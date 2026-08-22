@@ -3,6 +3,7 @@ import { privateKeyToAccount } from 'viem/accounts';
 
 const ADDRESS=/^0x[a-fA-F0-9]{40}$/;
 const PK=/^0x[a-fA-F0-9]{64}$/;
+const CLOID=/^0x[a-fA-F0-9]{32}$/;
 const n=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 
 export class RWAWorkerExecutionAPI {
@@ -90,18 +91,36 @@ export class RWAWorkerExecutionAPI {
     return result;
   }
 
-  async limit({coin,side='BUY',price,size,reduceOnly=false,tif='Gtc',leverage=1,copyRemaining=null}){
-    const {idx,u}=await this.asset(coin),p=this.fmtPx(price,u.szDecimals),s=this.fmtSz(size,u.szDecimals);
-    await this.riskCheck({coin,price:Number(p),size:Number(s),leverage,reduceOnly,copyRemaining});
-    if(!reduceOnly&&leverage!=null)this.assertResult(await this.exchange.updateLeverage({asset:idx,isCross:true,leverage:Math.max(1,Math.floor(n(leverage,1)))}),'Leverage update');
-    const result=this.assertResult(await this.exchange.order({orders:[{a:idx,b:String(side).toUpperCase()==='BUY',p,s,r:!!reduceOnly,t:{limit:{tif}}}],grouping:'na'}),'Worker order');
-    return{result,price:p,size:s,agent:this.agent.address};
+  async orderStatus(cloid){
+    if(!CLOID.test(String(cloid||'')))throw Error('Invalid client order id');
+    return this.info('orderStatus',{user:this.master,oid:String(cloid).toLowerCase()});
   }
 
-  async market({coin,side='BUY',size,reduceOnly=false,slippageBps=30,leverage=1,copyRemaining=null}){
+  async existingCloid(cloid){
+    if(!cloid)return null;
+    if(!CLOID.test(String(cloid)))throw Error('Invalid client order id');
+    const row=await this.orderStatus(cloid);
+    if(row?.status==='unknownOid')return null;
+    if(row?.status!=='order')return null;
+    const status=String(row?.order?.status||'').toLowerCase();
+    if(['open','filled','triggered'].includes(status))return row;
+    const e=Error(`CLOID_TERMINAL:${status||'unknown'}`);e.code='CLOID_TERMINAL';e.orderStatus=row;throw e;
+  }
+
+  async limit({coin,side='BUY',price,size,reduceOnly=false,tif='Gtc',leverage=1,copyRemaining=null,cloid=null}){
+    const {idx,u}=await this.asset(coin),p=this.fmtPx(price,u.szDecimals),s=this.fmtSz(size,u.szDecimals);
+    if(cloid){const prior=await this.existingCloid(cloid);if(prior)return{result:prior,price:p,size:s,agent:this.agent.address,cloid,replay:true}}
+    await this.riskCheck({coin,price:Number(p),size:Number(s),leverage,reduceOnly,copyRemaining});
+    if(!reduceOnly&&leverage!=null)this.assertResult(await this.exchange.updateLeverage({asset:idx,isCross:true,leverage:Math.max(1,Math.floor(n(leverage,1)))}),'Leverage update');
+    const order={a:idx,b:String(side).toUpperCase()==='BUY',p,s,r:!!reduceOnly,t:{limit:{tif}},...(cloid?{c:String(cloid).toLowerCase()}:{})};
+    const result=this.assertResult(await this.exchange.order({orders:[order],grouping:'na'}),'Worker order');
+    return{result,price:p,size:s,agent:this.agent.address,cloid:cloid||null,replay:false};
+  }
+
+  async market({coin,side='BUY',size,reduceOnly=false,slippageBps=30,leverage=1,copyRemaining=null,cloid=null}){
     const mids=await this.info('allMids'),mid=n(mids?.[String(coin).toUpperCase()]);if(!(mid>0))throw Error('Market price unavailable');
     const buy=String(side).toUpperCase()==='BUY',px=mid*(1+(buy?1:-1)*n(slippageBps,30)/10000);
-    return this.limit({coin,side,price:px,size,reduceOnly,tif:'Ioc',leverage,copyRemaining});
+    return this.limit({coin,side,price:px,size,reduceOnly,tif:'Ioc',leverage,copyRemaining,cloid});
   }
 
   async cancel({coin,oid}){
@@ -118,3 +137,4 @@ export class RWAWorkerExecutionAPI {
 }
 
 export const WORKER_SINGLE_WRITE_PATH='RWAWorkerExecutionAPI';
+export const WORKER_IDEMPOTENCY='deterministic-cloid-v1';
