@@ -5,12 +5,14 @@ if(window.RWAExecutionAPI)return;
 const CONFIG_URL='rwa-execution-config.json';
 const SESSION='rwa_wallet_link_v1';
 const AGENT_PREFIX='rwa_agent_wallet_v2';
+const RISK_PREFIX='rwa_risk_v2';
 const DB_NAME='rwa-secure-v1';
 const STORE='keys';
 const AES_ID='agent-aes-v1';
 let cfg=null;
 let mods=null;
 const metaCache=new Map();
+const agentVerifyCache=new Map();
 
 const audit=(type,details={})=>window.RWAAudit?.log?.(type,details);
 const provider=()=>window.RWAProvider||window.ethereum;
@@ -18,6 +20,7 @@ const session=()=>{try{return JSON.parse(localStorage.getItem(SESSION)||'null')}
 const master=()=>{const w=String(session()?.wallet||'').toLowerCase();return /^0x[a-f0-9]{40}$/.test(w)?w:''};
 const env=testnet=>testnet?'testnet':'mainnet';
 const recordKey=testnet=>`${AGENT_PREFIX}:${master()}:${env(testnet)}`;
+const riskKey=()=>`${RISK_PREFIX}:${master()||'anon'}`;
 const b64=u=>btoa(String.fromCharCode(...new Uint8Array(u)));
 const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 
@@ -90,6 +93,7 @@ async function decryptSecret(row){
 function readAgent(testnet=false){
   try{return JSON.parse(localStorage.getItem(recordKey(testnet))||'null')}catch{return null}
 }
+function removeAgent(testnet=false){localStorage.removeItem(recordKey(testnet));agentVerifyCache.delete(recordKey(testnet))}
 async function saveAgent(testnet,privateKey,address,name,expiresAt){
   const enc=await encryptSecret(privateKey);
   const row={
@@ -129,6 +133,15 @@ async function mainExchange(testnet=false){
     defaultExpiresAfter:()=>Date.now()+15000
   });
 }
+function assertWriteResult(result,label='Write action'){
+  if(result?.status&&result.status!=='ok')throw Error(`${label} rejected by venue`);
+  const statuses=result?.response?.data?.statuses;
+  if(Array.isArray(statuses)){
+    const bad=statuses.find(x=>x&&typeof x==='object'&&x.error);
+    if(bad?.error)throw Error(`${label} rejected: ${String(bad.error)}`);
+  }
+  return result;
+}
 
 async function authorizeAgent(testnet=false){
   if(!master())throw Error('Login with wallet first');
@@ -136,15 +149,15 @@ async function authorizeAgent(testnet=false){
   const {generatePrivateKey,privateKeyToAccount}=await modules();
   const pk=generatePrivateKey();
   const agent=privateKeyToAccount(pk);
-  const hours=Math.max(1,Number(c.agentExpiryHours||168));
+  const hours=Math.min(180*24,Math.max(1,Number(c.agentExpiryHours||168)));
   const expiresAt=Date.now()+hours*60*60*1000;
   const base=String(c.agentName||'RWA-EXECUTION').slice(0,16);
   const agentName=`${base} valid_until ${expiresAt}`;
   const ex=await mainExchange(testnet);
   audit('execution.agent.approval.request',{testnet,agent:agent.address,expiresAt});
-  const result=await ex.approveAgent({agentAddress:agent.address,agentName});
-  if(result?.status&&result.status!=='ok')throw Error('Agent approval failed');
-  await saveAgent(testnet,pk,agent.address,agentName,expiresAt);
+  const result=assertWriteResult(await ex.approveAgent({agentAddress:agent.address,agentName}),'Agent approval');
+  const row=await saveAgent(testnet,pk,agent.address,agentName,expiresAt);
+  agentVerifyCache.set(recordKey(testnet),{ts:Date.now(),value:{valid:true,row,remote:{address:agent.address,name:agentName,validUntil:expiresAt}}});
   audit('execution.agent.approved',{testnet,agent:agent.address,expiresAt});
   window.dispatchEvent(new CustomEvent('rwa:agent-changed'));
   return{address:agent.address,result,expiresAt};
@@ -152,7 +165,7 @@ async function authorizeAgent(testnet=false){
 async function agentAccount(testnet=false){
   const row=readAgent(testnet);
   if(!row)return null;
-  if(row.expiresAt&&Date.now()>Number(row.expiresAt))return null;
+  if(row.expiresAt&&Date.now()>Number(row.expiresAt)){removeAgent(testnet);return null}
   try{
     const pk=await decryptSecret(row);
     const {privateKeyToAccount}=await modules();
@@ -166,24 +179,15 @@ async function agentAccount(testnet=false){
 }
 async function revokeAgent(testnet=false){
   const row=readAgent(testnet);
-  if(!row){localStorage.removeItem(recordKey(testnet));return{revoked:true,remote:false}}
+  if(!row){removeAgent(testnet);return{revoked:true,remote:false}}
   const {generatePrivateKey,privateKeyToAccount}=await modules();
   const throwaway=privateKeyToAccount(generatePrivateKey());
   const ex=await mainExchange(testnet);
-  await ex.approveAgent({agentAddress:throwaway.address,agentName:row.name});
-  localStorage.removeItem(recordKey(testnet));
+  const result=assertWriteResult(await ex.approveAgent({agentAddress:throwaway.address,agentName:row.name}),'Agent revoke');
+  removeAgent(testnet);
   audit('execution.agent.revoked',{testnet,oldAgent:row.address,replacedByDiscardedAgent:throwaway.address});
   window.dispatchEvent(new CustomEvent('rwa:agent-changed'));
-  return{revoked:true,remote:true};
-}
-async function exchange(testnet=false,{preferAgent=true}={}){
-  const {ExchangeClient}=await modules();
-  let wallet=null;
-  let mode='master';
-  if(preferAgent){wallet=await agentAccount(testnet);if(wallet)mode='agent'}
-  if(!wallet)wallet=await masterWallet();
-  const client=new ExchangeClient({transport:await transport(testnet),wallet,defaultExpiresAfter:()=>Date.now()+15000});
-  return{client,mode};
+  return{revoked:true,remote:true,result};
 }
 
 async function info(type,data={},testnet=false){
@@ -227,8 +231,72 @@ function fmtSz(v,d){
   if(!Number(out))throw Error('Size rounds to zero');
   return out;
 }
-async function riskCheck(order){
-  if(window.RWARisk?.check)await window.RWARisk.check(order);
+
+async function verifyAgent(testnet=false,{force=false}={}){
+  const row=readAgent(testnet),k=recordKey(testnet);
+  if(!row)return{valid:false,row:null,reason:'not-configured'};
+  if(row.expiresAt&&Date.now()>Number(row.expiresAt)){removeAgent(testnet);return{valid:false,row:null,reason:'expired'}}
+  const hit=agentVerifyCache.get(k);if(!force&&hit&&Date.now()-hit.ts<15000)return hit.value;
+  try{
+    const list=await info('extraAgents',{user:master()},testnet);
+    const remote=(Array.isArray(list)?list:[]).find(x=>String(x?.address||'').toLowerCase()===String(row.address||'').toLowerCase());
+    const valid=!!remote&&(!remote.validUntil||Date.now()<=Number(remote.validUntil));
+    const value={valid,row,remote:remote||null,reason:valid?'verified':'not-authorized'};
+    agentVerifyCache.set(k,{ts:Date.now(),value});
+    if(!valid){removeAgent(testnet);audit('execution.agent.stale',{testnet,agent:row.address})}
+    return value;
+  }catch(e){
+    return{valid:null,row,remote:null,reason:'verification-unavailable',error:String(e?.message||e)};
+  }
+}
+async function exchange(testnet=false,{preferAgent=true}={}){
+  const {ExchangeClient}=await modules();
+  let wallet=null;
+  let mode='master';
+  if(preferAgent){
+    const verified=await verifyAgent(testnet);
+    if(verified.valid!==false){wallet=await agentAccount(testnet);if(wallet)mode='agent'}
+  }
+  if(!wallet)wallet=await masterWallet();
+  const client=new ExchangeClient({transport:await transport(testnet),wallet,defaultExpiresAfter:()=>Date.now()+15000});
+  return{client,mode};
+}
+
+function riskCfg(){
+  let r={};try{r=JSON.parse(localStorage.getItem(riskKey())||'{}')||{}}catch{}
+  return{
+    dailyLoss:Math.max(0,Number(r.dailyLoss??250)||0),
+    maxLeverage:Math.max(0,Number(r.maxLeverage??5)||0),
+    maxExposure:Math.max(0,Number(r.maxExposure??5000)||0),
+    perAsset:Math.max(0,Number(r.perAsset??2000)||0),
+    kill:!!r.kill
+  };
+}
+async function riskLive(testnet=false){
+  const user=master();if(!user)throw Error('Login with wallet first');
+  const [ch,pf]=await Promise.all([info('clearinghouseState',{user},testnet),info('portfolio',{user},testnet)]);
+  const pos=(ch?.assetPositions||[]).map(x=>x.position||x).filter(x=>Number(x?.szi)!==0);
+  const exposure=pos.reduce((s,p)=>s+Math.abs(Number(p.positionValue||0)),0);
+  const maxLev=Math.max(0,...pos.map(p=>Number(p.leverage?.value||p.leverage||0)));
+  const day=(Array.isArray(pf)?pf:[]).find(x=>Array.isArray(x)&&x[0]==='day')?.[1];
+  const last=day?.pnlHistory?.at?.(-1);const pnl=Number(Array.isArray(last)?last[1]:0)||0;
+  return{pnl,exposure,maxLeverage:maxLev,positions:pos};
+}
+async function mandatoryRiskCheck(order={},testnet=false){
+  const r=riskCfg(),reduceOnly=!!order.reduceOnly,requested=Math.max(0,Number(order.leverage||0)),coin=String(order.coin||'').toUpperCase(),kind=String(order.kind||'write');
+  const blocked=message=>{audit('execution.risk.blocked',{message,coin,kind,testnet,reduceOnly});throw Error(message)};
+  if(!reduceOnly&&r.kill)blocked('KILL SWITCH is active');
+  if(!reduceOnly&&r.maxLeverage>0&&requested>r.maxLeverage)blocked(`Max leverage ${r.maxLeverage}x exceeded`);
+  if(reduceOnly)return{pass:true,config:r,reduceOnly:true};
+  const live=await riskLive(testnet);
+  if(r.dailyLoss>0&&Number(live.pnl)<-r.dailyLoss)blocked('Daily max loss reached');
+  if(r.maxLeverage>0&&Number(live.maxLeverage)>r.maxLeverage)blocked(`Account leverage ${Number(live.maxLeverage).toFixed(1)}x exceeds max ${r.maxLeverage}x`);
+  const notional=Math.abs(Number(order.price||0)*Number(order.size||0));
+  const assetExposure=(live.positions||[]).filter(p=>String(p.coin||'').toUpperCase()===coin).reduce((s,p)=>s+Math.abs(Number(p.positionValue||0)),0);
+  if(r.perAsset>0&&assetExposure+notional>r.perAsset)blocked(`Per-asset limit exceeded (${r.perAsset})`);
+  if(r.maxExposure>0&&Number(live.exposure||0)+notional>r.maxExposure)blocked(`Total exposure limit exceeded (${r.maxExposure})`);
+  audit('execution.risk.pass',{coin,kind,testnet,notional,exposure:live.exposure});
+  return{pass:true,config:r,live,notional};
 }
 
 async function builderParam(){
@@ -243,7 +311,7 @@ async function approveBuilderFee(testnet=false){
   if(!b.enabled)throw Error('RWA builder fee is disabled');
   if(!/^0x[a-fA-F0-9]{40}$/.test(b.address||''))throw Error('Builder address is not configured');
   const ex=await mainExchange(testnet);
-  const result=await ex.approveBuilderFee({builder:b.address,maxFeeRate:String(b.maxFeeRate)});
+  const result=assertWriteResult(await ex.approveBuilderFee({builder:b.address,maxFeeRate:String(b.maxFeeRate)}),'Builder fee approval');
   audit('execution.builder.approved',{testnet,builder:b.address,maxFeeRate:b.maxFeeRate});
   return result;
 }
@@ -262,9 +330,9 @@ async function setLeverage({coin,leverage,isCross=true,testnet=false,preferAgent
   coin=String(coin).toUpperCase();
   const {idx}=await asset(coin,testnet);
   const value=Math.max(1,Math.floor(Number(leverage)||1));
-  await riskCheck({coin,price:0,size:0,leverage:value,reduceOnly:false,kind:'leverage'});
+  await mandatoryRiskCheck({coin,price:0,size:0,leverage:value,reduceOnly:false,kind:'leverage'},testnet);
   const {client,mode}=await exchange(testnet,{preferAgent});
-  const result=await client.updateLeverage({asset:idx,isCross:!!isCross,leverage:value});
+  const result=assertWriteResult(await client.updateLeverage({asset:idx,isCross:!!isCross,leverage:value}),'Leverage update');
   audit('execution.leverage',{coin,leverage:value,testnet,mode});
   return result;
 }
@@ -273,12 +341,12 @@ async function limit({coin,side='BUY',price,size,reduceOnly=false,tif='Gtc',leve
   const {idx,u}=await asset(coin,testnet);
   const p=fmtPx(price,u.szDecimals);
   const s=fmtSz(size,u.szDecimals);
-  await riskCheck({coin,price:Number(p),size:Number(s),leverage:Number(leverage||1),reduceOnly:!!reduceOnly,kind:'limit'});
+  await mandatoryRiskCheck({coin,price:Number(p),size:Number(s),leverage:Number(leverage||1),reduceOnly:!!reduceOnly,kind:'limit'},testnet);
   const {client,mode}=await exchange(testnet,{preferAgent});
-  if(leverage!=null)await client.updateLeverage({asset:idx,isCross:true,leverage:Math.max(1,Math.floor(Number(leverage)||1))});
+  if(leverage!=null)assertWriteResult(await client.updateLeverage({asset:idx,isCross:true,leverage:Math.max(1,Math.floor(Number(leverage)||1))}),'Leverage update');
   const builder=await builderParam();
   const args={orders:[{a:idx,b:String(side).toUpperCase()==='BUY',p,s,r:!!reduceOnly,t:{limit:{tif}}}],grouping:'na',...(builder?{builder}:{})};
-  const result=await client.order(args);
+  const result=assertWriteResult(await client.order(args),'Limit order');
   audit('execution.order',{kind:'limit',coin,side,price:p,size:s,reduceOnly:!!reduceOnly,testnet,mode,builder:!!builder});
   return{result,mode,price:p,size:s};
 }
@@ -299,18 +367,20 @@ async function trigger({coin,side,size,triggerPx,tpsl='sl',testnet=false,preferA
   const p=fmtPx(triggerPx,u.szDecimals);
   const s=fmtSz(Math.abs(Number(size)),u.szDecimals);
   const kind=String(tpsl).toLowerCase()==='tp'?'tp':'sl';
-  await riskCheck({coin,price:Number(p),size:Number(s),leverage:1,reduceOnly:true,kind:'trigger'});
+  await mandatoryRiskCheck({coin,price:Number(p),size:Number(s),leverage:1,reduceOnly:true,kind:'trigger'},testnet);
   const {client,mode}=await exchange(testnet,{preferAgent});
   const builder=await builderParam();
   const args={orders:[{a:idx,b:String(side).toUpperCase()==='BUY',p,s,r:true,t:{trigger:{isMarket:true,triggerPx:p,tpsl:kind}}}],grouping:'positionTpsl',...(builder?{builder}:{})};
-  const result=await client.order(args);
+  const result=assertWriteResult(await client.order(args),'TP/SL trigger');
   audit('execution.trigger',{coin,side,size:s,triggerPx:p,tpsl:kind,testnet,mode,builder:!!builder});
   return{result,mode,price:p,size:s};
 }
 async function cancel({coin,oid,testnet=false,preferAgent=true}){
+  coin=String(coin).toUpperCase();
   const {idx}=await asset(coin,testnet);
+  await mandatoryRiskCheck({coin,price:0,size:0,leverage:0,reduceOnly:true,kind:'cancel'},testnet);
   const {client,mode}=await exchange(testnet,{preferAgent});
-  const result=await client.cancel({cancels:[{a:idx,o:Number(oid)}]});
+  const result=assertWriteResult(await client.cancel({cancels:[{a:idx,o:Number(oid)}]}),'Cancel order');
   audit('execution.cancel',{coin,oid,testnet,mode});
   return{result,mode};
 }
@@ -319,9 +389,9 @@ async function modify({coin,oid,side,price,size,reduceOnly=false,testnet=false,p
   const {idx,u}=await asset(coin,testnet);
   const p=fmtPx(price,u.szDecimals);
   const s=fmtSz(size,u.szDecimals);
-  await riskCheck({coin,price:Number(p),size:Number(s),leverage:1,reduceOnly:!!reduceOnly,kind:'modify'});
+  await mandatoryRiskCheck({coin,price:Number(p),size:Number(s),leverage:1,reduceOnly:!!reduceOnly,kind:'modify'},testnet);
   const {client,mode}=await exchange(testnet,{preferAgent});
-  const result=await client.modify({oid:Number(oid),order:{a:idx,b:String(side).toUpperCase()==='BUY'||side==='B',p,s,r:!!reduceOnly,t:{limit:{tif:'Gtc'}}}});
+  const result=assertWriteResult(await client.modify({oid:Number(oid),order:{a:idx,b:String(side).toUpperCase()==='BUY'||side==='B',p,s,r:!!reduceOnly,t:{limit:{tif:'Gtc'}}}}),'Modify order');
   audit('execution.modify',{coin,oid,price:p,size:s,reduceOnly:!!reduceOnly,testnet,mode});
   return{result,mode};
 }
@@ -333,8 +403,9 @@ async function cancelAll({testnet=false,preferAgent=true}={}){
 }
 async function health(testnet=false){
   const c=await config();
+  let verification={valid:false,reason:'not-configured'};if(readAgent(testnet))verification=await verifyAgent(testnet);
   const a=readAgent(testnet);
-  const out={venue:c.venue,master:master(),walletProvider:!!provider(),agent:!!a,agentAddress:a?.address||'',agentExpiresAt:a?.expiresAt||0,environment:env(testnet),builder:await builderStatus(testnet)};
+  const out={venue:c.venue,master:master(),walletProvider:!!provider(),agent:!!a,agentAddress:a?.address||'',agentExpiresAt:a?.expiresAt||0,agentVerified:verification.valid===true,agentVerification:verification.reason,environment:env(testnet),builder:await builderStatus(testnet),risk:riskCfg()};
   try{await info('allMids',{},testnet);out.api='ok'}catch(e){out.api='error';out.error=e.message}
   return out;
 }
@@ -342,9 +413,10 @@ async function health(testnet=false){
 window.RWAExecutionAPI={
   version:'2.0.0',
   hardening:'single-write-path-v1',
+  riskGate:'mandatory-internal-v1',
   config,
   auth:{master,provider},
-  agent:{authorize:authorizeAgent,revoke:revokeAgent,status:(t=false)=>readAgent(t),account:agentAccount},
+  agent:{authorize:authorizeAgent,revoke:revokeAgent,status:(t=false)=>readAgent(t),account:agentAccount,verify:verifyAgent},
   builder:{status:builderStatus,approve:approveBuilderFee},
   orders:{
     limit,
@@ -360,7 +432,7 @@ window.RWAExecutionAPI={
     state:(t=false)=>info('clearinghouseState',{user:master()},t),
     fills:(t=false)=>info('userFills',{user:master()},t)
   },
-  risk:{setLeverage},
+  risk:{setLeverage,check:mandatoryRiskCheck,cfg:riskCfg,refresh:riskLive},
   info,
   health
 };
