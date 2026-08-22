@@ -1,0 +1,12 @@
+(()=>{
+'use strict';
+if(window.RWASocialSafety)return;
+const KEY='rwa_social_post_rate_v1';
+const toast=t=>typeof window.toast==='function'?window.toast(t):console.log(t);
+const session=()=>{try{return JSON.parse(localStorage.getItem('rwa_wallet_link_v1')||'null')}catch{return null}};
+function rate(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return[]}}
+function allowed(){const now=Date.now(),a=rate().filter(t=>now-t<3600000);if(a.length&&now-a[0]<10000)return{ok:false,msg:'Wait 10 seconds before posting again'};if(a.length>=20)return{ok:false,msg:'Anti-spam limit: 20 posts per hour'};a.unshift(now);localStorage.setItem(KEY,JSON.stringify(a.slice(0,20)));return{ok:true}}
+window.addEventListener('click',e=>{if(!e.target.closest?.('#publishNetworkPost,#publishThesis'))return;const r=allowed();if(!r.ok){e.preventDefault();e.stopImmediatePropagation();toast(r.msg);window.RWAAudit?.log?.('social.spam_block',{reason:r.msg})}},true);
+function enhance(){document.querySelectorAll('.network-post').forEach(p=>{const f=p.querySelector('footer');if(!f||f.querySelector('[data-quick-report]'))return;const id=p.dataset.event||'',txt=(p.textContent||'').trim().slice(0,120);const report=document.createElement('button');report.dataset.quickReport=id;report.textContent='Report';report.onclick=()=>{const arr=JSON.parse(localStorage.getItem(`rwa_social_report_v1:${session()?.wallet?.toLowerCase()||'anon'}`)||'[]');arr.unshift({target:id||txt,reason:'user-report',ts:Date.now()});localStorage.setItem(`rwa_social_report_v1:${session()?.wallet?.toLowerCase()||'anon'}`,JSON.stringify(arr.slice(0,200)));window.RWAAudit?.log?.('social.report.quick',{target:id});toast('Report added to moderation queue')};const mute=document.createElement('button');mute.textContent='Mute';mute.onclick=()=>{const k=`rwa_social_mute_v1:${session()?.wallet?.toLowerCase()||'anon'}`,arr=JSON.parse(localStorage.getItem(k)||'[]'),who=p.querySelector('header b')?.textContent?.trim().toLowerCase();if(who&&!arr.includes(who))arr.unshift(who);localStorage.setItem(k,JSON.stringify(arr.slice(0,200)));p.style.display='none';window.RWAAudit?.log?.('social.mute.quick',{value:who});toast('Muted')};f.append(report,mute)})}
+new MutationObserver(enhance).observe(document.body,{childList:true,subtree:true});enhance();window.RWASocialSafety={allowed,enhance};
+})();
