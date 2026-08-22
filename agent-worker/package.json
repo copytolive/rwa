@@ -1,0 +1,15 @@
+{
+  "name": "rwa-agent-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=22.12.0"},
+  "scripts": {
+    "start": "node worker.mjs",
+    "check": "node --check execution.mjs && node --check worker.mjs && node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@nktkas/hyperliquid": "0.33.3",
+    "viem": "2.37.3"
+  }
+}
