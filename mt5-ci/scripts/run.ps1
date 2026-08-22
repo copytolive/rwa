@@ -8,14 +8,10 @@ function Diagnostics(){
  $mq=Join-Path $env:APPDATA 'MetaQuotes';if(Test-Path $mq){Get-ChildItem $mq -Filter '*.log' -Recurse -ErrorAction SilentlyContinue|Sort-Object LastWriteTime -Descending|Select-Object -First 30|ForEach-Object{SafeLog $_.FullName (Join-Path $out ('app_'+$_.Directory.Name+'_'+$_.Name))}}
 }
 try{
- if([string]::IsNullOrWhiteSpace($login)-or[string]::IsNullOrWhiteSpace($password)-or[string]::IsNullOrWhiteSpace($server)){
-   [ordered]@{status='BLOCKED_MISSING_MT5_DEMO_SECRETS';required=@('MT5_LOGIN','MT5_PASSWORD','MT5_SERVER');message='Add a valid free demo account as GitHub Actions repository secrets. Never commit credentials.';utc=[DateTime]::UtcNow.ToString('o')}|ConvertTo-Json|Set-Content -Encoding UTF8 (Join-Path $out 'final_status.json');throw 'MT5 demo credentials are not configured in GitHub Actions secrets'
- }
- [ordered]@{credentials_source='GitHub Actions secrets';login_present=$true;password_present=$true;server_present=$true;server=$server;password_never_exported=$true}|ConvertTo-Json|Set-Content -Encoding UTF8 (Join-Path $out 'credential_gate.json')
  Stage INSTALL 'Downloading official MetaTrader 5 installer';$setup=Join-Path $env:RUNNER_TEMP 'mt5setup.exe';Invoke-WebRequest -UseBasicParsing -Uri 'https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe' -OutFile $setup;(Get-FileHash $setup -Algorithm SHA256).Hash|Set-Content (Join-Path $out 'installer_sha256.txt');Start-Process $setup -ArgumentList '/auto' -Wait;Start-Sleep 8;Get-Process terminal64,metaeditor64 -ErrorAction SilentlyContinue|Stop-Process -Force -ErrorAction SilentlyContinue
  $found=Get-ChildItem 'C:\Program Files' -Filter terminal64.exe -Recurse -ErrorAction SilentlyContinue|Select-Object -First 1;if(!$found){throw 'terminal64.exe not found'};$install=$found.Directory.FullName;$script:mt5=Join-Path $env:RUNNER_TEMP 'mt5-portable';if(Test-Path $script:mt5){Remove-Item -Recurse -Force $script:mt5};Copy-Item -Recurse -Force $install $script:mt5;$terminal=Join-Path $script:mt5 'terminal64.exe';$editor=Join-Path $script:mt5 'metaeditor64.exe'
  $ea=Join-Path $script:mt5 'MQL5\Experts\ChatGPT';$sc=Join-Path $script:mt5 'MQL5\Scripts\ChatGPT';$files=Join-Path $script:mt5 'MQL5\Files';New-Item -ItemType Directory -Force -Path $ea,$sc,$files|Out-Null;Copy-Item 'mt5-ci\mql5\SeedCustomTicks.mq5' $sc;Copy-Item 'mt5-ci\mql5\DeterministicPendingSmoke.mq5' $ea;Copy-Item 'mt5-ci\generated\smoke_ticks.csv' $files
- function Compile([string]$src){Stage COMPILE ([IO.Path]::GetFileName($src));Start-Process $editor -ArgumentList "/compile:`"$src`"",'/log' -Wait;$log=[IO.Path]::ChangeExtension($src,'.log');if(!(Test-Path $log)){throw "compile log missing"};SafeLog $log (Join-Path $out ([IO.Path]::GetFileName($log)));$txt=Get-Content $log -Raw;if($txt -notmatch '0 errors'){throw "MQL5 compile failed"};if(!(Test-Path ([IO.Path]::ChangeExtension($src,'.ex5')))){throw "EX5 missing"}}
+ function Compile([string]$src){Stage COMPILE ([IO.Path]::GetFileName($src));Start-Process $editor -ArgumentList "/compile:`"$src`"",'/log' -Wait;$log=[IO.Path]::ChangeExtension($src,'.log');if(!(Test-Path $log)){throw 'compile log missing'};SafeLog $log (Join-Path $out ([IO.Path]::GetFileName($log)));$txt=Get-Content $log -Raw;if($txt -notmatch '0 errors'){throw 'MQL5 compile failed'};if(!(Test-Path ([IO.Path]::ChangeExtension($src,'.ex5')))){throw 'EX5 missing'}}
  Compile (Join-Path $sc 'SeedCustomTicks.mq5');Compile (Join-Path $ea 'DeterministicPendingSmoke.mq5')
  Stage SEED 'Importing frozen custom Bid Ask ticks and deterministic M1 history';$seedIni=Join-Path $env:RUNNER_TEMP 'seed.ini';@"
 [Experts]
@@ -27,7 +23,11 @@ Script=ChatGPT\SeedCustomTicks
 Symbol=EURUSD
 Period=M1
 ShutdownTerminal=1
-"@|Set-Content -Encoding Unicode $seedIni;$p=Start-Process $terminal -ArgumentList '/portable',"/config:$seedIni" -PassThru;if(!$p.WaitForExit(180000)){$p.Kill();throw 'seed timeout'};$seedStatus=Join-Path $files 'seed_status.csv';if(!(Test-Path $seedStatus)){throw 'seed_status.csv missing'};Copy-Item $seedStatus $out;$st=Get-Content $seedStatus -Raw;if($st -notmatch 'PASS'){throw "custom history seed failed"}
+"@|Set-Content -Encoding Unicode $seedIni;$p=Start-Process $terminal -ArgumentList '/portable',"/config:$seedIni" -PassThru;if(!$p.WaitForExit(180000)){$p.Kill();throw 'seed timeout'};$seedStatus=Join-Path $files 'seed_status.csv';if(!(Test-Path $seedStatus)){throw 'seed_status.csv missing'};Copy-Item $seedStatus $out;$st=Get-Content $seedStatus -Raw;if($st -notmatch 'PASS'){throw 'custom history seed failed'}
+ if([string]::IsNullOrWhiteSpace($login)-or[string]::IsNullOrWhiteSpace($password)-or[string]::IsNullOrWhiteSpace($server)){
+   [ordered]@{status='BLOCKED_MISSING_MT5_DEMO_SECRETS';compile='PASS';history_seed='PASS';required=@('MT5_LOGIN','MT5_PASSWORD','MT5_SERVER');message='Add a valid free demo account as GitHub Actions repository secrets. Never commit credentials.';utc=[DateTime]::UtcNow.ToString('o')}|ConvertTo-Json|Set-Content -Encoding UTF8 (Join-Path $out 'final_status.json');throw 'MT5 demo credentials are not configured in GitHub Actions secrets'
+ }
+ [ordered]@{credentials_source='GitHub Actions secrets';login_present=$true;password_present=$true;server_present=$true;server=$server;password_never_exported=$true}|ConvertTo-Json|Set-Content -Encoding UTF8 (Join-Path $out 'credential_gate.json')
  Stage TESTER 'Authenticating demo context and running Strategy Tester Model 4 real ticks';$ini=Join-Path $env:RUNNER_TEMP 'tester.ini';@"
 [Common]
 Login=$login
