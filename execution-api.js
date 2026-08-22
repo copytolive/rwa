@@ -227,6 +227,9 @@ function fmtSz(v,d){
   if(!Number(out))throw Error('Size rounds to zero');
   return out;
 }
+async function riskCheck(order){
+  if(window.RWARisk?.check)await window.RWARisk.check(order);
+}
 
 async function builderParam(){
   const c=await config();
@@ -256,9 +259,11 @@ async function builderStatus(testnet=false){
 }
 
 async function setLeverage({coin,leverage,isCross=true,testnet=false,preferAgent=true}){
+  coin=String(coin).toUpperCase();
   const {idx}=await asset(coin,testnet);
-  const {client,mode}=await exchange(testnet,{preferAgent});
   const value=Math.max(1,Math.floor(Number(leverage)||1));
+  await riskCheck({coin,price:0,size:0,leverage:value,reduceOnly:false,kind:'leverage'});
+  const {client,mode}=await exchange(testnet,{preferAgent});
   const result=await client.updateLeverage({asset:idx,isCross:!!isCross,leverage:value});
   audit('execution.leverage',{coin,leverage:value,testnet,mode});
   return result;
@@ -268,13 +273,13 @@ async function limit({coin,side='BUY',price,size,reduceOnly=false,tif='Gtc',leve
   const {idx,u}=await asset(coin,testnet);
   const p=fmtPx(price,u.szDecimals);
   const s=fmtSz(size,u.szDecimals);
-  if(window.RWARisk?.check)await window.RWARisk.check({coin,price:Number(p),size:Number(s),leverage:Number(leverage||1)});
+  await riskCheck({coin,price:Number(p),size:Number(s),leverage:Number(leverage||1),reduceOnly:!!reduceOnly,kind:'limit'});
   const {client,mode}=await exchange(testnet,{preferAgent});
   if(leverage!=null)await client.updateLeverage({asset:idx,isCross:true,leverage:Math.max(1,Math.floor(Number(leverage)||1))});
   const builder=await builderParam();
   const args={orders:[{a:idx,b:String(side).toUpperCase()==='BUY',p,s,r:!!reduceOnly,t:{limit:{tif}}}],grouping:'na',...(builder?{builder}:{})};
   const result=await client.order(args);
-  audit('execution.order',{kind:'limit',coin,side,price:p,size:s,testnet,mode,builder:!!builder});
+  audit('execution.order',{kind:'limit',coin,side,price:p,size:s,reduceOnly:!!reduceOnly,testnet,mode,builder:!!builder});
   return{result,mode,price:p,size:s};
 }
 async function market({coin,side='BUY',size,reduceOnly=false,slippageBps=null,leverage=null,testnet=false,preferAgent=true}){
@@ -288,6 +293,20 @@ async function market({coin,side='BUY',size,reduceOnly=false,slippageBps=null,le
   const px=mid*(1+(buy?1:-1)*bps/10000);
   return limit({coin,side,price:px,size,reduceOnly,tif:'Ioc',leverage,testnet,preferAgent});
 }
+async function trigger({coin,side,size,triggerPx,tpsl='sl',testnet=false,preferAgent=true}){
+  coin=String(coin).toUpperCase();
+  const {idx,u}=await asset(coin,testnet);
+  const p=fmtPx(triggerPx,u.szDecimals);
+  const s=fmtSz(Math.abs(Number(size)),u.szDecimals);
+  const kind=String(tpsl).toLowerCase()==='tp'?'tp':'sl';
+  await riskCheck({coin,price:Number(p),size:Number(s),leverage:1,reduceOnly:true,kind:'trigger'});
+  const {client,mode}=await exchange(testnet,{preferAgent});
+  const builder=await builderParam();
+  const args={orders:[{a:idx,b:String(side).toUpperCase()==='BUY',p,s,r:true,t:{trigger:{isMarket:true,triggerPx:p,tpsl:kind}}}],grouping:'positionTpsl',...(builder?{builder}:{})};
+  const result=await client.order(args);
+  audit('execution.trigger',{coin,side,size:s,triggerPx:p,tpsl:kind,testnet,mode,builder:!!builder});
+  return{result,mode,price:p,size:s};
+}
 async function cancel({coin,oid,testnet=false,preferAgent=true}){
   const {idx}=await asset(coin,testnet);
   const {client,mode}=await exchange(testnet,{preferAgent});
@@ -296,13 +315,14 @@ async function cancel({coin,oid,testnet=false,preferAgent=true}){
   return{result,mode};
 }
 async function modify({coin,oid,side,price,size,reduceOnly=false,testnet=false,preferAgent=true}){
+  coin=String(coin).toUpperCase();
   const {idx,u}=await asset(coin,testnet);
   const p=fmtPx(price,u.szDecimals);
   const s=fmtSz(size,u.szDecimals);
-  if(window.RWARisk?.check)await window.RWARisk.check({coin,price:Number(p),size:Number(s),leverage:1});
+  await riskCheck({coin,price:Number(p),size:Number(s),leverage:1,reduceOnly:!!reduceOnly,kind:'modify'});
   const {client,mode}=await exchange(testnet,{preferAgent});
   const result=await client.modify({oid:Number(oid),order:{a:idx,b:String(side).toUpperCase()==='BUY'||side==='B',p,s,r:!!reduceOnly,t:{limit:{tif:'Gtc'}}}});
-  audit('execution.modify',{coin,oid,price:p,size:s,testnet,mode});
+  audit('execution.modify',{coin,oid,price:p,size:s,reduceOnly:!!reduceOnly,testnet,mode});
   return{result,mode};
 }
 async function cancelAll({testnet=false,preferAgent=true}={}){
@@ -321,6 +341,7 @@ async function health(testnet=false){
 
 window.RWAExecutionAPI={
   version:'2.0.0',
+  hardening:'single-write-path-v1',
   config,
   auth:{master,provider},
   agent:{authorize:authorizeAgent,revoke:revokeAgent,status:(t=false)=>readAgent(t),account:agentAccount},
@@ -328,6 +349,7 @@ window.RWAExecutionAPI={
   orders:{
     limit,
     market,
+    trigger,
     cancel,
     modify,
     cancelAll,
