@@ -37,6 +37,9 @@ for(const b of prod){
 const sign=document.querySelector('.signin');if(sign)sign.onclick=()=>suite('profile');
 const inst=document.querySelector('.institutional');if(inst)inst.onclick=()=>suite('rwa');
 if(!document.querySelector('script[data-rwa-exec-patch]')){
-  const s=document.createElement('script');s.src='suite-execution-patch.js?v=1';s.dataset.rwaExecPatch='1';document.body.appendChild(s);
+  const s=document.createElement('script');s.src='suite-execution-patch.js?v=2';s.dataset.rwaExecPatch='1';document.body.appendChild(s);
+}
+if(!document.querySelector('script[data-rwa-wallet-auth]')){
+  const s=document.createElement('script');s.src='wallet-auth.js?v=1';s.dataset.rwaWalletAuth='1';document.body.appendChild(s);
 }
 })();
