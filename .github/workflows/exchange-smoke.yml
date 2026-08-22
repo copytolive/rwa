@@ -5,6 +5,7 @@ on:
     paths:
       - "exchange-core.js"
       - "exchange-ui.js"
+      - "exchange-actions.js"
       - "testnet-e2e.js"
       - "wallet-core.js"
       - "walletconnect.js"
@@ -29,16 +30,18 @@ jobs:
           node --check execution-ops-bridge.js
           node --check exchange-core.js
           node --check exchange-ui.js
+          node --check exchange-actions.js
           node --check testnet-e2e.js
           python -m json.tool token/config.json >/dev/null
-          test -s token/RWAToken.sol
-          test -s token/RWAVestingVault.sol
+          test -s token/contracts/RWAToken.sol
+          test -s token/contracts/RWAVestingVault.sol
           grep -Fq 'walletconnect.js?v=4' index.html
           grep -Fq 'wallet-core.js?v=3' index.html
           ! grep -Fq 'wallet-seamless.js' index.html
           grep -Fq 'exchange-core.js?v=1' index.html
           grep -Fq 'exchange-ui.js?v=1' index.html
           grep -Fq 'testnet-e2e.js?v=1' index.html
+          grep -Fq "exchange-actions.js?v=1" testnet-e2e.js
           grep -Fq "version:'4.0.0'" walletconnect.js
           grep -Fq "version:'3.0.0'" wallet-core.js
           grep -Fq 'Wallet account switched' wallet-core.js
@@ -49,6 +52,9 @@ jobs:
           grep -Fq 'OPEN POSITIONS' exchange-ui.js
           grep -Fq 'OPEN ORDERS' exchange-ui.js
           grep -Fq 'Trade History' exchange-ui.js
+          grep -Fq 'Get Testnet USDC' exchange-actions.js
+          grep -Fq 'data-ex-modify' exchange-actions.js
+          grep -Fq 'app.hyperliquid-testnet.xyz/drip' exchange-actions.js
           grep -Fq 'REAL E2E RESULT' testnet-e2e.js
           grep -Fq 'Unlock Mainnet after PASS' testnet-e2e.js
           grep -Fq "const required=['wallet','collateral','entry','position','tpsl','modify','cancel','close','history','pnl']" testnet-e2e.js
@@ -58,7 +64,7 @@ jobs:
       - name: Publish source status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/exchange-source' -f description='Wallet v3, account, trade, E2E gate and token guardrails verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/exchange-source' -f description='Wallet, account, modify, E2E and token guardrails verified'
       - name: Verify GitHub Pages bundle
         shell: bash
         run: |
@@ -68,10 +74,11 @@ jobs:
             html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/?v=$q" || true)"
             core="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/exchange-core.js?v=$q" || true)"
             ui="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/exchange-ui.js?v=$q" || true)"
+            actions="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/exchange-actions.js?v=$q" || true)"
             wallet="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/wallet-core.js?v=$q" || true)"
             wc="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/walletconnect.js?v=$q" || true)"
             e2e="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/testnet-e2e.js?v=$q" || true)"
-            if grep -Fq 'walletconnect.js?v=4' <<<"$html" && grep -Fq 'wallet-core.js?v=3' <<<"$html" && ! grep -Fq 'wallet-seamless.js' <<<"$html" && grep -Fq 'exchange-core.js?v=1' <<<"$html" && grep -Fq 'exchange-ui.js?v=1' <<<"$html" && grep -Fq 'testnet-e2e.js?v=1' <<<"$html" && grep -Fq "version:'4.0.0'" <<<"$wc" && grep -Fq "version:'3.0.0'" <<<"$wallet" && grep -Fq 'Wallet account switched' <<<"$wallet" && grep -Fq "version:'1.0.0'" <<<"$core" && grep -Fq 'RWA EXCHANGE CORE' <<<"$ui" && grep -Fq 'REAL E2E RESULT' <<<"$e2e"; then ok=1; break; fi
+            if grep -Fq 'walletconnect.js?v=4' <<<"$html" && grep -Fq 'wallet-core.js?v=3' <<<"$html" && ! grep -Fq 'wallet-seamless.js' <<<"$html" && grep -Fq 'exchange-core.js?v=1' <<<"$html" && grep -Fq 'exchange-ui.js?v=1' <<<"$html" && grep -Fq 'testnet-e2e.js?v=1' <<<"$html" && grep -Fq "version:'4.0.0'" <<<"$wc" && grep -Fq "version:'3.0.0'" <<<"$wallet" && grep -Fq 'Wallet account switched' <<<"$wallet" && grep -Fq "version:'1.0.0'" <<<"$core" && grep -Fq 'RWA EXCHANGE CORE' <<<"$ui" && grep -Fq 'Get Testnet USDC' <<<"$actions" && grep -Fq 'data-ex-modify' <<<"$actions" && grep -Fq 'REAL E2E RESULT' <<<"$e2e"; then ok=1; break; fi
             sleep 5
           done
           test "$ok" = "1"
