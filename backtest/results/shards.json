@@ -21,6 +21,36 @@
       "merkle_root": "cbd411407511820aa6562cb634f3881d600c23da2320ede2ae0f1d1a9676a5c4",
       "valid_samples": 1714377,
       "completed_at": "2026-08-22T18:55:40.011260+00:00"
+    },
+    {
+      "shard_id": "8a21b47066145ecc71e51467bf8c16799c4a70e0f504767302f13ab977e89635",
+      "month": "2009-06",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "610012e2b6d0f81f985df74429bcb9c85c292d06c142b59e870118d3102677f7",
+      "evaluation_count": 59,
+      "merkle_root": "1859bda64db56b2a5ba28bb61f16b45a7628ab0280a3c9c6c1a7eae979a46567",
+      "valid_samples": 1627796,
+      "completed_at": "2026-08-22T19:00:42.414398+00:00"
+    },
+    {
+      "shard_id": "9921b64e022841b95f498b47d66edf1ee5448efce2ebb52efdf80928b4c0c92e",
+      "month": "2009-07",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "ef0d6c00e60fed261cbeca384ee2a0d9bc8a1a67ce5350a3f77e0b241ed9e317",
+      "evaluation_count": 59,
+      "merkle_root": "37bb7d0d01bc4900d3b981a864c558dbc64607aca630787785f71ddf5c63905b",
+      "valid_samples": 1960814,
+      "completed_at": "2026-08-22T19:01:33.307582+00:00"
+    },
+    {
+      "shard_id": "53188ba0b52d05391e31fb8b1dc50fe48298afb3a8d9d6058b40ebdfcdc1025b",
+      "month": "2009-08",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "68433986a1ac2486371bfc98b7aac45da3ebc20001d962fe6fd2e645547742de",
+      "evaluation_count": 59,
+      "merkle_root": "8f404bcff76d2a1580063844b96e35e511dc013f520aa35032ed73b50547c50b",
+      "valid_samples": 1793203,
+      "completed_at": "2026-08-22T19:01:54.986141+00:00"
     }
   ]
 }
