@@ -52,16 +52,21 @@ jobs:
           test -s backtest/results/campaign.json
           test -s backtest/results/evaluation_ids.json
           test -s backtest/results/latest_batch.json
+          test -s backtest/results/batches.json
 
-      - name: Validate VectorForge ledger and source catalog
+      - name: Validate VectorForge ledger, DOM contract and source catalog
         run: |
           python - <<'PY'
           import json
+          import re
           from pathlib import Path
 
           manifest = json.loads(Path('backtest/data/manifest.json').read_text())
           campaign = json.loads(Path('backtest/results/campaign.json').read_text())
           ids = json.loads(Path('backtest/results/evaluation_ids.json').read_text()).get('ids', [])
+          batches = json.loads(Path('backtest/results/batches.json').read_text()).get('batches', [])
+          html = Path('backtest/index.html').read_text()
+          app = Path('backtest/app.js').read_text()
 
           files = manifest.get('files', [])
           months = [x.get('month') for x in files]
@@ -69,9 +74,20 @@ jobs:
           assert len(set(months)) == len(months), 'duplicate source months in manifest'
           assert months[0] == '2009-05' and months[-1] == '2018-07', 'coverage mismatch'
           assert campaign['target_evaluations'] == 1_000_000_000_000
+          assert len(ids) == len(set(ids)), 'duplicate evaluation IDs persisted'
           assert campaign['verified_completed'] == len(set(ids)), 'ledger count != unique evaluation IDs'
           assert campaign['verified_completed'] <= campaign['target_evaluations']
-          print(f"VectorForge QA PASS: {len(files)} source files, {len(set(ids))} verified evaluations")
+          assert all(len(x.get('dataset_sha256', '')) == 64 for x in batches), 'invalid batch dataset hash'
+
+          html_ids = set(re.findall(r'id=["\']([^"\']+)', html))
+          app_ids = set(re.findall(r"\$\('([^']+)'\)", app))
+          missing = sorted(app_ids - html_ids)
+          assert not missing, f'app.js references missing DOM ids: {missing}'
+
+          print(
+              f"VectorForge QA PASS: {len(files)} source files, "
+              f"{len(set(ids))} verified evaluations, {len(batches)} batch records"
+          )
           PY
 
   deploy:
