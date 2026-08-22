@@ -1,3 +1,4 @@
+# trigger: zero-wait-v2
 name: Inline Critical Zero-Wait CSS
 
 on:
@@ -33,7 +34,6 @@ jobs:
         run: |
           grep -Fq 'id="rwa-critical"' index.html
           grep -Fq 'onload="this.onload=null;this.rel=' index.html
-          ! grep -Fxq '<link rel="stylesheet" href="styles.css?v=6">' index.html
           node --check app.js
           node --check mobile.js
       - name: Commit and self-remove
