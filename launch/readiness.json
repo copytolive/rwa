@@ -1,7 +1,8 @@
 {
-  "schema": 2,
-  "generated_at": "2026-08-22T23:49:48.714Z",
-  "status": "BLOCKED",
+  "schema": 3,
+  "generated_at": "2026-08-22T23:50:32.811Z",
+  "status": "ENGINEERING_COMPLETE_AWAITING_EXTERNAL_PROOFS",
+  "engineering_ready": true,
   "beta_ready": false,
   "beta_passed": false,
   "mainnet_ready": false,
@@ -38,6 +39,26 @@
     "worker_no_fund_methods": {
       "ok": true,
       "detail": "no withdrawal/transfer API exposed"
+    },
+    "e2e_verifier_pipeline": {
+      "ok": true,
+      "detail": "wallet signature + Hyperliquid testnet verifier workflow"
+    },
+    "rwa_verifier_pipeline": {
+      "ok": true,
+      "detail": "reviewer signature + evidence + registry workflow"
+    },
+    "beta_verifier_pipeline": {
+      "ok": true,
+      "detail": "wallet + worker session + venue beta verifier workflow"
+    },
+    "security_ci_pipeline": {
+      "ok": true,
+      "detail": "repository-wide source security workflow"
+    },
+    "watchdog_pipeline": {
+      "ok": true,
+      "detail": "5-minute worker fail-safe watchdog"
     },
     "real_wallet_e2e": {
       "ok": false,
