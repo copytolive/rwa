@@ -1,6 +1,22 @@
 (()=>{
   const $=id=>document.getElementById(id);
 
+  function applyMobileLayoutOverride(){
+    if(document.getElementById('mobile-chart-first-override'))return;
+    const style=document.createElement('style');
+    style.id='mobile-chart-first-override';
+    style.textContent=`
+      @media (max-width:680px){
+        .main .terminal-header{display:none!important}
+        .main .chart-wrap{height:min(66vh,510px)!important;min-height:390px!important}
+      }
+      @media (max-width:390px){
+        .main .chart-wrap{height:min(64vh,455px)!important;min-height:350px!important}
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   const compactNumber=v=>{
     const n=Number(v);if(!Number.isFinite(n))return '—';
     return '$'+Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1}).format(n);
@@ -100,6 +116,7 @@
     else if(!document.body.classList.contains('mview-overview')&&!document.body.classList.contains('mview-trades')&&!document.body.classList.contains('mview-depth'))setDetailView('overview');
   });
 
+  applyMobileLayoutOverride();
   syncMobile();
   if(innerWidth<=680){closeMarkets();setDetailView('overview');}
   setInterval(syncMobile,2200);
