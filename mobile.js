@@ -23,6 +23,11 @@
     if($('mobileRwaCount'))$('mobileRwaCount').textContent=rwa.toLocaleString();
   }
 
+  function syncSelectedStats(){
+    const pairs=[['statHigh','mobileHigh'],['statLow','mobileLow'],['statVol','mobileVolume']];
+    for(const [from,to] of pairs){const a=$(from),b=$(to);if(a&&b)b.textContent=a.textContent;}
+  }
+
   function annotateRows(){
     if(innerWidth>680||typeof S==='undefined'||!S.map)return;
     document.querySelectorAll('.pairrow[data-sym]').forEach(row=>{
@@ -33,30 +38,46 @@
     });
   }
 
-  function syncMobile(){syncStatus();syncBreadth();annotateRows();}
+  function syncMobile(){syncStatus();syncBreadth();syncSelectedStats();annotateRows();}
   function watch(id,fn=syncMobile){const el=$(id);if(el)new MutationObserver(fn).observe(el,{subtree:true,childList:true,characterData:true,attributes:true})}
+
+  function setNav(name){
+    document.querySelectorAll('[data-mobile-nav]').forEach(a=>a.classList.toggle('active',a.dataset.mobileNav===name));
+  }
+
+  function closeMarkets(){
+    if(innerWidth>680)return;
+    document.body.classList.remove('market-drawer-open');
+  }
+
+  function openMarkets(focusSearch=false){
+    if(innerWidth>680)return;
+    document.body.classList.add('market-drawer-open');
+    setNav('markets');
+    syncMobile();
+    if(focusSearch)setTimeout(()=>$('search')?.focus(),120);
+  }
 
   function setDetailView(view,scroll=false){
     if(innerWidth>680)return;
+    closeMarkets();
     document.body.classList.remove('mview-overview','mview-trades','mview-depth');
     document.body.classList.add(`mview-${view}`);
     document.querySelectorAll('[data-mobile-view]').forEach(b=>b.classList.toggle('active',b.dataset.mobileView===view));
-    document.querySelectorAll('[data-mobile-nav]').forEach(a=>a.classList.remove('active'));
-    const navName=view==='depth'?'depth':'chart';
-    document.querySelector(`[data-mobile-nav="${navName}"]`)?.classList.add('active');
+    const navName=view==='depth'?'depth':'chart';setNav(navName);
     if(scroll)(view==='depth'?$('depth'):$('terminal'))?.scrollIntoView({behavior:'smooth',block:'start'});
-  }
-
-  function goMarkets(){
-    if(innerWidth>680)return;
-    document.querySelectorAll('[data-mobile-nav]').forEach(a=>a.classList.remove('active'));
-    document.querySelector('[data-mobile-nav="markets"]')?.classList.add('active');
-    $('markets')?.scrollIntoView({behavior:'smooth',block:'start'});
   }
 
   document.addEventListener('click',e=>{
     const row=e.target.closest('.pairrow');
-    if(row&&innerWidth<=680){setTimeout(()=>{syncMobile();setDetailView('overview',true)},100);return}
+    if(row&&innerWidth<=680){
+      setTimeout(()=>{syncMobile();closeMarkets();setDetailView('overview',true)},120);
+      return;
+    }
+
+    if(e.target.closest('#mobileMarketsClose')){
+      e.preventDefault();closeMarkets();setNav('chart');return;
+    }
 
     const view=e.target.closest('[data-mobile-view]');
     if(view&&innerWidth<=680){e.preventDefault();setDetailView(view.dataset.mobileView,true);return}
@@ -65,20 +86,21 @@
     if(nav&&innerWidth<=680){
       e.preventDefault();
       const target=nav.dataset.mobileNav;
-      if(target==='markets')goMarkets();
+      if(target==='markets')openMarkets(false);
       else if(target==='depth')setDetailView('depth',true);
       else setDetailView('overview',true);
     }
   });
 
-  ['pairCount','liveDot'].forEach(id=>watch(id));
+  ['pairCount','liveDot','statHigh','statLow','statVol'].forEach(id=>watch(id));
   watch('pairList',()=>setTimeout(syncMobile,0));
   addEventListener('resize',()=>{
     syncMobile();
-    if(innerWidth<=680&&!document.body.classList.contains('mview-overview')&&!document.body.classList.contains('mview-trades')&&!document.body.classList.contains('mview-depth'))setDetailView('overview');
+    if(innerWidth>680)document.body.classList.remove('market-drawer-open');
+    else if(!document.body.classList.contains('mview-overview')&&!document.body.classList.contains('mview-trades')&&!document.body.classList.contains('mview-depth'))setDetailView('overview');
   });
 
   syncMobile();
-  if(innerWidth<=680)setDetailView('overview');
+  if(innerWidth<=680){closeMarkets();setDetailView('overview');}
   setInterval(syncMobile,2200);
 })();
