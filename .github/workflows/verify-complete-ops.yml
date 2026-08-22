@@ -13,6 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Report verifier start
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment "${{ github.event.issue.number }}" --body "FINAL RWA VERIFIER STARTED. Running source checks now."
       - name: Validate all operation modules
         run: |
           node --check ops-suite.js
