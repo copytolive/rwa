@@ -19,8 +19,9 @@ async function workerHealth(cfg){
   }catch(e){return{ok:false,ready:false,detail:String(e.message||e)}}
 }
 
-const [execution,core,workerExec,workerLoop,reviewers,assets,e2e,beta,workerCfg,control,revenue]=await Promise.all([
-  text('execution-api.js'),text('exchange-core.js'),text('agent-worker/execution.mjs'),text('agent-worker/worker.mjs'),read('rwa-reviewers.json'),read('rwa-assets.json'),read('launch/e2e-registry.json'),read('launch/beta-registry.json'),read('agent-worker/public-config.json'),read('agent-worker/control.json'),read('rwa-execution-config.json')
+const [execution,core,workerExec,workerLoop,reviewers,assets,e2e,beta,workerCfg,control,revenue,rwaVerify,e2eVerify,betaVerify,securityGate,workerWatch,rwaWorkflow,e2eWorkflow,betaWorkflow,securityWorkflow,watchWorkflow]=await Promise.all([
+  text('execution-api.js'),text('exchange-core.js'),text('agent-worker/execution.mjs'),text('agent-worker/worker.mjs'),read('rwa-reviewers.json'),read('rwa-assets.json'),read('launch/e2e-registry.json'),read('launch/beta-registry.json'),read('agent-worker/public-config.json'),read('agent-worker/control.json'),read('rwa-execution-config.json'),
+  text('tools/rwa-verify.mjs'),text('tools/e2e-proof.mjs'),text('tools/beta-proof.mjs'),text('tools/security-gate.mjs'),text('tools/worker-watch.mjs'),text('.github/workflows/rwa-registry-review.yml'),text('.github/workflows/e2e-proof-review.yml'),text('.github/workflows/beta-proof-review.yml'),text('.github/workflows/security-gate.yml'),text('.github/workflows/worker-watch.yml')
 ]);
 const health=await workerHealth(workerCfg);
 const proofs=(beta.proofs||[]).filter(x=>x?.status==='VERIFIED'&&addr(x.wallet)&&rank[x.phase]);
@@ -33,6 +34,11 @@ const checks={
   worker_single_write:{ok:workerExec.includes("WORKER_SINGLE_WRITE_PATH='RWAWorkerExecutionAPI'")&&!workerLoop.includes('ExchangeClient'),detail:'worker writes only through RWAWorkerExecutionAPI'},
   worker_idempotency:{ok:workerExec.includes("WORKER_IDEMPOTENCY='deterministic-cloid-v1'")&&workerExec.includes("info('orderStatus'")&&workerLoop.includes('cloidFor')&&workerLoop.includes('sourceFillId'),detail:'deterministic CLOID + venue orderStatus + persisted source-fill ledger'},
   worker_no_fund_methods:{ok:!/(withdraw3|usdClassTransfer|spotSend|sendAsset)/.test(workerExec+workerLoop),detail:'no withdrawal/transfer API exposed'},
+  e2e_verifier_pipeline:{ok:e2eVerify.includes('E2E_PROOF_JSON_START')&&e2eWorkflow.includes('node tools/e2e-proof.mjs')&&e2eWorkflow.includes('launch/e2e-registry.json'),detail:'wallet signature + Hyperliquid testnet verifier workflow'},
+  rwa_verifier_pipeline:{ok:rwaVerify.includes('verifyMessage')&&rwaVerify.includes("status:'VERIFIED'")&&rwaWorkflow.includes('node tools/rwa-verify.mjs')&&rwaWorkflow.includes('rwa-assets.json'),detail:'reviewer signature + evidence + registry workflow'},
+  beta_verifier_pipeline:{ok:betaVerify.includes('BETA_PROOF_JSON_START')&&betaVerify.includes("userFillsByTime")&&betaVerify.includes("processed source fill")&&betaWorkflow.includes('node tools/beta-proof.mjs'),detail:'wallet + worker session + venue beta verifier workflow'},
+  security_ci_pipeline:{ok:securityGate.includes('single_write_path')&&securityGate.includes('worker_fund_isolation')&&securityWorkflow.includes('node tools/security-gate.mjs'),detail:'repository-wide source security workflow'},
+  watchdog_pipeline:{ok:workerWatch.includes("kill_switch:true")&&workerWatch.includes("mainnet_enabled:false")&&watchWorkflow.includes('node tools/worker-watch.mjs --trip'),detail:'5-minute worker fail-safe watchdog'},
   real_wallet_e2e:{ok:(e2e.wallets||[]).some(x=>addr(x.wallet)&&x.status==='E2E_VERIFIED'&&Number(x.verified_at)>0),detail:`${(e2e.wallets||[]).length} registered wallet proof(s)`},
   reviewer_registry:{ok:(reviewers.reviewers||[]).some(x=>addr(typeof x==='string'?x:x.wallet)),detail:`${(reviewers.reviewers||[]).length} authorized reviewer(s)`},
   verified_rwa_asset:{ok:(assets.verified||[]).some(okAsset),detail:`${(assets.verified||[]).length} verified asset(s)`},
@@ -45,18 +51,22 @@ const checks={
   mainnet_control:{ok:control.mainnet_enabled===true,detail:`mainnet_enabled=${control.mainnet_enabled}`},
   revenue_deferred:{ok:revenue.builder?.enabled===false&&Number(revenue.builder?.feeTenthsBp||0)===0,detail:'builder/platform fee remains OFF until final revenue wallet approval'}
 };
-const prereqKeys=['browser_single_write','browser_global_mainnet_lock','worker_single_write','worker_idempotency','worker_no_fund_methods','real_wallet_e2e','reviewer_registry','verified_rwa_asset','worker_configured','worker_live','worker_control'];
+const engineeringKeys=['browser_single_write','browser_global_mainnet_lock','worker_single_write','worker_idempotency','worker_no_fund_methods','e2e_verifier_pipeline','rwa_verifier_pipeline','beta_verifier_pipeline','security_ci_pipeline','watchdog_pipeline','revenue_deferred'];
+const engineeringBlockers=engineeringKeys.filter(k=>!checks[k].ok).map(k=>({gate:k,detail:checks[k].detail}));
+const engineering_ready=engineeringBlockers.length===0;
+const prereqKeys=['real_wallet_e2e','reviewer_registry','verified_rwa_asset','worker_configured','worker_live','worker_control'];
 const betaKeys=['beta_internal','beta_closed','beta_public'];
 const prereqBlockers=prereqKeys.filter(k=>!checks[k].ok).map(k=>({gate:k,detail:checks[k].detail}));
 const betaBlockers=betaKeys.filter(k=>!checks[k].ok).map(k=>({gate:k,detail:checks[k].detail}));
-const beta_ready=prereqBlockers.length===0;
+const beta_ready=engineering_ready&&prereqBlockers.length===0;
 const beta_passed=beta_ready&&betaBlockers.length===0;
 const mainnet_ready=beta_passed&&checks.mainnet_control.ok;
-const blockers=[...prereqBlockers,...betaBlockers,...(!checks.mainnet_control.ok?[{gate:'mainnet_control',detail:checks.mainnet_control.detail}]:[])];
-const status=mainnet_ready?'READY_FOR_MAINNET':beta_passed?'BETA_PASSED_AWAITING_MAINNET':beta_ready?'READY_FOR_BETA':'BLOCKED';
-const out={schema:2,generated_at:new Date().toISOString(),status,beta_ready,beta_passed,mainnet_ready,beta:{thresholds,counts:betaCounts,verified_proofs:proofs.length},checks,blockers,revenue:'DEFERRED',token_tge:'DEFERRED'};
+const blockers=[...engineeringBlockers,...prereqBlockers,...betaBlockers,...(!checks.mainnet_control.ok?[{gate:'mainnet_control',detail:checks.mainnet_control.detail}]:[])];
+const status=mainnet_ready?'READY_FOR_MAINNET':beta_passed?'BETA_PASSED_AWAITING_MAINNET':beta_ready?'READY_FOR_BETA':engineering_ready?'ENGINEERING_COMPLETE_AWAITING_EXTERNAL_PROOFS':'BLOCKED';
+const out={schema:3,generated_at:new Date().toISOString(),status,engineering_ready,beta_ready,beta_passed,mainnet_ready,beta:{thresholds,counts:betaCounts,verified_proofs:proofs.length},checks,blockers,revenue:'DEFERRED',token_tge:'DEFERRED'};
 if(process.argv.includes('--write'))await writeFile('launch/readiness.json',JSON.stringify(out,null,2)+'\n');
 console.log(JSON.stringify(out,null,2));
+if(process.argv.includes('--require-engineering')&&!engineering_ready)process.exit(5);
 if(process.argv.includes('--require-beta')&&!beta_ready)process.exit(2);
 if(process.argv.includes('--require-beta-passed')&&!beta_passed)process.exit(4);
 if(process.argv.includes('--require-mainnet')&&!mainnet_ready)process.exit(3);
