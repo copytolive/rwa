@@ -39,26 +39,27 @@ jobs:
           grep -Fq 'realtime-core.js?v=2' index.html
           grep -Fq 'chart-core.js?v=1' index.html
           grep -Fq 'walletconnect.js?v=3' index.html
-          grep -Fq 'wallet-core.js?v=1' index.html
+          grep -Fq 'wallet-core.js?v=2' index.html
           grep -Fq 'execution-api.js?v=2' index.html
           grep -Fq 'execution-ops-bridge.js?v=3' index.html
           ! grep -Fq 'browser-recovery.js' index.html
           ! grep -Fq 'instantChartBoot();loadSuite()' mobile.js
           grep -Fq 'REST fallback' realtime-core.js
           grep -Fq "loadCritical('chart-core.js?v=1'" execution-ops-bridge.js
-          grep -Fq "loadCritical('wallet-core.js?v=1'" execution-ops-bridge.js
           grep -Fq 'waitWalletAuth' execution-ops-bridge.js
           grep -Fq 'window.loadTradingView=openTradingView' chart-core.js
           grep -Fq 'liveCandle' chart-core.js
           grep -Fq 'eip6963:requestProvider' wallet-core.js
           grep -Fq 'personal_sign' wallet-core.js
+          grep -Fq 'personal_ecRecover' wallet-core.js
+          grep -Fq "via:'wallet-core-v2'" wallet-core.js
           grep -Fq 'RWAExecutionAPI' suite-execution-patch.js
       - name: Publish source success
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/execution-source' -f description='Dedicated execution API source verified'
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/chart-wallet-source' -f description='Realtime chart + wallet login source verified'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/chart-wallet-source' -f description='Realtime chart + provider-native wallet login source verified'
       - name: Wait for GitHub Pages propagation
         id: live
         shell: bash
@@ -73,7 +74,7 @@ jobs:
             execops="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/execution-ops-bridge.js?v=$q" || true)"
             execapi="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/execution-api.js?v=$q" || true)"
             if grep -Fq 'chart-core.js?v=1' <<<"$html" && \
-               grep -Fq 'wallet-core.js?v=1' <<<"$html" && \
+               grep -Fq 'wallet-core.js?v=2' <<<"$html" && \
                grep -Fq 'execution-ops-bridge.js?v=3' <<<"$html" && \
                grep -Fq 'REST fallback' <<<"$core" && \
                grep -Fq 'waitWalletAuth' <<<"$execops" && \
@@ -81,9 +82,11 @@ jobs:
                grep -Fq 'liveCandle' <<<"$chart" && \
                grep -Fq 'eip6963:requestProvider' <<<"$wallet" && \
                grep -Fq 'personal_sign' <<<"$wallet" && \
+               grep -Fq 'personal_ecRecover' <<<"$wallet" && \
+               grep -Fq "via:'wallet-core-v2'" <<<"$wallet" && \
                grep -Fq "version:'2.0.0'" <<<"$execapi"; then
               ok=1
-              echo "Live chart + wallet + execution bundle verified on attempt $i"
+              echo "Live chart + wallet v2 + execution bundle verified on attempt $i"
               break
             fi
             sleep 5
@@ -94,8 +97,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/live-browser-smoke' -f description='Live chart + wallet + realtime application verified'
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/chart-wallet-smoke' -f description='Chart and wallet login verified live'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/live-browser-smoke' -f description='Live chart + wallet v2 + realtime verified'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/chart-wallet-smoke' -f description='Chart and provider-native wallet login verified live'
           gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/execution-api-smoke' -f description='Dedicated execution API verified live'
       - name: Publish live failure statuses
         if: failure()
@@ -103,5 +106,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/live-browser-smoke' -f description='Live browser smoke failed'
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/chart-wallet-smoke' -f description='Chart or wallet live verification failed'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/chart-wallet-smoke' -f description='Chart or wallet v2 live verification failed'
           gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/execution-api-smoke' -f description='Execution API live verification failed'
