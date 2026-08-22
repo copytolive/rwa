@@ -28,6 +28,7 @@ jobs:
           node --check suite-ui.js
           node --check suite.js
           node --check suite-nav.js
+          node --check suite-execution-patch.js
           node --check backtest/app.js
           node --check backtest/worker.js
 
@@ -41,9 +42,14 @@ jobs:
           test -s suite-ui.js
           test -s suite.js
           test -s suite-nav.js
+          test -s suite-execution-patch.js
           test -s suite.css
           test -s rwa-assets.json
           python -m json.tool rwa-assets.json >/dev/null
+          grep -q "suite-ui.js" mobile.js
+          grep -q "suite.js" mobile.js
+          grep -q "suite-nav.js" mobile.js
+          grep -q "suite-execution-patch.js" suite-nav.js
           test -s backtest/index.html
           test -s backtest/app.js
           test -s backtest/worker.js
