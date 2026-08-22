@@ -19,7 +19,7 @@
     <div class="status-stack"><span class="badge ok">● ENGINE ONLINE</span><span class="badge">PUBLIC GITHUB HOSTING</span><span class="badge">MULTI-ASSET</span></div>
   </header>
 
-  <section class="notice"><strong>Multi-asset data:</strong> Dukascopy is the primary bid/ask tick source for major FX, large FX crosses, Gold, Silver, BTCUSD and ETHUSD. Exchange-native BTCUSDT/ETHUSDT use Binance Public Data. Raw archives stay at their authoritative public source and are fetched on demand; this repository stores the public catalog, source verification, request configuration and audit hashes.</section>
+  <section class="notice"><strong>Multi-asset data:</strong> the public universe is standardized on Dukascopy historical bid/ask tick data for major FX, large FX crosses, Gold, Silver, BTCUSD and ETHUSD. Raw archives remain at Dukascopy and are fetched on demand; this public repository stores instrument metadata, source verification fingerprints, simulation requests and audit results.</section>
 
   <section class="campaign-strip">
     <article><span>Campaign Target</span><strong id="cTarget">1,000,000,000,000</strong><small>unique evaluations</small></article>
@@ -97,7 +97,7 @@
 
       <div class="actions"><button id="runBtn" class="primary">Run Historical Simulation</button><button id="stopBtn" class="secondary" disabled>Stop</button></div>
       <button id="exportBtn" class="export" disabled>Export Last Result JSON</button>
-      <div class="hint">The browser engine currently streams the legacy EURUSD catalog or a local custom file. Full multi-asset Dukascopy execution is available through the GitHub chat runner and shares the same public audit repository.</div>
+      <div class="hint">The browser engine currently streams the legacy EURUSD catalog or a local custom file. Full multi-asset Dukascopy execution is available through the GitHub chat runner and public request workflow.</div>
     </aside>
 
     <section class="panel output">
@@ -126,10 +126,10 @@
   </section>
 
   <section class="panel chat-mode">
-    <div class="panel-title">Chat-Controlled Full Tick Backtest</div>
-    <p>For the multi-asset universe above, the GitHub execution plane accepts a structured request, downloads the required historical source data, runs the simulation, and saves a public JSON result with dataset SHA-256 and evaluation ID.</p>
+    <div class="panel-title">Full Tick Backtest · Chat + Public GitHub Requests</div>
+    <p>For the multi-asset universe above, GitHub downloads the required Dukascopy historical bid/ask ticks, runs the simulation, and saves a public JSON result with dataset SHA-256 and evaluation ID.</p>
     <div class="formula">Example chat: Backtest XAUUSD 2020-01-01 to 2025-01-01, SMA 50/1000, RR 1:2, both directions.</div>
-    <p class="muted">The chat workflow is historical simulation only and never places broker or exchange orders.</p>
+    <p class="muted">Public GitHub requests are capped at 7 calendar days per job to protect shared compute. Longer research campaigns can be issued through the owner/chat workflow. Historical simulation only; no broker execution.</p>
   </section>
 
   <section class="panel catalog">
@@ -159,5 +159,6 @@
   <footer>VectorForge · historical research and simulation software · no broker execution.</footer>
 </main>
 <script type="module" src="./app.js"></script>
+<script type="module" src="./public-request.js"></script>
 </body>
 </html>
