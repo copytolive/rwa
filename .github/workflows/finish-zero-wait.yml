@@ -1,0 +1,60 @@
+name: Finish Zero-Wait Visual Boot
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/finish-zero-wait.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove remaining visible loading states
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          app=Path('app.js').read_text()
+          old="if(!a.length){ctx.fillStyle='#666572';ctx.font='12px system-ui';ctx.textAlign='center';ctx.fillText('Loading live candlesticks…',w/2,h/2);return}"
+          new="if(!a.length){ctx.strokeStyle='#18181f';ctx.lineWidth=1;for(let i=1;i<6;i++){const y=h*i/6;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}for(let i=1;i<8;i++){const x=w*i/8;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}return}"
+          if old not in app: raise SystemExit('fallback empty-state contract changed')
+          app=app.replace(old,new,1)
+          Path('app.js').write_text(app)
+
+          idx=Path('index.html').read_text()
+          idx=idx.replace('app.js?v=7','app.js?v=8')
+          idx=idx.replace('mobile.js?v=8','mobile.js?v=9')
+          idx=idx.replace('Connecting market…','Market network')
+          idx=idx.replace('Loading markets…','Markets')
+          idx=idx.replace('Loading exchange markets…','Live USDT markets')
+          Path('index.html').write_text(idx)
+
+          mob=Path('mobile.js').read_text()
+          # Warm non-critical suite only after the critical chart has had time to settle.
+          tail='setInterval(()=>{syncMobile();if(document.body.classList.contains(\'social-open\')){renderTrending();renderFeed()}},2200);'
+          if tail in mob and 'rwaIdleSuiteWarm' not in mob:
+              mob=mob.replace(tail,tail+"\n  const rwaIdleSuiteWarm=()=>{try{loadSuite()}catch(_){}};setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(rwaIdleSuiteWarm,{timeout:3500});else setTimeout(rwaIdleSuiteWarm,1200)},1800);",1)
+          Path('mobile.js').write_text(mob)
+          PY
+      - name: Validate
+        run: |
+          node --check app.js
+          node --check mobile.js
+          grep -Fq 'app.js?v=8' index.html
+          grep -Fq 'mobile.js?v=9' index.html
+          ! grep -Fq 'Loading live candlesticks' app.js
+          ! grep -Fq 'Loading professional market chart' index.html
+          ! grep -Fq 'preload" href="suite-ui.js' index.html
+      - name: Commit and self-remove
+        run: |
+          rm .github/workflows/finish-zero-wait.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app.js mobile.js index.html .github/workflows/finish-zero-wait.yml
+          git commit -m 'perf: remove visible loading and idle-warm features'
+          git push
