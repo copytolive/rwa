@@ -1,0 +1,34 @@
+name: Debug RWA Operations Source
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Diagnose
+        id: diag
+        shell: bash
+        run: |
+          set +e
+          fail=""
+          for f in ops-suite.js suite-execution-patch.js walletconnect.js walletconnect-auth-patch.js provider-failover.js monitor-client.js social-safety-patch.js audit-hooks.js verification-sign-patch.js suite-nav.js; do
+            node --check "$f" >/tmp/out 2>&1 || { fail="$fail JS:$f=$(tr '\n' ' ' </tmp/out);"; }
+          done
+          python -m py_compile monitor/monitor.py >/tmp/out 2>&1 || fail="$fail PY:monitor=$(tr '\n' ' ' </tmp/out);"
+          checks=("frontendOpenOrders|ops-suite.js" "historicalOrders|ops-suite.js" "exchange.cancel|ops-suite.js" "exchange.modify|ops-suite.js" "positionTpsl|ops-suite.js" "KILL SWITCH|ops-suite.js" "RWAAudit|ops-suite.js" "RWA verification|ops-suite.js" "updateLeverage|suite-execution-patch.js" "RWARisk|suite-execution-patch.js" "RWAWalletConnect|walletconnect.js" "RWAFailoverV2|provider-failover.js" "RWASocialSafety|social-safety-patch.js" "wallet.login|audit-hooks.js" "wallet.logout|audit-hooks.js" "RWAVerificationSign|verification-sign-patch.js" "wallet-signature-required|monitor/config.json" "verification-sign-patch.js|suite-nav.js")
+          for c in "${checks[@]}"; do p="${c%%|*}"; f="${c#*|}"; grep -Fq "$p" "$f" || fail="$fail MISSING:$p@$f;"; done
+          grep -Fq "cron: '*/5" .github/workflows/monitor.yml || fail="$fail MISSING:cron;"
+          if [ -z "$fail" ]; then echo "result=SOURCE DEBUG PASS" >> "$GITHUB_OUTPUT"; else echo "result=$fail" >> "$GITHUB_OUTPUT"; fi
+      - name: Report
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ steps.diag.outputs.result }}
+        run: gh issue comment "${{ github.event.issue.number }}" --body "SOURCE DEBUG: $RESULT"
