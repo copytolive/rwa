@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#07080b">
 <title>RWA Markets — Global Real-World Asset Market Infrastructure</title>
 <meta name="description" content="A premium live market terminal for real-world-asset discovery, professional charting, market depth and hundreds of active instruments.">
-<link rel="stylesheet" href="styles.css?v=5">
+<link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
 <div class="app">
@@ -26,6 +26,7 @@
     <div class="status"><span id="liveDot" class="dot"></span><span id="liveText">Connecting market…</span></div>
     <button class="signin" onclick="toast('Account access will be enabled with identity and wallet integration')">Sign in</button>
     <button class="institutional" onclick="toast('Institutional onboarding is being prepared')">Request access</button>
+    <button class="mobile-profile" onclick="toast('Account access will be enabled with identity and wallet integration')" aria-label="Account">◎</button>
   </div>
 </header>
 
@@ -42,10 +43,32 @@
   <span><b>RWA</b> Built for real-world asset discovery</span>
 </div>
 
-<div class="mobile-intro">
-  <div><span class="mobile-eyebrow">RWA GLOBAL MARKETS</span><h1>Markets built for the <em>real economy.</em></h1><p>Live discovery, professional charting and market intelligence in one interface.</p></div>
-  <div class="mobile-live"><span id="mobileLiveDot"></span> LIVE MARKET</div>
-</div>
+<!-- Native-style mobile home -->
+<section class="mobile-home" aria-label="Mobile market overview">
+  <div class="mobile-home-top">
+    <div><span class="mobile-eyebrow">GLOBAL MARKET INFRASTRUCTURE</span><h1>Real markets.<br><em>One live terminal.</em></h1></div>
+    <div class="mobile-live-pill"><span id="mobileLiveDot"></span><b>LIVE</b></div>
+  </div>
+  <p class="mobile-home-copy">Discover hundreds of markets, open professional charts and follow live execution flow from one mobile-first interface.</p>
+
+  <div class="mobile-feature-card">
+    <div class="mfc-orb"></div>
+    <div class="mfc-top"><span>ACTIVE MARKET</span><button onclick="toast('Watchlists will be enabled with account access')">☆</button></div>
+    <div class="mfc-main">
+      <div class="mfc-token" id="mobileSelIcon">BT</div>
+      <div class="mfc-name"><strong id="mobilePairName">BTC / USDT</strong><small id="mobilePairLabel">Bitcoin · Binance Spot</small></div>
+    </div>
+    <div class="mfc-price-row"><strong id="mobileSelectedPrice">—</strong><span id="mobileSelectedChange">—</span></div>
+    <div class="mfc-stats">
+      <div><small>24H HIGH</small><b id="mobileHigh">—</b></div>
+      <div><small>24H LOW</small><b id="mobileLow">—</b></div>
+      <div><small>VOLUME</small><b id="mobileVol">—</b></div>
+    </div>
+    <a class="mfc-open" href="#terminal">Open professional chart <span>↗</span></a>
+  </div>
+
+  <div class="mobile-section-head"><div><span>DISCOVER</span><h2>Live markets</h2></div><small id="mobilePairCount">Loading markets…</small></div>
+</section>
 
 <div class="layout">
 <aside class="left" id="markets">
@@ -59,6 +82,7 @@
 </aside>
 
 <main class="main" id="terminal">
+  <div class="mobile-terminal-label"><span>PROFESSIONAL CHART</span><b><i></i> LIVE</b></div>
   <div class="terminal-header">
     <div class="instrument">
       <div id="selIcon" class="tokenicon featured">BT</div>
@@ -71,12 +95,12 @@
       <div class="qstat"><small>Low</small><b id="statLow">—</b></div>
       <div class="qstat"><small>Volume</small><b id="statVol">—</b></div>
     </div>
-    <div class="instrument-actions"><button onclick="toast('Watchlists will be enabled with account access')">☆ Watch</button><button onclick="toast('Shareable market links are being prepared')">↗ Share</button></div>
+    <div class="instrument-actions"><button onclick="toast('Watchlists will be enabled with account access')">☆ Watch</button><button onclick="toast('Price alerts will be enabled with account access')">◌ Alert</button><button onclick="toast('Shareable market links are being prepared')">↗ Share</button></div>
   </div>
 
   <div class="chart-toolbar">
     <div class="tf" id="timeframes"><button data-iv="1">1m</button><button data-iv="5">5m</button><button class="active" data-iv="15">15m</button><button data-iv="60">1H</button><button data-iv="240">4H</button><button data-iv="D">1D</button></div>
-    <div class="chart-actions"><span class="data-origin"><i></i> Live chart</span><button onclick="reloadChart()">↻ Reload</button></div>
+    <div class="chart-actions"><span class="data-origin"><i></i> Live chart</span><button onclick="reloadChart()">↻</button></div>
   </div>
 
   <div class="chart-wrap">
@@ -84,6 +108,13 @@
     <div class="chart-loading">Loading professional market chart…</div>
     <canvas id="fallbackChart" class="fallback-chart"></canvas>
     <div id="tvHost" class="tv-host"></div>
+  </div>
+
+  <div class="mobile-market-actions">
+    <button onclick="toast('Watchlists will be enabled with account access')"><span>☆</span><small>Watch</small></button>
+    <button onclick="toast('Price alerts will be enabled with account access')"><span>◌</span><small>Alert</small></button>
+    <button onclick="reloadChart()"><span>↻</span><small>Refresh</small></button>
+    <button onclick="toast('Shareable market links are being prepared')"><span>↗</span><small>Share</small></button>
   </div>
 
   <div class="bottom">
@@ -94,9 +125,9 @@
 
 <aside class="right" id="depth">
   <div class="aside-label"><span>MARKET DEPTH</span><small>Execution intelligence</small></div>
-  <section class="right-section"><div class="right-title"><span>ORDER BOOK</span><small>Top 10</small></div><div class="book-head"><span>Price</span><span>Amount</span><span>Total</span></div><div id="asks"></div><div id="midPrice" class="midprice">—</div><div id="bids"></div></section>
-  <section class="right-section"><div class="right-title"><span>TOP MOVERS</span><small>24h</small></div><div id="movers" class="movers"></div></section>
-  <section class="right-section"><div class="right-title"><span>LIVE ACTIVITY</span><small>Market events</small></div><div id="activity" class="activity"><div class="empty">Waiting for live activity…</div></div></section>
+  <section class="right-section order-section"><div class="right-title"><span>ORDER BOOK</span><small>Top 10</small></div><div class="book-head"><span>Price</span><span>Amount</span><span>Total</span></div><div id="asks"></div><div id="midPrice" class="midprice">—</div><div id="bids"></div></section>
+  <section class="right-section mover-section"><div class="right-title"><span>TOP MOVERS</span><small>24h</small></div><div id="movers" class="movers"></div></section>
+  <section class="right-section activity-section"><div class="right-title"><span>LIVE ACTIVITY</span><small>Market events</small></div><div id="activity" class="activity"><div class="empty">Waiting for live activity…</div></div></section>
   <section class="institutional-card"><div class="institutional-orb"></div><small>RWA INSTITUTIONAL</small><h3>Infrastructure for markets tied to the real economy.</h3><p>Designed to evolve from public market discovery into verified assets, issuance, ownership and institutional workflows.</p><button onclick="toast('Institutional onboarding is being prepared')">Explore institutional access <span>→</span></button></section>
 </aside>
 </div>
@@ -111,12 +142,12 @@
 <nav class="mobile-tabs" aria-label="Mobile navigation">
   <a class="active" href="#markets"><span>◫</span><small>Markets</small></a>
   <a href="#terminal"><span>⌁</span><small>Chart</small></a>
+  <a class="mobile-tab-main" href="#terminal"><span>R</span></a>
   <a href="#depth"><span>≋</span><small>Depth</small></a>
-  <a href="#" onclick="toast('RWA Intelligence is being prepared')"><span>✦</span><small>Intel</small></a>
   <a href="#" onclick="toast('Portfolio module comes with wallet integration')"><span>◎</span><small>Portfolio</small></a>
 </nav>
 </div>
 <div id="toast" class="toast"></div>
-<script src="app.js?v=5"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>
