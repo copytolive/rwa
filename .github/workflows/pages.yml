@@ -23,7 +23,7 @@ jobs:
       - name: Validate JavaScript syntax
         run: node --check app.js && node --check mobile.js
       - name: Verify production files
-        run: test -s index.html && test -s app.js && test -s mobile.js && test -s styles.css
+        run: test -s index.html && test -s app.js && test -s mobile.js && test -s styles.css && test -s mobile.css
 
   deploy:
     needs: verify
