@@ -16,11 +16,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install pinned compiler dependencies
+      - name: Install pinned compiler and test dependencies
         run: npm install --prefix token --ignore-scripts --no-audit --no-fund
-      - name: Compile fixed-supply and vesting contracts
+      - name: Validate PRE-TGE test source
         run: |
-          npm run --prefix token compile
+          node --check token/test/contracts.test.mjs
+          grep -Fq 'fixed total supply mismatch' token/test/contracts.test.mjs
+          grep -Fq 'vesting must be zero before cliff' token/test/contracts.test.mjs
+          grep -Fq 'non-beneficiary release must revert' token/test/contracts.test.mjs
+      - name: Compile and unit test fixed-supply and vesting contracts
+        run: |
+          npm run --prefix token verify
           test -s token/build/contracts_RWAToken_sol_RWAToken.abi
           test -s token/build/contracts_RWAToken_sol_RWAToken.bin
           test -s token/build/contracts_RWAVestingVault_sol_RWAVestingVault.abi
@@ -31,9 +37,9 @@ jobs:
           python -m json.tool token/config.json >/dev/null
           grep -Fq '"tgeEnabled": false' token/config.json
           grep -Fq '"mainnetDeploymentEnabled": false' token/config.json
-          if node token/deploy-guard.mjs --network=testnet >/tmp/testnet.log 2>&1; then cat /tmp/testnet.log; echo 'Incomplete token config must stay blocked'; exit 1; fi
-          if node token/deploy-guard.mjs --network=mainnet >/tmp/mainnet.log 2>&1; then cat /tmp/mainnet.log; echo 'Mainnet must stay blocked'; exit 1; fi
+          if node token/deploy-guard.mjs --network=testnet >/tmp/testnet.log 2>&1; then cat /tmp/testnet.log; echo 'Incomplete token config must stay blocked'; exit 1; else echo 'Incomplete testnet deployment correctly blocked'; fi
+          if node token/deploy-guard.mjs --network=mainnet >/tmp/mainnet.log 2>&1; then cat /tmp/mainnet.log; echo 'Mainnet must stay blocked'; exit 1; else echo 'Mainnet deployment correctly blocked'; fi
       - name: Publish token contract status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/token-contracts' -f description='PRE-TGE token contracts compile; TGE/mainnet guards remain OFF'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/token-contracts' -f description='PRE-TGE compile + unit tests pass; TGE/mainnet deployment remain OFF'
