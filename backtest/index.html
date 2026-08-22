@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="VectorForge browser-native historical market simulation and auditable GitHub backtest research lab.">
+  <meta name="description" content="VectorForge public multi-asset historical market simulation and auditable GitHub backtest research lab.">
   <title>VectorForge Historical Simulation Lab</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
@@ -13,29 +13,36 @@
     <div>
       <div class="eyebrow">OPEN RESEARCH ENGINE · GITHUB PAGES</div>
       <h1>VectorForge <span>Historical Simulation Lab</span></h1>
-      <p>Reproducible historical market-strategy simulation directly in your browser. No local IDE required.</p>
+      <p>Public multi-asset historical research using auditable market data, browser simulation and GitHub compute. No local IDE required.</p>
     </div>
-    <div class="status-stack"><span class="badge ok">● ENGINE ONLINE</span><span class="badge">PUBLIC GITHUB HOSTING</span></div>
+    <div class="status-stack"><span class="badge ok">● ENGINE ONLINE</span><span class="badge">PUBLIC GITHUB HOSTING</span><span class="badge">MULTI-ASSET</span></div>
   </header>
 
-  <section class="notice"><strong>Verified source coverage:</strong> public EURUSD 1-second quote files, May 2009 through July 2018. All 111 available monthly source files are indexed and fetched on demand from GitHub; later months are not invented.</section>
+  <section class="notice"><strong>Multi-asset data:</strong> Dukascopy is the primary bid/ask tick source for major FX, large FX crosses, Gold, Silver, BTCUSD and ETHUSD. Exchange-native BTCUSDT/ETHUSDT use Binance Public Data. Raw archives stay at their authoritative public source and are fetched on demand; this repository stores the public catalog, source verification, request configuration and audit hashes.</section>
 
   <section class="campaign-strip">
     <article><span>Campaign Target</span><strong id="cTarget">1,000,000,000,000</strong><small>unique evaluations</small></article>
     <article><span>Verified Completed</span><strong id="cVerified">—</strong><small>actual computed hashes</small></article>
-    <article><span>Source Coverage</span><strong id="cCoverage">—</strong><small id="cRemaining">processed / 111 months</small></article>
-    <article><span>Verified Samples</span><strong id="cSamples">—</strong><small>deduplicated source samples</small></article>
+    <article><span>EURUSD Coverage</span><strong id="cCoverage">—</strong><small id="cRemaining">processed / 111 months</small></article>
+    <article><span>Verified Samples</span><strong id="cSamples">—</strong><small>source samples</small></article>
     <article><span>Last Batch</span><strong id="cBatch">—</strong><small id="cBatchMonth">loading</small></article>
     <article><span>Dataset SHA-256</span><code id="cHash">loading…</code><small id="cStatus">campaign ledger</small></article>
   </section>
 
+  <section class="panel asset-universe">
+    <div class="panel-title split"><span>Public Instrument Universe</span><span id="assetSummary" class="muted">Loading…</span></div>
+    <div class="catalog-tools"><input id="assetSearch" placeholder="Search EURUSD, XAUUSD, BTC, JPY…"><span class="muted">Primary source: Dukascopy bid/ask tick</span></div>
+    <div id="assetGrid" class="asset-grid"></div>
+    <div class="hint">A VERIFIED badge means the automated GitHub source verifier successfully obtained real historical source data and recorded a SHA-256 sample fingerprint. PENDING means the catalog entry exists but its latest automated verification result is not yet published.</div>
+  </section>
+
   <section class="grid">
     <aside class="panel controls">
-      <div class="panel-title">Simulation Configuration</div>
+      <div class="panel-title">Browser Simulation Configuration</div>
 
       <label>Dataset
         <select id="dataset">
-          <option value="eurusd1s">EURUSD · 1-second · public GitHub quote data</option>
+          <option value="eurusd1s">EURUSD · 1-second · legacy public GitHub stream</option>
           <option value="custom">Custom tick/quote TXT or CSV · local browser upload</option>
         </select>
       </label>
@@ -89,7 +96,7 @@
 
       <div class="actions"><button id="runBtn" class="primary">Run Historical Simulation</button><button id="stopBtn" class="secondary" disabled>Stop</button></div>
       <button id="exportBtn" class="export" disabled>Export Last Result JSON</button>
-      <div class="hint">Public monthly files can be tens of MB each. Custom files stay in your browser and are not uploaded. For timestamp-first CSV files, set Bid/Ask column numbers accordingly.</div>
+      <div class="hint">The browser engine currently streams the legacy EURUSD catalog or a local custom file. Full multi-asset Dukascopy execution is available through the GitHub chat runner and shares the same public audit repository.</div>
     </aside>
 
     <section class="panel output">
@@ -117,8 +124,15 @@
     </section>
   </section>
 
+  <section class="panel chat-mode">
+    <div class="panel-title">Chat-Controlled Full Tick Backtest</div>
+    <p>For the multi-asset universe above, the GitHub execution plane accepts a structured request, downloads the required historical source data, runs the simulation, and saves a public JSON result with dataset SHA-256 and evaluation ID.</p>
+    <div class="formula">Example chat: Backtest XAUUSD 2020-01-01 to 2025-01-01, SMA 50/1000, RR 1:2, both directions.</div>
+    <p class="muted">The chat workflow is historical simulation only and never places broker or exchange orders.</p>
+  </section>
+
   <section class="panel catalog">
-    <div class="panel-title split"><span>Source File Catalog</span><span id="fileCount" class="muted"></span></div>
+    <div class="panel-title split"><span>Legacy EURUSD Source File Catalog</span><span id="fileCount" class="muted"></span></div>
     <div class="catalog-tools"><input id="catalogSearch" placeholder="Filter month, e.g. 2017-03"><a id="sourceRepo" target="_blank" rel="noopener">Open source repository ↗</a></div>
     <div id="catalogList" class="catalog-list"></div>
   </section>
@@ -138,7 +152,7 @@
     <div class="panel-title">Auditable evaluation count</div>
     <p>One verified factory evaluation is one actually computed unique combination of dataset hash, source period, model, parameters and engine version. Browser runs receive their own SHA-256 fingerprint including execution assumptions.</p>
     <div class="formula">evaluation_id = SHA256(dataset_hash + period + model + parameters + engine_version)</div>
-    <p class="muted">The 1-trillion figure is a campaign target, not a completed-count claim. GitHub Pages is the interactive static layer; large-scale execution is handled by resumable GitHub Actions / distributed compute.</p>
+    <p class="muted">The 1-trillion figure is a campaign target, not a completed-count claim. GitHub Pages is the public interactive layer; large-scale execution is handled by resumable GitHub Actions / distributed compute.</p>
   </section>
 
   <footer>VectorForge · historical research and simulation software · no broker execution.</footer>
