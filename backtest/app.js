@@ -1,6 +1,6 @@
 const SOURCE_REPO='https://github.com/zcbmlijygrdwa/fx_EUR_USD_tick';
 const RAW_BASE='https://raw.githubusercontent.com/zcbmlijygrdwa/fx_EUR_USD_tick/master';
-const ENGINE_VERSION='vectorforge-browser-1.1.0';
+const ENGINE_VERSION='vectorforge-browser-1.1.1';
 
 const $=id=>document.getElementById(id);
 const months=[];
@@ -60,6 +60,7 @@ function getConfig(){
     slow:+$('slow').value,
     slPips:+$('slPips').value,
     rr:+$('rr').value,
+    pointSize:+$('pointSize').value,
     spreadPips:+$('spreadPips').value,
     rsiBuy:+$('rsiBuy').value,
     rsiSell:+$('rsiSell').value,
@@ -80,7 +81,7 @@ $('runBtn').addEventListener('click',()=>{
   const cfg=getConfig(),file=cfg.custom?($('customFile').files?.[0]||null):null;
   if(!cfg.months.length) return;
   if(cfg.custom&&!file){alert('Choose a custom TXT/CSV file first.');return}
-  if(cfg.fast<2||cfg.slow<3||cfg.slPips<=0||cfg.rr<=0){alert('Check parameter values.');return}
+  if(cfg.fast<2||cfg.slow<3||cfg.slPips<=0||cfg.rr<=0||cfg.pointSize<=0){alert('Check parameter values.');return}
   $('log').innerHTML=''; $('exportBtn').disabled=true; setBusy(true); $('progressBar').style.width='0%'; $('progressText').textContent='Starting worker…';
   worker=new Worker('./worker.js');
   worker.onmessage=async e=>{
