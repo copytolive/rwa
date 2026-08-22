@@ -9,6 +9,7 @@ try{
   const pkg=JSON.parse(m[1]);
   const p=pkg?.payload||{};
   if(!p.asset?.name||!p.reviewer||!pkg.signature||!pkg.message)fail('Incomplete approval package');
+  if(!(Number(p.asset.nav)>0))fail('Verified asset NAV must be greater than zero');
   const expected=`RWA VERIFIED APPROVAL\n${JSON.stringify(p)}`;
   if(pkg.message!==expected)fail('Approval message does not match payload');
   const recovered=verifyMessage(pkg.message,pkg.signature).toLowerCase();
@@ -26,11 +27,14 @@ try{
     id,
     name:String(p.asset.name),
     type:String(p.asset.type||'Real World Asset'),
-    nav:Number(p.asset.nav||0),
+    nav:Number(p.asset.nav),
     yield:Number(p.asset.yield||0),
     location:String(p.asset.location||''),
     document:String(p.asset.document||p.legal||''),
     issuer:String(p.issuer),
+    ownership:String(p.ownership),
+    appraisal:String(p.appraisal),
+    legal:String(p.legal),
     ownership_document:String(p.ownership),
     appraisal_document:String(p.appraisal),
     legal_document:String(p.legal),
