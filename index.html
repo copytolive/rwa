@@ -7,7 +7,7 @@
 <title>RWA Markets — Global Real-World Asset Market Infrastructure</title>
 <meta name="description" content="A premium live market terminal for real-world-asset discovery, professional charting, market depth and hundreds of active instruments.">
 <link rel="stylesheet" href="styles.css?v=6">
-<link rel="stylesheet" href="mobile.css?v=2">
+<link rel="stylesheet" href="mobile.css?v=3">
 </head>
 <body class="mview-overview">
 <div class="app">
@@ -36,7 +36,11 @@
 <section class="mobile-home" aria-label="Mobile markets header">
   <div class="mobile-simple-head">
     <div><h1>Markets</h1><small id="mobilePairCount">Loading markets…</small></div>
-    <div class="mobile-live-pill"><span id="mobileLiveDot"></span> LIVE</div>
+  </div>
+  <div class="mobile-breadth" aria-label="Live market breadth">
+    <div><small>GAINERS</small><b id="mobileGainers">—</b></div>
+    <div><small>LOSERS</small><b id="mobileLosers">—</b></div>
+    <div><small>RWA PAIRS</small><b id="mobileRwaCount">—</b></div>
   </div>
 </section>
 
@@ -48,7 +52,7 @@
   <div class="chart-toolbar"><div class="tf" id="timeframes"><button data-iv="1">1m</button><button data-iv="5">5m</button><button class="active" data-iv="15">15m</button><button data-iv="60">1H</button><button data-iv="240">4H</button><button data-iv="D">1D</button></div><div class="chart-actions"><span class="data-origin"><i></i> Live chart</span><button onclick="reloadChart()">↻</button></div></div>
   <div class="chart-wrap"><div class="chart-watermark">RWA</div><div class="chart-loading">Loading professional market chart…</div><canvas id="fallbackChart" class="fallback-chart"></canvas><div id="tvHost" class="tv-host"></div></div>
   <div class="mobile-detail-tabs" style="display:none" role="tablist" aria-label="Market detail view"><button class="active" data-mobile-view="overview">Overview</button><button data-mobile-view="trades">Trades</button><button data-mobile-view="depth">Depth</button></div>
-  <div class="bottom"><section class="bottom-panel"><div class="panel-title"><div><span>LIVE MARKET TAPE</span><small>Executed trades</small></div><b class="live-label"><i></i> REAL-TIME</b></div><div id="tradeTape" class="tape"><div class="empty">Waiting for trades…</div></div></section><section><div class="panel-title"><div><span>MARKET PULSE</span><small>Session flow</small></div><b class="live-label"><i></i> LIVE</b></div><div class="pulse-card"><div class="pulse-score"><div><span>Buy-side activity</span><strong id="buyPct">50%</strong></div><span id="tradeCount">0 trades</span></div><div class="bar"><div id="pulseBar" class="barfill"></div></div><div class="pulse-grid"><div class="mini"><small>Best bid</small><b id="bestBid">—</b></div><div class="mini"><small>Best ask</small><b id="bestAsk">—</b></div><div class="mini"><small>Spread</small><b id="spread">—</b></div><div class="mini"><small>Last tick</small><b id="lastTick">—</b></div></div></div></section></div>
+  <div class="bottom"><section class="bottom-panel"><div class="panel-title"><div><span>LIVE TRADES</span><small>Executed trades</small></div><b class="live-label"><i></i> REAL-TIME</b></div><div id="tradeTape" class="tape"><div class="empty">Waiting for trades…</div></div></section><section><div class="panel-title"><div><span>MARKET OVERVIEW</span><small>Live execution metrics</small></div><b class="live-label"><i></i> LIVE</b></div><div class="pulse-card"><div class="pulse-score"><div><span>Buy pressure</span><strong id="buyPct">50%</strong></div><div class="trade-total"><small>TRADES</small><b id="tradeCount">0 trades</b></div></div><div class="bar"><div id="pulseBar" class="barfill"></div></div><div class="pulse-grid"><div class="mini"><small>Best bid</small><b id="bestBid">—</b></div><div class="mini"><small>Best ask</small><b id="bestAsk">—</b></div><div class="mini"><small>Spread</small><b id="spread">—</b></div><div class="mini"><small>Last tick</small><b id="lastTick">—</b></div></div></div></section></div>
 </main>
 
 <aside class="right" id="depth"><div class="aside-label"><span>MARKET DEPTH</span><small>Execution intelligence</small></div><section class="right-section order-section"><div class="right-title"><span>ORDER BOOK</span><small>Top 10</small></div><div class="book-head"><span>Price</span><span>Amount</span><span>Total</span></div><div id="asks"></div><div id="midPrice" class="midprice">—</div><div id="bids"></div></section><section class="right-section mover-section"><div class="right-title"><span>TOP MOVERS</span><small>24h</small></div><div id="movers" class="movers"></div></section><section class="right-section activity-section"><div class="right-title"><span>LIVE ACTIVITY</span><small>Market events</small></div><div id="activity" class="activity"><div class="empty">Waiting for live activity…</div></div></section><section class="institutional-card"><div class="institutional-orb"></div><small>RWA INSTITUTIONAL</small><h3>Infrastructure for markets tied to the real economy.</h3><p>Designed to evolve from public market discovery into verified assets, issuance, ownership and institutional workflows.</p><button onclick="toast('Institutional onboarding is being prepared')">Explore institutional access <span>→</span></button></section></aside>
@@ -59,6 +63,6 @@
 </div>
 <div id="toast" class="toast"></div>
 <script src="app.js?v=6"></script>
-<script src="mobile.js?v=3"></script>
+<script src="mobile.js?v=4"></script>
 </body>
 </html>
