@@ -2,7 +2,7 @@
   "campaign": "vectorforge-trillion-evaluation-research",
   "engine_version": "vectorforge-browser-1.0.0",
   "target_evaluations": 1000000000000,
-  "verified_completed": 118,
+  "verified_completed": 177,
   "status": "RUNNING",
   "definition": "One verified evaluation is one actually computed unique combination of dataset hash, period, model, parameters and engine version.",
   "data": {
@@ -19,21 +19,21 @@
     "Distributed runners can be added later while retaining the same evaluation fingerprint scheme."
   ],
   "last_verified_batch": {
-    "month": "2009-05",
+    "month": "2009-06",
     "engine_version": "vectorforge-batch-1.1.0",
-    "dataset_sha256": "18fd3c5001b4232526ea41a4e85eca19c09f11ab064e9e2feafa87678f75fb8e",
+    "dataset_sha256": "610012e2b6d0f81f985df74429bcb9c85c292d06c142b59e870118d3102677f7",
     "evaluations": 59,
     "evaluations_computed": 59,
     "duplicate_evaluations": 0,
-    "valid_samples": 1714377,
-    "completed_at": "2026-08-22T18:55:40.011260+00:00"
+    "valid_samples": 1627796,
+    "completed_at": "2026-08-22T19:00:42.414398+00:00"
   },
   "source_catalog": {
     "available_months": 111,
-    "processed_months": 2,
-    "remaining_months": 109,
-    "next_month": "2009-06",
+    "processed_months": 3,
+    "remaining_months": 108,
+    "next_month": "2009-07",
     "coverage_complete": false,
-    "verified_samples_total": 3620095
+    "verified_samples_total": 5247891
   }
 }
