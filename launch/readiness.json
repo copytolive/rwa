@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "generated_at": "2026-08-23T00:00:00.000Z",
+  "status": "BLOCKED",
+  "beta_ready": false,
+  "mainnet_ready": false,
+  "checks": {
+    "browser_single_write": {"ok": true, "detail": "RWAExecutionAPI + mandatory risk + atomic normalTpsl"},
+    "worker_single_write": {"ok": true, "detail": "worker writes only through RWAWorkerExecutionAPI"},
+    "worker_no_fund_methods": {"ok": true, "detail": "no withdrawal/transfer API exposed"},
+    "real_wallet_e2e": {"ok": false, "detail": "0 registered wallet proof(s)"},
+    "reviewer_registry": {"ok": false, "detail": "0 authorized reviewer(s)"},
+    "verified_rwa_asset": {"ok": false, "detail": "0 verified asset(s)"},
+    "worker_configured": {"ok": false, "detail": "disabled"},
+    "worker_live": {"ok": false, "detail": "public worker URL not activated"},
+    "worker_control": {"ok": false, "detail": "enabled=false kill=true production_ready=false"},
+    "revenue_deferred": {"ok": true, "detail": "builder/platform fee remains OFF until final revenue wallet approval"}
+  },
+  "blockers": [
+    {"gate": "real_wallet_e2e", "detail": "0 registered wallet proof(s)"},
+    {"gate": "reviewer_registry", "detail": "0 authorized reviewer(s)"},
+    {"gate": "verified_rwa_asset", "detail": "0 verified asset(s)"},
+    {"gate": "worker_configured", "detail": "disabled"},
+    {"gate": "worker_live", "detail": "public worker URL not activated"},
+    {"gate": "worker_control", "detail": "enabled=false kill=true production_ready=false"}
+  ],
+  "revenue": "DEFERRED",
+  "token_tge": "DEFERRED"
+}
