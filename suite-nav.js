@@ -11,13 +11,14 @@ const sign=document.querySelector('.signin');if(sign)sign.onclick=()=>suite('pro
 if(!document.querySelector('link[data-rwa-ops-css]')){const l=document.createElement('link');l.rel='stylesheet';l.href='ops.css?v=1';l.dataset.rwaOpsCss='1';document.head.appendChild(l)}
 function load(src,key){if(document.querySelector(`script[data-rwa-${key}]`))return;const s=document.createElement('script');s.src=src;s.async=false;s.dataset[`rwa${key.replace(/(^|-)(\w)/g,(_,a,b)=>b.toUpperCase())}`]='1';document.body.appendChild(s)}
 load('walletconnect.js?v=2','walletconnect');
+load('execution-api.js?v=1','execution-api');
+load('execution-ops-bridge.js?v=1','execution-ops');
 load('ops-suite.js?v=1','ops');
 load('risk-hardening.js?v=1','risk-hardening');
 load('provider-failover.js?v=2','failover');
 load('monitor-client.js?v=2','monitor-client');
 load('monitor-config-client.js?v=1','monitor-config-client');
 load('social-safety-patch.js?v=2','social-safety');
-load('execution-api.js?v=1','execution-api');
 load('execution-ui.js?v=1','execution-ui');
 load('suite-execution-patch.js?v=5','exec-patch');
 load('wallet-auth.js?v=2','wallet-auth');
