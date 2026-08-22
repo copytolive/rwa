@@ -1,7 +1,17 @@
 {
-  "updated_at": 0,
-  "providers": {},
   "alerts": [],
   "copy_signals": [],
-  "note": "Monitoring only. No private key and no automatic order execution."
+  "note": "Monitoring only. No private key and no automatic order execution.",
+  "providers": {
+    "binance": {
+      "error": "HTTP Error 451: ",
+      "ok": false
+    },
+    "hyperliquid": {
+      "latency_ms": 361,
+      "markets": 949,
+      "ok": true
+    }
+  },
+  "updated_at": 1787426874411
 }
