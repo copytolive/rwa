@@ -2,8 +2,8 @@
   "campaign": "vectorforge-trillion-evaluation-research",
   "engine_version": "vectorforge-browser-1.0.0",
   "target_evaluations": 1000000000000,
-  "verified_completed": 0,
-  "status": "INITIALIZED",
+  "verified_completed": 59,
+  "status": "RUNNING",
   "definition": "One verified evaluation is one actually computed unique combination of dataset hash, period, model, parameters and engine version.",
   "data": {
     "symbol": "EURUSD",
@@ -17,5 +17,12 @@
     "Target count is not presented as completed count.",
     "GitHub Pages is the interactive browser layer, not the trillion-scale compute layer.",
     "Distributed runners can be added later while retaining the same evaluation fingerprint scheme."
-  ]
+  ],
+  "last_verified_batch": {
+    "month": "2018-01",
+    "engine_version": "vectorforge-batch-1.0.0",
+    "dataset_sha256": "ca0ce287bd3029753de6af6f29cdea1e5821d41291f93b925dd7902ebdb2812b",
+    "evaluations": 59,
+    "completed_at": "2026-08-22T18:42:38.218609+00:00"
+  }
 }
