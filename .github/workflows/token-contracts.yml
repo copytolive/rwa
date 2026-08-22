@@ -18,12 +18,20 @@ jobs:
           node-version: '22'
       - name: Install pinned compiler and test dependencies
         run: npm install --prefix token --ignore-scripts --no-audit --no-fund
+      - name: Publish dependency status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/token-deps' -f description='Pinned PRE-TGE compiler/test dependencies installed'
       - name: Validate PRE-TGE test source
         run: |
           node --check token/test/contracts.test.mjs
           grep -Fq 'fixed total supply mismatch' token/test/contracts.test.mjs
           grep -Fq 'vesting must be zero before cliff' token/test/contracts.test.mjs
           grep -Fq 'non-beneficiary release must revert' token/test/contracts.test.mjs
+      - name: Publish token source status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/token-test-source' -f description='PRE-TGE unit-test source syntax/contracts verified'
       - name: Compile and unit test PRE-TGE contracts
         run: |
           npm run --prefix token verify
@@ -35,6 +43,10 @@ jobs:
           test -s token/build/contracts_interfaces_IRWAVesting_sol_IRWAVesting.abi
           test -s token/build/contracts_interfaces_IRWARewards_sol_IRWARewards.abi
           test -s token/build/contracts_interfaces_IRWAGovernance_sol_IRWAGovernance.abi
+      - name: Publish token test status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/token-tests' -f description='Fixed-supply + vesting unit tests and integration interface compilation pass'
       - name: Verify PRE-TGE deployment guardrails
         run: |
           node --check token/deploy-guard.mjs
@@ -43,7 +55,16 @@ jobs:
           grep -Fq '"mainnetDeploymentEnabled": false' token/config.json
           if node token/deploy-guard.mjs --network=testnet >/tmp/testnet.log 2>&1; then cat /tmp/testnet.log; echo 'Incomplete token config must stay blocked'; exit 1; else echo 'Incomplete testnet deployment correctly blocked'; fi
           if node token/deploy-guard.mjs --network=mainnet >/tmp/mainnet.log 2>&1; then cat /tmp/mainnet.log; echo 'Mainnet must stay blocked'; exit 1; else echo 'Mainnet deployment correctly blocked'; fi
+      - name: Publish token guard status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/token-guards' -f description='Incomplete testnet and all mainnet deployment remain blocked'
       - name: Publish token contract status
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/token-contracts' -f description='PRE-TGE compile + unit tests + interfaces pass; TGE/mainnet remain OFF'
+      - name: Publish token failure status
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/token-contracts' -f description='PRE-TGE contract verification failed; inspect last successful token stage'
