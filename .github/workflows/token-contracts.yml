@@ -1,0 +1,39 @@
+name: RWA PRE-TGE Token Contracts
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "token/**"
+      - ".github/workflows/token-contracts.yml"
+permissions:
+  contents: read
+  statuses: write
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned compiler dependencies
+        run: npm install --prefix token --ignore-scripts --no-audit --no-fund
+      - name: Compile fixed-supply and vesting contracts
+        run: |
+          npm run --prefix token compile
+          test -s token/build/contracts_RWAToken_sol_RWAToken.abi
+          test -s token/build/contracts_RWAToken_sol_RWAToken.bin
+          test -s token/build/contracts_RWAVestingVault_sol_RWAVestingVault.abi
+          test -s token/build/contracts_RWAVestingVault_sol_RWAVestingVault.bin
+      - name: Verify PRE-TGE deployment guardrails
+        run: |
+          node --check token/deploy-guard.mjs
+          python -m json.tool token/config.json >/dev/null
+          grep -Fq '"tgeEnabled": false' token/config.json
+          grep -Fq '"mainnetDeploymentEnabled": false' token/config.json
+          if node token/deploy-guard.mjs --network=testnet >/tmp/testnet.log 2>&1; then cat /tmp/testnet.log; echo 'Incomplete token config must stay blocked'; exit 1; fi
+          if node token/deploy-guard.mjs --network=mainnet >/tmp/mainnet.log 2>&1; then cat /tmp/mainnet.log; echo 'Mainnet must stay blocked'; exit 1; fi
+      - name: Publish token contract status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/token-contracts' -f description='PRE-TGE token contracts compile; TGE/mainnet guards remain OFF'
