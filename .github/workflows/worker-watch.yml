@@ -1,0 +1,69 @@
+name: RWA Worker Watch
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "agent-worker/public-config.json"
+      - "agent-worker/control.json"
+      - "tools/worker-watch.mjs"
+      - ".github/workflows/worker-watch.yml"
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  statuses: write
+
+concurrency:
+  group: rwa-worker-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+      - name: Read worker configuration
+        id: cfg
+        run: |
+          ENABLED=$(node -e "const x=require('./agent-worker/public-config.json');process.stdout.write(String(!!x.enabled))")
+          echo "enabled=$ENABLED" >> "$GITHUB_OUTPUT"
+      - name: Worker safely disabled
+        if: steps.cfg.outputs.enabled != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=pending -f context='rwa/worker-live' -f description='24x7 worker safely disabled; awaiting real HTTPS deployment'
+      - name: Probe and fail-safe trip
+        if: steps.cfg.outputs.enabled == 'true'
+        id: probe
+        continue-on-error: true
+        run: node tools/worker-watch.mjs --trip | tee /tmp/worker-watch.json
+      - name: Persist fail-safe trip
+        if: steps.cfg.outputs.enabled == 'true' && steps.probe.outcome != 'success'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add agent-worker/control.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'safety: trip 24x7 worker kill switch after failed health gate'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+      - name: Publish worker healthy
+        if: steps.cfg.outputs.enabled == 'true' && steps.probe.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/worker-live' -f description='Official 24x7 worker health + ready + safety contract PASS'
+      - name: Publish worker failure
+        if: steps.cfg.outputs.enabled == 'true' && steps.probe.outcome != 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/worker-live' -f description='Worker health/safety failed; repository kill switch tripped'
