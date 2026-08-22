@@ -24,13 +24,17 @@ jobs:
           grep -Fq 'fixed total supply mismatch' token/test/contracts.test.mjs
           grep -Fq 'vesting must be zero before cliff' token/test/contracts.test.mjs
           grep -Fq 'non-beneficiary release must revert' token/test/contracts.test.mjs
-      - name: Compile and unit test fixed-supply and vesting contracts
+      - name: Compile and unit test PRE-TGE contracts
         run: |
           npm run --prefix token verify
           test -s token/build/contracts_RWAToken_sol_RWAToken.abi
           test -s token/build/contracts_RWAToken_sol_RWAToken.bin
           test -s token/build/contracts_RWAVestingVault_sol_RWAVestingVault.abi
           test -s token/build/contracts_RWAVestingVault_sol_RWAVestingVault.bin
+          test -s token/build/contracts_interfaces_IRWATreasury_sol_IRWATreasury.abi
+          test -s token/build/contracts_interfaces_IRWAVesting_sol_IRWAVesting.abi
+          test -s token/build/contracts_interfaces_IRWARewards_sol_IRWARewards.abi
+          test -s token/build/contracts_interfaces_IRWAGovernance_sol_IRWAGovernance.abi
       - name: Verify PRE-TGE deployment guardrails
         run: |
           node --check token/deploy-guard.mjs
@@ -42,4 +46,4 @@ jobs:
       - name: Publish token contract status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/token-contracts' -f description='PRE-TGE compile + unit tests pass; TGE/mainnet deployment remain OFF'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/token-contracts' -f description='PRE-TGE compile + unit tests + interfaces pass; TGE/mainnet remain OFF'
