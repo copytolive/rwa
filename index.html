@@ -7,7 +7,7 @@
 <title>RWA Markets — Global Real-World Asset Market Infrastructure</title>
 <meta name="description" content="A premium live market terminal for real-world-asset discovery, professional charting, market depth and hundreds of active instruments.">
 <link rel="stylesheet" href="styles.css?v=6">
-<link rel="stylesheet" href="mobile.css?v=3">
+<link rel="stylesheet" href="mobile.css?v=4">
 </head>
 <body class="mview-overview">
 <div class="app">
@@ -36,6 +36,7 @@
 <section class="mobile-home" aria-label="Mobile markets header">
   <div class="mobile-simple-head">
     <div><h1>Markets</h1><small id="mobilePairCount">Loading markets…</small></div>
+    <button id="mobileMarketsClose" class="mobile-market-close" style="display:none" aria-label="Close markets">×</button>
   </div>
   <div class="mobile-breadth" aria-label="Live market breadth">
     <div><small>GAINERS</small><b id="mobileGainers">—</b></div>
@@ -51,17 +52,17 @@
   <div class="terminal-header"><div class="instrument"><div id="selIcon" class="tokenicon featured">BT</div><div class="instrument-copy"><div class="instrument-line"><b id="selName">BTC / USDT</b><span class="verified-badge"><i></i> LIVE</span></div><small id="selLabel">Bitcoin · Binance Spot</small></div></div><div class="quickstats"><div class="qstat price-stat"><small>Price</small><b id="statPrice">—</b></div><div class="qstat"><small>24h</small><b id="statChange">—</b></div><div class="qstat"><small>High</small><b id="statHigh">—</b></div><div class="qstat"><small>Low</small><b id="statLow">—</b></div><div class="qstat"><small>Volume</small><b id="statVol">—</b></div></div><div class="instrument-actions"><button onclick="toast('Watchlists will be enabled with account access')">☆ Watch</button><button onclick="toast('Price alerts will be enabled with account access')">◌ Alert</button><button onclick="toast('Shareable market links are being prepared')">↗ Share</button></div></div>
   <div class="chart-wrap"><div class="chart-watermark">RWA</div><div class="chart-loading">Loading professional market chart…</div><canvas id="fallbackChart" class="fallback-chart"></canvas><div id="tvHost" class="tv-host"></div></div>
   <div class="mobile-detail-tabs" style="display:none" role="tablist" aria-label="Market detail view"><button class="active" data-mobile-view="overview">Overview</button><button data-mobile-view="trades">Trades</button><button data-mobile-view="depth">Depth</button></div>
-  <div class="bottom"><section class="bottom-panel"><div class="panel-title"><div><span>LIVE TRADES</span><small>Executed trades</small></div><b class="live-label"><i></i> REAL-TIME</b></div><div id="tradeTape" class="tape"><div class="empty">Waiting for trades…</div></div></section><section><div class="panel-title"><div><span>MARKET OVERVIEW</span><small>Live execution metrics</small></div><b class="live-label"><i></i> LIVE</b></div><div class="pulse-card"><div class="pulse-score"><div><span>Buy pressure</span><strong id="buyPct">50%</strong></div><div class="trade-total"><small>TRADES</small><b id="tradeCount">0 trades</b></div></div><div class="bar"><div id="pulseBar" class="barfill"></div></div><div class="pulse-grid"><div class="mini"><small>Best bid</small><b id="bestBid">—</b></div><div class="mini"><small>Best ask</small><b id="bestAsk">—</b></div><div class="mini"><small>Spread</small><b id="spread">—</b></div><div class="mini"><small>Last tick</small><b id="lastTick">—</b></div></div></div></section></div>
+  <div class="bottom"><section class="bottom-panel"><div class="panel-title"><div><span>LIVE TRADES</span><small>Executed trades</small></div><b class="live-label"><i></i> REAL-TIME</b></div><div id="tradeTape" class="tape"><div class="empty">Waiting for trades…</div></div></section><section><div class="panel-title"><div><span>MARKET OVERVIEW</span><small>Live execution metrics</small></div><b class="live-label"><i></i> LIVE</b></div><div class="pulse-card"><div class="mobile-secondary-stats" style="display:none"><div><small>24H HIGH</small><b id="mobileHigh">—</b></div><div><small>24H LOW</small><b id="mobileLow">—</b></div><div><small>24H VOLUME</small><b id="mobileVolume">—</b></div></div><div class="pulse-score"><div><span>Buy pressure</span><strong id="buyPct">50%</strong></div><div class="trade-total"><small>TRADES</small><b id="tradeCount">0 trades</b></div></div><div class="bar"><div id="pulseBar" class="barfill"></div></div><div class="pulse-grid"><div class="mini"><small>Best bid</small><b id="bestBid">—</b></div><div class="mini"><small>Best ask</small><b id="bestAsk">—</b></div><div class="mini"><small>Spread</small><b id="spread">—</b></div><div class="mini"><small>Last tick</small><b id="lastTick">—</b></div></div></div></section></div>
 </main>
 
 <aside class="right" id="depth"><div class="aside-label"><span>MARKET DEPTH</span><small>Execution intelligence</small></div><section class="right-section order-section"><div class="right-title"><span>ORDER BOOK</span><small>Top 10</small></div><div class="book-head"><span>Price</span><span>Amount</span><span>Total</span></div><div id="asks"></div><div id="midPrice" class="midprice">—</div><div id="bids"></div></section><section class="right-section mover-section"><div class="right-title"><span>TOP MOVERS</span><small>24h</small></div><div id="movers" class="movers"></div></section><section class="right-section activity-section"><div class="right-title"><span>LIVE ACTIVITY</span><small>Market events</small></div><div id="activity" class="activity"><div class="empty">Waiting for live activity…</div></div></section><section class="institutional-card"><div class="institutional-orb"></div><small>RWA INSTITUTIONAL</small><h3>Infrastructure for markets tied to the real economy.</h3><p>Designed to evolve from public market discovery into verified assets, issuance, ownership and institutional workflows.</p><button onclick="toast('Institutional onboarding is being prepared')">Explore institutional access <span>→</span></button></section></aside>
 </div>
 
 <section class="credibility-strip"><div><small>PRODUCT</small><strong>Professional market terminal</strong></div><div><small>DATA LAYER</small><strong>Live public market feeds</strong></div><div><small>ASSET VISION</small><strong>Verified real-world markets</strong></div><div><small>EXPERIENCE</small><strong>Desktop + mobile first</strong></div></section>
-<nav class="mobile-tabs" aria-label="Mobile navigation"><a class="active" href="#markets" data-mobile-nav="markets"><span>⌕</span><small>Markets</small></a><a href="#terminal" data-mobile-nav="chart"><span>⌁</span><small>Chart</small></a><a href="#depth" data-mobile-nav="depth"><span>≋</span><small>Depth</small></a></nav>
+<nav class="mobile-tabs" aria-label="Mobile navigation"><a href="#markets" data-mobile-nav="markets"><span>⌕</span><small>Markets</small></a><a class="active" href="#terminal" data-mobile-nav="chart"><span>⌁</span><small>Chart</small></a><a href="#depth" data-mobile-nav="depth"><span>≋</span><small>Depth</small></a></nav>
 </div>
 <div id="toast" class="toast"></div>
 <script src="app.js?v=6"></script>
-<script src="mobile.js?v=4"></script>
+<script src="mobile.js?v=5"></script>
 </body>
 </html>
