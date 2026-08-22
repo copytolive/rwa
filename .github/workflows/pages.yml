@@ -31,6 +31,9 @@ jobs:
           node --check suite-ui.js
           node --check suite.js
           node --check suite-nav.js
+          node --check execution-api.js
+          node --check execution-ui.js
+          node --check execution-ops-bridge.js
           node --check suite-execution-patch.js
           node --check wallet-auth.js
           node --check walletconnect.js
@@ -63,6 +66,11 @@ jobs:
           test -s suite-ui.js
           test -s suite.js
           test -s suite-nav.js
+          test -s execution-api.js
+          test -s execution-ui.js
+          test -s execution-ops-bridge.js
+          test -s rwa-execution-config.json
+          test -s EXECUTION_API.md
           test -s suite-execution-patch.js
           test -s wallet-auth.js
           test -s walletconnect.js
@@ -86,7 +94,6 @@ jobs:
           test -s monitor/status.json
           test -s monitor/monitor.py
           test -s monitor/admin-wallets.json
-          test -s monitor-config-client.js
           test -s tools/monitor-config.mjs
           test -s .github/workflows/monitor-config.yml
           test -s .github/workflows/monitor.yml
@@ -96,6 +103,8 @@ jobs:
           python -m json.tool monitor/config.json >/dev/null
           python -m json.tool monitor/status.json >/dev/null
           python -m json.tool monitor/admin-wallets.json >/dev/null
+          python -m json.tool rwa-execution-config.json >/dev/null
+
           grep -Fq "realtime-core.js?v=2" index.html
           ! grep -Fq "browser-recovery.js" index.html
           ! grep -Fq "instantChartBoot();loadSuite()" mobile.js
@@ -103,7 +112,13 @@ jobs:
           grep -Fq "stream.binance.com:9443" realtime-core.js
           grep -Fq "stream.binance.com:443" realtime-core.js
           grep -Fq "REST fallback" realtime-core.js
+
           grep -Fq "suite-nav.js" mobile.js
+          grep -Fq "execution-api.js?v=2" suite-nav.js
+          grep -Fq "execution-ops-bridge.js?v=2" suite-nav.js
+          grep -Fq "execution-ui.js?v=2" suite-nav.js
+          grep -Fq "suite-execution-patch.js?v=5" suite-nav.js
+          grep -Fq "wallet-auth.js" suite-nav.js
           grep -Fq "ops-suite.js" suite-nav.js
           grep -Fq "risk-hardening.js" suite-nav.js
           grep -Fq "walletconnect.js" suite-nav.js
@@ -113,6 +128,27 @@ jobs:
           grep -Fq "social-safety-patch.js" suite-nav.js
           grep -Fq "audit-hooks.js" suite-nav.js
           grep -Fq "rwa-verify-client.js" suite-nav.js
+
+          # Wallet-first exchange architecture.
+          grep -Fq "approveAgent" execution-api.js
+          grep -Fq "approveBuilderFee" execution-api.js
+          grep -Fq "AES-GCM" execution-api.js
+          grep -Fq "frontendOpenOrders" execution-api.js
+          grep -Fq "historicalOrders" execution-api.js
+          grep -Fq "clearinghouseState" execution-api.js
+          grep -Fq "orders:{limit,market,cancel,modify,cancelAll" execution-api.js
+          grep -Fq "RWAExecutionAPI" execution-ui.js
+          grep -Fq "FAST API WALLET" execution-ui.js
+          grep -Fq "RWAExecutionAPI" execution-ops-bridge.js
+          grep -Fq "execution.cancel_all" execution-ops-bridge.js
+          grep -Fq "RWAExecutionAPI" suite-execution-patch.js
+          grep -Fq "orders.market" suite-execution-patch.js
+          grep -Fq "orders.limit" suite-execution-patch.js
+          grep -Fq "RWARisk" suite-execution-patch.js
+          grep -Fq '"venue": "hyperliquid"' rwa-execution-config.json
+          grep -Fq '"testnet": true' rwa-execution-config.json
+          grep -Fq '"enabled": false' rwa-execution-config.json
+
           grep -Fq "RWARisk" ops-suite.js
           grep -Fq "RWAOps" ops-suite.js
           grep -Fq "RWARiskHardening" risk-hardening.js
@@ -128,11 +164,9 @@ jobs:
           grep -Fq "RWA 24X7 CONFIG" monitor-config-client.js
           grep -Fq "wallet-signature-required" monitor/config.json
           grep -Fq "cron: '*/5" .github/workflows/monitor.yml
-          grep -Fq "RWAProvider" suite-execution-patch.js
-          grep -Fq "RWARisk" suite-execution-patch.js
-          grep -Fq "updateLeverage" suite-execution-patch.js
           grep -Fq "[RWA-VERIFY]" .github/workflows/rwa-registry-review.yml
           grep -Fq "[MONITOR-CONFIG]" .github/workflows/monitor-config.yml
+
           test -s backtest/index.html
           test -s backtest/app.js
           test -s backtest/worker.js
