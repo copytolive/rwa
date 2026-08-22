@@ -13,6 +13,8 @@ function load(src,key){if(document.querySelector(`script[data-rwa-${key}]`))retu
 load('walletconnect.js?v=1','walletconnect');
 load('ops-suite.js?v=1','ops');
 load('provider-failover.js?v=1','failover');
+load('monitor-client.js?v=1','monitor-client');
 load('suite-execution-patch.js?v=3','exec-patch');
 load('wallet-auth.js?v=2','wallet-auth');
+load('walletconnect-auth-patch.js?v=1','walletconnect-auth-patch');
 })();
