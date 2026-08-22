@@ -2,7 +2,7 @@
   "campaign": "vectorforge-trillion-evaluation-research",
   "engine_version": "vectorforge-browser-1.0.0",
   "target_evaluations": 1000000000000,
-  "verified_completed": 413,
+  "verified_completed": 472,
   "status": "RUNNING",
   "definition": "One verified evaluation is one actually computed unique combination of dataset hash, period, model, parameters and engine version.",
   "data": {
@@ -19,26 +19,26 @@
     "Distributed runners can be added later while retaining the same evaluation fingerprint scheme."
   ],
   "last_verified_batch": {
-    "month": "2009-10",
+    "month": "2009-11",
     "engine_version": "vectorforge-batch-1.1.0",
-    "dataset_sha256": "a8a1c4a50d9801de04043ecac05fd2c43c7cdffc39b75326ae9fe0c18c9a8427",
+    "dataset_sha256": "c713e7dd52ac68dbaa8b32f4614a71bfbfebb26dbe5a2503cfa6d035110dd47e",
     "evaluations": 59,
     "evaluations_computed": 59,
     "duplicate_evaluations": 0,
-    "valid_samples": 1875765,
-    "completed_at": "2026-08-22T19:04:05.363253+00:00"
+    "valid_samples": 1726649,
+    "completed_at": "2026-08-22T19:04:31.835129+00:00"
   },
   "source_catalog": {
     "available_months": 111,
-    "processed_months": 7,
-    "remaining_months": 104,
-    "next_month": "2009-11",
+    "processed_months": 8,
+    "remaining_months": 103,
+    "next_month": "2009-12",
     "coverage_complete": false,
-    "verified_samples_total": 12591631
+    "verified_samples_total": 14318280
   },
   "verification_shards": {
-    "count": 7,
-    "evaluation_count": 413,
+    "count": 8,
+    "evaluation_count": 472,
     "algorithm": "binary SHA-256 Merkle root over sorted evaluation-ID bytes",
     "ledger": "shards.json"
   }
