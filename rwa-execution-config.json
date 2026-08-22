@@ -1,9 +1,10 @@
 {
-  "version": 1,
+  "version": 2,
   "venue": "hyperliquid",
   "mainnetApi": "https://api.hyperliquid.xyz",
   "testnetApi": "https://api.hyperliquid-testnet.xyz",
   "agentName": "RWA-EXECUTION",
+  "agentExpiryHours": 168,
   "agentStorage": "encrypted-browser",
   "defaults": {
     "testnet": true,
