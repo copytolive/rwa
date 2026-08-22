@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "updated_at": "2026-08-23",
+  "wallets": [],
+  "note": "Only wallet-bound, venue-backed testnet E2E proofs belong here. Empty means mainnet launch remains blocked."
+}
