@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "primary_provider": "dukascopy",
   "assets": [
     {"symbol":"EURUSD","name":"EUR / USD","class":"forex-major","provider":"dukascopy","provider_symbol":"eurusd","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2007-01-01"},
@@ -37,14 +37,12 @@
     {"symbol":"XAGUSD","name":"Silver / USD","class":"metal","provider":"dukascopy","provider_symbol":"xagusd","point_size":0.001,"mode":"bid_ask_tick","earliest_tick":"2014-07-25"},
 
     {"symbol":"BTCUSD","name":"Bitcoin / USD","class":"crypto","provider":"dukascopy","provider_symbol":"btcusd","point_size":0.01,"mode":"bid_ask_tick","earliest_tick":"2017-05-07"},
-    {"symbol":"ETHUSD","name":"Ether / USD","class":"crypto","provider":"dukascopy","provider_symbol":"ethusd","point_size":0.01,"mode":"bid_ask_tick","earliest_tick":"2017-12-11"},
-    {"symbol":"BTCUSDT","name":"Bitcoin / USDT","class":"crypto","provider":"binance","provider_symbol":"BTCUSDT","point_size":0.01,"mode":"exchange_aggtrade_tick","earliest_tick":"2017-08-17"},
-    {"symbol":"ETHUSDT","name":"Ether / USDT","class":"crypto","provider":"binance","provider_symbol":"ETHUSDT","point_size":0.01,"mode":"exchange_aggtrade_tick","earliest_tick":"2017-08-17"}
+    {"symbol":"ETHUSD","name":"Ether / USD","class":"crypto","provider":"dukascopy","provider_symbol":"ethusd","point_size":0.01,"mode":"bid_ask_tick","earliest_tick":"2017-12-11"}
   ],
   "notes": [
-    "Dukascopy is the primary historical source for FX, metals, BTCUSD and ETHUSD and is processed as historical bid/ask quote ticks.",
-    "Binance Public Data is retained only for exchange-native BTCUSDT and ETHUSDT aggregate-trade history; execution uses a configurable simulated spread.",
-    "Raw archives are streamed/fetched on demand and are not duplicated into the GitHub Pages repository.",
-    "earliest_tick values describe the earliest tick availability documented by the selected provider/tooling and may differ from older daily-candle history."
+    "All public catalog instruments use Dukascopy as the primary historical bid/ask tick source.",
+    "Raw Dukascopy archives are fetched on demand and are not duplicated into the GitHub Pages repository.",
+    "The public repository stores instrument metadata, source verification fingerprints, simulation requests and audit results.",
+    "earliest_tick values describe the earliest tick availability documented by the selected Dukascopy tooling and may differ from older daily-candle history."
   ]
 }
