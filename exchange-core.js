@@ -53,19 +53,22 @@ async function submit(o={}){
  const size=n(o.size),lev=Math.max(1,Math.floor(n(o.leverage,1))),price=n(o.price),tp=n(o.tp),sl=n(o.sl);if(!(size>0))throw Error('Size must be greater than zero');if(kind==='LIMIT'&&!(price>0))throw Error('Limit price is required');
  return withSubmit(async()=>{
   const a=api(),common={coin,side,size,reduceOnly:!!o.reduceOnly,leverage:lev,testnet:testnet(),preferAgent:true};
+  if(tp>0||sl>0){
+   if(!a?.orders?.bracket||a?.bracket!=='atomic-normal-tpsl-v1')throw Error('Atomic TP/SL bracket API unavailable');
+   const bracket=await a.orders.bracket({coin,side,size,type:kind,price:kind==='LIMIT'?price:null,tp:tp||null,sl:sl||null,tif:o.tif||'Gtc',leverage:lev,testnet:testnet(),preferAgent:true});
+   const protection=Array.from({length:Number(bracket?.protectionCount||0)},(_,i)=>({bracket:true,index:i+1,result:bracket.result}));
+   return{entry:bracket,protection,atomic:true};
+  }
   const entry=kind==='MARKET'?await a.orders.market(common):await a.orders.limit({...common,price,tif:o.tif||'Gtc'});
-  const protection=[];const exitSide=side==='BUY'?'SELL':'BUY';
-  if(tp>0)protection.push(await trigger({coin,side:exitSide,size,triggerPx:tp,tpsl:'tp'}));
-  if(sl>0)protection.push(await trigger({coin,side:exitSide,size,triggerPx:sl,tpsl:'sl'}));
-  return{entry,protection};
- },{coin,side,kind,size,leverage:lev,env:state.env,tp:tp||null,sl:sl||null});
+  return{entry,protection:[],atomic:false};
+ },{coin,side,kind,size,leverage:lev,env:state.env,tp:tp||null,sl:sl||null,atomic:tp>0||sl>0});
 }
 async function cancel(coin,oid){return withSubmit(()=>api().orders.cancel({coin:normalizeCoin(coin),oid:Number(oid),testnet:testnet(),preferAgent:true}),{action:'cancel',coin,oid,env:state.env})}
 async function cancelAll(){return withSubmit(()=>api().orders.cancelAll({testnet:testnet(),preferAgent:true}),{action:'cancelAll',env:state.env})}
 async function modify(o){const coin=normalizeCoin(o.coin);return withSubmit(()=>api().orders.modify({coin,oid:Number(o.oid),side:o.side,price:n(o.price),size:n(o.size),reduceOnly:!!o.reduceOnly,testnet:testnet(),preferAgent:true}),{action:'modify',coin,oid:o.oid,env:state.env})}
 async function closePosition(coin){coin=normalizeCoin(coin);const p=state.positions.find(x=>String(x.coin).toUpperCase()===coin);if(!p)throw Error('Position not found');const signed=n(p.szi);if(!signed)throw Error('Position is already flat');return withSubmit(()=>api().orders.market({coin,side:signed>0?'SELL':'BUY',size:Math.abs(signed),reduceOnly:true,testnet:testnet(),preferAgent:true}),{action:'close',coin,size:Math.abs(signed),env:state.env})}
 async function preflight(){const out={env:state.env,wallet:wallet(),checks:[],ready:false};
- const add=(name,ok,detail='')=>out.checks.push({name,ok:!!ok,detail});add('environment',state.env==='testnet',state.env==='testnet'?'TESTNET':'MAINNET — switch to testnet for E2E');add('wallet login',!!out.wallet,out.wallet||'not connected');add('execution API',!!api(),api()?.version||'loading');
+ const add=(name,ok,detail='')=>out.checks.push({name,ok:!!ok,detail});add('environment',state.env==='testnet',state.env==='testnet'?'TESTNET':'MAINNET — switch to testnet for E2E');add('wallet login',!!out.wallet,out.wallet||'not connected');add('execution API',!!api(),api()?.version||'loading');add('atomic TP/SL',api()?.bracket==='atomic-normal-tpsl-v1'&&typeof api()?.orders?.bracket==='function',api()?.bracket||'missing');
  if(!out.wallet||!api())return out;
  try{const h=await api().health(testnet());add('venue API',h.api==='ok',h.api||h.error||'unknown')}catch(e){add('venue API',false,String(e.message||e))}
  try{const m=await api().info('meta',{},testnet());add('perp universe',Array.isArray(m?.universe)&&m.universe.length>0,`${m?.universe?.length||0} assets`)}catch(e){add('perp universe',false,String(e.message||e))}
@@ -74,6 +77,6 @@ async function preflight(){const out={env:state.env,wallet:wallet(),checks:[],re
 }
 function start(){clearInterval(state.poll);if(localStorage.getItem(ENV_KEY)==='mainnet')localStorage.setItem(ENV_KEY,'testnet');refresh();state.poll=setInterval(()=>{if(document.visibilityState==='visible'&&wallet())refresh({silent:true})},2500)}
 window.addEventListener('rwa:wallet-login',()=>{state.wallet=wallet();if(!mainnetUnlocked()&&state.env!=='testnet')setEnv('testnet');else refresh()});window.addEventListener('rwa:wallet-logout',()=>{state.wallet='';state.env='testnet';localStorage.setItem(ENV_KEY,'testnet');refresh()});window.addEventListener('rwa:agent-changed',()=>refresh({silent:true}));document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh({silent:true})});
-window.RWAExchangeCore={version:'1.0.0',safety:'wallet-bound-mainnet-gate-v2',state:()=>snapshotLocal(),refresh,setEnv,testnet,mainnetUnlocked,selectedCoin,submit,cancel,cancelAll,modify,closePosition,preflight,start};
+window.RWAExchangeCore={version:'1.0.0',safety:'wallet-bound-mainnet-gate-v2',protection:'atomic-normal-tpsl-v1',state:()=>snapshotLocal(),refresh,setEnv,testnet,mainnetUnlocked,selectedCoin,submit,cancel,cancelAll,modify,closePosition,preflight,start};
 start();
 })();
