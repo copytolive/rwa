@@ -1,0 +1,37 @@
+name: Apply Critical Browser Patch
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/critical-browser-patch.yml"
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch direct critical bootstrap
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old='<script src="realtime-core.js?v=2"></script>\n<script src="execution-api.js?v=2"></script>\n<script src="execution-ops-bridge.js?v=2"></script>'
+          new='<script src="realtime-core.js?v=2"></script>\n<script src="chart-core.js?v=1"></script>\n<script src="walletconnect.js?v=3"></script>\n<script src="wallet-core.js?v=1"></script>\n<script src="execution-api.js?v=2"></script>\n<script src="execution-ops-bridge.js?v=3"></script>'
+          if old in s:
+              s=s.replace(old,new)
+          else:
+              s=s.replace('<script src="execution-ops-bridge.js?v=2"></script>','<script src="execution-ops-bridge.js?v=3"></script>')
+              if 'chart-core.js?v=1' not in s:
+                  s=s.replace('<script src="realtime-core.js?v=2"></script>','<script src="realtime-core.js?v=2"></script>\n<script src="chart-core.js?v=1"></script>\n<script src="walletconnect.js?v=3"></script>\n<script src="wallet-core.js?v=1"></script>')
+          p.write_text(s)
+          assert 'chart-core.js?v=1' in s
+          assert 'wallet-core.js?v=1' in s
+          assert 'execution-ops-bridge.js?v=3' in s
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'fix: load chart and wallet cores directly [skip ci]' || exit 0
+          git push
