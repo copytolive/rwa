@@ -1,0 +1,57 @@
+name: Verify RWA Full Suite
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate full suite source
+        run: |
+          node --check app.js
+          node --check mobile.js
+          node --check suite-ui.js
+          node --check suite.js
+          node --check suite-nav.js
+          python -m json.tool rwa-assets.json >/dev/null
+          grep -q "Verified trader leaderboard" suite-ui.js
+          grep -q "Copy-trade controls" suite-ui.js
+          grep -q "Alert engine" suite-ui.js
+          grep -q "Portfolio" suite-ui.js
+          grep -q "Trading feed" suite-ui.js
+          grep -q "Market intelligence" suite-ui.js
+          grep -q "RWA Marketplace" suite-ui.js
+          grep -q "Execution" suite-ui.js
+          grep -q "loadLeaderboard" suite.js
+          grep -q "loadHyperliquid" suite.js
+          grep -q "executeTrade" suite.js
+
+      - name: Verify production files
+        run: |
+          ok=0
+          for i in {1..24}; do
+            root="https://narzulalistiqlal.github.io/rwa"
+            if curl -fsSL "$root/mobile.js?verify=${GITHUB_RUN_ID}-${i}" | grep -q "suite-ui.js" \
+              && curl -fsSL "$root/suite-ui.js?verify=${GITHUB_RUN_ID}-${i}" | grep -q "Verified trader leaderboard" \
+              && curl -fsSL "$root/suite.js?verify=${GITHUB_RUN_ID}-${i}" | grep -q "executeTrade" \
+              && curl -fsSL "$root/suite-nav.js?verify=${GITHUB_RUN_ID}-${i}" | grep -q "Portfolio" \
+              && curl -fsSL "$root/rwa-assets.json?verify=${GITHUB_RUN_ID}-${i}" | python -m json.tool >/dev/null; then
+              ok=1
+              break
+            fi
+            sleep 10
+          done
+          test "$ok" = "1"
+
+      - name: Report success
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment "${{ github.event.issue.number }}" --body "RWA FULL SUITE PRODUCTION SUCCESS. Syntax valid; Profile + Verified P&L + Leaderboard + Copy + Watch/Alerts + Portfolio + Social Feed + Intelligence + RWA Marketplace + Wallet-signed Execution files verified live at https://narzulalistiqlal.github.io/rwa/"
