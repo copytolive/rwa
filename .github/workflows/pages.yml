@@ -4,12 +4,9 @@ on:
   push:
     branches: ["main"]
   workflow_dispatch:
-  issues:
-    types: [opened]
 
 permissions:
   contents: read
-  issues: write
   pages: write
   id-token: write
 
@@ -23,8 +20,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    outputs:
-      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,20 +32,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-  report:
-    if: always() && github.event_name == 'issues'
-    needs: [deploy]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Report deployment result
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RESULT: ${{ needs.deploy.result }}
-          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
-        run: |
-          if [ "$RESULT" = "success" ]; then
-            gh issue comment "${{ github.event.issue.number }}" --repo "${{ github.repository }}" --body "RWA FOMO-inspired UI deployment SUCCESS. Site: ${PAGE_URL:-https://narzulalistiqlal.github.io/rwa/}"
-          else
-            gh issue comment "${{ github.event.issue.number }}" --repo "${{ github.repository }}" --body "RWA deployment FAILED. Deploy job result: $RESULT"
-          fi
