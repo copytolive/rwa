@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "primary_provider": "dukascopy",
   "assets": [
     {"symbol":"EURUSD","name":"EUR / USD","class":"forex-major","provider":"dukascopy","provider_symbol":"eurusd","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2007-01-01"},
@@ -28,10 +28,8 @@
     {"symbol":"CADJPY","name":"CAD / JPY","class":"forex-cross","provider":"dukascopy","provider_symbol":"cadjpy","point_size":0.01,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
     {"symbol":"CADCHF","name":"CAD / CHF","class":"forex-cross","provider":"dukascopy","provider_symbol":"cadchf","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
     {"symbol":"CHFJPY","name":"CHF / JPY","class":"forex-cross","provider":"dukascopy","provider_symbol":"chfjpy","point_size":0.01,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
-    {"symbol":"NZDJPY","name":"NZD / JPY","class":"forex-cross","provider":"dukascopy","provider_symbol":"nzdjpy","point_size":0.01,"mode":"bid_ask_tick","earliest_tick":"2012-03-22"},
     {"symbol":"NZDCAD","name":"NZD / CAD","class":"forex-cross","provider":"dukascopy","provider_symbol":"nzdcad","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
     {"symbol":"NZDCHF","name":"NZD / CHF","class":"forex-cross","provider":"dukascopy","provider_symbol":"nzdchf","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
-    {"symbol":"USDCNH","name":"USD / CNH","class":"forex-major-cross","provider":"dukascopy","provider_symbol":"usdcnh","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2014-04-22"},
 
     {"symbol":"XAUUSD","name":"Gold / USD","class":"metal","provider":"dukascopy","provider_symbol":"xauusd","point_size":0.01,"mode":"bid_ask_tick","earliest_tick":"2003-05-05"},
     {"symbol":"XAGUSD","name":"Silver / USD","class":"metal","provider":"dukascopy","provider_symbol":"xagusd","point_size":0.001,"mode":"bid_ask_tick","earliest_tick":"2014-07-25"},
@@ -41,8 +39,8 @@
   ],
   "notes": [
     "All public catalog instruments use Dukascopy as the primary historical bid/ask tick source.",
+    "Only instruments that pass automated source verification are retained in the public production universe.",
     "Raw Dukascopy archives are fetched on demand and are not duplicated into the GitHub Pages repository.",
-    "The public repository stores instrument metadata, source verification fingerprints, simulation requests and audit results.",
-    "earliest_tick values describe the earliest tick availability documented by the selected Dukascopy tooling and may differ from older daily-candle history."
+    "The public repository stores instrument metadata, source verification fingerprints, simulation requests and audit results."
   ]
 }
