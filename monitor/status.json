@@ -1,17 +1,29 @@
 {
   "alerts": [],
   "copy_signals": [],
+  "market_data_provider": "binance_vision",
   "note": "Monitoring only. No private key and no automatic order execution.",
   "providers": {
-    "binance": {
-      "error": "HTTP Error 451: ",
+    "binance_api1": {
+      "active": false,
       "ok": false
     },
+    "binance_global": {
+      "active": false,
+      "ok": false
+    },
+    "binance_vision": {
+      "active": true,
+      "latency_ms": 2291,
+      "markets": 3684,
+      "ok": true
+    },
     "hyperliquid": {
-      "latency_ms": 361,
+      "active": true,
+      "latency_ms": 295,
       "markets": 949,
       "ok": true
     }
   },
-  "updated_at": 1787426874411
+  "updated_at": 1787426920865
 }
