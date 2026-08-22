@@ -1,9 +1,10 @@
 const SOURCE_REPO='https://github.com/zcbmlijygrdwa/fx_EUR_USD_tick';
 const RAW_BASE='https://raw.githubusercontent.com/zcbmlijygrdwa/fx_EUR_USD_tick/master';
-const ENGINE_VERSION='vectorforge-browser-1.2.0';
+const ENGINE_VERSION='vectorforge-browser-1.2.1';
 
 const $=id=>document.getElementById(id);
 const months=[];
+const verifiedSources=new Map();
 for(let y=2009;y<=2018;y++){
   const start=y===2009?5:1,end=y===2018?7:12;
   for(let m=start;m<=end;m++)months.push(`${y}-${String(m).padStart(2,'0')}`);
@@ -21,11 +22,34 @@ function renderCatalog(filter=''){
   const list=$('catalogList');list.innerHTML='';
   const shown=months.filter(m=>m.includes(filter.trim()));
   for(const ym of shown){
-    const a=document.createElement('a');a.className='file';a.target='_blank';a.rel='noopener';
+    const v=verifiedSources.get(ym);
+    const a=document.createElement('a');a.className=`file${v?' verified':''}`;a.target='_blank';a.rel='noopener';
     a.href=`${SOURCE_REPO}/blob/master/EURUSD-${ym}_converted.txt`;
-    a.innerHTML=`<span>EURUSD ${ym}</span><small>1s ↗</small>`;list.appendChild(a);
+    if(v){
+      const shortHash=(v.dataset_sha256||'').slice(0,10);
+      a.title=`SHA-256 ${v.dataset_sha256||'unknown'} · ${Number(v.valid_samples||0).toLocaleString()} samples`;
+      a.innerHTML=`<span>EURUSD ${ym}</span><small class="source-state">✓ ${shortHash}</small>`;
+    }else{
+      a.innerHTML=`<span>EURUSD ${ym}</span><small>pending · 1s ↗</small>`;
+    }
+    list.appendChild(a);
   }
-  $('fileCount').textContent=`${shown.length} / ${months.length} files`;
+  $('fileCount').textContent=`${shown.length} / ${months.length} files · ${verifiedSources.size} hashed`;
+}
+
+async function loadSourceHistory(){
+  try{
+    const r=await fetch(`./results/batches.json?cb=${Date.now()}`,{cache:'no-store'});
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    const data=await r.json();
+    verifiedSources.clear();
+    for(const row of data.batches||[]){
+      if(!row?.month)continue;
+      const old=verifiedSources.get(row.month);
+      if(!old||String(row.completed_at||'')>=String(old.completed_at||''))verifiedSources.set(row.month,row);
+    }
+  }catch(err){console.warn('Source history unavailable',err)}
+  renderCatalog($('catalogSearch')?.value||'');
 }
 
 async function loadCampaign(){
@@ -35,12 +59,13 @@ async function loadCampaign(){
     const c=await r.json();
     $('cTarget').textContent=Number(c.target_evaluations).toLocaleString();
     $('cVerified').textContent=Number(c.verified_completed).toLocaleString();
-    $('cStatus').textContent=`STATUS · ${c.status}`;
+    const vs=c.verification_shards||{};
+    $('cStatus').textContent=`STATUS · ${c.status}${vs.count?` · ${Number(vs.count).toLocaleString()} SHARDS`:''}`;
     const sc=c.source_catalog||{};
     const processed=Number.isFinite(+sc.processed_months)?+sc.processed_months:(c.last_verified_batch?1:0);
     const available=Number.isFinite(+sc.available_months)?+sc.available_months:months.length;
     $('cCoverage').textContent=`${processed} / ${available}`;
-    $('cRemaining').textContent=`${Math.max(0,available-processed)} months remaining`;
+    $('cRemaining').textContent=`${Math.max(0,available-processed)} months remaining${sc.next_month?` · next ${sc.next_month}`:''}`;
     $('cSamples').textContent=Number(sc.verified_samples_total||c.last_verified_batch?.valid_samples||0).toLocaleString();
     const b=c.last_verified_batch;
     if(b){
@@ -167,4 +192,4 @@ $('dataset').addEventListener('change',()=>{
   const custom=$('dataset').value==='custom';$('customFields').classList.toggle('hidden-field',!custom);$('monthRange').style.display=custom?'none':'';
 });
 
-fillMonths();renderCatalog();loadCampaign();loadLatestBatch();
+fillMonths();renderCatalog();loadCampaign();loadLatestBatch();loadSourceHistory();
