@@ -1,0 +1,46 @@
+name: Verify Instant UI Push
+
+on:
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - "qa/instant-status.json"
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate source and production
+        id: verify
+        shell: bash
+        run: |
+          set -e
+          node --check app.js
+          node --check mobile.js
+          grep -Fq 'instantChartBoot' mobile.js
+          grep -Fq 'warmConnections' mobile.js
+          grep -Fq 'mobile.js?v=7' index.html
+          grep -Fq 'rel="preload" href="mobile.js?v=7"' index.html
+          ok=0
+          for i in {1..24}; do
+            q="${GITHUB_RUN_ID}-${i}"
+            if curl -fsSL "https://narzulalistiqlal.github.io/rwa/?v=$q" | grep -Fq 'mobile.js?v=7' && \
+               curl -fsSL "https://narzulalistiqlal.github.io/rwa/mobile.js?v=$q" | grep -Fq 'instantChartBoot' && \
+               curl -fsSL "https://narzulalistiqlal.github.io/rwa/mobile.js?v=$q" | grep -Fq 'warmConnections'; then ok=1; break; fi
+            sleep 10
+          done
+          test "$ok" = "1"
+      - name: Persist PASS status
+        if: success()
+        run: |
+          mkdir -p qa
+          printf '{"status":"PASS","instant_chart":true,"parallel_features":true,"mobile_asset":"v7","run_id":"%s"}\n' "$GITHUB_RUN_ID" > qa/instant-status.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add qa/instant-status.json
+          git commit -m 'chore: record instant UI verification [skip ci]' || exit 0
+          git push
