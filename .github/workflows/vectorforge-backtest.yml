@@ -1,0 +1,55 @@
+name: VectorForge Backtest Factory
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_month:
+        description: "Start month YYYY-MM"
+        required: true
+        default: "2018-01"
+      end_month:
+        description: "End month YYYY-MM"
+        required: true
+        default: "2018-01"
+      strategy:
+        description: "sma_cross | ema_cross | rsi_mr | breakout | bollinger_mr"
+        required: true
+        default: "sma_cross"
+      p1_grid:
+        description: "Comma list or a:b:step"
+        required: true
+        default: "50,100,200"
+      p2_grid:
+        description: "Comma list or a:b:step"
+        required: true
+        default: "500,1000,1500"
+permissions:
+  contents: write
+concurrency:
+  group: vectorforge-backtest-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      START_MONTH: ${{ inputs.start_month }}
+      END_MONTH: ${{ inputs.end_month }}
+      STRATEGY: ${{ inputs.strategy }}
+      P1_GRID: ${{ inputs.p1_grid }}
+      P2_GRID: ${{ inputs.p2_grid }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run reproducible sweep
+        run: python backtest/scripts/batch_backtest.py
+      - name: Validate evidence JSON
+        run: python -m json.tool backtest/results/latest.json >/dev/null
+      - name: Commit compact evidence
+        run: |
+          git config user.name "vectorforge-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add backtest/results/
+          if git diff --cached --quiet; then echo "No result change."; else git commit -m "VectorForge: add verified batch evidence" && git push; fi

@@ -1,0 +1,5 @@
+{
+  "status": "NO_BATCH_RUN_YET",
+  "engine_version": "VF-1.0.0",
+  "note": "Run the VectorForge Backtest Factory workflow to populate batch evidence."
+}

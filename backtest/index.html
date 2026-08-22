@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#090b10">
+  <title>VectorForge Backtest Lab</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div><div class="eyebrow">PUBLIC RESEARCH ENGINE</div><h1>VectorForge <span>Backtest Lab</span></h1></div>
+    <div class="status-pill"><i></i><span id="engineStatus">ENGINE READY</span></div>
+  </header>
+  <main>
+    <section class="hero"><div><p class="kicker">GitHub Pages · Browser-native · No VS Code required</p><h2>Test strategies against second-level market data.</h2><p class="muted">Streaming engine, deterministic run fingerprints, execution-cost model, downloadable trades and JSON evidence.</p></div><div class="hero-stat"><span>ENGINE</span><strong>VF-1.0.0</strong><small>client-side worker</small></div></section>
+    <section class="grid">
+      <aside class="panel controls">
+        <div class="section-title">01 · DATA</div>
+        <label>Data mode<select id="dataMode"><option value="remote">GitHub EURUSD 1-second</option><option value="upload">Upload TXT / CSV</option></select></label>
+        <div id="remoteControls" class="two"><label>Start month<input id="startMonth" type="month" min="2009-05" value="2018-01"></label><label>End month<input id="endMonth" type="month" min="2009-05" value="2018-01"></label></div>
+        <label id="fileWrap" class="hidden">Tick file<input id="tickFile" type="file" accept=".txt,.csv,.tsv"></label>
+        <div class="source-note">Remote source is streamed from the original public repository; large tick archives are not duplicated into this Pages repo.</div>
+        <div class="section-title">02 · STRATEGY</div>
+        <label>Strategy<select id="strategy"><option value="sma_cross">SMA Cross</option><option value="ema_cross">EMA Cross</option><option value="rsi_mr">RSI Mean Reversion</option><option value="breakout">Rolling Breakout</option><option value="bollinger_mr">Bollinger Mean Reversion</option></select></label>
+        <div class="two"><label id="p1Label">Fast period<input id="p1" type="number" min="2" value="50"></label><label id="p2Label">Slow period<input id="p2" type="number" min="3" value="1000"></label></div>
+        <div class="section-title">03 · EXECUTION</div>
+        <div class="two"><label>Initial balance ($)<input id="balance" type="number" min="100" value="10000"></label><label>Lot size<input id="lot" type="number" min="0.01" step="0.01" value="0.10"></label><label>Spread (pips)<input id="spread" type="number" min="0" step="0.1" value="1.0"></label><label>Slippage (pips)<input id="slippage" type="number" min="0" step="0.1" value="0.2"></label><label>Stop loss (pips)<input id="sl" type="number" min="0.1" step="0.1" value="20"></label><label>Risk : Reward<input id="rr" type="number" min="0.1" step="0.1" value="2"></label><label>Commission $/lot RT<input id="commission" type="number" min="0" step="0.1" value="7"></label><label>Max trades stored<input id="maxTrades" type="number" min="100" step="100" value="20000"></label></div>
+        <div class="actions"><button id="runBtn" class="primary">RUN BACKTEST</button><button id="stopBtn" disabled>STOP</button></div><div class="progress"><div id="progressBar"></div></div><div class="progress-meta"><span id="progressText">Ready</span><span id="samplesText">0 samples</span></div>
+      </aside>
+      <section class="workspace">
+        <div class="metrics"><article><span>NET P&L</span><strong id="mPnl">—</strong><small id="mReturn">—</small></article><article><span>TRADES</span><strong id="mTrades">—</strong><small id="mFreq">—</small></article><article><span>WIN RATE</span><strong id="mWr">—</strong><small id="mWins">—</small></article><article><span>PROFIT FACTOR</span><strong id="mPf">—</strong><small id="mExpectancy">—</small></article><article><span>MAX DRAWDOWN</span><strong id="mDd">—</strong><small id="mDdPct">—</small></article><article><span>RUN FINGERPRINT</span><strong id="mHash" class="hash">—</strong><small id="mElapsed">—</small></article></div>
+        <article class="panel chart-panel"><div class="panel-head"><div><span>EQUITY CURVE</span><b id="chartLabel">No completed run</b></div><button id="exportJson" disabled>JSON</button><button id="exportCsv" disabled>TRADES CSV</button></div><canvas id="equity" height="260"></canvas></article>
+        <article class="panel"><div class="panel-head"><div><span>RUN EVIDENCE</span><b>Deterministic configuration + data descriptor</b></div></div><div id="evidence" class="evidence">Run a test to generate evidence.</div></article>
+        <article class="panel"><div class="panel-head"><div><span>TRADES</span><b id="tradeCount">0 stored</b></div></div><div class="table-wrap"><table><thead><tr><th>#</th><th>Side</th><th>Entry</th><th>Exit</th><th>Reason</th><th>Pips</th><th>P&L</th><th>Equity</th></tr></thead><tbody id="tradesBody"><tr><td colspan="8" class="empty">No trades yet.</td></tr></tbody></table></div></article>
+        <article class="panel batch"><div><span class="section-title no-margin">CLOUD / LARGE BATCH</span><h3>Use GitHub Actions for parameter sweeps.</h3><p class="muted">The browser is for interactive verification. The included workflow performs reproducible batch runs and saves compact evidence to GitHub.</p></div><a class="button-link" href="https://github.com/narzulalistiqlal/rwa/actions/workflows/vectorforge-backtest.yml" target="_blank" rel="noopener">OPEN GITHUB ACTIONS</a></article>
+        <article class="warning"><strong>Research tool — not MT5-identical.</strong><span>This version models spread, slippage, commission, SL and TP, but does not claim broker-perfect tick execution, swaps, latency or order-book fills.</span></article>
+      </section>
+    </section>
+  </main>
+  <script src="./app.js"></script>
+</body>
+</html>

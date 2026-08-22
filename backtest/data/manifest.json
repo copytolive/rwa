@@ -1,0 +1,15 @@
+{
+  "engine_version": "VF-1.0.0",
+  "default_symbol": "EURUSD",
+  "sources": [{
+    "id": "fx_eur_usd_tick",
+    "repository": "zcbmlijygrdwa/fx_EUR_USD_tick",
+    "cadence": "1 second",
+    "coverage_start": "2009-05",
+    "raw_template": "https://raw.githubusercontent.com/zcbmlijygrdwa/fx_EUR_USD_tick/master/EURUSD-YYYY-MM_converted.txt",
+    "columns": "SELL/BID, BUY/ASK; engine consumes first column for compatibility with the existing research script",
+    "redistributed": false,
+    "license_note": "No explicit license file was detected during integration. VectorForge references/streams the original source rather than republishing the archive."
+  }],
+  "local_upload": {"formats": ["txt", "csv", "tsv"], "parser": "first numeric field per line", "max_file_size": "browser/device dependent"}
+}
