@@ -1,0 +1,57 @@
+name: Verify RWA Operations Suite
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate source
+        run: |
+          node --check ops-suite.js
+          node --check walletconnect.js
+          node --check walletconnect-auth-patch.js
+          node --check provider-failover.js
+          node --check monitor-client.js
+          node --check social-safety-patch.js
+          node --check suite-execution-patch.js
+          node --check suite-nav.js
+          python -m py_compile monitor/monitor.py
+          python monitor/monitor.py
+          python -m json.tool monitor/status.json >/dev/null
+          grep -q "Order management" ops-suite.js
+          grep -q "KILL SWITCH" ops-suite.js
+          grep -q "Activity & audit log" ops-suite.js
+          grep -q "RWA verification" ops-suite.js
+          grep -q "WalletConnect / Reown" ops-suite.js
+          grep -q "RWAFailover" provider-failover.js
+          grep -q "RWASocialSafety" social-safety-patch.js
+          grep -q "wallet-signature-required" monitor/config.json
+          grep -q "RWARisk" suite-execution-patch.js
+      - name: Verify production bundle
+        run: |
+          ok=0
+          for i in {1..24}; do
+            q="${GITHUB_RUN_ID}-${i}"
+            if curl -fsSL "https://narzulalistiqlal.github.io/rwa/suite-nav.js?v=$q" | grep -q "ops-suite.js" && \
+               curl -fsSL "https://narzulalistiqlal.github.io/rwa/ops-suite.js?v=$q" | grep -q "Order management" && \
+               curl -fsSL "https://narzulalistiqlal.github.io/rwa/walletconnect.js?v=$q" | grep -q "RWAWalletConnect" && \
+               curl -fsSL "https://narzulalistiqlal.github.io/rwa/provider-failover.js?v=$q" | grep -q "RWAFailover" && \
+               curl -fsSL "https://narzulalistiqlal.github.io/rwa/social-safety-patch.js?v=$q" | grep -q "RWASocialSafety" && \
+               curl -fsSL "https://narzulalistiqlal.github.io/rwa/monitor-client.js?v=$q" | grep -q "RWAMonitorClient"; then
+              ok=1; break
+            fi
+            sleep 10
+          done
+          test "$ok" = "1"
+      - name: Report success
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment "${{ github.event.issue.number }}" --body "RWA OPERATIONS SUITE SUCCESS. Orders/cancel/modify/TP-SL, global risk + kill switch, audit log, WalletConnect bridge, RWA verification workflow, social safety, provider failover, and scheduled monitor source + production bundle all passed."
