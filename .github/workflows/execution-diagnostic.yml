@@ -1,0 +1,44 @@
+name: Execution Source Diagnostic
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/execution-diagnostic.yml"
+      - "execution-api.js"
+      - "execution-ui.js"
+      - "execution-ops-bridge.js"
+      - "suite-execution-patch.js"
+      - "suite-nav.js"
+      - "rwa-execution-config.json"
+permissions:
+  contents: read
+  issues: write
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Diagnose
+        shell: bash
+        run: |
+          set +e
+          : > /tmp/fails
+          check(){ "$@" >/tmp/out 2>&1; rc=$?; if [ $rc -ne 0 ]; then echo "FAIL: $*" >> /tmp/fails; cat /tmp/out >> /tmp/fails; fi; }
+          check node --check app.js
+          check node --check realtime-core.js
+          check node --check mobile.js
+          check node --check suite-nav.js
+          check node --check execution-api.js
+          check node --check execution-ui.js
+          check node --check execution-ops-bridge.js
+          check node --check suite-execution-patch.js
+          check python -m json.tool rwa-execution-config.json
+          grep -Fq 'realtime-core.js?v=2' index.html || echo "FAIL: index realtime core" >> /tmp/fails
+          grep -Fq 'execution-api.js?v=2' suite-nav.js || echo "FAIL: suite nav execution api v2" >> /tmp/fails
+          grep -Fq 'execution-ops-bridge.js?v=2' suite-nav.js || echo "FAIL: suite nav ops bridge v2" >> /tmp/fails
+          grep -Fq 'execution-ui.js?v=2' suite-nav.js || echo "FAIL: suite nav execution ui v2" >> /tmp/fails
+          grep -Fq 'approveAgent' execution-api.js || echo "FAIL: approveAgent" >> /tmp/fails
+          grep -Fq 'orders:{limit,market,cancel,modify,cancelAll' execution-api.js || echo "FAIL: orders contract" >> /tmp/fails
+          grep -Fq 'RWAExecutionAPI' suite-execution-patch.js || echo "FAIL: execution bridge contract" >> /tmp/fails
+          if [ -s /tmp/fails ]; then cat /tmp/fails; exit 1; fi
+          echo 'ALL EXECUTION SOURCE CHECKS PASS'
