@@ -37,6 +37,7 @@ jobs:
           node --check ops-suite.js
           node --check provider-failover.js
           node --check monitor-client.js
+          node --check social-safety-patch.js
           node --check backtest/app.js
           node --check backtest/worker.js
           node --check backtest/public-request.js
@@ -62,11 +63,13 @@ jobs:
           test -s ops.css
           test -s provider-failover.js
           test -s monitor-client.js
+          test -s social-safety-patch.js
           test -s suite.css
           test -s rwa-assets.json
           test -s monitor/config.json
           test -s monitor/status.json
           test -s monitor/monitor.py
+          test -s .github/workflows/monitor.yml
           python -m json.tool rwa-assets.json >/dev/null
           python -m json.tool monitor/config.json >/dev/null
           python -m json.tool monitor/status.json >/dev/null
@@ -75,11 +78,14 @@ jobs:
           grep -q "walletconnect.js" suite-nav.js
           grep -q "provider-failover.js" suite-nav.js
           grep -q "monitor-client.js" suite-nav.js
+          grep -q "social-safety-patch.js" suite-nav.js
           grep -q "RWARisk" ops-suite.js
           grep -q "RWAOps" ops-suite.js
           grep -q "RWAWalletConnect" walletconnect.js
           grep -q "RWAFailover" provider-failover.js
+          grep -q "RWASocialSafety" social-safety-patch.js
           grep -q "wallet-signature-required" monitor/config.json
+          grep -q "cron: '*/5" .github/workflows/monitor.yml
           grep -q "RWAProvider" suite-execution-patch.js
           grep -q "RWARisk" suite-execution-patch.js
           test -s backtest/index.html
