@@ -6,14 +6,15 @@ const ENV_KEY='rwa_exchange_env_v1';
 const MAINNET_GATE='rwa_mainnet_gate_v1';
 const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-const state={env:localStorage.getItem(ENV_KEY)==='mainnet'?'mainnet':'testnet',wallet:'',account:null,positions:[],orders:[],fills:[],history:[],mids:{},loading:false,submitting:false,error:'',lastUpdated:0,poll:null};
+const state={env:'testnet',wallet:'',account:null,positions:[],orders:[],fills:[],history:[],mids:{},loading:false,submitting:false,error:'',lastUpdated:0,poll:null};
 const audit=(type,details={})=>window.RWAAudit?.log?.(type,details);
 const emit=()=>window.dispatchEvent(new CustomEvent('rwa:exchange-state',{detail:snapshotLocal()}));
 function session(){try{return JSON.parse(localStorage.getItem(SESSION)||'null')}catch{return null}}
 function wallet(){return String(window.RWAWalletAuth?.session?.()?.wallet||session()?.wallet||'').toLowerCase()}
 function api(){return window.RWAExecutionAPI}
 function testnet(){return state.env==='testnet'}
-function mainnetUnlocked(){return localStorage.getItem(MAINNET_GATE)==='E2E_VERIFIED'}
+function mainnetGate(){try{const g=JSON.parse(localStorage.getItem(MAINNET_GATE)||'null');return g&&typeof g==='object'?g:null}catch{return null}}
+function mainnetUnlocked(){const g=mainnetGate(),w=wallet();return !!(w&&g?.status==='E2E_VERIFIED'&&String(g.wallet||'').toLowerCase()===w&&Number(g.verifiedAt)>0)}
 function n(v,d=0){const x=Number(v);return Number.isFinite(x)?x:d}
 function positionRows(ch){return (ch?.assetPositions||[]).map(x=>x.position||x).filter(p=>Math.abs(n(p?.szi))>0)}
 function accountSummary(ch,positions){
@@ -38,15 +39,14 @@ async function refresh({silent=false}={}){
  }catch(e){state.error=String(e?.message||e);if(!silent)console.warn('RWA exchange refresh',e)}finally{state.loading=false;emit()}
  return snapshotLocal();
 }
-function setEnv(env){env=env==='mainnet'?'mainnet':'testnet';if(env==='mainnet'&&!mainnetUnlocked())throw Error('Mainnet is locked until the real-wallet testnet E2E checklist is verified');state.env=env;localStorage.setItem(ENV_KEY,env);audit('exchange.environment',{env});refresh();return env}
+function setEnv(env){env=env==='mainnet'?'mainnet':'testnet';if(env==='mainnet'&&!mainnetUnlocked())throw Error('Mainnet is locked until the real-wallet testnet E2E checklist is verified for this wallet');state.env=env;localStorage.setItem(ENV_KEY,env);audit('exchange.environment',{env,wallet:wallet()});refresh();return env}
 function selectedCoin(){try{const p=typeof S!=='undefined'?S.map?.get(S.selected):null;return String(p?.base||'BTC').toUpperCase()}catch{return'BTC'}}
 function normalizeCoin(v){const c=String(v||selectedCoin()).trim().toUpperCase().replace(/[-_/ ]?(USDT|USDC)$/,'');if(!c)throw Error('Coin is required');return c}
-function guardSubmit(){if(state.submitting)throw Error('Another execution is still pending');if(!wallet())throw Error('Connect wallet first');if(!api())throw Error('Execution API unavailable');if(state.env==='mainnet'&&!mainnetUnlocked())throw Error('Mainnet is locked until testnet E2E is verified')}
+function guardSubmit(){if(state.submitting)throw Error('Another execution is still pending');if(!wallet())throw Error('Connect wallet first');if(!api())throw Error('Execution API unavailable');if(state.env==='mainnet'&&!mainnetUnlocked())throw Error('Mainnet is locked until testnet E2E is verified for this wallet')}
 async function withSubmit(fn,meta){guardSubmit();state.submitting=true;emit();audit('exchange.submit.start',meta);try{const out=await fn();audit('exchange.submit.success',meta);setTimeout(()=>refresh({silent:true}),500);return out}catch(e){audit('exchange.submit.failed',{...meta,error:String(e?.message||e)});throw e}finally{state.submitting=false;emit()}}
 async function trigger({coin,side,size,triggerPx,tpsl}){
  const a=api();if(a?.orders?.trigger)return a.orders.trigger({coin,side,size,triggerPx,tpsl,testnet:testnet(),preferAgent:true});
- if(window.RWAExecutionOpsBridge?.trigger)return window.RWAExecutionOpsBridge.trigger({coin,side,size,triggerPx,tpsl,testnet:testnet()});
- throw Error('TP/SL execution bridge unavailable');
+ throw Error('TP/SL execution API unavailable');
 }
 async function submit(o={}){
  const coin=normalizeCoin(o.coin),side=String(o.side||'BUY').toUpperCase()==='SELL'?'SELL':'BUY',kind=String(o.type||'MARKET').toUpperCase()==='LIMIT'?'LIMIT':'MARKET';
@@ -65,15 +65,15 @@ async function cancelAll(){return withSubmit(()=>api().orders.cancelAll({testnet
 async function modify(o){const coin=normalizeCoin(o.coin);return withSubmit(()=>api().orders.modify({coin,oid:Number(o.oid),side:o.side,price:n(o.price),size:n(o.size),reduceOnly:!!o.reduceOnly,testnet:testnet(),preferAgent:true}),{action:'modify',coin,oid:o.oid,env:state.env})}
 async function closePosition(coin){coin=normalizeCoin(coin);const p=state.positions.find(x=>String(x.coin).toUpperCase()===coin);if(!p)throw Error('Position not found');const signed=n(p.szi);if(!signed)throw Error('Position is already flat');return withSubmit(()=>api().orders.market({coin,side:signed>0?'SELL':'BUY',size:Math.abs(signed),reduceOnly:true,testnet:testnet(),preferAgent:true}),{action:'close',coin,size:Math.abs(signed),env:state.env})}
 async function preflight(){const out={env:state.env,wallet:wallet(),checks:[],ready:false};
- const add=(name,ok,detail='')=>out.checks.push({name,ok:!!ok,detail});add('wallet login',!!out.wallet,out.wallet||'not connected');add('execution API',!!api(),api()?.version||'loading');
+ const add=(name,ok,detail='')=>out.checks.push({name,ok:!!ok,detail});add('environment',state.env==='testnet',state.env==='testnet'?'TESTNET':'MAINNET — switch to testnet for E2E');add('wallet login',!!out.wallet,out.wallet||'not connected');add('execution API',!!api(),api()?.version||'loading');
  if(!out.wallet||!api())return out;
  try{const h=await api().health(testnet());add('venue API',h.api==='ok',h.api||h.error||'unknown')}catch(e){add('venue API',false,String(e.message||e))}
  try{const m=await api().info('meta',{},testnet());add('perp universe',Array.isArray(m?.universe)&&m.universe.length>0,`${m?.universe?.length||0} assets`)}catch(e){add('perp universe',false,String(e.message||e))}
  try{const ch=await api().account.state(testnet());add('account state',!!ch,'readable');add('test collateral',n(ch?.marginSummary?.accountValue)>0,`equity ${n(ch?.marginSummary?.accountValue).toFixed(2)}`)}catch(e){add('account state',false,String(e.message||e))}
  const ag=api().agent?.status?.(testnet());add('API wallet',!!ag,ag?.address||'master-sign mode');out.ready=out.checks.every(x=>x.name==='API wallet'||x.ok);return out;
 }
-function start(){clearInterval(state.poll);refresh();state.poll=setInterval(()=>{if(document.visibilityState==='visible'&&wallet())refresh({silent:true})},2500)}
-window.addEventListener('rwa:wallet-login',()=>{state.wallet=wallet();refresh()});window.addEventListener('rwa:wallet-logout',()=>{state.wallet='';refresh()});window.addEventListener('rwa:agent-changed',()=>refresh({silent:true}));document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh({silent:true})});
-window.RWAExchangeCore={version:'1.0.0',state:()=>snapshotLocal(),refresh,setEnv,testnet,mainnetUnlocked,selectedCoin,submit,cancel,cancelAll,modify,closePosition,preflight,start};
+function start(){clearInterval(state.poll);if(localStorage.getItem(ENV_KEY)==='mainnet')localStorage.setItem(ENV_KEY,'testnet');refresh();state.poll=setInterval(()=>{if(document.visibilityState==='visible'&&wallet())refresh({silent:true})},2500)}
+window.addEventListener('rwa:wallet-login',()=>{state.wallet=wallet();if(!mainnetUnlocked()&&state.env!=='testnet')setEnv('testnet');else refresh()});window.addEventListener('rwa:wallet-logout',()=>{state.wallet='';state.env='testnet';localStorage.setItem(ENV_KEY,'testnet');refresh()});window.addEventListener('rwa:agent-changed',()=>refresh({silent:true}));document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh({silent:true})});
+window.RWAExchangeCore={version:'1.0.0',safety:'wallet-bound-mainnet-gate-v2',state:()=>snapshotLocal(),refresh,setEnv,testnet,mainnetUnlocked,selectedCoin,submit,cancel,cancelAll,modify,closePosition,preflight,start};
 start();
 })();
