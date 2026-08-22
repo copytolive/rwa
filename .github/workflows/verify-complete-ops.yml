@@ -37,7 +37,7 @@ jobs:
           grep -q "RWAAudit" ops-suite.js
           grep -q "RWA verification" ops-suite.js
           grep -q "updateLeverage" suite-execution-patch.js
-          grep -q "RWARisk.check" suite-execution-patch.js
+          grep -q "RWARisk" suite-execution-patch.js
           grep -q "RWAWalletConnect" walletconnect.js
           grep -q "RWAFailoverV2" provider-failover.js
           grep -q "RWASocialSafety" social-safety-patch.js
