@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "updated_at": "2026-08-23",
+  "thresholds": {
+    "internal": 3,
+    "closed": 20,
+    "public": 100
+  },
+  "proofs": [],
+  "note": "Entries are accepted only by the BETA-PROOF workflow after wallet signature, official worker health, and Hyperliquid testnet round-trip activity verification. Mainnet launch requires the public threshold."
+}
