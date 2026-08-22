@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "enabled": false,
+  "base_url": "",
+  "mode": "delegated-agent",
+  "master_private_key_required": false,
+  "agent_private_key_scope": "trade-only delegated Hyperliquid agent",
+  "note": "Set enabled=true and base_url only after the deployed /healthz endpoint passes launch-gate verification."
+}
