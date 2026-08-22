@@ -4,9 +4,12 @@ on:
   push:
     branches: ["main"]
   workflow_dispatch:
+  issues:
+    types: [opened]
 
 permissions:
   contents: read
+  issues: write
   pages: write
   id-token: write
 
@@ -17,6 +20,8 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    outputs:
+      verified: ${{ steps.ok.outputs.verified }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,6 +29,14 @@ jobs:
         run: node --check app.js
       - name: Verify terminal files
         run: test -s index.html && test -s app.js && test -s styles.css
+      - name: Mark verification
+        id: ok
+        run: echo "verified=true" >> "$GITHUB_OUTPUT"
+      - name: Report verification
+        if: github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment "${{ github.event.issue.number }}" --repo "${{ github.repository }}" --body "PREMIUM MOBILE UI JS PASS. Terminal files verified; starting Pages deployment."
 
   deploy:
     needs: verify
@@ -31,6 +44,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -43,3 +58,21 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  report:
+    if: always() && github.event_name == 'issues'
+    needs: [verify, deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report final result
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERIFY: ${{ needs.verify.result }}
+          DEPLOY: ${{ needs.deploy.result }}
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+        run: |
+          if [ "$VERIFY" = "success" ] && [ "$DEPLOY" = "success" ]; then
+            gh issue comment "${{ github.event.issue.number }}" --repo "${{ github.repository }}" --body "PREMIUM MOBILE UI DEPLOYMENT SUCCESS. Live at ${PAGE_URL:-https://narzulalistiqlal.github.io/rwa/}"
+          else
+            gh issue comment "${{ github.event.issue.number }}" --repo "${{ github.repository }}" --body "PREMIUM MOBILE UI DEPLOYMENT FAILED. verify=$VERIFY deploy=$DEPLOY"
+          fi
