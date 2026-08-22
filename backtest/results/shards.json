@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "verification": "binary SHA-256 Merkle root over sorted evaluation-ID bytes",
+  "shards": [
+    {
+      "shard_id": "07f97034ad65f4a1e599be90b9df1fe48950808f20f6b31d9ae7b84673412d1f",
+      "month": "2018-01",
+      "engine_version": "vectorforge-batch-1.0.0",
+      "dataset_sha256": "ca0ce287bd3029753de6af6f29cdea1e5821d41291f93b925dd7902ebdb2812b",
+      "evaluation_count": 59,
+      "merkle_root": "81d6a48a829c6a114d645032fb6ec859eabba90f719be23e1cd2633b718c51d1",
+      "valid_samples": 1905718,
+      "completed_at": "2026-08-22T18:42:38.218609+00:00"
+    },
+    {
+      "shard_id": "6b267065bc60d06b64fde50780ab0d46aed4bb11348d23f0b89fa584f5436c00",
+      "month": "2009-05",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "18fd3c5001b4232526ea41a4e85eca19c09f11ab064e9e2feafa87678f75fb8e",
+      "evaluation_count": 59,
+      "merkle_root": "cbd411407511820aa6562cb634f3881d600c23da2320ede2ae0f1d1a9676a5c4",
+      "valid_samples": 1714377,
+      "completed_at": "2026-08-22T18:55:40.011260+00:00"
+    }
+  ]
+}
