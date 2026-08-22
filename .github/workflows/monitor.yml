@@ -10,12 +10,9 @@ on:
       - "monitor/config.json"
       - "monitor/monitor.py"
       - ".github/workflows/monitor.yml"
-  issues:
-    types: [opened]
 
 permissions:
   contents: write
-  issues: write
 
 concurrency:
   group: rwa-monitor
@@ -23,7 +20,6 @@ concurrency:
 
 jobs:
   monitor:
-    if: github.event_name != 'issues'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -50,53 +46,3 @@ jobs:
           git add monitor/status.json
           git commit -m 'chore: refresh 24x7 monitor status [skip ci]'
           git push
-
-  browser_fix:
-    if: github.event_name == 'issues' && startsWith(github.event.issue.title, '[QA-BROWSER-FIX]')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Harden realtime core
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('realtime-core.js'); s=p.read_text()
-          if 'lastAllMessage=0' not in s:
-              s=s.replace('let detailAttempt=0,allAttempt=0,detailRetry=0,allRetry=0,lastDetailMessage=0;','let detailAttempt=0,allAttempt=0,detailRetry=0,allRetry=0,lastDetailMessage=0,lastAllMessage=0;')
-          if 'lastAllMessage=Date.now()' not in s:
-              old="ws.onmessage=e=>{try{const arr=JSON.parse(e.data);if(!Array.isArray(arr))return;"
-              new="ws.onmessage=e=>{lastAllMessage=Date.now();try{const arr=JSON.parse(e.data);if(!Array.isArray(arr))return;"
-              if old not in s: raise SystemExit('all ticker handler contract changed')
-              s=s.replace(old,new,1)
-          if 'async function restHeartbeat()' not in s:
-              marker='setInterval(persistUniverse,3000);'
-              extra='''setInterval(()=>{try{const now=Date.now();if(S.detailWS&&S.detailWS.readyState===1&&lastDetailMessage&&now-lastDetailMessage>4500){S.detailWS.__rwaManual=false;try{S.detailWS.close()}catch(_){}}if(S.marketWS&&S.marketWS.readyState===1&&lastAllMessage&&now-lastAllMessage>7000){S.marketWS.__rwaManual=false;try{S.marketWS.close()}catch(_){}}}catch(_){}},2200);
-async function restHeartbeat(){if(Date.now()-lastDetailMessage<5500)return;const sym=S.selected;for(const base of ['https://data-api.binance.vision','https://api.binance.com','https://api1.binance.com']){const c=new AbortController(),tm=setTimeout(()=>c.abort(),1800);try{const r=await fetch(`${base}/api/v3/ticker/24hr?symbol=${encodeURIComponent(sym)}`,{cache:'no-store',signal:c.signal});clearTimeout(tm);if(!r.ok)continue;const m=await r.json(),x=ensurePair(sym);x.price=n(m.lastPrice);x.change=n(m.priceChangePercent);x.high=n(m.highPrice);x.low=n(m.lowPrice);x.vol=n(m.quoteVolume);renderHeader(x);updatePairDOM(x,null);live('LIVE · REST fallback');lastDetailMessage=Date.now();return}catch(_){clearTimeout(tm)}}}
-setInterval(restHeartbeat,5000);'''
-              if marker not in s: raise SystemExit('persist marker missing')
-              s=s.replace(marker,marker+'\n'+extra,1)
-          p.write_text(s)
-          p=Path('index.html'); s=p.read_text()
-          s=s.replace('styles.css?v=6','styles.css?v=7').replace('mobile.css?v=5','mobile.css?v=6').replace('realtime-core.js?v=1','realtime-core.js?v=2')
-          p.write_text(s)
-          PY
-          node --check app.js
-          node --check realtime-core.js
-          node --check mobile.js
-          grep -Fq 'realtime-core.js?v=2' index.html
-          grep -Fq 'styles.css?v=7' index.html
-          grep -Fq 'mobile.css?v=6' index.html
-          grep -Fq 'REST fallback' realtime-core.js
-          ! grep -Fq 'browser-recovery.js' index.html
-          ! grep -Fq 'instantChartBoot();loadSuite()' mobile.js
-      - name: Commit fix
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add realtime-core.js index.html
-          git commit -m 'fix: harden frozen browser realtime core' || true
-          git push || true
-      - name: Report success
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh issue comment "${{ github.event.issue.number }}" --body "BROWSER CORE FIX SUCCESS. Startup suite loop removed; TradingView excluded from automatic boot; selected realtime has 3 WebSocket endpoints, frozen-socket watchdog, REST fallback, cached market universe, and fresh CSS/core asset versions."
