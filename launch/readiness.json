@@ -1,7 +1,7 @@
 {
   "schema": 3,
-  "generated_at": "2026-08-22T23:50:32.811Z",
-  "status": "ENGINEERING_COMPLETE_AWAITING_EXTERNAL_PROOFS",
+  "generated_at": "2026-08-22T23:51:42.422Z",
+  "status": "BLOCKED",
   "engineering_ready": true,
   "beta_ready": false,
   "beta_passed": false,
