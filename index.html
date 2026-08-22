@@ -12,7 +12,7 @@
 <link rel="preload" href="app.js?v=10" as="script">
 <link rel="preload" href="mobile.js?v=12" as="script">
 <link rel="preload" href="realtime-core.js?v=2" as="script">
-<link rel="preload" href="execution-api.js?v=1" as="script">
+<link rel="preload" href="execution-api.js?v=2" as="script">
 <link rel="stylesheet" href="styles.css?v=7">
 <link rel="stylesheet" href="mobile.css?v=6">
 </head>
@@ -32,7 +32,7 @@
   </nav>
   <div class="top-actions">
     <div class="status"><span id="liveDot" class="dot"></span><span id="liveText">Market network</span></div>
-    <button class="signin" onclick="toast('Account access will be enabled with identity and wallet integration')">Sign in</button>
+    <button class="signin" onclick="toast('Connect wallet to access your RWA account')">Connect Wallet</button>
     <button class="institutional" onclick="toast('Institutional onboarding is being prepared')">Request access</button>
     <button class="mobile-social-head" style="display:none" data-mobile-header="social" aria-label="Open social trading">◎</button>
   </div>
@@ -92,10 +92,10 @@
 <div id="toast" class="toast"></div>
 <script src="app.js?v=10"></script>
 <script src="realtime-core.js?v=2"></script>
-<script src="execution-api.js?v=1"></script>
-<script src="execution-ops-bridge.js?v=1"></script>
-<script src="execution-ui.js?v=1"></script>
-<script src="suite-execution-patch.js?v=5"></script>
+<script src="execution-api.js?v=2"></script>
+<script src="execution-ops-bridge.js?v=2"></script>
+<script src="execution-ui.js?v=3"></script>
+<script src="suite-execution-patch.js?v=6"></script>
 <script src="mobile.js?v=12"></script>
 </body>
 </html>
