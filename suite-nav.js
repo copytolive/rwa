@@ -2,7 +2,9 @@
 const nav=document.querySelector('.mobile-tabs');
 if(nav){
   nav.innerHTML='<a href="#markets" data-mobile-nav="markets"><span>⌕</span><small>Markets</small></a><a class="active" href="#terminal" data-mobile-nav="chart"><span>⌁</span><small>Chart</small></a><a href="#social" data-mobile-nav="social"><span>◎</span><small>Social</small></a><a href="#suite" data-mobile-nav="hub"><span>◇</span><small>Hub</small></a><a href="#suite" data-mobile-nav="portfolio"><span>▣</span><small>Portfolio</small></a>';
+  nav.style.setProperty('grid-template-columns','repeat(5,1fr)','important');
 }
+const ptab=document.querySelector('[data-suite-tab="profile"]');if(ptab)ptab.textContent='Profile + P&L';
 function hideSuite(){
   document.body.classList.remove('suite-open');
   const s=document.getElementById('suite');if(s)s.style.display='none';
@@ -34,4 +36,7 @@ for(const b of prod){
 }
 const sign=document.querySelector('.signin');if(sign)sign.onclick=()=>suite('profile');
 const inst=document.querySelector('.institutional');if(inst)inst.onclick=()=>suite('rwa');
+if(!document.querySelector('script[data-rwa-exec-patch]')){
+  const s=document.createElement('script');s.src='suite-execution-patch.js?v=1';s.dataset.rwaExecPatch='1';document.body.appendChild(s);
+}
 })();
