@@ -27,12 +27,15 @@ export class RWAWorkerExecutionAPI {
   }
 
   get apiUrl(){return this.testnet?'https://api.hyperliquid-testnet.xyz':'https://api.hyperliquid.xyz'}
+  apiUrlFor(testnet){return testnet?'https://api.hyperliquid-testnet.xyz':'https://api.hyperliquid.xyz'}
 
-  async info(type,data={}){
-    const r=await fetch(this.apiUrl+'/info',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({type,...data}),signal:AbortSignal.timeout(15000)});
+  async infoAt(testnet,type,data={}){
+    const r=await fetch(this.apiUrlFor(!!testnet)+'/info',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({type,...data}),signal:AbortSignal.timeout(15000)});
     if(!r.ok)throw Error(`Hyperliquid info HTTP ${r.status}`);
     return r.json();
   }
+
+  async info(type,data={}){return this.infoAt(this.testnet,type,data)}
 
   async verifyAgent(){
     const rows=await this.info('extraAgents',{user:this.master});
@@ -129,10 +132,9 @@ export class RWAWorkerExecutionAPI {
 
   async accountState(){return this.info('clearinghouseState',{user:this.master})}
   async portfolio(){return this.info('portfolio',{user:this.master})}
-  async fillsByTime(user,startTime,endTime=Date.now(),sourceTestnet=this.testnet){
-    const url=sourceTestnet?'https://api.hyperliquid-testnet.xyz':'https://api.hyperliquid.xyz';
-    const r=await fetch(url+'/info',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({type:'userFillsByTime',user,startTime,endTime,aggregateByTime:false}),signal:AbortSignal.timeout(15000)});
-    if(!r.ok)throw Error(`Source fills HTTP ${r.status}`);return r.json();
+  async sourceState(user,sourceTestnet=false){return this.infoAt(!!sourceTestnet,'clearinghouseState',{user})}
+  async fillsByTime(user,startTime,endTime=Date.now(),sourceTestnet=false){
+    return this.infoAt(!!sourceTestnet,'userFillsByTime',{user,startTime,endTime,aggregateByTime:false});
   }
 }
 
