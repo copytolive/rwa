@@ -1,5 +1,5 @@
 let cancelled=false;
-self.onmessage=e=>{if(e.data?.type==='run'){cancelled=false;run(e.data.config).catch(err=>postMessage({type:'error',message:String(err?.message||err)}))}else if(e.data?.type==='cancel'){cancelled=true}};
+self.onmessage=e=>{if(e.data?.type==='run'){cancelled=false;run(e.data.config,e.data.file||null).catch(err=>postMessage({type:'error',message:String(err?.message||err)}))}else if(e.data?.type==='cancel'){cancelled=true}};
 
 const pip=0.0001;
 
@@ -64,12 +64,12 @@ class Strategy{
 }
 
 function parsePrices(line,fallbackSpreadPips){
-  const s=line.trim();if(!s)return null;const parts=s.split(/[\s,;]+/,3);const bid=Number(parts[0]);if(!Number.isFinite(bid)||!(bid>0.5&&bid<2.5))return null;
-  let ask=parts.length>1?Number(parts[1]):NaN;if(!Number.isFinite(ask)||!(ask>=bid&&ask-bid<0.02))ask=bid+fallbackSpreadPips*pip;
+  const s=line.trim();if(!s)return null;const parts=s.split(/[\s,;]+/,3);const bid=Number(parts[0]);if(!Number.isFinite(bid)||!(bid>0.000001&&bid<1000000))return null;
+  let ask=parts.length>1?Number(parts[1]):NaN;if(!Number.isFinite(ask)||ask<bid||ask-bid>Math.max(0.02,bid*0.02))ask=bid+fallbackSpreadPips*pip;
   return [bid,ask];
 }
 
-async function run(c){
+async function run(c,customFile){
   const st=new Strategy(c);let pos=null,samples=0,events=0,wins=0,grossPos=0,grossNeg=0,netR=0,peak=0,maxDD=0,lastBid=null,lastAsk=null,processed=0;
   const record=r=>{events++;netR+=r;if(r>0){wins++;grossPos+=r}else grossNeg+=Math.abs(r);if(netR>peak)peak=netR;maxDD=Math.max(maxDD,peak-netR)};
   const maybeExit=(bid,ask)=>{
@@ -81,12 +81,12 @@ async function run(c){
     lastBid=bid;lastAsk=ask;samples++;maybeExit(bid,ask);const mid=(bid+ask)/2;const sig=st.signal(mid);
     if(!pos&&sig){const d=c.slPips*pip;pos=sig===1?{dir:1,entry:ask,stop:ask-d,target:ask+d*c.rr}:{dir:-1,entry:bid,stop:bid+d,target:bid-d*c.rr}}
   };
-
-  for(let mi=0;mi<c.months.length;mi++){
-    if(cancelled)throw new Error('Cancelled');const ym=c.months[mi],url=`${c.rawBase}/EURUSD-${ym}_converted.txt`;
-    postMessage({type:'progress',pct:mi/c.months.length*100,text:`Downloading ${ym}…`,log:`${ym} · fetch`});
-    const res=await fetch(url,{cache:'force-cache'});if(!res.ok)throw new Error(`${ym}: HTTP ${res.status}`);
-    const reader=res.body.getReader(),decoder=new TextDecoder();let carry='',local=0;
+  const labels=customFile?[customFile.name]:c.months;
+  for(let mi=0;mi<labels.length;mi++){
+    if(cancelled)throw new Error('Cancelled');const label=labels[mi];let reader;
+    if(customFile){postMessage({type:'progress',pct:0,text:`Reading ${label}…`,log:`${label} · local file`});reader=customFile.stream().getReader()}
+    else{const url=`${c.rawBase}/EURUSD-${label}_converted.txt`;postMessage({type:'progress',pct:mi/labels.length*100,text:`Downloading ${label}…`,log:`${label} · fetch`});const res=await fetch(url,{cache:'force-cache'});if(!res.ok)throw new Error(`${label}: HTTP ${res.status}`);reader=res.body.getReader()}
+    const decoder=new TextDecoder();let carry='',local=0;
     while(true){
       if(cancelled)throw new Error('Cancelled');const {value,done}=await reader.read();carry+=decoder.decode(value||new Uint8Array(),{stream:!done});
       const lines=carry.split(/\r?\n/);carry=lines.pop()||'';
@@ -94,9 +94,9 @@ async function run(c){
       if(done)break;
     }
     if(carry){const q=parsePrices(carry,c.spreadPips);if(q){processQuote(q[0],q[1]);local++}}
-    processed++;postMessage({type:'progress',pct:(mi+1)/c.months.length*100,text:`Processed ${ym} · ${local.toLocaleString()} samples`,log:`${ym} · ${local.toLocaleString()} valid samples`});
+    processed++;postMessage({type:'progress',pct:(mi+1)/labels.length*100,text:`Processed ${label} · ${local.toLocaleString()} samples`,log:`${label} · ${local.toLocaleString()} valid samples`});
   }
   if(pos&&lastBid!=null&&lastAsk!=null){const px=pos.dir===1?lastBid:lastAsk;const d=c.slPips*pip;let r=pos.dir===1?(px-pos.entry)/d:(pos.entry-px)/d;r=Math.max(-1,Math.min(c.rr,r));record(r);pos=null}
-  const weeks=Math.max(1,c.months.length*30.4375/7);
-  postMessage({type:'result',result:{netR,positiveRate:events?wins/events*100:0,gainLossRatio:grossNeg?grossPos/grossNeg:(grossPos?Infinity:0),maxDrawdownR:maxDD,events,eventsPerWeek:events/weeks,samples,monthsProcessed:processed}});
+  const activeWeeks=Math.max(1,samples/(5*24*3600));
+  postMessage({type:'result',result:{netR,positiveRate:events?wins/events*100:0,gainLossRatio:grossNeg?grossPos/grossNeg:(grossPos?Infinity:0),maxDrawdownR:maxDD,events,eventsPerWeek:events/activeWeeks,samples,monthsProcessed:processed,sourceType:customFile?'custom-local':'public-github'}});
 }
