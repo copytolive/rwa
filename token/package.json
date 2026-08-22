@@ -1,0 +1,13 @@
+{
+  "name": "rwa-token-pre-tge",
+  "private": true,
+  "version": "0.1.0",
+  "description": "PRE-TGE contract compilation only; no automatic deployment",
+  "scripts": {
+    "compile": "rm -rf build && mkdir -p build && solcjs --base-path . --include-path node_modules --abi --bin contracts/RWAToken.sol contracts/RWAVestingVault.sol -o build"
+  },
+  "devDependencies": {
+    "@openzeppelin/contracts": "5.1.0",
+    "solc": "0.8.24"
+  }
+}
