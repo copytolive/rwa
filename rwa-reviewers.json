@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "updated_at": "2026-08-23",
+  "reviewers": [],
+  "note": "Only wallet addresses explicitly listed here may sign a public VERIFIED asset approval."
+}
