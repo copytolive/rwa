@@ -4,11 +4,14 @@ on:
   push:
     branches: ["main"]
   workflow_dispatch:
+  issues:
+    types: [opened]
 
 permissions:
   contents: read
   pages: write
   id-token: write
+  issues: write
 
 concurrency:
   group: "pages"
@@ -21,9 +24,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Validate JavaScript syntax
-        run: node --check app.js
+        run: node --check app.js && node --check mobile.js
       - name: Verify terminal files
-        run: test -s index.html && test -s app.js && test -s styles.css
+        run: test -s index.html && test -s app.js && test -s mobile.js && test -s styles.css
+      - name: Report verification pass
+        if: github.event_name == 'issues'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body: 'MOBILE REDESIGN JS PASS. app.js + mobile.js syntax and production files verified; starting Pages deployment.'})
 
   deploy:
     needs: verify
@@ -43,3 +52,9 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Report deployment success
+        if: github.event_name == 'issues'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body: 'MOBILE REDESIGN DEPLOYMENT SUCCESS. Live at https://narzulalistiqlal.github.io/rwa/'})
