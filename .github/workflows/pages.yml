@@ -35,11 +35,15 @@ jobs:
           node --check walletconnect.js
           node --check walletconnect-auth-patch.js
           node --check ops-suite.js
+          node --check risk-hardening.js
           node --check provider-failover.js
           node --check monitor-client.js
+          node --check monitor-config-client.js
           node --check social-safety-patch.js
           node --check audit-hooks.js
-          node --check verification-sign-patch.js
+          node --check rwa-verify-client.js
+          node --check tools/rwa-verify.mjs
+          node --check tools/monitor-config.mjs
           node --check backtest/app.js
           node --check backtest/worker.js
           node --check backtest/public-request.js
@@ -63,40 +67,63 @@ jobs:
           test -s walletconnect-auth-patch.js
           test -s ops-suite.js
           test -s ops.css
+          test -s risk-hardening.js
           test -s provider-failover.js
           test -s monitor-client.js
+          test -s monitor-config-client.js
           test -s social-safety-patch.js
           test -s audit-hooks.js
-          test -s verification-sign-patch.js
+          test -s rwa-verify-client.js
           test -s suite.css
           test -s rwa-assets.json
+          test -s rwa-reviewers.json
+          test -s moderation.json
+          test -s tools/rwa-verify.mjs
+          test -s .github/workflows/rwa-registry-review.yml
           test -s monitor/config.json
           test -s monitor/status.json
           test -s monitor/monitor.py
+          test -s monitor/admin-wallets.json
+          test -s monitor-config-client.js
+          test -s tools/monitor-config.mjs
+          test -s .github/workflows/monitor-config.yml
           test -s .github/workflows/monitor.yml
           python -m json.tool rwa-assets.json >/dev/null
+          python -m json.tool rwa-reviewers.json >/dev/null
+          python -m json.tool moderation.json >/dev/null
           python -m json.tool monitor/config.json >/dev/null
           python -m json.tool monitor/status.json >/dev/null
+          python -m json.tool monitor/admin-wallets.json >/dev/null
           grep -Fq "suite-nav.js" mobile.js
           grep -Fq "ops-suite.js" suite-nav.js
+          grep -Fq "risk-hardening.js" suite-nav.js
           grep -Fq "walletconnect.js" suite-nav.js
           grep -Fq "provider-failover.js" suite-nav.js
           grep -Fq "monitor-client.js" suite-nav.js
+          grep -Fq "monitor-config-client.js" suite-nav.js
           grep -Fq "social-safety-patch.js" suite-nav.js
           grep -Fq "audit-hooks.js" suite-nav.js
-          grep -Fq "verification-sign-patch.js" suite-nav.js
+          grep -Fq "rwa-verify-client.js" suite-nav.js
           grep -Fq "RWARisk" ops-suite.js
           grep -Fq "RWAOps" ops-suite.js
+          grep -Fq "RWARiskHardening" risk-hardening.js
           grep -Fq "RWAWalletConnect" walletconnect.js
-          grep -Fq "RWAFailover" provider-failover.js
-          grep -Fq "RWASocialSafety" social-safety-patch.js
+          grep -Fq "RWAFailoverV2" provider-failover.js
+          grep -Fq "api.exchange.coinbase.com" provider-failover.js
+          grep -Fq "api.kraken.com" provider-failover.js
+          grep -Fq "RWASocialSafetyV2" social-safety-patch.js
+          grep -Fq "moderation.json" social-safety-patch.js
           grep -Fq "RWAAuditHooks" audit-hooks.js
-          grep -Fq "RWAVerificationSign" verification-sign-patch.js
+          grep -Fq "RWAVerifyClient" rwa-verify-client.js
+          grep -Fq "rwa-reviewers.json" rwa-verify-client.js
+          grep -Fq "RWA 24X7 CONFIG" monitor-config-client.js
           grep -Fq "wallet-signature-required" monitor/config.json
           grep -Fq "cron: '*/5" .github/workflows/monitor.yml
           grep -Fq "RWAProvider" suite-execution-patch.js
           grep -Fq "RWARisk" suite-execution-patch.js
           grep -Fq "updateLeverage" suite-execution-patch.js
+          grep -Fq "[RWA-VERIFY]" .github/workflows/rwa-registry-review.yml
+          grep -Fq "[MONITOR-CONFIG]" .github/workflows/monitor-config.yml
           test -s backtest/index.html
           test -s backtest/app.js
           test -s backtest/worker.js
