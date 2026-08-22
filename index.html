@@ -7,7 +7,7 @@
 <title>RWA Markets — Global Real-World Asset Market Infrastructure</title>
 <meta name="description" content="A premium live market terminal for real-world-asset discovery, professional charting, market depth and hundreds of active instruments.">
 <link rel="stylesheet" href="styles.css?v=6">
-<link rel="stylesheet" href="mobile.css?v=1">
+<link rel="stylesheet" href="mobile.css?v=2">
 </head>
 <body class="mview-overview">
 <div class="app">
@@ -33,38 +33,21 @@
 <div class="productbar"><div class="product-left"><strong>Markets</strong><span>Global Terminal</span><span class="beta">PUBLIC BETA</span></div><div class="product-nav"><button class="active">Live Markets</button><button onclick="toast('RWA Index is being prepared')">RWA Index</button><button onclick="toast('Verified Assets is being prepared')">Asset Marketplace</button><button onclick="toast('Research workspace is being prepared')">Research</button></div><div class="product-right"><span class="secure-dot"></span> Live infrastructure</div></div>
 <div class="trustbar"><span><b>DATA</b> Real-time public exchange feeds</span><span><b>CHARTS</b> Professional TradingView interface</span><span><b>UNIVERSE</b> Hundreds of active markets</span><span><b>RWA</b> Built for real-world asset discovery</span></div>
 
-<section class="mobile-home" aria-label="Mobile market overview">
-  <div class="mobile-dashboard-head">
-    <div><small>RWA MARKET TERMINAL</small><h1>Markets</h1></div>
-    <div class="mdh-live"><i></i> LIVE</div>
+<section class="mobile-home" aria-label="Mobile markets header">
+  <div class="mobile-simple-head">
+    <div><h1>Markets</h1><small id="mobilePairCount">Loading markets…</small></div>
+    <div class="mobile-live-pill"><span id="mobileLiveDot"></span> LIVE</div>
   </div>
-  <div class="mobile-feature-card">
-    <div class="mfc-orb"></div>
-    <div class="mfc-top"><span>ACTIVE MARKET</span><button onclick="toast('Watchlists will be enabled with account access')" aria-label="Add to watchlist">☆</button></div>
-    <div class="mfc-main"><div class="mfc-token" id="mobileSelIcon">BT</div><div class="mfc-name"><strong id="mobilePairName">BTC / USDT</strong><small id="mobilePairLabel">Bitcoin · Binance Spot</small></div></div>
-    <div class="mfc-price-row"><strong id="mobileSelectedPrice">—</strong><span id="mobileSelectedChange">—</span></div>
-    <div class="mfc-chart"><canvas id="mobileSparkline"></canvas></div>
-    <div class="mfc-stats"><div><small>24H HIGH</small><b id="mobileHigh">—</b></div><div><small>24H LOW</small><b id="mobileLow">—</b></div><div><small>VOLUME</small><b id="mobileVol">—</b></div></div>
-  </div>
-  <div class="mobile-quick-grid" aria-label="Market shortcuts">
-    <button data-mobile-action="search"><span>⌕</span><small>Search</small></button>
-    <button data-mobile-action="rwa"><span>R</span><small>RWA</small></button>
-    <button data-mobile-action="gainers"><span>↗</span><small>Movers</small></button>
-    <button onclick="toast('Price alerts will be enabled with account access')"><span>◌</span><small>Alerts</small></button>
-  </div>
-  <div class="mobile-section-head"><div><span>DISCOVER</span><h2>Market watch</h2></div><small id="mobilePairCount">Loading markets…</small></div>
 </section>
 
 <div class="layout">
 <aside class="left" id="markets"><div class="aside-label"><span>MARKET UNIVERSE</span><small>Live instruments</small></div><div class="market-head"><div class="search"><span class="search-icon">⌕</span><input id="search" autocomplete="off" placeholder="Search BTC, ONDO, ETH…"></div><div class="filters"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="rwa">RWA</button><button class="filter" data-filter="gainers">Gainers</button><button class="filter" data-filter="losers">Losers</button></div><div class="paircount" id="pairCount">Loading exchange markets…</div></div><div class="pairlist" id="pairList"><div class="empty">Loading live USDT markets…</div></div></aside>
 
 <main class="main" id="terminal">
-  <div class="mobile-terminal-label"><span>PROFESSIONAL CHART</span><b><i></i> LIVE</b></div>
   <div class="terminal-header"><div class="instrument"><div id="selIcon" class="tokenicon featured">BT</div><div class="instrument-copy"><div class="instrument-line"><b id="selName">BTC / USDT</b><span class="verified-badge"><i></i> LIVE</span></div><small id="selLabel">Bitcoin · Binance Spot</small></div></div><div class="quickstats"><div class="qstat price-stat"><small>Price</small><b id="statPrice">—</b></div><div class="qstat"><small>24h</small><b id="statChange">—</b></div><div class="qstat"><small>High</small><b id="statHigh">—</b></div><div class="qstat"><small>Low</small><b id="statLow">—</b></div><div class="qstat"><small>Volume</small><b id="statVol">—</b></div></div><div class="instrument-actions"><button onclick="toast('Watchlists will be enabled with account access')">☆ Watch</button><button onclick="toast('Price alerts will be enabled with account access')">◌ Alert</button><button onclick="toast('Shareable market links are being prepared')">↗ Share</button></div></div>
   <div class="chart-toolbar"><div class="tf" id="timeframes"><button data-iv="1">1m</button><button data-iv="5">5m</button><button class="active" data-iv="15">15m</button><button data-iv="60">1H</button><button data-iv="240">4H</button><button data-iv="D">1D</button></div><div class="chart-actions"><span class="data-origin"><i></i> Live chart</span><button onclick="reloadChart()">↻</button></div></div>
   <div class="chart-wrap"><div class="chart-watermark">RWA</div><div class="chart-loading">Loading professional market chart…</div><canvas id="fallbackChart" class="fallback-chart"></canvas><div id="tvHost" class="tv-host"></div></div>
-  <div class="mobile-market-actions"><button onclick="toast('Watchlists will be enabled with account access')"><span>☆</span><small>Watch</small></button><button onclick="toast('Price alerts will be enabled with account access')"><span>◌</span><small>Alert</small></button><button onclick="reloadChart()"><span>↻</span><small>Refresh</small></button><button onclick="toast('Shareable market links are being prepared')"><span>↗</span><small>Share</small></button></div>
-  <div class="mobile-detail-tabs" role="tablist" aria-label="Market detail view"><button class="active" data-mobile-view="overview">Overview</button><button data-mobile-view="trades">Trades</button><button data-mobile-view="depth">Depth</button></div>
+  <div class="mobile-detail-tabs" style="display:none" role="tablist" aria-label="Market detail view"><button class="active" data-mobile-view="overview">Overview</button><button data-mobile-view="trades">Trades</button><button data-mobile-view="depth">Depth</button></div>
   <div class="bottom"><section class="bottom-panel"><div class="panel-title"><div><span>LIVE MARKET TAPE</span><small>Executed trades</small></div><b class="live-label"><i></i> REAL-TIME</b></div><div id="tradeTape" class="tape"><div class="empty">Waiting for trades…</div></div></section><section><div class="panel-title"><div><span>MARKET PULSE</span><small>Session flow</small></div><b class="live-label"><i></i> LIVE</b></div><div class="pulse-card"><div class="pulse-score"><div><span>Buy-side activity</span><strong id="buyPct">50%</strong></div><span id="tradeCount">0 trades</span></div><div class="bar"><div id="pulseBar" class="barfill"></div></div><div class="pulse-grid"><div class="mini"><small>Best bid</small><b id="bestBid">—</b></div><div class="mini"><small>Best ask</small><b id="bestAsk">—</b></div><div class="mini"><small>Spread</small><b id="spread">—</b></div><div class="mini"><small>Last tick</small><b id="lastTick">—</b></div></div></div></section></div>
 </main>
 
@@ -72,10 +55,10 @@
 </div>
 
 <section class="credibility-strip"><div><small>PRODUCT</small><strong>Professional market terminal</strong></div><div><small>DATA LAYER</small><strong>Live public market feeds</strong></div><div><small>ASSET VISION</small><strong>Verified real-world markets</strong></div><div><small>EXPERIENCE</small><strong>Desktop + mobile first</strong></div></section>
-<nav class="mobile-tabs" aria-label="Mobile navigation"><a class="active" href="#markets" data-mobile-nav="markets"><span>◫</span><small>Markets</small></a><a href="#terminal" data-mobile-nav="chart"><span>⌁</span><small>Chart</small></a><a class="mobile-tab-main" href="#markets" data-mobile-action="rwa"><span>R</span></a><a href="#depth" data-mobile-nav="depth"><span>≋</span><small>Depth</small></a><a href="#" onclick="toast('Portfolio module comes with wallet integration')"><span>◎</span><small>Portfolio</small></a></nav>
+<nav class="mobile-tabs" aria-label="Mobile navigation"><a class="active" href="#markets" data-mobile-nav="markets"><span>⌕</span><small>Markets</small></a><a href="#terminal" data-mobile-nav="chart"><span>⌁</span><small>Chart</small></a><a href="#depth" data-mobile-nav="depth"><span>≋</span><small>Depth</small></a></nav>
 </div>
 <div id="toast" class="toast"></div>
 <script src="app.js?v=6"></script>
-<script src="mobile.js?v=2"></script>
+<script src="mobile.js?v=3"></script>
 </body>
 </html>
