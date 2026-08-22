@@ -39,6 +39,9 @@ jobs:
           node --check monitor-client.js
           node --check backtest/app.js
           node --check backtest/worker.js
+          node --check backtest/public-request.js
+          node --check backtest/data/validate_assets.cjs
+          python -m py_compile backtest/chat/run_chat_job.py backtest/chat/public_issue_request.py
           python -m py_compile monitor/monitor.py
 
       - name: Verify production files and contracts
@@ -82,13 +85,19 @@ jobs:
           test -s backtest/index.html
           test -s backtest/app.js
           test -s backtest/worker.js
+          test -s backtest/public-request.js
           test -s backtest/styles.css
+          test -s backtest/assets.css
+          test -s backtest/data/assets.json
+          test -s backtest/data/asset_status.json
           test -s backtest/data/manifest.json
           test -s backtest/results/campaign.json
           test -s backtest/results/evaluation_ids.json
           test -s backtest/results/latest_batch.json
           test -s backtest/results/batches.json
           test -s backtest/results/shards.json
+          python -m json.tool backtest/data/assets.json >/dev/null
+          python -m json.tool backtest/data/asset_status.json >/dev/null
 
       - name: Validate VectorForge ledger, DOM contract and source catalog
         run: |
@@ -101,6 +110,8 @@ jobs:
           ids = json.loads(Path('backtest/results/evaluation_ids.json').read_text()).get('ids', [])
           batches = json.loads(Path('backtest/results/batches.json').read_text()).get('batches', [])
           shards = json.loads(Path('backtest/results/shards.json').read_text()).get('shards', [])
+          assets = json.loads(Path('backtest/data/assets.json').read_text()).get('assets', [])
+          asset_status = json.loads(Path('backtest/data/asset_status.json').read_text()).get('assets', [])
           html = Path('backtest/index.html').read_text(); app = Path('backtest/app.js').read_text()
           files = manifest.get('files', []); months = [x.get('month') for x in files]
           assert len(files) == 111, f'expected 111 source files, got {len(files)}'
@@ -114,9 +125,15 @@ jobs:
           assert len({x.get('shard_id') for x in shards}) == len(shards), 'duplicate shard IDs'
           assert all(len(x.get('merkle_root', '')) == 64 for x in shards), 'invalid Merkle root'
           assert sum(int(x.get('evaluation_count', 0)) for x in shards) == len(ids), 'shard evaluation total mismatch'
+          symbols=[x.get('symbol') for x in assets]
+          assert len(symbols)==len(set(symbols)) and len(symbols)>=30, 'invalid or undersized public asset universe'
+          assert all(x.get('provider')=='dukascopy' and x.get('mode')=='bid_ask_tick' for x in assets), 'public universe must use Dukascopy bid/ask tick'
+          status_symbols={x.get('symbol') for x in asset_status}
+          assert status_symbols, 'asset verification status is empty'
           html_ids = set(re.findall(r'id=["\']([^"\']+)', html)); app_ids = set(re.findall(r"\$\('([^']+)'\)", app))
           missing = sorted(app_ids - html_ids); assert not missing, f'app.js references missing DOM ids: {missing}'
-          print(f"VectorForge QA PASS: {len(files)} source files, {len(set(ids))} verified evaluations, {len(batches)} batches, {len(shards)} shards")
+          assert 'public-request.js' in html and 'assets.css' in html, 'multi-asset public UI assets not loaded'
+          print(f"VectorForge QA PASS: {len(files)} EURUSD files, {len(assets)} public assets, {len(set(ids))} verified evaluations, {len(shards)} shards")
           PY
 
   deploy:
