@@ -9,14 +9,10 @@
 <link rel="preconnect" href="https://s3.tradingview.com" crossorigin>
 <link rel="preconnect" href="https://www.tradingview.com" crossorigin>
 <link rel="preconnect" href="https://data-api.binance.vision" crossorigin>
+<link rel="preconnect" href="https://data-stream.binance.vision" crossorigin>
 <link rel="preconnect" href="https://api.binance.com" crossorigin>
-<link rel="preconnect" href="https://esm.sh" crossorigin>
-<link rel="preload" href="app.js?v=6" as="script">
-<link rel="preload" href="mobile.js?v=7" as="script">
-<link rel="preload" href="suite-ui.js?v=1" as="script">
-<link rel="preload" href="suite.js?v=1" as="script">
-<link rel="preload" href="suite-nav.js?v=1" as="script">
-<link rel="preload" href="suite.css?v=1" as="style">
+<link rel="preload" href="app.js?v=7" as="script">
+<link rel="preload" href="mobile.js?v=8" as="script">
 <link rel="stylesheet" href="styles.css?v=6">
 <link rel="stylesheet" href="mobile.css?v=5">
 </head>
@@ -61,7 +57,7 @@
 
 <main class="main" id="terminal">
   <div class="terminal-header"><div class="instrument"><div id="selIcon" class="tokenicon featured">BT</div><div class="instrument-copy"><div class="instrument-line"><b id="selName">BTC / USDT</b><span class="verified-badge"><i></i> LIVE</span></div><small id="selLabel">Bitcoin · Binance Spot</small></div></div><div class="quickstats"><div class="qstat price-stat"><small>Price</small><b id="statPrice">—</b></div><div class="qstat"><small>24h</small><b id="statChange">—</b></div><div class="qstat"><small>High</small><b id="statHigh">—</b></div><div class="qstat"><small>Low</small><b id="statLow">—</b></div><div class="qstat"><small>Volume</small><b id="statVol">—</b></div></div><div class="instrument-actions"><button onclick="toast('Watchlists will be enabled with account access')">☆ Watch</button><button onclick="toast('Price alerts will be enabled with account access')">◌ Alert</button><button onclick="toast('Shareable market links are being prepared')">↗ Share</button></div></div>
-  <div class="chart-wrap"><div class="chart-watermark">RWA</div><div class="chart-loading">Loading professional market chart…</div><canvas id="fallbackChart" class="fallback-chart"></canvas><div id="tvHost" class="tv-host"></div></div>
+  <div class="chart-wrap"><div class="chart-watermark">RWA</div><canvas id="fallbackChart" class="fallback-chart"></canvas><div id="tvHost" class="tv-host"><div class="tradingview-widget-container" style="height:100%;width:100%"><div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>{"autosize":true,"symbol":"BINANCE:BTCUSDT","interval":"15","timezone":"Asia/Jakarta","theme":"dark","style":"1","locale":"en","backgroundColor":"rgba(9,9,13,1)","gridColor":"rgba(36,36,46,.55)","hide_top_toolbar":false,"hide_legend":false,"allow_symbol_change":false,"save_image":false,"calendar":false,"support_host":"https://www.tradingview.com"}</script></div></div></div><script>(function(){var c=document.getElementById('fallbackChart');if(!c)return;var r=c.getBoundingClientRect(),d=window.devicePixelRatio||1,w=Math.max(1,r.width),h=Math.max(1,r.height),x=c.getContext('2d');c.width=w*d;c.height=h*d;x.setTransform(d,0,0,d,0,0);x.fillStyle='#09090d';x.fillRect(0,0,w,h);var data=null;try{var o=JSON.parse(localStorage.getItem('rwa_chart_cache_v2:BTCUSDT:15')||'null');if(o&&Array.isArray(o.data)&&o.data.length&&Date.now()-Number(o.ts||0)<21600000)data=o.data}catch(e){}if(data){var p={l:10,r:58,t:18,b:28},cw=w-p.l-p.r,ch=h-p.t-p.b,lo=Math.min.apply(null,data.map(function(k){return k.l})),hi=Math.max.apply(null,data.map(function(k){return k.h})),rg=hi-lo||1,st=cw/data.length,bw=Math.max(1,st*.62),yy=function(v){return p.t+(hi-v)/rg*ch};data.forEach(function(k,i){var xx=p.l+i*st+st/2,up=k.c>=k.o,col=up?'#38d996':'#ff6677';x.strokeStyle=col;x.fillStyle=col;x.beginPath();x.moveTo(xx,yy(k.h));x.lineTo(xx,yy(k.l));x.stroke();var y1=yy(Math.max(k.o,k.c)),y2=yy(Math.min(k.o,k.c));x.fillRect(xx-bw/2,y1,bw,Math.max(1,y2-y1))})}else{x.strokeStyle='#18181f';x.lineWidth=1;for(var i=1;i<6;i++){var y=h*i/6;x.beginPath();x.moveTo(0,y);x.lineTo(w,y);x.stroke()}for(var j=1;j<8;j++){var z=w*j/8;x.beginPath();x.moveTo(z,0);x.lineTo(z,h);x.stroke()}}})();</script>
   <div class="mobile-detail-tabs" style="display:none" role="tablist" aria-label="Market detail view"><button class="active" data-mobile-view="overview">Overview</button><button data-mobile-view="trades">Trades</button><button data-mobile-view="depth">Depth</button></div>
   <div class="bottom"><section class="bottom-panel"><div class="panel-title"><div><span>LIVE TRADES</span><small>Executed trades</small></div><b class="live-label"><i></i> REAL-TIME</b></div><div id="tradeTape" class="tape"><div class="empty">Waiting for trades…</div></div></section><section><div class="panel-title"><div><span>MARKET OVERVIEW</span><small>Live execution metrics</small></div><b class="live-label"><i></i> LIVE</b></div><div class="pulse-card"><div class="mobile-secondary-stats" style="display:none"><div><small>24H HIGH</small><b id="mobileHigh">—</b></div><div><small>24H LOW</small><b id="mobileLow">—</b></div><div><small>24H VOLUME</small><b id="mobileVolume">—</b></div></div><div class="pulse-score"><div><span>Buy pressure</span><strong id="buyPct">50%</strong></div><div class="trade-total"><small>TRADES</small><b id="tradeCount">0 trades</b></div></div><div class="bar"><div id="pulseBar" class="barfill"></div></div><div class="pulse-grid"><div class="mini"><small>Best bid</small><b id="bestBid">—</b></div><div class="mini"><small>Best ask</small><b id="bestAsk">—</b></div><div class="mini"><small>Spread</small><b id="spread">—</b></div><div class="mini"><small>Last tick</small><b id="lastTick">—</b></div></div></div></section></div>
 </main>
@@ -91,10 +87,10 @@
 </section>
 
 <section class="credibility-strip"><div><small>PRODUCT</small><strong>Professional market terminal</strong></div><div><small>DATA LAYER</small><strong>Live public market feeds</strong></div><div><small>ASSET VISION</small><strong>Verified real-world markets</strong></div><div><small>EXPERIENCE</small><strong>Desktop + mobile first</strong></div></section>
-<nav class="mobile-tabs" aria-label="Mobile navigation"><a href="#markets" data-mobile-nav="markets"><span>⌕</span><small>Markets</small></a><a class="active" href="#terminal" data-mobile-nav="chart"><span>⌁</span><small>Chart</small></a><a href="#social" data-mobile-nav="social"><span>◎</span><small>Social</small></a><a href="#depth" data-mobile-nav="depth"><span>≋</span><small>Depth</small></a></nav>
+<nav class="mobile-tabs" aria-label="Mobile navigation"><a href="#markets" data-mobile-nav="markets"><span>⌕</span><small>Markets</small></a><a class="active" href="#terminal" data-mobile-nav="chart"><span>⌁</span><small>Chart</small></a><a href="#social" data-mobile-nav="social"><span>◎</span><small>Social</small></a><a href="#suite" data-mobile-nav="hub"><span>◇</span><small>Hub</small></a><a href="#suite" data-mobile-nav="portfolio"><span>▣</span><small>Portfolio</small></a></nav>
 </div>
 <div id="toast" class="toast"></div>
-<script src="app.js?v=6"></script>
-<script src="mobile.js?v=7"></script>
+<script src="app.js?v=7"></script>
+<script src="mobile.js?v=8"></script>
 </body>
 </html>

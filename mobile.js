@@ -9,16 +9,13 @@
   const fmtPct=v=>{const n=Number(v);if(!Number.isFinite(n))return'—';return(n>=0?'+':'')+n.toFixed(2)+'%'};
   function selected(){return typeof S!=='undefined'&&S.map?S.map.get(S.selected):null}
   function warmConnections(){
-    for(const href of ['https://s3.tradingview.com','https://www.tradingview.com','https://data-api.binance.vision','https://api.binance.com','https://esm.sh']){
-      if(document.querySelector(`link[data-rwa-preconnect="${href}"]`))continue;
-      const l=document.createElement('link');l.rel='preconnect';l.href=href;l.crossOrigin='anonymous';l.dataset.rwaPreconnect=href;document.head.appendChild(l)
+    for(const href of ['https://s3.tradingview.com','https://www.tradingview.com','https://data-api.binance.vision','https://data-stream.binance.vision']){
+      if(document.querySelector(`link[data-rwa-preconnect=\"${href}\"]`))continue;const l=document.createElement('link');l.rel='preconnect';l.href=href;l.crossOrigin='anonymous';l.dataset.rwaPreconnect=href;document.head.appendChild(l)
     }
-    const assets=['suite.css?v=1','suite-ui.js?v=1','suite.js?v=1','suite-nav.js?v=1','walletconnect.js?v=2','ops-suite.js?v=1','risk-hardening.js?v=1','provider-failover.js?v=2','monitor-client.js?v=2','monitor-config-client.js?v=1','social-safety-patch.js?v=2','suite-execution-patch.js?v=4','wallet-auth.js?v=2','walletconnect-auth-patch.js?v=1','audit-hooks.js?v=2','rwa-verify-client.js?v=1'];
-    for(const href of assets){if(document.querySelector(`link[data-rwa-warm="${href}"]`))continue;const l=document.createElement('link');l.rel='preload';l.href=href;l.as=href.endsWith('.css?v=1')?'style':'script';l.dataset.rwaWarm=href;document.head.appendChild(l)}
   }
   function chartCacheKey(){return `${CHART_CACHE}:${typeof S!=='undefined'?S.selected:'BTCUSDT'}:${typeof S!=='undefined'?S.interval:'15'}`}
   function restoreCachedChart(){try{if(typeof S==='undefined'||!Array.isArray(S.klines)||S.klines.length)return;const v=JSON.parse(localStorage.getItem(chartCacheKey())||'null');if(v&&Array.isArray(v.data)&&v.data.length&&Date.now()-Number(v.ts||0)<6*60*60*1000){S.klines=v.data;if(typeof drawFallback==='function')drawFallback()}}catch(_){}}
-  function drawInstantGrid(){const c=$('fallbackChart');if(!c||typeof c.getContext!=='function')return;const ctx=c.getContext('2d'),rect=c.getBoundingClientRect(),dpr=devicePixelRatio||1,w=Math.max(1,rect.width),h=Math.max(1,rect.height);c.width=Math.max(1,w*dpr);c.height=Math.max(1,h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#09090d';ctx.fillRect(0,0,w,h);ctx.strokeStyle='#18181f';ctx.lineWidth=1;for(let i=1;i<6;i++){const y=h*i/6;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}for(let i=1;i<8;i++){const x=w*i/8;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}ctx.fillStyle='#5f6875';ctx.font='11px system-ui';ctx.textAlign='left';ctx.fillText('BTC / USDT · connecting live chart…',14,22)}
+  function drawInstantGrid(){const c=$('fallbackChart');if(!c||typeof c.getContext!=='function')return;const ctx=c.getContext('2d'),rect=c.getBoundingClientRect(),dpr=devicePixelRatio||1,w=Math.max(1,rect.width),h=Math.max(1,rect.height);c.width=Math.max(1,w*dpr);c.height=Math.max(1,h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#09090d';ctx.fillRect(0,0,w,h);ctx.strokeStyle='#18181f';ctx.lineWidth=1;for(let i=1;i<6;i++){const y=h*i/6;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}for(let i=1;i<8;i++){const x=w*i/8;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}ctx.fillStyle='#5f6875';ctx.font='11px system-ui';ctx.textAlign='left';ctx.fillText('BTC / USDT',14,22)}
   function instantChartBoot(){
     if(typeof S==='undefined')return;
     restoreCachedChart();if(!S.klines?.length)drawInstantGrid();
@@ -27,7 +24,7 @@
       loadKlines=function(){const key=`${S.selected}:${S.interval}`;if(pending&&pendingKey===key)return pending;if(pendingKey===key&&Date.now()-lastDone<2500)return Promise.resolve(S.klines);pendingKey=key;pending=Promise.resolve(originalKlines()).then(()=>{try{if(Array.isArray(S.klines)&&S.klines.length)localStorage.setItem(chartCacheKey(),JSON.stringify({ts:Date.now(),data:S.klines.slice(-180)}))}catch(_){};lastDone=Date.now();return S.klines}).finally(()=>{pending=null});return pending}
     }
     if(typeof loadTradingView==='function'){
-      const originalTV=loadTradingView;let lastKey='';
+      const originalTV=loadTradingView;let lastKey=$('tvHost')?.children.length?`${S.selected}:${S.interval}`:'';
       loadTradingView=function(force=false){const key=`${S.selected}:${S.interval}`,host=$('tvHost');if(!force&&lastKey===key&&host&&host.children.length)return;lastKey=key;return originalTV()}
     }
     if(typeof connectDetail==='function'){
@@ -65,12 +62,13 @@
     const side=e.target.closest('[data-thesis-side]');if(side&&innerWidth<=680){e.preventDefault();thesisSide=side.dataset.thesisSide;document.querySelectorAll('[data-thesis-side]').forEach(b=>b.classList.toggle('active',b.dataset.thesisSide===thesisSide));return}
     if(e.target.closest('#publishThesis')){e.preventDefault();publishThesis();return}
     const view=e.target.closest('[data-mobile-view]');if(view&&innerWidth<=680){e.preventDefault();setDetailView(view.dataset.mobileView,true);return}
-    const nav=e.target.closest('[data-mobile-nav]');if(nav&&innerWidth<=680){e.preventDefault();const target=nav.dataset.mobileNav;if(target==='hub'||target==='portfolio')return;if(target==='markets')openMarkets(false);else if(target==='social')openSocial();else if(target==='depth')setDetailView('depth',true);else setDetailView('overview',true)}
+    const nav=e.target.closest('[data-mobile-nav]');if(nav&&innerWidth<=680){e.preventDefault();const target=nav.dataset.mobileNav;if(target==='hub'||target==='portfolio'){loadSuite().then(()=>window.RWASuite?.open(target==='portfolio'?'portfolio':'profile'));return;}if(target==='markets')openMarkets(false);else if(target==='social')openSocial();else if(target==='depth')setDetailView('depth',true);else setDetailView('overview',true)}
   });
   const thesis=$('thesisText');if(thesis)thesis.addEventListener('input',()=>{if($('thesisCount'))$('thesisCount').textContent=`${thesis.value.length} / 180`});
   ['pairCount','liveDot','statHigh','statLow','statVol','statChange','buyPct','tradeCount'].forEach(id=>watch(id));watch('pairList',()=>setTimeout(()=>{syncMobile();renderTrending()},0));
   addEventListener('resize',()=>{syncMobile();if(innerWidth>680){document.body.classList.remove('market-drawer-open','social-open','suite-open')}else if(!document.body.classList.contains('mview-overview')&&!document.body.classList.contains('mview-trades')&&!document.body.classList.contains('mview-depth'))setDetailView('overview')});
   function loadScript(src){return new Promise((resolve,reject)=>{const existing=[...document.scripts].find(x=>(x.getAttribute('src')||'').split('?')[0]===src.split('?')[0]);if(existing){if(existing.dataset.rwaReady==='1')return resolve();existing.addEventListener('load',resolve,{once:true});existing.addEventListener('error',reject,{once:true});return}const s=document.createElement('script');s.src=src;s.onload=()=>{s.dataset.rwaReady='1';resolve()};s.onerror=reject;document.body.appendChild(s)})}
+  document.addEventListener('click',e=>{const b=e.target.closest?.('.signin,.institutional,.topnav button,.product-nav button');if(!b)return;const t=(b.textContent||'').trim().toLowerCase();let tab='';if(b.matches('.signin')||t==='company')tab='profile';else if(b.matches('.institutional')||t.includes('asset'))tab='rwa';else if(t.includes('intelligence')||t.includes('rwa index'))tab='intel';else if(t.includes('research'))tab='feed';if(!tab)return;e.preventDefault();e.stopImmediatePropagation();loadSuite().then(()=>window.RWASuite?.open(tab));},true);
   function loadSuite(){if(suiteLoadPromise)return suiteLoadPromise;suiteLoadPromise=(async()=>{try{if(!document.querySelector('link[href^="suite.css"]')){const l=document.createElement('link');l.rel='stylesheet';l.href='suite.css?v=1';document.head.appendChild(l)}await loadScript('suite-ui.js?v=1');await loadScript('suite.js?v=1');await loadScript('suite-nav.js?v=1')}catch(e){console.error('RWA suite load failed',e)}})();return suiteLoadPromise}
   warmConnections();instantChartBoot();loadSuite();
   syncMobile();renderFeed();if(innerWidth<=680){closeMarkets();closeSocial();setDetailView('overview')}setInterval(()=>{syncMobile();if(document.body.classList.contains('social-open')){renderTrending();renderFeed()}},2200);
