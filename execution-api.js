@@ -115,11 +115,20 @@ async function masterWallet(){
   const m=master();
   if(!m)throw Error('Login with wallet first');
   if(!p)throw Error('Wallet provider unavailable');
-  const {createWalletClient,custom,arbitrum}=await modules();
   const accts=await p.request({method:'eth_requestAccounts'});
   const a=String(accts?.[0]||'').toLowerCase();
   if(a!==m)throw Error('Connected wallet does not match logged-in wallet');
-  return createWalletClient({account:a,chain:arbitrum,transport:custom(p)});
+  try{
+    const {BrowserProvider}=await import('https://esm.sh/ethers@6.15.0');
+    const ep=new BrowserProvider(p,'any');
+    const signer=await ep.getSigner(a);
+    const signerAddress=String(await signer.getAddress()).toLowerCase();
+    if(signerAddress!==m)throw Error('Browser signer does not match logged-in wallet');
+    return signer;
+  }catch(e){
+    const detail=String(e?.cause?.message||e?.shortMessage||e?.message||e);
+    throw Error(`Wallet signer unavailable: ${detail}`);
+  }
 }
 async function transport(testnet=false){
   const {HttpTransport}=await modules();
