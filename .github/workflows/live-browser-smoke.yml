@@ -1,0 +1,66 @@
+name: RWA Live Browser Smoke
+
+on:
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - "monitor/status.json"
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: rwa-live-browser-smoke
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate browser source
+        run: |
+          node --check app.js
+          node --check realtime-core.js
+          node --check mobile.js
+          grep -Fq 'realtime-core.js?v=2' index.html
+          ! grep -Fq 'browser-recovery.js' index.html
+          ! grep -Fq 'instantChartBoot();loadSuite()' mobile.js
+          grep -Fq 'stream.binance.com:9443' realtime-core.js
+          grep -Fq 'stream.binance.com:443' realtime-core.js
+          grep -Fq 'REST fallback' realtime-core.js
+      - name: Wait for GitHub Pages propagation
+        id: live
+        shell: bash
+        run: |
+          ok=0
+          for i in {1..36}; do
+            q="${GITHUB_RUN_ID}-${i}"
+            html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/?v=$q" || true)"
+            core="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/realtime-core.js?v=$q" || true)"
+            mobile="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/mobile.js?v=$q" || true)"
+            if grep -Fq 'realtime-core.js?v=2' <<<"$html" && \
+               grep -Fq 'styles.css?v=7' <<<"$html" && \
+               grep -Fq 'mobile.css?v=6' <<<"$html" && \
+               ! grep -Fq 'browser-recovery.js' <<<"$html" && \
+               grep -Fq 'stream.binance.com:9443' <<<"$core" && \
+               grep -Fq 'REST fallback' <<<"$core" && \
+               ! grep -Fq 'instantChartBoot();loadSuite()' <<<"$mobile"; then
+              ok=1
+              echo "Live browser bundle verified on attempt $i"
+              break
+            fi
+            sleep 5
+          done
+          test "$ok" = "1"
+      - name: Publish success status
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/live-browser-smoke' -f description='Live Pages bundle and realtime startup verified'
+      - name: Publish failure status
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/live-browser-smoke' -f description='Live browser smoke failed; do not trust this deployment'
