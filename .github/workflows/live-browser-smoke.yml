@@ -36,13 +36,13 @@ jobs:
           node --check exchange-core.js
           node --check exchange-ui.js
           node --check testnet-e2e.js
+          node --check copy-24x7-client.js
+          node --check launch-status.js
+          node --check beta-proof-client.js
           node --check suite-execution-patch.js
           python -m json.tool rwa-execution-config.json >/dev/null
-          python -m json.tool token/config.json >/dev/null
+          python -m json.tool launch/readiness.json >/dev/null
           test -s EXECUTION_API.md
-          test -s chart-core.js
-          test -s wallet-core.js
-          test -s testnet-e2e.js
           grep -Fq 'realtime-core.js?v=2' index.html
           grep -Fq 'chart-core.js?v=1' index.html
           grep -Fq 'walletconnect.js?v=4' index.html
@@ -68,21 +68,30 @@ jobs:
           grep -Fq 'Wallet account switched' wallet-core.js
           grep -Fq "version:'2.0.0'" execution-api.js
           grep -Fq "hardening:'single-write-path-v1'" execution-api.js
+          grep -Fq "riskGate:'mandatory-internal-v1'" execution-api.js
+          grep -Fq "bracket:'atomic-normal-tpsl-v1'" execution-api.js
           grep -Fq 'async function trigger' execution-api.js
           ! grep -Fq 'ExchangeClient' execution-ops-bridge.js
           ! grep -Fq 'ExchangeClient' ops-suite.js
           ! grep -Fq 'ExchangeClient' risk-hardening.js
           ! grep -Fq 'ExchangeClient' suite-execution-patch.js
           grep -Fq "path:'RWAExecutionAPI'" ops-suite.js
-          grep -Fq "version:'1.0.0'" exchange-core.js
+          grep -Fq "version:'1.1.0'" exchange-core.js
+          grep -Fq "safety:'wallet-and-global-launch-gate-v3'" exchange-core.js
+          grep -Fq 'localE2EVerified()&&globalMainnetReady()' exchange-core.js
           grep -Fq 'RWA EXCHANGE CORE' exchange-ui.js
+          grep -Fq "version:'3.1.0'" testnet-e2e.js
           grep -Fq 'REAL E2E RESULT' testnet-e2e.js
+          grep -Fq 'Save Wallet E2E Gate' testnet-e2e.js
+          grep -Fq "copy-24x7-client.js?v=2" suite-nav.js
+          grep -Fq "launch-status.js?v=2" suite-nav.js
+          grep -Fq "beta-proof-client.js?v=1" suite-nav.js
       - name: Publish source success
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/execution-source' -f description='Dedicated execution API single-write source verified'
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/chart-wallet-source' -f description='Realtime chart + seamless wallet v3/v4 verified'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/execution-source' -f description='Dedicated execution API + global mainnet safety source verified'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/chart-wallet-source' -f description='Realtime chart + wallet v3/v4 verified'
       - name: Wait for GitHub Pages propagation
         shell: bash
         run: |
@@ -100,7 +109,8 @@ jobs:
             excore="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/exchange-core.js?v=$q" || true)"
             exui="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/exchange-ui.js?v=$q" || true)"
             e2e="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/testnet-e2e.js?v=$q" || true)"
-            if grep -Fq 'walletconnect.js?v=4' <<<"$html" && grep -Fq 'wallet-core.js?v=3' <<<"$html" && ! grep -Fq 'wallet-seamless.js' <<<"$html" && grep -Fq 'exchange-core.js?v=1' <<<"$html" && grep -Fq 'testnet-e2e.js?v=1' <<<"$html" && grep -Fq 'REST fallback' <<<"$core" && grep -Fq 'liveCandle' <<<"$chart" && grep -Fq "version:'4.0.0'" <<<"$wc" && grep -Fq "version:'3.0.0'" <<<"$wallet" && grep -Fq 'Wallet account switched' <<<"$wallet" && grep -Fq "hardening:'single-write-path-v1'" <<<"$execapi" && grep -Fq 'async function trigger' <<<"$execapi" && ! grep -Fq 'ExchangeClient' <<<"$bridge" && ! grep -Fq 'ExchangeClient' <<<"$ops" && grep -Fq "version:'1.0.0'" <<<"$excore" && grep -Fq 'RWA EXCHANGE CORE' <<<"$exui" && grep -Fq 'REAL E2E RESULT' <<<"$e2e"; then ok=1; break; fi
+            launch="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/launch/readiness.json?v=$q" || true)"
+            if grep -Fq 'walletconnect.js?v=4' <<<"$html" && grep -Fq 'wallet-core.js?v=3' <<<"$html" && ! grep -Fq 'wallet-seamless.js' <<<"$html" && grep -Fq 'REST fallback' <<<"$core" && grep -Fq 'liveCandle' <<<"$chart" && grep -Fq "version:'4.0.0'" <<<"$wc" && grep -Fq "version:'3.0.0'" <<<"$wallet" && grep -Fq 'Wallet account switched' <<<"$wallet" && grep -Fq "hardening:'single-write-path-v1'" <<<"$execapi" && grep -Fq "riskGate:'mandatory-internal-v1'" <<<"$execapi" && ! grep -Fq 'ExchangeClient' <<<"$bridge" && ! grep -Fq 'ExchangeClient' <<<"$ops" && grep -Fq "version:'1.1.0'" <<<"$excore" && grep -Fq "safety:'wallet-and-global-launch-gate-v3'" <<<"$excore" && grep -Fq 'RWA EXCHANGE CORE' <<<"$exui" && grep -Fq "version:'3.1.0'" <<<"$e2e" && grep -Fq 'Save Wallet E2E Gate' <<<"$e2e" && grep -Eq '"status"[[:space:]]*:[[:space:]]*"(BLOCKED|READY_FOR_BETA|BETA_PASSED_AWAITING_MAINNET|READY_FOR_MAINNET)"' <<<"$launch"; then ok=1; break; fi
             sleep 5
           done
           test "$ok" = "1"
@@ -109,9 +119,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/live-browser-smoke' -f description='Chart + wallet + single-write exchange verified live'
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/chart-wallet-smoke' -f description='Chart and seamless wallet login verified live'
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/execution-api-smoke' -f description='Dedicated execution API single-write path verified live'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/live-browser-smoke' -f description='Chart + wallet + hardened exchange verified live'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/chart-wallet-smoke' -f description='Chart and wallet login verified live'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/execution-api-smoke' -f description='Execution API + global launch gate verified live'
       - name: Publish live failure statuses
         if: failure()
         env:
