@@ -1,6 +1,8 @@
 (()=>{
 'use strict';
 if(window.RWATestnetE2E)return;
+function loadActions(){if(window.RWAExchangeActions||[...document.scripts].some(s=>(s.getAttribute('src')||'').startsWith('exchange-actions.js')))return;const s=document.createElement('script');s.src='exchange-actions.js?v=1';s.async=true;document.body.appendChild(s)}
+loadActions();
 const PREFIX='rwa_testnet_e2e_v1';const MAINNET_GATE='rwa_mainnet_gate_v1';
 const names={wallet:'Wallet login',collateral:'Test collateral',agent:'API wallet authorized',entry:'Entry order',position:'Position observed',tpsl:'TP/SL submitted',modify:'Order modified',cancel:'Order canceled',close:'Position closed',history:'Trade history observed',pnl:'PnL observed'};
 const required=['wallet','collateral','entry','position','tpsl','modify','cancel','close','history','pnl'];
