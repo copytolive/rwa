@@ -3,20 +3,45 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#09090d">
-<title>RWA Market — Live Social Trading Terminal</title>
-<meta name="description" content="Live social-first market terminal with hundreds of clickable markets, real-time quotes, order book, recent trades and professional charts.">
-<link rel="stylesheet" href="styles.css?v=3">
+<meta name="theme-color" content="#08090c">
+<title>RWA Markets — Institutional Real-World Asset Infrastructure</title>
+<meta name="description" content="Institutional-grade real-world asset market infrastructure with live global markets, professional charts, order books, market intelligence and hundreds of clickable instruments.">
+<link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
 <div class="app">
 <header class="topbar">
-  <a class="brand" href="#"><span class="brandmark">R</span><span>rwa</span></a>
-  <nav class="topnav"><button class="active">Markets</button><button onclick="toast('Social feed connects after user accounts are enabled')">Feed</button><button onclick="toast('Leaderboard layer is ready for account integration')">Leaderboard</button></nav>
-  <div class="status"><span id="liveDot" class="dot"></span><span id="liveText">Connecting market…</span></div>
+  <a class="brand" href="#">
+    <span class="brandmark">R</span>
+    <span class="brandcopy"><strong>RWA</strong><small>REAL WORLD ASSET INFRASTRUCTURE</small></span>
+  </a>
+  <nav class="topnav">
+    <button class="active">Markets</button>
+    <button onclick="toast('RWA Intelligence is being connected to verified asset data')">Intelligence</button>
+    <button onclick="toast('Verified asset marketplace is being prepared')">Assets</button>
+    <button onclick="toast('Institutional research module is being prepared')">Research</button>
+    <button onclick="toast('Company information module is being prepared')">Company</button>
+  </nav>
+  <div class="top-actions">
+    <div class="status"><span id="liveDot" class="dot"></span><span id="liveText">Connecting market…</span></div>
+    <button class="signin" onclick="toast('Account access will be enabled with identity and wallet integration')">Sign in</button>
+    <button class="institutional" onclick="toast('Institutional access workflow is being prepared')">Institutional access</button>
+  </div>
 </header>
+<div class="productbar">
+  <div class="product-left"><strong>RWA Markets</strong><span>Professional Terminal</span><span class="beta">PUBLIC BETA</span></div>
+  <div class="product-nav"><button class="active">Spot Markets</button><button onclick="toast('RWA Index is being prepared')">RWA Index</button><button onclick="toast('Verified Assets is being prepared')">Verified Assets</button><button onclick="toast('Research workspace is being prepared')">Research</button></div>
+  <div class="product-right"><span class="secure-dot"></span> Live market infrastructure</div>
+</div>
+<div class="trustbar">
+  <span><b>MARKET DATA</b> Real-time public exchange feeds</span>
+  <span><b>CHARTING</b> Professional TradingView interface</span>
+  <span><b>UNIVERSE</b> Hundreds of active markets</span>
+  <span><b>RWA LAYER</b> Built for real-world asset discovery</span>
+</div>
 <div class="layout">
 <aside class="left" id="markets">
+  <div class="aside-label"><span>MARKET UNIVERSE</span><small>Global instruments</small></div>
   <div class="market-head">
     <div class="search"><span>⌕</span><input id="search" autocomplete="off" placeholder="Search hundreds of markets"></div>
     <div class="filters"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="rwa">RWA</button><button class="filter" data-filter="gainers">Gainers</button><button class="filter" data-filter="losers">Losers</button></div>
@@ -26,28 +51,30 @@
 </aside>
 <main class="main" id="terminal">
   <div class="terminal-header">
-    <div class="instrument"><div id="selIcon" class="tokenicon">BT</div><div><b id="selName">BTC / USDT</b><small id="selLabel">Bitcoin · Binance Spot</small></div></div>
+    <div class="instrument"><div id="selIcon" class="tokenicon">BT</div><div><div class="instrument-line"><b id="selName">BTC / USDT</b><span class="verified-badge">LIVE</span></div><small id="selLabel">Bitcoin · Binance Spot</small></div></div>
     <div class="quickstats"><div class="qstat"><small>Price</small><b id="statPrice">—</b></div><div class="qstat"><small>24h</small><b id="statChange">—</b></div><div class="qstat"><small>High</small><b id="statHigh">—</b></div><div class="qstat"><small>Low</small><b id="statLow">—</b></div><div class="qstat"><small>Volume</small><b id="statVol">—</b></div></div>
   </div>
   <div class="chart-toolbar">
     <div class="tf" id="timeframes"><button data-iv="1">1m</button><button data-iv="5">5m</button><button class="active" data-iv="15">15m</button><button data-iv="60">1h</button><button data-iv="240">4h</button><button data-iv="D">1D</button></div>
-    <div class="chart-actions"><button onclick="reloadChart()">↻ Reload chart</button></div>
+    <div class="chart-actions"><span class="data-origin">Live chart · market data</span><button onclick="reloadChart()">↻ Reload</button></div>
   </div>
-  <div class="chart-wrap"><div class="chart-loading">Loading professional chart…</div><canvas id="fallbackChart" class="fallback-chart"></canvas><div id="tvHost" class="tv-host"></div></div>
+  <div class="chart-wrap"><div class="chart-loading">Loading professional market chart…</div><canvas id="fallbackChart" class="fallback-chart"></canvas><div id="tvHost" class="tv-host"></div></div>
   <div class="bottom">
-    <section class="bottom-panel"><div class="panel-title">LIVE MARKET TAPE <span>real trades</span></div><div id="tradeTape" class="tape"><div class="empty">Waiting for trades…</div></div></section>
-    <section><div class="panel-title">MARKET PULSE <span>session activity</span></div><div class="pulse-card"><div class="pulse-score"><div><span>Buy-side activity</span><strong id="buyPct">50%</strong></div><span id="tradeCount">0 trades</span></div><div class="bar"><div id="pulseBar" class="barfill"></div></div><div class="pulse-grid"><div class="mini"><small>Best bid</small><b id="bestBid">—</b></div><div class="mini"><small>Best ask</small><b id="bestAsk">—</b></div><div class="mini"><small>Spread</small><b id="spread">—</b></div><div class="mini"><small>Last tick</small><b id="lastTick">—</b></div></div></div></section>
+    <section class="bottom-panel"><div class="panel-title"><div>LIVE MARKET TAPE<small> Executed trades</small></div><span>REAL-TIME</span></div><div id="tradeTape" class="tape"><div class="empty">Waiting for trades…</div></div></section>
+    <section><div class="panel-title"><div>MARKET PULSE<small> Session flow</small></div><span>LIVE</span></div><div class="pulse-card"><div class="pulse-score"><div><span>Buy-side activity</span><strong id="buyPct">50%</strong></div><span id="tradeCount">0 trades</span></div><div class="bar"><div id="pulseBar" class="barfill"></div></div><div class="pulse-grid"><div class="mini"><small>Best bid</small><b id="bestBid">—</b></div><div class="mini"><small>Best ask</small><b id="bestAsk">—</b></div><div class="mini"><small>Spread</small><b id="spread">—</b></div><div class="mini"><small>Last tick</small><b id="lastTick">—</b></div></div></div></section>
   </div>
 </main>
 <aside class="right">
+  <div class="aside-label"><span>MARKET DEPTH</span><small>Execution intelligence</small></div>
   <section class="right-section"><div class="right-title">ORDER BOOK <small>Top 10</small></div><div class="book-head"><span>Price</span><span>Amount</span><span>Total</span></div><div id="asks"></div><div id="midPrice" class="midprice">—</div><div id="bids"></div></section>
   <section class="right-section"><div class="right-title">TOP MOVERS <small>24h</small></div><div id="movers" class="movers"></div></section>
-  <section class="right-section"><div class="right-title">LIVE ACTIVITY <small>market events</small></div><div id="activity" class="activity"><div class="empty">Waiting for live activity…</div></div></section>
+  <section class="right-section"><div class="right-title">LIVE ACTIVITY <small>Market events</small></div><div id="activity" class="activity"><div class="empty">Waiting for live activity…</div></div></section>
+  <section class="institutional-card"><small>RWA INSTITUTIONAL</small><h3>Market infrastructure for the real economy.</h3><p>Built to evolve from live public markets into verified real-world assets, issuance, ownership and institutional access.</p><button onclick="toast('Institutional onboarding workflow is being prepared')">Request access →</button></section>
 </aside>
 </div>
-<nav class="mobile-tabs"><a href="#markets">Markets</a><a href="#terminal">Chart</a><a href="#" onclick="toast('Feed will use verified user activity when accounts are connected')">Feed</a><a href="#" onclick="toast('Portfolio module comes with wallet integration')">Portfolio</a></nav>
+<nav class="mobile-tabs"><a href="#markets">Markets</a><a href="#terminal">Chart</a><a href="#" onclick="toast('RWA Intelligence is being prepared')">Intel</a><a href="#" onclick="toast('Portfolio module comes with wallet integration')">Portfolio</a></nav>
 </div>
 <div id="toast" class="toast"></div>
-<script src="app.js?v=3"></script>
+<script src="app.js?v=4"></script>
 </body>
 </html>
