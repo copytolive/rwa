@@ -13,14 +13,12 @@
     <div class="status-stack"><span class="badge ok">● ENGINE ONLINE</span><span class="badge">EURUSD · 1 SECOND</span></div>
   </header>
   <section class="notice"><strong>Verified source coverage:</strong> public EURUSD 1-second quote files, May 2009 through July 2018. Source files are fetched on demand from GitHub.</section>
-
   <section class="campaign-strip">
     <article><span>Campaign Target</span><strong id="cTarget">1,000,000,000,000</strong><small>unique evaluations</small></article>
     <article><span>Verified Completed</span><strong id="cVerified">—</strong><small>actual computed hashes</small></article>
     <article><span>Last Batch</span><strong id="cBatch">—</strong><small id="cBatchMonth">loading</small></article>
     <article><span>Dataset SHA-256</span><code id="cHash">loading…</code><small id="cStatus">campaign ledger</small></article>
   </section>
-
   <section class="grid">
     <aside class="panel controls">
       <div class="panel-title">Simulation Configuration</div>
@@ -29,8 +27,8 @@
       <div id="monthRange" class="row2"><label>From month<select id="fromMonth"></select></label><label>To month<select id="toMonth"></select></label></div>
       <label>Model<select id="strategy"><option value="price_sma">Price / SMA cross</option><option value="sma_cross">SMA fast / slow cross</option><option value="ema_cross">EMA fast / slow cross</option><option value="rsi_revert">RSI mean-reversion model</option><option value="donchian">Donchian breakout model</option></select></label>
       <div class="row2"><label>Fast / period<input id="fast" type="number" min="2" value="50"></label><label>Slow / lookback<input id="slow" type="number" min="3" value="1000"></label></div>
-      <div class="row3"><label>Exit distance (pips)<input id="slPips" type="number" min="0.1" step="0.1" value="15"></label><label>Target ratio<input id="rr" type="number" min="0.1" step="0.1" value="2"></label><label>Fallback spread (pips)<input id="spreadPips" type="number" min="0" step="0.1" value="1"></label></div>
-      <div class="row2"><label>RSI lower<input id="rsiBuy" type="number" min="1" max="49" value="30"></label><label>RSI upper<input id="rsiSell" type="number" min="51" max="99" value="70"></label></div>
+      <div class="row3"><label>Exit distance (points)<input id="slPips" type="number" min="0.1" step="0.1" value="15"></label><label>Target ratio<input id="rr" type="number" min="0.1" step="0.1" value="2"></label><label>Point size<input id="pointSize" type="number" min="0.00000001" step="0.00000001" value="0.0001"></label></div>
+      <div class="row3"><label>Fallback spread (points)<input id="spreadPips" type="number" min="0" step="0.1" value="1"></label><label>RSI lower<input id="rsiBuy" type="number" min="1" max="49" value="30"></label><label>RSI upper<input id="rsiSell" type="number" min="51" max="99" value="70"></label></div>
       <div class="actions"><button id="runBtn" class="primary">Run Historical Simulation</button><button id="stopBtn" class="secondary" disabled>Stop</button></div>
       <button id="exportBtn" class="export" disabled>Export Last Result JSON</button>
       <div class="hint">Public monthly files can be tens of MB each. Custom files stay in your browser and are not uploaded to this repository.</div>
