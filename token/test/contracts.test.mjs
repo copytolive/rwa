@@ -47,7 +47,7 @@ async function deploy(a,signer,args=[]){
 }
 async function expectRevert(fn,label){
   let reverted=false;
-  try{await fn()}catch{reverted=true}
+  try{const out=await fn();if(out?.wait)await out.wait();if(out?.waitForDeployment)await out.waitForDeployment()}catch{reverted=true}
   assert.equal(reverted,true,label);
 }
 
@@ -102,12 +102,12 @@ let now=(await provider.getBlock('latest')).timestamp;
 await provider.send('evm_increaseTime',[Math.max(0,start+500-now)]);
 await provider.send('evm_mine',[]);
 await expectRevert(()=>vesting.connect(outsider).release(),'non-beneficiary release must revert');
-const releaseBlock=await provider.getBlock('latest');
-const vestedNow=await vesting.vestedAt(releaseBlock.timestamp);
 const beforeRelease=await token.balanceOf(beneficiaryAddress);
 await (await vesting.connect(beneficiary).release()).wait();
 const afterRelease=await token.balanceOf(beneficiaryAddress);
-assert.equal(afterRelease-beforeRelease,vestedNow,'beneficiary release amount mismatch');
+assert.equal(afterRelease-beforeRelease,await vesting.released(),'beneficiary release amount mismatch');
+assert.ok(await vesting.released()>0n,'mid-schedule release must be positive');
+assert.ok(await vesting.released()<allocation,'mid-schedule release must be partial');
 
 now=(await provider.getBlock('latest')).timestamp;
 await provider.send('evm_increaseTime',[Math.max(0,start+durationSeconds+1-now)]);
