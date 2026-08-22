@@ -10,20 +10,16 @@ on:
       - "monitor/config.json"
       - "monitor/monitor.py"
       - ".github/workflows/monitor.yml"
-  issues:
-    types: [opened]
 
 permissions:
   contents: write
-  issues: write
 
 concurrency:
-  group: rwa-monitor-${{ github.event_name }}
+  group: rwa-monitor
   cancel-in-progress: true
 
 jobs:
   monitor:
-    if: github.event_name != 'issues'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -50,46 +46,3 @@ jobs:
           git add monitor/status.json
           git commit -m 'chore: refresh 24x7 monitor status [skip ci]'
           git push
-
-  verify_zero_wait:
-    if: github.event_name == 'issues' && startsWith(github.event.issue.title, '[QA-ZEROWAIT]')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Validate zero-wait source
-        run: |
-          node --check app.js
-          node --check mobile.js
-          grep -Fq 'app.js?v=8' index.html
-          grep -Fq 'mobile.js?v=9' index.html
-          grep -Fq 'external-embedding/embed-widget-advanced-chart.js' index.html
-          grep -Fq 'setTimeout(loadMarkets,450)' app.js
-          ! grep -Fq 'Loading live candlesticks' app.js
-          ! grep -Fq 'Loading professional market chart' index.html
-          ! grep -Fq 'preload" href="suite-ui.js' index.html
-          ! grep -Fq 'preload" href="suite.js' index.html
-          ! grep -Fq 'preload" href="suite-nav.js' index.html
-      - name: Verify live GitHub Pages bundle
-        run: |
-          ok=0
-          for i in {1..30}; do
-            q="${GITHUB_RUN_ID}-${i}"
-            html="$(curl -fsSL "https://narzulalistiqlal.github.io/rwa/?v=$q" || true)"
-            mob="$(curl -fsSL "https://narzulalistiqlal.github.io/rwa/mobile.js?v=$q" || true)"
-            app="$(curl -fsSL "https://narzulalistiqlal.github.io/rwa/app.js?v=$q" || true)"
-            if printf '%s' "$html" | grep -Fq 'mobile.js?v=9' && \
-               printf '%s' "$html" | grep -Fq 'external-embedding/embed-widget-advanced-chart.js' && \
-               ! printf '%s' "$html" | grep -Fq 'preload" href="suite-ui.js' && \
-               printf '%s' "$mob" | grep -Fq 'rwaIdleSuiteWarm' && \
-               printf '%s' "$app" | grep -Fq 'setTimeout(loadMarkets,450)' && \
-               ! printf '%s' "$app" | grep -Fq 'Loading live candlesticks'; then
-              ok=1
-              break
-            fi
-            sleep 10
-          done
-          test "$ok" = "1"
-      - name: Report success
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh issue comment "${{ github.event.issue.number }}" --body "ZERO-WAIT PRODUCTION SUCCESS. GitHub Pages now starts TradingView directly from parsed HTML, paints cached/neutral canvas immediately, delays market-universe REST off the critical path, removes visible chart loading states, and lazy/idle-loads heavy Social/Hub/Wallet/Risk modules instead of competing with first paint."
