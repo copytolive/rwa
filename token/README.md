@@ -13,7 +13,32 @@ This directory prepares token infrastructure without launching a live token.
 
 - `contracts/RWAToken.sol`: fixed supply, ERC-20 Permit, ERC20Votes governance-ready token. No post-deployment minting.
 - `contracts/RWAVestingVault.sol`: immutable cliff + linear vesting vault for team/investor/partner allocations.
-- `.github/workflows/token-contracts.yml` permanently compiles both contracts with pinned Solidity `0.8.24` and OpenZeppelin `5.1.0`, and verifies that PRE-TGE/mainnet guards remain closed.
+- `contracts/interfaces/IRWATreasury.sol`: PRE-TGE treasury integration surface only; no treasury multisig is selected here.
+- `contracts/interfaces/IRWAVesting.sol`: common vesting read/release surface.
+- `contracts/interfaces/IRWARewards.sol`: rewards integration surface only; no reward rate/program/allocation is configured.
+- `contracts/interfaces/IRWAGovernance.sol`: delegation/vote integration surface only; no Governor/quorum/voting period is configured.
+
+These interfaces intentionally define integration boundaries without inventing tokenomics, treasury addresses, governance thresholds, or reward economics.
+
+## Unit tests and CI
+
+`token/test/contracts.test.mjs` runs on a local in-memory EVM and verifies the source before any deployment is considered. It covers:
+
+- exact fixed total supply minted to the constructor treasury;
+- no public post-deployment `mint` function;
+- zero treasury and zero supply constructor reverts;
+- ERC-20 transfer plus Permit/Votes surface;
+- vesting zero before cliff, linear midpoint, and full vesting at duration end;
+- invalid vesting schedule reverts;
+- beneficiary-only release and full vault drain after the schedule completes.
+
+`.github/workflows/token-contracts.yml` installs pinned dependencies, compiles the token/vault plus all PRE-TGE interfaces, runs the unit tests, verifies deployment locks, and publishes staged commit statuses. A failure publishes `rwa/token-contracts = failure` instead of silently looking complete.
+
+Local verification after dependencies are installed:
+
+```bash
+npm run --prefix token verify
+```
 
 ## Deployment guard
 
