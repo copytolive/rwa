@@ -1,2 +1,1 @@
-FAIL: suite nav execution ui v2
 FAIL: orders contract
