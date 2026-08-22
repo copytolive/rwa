@@ -1,6 +1,6 @@
 const SOURCE_REPO='https://github.com/zcbmlijygrdwa/fx_EUR_USD_tick';
 const RAW_BASE='https://raw.githubusercontent.com/zcbmlijygrdwa/fx_EUR_USD_tick/master';
-const ENGINE_VERSION='vectorforge-browser-1.0.0';
+const ENGINE_VERSION='vectorforge-browser-1.1.0';
 
 const $=id=>document.getElementById(id);
 const months=[];
@@ -48,10 +48,13 @@ function selectedMonths(){
 }
 
 function getConfig(){
+  const custom=$('dataset').value==='custom';
+  const file=$('customFile').files?.[0]||null;
   return {
     engineVersion:ENGINE_VERSION,
-    dataset:$('dataset').value,
-    months:selectedMonths(),
+    dataset:custom?`custom:${file?.name||'none'}`:'eurusd1s',
+    custom,
+    months:custom?['CUSTOM']:selectedMonths(),
     strategy:$('strategy').value,
     fast:+$('fast').value,
     slow:+$('slow').value,
@@ -72,12 +75,13 @@ function addLog(s){const d=document.createElement('div');d.textContent=s;$('log'
 function fmt(n,d=2){if(n===Infinity)return '∞';return Number.isFinite(n)?Number(n).toLocaleString(undefined,{maximumFractionDigits:d,minimumFractionDigits:d}):'—'}
 async function sha256(text){const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('')}
 
-let worker=null;
+let worker=null,lastExport=null;
 $('runBtn').addEventListener('click',()=>{
-  const cfg=getConfig();
+  const cfg=getConfig(),file=cfg.custom?($('customFile').files?.[0]||null):null;
   if(!cfg.months.length) return;
+  if(cfg.custom&&!file){alert('Choose a custom TXT/CSV file first.');return}
   if(cfg.fast<2||cfg.slow<3||cfg.slPips<=0||cfg.rr<=0){alert('Check parameter values.');return}
-  $('log').innerHTML=''; setBusy(true); $('progressBar').style.width='0%'; $('progressText').textContent='Starting worker…';
+  $('log').innerHTML=''; $('exportBtn').disabled=true; setBusy(true); $('progressBar').style.width='0%'; $('progressText').textContent='Starting worker…';
   worker=new Worker('./worker.js');
   worker.onmessage=async e=>{
     const m=e.data;
@@ -96,17 +100,23 @@ $('runBtn').addEventListener('click',()=>{
       $('mEquity').textContent=`${fmt(r.netR)} R`;
       $('mSamples').textContent=Number(r.samples).toLocaleString();
       const fp=await sha256(JSON.stringify({config:cfg,result:r,engine:ENGINE_VERSION}));
-      $('fingerprint').textContent=fp; $('progressText').textContent=`Completed ${r.monthsProcessed} month(s).`;
-      addLog(`DONE · fingerprint ${fp.slice(0,16)}…`); worker.terminate();worker=null;
+      $('fingerprint').textContent=fp; $('progressText').textContent=`Completed ${r.monthsProcessed} source segment(s).`;
+      addLog(`DONE · fingerprint ${fp.slice(0,16)}…`);
+      lastExport={generatedAt:new Date().toISOString(),fingerprint:fp,config:cfg,result:r};$('exportBtn').disabled=false;
+      worker.terminate();worker=null;
     } else if(m.type==='error'){
       setBusy(false); $('runState').textContent='ERROR'; $('progressText').textContent=m.message;addLog(`ERROR · ${m.message}`);worker?.terminate();worker=null;
     }
   };
   worker.onerror=e=>{setBusy(false);$('runState').textContent='ERROR';$('progressText').textContent=e.message;worker?.terminate();worker=null};
-  worker.postMessage({type:'run',config:cfg});
+  worker.postMessage({type:'run',config:cfg,file});
 });
 $('stopBtn').addEventListener('click',()=>{worker?.terminate();worker=null;setBusy(false);$('runState').textContent='STOPPED';$('progressText').textContent='Stopped by user.'});
+$('exportBtn').addEventListener('click',()=>{
+  if(!lastExport)return;const blob=new Blob([JSON.stringify(lastExport,null,2)],{type:'application/json'});const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=`vectorforge-result-${Date.now()}.json`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);
+});
 $('catalogSearch').addEventListener('input',e=>renderCatalog(e.target.value));
 $('sourceRepo').href=SOURCE_REPO;
 $('strategy').addEventListener('change',()=>{if($('strategy').value==='rsi_revert'&&+$('fast').value===50)$('fast').value=14});
+$('dataset').addEventListener('change',()=>{const custom=$('dataset').value==='custom';$('customFileLabel').classList.toggle('hidden-field',!custom);$('monthRange').style.display=custom?'none':''});
 fillMonths();renderCatalog();loadCampaign();
