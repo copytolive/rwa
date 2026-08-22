@@ -11,7 +11,8 @@ on:
       - "rwa-reviewers.json"
       - "rwa-assets.json"
       - "rwa-execution-config.json"
-      - "launch/**"
+      - "launch/e2e-registry.json"
+      - "launch/beta-registry.json"
       - "tools/launch-gate.mjs"
       - "tools/beta-proof.mjs"
       - ".github/workflows/beta-proof-review.yml"
@@ -51,7 +52,7 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add launch/readiness.json
           if ! git diff --cached --quiet; then
-            git commit -m 'launch: refresh machine evaluated readiness [skip ci]'
+            git commit -m 'launch: refresh machine evaluated readiness'
             git pull --rebase origin main
             git push origin HEAD:main
           fi
