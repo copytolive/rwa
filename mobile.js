@@ -72,4 +72,5 @@
   function loadSuite(){if(suiteLoadPromise)return suiteLoadPromise;suiteLoadPromise=(async()=>{try{if(!document.querySelector('link[href^="suite.css"]')){const l=document.createElement('link');l.rel='stylesheet';l.href='suite.css?v=1';document.head.appendChild(l)}await loadScript('suite-ui.js?v=1');await loadScript('suite.js?v=1');await loadScript('suite-nav.js?v=1')}catch(e){console.error('RWA suite load failed',e)}})();return suiteLoadPromise}
   warmConnections();instantChartBoot();loadSuite();
   syncMobile();renderFeed();if(innerWidth<=680){closeMarkets();closeSocial();setDetailView('overview')}setInterval(()=>{syncMobile();if(document.body.classList.contains('social-open')){renderTrending();renderFeed()}},2200);
+  const rwaIdleSuiteWarm=()=>{try{loadSuite()}catch(_){}};setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(rwaIdleSuiteWarm,{timeout:3500});else setTimeout(rwaIdleSuiteWarm,1200)},1800);
 })();

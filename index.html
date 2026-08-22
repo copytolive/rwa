@@ -11,8 +11,8 @@
 <link rel="preconnect" href="https://data-api.binance.vision" crossorigin>
 <link rel="preconnect" href="https://data-stream.binance.vision" crossorigin>
 <link rel="preconnect" href="https://api.binance.com" crossorigin>
-<link rel="preload" href="app.js?v=7" as="script">
-<link rel="preload" href="mobile.js?v=8" as="script">
+<link rel="preload" href="app.js?v=8" as="script">
+<link rel="preload" href="mobile.js?v=9" as="script">
 <link rel="stylesheet" href="styles.css?v=6">
 <link rel="stylesheet" href="mobile.css?v=5">
 </head>
@@ -31,7 +31,7 @@
     <button onclick="toast('Company information is being prepared')">Company</button>
   </nav>
   <div class="top-actions">
-    <div class="status"><span id="liveDot" class="dot"></span><span id="liveText">Connecting market…</span></div>
+    <div class="status"><span id="liveDot" class="dot"></span><span id="liveText">Market network</span></div>
     <button class="signin" onclick="toast('Account access will be enabled with identity and wallet integration')">Sign in</button>
     <button class="institutional" onclick="toast('Institutional onboarding is being prepared')">Request access</button>
     <button class="mobile-social-head" style="display:none" data-mobile-header="social" aria-label="Open social trading">◎</button>
@@ -42,7 +42,7 @@
 
 <section class="mobile-home" aria-label="Mobile markets header">
   <div class="mobile-simple-head">
-    <div><h1>Markets</h1><small id="mobilePairCount">Loading markets…</small></div>
+    <div><h1>Markets</h1><small id="mobilePairCount">Markets</small></div>
     <button id="mobileMarketsClose" class="mobile-market-close" style="display:none" aria-label="Close markets">×</button>
   </div>
   <div class="mobile-breadth" aria-label="Live market breadth">
@@ -53,7 +53,7 @@
 </section>
 
 <div class="layout">
-<aside class="left" id="markets"><div class="aside-label"><span>MARKET UNIVERSE</span><small>Live instruments</small></div><div class="market-head"><div class="search"><span class="search-icon">⌕</span><input id="search" autocomplete="off" placeholder="Search BTC, ONDO, ETH…"></div><div class="filters"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="rwa">RWA</button><button class="filter" data-filter="gainers">Gainers</button><button class="filter" data-filter="losers">Losers</button></div><div class="paircount" id="pairCount">Loading exchange markets…</div></div><div class="pairlist" id="pairList"><div class="empty">Loading live USDT markets…</div></div></aside>
+<aside class="left" id="markets"><div class="aside-label"><span>MARKET UNIVERSE</span><small>Live instruments</small></div><div class="market-head"><div class="search"><span class="search-icon">⌕</span><input id="search" autocomplete="off" placeholder="Search BTC, ONDO, ETH…"></div><div class="filters"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="rwa">RWA</button><button class="filter" data-filter="gainers">Gainers</button><button class="filter" data-filter="losers">Losers</button></div><div class="paircount" id="pairCount">Live USDT markets</div></div><div class="pairlist" id="pairList"><div class="empty">Loading live USDT markets…</div></div></aside>
 
 <main class="main" id="terminal">
   <div class="terminal-header"><div class="instrument"><div id="selIcon" class="tokenicon featured">BT</div><div class="instrument-copy"><div class="instrument-line"><b id="selName">BTC / USDT</b><span class="verified-badge"><i></i> LIVE</span></div><small id="selLabel">Bitcoin · Binance Spot</small></div></div><div class="quickstats"><div class="qstat price-stat"><small>Price</small><b id="statPrice">—</b></div><div class="qstat"><small>24h</small><b id="statChange">—</b></div><div class="qstat"><small>High</small><b id="statHigh">—</b></div><div class="qstat"><small>Low</small><b id="statLow">—</b></div><div class="qstat"><small>Volume</small><b id="statVol">—</b></div></div><div class="instrument-actions"><button onclick="toast('Watchlists will be enabled with account access')">☆ Watch</button><button onclick="toast('Price alerts will be enabled with account access')">◌ Alert</button><button onclick="toast('Shareable market links are being prepared')">↗ Share</button></div></div>
@@ -90,7 +90,7 @@
 <nav class="mobile-tabs" aria-label="Mobile navigation"><a href="#markets" data-mobile-nav="markets"><span>⌕</span><small>Markets</small></a><a class="active" href="#terminal" data-mobile-nav="chart"><span>⌁</span><small>Chart</small></a><a href="#social" data-mobile-nav="social"><span>◎</span><small>Social</small></a><a href="#suite" data-mobile-nav="hub"><span>◇</span><small>Hub</small></a><a href="#suite" data-mobile-nav="portfolio"><span>▣</span><small>Portfolio</small></a></nav>
 </div>
 <div id="toast" class="toast"></div>
-<script src="app.js?v=7"></script>
-<script src="mobile.js?v=8"></script>
+<script src="app.js?v=8"></script>
+<script src="mobile.js?v=9"></script>
 </body>
 </html>
