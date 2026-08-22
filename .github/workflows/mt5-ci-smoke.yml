@@ -22,22 +22,30 @@ concurrency:
 
 jobs:
   native-smoke:
-    runs-on: windows-latest
+    runs-on: windows-2022
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
           ref: mt5-ci-smoke
           fetch-depth: 1
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
       - name: Generate frozen synthetic Bid Ask ticks
         shell: pwsh
         run: python mt5-ci/scripts/generate_smoke.py
+
       - name: Install and execute native MT5
         shell: pwsh
+        env:
+          MT5_LOGIN: ${{ secrets.MT5_LOGIN }}
+          MT5_PASSWORD: ${{ secrets.MT5_PASSWORD }}
+          MT5_SERVER: ${{ secrets.MT5_SERVER }}
         run: ./mt5-ci/scripts/run.ps1
+
       - name: Upload all evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -48,6 +56,7 @@ jobs:
             mt5-ci/results/latest/**
           if-no-files-found: warn
           retention-days: 30
+
       - name: Commit compact latest evidence
         if: always() && github.event_name != 'pull_request'
         shell: pwsh
