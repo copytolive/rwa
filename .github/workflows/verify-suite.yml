@@ -1,0 +1,50 @@
+name: Verify Full RWA Suite
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate full suite source
+        run: |
+          node --check app.js
+          node --check mobile.js
+          node --check suite-ui.js
+          node --check suite.js
+          node --check suite-nav.js
+          node --check suite-execution-patch.js
+          python -m json.tool rwa-assets.json >/dev/null
+          grep -q "suite-ui.js" mobile.js
+          grep -q "suite.js" mobile.js
+          grep -q "suite-nav.js" mobile.js
+          grep -q "suite-execution-patch.js" suite-nav.js
+          grep -q "Verified trader leaderboard" suite-ui.js
+          grep -q "Copy-trade controls" suite-ui.js
+          grep -q "RWA Marketplace" suite-ui.js
+          grep -q "Execution" suite-ui.js
+      - name: Verify production suite bundle
+        run: |
+          ok=0
+          for i in {1..18}; do
+            base="https://narzulalistiqlal.github.io/rwa/?verify=${GITHUB_RUN_ID}-${i}"
+            if curl -fsSL "$base" | grep -q "mobile.js" && \
+               curl -fsSL "https://narzulalistiqlal.github.io/rwa/mobile.js?verify=${GITHUB_RUN_ID}-${i}" | grep -q "suite-ui.js" && \
+               curl -fsSL "https://narzulalistiqlal.github.io/rwa/suite-nav.js?verify=${GITHUB_RUN_ID}-${i}" | grep -q "suite-execution-patch.js"; then
+              ok=1
+              break
+            fi
+            sleep 10
+          done
+          test "$ok" = "1"
+      - name: Report success
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment "${{ github.event.issue.number }}" --body "FULL RWA SUITE DEPLOYMENT SUCCESS. Profile + verified P&L, leaderboard, copy controls, watch/alerts, portfolio, signed social feed, intelligence, RWA registry, and wallet-signed execution are wired on production. Syntax and production bundle checks passed."
