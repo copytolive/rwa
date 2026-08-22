@@ -19,5 +19,5 @@ load('suite-execution-patch.js?v=4','exec-patch');
 load('wallet-auth.js?v=2','wallet-auth');
 load('walletconnect-auth-patch.js?v=1','walletconnect-auth-patch');
 load('audit-hooks.js?v=2','audit-hooks');
-load('verification-sign-patch.js?v=1','verification-sign');
+load('rwa-verify-client.js?v=1','rwa-verify');
 })();
