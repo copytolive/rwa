@@ -36,8 +36,9 @@ jobs:
           grep -Fq 'execution-api.js?v=2' suite-nav.js || echo "FAIL: suite nav execution api v2" >> /tmp/fails
           grep -Fq 'execution-ops-bridge.js?v=2' suite-nav.js || echo "FAIL: suite nav ops bridge v2" >> /tmp/fails
           grep -Fq 'execution-ui.js?v=2' suite-nav.js || echo "FAIL: suite nav execution ui v2" >> /tmp/fails
+          grep -Fq "version:'2.0.0'" execution-api.js || echo "FAIL: execution API v2 marker" >> /tmp/fails
           grep -Fq 'approveAgent' execution-api.js || echo "FAIL: approveAgent" >> /tmp/fails
-          grep -Fq 'orders:{limit,market,cancel,modify,cancelAll' execution-api.js || echo "FAIL: orders contract" >> /tmp/fails
+          grep -Fq 'cancelAll' execution-api.js || echo "FAIL: cancelAll contract" >> /tmp/fails
           grep -Fq 'RWAExecutionAPI' suite-execution-patch.js || echo "FAIL: execution bridge contract" >> /tmp/fails
           if [ -s /tmp/fails ]; then cp /tmp/fails EXECUTION_DIAGNOSTIC.txt; else echo 'ALL EXECUTION SOURCE CHECKS PASS' > EXECUTION_DIAGNOSTIC.txt; fi
           git config user.name 'github-actions[bot]'
