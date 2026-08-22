@@ -50,7 +50,7 @@ jobs:
           grep -Fq 'orders:{limit,market,cancel,modify,cancelAll' execution-api.js
           grep -Fq 'RWAExecutionOpsBridge' execution-ops-bridge.js
           grep -Fq 'if(window.RWAExecutionBridge)return;' suite-execution-patch.js
-          grep -Fq "if($('executionEngine'))return true" execution-ui.js
+          grep -Fq "executionEngine'))return true;" execution-ui.js
       - name: Publish source success
         env:
           GH_TOKEN: ${{ github.token }}
@@ -88,7 +88,7 @@ jobs:
                grep -Fq 'approveBuilderFee' <<<"$execapi" && \
                grep -Fq 'AES-GCM' <<<"$execapi" && \
                grep -Fq 'FAST API WALLET' <<<"$execui" && \
-               grep -Fq "if($('executionEngine'))return true" <<<"$execui" && \
+               grep -Fq "executionEngine'))return true;" <<<"$execui" && \
                grep -Fq 'execution.cancel_all' <<<"$execops" && \
                grep -Fq 'if(window.RWAExecutionBridge)return;' <<<"$execbridge" && \
                grep -Fq 'RWAExecutionAPI' <<<"$execbridge" && \
