@@ -61,6 +61,16 @@
       "merkle_root": "10133bf1594374923979910cf3563e728fa30ea039cbeff433153e033409e5c1",
       "valid_samples": 1713958,
       "completed_at": "2026-08-22T19:03:49.986742+00:00"
+    },
+    {
+      "shard_id": "fb058ea3e992de6d85d9cc40f6a2887f6086f7bac500e76686b70532ba71a4ae",
+      "month": "2009-10",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "a8a1c4a50d9801de04043ecac05fd2c43c7cdffc39b75326ae9fe0c18c9a8427",
+      "evaluation_count": 59,
+      "merkle_root": "87ead1e2e4509b7cddf11270d5e28675ccb737267347c3c5384c0c50ad064611",
+      "valid_samples": 1875765,
+      "completed_at": "2026-08-22T19:04:05.363253+00:00"
     }
   ]
 }
