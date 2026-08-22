@@ -20,10 +20,50 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Validate JavaScript syntax
-        run: node --check app.js && node --check mobile.js
+        run: |
+          node --check app.js
+          node --check mobile.js
+          node --check backtest/app.js
+          node --check backtest/worker.js
+
       - name: Verify production files
-        run: test -s index.html && test -s app.js && test -s mobile.js && test -s styles.css && test -s mobile.css
+        run: |
+          test -s index.html
+          test -s app.js
+          test -s mobile.js
+          test -s styles.css
+          test -s mobile.css
+          test -s backtest/index.html
+          test -s backtest/app.js
+          test -s backtest/worker.js
+          test -s backtest/styles.css
+          test -s backtest/data/manifest.json
+          test -s backtest/results/campaign.json
+          test -s backtest/results/evaluation_ids.json
+          test -s backtest/results/latest_batch.json
+
+      - name: Validate VectorForge ledger and source catalog
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(Path('backtest/data/manifest.json').read_text())
+          campaign = json.loads(Path('backtest/results/campaign.json').read_text())
+          ids = json.loads(Path('backtest/results/evaluation_ids.json').read_text()).get('ids', [])
+
+          files = manifest.get('files', [])
+          months = [x.get('month') for x in files]
+          assert len(files) == 111, f'expected 111 source files, got {len(files)}'
+          assert len(set(months)) == len(months), 'duplicate source months in manifest'
+          assert months[0] == '2009-05' and months[-1] == '2018-07', 'coverage mismatch'
+          assert campaign['target_evaluations'] == 1_000_000_000_000
+          assert campaign['verified_completed'] == len(set(ids)), 'ledger count != unique evaluation IDs'
+          assert campaign['verified_completed'] <= campaign['target_evaluations']
+          print(f"VectorForge QA PASS: {len(files)} source files, {len(set(ids))} verified evaluations")
+          PY
 
   deploy:
     needs: verify
