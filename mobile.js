@@ -9,7 +9,7 @@
   const fmtPct=v=>{const n=Number(v);if(!Number.isFinite(n))return'—';return(n>=0?'+':'')+n.toFixed(2)+'%'};
   function selected(){return typeof S!=='undefined'&&S.map?S.map.get(S.selected):null}
   function warmConnections(){
-    for(const href of ['https://s3.tradingview.com','https://www.tradingview.com','https://data-api.binance.vision','https://data-stream.binance.vision']){
+    for(const href of ['https://data-api.binance.vision','https://data-stream.binance.vision','https://stream.binance.com']){
       if(document.querySelector(`link[data-rwa-preconnect=\"${href}\"]`))continue;const l=document.createElement('link');l.rel='preconnect';l.href=href;l.crossOrigin='anonymous';l.dataset.rwaPreconnect=href;document.head.appendChild(l)
     }
   }
@@ -70,7 +70,6 @@
   function loadScript(src){return new Promise((resolve,reject)=>{const existing=[...document.scripts].find(x=>(x.getAttribute('src')||'').split('?')[0]===src.split('?')[0]);if(existing){if(existing.dataset.rwaReady==='1')return resolve();existing.addEventListener('load',resolve,{once:true});existing.addEventListener('error',reject,{once:true});return}const s=document.createElement('script');s.src=src;s.onload=()=>{s.dataset.rwaReady='1';resolve()};s.onerror=reject;document.body.appendChild(s)})}
   document.addEventListener('click',e=>{const b=e.target.closest?.('.signin,.institutional,.topnav button,.product-nav button');if(!b)return;const t=(b.textContent||'').trim().toLowerCase();let tab='';if(b.matches('.signin')||t==='company')tab='profile';else if(b.matches('.institutional')||t.includes('asset'))tab='rwa';else if(t.includes('intelligence')||t.includes('rwa index'))tab='intel';else if(t.includes('research'))tab='feed';if(!tab)return;e.preventDefault();e.stopImmediatePropagation();loadSuite().then(()=>window.RWASuite?.open(tab));},true);
   function loadSuite(){if(suiteLoadPromise)return suiteLoadPromise;suiteLoadPromise=(async()=>{try{if(!document.querySelector('link[href^="suite.css"]')){const l=document.createElement('link');l.rel='stylesheet';l.href='suite.css?v=1';document.head.appendChild(l)}await loadScript('suite-ui.js?v=1');await loadScript('suite.js?v=1');await loadScript('suite-nav.js?v=1')}catch(e){console.error('RWA suite load failed',e)}})();return suiteLoadPromise}
-  warmConnections();instantChartBoot();loadSuite();
+  warmConnections();instantChartBoot();
   syncMobile();renderFeed();if(innerWidth<=680){closeMarkets();closeSocial();setDetailView('overview')}setInterval(()=>{syncMobile();if(document.body.classList.contains('social-open')){renderTrending();renderFeed()}},2200);
-  const rwaIdleSuiteWarm=()=>{try{loadSuite()}catch(_){}};setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(rwaIdleSuiteWarm,{timeout:3500});else setTimeout(rwaIdleSuiteWarm,1200)},1800);
 })();
