@@ -1,3 +1,4 @@
+# retrigger: exchange-core-v1
 name: Apply Exchange Core
 on:
   push:
@@ -16,7 +17,6 @@ jobs:
           python - <<'PY'
           from pathlib import Path
 
-          # Seamless account switching: no reload, one fresh signature for the new account.
           p=Path('wallet-core.js'); s=p.read_text()
           old="if(window.ethereum?.on)window.ethereum.on('accountsChanged',a=>{const active=session()?.wallet?.toLowerCase(),next=String(a?.[0]||'').toLowerCase();if(active&&next&&active!==next){localStorage.removeItem(KEY);verified=false;labels();toast('Wallet account changed. Connect again.')}})"
           new="if(window.ethereum?.on){window.ethereum.on('accountsChanged',async a=>{const active=session()?.wallet?.toLowerCase(),next=String(a?.[0]||'').toLowerCase();if(!next){localStorage.removeItem(KEY);verified=false;current=null;labels();window.dispatchEvent(new CustomEvent('rwa:wallet-logout'));return}if(active!==next){localStorage.removeItem(KEY);verified=false;current=window.ethereum;labels();try{await signWith(window.ethereum);toast('Wallet account switched · '+short(next))}catch(e){toast(e?.message||'Sign the new account to continue')}}});window.ethereum.on('chainChanged',chain=>window.dispatchEvent(new CustomEvent('rwa:wallet-chain',{detail:{chain}})))}"
@@ -24,7 +24,6 @@ jobs:
           assert "Wallet account switched" in s
           p.write_text(s)
 
-          # Direct critical boot.
           p=Path('index.html'); s=p.read_text()
           s=s.replace('wallet-core.js?v=2','wallet-core.js?v=3')
           if 'exchange-core.js?v=1' not in s:
@@ -33,20 +32,16 @@ jobs:
           assert 'wallet-core.js?v=3' in s and 'exchange-core.js?v=1' in s and 'exchange-ui.js?v=1' in s
           p.write_text(s)
 
-          # Keep existing live smoke aligned with cache version.
           p=Path('.github/workflows/live-browser-smoke.yml'); s=p.read_text().replace('wallet-core.js?v=2','wallet-core.js?v=3')
           p.write_text(s)
 
-          # Permanent Pages gate: exchange core must parse and be wired.
           p=Path('.github/workflows/pages.yml'); s=p.read_text()
-          marker='node --check exchange-core.js'
-          if marker not in s:
+          if 'node --check exchange-core.js' not in s:
               needle='node --check execution-ops-bridge.js'
               s=s.replace(needle,needle+'\n          node --check exchange-core.js\n          node --check exchange-ui.js')
           if "test -s exchange-core.js" not in s:
               needle='test -s execution-ops-bridge.js'
               if needle in s: s=s.replace(needle,needle+'\n          test -s exchange-core.js\n          test -s exchange-ui.js')
-          # Append wiring assertions inside first verify shell block using an existing stable assertion.
           if "grep -q 'exchange-core.js?v=1' index.html" not in s:
               needle="grep -q 'realtime-core.js?v=2' index.html"
               if needle in s: s=s.replace(needle,needle+"\n          grep -q 'wallet-core.js?v=3' index.html\n          grep -q 'exchange-core.js?v=1' index.html\n          grep -q 'exchange-ui.js?v=1' index.html")
