@@ -1,10 +1,12 @@
 const SOURCE_REPO='https://github.com/zcbmlijygrdwa/fx_EUR_USD_tick';
 const RAW_BASE='https://raw.githubusercontent.com/zcbmlijygrdwa/fx_EUR_USD_tick/master';
-const ENGINE_VERSION='vectorforge-browser-1.2.1';
+const ENGINE_VERSION='vectorforge-browser-1.3.0';
 
 const $=id=>document.getElementById(id);
 const months=[];
 const verifiedSources=new Map();
+let assetCatalog=[];
+const assetStatusBySymbol=new Map();
 for(let y=2009;y<=2018;y++){
   const start=y===2009?5:1,end=y===2018?7:12;
   for(let m=start;m<=end;m++)months.push(`${y}-${String(m).padStart(2,'0')}`);
@@ -16,6 +18,58 @@ function fillMonths(){
     for(const ym of months){const o=document.createElement('option');o.value=ym;o.textContent=ym;el.appendChild(o)}
   }
   $('fromMonth').value='2018-01';$('toMonth').value='2018-01';
+}
+
+function assetLabel(a){
+  if(a.class==='forex-major')return'FX MAJOR';
+  if(a.class==='forex-cross'||a.class==='forex-major-cross')return'FX CROSS';
+  if(a.class==='metal')return'METAL';
+  if(a.class==='crypto')return'CRYPTO';
+  return String(a.class||'ASSET').toUpperCase();
+}
+
+function renderAssets(filter=''){
+  const grid=$('assetGrid');if(!grid)return;
+  const q=filter.trim().toUpperCase();
+  const shown=assetCatalog.filter(a=>!q||`${a.symbol} ${a.name} ${a.class} ${a.provider}`.toUpperCase().includes(q));
+  grid.innerHTML='';
+  let verified=0;
+  for(const a of shown){
+    const v=assetStatusBySymbol.get(a.symbol);
+    const status=v?.status||'PENDING';
+    if(status==='VERIFIED')verified++;
+    const card=document.createElement('article');
+    card.className=`asset-card ${status.toLowerCase()}`;
+    const hash=v?.sample_sha256?String(v.sample_sha256).slice(0,10):'';
+    const provider=a.provider==='dukascopy'?'Dukascopy':a.provider==='binance'?'Binance Public Data':a.provider;
+    card.innerHTML=`
+      <div class="asset-card-top"><span class="asset-type">${assetLabel(a)}</span><span class="asset-status ${status.toLowerCase()}">${status==='VERIFIED'?'✓ ':''}${status}</span></div>
+      <strong>${a.symbol}</strong><span class="asset-name">${a.name||a.symbol}</span>
+      <div class="asset-meta"><span>${provider}</span><span>tick from ${a.earliest_tick||'—'}</span></div>
+      <div class="asset-meta"><span>point ${a.point_size}</span><span>${hash?`SHA ${hash}`:a.mode}</span></div>`;
+    if(v?.error)card.title=v.error;
+    grid.appendChild(card);
+  }
+  const totalVerified=assetCatalog.filter(a=>assetStatusBySymbol.get(a.symbol)?.status==='VERIFIED').length;
+  $('assetSummary').textContent=`${shown.length} shown · ${totalVerified}/${assetCatalog.length||0} source-verified`;
+}
+
+async function loadAssets(){
+  try{
+    const r=await fetch(`./data/assets.json?cb=${Date.now()}`,{cache:'no-store'});
+    if(!r.ok)throw new Error(`catalog HTTP ${r.status}`);
+    const data=await r.json();assetCatalog=Array.isArray(data.assets)?data.assets:[];
+  }catch(err){
+    $('assetSummary').textContent=`Asset catalog unavailable: ${err.message}`;return;
+  }
+  try{
+    const r=await fetch(`./data/asset_status.json?cb=${Date.now()}`,{cache:'no-store'});
+    if(r.ok){
+      const data=await r.json();assetStatusBySymbol.clear();
+      for(const a of data.assets||[])if(a?.symbol)assetStatusBySymbol.set(a.symbol,a);
+    }
+  }catch(err){console.warn('Asset verification status unavailable',err)}
+  renderAssets($('assetSearch')?.value||'');
 }
 
 function renderCatalog(filter=''){
@@ -186,10 +240,11 @@ $('exportBtn').addEventListener('click',()=>{
   a.href=u;a.download=`vectorforge-result-${Date.now()}.json`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);
 });
 $('catalogSearch').addEventListener('input',e=>renderCatalog(e.target.value));
+$('assetSearch').addEventListener('input',e=>renderAssets(e.target.value));
 $('sourceRepo').href=SOURCE_REPO;
 $('strategy').addEventListener('change',()=>{if($('strategy').value==='rsi_revert'&&+$('fast').value===50)$('fast').value=14});
 $('dataset').addEventListener('change',()=>{
   const custom=$('dataset').value==='custom';$('customFields').classList.toggle('hidden-field',!custom);$('monthRange').style.display=custom?'none':'';
 });
 
-fillMonths();renderCatalog();loadCampaign();loadLatestBatch();loadSourceHistory();
+fillMonths();renderCatalog();loadCampaign();loadLatestBatch();loadSourceHistory();loadAssets();
