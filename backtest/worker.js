@@ -1,8 +1,6 @@
 let cancelled=false;
 self.onmessage=e=>{if(e.data?.type==='run'){cancelled=false;run(e.data.config,e.data.file||null).catch(err=>postMessage({type:'error',message:String(err?.message||err)}))}else if(e.data?.type==='cancel'){cancelled=true}};
 
-const pip=0.0001;
-
 class RollingMean{
   constructor(n){this.n=Math.max(1,n|0);this.buf=new Float64Array(this.n);this.i=0;this.count=0;this.sum=0}
   push(v){if(this.count<this.n){this.buf[this.i]=v;this.sum+=v;this.count++}else{this.sum+=v-this.buf[this.i];this.buf[this.i]=v}this.i=(this.i+1)%this.n}
@@ -63,13 +61,14 @@ class Strategy{
   }
 }
 
-function parsePrices(line,fallbackSpreadPips){
+function parsePrices(line,fallbackSpreadPoints,pointSize){
   const s=line.trim();if(!s)return null;const parts=s.split(/[\s,;]+/,3);const bid=Number(parts[0]);if(!Number.isFinite(bid)||!(bid>0.000001&&bid<1000000))return null;
-  let ask=parts.length>1?Number(parts[1]):NaN;if(!Number.isFinite(ask)||ask<bid||ask-bid>Math.max(0.02,bid*0.02))ask=bid+fallbackSpreadPips*pip;
+  let ask=parts.length>1?Number(parts[1]):NaN;if(!Number.isFinite(ask)||ask<bid||ask-bid>Math.max(pointSize*10000,bid*0.02))ask=bid+fallbackSpreadPoints*pointSize;
   return [bid,ask];
 }
 
 async function run(c,customFile){
+  const pointSize=Number(c.pointSize)||0.0001;
   const st=new Strategy(c);let pos=null,samples=0,events=0,wins=0,grossPos=0,grossNeg=0,netR=0,peak=0,maxDD=0,lastBid=null,lastAsk=null,processed=0;
   const record=r=>{events++;netR+=r;if(r>0){wins++;grossPos+=r}else grossNeg+=Math.abs(r);if(netR>peak)peak=netR;maxDD=Math.max(maxDD,peak-netR)};
   const maybeExit=(bid,ask)=>{
@@ -79,7 +78,7 @@ async function run(c,customFile){
   };
   const processQuote=(bid,ask)=>{
     lastBid=bid;lastAsk=ask;samples++;maybeExit(bid,ask);const mid=(bid+ask)/2;const sig=st.signal(mid);
-    if(!pos&&sig){const d=c.slPips*pip;pos=sig===1?{dir:1,entry:ask,stop:ask-d,target:ask+d*c.rr}:{dir:-1,entry:bid,stop:bid+d,target:bid-d*c.rr}}
+    if(!pos&&sig){const d=c.slPips*pointSize;pos=sig===1?{dir:1,entry:ask,stop:ask-d,target:ask+d*c.rr}:{dir:-1,entry:bid,stop:bid+d,target:bid-d*c.rr}}
   };
   const labels=customFile?[customFile.name]:c.months;
   for(let mi=0;mi<labels.length;mi++){
@@ -90,13 +89,13 @@ async function run(c,customFile){
     while(true){
       if(cancelled)throw new Error('Cancelled');const {value,done}=await reader.read();carry+=decoder.decode(value||new Uint8Array(),{stream:!done});
       const lines=carry.split(/\r?\n/);carry=lines.pop()||'';
-      for(const line of lines){const q=parsePrices(line,c.spreadPips);if(!q)continue;processQuote(q[0],q[1]);local++}
+      for(const line of lines){const q=parsePrices(line,c.spreadPips,pointSize);if(!q)continue;processQuote(q[0],q[1]);local++}
       if(done)break;
     }
-    if(carry){const q=parsePrices(carry,c.spreadPips);if(q){processQuote(q[0],q[1]);local++}}
+    if(carry){const q=parsePrices(carry,c.spreadPips,pointSize);if(q){processQuote(q[0],q[1]);local++}}
     processed++;postMessage({type:'progress',pct:(mi+1)/labels.length*100,text:`Processed ${label} · ${local.toLocaleString()} samples`,log:`${label} · ${local.toLocaleString()} valid samples`});
   }
-  if(pos&&lastBid!=null&&lastAsk!=null){const px=pos.dir===1?lastBid:lastAsk;const d=c.slPips*pip;let r=pos.dir===1?(px-pos.entry)/d:(pos.entry-px)/d;r=Math.max(-1,Math.min(c.rr,r));record(r);pos=null}
+  if(pos&&lastBid!=null&&lastAsk!=null){const px=pos.dir===1?lastBid:lastAsk;const d=c.slPips*pointSize;let r=pos.dir===1?(px-pos.entry)/d:(pos.entry-px)/d;r=Math.max(-1,Math.min(c.rr,r));record(r);pos=null}
   const activeWeeks=Math.max(1,samples/(5*24*3600));
-  postMessage({type:'result',result:{netR,positiveRate:events?wins/events*100:0,gainLossRatio:grossNeg?grossPos/grossNeg:(grossPos?Infinity:0),maxDrawdownR:maxDD,events,eventsPerWeek:events/activeWeeks,samples,monthsProcessed:processed,sourceType:customFile?'custom-local':'public-github'}});
+  postMessage({type:'result',result:{netR,positiveRate:events?wins/events*100:0,gainLossRatio:grossNeg?grossPos/grossNeg:(grossPos?Infinity:0),maxDrawdownR:maxDD,events,eventsPerWeek:events/activeWeeks,samples,monthsProcessed:processed,sourceType:customFile?'custom-local':'public-github',pointSize}});
 }
