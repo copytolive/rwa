@@ -1,3 +1,4 @@
+# trigger: v2
 name: Install RWA Execution API
 on:
   push:
