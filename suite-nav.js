@@ -10,13 +10,14 @@ for(const b of document.querySelectorAll('.product-nav button')){const t=b.textC
 const sign=document.querySelector('.signin');if(sign)sign.onclick=()=>suite('profile');const inst=document.querySelector('.institutional');if(inst)inst.onclick=()=>suite('rwa');
 if(!document.querySelector('link[data-rwa-ops-css]')){const l=document.createElement('link');l.rel='stylesheet';l.href='ops.css?v=1';l.dataset.rwaOpsCss='1';document.head.appendChild(l)}
 function load(src,key){if(document.querySelector(`script[data-rwa-${key}]`))return;const s=document.createElement('script');s.src=src;s.async=false;s.dataset[`rwa${key.replace(/(^|-)(\w)/g,(_,a,b)=>b.toUpperCase())}`]='1';document.body.appendChild(s)}
-load('walletconnect.js?v=1','walletconnect');
+load('walletconnect.js?v=2','walletconnect');
 load('ops-suite.js?v=1','ops');
 load('provider-failover.js?v=2','failover');
 load('monitor-client.js?v=2','monitor-client');
 load('social-safety-patch.js?v=2','social-safety');
-load('suite-execution-patch.js?v=3','exec-patch');
+load('suite-execution-patch.js?v=4','exec-patch');
 load('wallet-auth.js?v=2','wallet-auth');
 load('walletconnect-auth-patch.js?v=1','walletconnect-auth-patch');
-load('audit-hooks.js?v=1','audit-hooks');
+load('audit-hooks.js?v=2','audit-hooks');
+load('verification-sign-patch.js?v=1','verification-sign');
 })();
