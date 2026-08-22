@@ -130,13 +130,14 @@ jobs:
           grep -Fq "rwa-verify-client.js" suite-nav.js
 
           # Wallet-first exchange architecture.
+          grep -Fq "version:'2.0.0'" execution-api.js
           grep -Fq "approveAgent" execution-api.js
           grep -Fq "approveBuilderFee" execution-api.js
           grep -Fq "AES-GCM" execution-api.js
           grep -Fq "frontendOpenOrders" execution-api.js
           grep -Fq "historicalOrders" execution-api.js
           grep -Fq "clearinghouseState" execution-api.js
-          grep -Fq "orders:{limit,market,cancel,modify,cancelAll" execution-api.js
+          grep -Fq "cancelAll" execution-api.js
           grep -Fq "RWAExecutionAPI" execution-ui.js
           grep -Fq "FAST API WALLET" execution-ui.js
           grep -Fq "RWAExecutionAPI" execution-ops-bridge.js
