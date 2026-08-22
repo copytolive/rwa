@@ -36,9 +36,9 @@ const checks={
   worker_no_fund_methods:{ok:!/(withdraw3|usdClassTransfer|spotSend|sendAsset)/.test(workerExec+workerLoop),detail:'no withdrawal/transfer API exposed'},
   e2e_verifier_pipeline:{ok:e2eVerify.includes('E2E_PROOF_JSON_START')&&e2eWorkflow.includes('node tools/e2e-proof.mjs')&&e2eWorkflow.includes('launch/e2e-registry.json'),detail:'wallet signature + Hyperliquid testnet verifier workflow'},
   rwa_verifier_pipeline:{ok:rwaVerify.includes('verifyMessage')&&rwaVerify.includes("status:'VERIFIED'")&&rwaWorkflow.includes('node tools/rwa-verify.mjs')&&rwaWorkflow.includes('rwa-assets.json'),detail:'reviewer signature + evidence + registry workflow'},
-  beta_verifier_pipeline:{ok:betaVerify.includes('BETA_PROOF_JSON_START')&&betaVerify.includes("userFillsByTime")&&betaVerify.includes("processed source fill")&&betaWorkflow.includes('node tools/beta-proof.mjs'),detail:'wallet + worker session + venue beta verifier workflow'},
+  beta_verifier_pipeline:{ok:betaVerify.includes('BETA_PROOF_JSON_START')&&betaVerify.includes('userFillsByTime')&&betaVerify.includes('processed source fill')&&betaWorkflow.includes('node tools/beta-proof.mjs'),detail:'wallet + worker session + venue beta verifier workflow'},
   security_ci_pipeline:{ok:securityGate.includes('single_write_path')&&securityGate.includes('worker_fund_isolation')&&securityWorkflow.includes('node tools/security-gate.mjs'),detail:'repository-wide source security workflow'},
-  watchdog_pipeline:{ok:workerWatch.includes("kill_switch:true")&&workerWatch.includes("mainnet_enabled:false")&&watchWorkflow.includes('node tools/worker-watch.mjs --trip'),detail:'5-minute worker fail-safe watchdog'},
+  watchdog_pipeline:{ok:workerWatch.includes('kill_switch:true')&&workerWatch.includes('mainnet_enabled:false')&&watchWorkflow.includes('node tools/worker-watch.mjs --trip'),detail:'5-minute worker fail-safe watchdog'},
   real_wallet_e2e:{ok:(e2e.wallets||[]).some(x=>addr(x.wallet)&&x.status==='E2E_VERIFIED'&&Number(x.verified_at)>0),detail:`${(e2e.wallets||[]).length} registered wallet proof(s)`},
   reviewer_registry:{ok:(reviewers.reviewers||[]).some(x=>addr(typeof x==='string'?x:x.wallet)),detail:`${(reviewers.reviewers||[]).length} authorized reviewer(s)`},
   verified_rwa_asset:{ok:(assets.verified||[]).some(okAsset),detail:`${(assets.verified||[]).length} verified asset(s)`},
@@ -62,7 +62,7 @@ const beta_ready=engineering_ready&&prereqBlockers.length===0;
 const beta_passed=beta_ready&&betaBlockers.length===0;
 const mainnet_ready=beta_passed&&checks.mainnet_control.ok;
 const blockers=[...engineeringBlockers,...prereqBlockers,...betaBlockers,...(!checks.mainnet_control.ok?[{gate:'mainnet_control',detail:checks.mainnet_control.detail}]:[])];
-const status=mainnet_ready?'READY_FOR_MAINNET':beta_passed?'BETA_PASSED_AWAITING_MAINNET':beta_ready?'READY_FOR_BETA':engineering_ready?'ENGINEERING_COMPLETE_AWAITING_EXTERNAL_PROOFS':'BLOCKED';
+const status=mainnet_ready?'READY_FOR_MAINNET':beta_passed?'BETA_PASSED_AWAITING_MAINNET':beta_ready?'READY_FOR_BETA':'BLOCKED';
 const out={schema:3,generated_at:new Date().toISOString(),status,engineering_ready,beta_ready,beta_passed,mainnet_ready,beta:{thresholds,counts:betaCounts,verified_proofs:proofs.length},checks,blockers,revenue:'DEFERRED',token_tge:'DEFERRED'};
 if(process.argv.includes('--write'))await writeFile('launch/readiness.json',JSON.stringify(out,null,2)+'\n');
 console.log(JSON.stringify(out,null,2));
