@@ -1,28 +1,130 @@
 {
-  "schema": 1,
-  "generated_at": "2026-08-23T00:00:00.000Z",
+  "schema": 2,
+  "generated_at": "2026-08-22T23:41:38.464Z",
   "status": "BLOCKED",
   "beta_ready": false,
+  "beta_passed": false,
   "mainnet_ready": false,
+  "beta": {
+    "thresholds": {
+      "internal": 3,
+      "closed": 20,
+      "public": 100
+    },
+    "counts": {
+      "internal": 0,
+      "closed": 0,
+      "public": 0
+    },
+    "verified_proofs": 0
+  },
   "checks": {
-    "browser_single_write": {"ok": true, "detail": "RWAExecutionAPI + mandatory risk + atomic normalTpsl"},
-    "worker_single_write": {"ok": true, "detail": "worker writes only through RWAWorkerExecutionAPI"},
-    "worker_no_fund_methods": {"ok": true, "detail": "no withdrawal/transfer API exposed"},
-    "real_wallet_e2e": {"ok": false, "detail": "0 registered wallet proof(s)"},
-    "reviewer_registry": {"ok": false, "detail": "0 authorized reviewer(s)"},
-    "verified_rwa_asset": {"ok": false, "detail": "0 verified asset(s)"},
-    "worker_configured": {"ok": false, "detail": "disabled"},
-    "worker_live": {"ok": false, "detail": "public worker URL not activated"},
-    "worker_control": {"ok": false, "detail": "enabled=false kill=true production_ready=false"},
-    "revenue_deferred": {"ok": true, "detail": "builder/platform fee remains OFF until final revenue wallet approval"}
+    "browser_single_write": {
+      "ok": true,
+      "detail": "RWAExecutionAPI + mandatory risk + atomic normalTpsl"
+    },
+    "browser_global_mainnet_lock": {
+      "ok": true,
+      "detail": "mainnet requires wallet E2E + global READY_FOR_MAINNET"
+    },
+    "worker_single_write": {
+      "ok": true,
+      "detail": "worker writes only through RWAWorkerExecutionAPI"
+    },
+    "worker_idempotency": {
+      "ok": true,
+      "detail": "deterministic CLOID + venue orderStatus + persisted source-fill ledger"
+    },
+    "worker_no_fund_methods": {
+      "ok": true,
+      "detail": "no withdrawal/transfer API exposed"
+    },
+    "real_wallet_e2e": {
+      "ok": false,
+      "detail": "0 registered wallet proof(s)"
+    },
+    "reviewer_registry": {
+      "ok": false,
+      "detail": "0 authorized reviewer(s)"
+    },
+    "verified_rwa_asset": {
+      "ok": false,
+      "detail": "0 verified asset(s)"
+    },
+    "worker_configured": {
+      "ok": false,
+      "detail": "disabled"
+    },
+    "worker_live": {
+      "ok": false,
+      "detail": "public worker URL not activated"
+    },
+    "worker_control": {
+      "ok": false,
+      "detail": "enabled=false kill=true production_ready=false readyz=false"
+    },
+    "beta_internal": {
+      "ok": false,
+      "detail": "0/3 verified wallet(s)"
+    },
+    "beta_closed": {
+      "ok": false,
+      "detail": "0/20 verified wallet(s)"
+    },
+    "beta_public": {
+      "ok": false,
+      "detail": "0/100 verified wallet(s)"
+    },
+    "mainnet_control": {
+      "ok": false,
+      "detail": "mainnet_enabled=false"
+    },
+    "revenue_deferred": {
+      "ok": true,
+      "detail": "builder/platform fee remains OFF until final revenue wallet approval"
+    }
   },
   "blockers": [
-    {"gate": "real_wallet_e2e", "detail": "0 registered wallet proof(s)"},
-    {"gate": "reviewer_registry", "detail": "0 authorized reviewer(s)"},
-    {"gate": "verified_rwa_asset", "detail": "0 verified asset(s)"},
-    {"gate": "worker_configured", "detail": "disabled"},
-    {"gate": "worker_live", "detail": "public worker URL not activated"},
-    {"gate": "worker_control", "detail": "enabled=false kill=true production_ready=false"}
+    {
+      "gate": "real_wallet_e2e",
+      "detail": "0 registered wallet proof(s)"
+    },
+    {
+      "gate": "reviewer_registry",
+      "detail": "0 authorized reviewer(s)"
+    },
+    {
+      "gate": "verified_rwa_asset",
+      "detail": "0 verified asset(s)"
+    },
+    {
+      "gate": "worker_configured",
+      "detail": "disabled"
+    },
+    {
+      "gate": "worker_live",
+      "detail": "public worker URL not activated"
+    },
+    {
+      "gate": "worker_control",
+      "detail": "enabled=false kill=true production_ready=false readyz=false"
+    },
+    {
+      "gate": "beta_internal",
+      "detail": "0/3 verified wallet(s)"
+    },
+    {
+      "gate": "beta_closed",
+      "detail": "0/20 verified wallet(s)"
+    },
+    {
+      "gate": "beta_public",
+      "detail": "0/100 verified wallet(s)"
+    },
+    {
+      "gate": "mainnet_control",
+      "detail": "mainnet_enabled=false"
+    }
   ],
   "revenue": "DEFERRED",
   "token_tge": "DEFERRED"
