@@ -1,0 +1,48 @@
+name: RWA Launch Gate
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "execution-api.js"
+      - "exchange-core.js"
+      - "agent-worker/**"
+      - "rwa-reviewers.json"
+      - "rwa-assets.json"
+      - "rwa-execution-config.json"
+      - "launch/**"
+      - "tools/launch-gate.mjs"
+      - ".github/workflows/launch-gate.yml"
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+      - name: Evaluate launch gates
+        run: |
+          node tools/launch-gate.mjs > /tmp/rwa-launch.json
+          cat /tmp/rwa-launch.json
+          python -m json.tool launch/readiness.json >/dev/null
+          python -m json.tool launch/e2e-registry.json >/dev/null
+      - name: Publish launch status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          READY="$(node -e "const x=require('/tmp/rwa-launch.json');process.stdout.write(String(x.mainnet_ready))")"
+          BLOCKERS="$(node -e "const x=require('/tmp/rwa-launch.json');process.stdout.write(x.blockers.map(b=>b.gate).slice(0,4).join(','))")"
+          if [ "$READY" = "true" ]; then
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/launch-gate' -f description='RWA mainnet launch gates PASS'
+          else
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=pending -f context='rwa/launch-gate' -f description="Blocked: ${BLOCKERS:-external launch inputs}"
+          fi
