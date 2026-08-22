@@ -1,0 +1,53 @@
+# trigger: v2
+name: Fix Stuck Browser Core
+on:
+  push:
+    branches: ["main"]
+    paths: [".github/workflows/fix-stuck-browser-core.yml"]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch critical startup
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('mobile.js'); s=p.read_text()
+          old="for(const href of ['https://s3.tradingview.com','https://www.tradingview.com','https://data-api.binance.vision','https://data-stream.binance.vision'])"
+          new="for(const href of ['https://data-api.binance.vision','https://data-stream.binance.vision','https://stream.binance.com'])"
+          if old not in s: raise SystemExit('mobile preconnect contract changed')
+          s=s.replace(old,new,1)
+          old2='warmConnections();instantChartBoot();loadSuite();'
+          if old2 not in s: raise SystemExit('mobile boot contract changed')
+          s=s.replace(old2,'warmConnections();instantChartBoot();',1)
+          s=re.sub(r"\n  const rwaIdleSuiteWarm=.*?\n","\n",s,count=1)
+          p.write_text(s)
+          p=Path('app.js'); s=p.read_text(); s=s.replace('setTimeout(loadMarkets,450);','setTimeout(loadMarkets,0);'); p.write_text(s)
+          p=Path('index.html'); s=p.read_text()
+          s=s.replace('<link rel="preconnect" href="https://s3.tradingview.com" crossorigin>\n','').replace('<link rel="preconnect" href="https://www.tradingview.com" crossorigin>\n','')
+          s=re.sub(r'app\.js\?v=\d+','app.js?v=10',s); s=re.sub(r'mobile\.js\?v=\d+','mobile.js?v=11',s)
+          s=s.replace('<script src="browser-recovery.js?v=2"></script>','<script src="realtime-core.js?v=1"></script>')
+          if 'realtime-core.js?v=1' not in s: raise SystemExit('realtime core not installed')
+          if '<link rel="preload" href="realtime-core.js?v=1" as="script">' not in s:
+              s=s.replace('<link rel="preload" href="mobile.js?v=11" as="script">','<link rel="preload" href="mobile.js?v=11" as="script">\n<link rel="preload" href="realtime-core.js?v=1" as="script">')
+          p.write_text(s)
+          PY
+          node --check app.js
+          node --check realtime-core.js
+          node --check mobile.js
+          grep -Fq 'realtime-core.js?v=1' index.html
+          grep -Fq 'mobile.js?v=11' index.html
+          ! grep -Fq 'browser-recovery.js' index.html
+          ! grep -Fq 'instantChartBoot();loadSuite()' mobile.js
+      - name: Commit and self-remove
+        run: |
+          rm .github/workflows/fix-stuck-browser-core.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html app.js mobile.js realtime-core.js .github/workflows/fix-stuck-browser-core.yml
+          git commit -m 'fix: isolate realtime core and stop startup load loop'
+          git push
