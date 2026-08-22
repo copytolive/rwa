@@ -26,6 +26,7 @@ jobs:
       - name: Validate application syntax
         run: |
           node --check app.js
+          node --check realtime-core.js
           node --check mobile.js
           node --check suite-ui.js
           node --check suite.js
@@ -55,6 +56,7 @@ jobs:
         run: |
           test -s index.html
           test -s app.js
+          test -s realtime-core.js
           test -s mobile.js
           test -s styles.css
           test -s mobile.css
@@ -94,6 +96,13 @@ jobs:
           python -m json.tool monitor/config.json >/dev/null
           python -m json.tool monitor/status.json >/dev/null
           python -m json.tool monitor/admin-wallets.json >/dev/null
+          grep -Fq "realtime-core.js?v=2" index.html
+          ! grep -Fq "browser-recovery.js" index.html
+          ! grep -Fq "instantChartBoot();loadSuite()" mobile.js
+          grep -Fq "data-stream.binance.vision" realtime-core.js
+          grep -Fq "stream.binance.com:9443" realtime-core.js
+          grep -Fq "stream.binance.com:443" realtime-core.js
+          grep -Fq "REST fallback" realtime-core.js
           grep -Fq "suite-nav.js" mobile.js
           grep -Fq "ops-suite.js" suite-nav.js
           grep -Fq "risk-hardening.js" suite-nav.js
