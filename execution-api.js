@@ -370,6 +370,41 @@ async function market({coin,side='BUY',size,reduceOnly=false,slippageBps=null,le
   const px=mid*(1+(buy?1:-1)*bps/10000);
   return limit({coin,side,price:px,size,reduceOnly,tif:'Ioc',leverage,testnet,preferAgent});
 }
+async function bracket({coin,side='BUY',size,type='MARKET',price=null,tp=null,sl=null,tif='Gtc',slippageBps=null,leverage=null,testnet=false,preferAgent=true}){
+  coin=String(coin).toUpperCase();
+  const {idx,u}=await asset(coin,testnet);
+  const s=fmtSz(size,u.szDecimals);
+  const buy=String(side).toUpperCase()==='BUY';
+  const kind=String(type).toUpperCase()==='LIMIT'?'LIMIT':'MARKET';
+  let reference,entryRaw;
+  if(kind==='MARKET'){
+    const mids=await info('allMids',{},testnet);
+    reference=Number(mids?.[coin]);
+    if(!Number.isFinite(reference)||reference<=0)throw Error('Market price unavailable');
+    const c=await config();
+    const bps=Number(slippageBps??c.defaults?.marketSlippageBps??30);
+    entryRaw=reference*(1+(buy?1:-1)*bps/10000);
+  }else{
+    reference=Number(price);
+    entryRaw=reference;
+    if(!Number.isFinite(reference)||reference<=0)throw Error('Limit price is required');
+  }
+  const p=fmtPx(entryRaw,u.szDecimals),tpN=Number(tp||0),slN=Number(sl||0);
+  if(!(tpN>0||slN>0))throw Error('Bracket order requires TP or SL');
+  if(tpN>0&&((buy&&tpN<=reference)||(!buy&&tpN>=reference)))throw Error(buy?'Take profit must be above entry':'Take profit must be below entry');
+  if(slN>0&&((buy&&slN>=reference)||(!buy&&slN<=reference)))throw Error(buy?'Stop loss must be below entry':'Stop loss must be above entry');
+  await mandatoryRiskCheck({coin,price:Number(p),size:Number(s),leverage:Number(leverage||1),reduceOnly:false,kind:'bracket'},testnet);
+  const {client,mode}=await exchange(testnet,{preferAgent});
+  if(leverage!=null)assertWriteResult(await client.updateLeverage({asset:idx,isCross:true,leverage:Math.max(1,Math.floor(Number(leverage)||1))}),'Leverage update');
+  const orders=[{a:idx,b:buy,p,s,r:false,t:{limit:{tif:kind==='MARKET'?'Ioc':tif}}}];
+  const closeBuy=!buy;
+  if(tpN>0){const x=fmtPx(tpN,u.szDecimals);orders.push({a:idx,b:closeBuy,p:x,s,r:true,t:{trigger:{isMarket:true,triggerPx:x,tpsl:'tp'}}})}
+  if(slN>0){const x=fmtPx(slN,u.szDecimals);orders.push({a:idx,b:closeBuy,p:x,s,r:true,t:{trigger:{isMarket:true,triggerPx:x,tpsl:'sl'}}})}
+  const builder=await builderParam();
+  const result=assertWriteResult(await client.order({orders,grouping:'normalTpsl',...(builder?{builder}:{})}),'Bracket order');
+  audit('execution.order',{kind:'bracket',entryKind:kind,coin,side,price:p,size:s,tp:tpN||null,sl:slN||null,protection:orders.length-1,testnet,mode,builder:!!builder});
+  return{result,mode,price:p,size:s,protectionCount:orders.length-1,tp:tpN||null,sl:slN||null};
+}
 async function trigger({coin,side,size,triggerPx,tpsl='sl',testnet=false,preferAgent=true}){
   coin=String(coin).toUpperCase();
   const {idx,u}=await asset(coin,testnet);
@@ -420,9 +455,10 @@ async function health(testnet=false){
 }
 
 window.RWAExecutionAPI={
-  version:'2.0.0',
+  version:'2.1.0',
   hardening:'single-write-path-v1',
   riskGate:'mandatory-internal-v1',
+  bracket:'atomic-normal-tpsl-v1',
   config,
   auth:{master,provider},
   agent:{authorize:authorizeAgent,revoke:revokeAgent,status:(t=false)=>readAgent(t),account:agentAccount,verify:verifyAgent},
@@ -430,6 +466,7 @@ window.RWAExecutionAPI={
   orders:{
     limit,
     market,
+    bracket,
     trigger,
     cancel,
     modify,
