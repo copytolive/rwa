@@ -50,8 +50,18 @@ jobs:
           node --check social-safety-patch.js
           node --check audit-hooks.js
           node --check rwa-verify-client.js
+          node --check copy-24x7-client.js
+          node --check launch-status.js
+          node --check beta-proof-client.js
           node --check tools/rwa-verify.mjs
+          node --check tools/e2e-proof.mjs
+          node --check tools/beta-proof.mjs
+          node --check tools/launch-gate.mjs
+          node --check tools/security-gate.mjs
           node --check tools/monitor-config.mjs
+          node --check agent-worker/execution.mjs
+          node --check agent-worker/copy-engine.mjs
+          node --check agent-worker/worker.mjs
           node --check backtest/app.js
           node --check backtest/worker.js
           node --check backtest/public-request.js
@@ -61,57 +71,21 @@ jobs:
 
       - name: Verify production files and contracts
         run: |
-          test -s index.html
-          test -s app.js
-          test -s realtime-core.js
-          test -s chart-core.js
-          test -s wallet-core.js
-          test -s mobile.js
-          test -s styles.css
-          test -s mobile.css
-          test -s suite-ui.js
-          test -s suite.js
-          test -s suite-nav.js
-          test -s execution-api.js
-          test -s execution-ui.js
-          test -s execution-ops-bridge.js
-          test -s exchange-core.js
-          test -s exchange-ui.js
-          test -s exchange-actions.js
-          test -s testnet-e2e.js
-          test -s rwa-execution-config.json
-          test -s EXECUTION_API.md
-          test -s suite-execution-patch.js
-          test -s walletconnect.js
-          test -s ops-suite.js
-          test -s ops.css
-          test -s risk-hardening.js
-          test -s provider-failover.js
-          test -s monitor-client.js
-          test -s monitor-config-client.js
-          test -s social-safety-patch.js
-          test -s audit-hooks.js
-          test -s rwa-verify-client.js
-          test -s suite.css
-          test -s rwa-assets.json
-          test -s rwa-reviewers.json
-          test -s moderation.json
-          test -s tools/rwa-verify.mjs
-          test -s .github/workflows/rwa-registry-review.yml
-          test -s monitor/config.json
-          test -s monitor/status.json
-          test -s monitor/monitor.py
-          test -s monitor/admin-wallets.json
-          test -s tools/monitor-config.mjs
-          test -s .github/workflows/monitor-config.yml
-          test -s .github/workflows/monitor.yml
-          python -m json.tool rwa-assets.json >/dev/null
-          python -m json.tool rwa-reviewers.json >/dev/null
-          python -m json.tool moderation.json >/dev/null
-          python -m json.tool monitor/config.json >/dev/null
-          python -m json.tool monitor/status.json >/dev/null
-          python -m json.tool monitor/admin-wallets.json >/dev/null
-          python -m json.tool rwa-execution-config.json >/dev/null
+          for f in \
+            index.html app.js realtime-core.js chart-core.js wallet-core.js mobile.js styles.css mobile.css \
+            suite-ui.js suite.js suite-nav.js suite.css execution-api.js execution-ui.js execution-ops-bridge.js \
+            exchange-core.js exchange-ui.js exchange-actions.js testnet-e2e.js suite-execution-patch.js walletconnect.js \
+            ops-suite.js ops.css risk-hardening.js provider-failover.js monitor-client.js monitor-config-client.js \
+            social-safety-patch.js audit-hooks.js rwa-verify-client.js copy-24x7-client.js launch-status.js beta-proof-client.js \
+            rwa-execution-config.json rwa-assets.json rwa-reviewers.json moderation.json EXECUTION_API.md LAUNCH_RUNBOOK.md \
+            launch/readiness.json launch/e2e-registry.json launch/beta-registry.json \
+            tools/rwa-verify.mjs tools/e2e-proof.mjs tools/beta-proof.mjs tools/launch-gate.mjs tools/security-gate.mjs \
+            agent-worker/execution.mjs agent-worker/copy-engine.mjs agent-worker/worker.mjs agent-worker/control.json agent-worker/public-config.json agent-worker/Dockerfile \
+            monitor/config.json monitor/status.json monitor/monitor.py monitor/admin-wallets.json tools/monitor-config.mjs \
+            .github/workflows/rwa-registry-review.yml .github/workflows/e2e-proof-review.yml .github/workflows/beta-proof-review.yml \
+            .github/workflows/launch-gate.yml .github/workflows/security-gate.yml .github/workflows/agent-worker-smoke.yml .github/workflows/copy-production-sim.yml; do test -s "$f"; done
+
+          for j in rwa-execution-config.json rwa-assets.json rwa-reviewers.json moderation.json launch/readiness.json launch/e2e-registry.json launch/beta-registry.json agent-worker/control.json agent-worker/public-config.json monitor/config.json monitor/status.json monitor/admin-wallets.json token/config.json; do python -m json.tool "$j" >/dev/null; done
 
           grep -Fq "realtime-core.js?v=2" index.html
           grep -Fq "walletconnect.js?v=4" index.html
@@ -126,65 +100,70 @@ jobs:
 
           grep -Fq "suite-nav.js" mobile.js
           grep -Fq "walletconnect.js?v=4" suite-nav.js
-          grep -Fq "execution-api.js?v=3" suite-nav.js
+          grep -Fq "execution-api.js?v=4" suite-nav.js
           grep -Fq "execution-ops-bridge.js?v=4" suite-nav.js
           grep -Fq "ops-suite.js?v=2" suite-nav.js
           grep -Fq "execution-ui.js?v=3" suite-nav.js
           grep -Fq "suite-execution-patch.js?v=6" suite-nav.js
+          grep -Fq "copy-24x7-client.js?v=2" suite-nav.js
+          grep -Fq "launch-status.js?v=2" suite-nav.js
+          grep -Fq "beta-proof-client.js?v=1" suite-nav.js
           ! grep -Fq "load('wallet-auth.js" suite-nav.js
           ! grep -Fq "load('walletconnect-auth-patch.js" suite-nav.js
-          grep -Fq "risk-hardening.js" suite-nav.js
-          grep -Fq "provider-failover.js" suite-nav.js
-          grep -Fq "monitor-client.js" suite-nav.js
-          grep -Fq "monitor-config-client.js" suite-nav.js
-          grep -Fq "social-safety-patch.js" suite-nav.js
-          grep -Fq "audit-hooks.js" suite-nav.js
-          grep -Fq "rwa-verify-client.js" suite-nav.js
 
-          # Wallet v3 is the only runtime auth owner.
           grep -Fq "version:'3.0.0'" wallet-core.js
           grep -Fq "eip6963:requestProvider" wallet-core.js
           grep -Fq "personal_sign" wallet-core.js
           grep -Fq "personal_ecRecover" wallet-core.js
           grep -Fq "Wallet account switched" wallet-core.js
 
-          # Wallet-first exchange architecture and single Hyperliquid write path.
           grep -Fq "version:'2.0.0'" execution-api.js
           grep -Fq "hardening:'single-write-path-v1'" execution-api.js
+          grep -Fq "riskGate:'mandatory-internal-v1'" execution-api.js
+          grep -Fq "bracket:'atomic-normal-tpsl-v1'" execution-api.js
+          grep -Fq "grouping:'normalTpsl'" execution-api.js
           grep -Fq "approveAgent" execution-api.js
           grep -Fq "approveBuilderFee" execution-api.js
           grep -Fq "AES-GCM" execution-api.js
-          grep -Fq "frontendOpenOrders" execution-api.js
-          grep -Fq "historicalOrders" execution-api.js
-          grep -Fq "clearinghouseState" execution-api.js
-          grep -Fq "async function trigger" execution-api.js
-          grep -Fq "cancelAll" execution-api.js
+          grep -Fq "info('extraAgents'" execution-api.js
           ! grep -Fq "ExchangeClient" execution-ops-bridge.js
           ! grep -Fq "ExchangeClient" ops-suite.js
           ! grep -Fq "ExchangeClient" risk-hardening.js
           ! grep -Fq "ExchangeClient" suite-execution-patch.js
-          grep -Fq "RWAExecutionAPI" execution-ui.js
-          grep -Fq "FAST API WALLET" execution-ui.js
-          grep -Fq "RWAExecutionAPI" execution-ops-bridge.js
-          grep -Fq "execution.cancel_all" execution-ops-bridge.js
-          grep -Fq "RWAExecutionAPI" suite-execution-patch.js
-          grep -Fq "orders.market" suite-execution-patch.js
-          grep -Fq "orders.limit" suite-execution-patch.js
-          grep -Fq "RWARisk" suite-execution-patch.js
-          grep -Fq "path:'RWAExecutionAPI'" ops-suite.js
-          grep -Fq '"venue": "hyperliquid"' rwa-execution-config.json
-          grep -Fq '"testnet": true' rwa-execution-config.json
-          grep -Fq '"enabled": false' rwa-execution-config.json
 
-          # Mainnet remains testnet-gated and evidence is venue-backed + wallet-bound.
-          grep -Fq "safety:'wallet-bound-mainnet-gate-v2'" exchange-core.js
+          grep -Fq "version:'1.1.0'" exchange-core.js
+          grep -Fq "safety:'wallet-and-global-launch-gate-v3'" exchange-core.js
+          grep -Fq "localE2EVerified()&&globalMainnetReady()" exchange-core.js
+          grep -Fq "status==='READY_FOR_MAINNET'" exchange-core.js
+          grep -Fq "protection:'atomic-normal-tpsl-v1'" exchange-core.js
           grep -Fq "const state={env:'testnet'" exchange-core.js
+
+          grep -Fq "version:'3.1.0'" testnet-e2e.js
           grep -Fq "status:'E2E_VERIFIED'" testnet-e2e.js
-          grep -Fq "wallet:s.wallet" testnet-e2e.js
-          grep -Fq "source='venue'" testnet-e2e.js
           grep -Fq "REAL E2E RESULT" testnet-e2e.js
-          grep -Fq "Unlock Mainnet after PASS" testnet-e2e.js
+          grep -Fq "Save Wallet E2E Gate" testnet-e2e.js
+          grep -Fq "GLOBAL LAUNCH GATE" testnet-e2e.js
           ! grep -Fq "RWATestnetE2E?.mark" exchange-actions.js
+
+          grep -Fq "version:'2.0.0'" copy-24x7-client.js
+          grep -Fq "RWA 24/7 COPY AUTHORIZE V2" copy-24x7-client.js
+          grep -Fq "sourceTestnet:false" copy-24x7-client.js
+          grep -Fq "RWA_PUBLIC_ORIGIN" agent-worker/worker.mjs
+          grep -Fq "consumeNonce" agent-worker/worker.mjs
+          grep -Fq "copy.retry_pending" agent-worker/worker.mjs
+          grep -Fq "copy.replay_confirmed" agent-worker/worker.mjs
+          grep -Fq "WORKER_IDEMPOTENCY='deterministic-cloid-v1'" agent-worker/execution.mjs
+          ! grep -Fq "ExchangeClient" agent-worker/worker.mjs
+          ! grep -Eq "withdraw3|usdClassTransfer|spotSend|sendAsset" agent-worker/execution.mjs agent-worker/worker.mjs
+
+          grep -Fq "version:'2.0.0'" launch-status.js
+          grep -Fq "Public beta" launch-status.js
+          grep -Fq "RWA BETA TESTNET PROOF" beta-proof-client.js
+          grep -Fq "BETA_PROOF_JSON_START" tools/beta-proof.mjs
+          grep -Fq "READY_FOR_MAINNET" tools/launch-gate.mjs
+          grep -Fq "beta_public" tools/launch-gate.mjs
+          grep -Fq "node tools/launch-gate.mjs --write" .github/workflows/launch-gate.yml
+          grep -Fq "[BETA-PROOF]" .github/workflows/beta-proof-review.yml
 
           grep -Fq "RWARisk" ops-suite.js
           grep -Fq "RWAOps" ops-suite.js
@@ -204,6 +183,10 @@ jobs:
           grep -Fq "[RWA-VERIFY]" .github/workflows/rwa-registry-review.yml
           grep -Fq "[MONITOR-CONFIG]" .github/workflows/monitor-config.yml
 
+          grep -Fq '"enabled": false' rwa-execution-config.json
+          grep -Fq '"tgeEnabled": false' token/config.json
+          grep -Fq '"mainnetDeploymentEnabled": false' token/config.json
+
           test -s backtest/index.html
           test -s backtest/app.js
           test -s backtest/worker.js
@@ -220,6 +203,9 @@ jobs:
           test -s backtest/results/shards.json
           python -m json.tool backtest/data/assets.json >/dev/null
           python -m json.tool backtest/data/asset_status.json >/dev/null
+
+      - name: Run repository security gate
+        run: node tools/security-gate.mjs
 
       - name: Validate VectorForge ledger, DOM contract and source catalog
         run: |
