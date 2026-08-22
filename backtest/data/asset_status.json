@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-22T19:19:33.721Z",
+  "generated_at": "2026-08-22T19:21:50.397Z",
   "verification_window": {
     "from": "2024-01-02T12:00:00.000Z",
     "to": "2024-01-02T12:15:00.000Z"
   },
-  "total_assets": 35,
-  "verified_assets": 33,
-  "failed_assets": 2,
+  "total_assets": 33,
+  "verified_assets": 30,
+  "failed_assets": 3,
   "primary_provider": "dukascopy",
   "assets": [
     {
@@ -26,8 +26,8 @@
       "last_timestamp": 1704197699830,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:26.362Z",
-      "latency_ms": 186
+      "verified_at": "2026-08-22T19:21:44.478Z",
+      "latency_ms": 229
     },
     {
       "symbol": "GBPUSD",
@@ -45,8 +45,8 @@
       "last_timestamp": 1704197699384,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:26.403Z",
-      "latency_ms": 40
+      "verified_at": "2026-08-22T19:21:44.679Z",
+      "latency_ms": 200
     },
     {
       "symbol": "USDJPY",
@@ -64,8 +64,8 @@
       "last_timestamp": 1704197699227,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:26.428Z",
-      "latency_ms": 25
+      "verified_at": "2026-08-22T19:21:44.719Z",
+      "latency_ms": 40
     },
     {
       "symbol": "USDCHF",
@@ -83,8 +83,8 @@
       "last_timestamp": 1704197697812,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:26.449Z",
-      "latency_ms": 21
+      "verified_at": "2026-08-22T19:21:44.905Z",
+      "latency_ms": 186
     },
     {
       "symbol": "AUDUSD",
@@ -102,8 +102,8 @@
       "last_timestamp": 1704197699170,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:26.560Z",
-      "latency_ms": 111
+      "verified_at": "2026-08-22T19:21:45.098Z",
+      "latency_ms": 193
     },
     {
       "symbol": "USDCAD",
@@ -114,15 +114,10 @@
       "point_size": 0.0001,
       "mode": "bid_ask_tick",
       "earliest_tick": "2012-02-09",
-      "status": "VERIFIED",
-      "sample_count": 735,
-      "sample_sha256": "5d96a97eb45630cbf154396aaa7fb56f5b5d18f7e8c5d083570ab4f4af70c921",
-      "first_timestamp": 1704196801217,
-      "last_timestamp": 1704197699426,
-      "sample_from": "2024-01-02T12:00:00.000Z",
-      "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:26.573Z",
-      "latency_ms": 13
+      "status": "FAILED",
+      "error": "zero valid bid/ask ticks in verification window",
+      "verified_at": "2026-08-22T19:21:45.295Z",
+      "latency_ms": 197
     },
     {
       "symbol": "NZDUSD",
@@ -140,8 +135,8 @@
       "last_timestamp": 1704197699913,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:26.589Z",
-      "latency_ms": 16
+      "verified_at": "2026-08-22T19:21:45.506Z",
+      "latency_ms": 211
     },
     {
       "symbol": "EURGBP",
@@ -159,8 +154,8 @@
       "last_timestamp": 1704197699275,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:26.606Z",
-      "latency_ms": 17
+      "verified_at": "2026-08-22T19:21:45.689Z",
+      "latency_ms": 183
     },
     {
       "symbol": "EURJPY",
@@ -178,8 +173,8 @@
       "last_timestamp": 1704197699870,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:26.740Z",
-      "latency_ms": 134
+      "verified_at": "2026-08-22T19:21:45.888Z",
+      "latency_ms": 199
     },
     {
       "symbol": "EURCHF",
@@ -197,8 +192,8 @@
       "last_timestamp": 1704197698119,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:26.849Z",
-      "latency_ms": 109
+      "verified_at": "2026-08-22T19:21:46.072Z",
+      "latency_ms": 184
     },
     {
       "symbol": "EURAUD",
@@ -216,8 +211,8 @@
       "last_timestamp": 1704197699170,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:26.961Z",
-      "latency_ms": 112
+      "verified_at": "2026-08-22T19:21:46.306Z",
+      "latency_ms": 234
     },
     {
       "symbol": "EURCAD",
@@ -235,8 +230,8 @@
       "last_timestamp": 1704197699457,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:27.071Z",
-      "latency_ms": 110
+      "verified_at": "2026-08-22T19:21:46.493Z",
+      "latency_ms": 187
     },
     {
       "symbol": "EURNZD",
@@ -254,8 +249,8 @@
       "last_timestamp": 1704197699173,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:27.183Z",
-      "latency_ms": 112
+      "verified_at": "2026-08-22T19:21:46.680Z",
+      "latency_ms": 187
     },
     {
       "symbol": "GBPJPY",
@@ -273,8 +268,8 @@
       "last_timestamp": 1704197699735,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:27.298Z",
-      "latency_ms": 115
+      "verified_at": "2026-08-22T19:21:46.869Z",
+      "latency_ms": 189
     },
     {
       "symbol": "GBPCHF",
@@ -292,8 +287,8 @@
       "last_timestamp": 1704197699370,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:27.411Z",
-      "latency_ms": 113
+      "verified_at": "2026-08-22T19:21:47.101Z",
+      "latency_ms": 231
     },
     {
       "symbol": "GBPAUD",
@@ -311,8 +306,8 @@
       "last_timestamp": 1704197699370,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:27.523Z",
-      "latency_ms": 111
+      "verified_at": "2026-08-22T19:21:47.291Z",
+      "latency_ms": 190
     },
     {
       "symbol": "GBPCAD",
@@ -330,8 +325,8 @@
       "last_timestamp": 1704197699304,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:27.630Z",
-      "latency_ms": 107
+      "verified_at": "2026-08-22T19:21:47.478Z",
+      "latency_ms": 187
     },
     {
       "symbol": "GBPNZD",
@@ -349,8 +344,8 @@
       "last_timestamp": 1704197699759,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:27.747Z",
-      "latency_ms": 117
+      "verified_at": "2026-08-22T19:21:47.713Z",
+      "latency_ms": 235
     },
     {
       "symbol": "AUDJPY",
@@ -368,8 +363,8 @@
       "last_timestamp": 1704197699173,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:27.763Z",
-      "latency_ms": 15
+      "verified_at": "2026-08-22T19:21:47.905Z",
+      "latency_ms": 192
     },
     {
       "symbol": "AUDCAD",
@@ -387,8 +382,8 @@
       "last_timestamp": 1704197699455,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:27.877Z",
-      "latency_ms": 114
+      "verified_at": "2026-08-22T19:21:48.091Z",
+      "latency_ms": 186
     },
     {
       "symbol": "AUDCHF",
@@ -406,8 +401,8 @@
       "last_timestamp": 1704197699302,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:27.990Z",
-      "latency_ms": 113
+      "verified_at": "2026-08-22T19:21:48.279Z",
+      "latency_ms": 187
     },
     {
       "symbol": "AUDNZD",
@@ -425,8 +420,8 @@
       "last_timestamp": 1704197699209,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:28.103Z",
-      "latency_ms": 113
+      "verified_at": "2026-08-22T19:21:48.468Z",
+      "latency_ms": 189
     },
     {
       "symbol": "CADJPY",
@@ -444,8 +439,8 @@
       "last_timestamp": 1704197699459,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:28.217Z",
-      "latency_ms": 114
+      "verified_at": "2026-08-22T19:21:48.657Z",
+      "latency_ms": 189
     },
     {
       "symbol": "CADCHF",
@@ -463,8 +458,8 @@
       "last_timestamp": 1704197699468,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:28.324Z",
-      "latency_ms": 107
+      "verified_at": "2026-08-22T19:21:48.842Z",
+      "latency_ms": 185
     },
     {
       "symbol": "CHFJPY",
@@ -482,8 +477,8 @@
       "last_timestamp": 1704197699003,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:28.435Z",
-      "latency_ms": 110
+      "verified_at": "2026-08-22T19:21:49.029Z",
+      "latency_ms": 187
     },
     {
       "symbol": "NZDJPY",
@@ -496,8 +491,8 @@
       "earliest_tick": "2012-03-22",
       "status": "FAILED",
       "error": "zero valid bid/ask ticks in verification window",
-      "verified_at": "2026-08-22T19:19:28.552Z",
-      "latency_ms": 116
+      "verified_at": "2026-08-22T19:21:49.261Z",
+      "latency_ms": 231
     },
     {
       "symbol": "NZDCAD",
@@ -515,8 +510,8 @@
       "last_timestamp": 1704197699451,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:28.671Z",
-      "latency_ms": 119
+      "verified_at": "2026-08-22T19:21:49.443Z",
+      "latency_ms": 182
     },
     {
       "symbol": "NZDCHF",
@@ -534,8 +529,8 @@
       "last_timestamp": 1704197697813,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:28.780Z",
-      "latency_ms": 109
+      "verified_at": "2026-08-22T19:21:49.627Z",
+      "latency_ms": 183
     },
     {
       "symbol": "USDCNH",
@@ -548,8 +543,8 @@
       "earliest_tick": "2014-04-22",
       "status": "FAILED",
       "error": "zero valid bid/ask ticks in verification window",
-      "verified_at": "2026-08-22T19:19:28.896Z",
-      "latency_ms": 116
+      "verified_at": "2026-08-22T19:21:49.819Z",
+      "latency_ms": 192
     },
     {
       "symbol": "XAUUSD",
@@ -567,8 +562,8 @@
       "last_timestamp": 1704197699053,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:28.914Z",
-      "latency_ms": 18
+      "verified_at": "2026-08-22T19:21:49.831Z",
+      "latency_ms": 12
     },
     {
       "symbol": "XAGUSD",
@@ -586,8 +581,8 @@
       "last_timestamp": 1704197699165,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:29.023Z",
-      "latency_ms": 109
+      "verified_at": "2026-08-22T19:21:50.018Z",
+      "latency_ms": 187
     },
     {
       "symbol": "BTCUSD",
@@ -605,8 +600,8 @@
       "last_timestamp": 1704197699198,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:29.040Z",
-      "latency_ms": 17
+      "verified_at": "2026-08-22T19:21:50.213Z",
+      "latency_ms": 195
     },
     {
       "symbol": "ETHUSD",
@@ -624,44 +619,8 @@
       "last_timestamp": 1704197657523,
       "sample_from": "2024-01-02T12:00:00.000Z",
       "sample_to": "2024-01-02T12:15:00.000Z",
-      "verified_at": "2026-08-22T19:19:29.152Z",
-      "latency_ms": 112
-    },
-    {
-      "symbol": "BTCUSDT",
-      "name": "Bitcoin / USDT",
-      "class": "crypto",
-      "provider": "binance",
-      "provider_symbol": "BTCUSDT",
-      "point_size": 0.01,
-      "mode": "exchange_aggtrade_tick",
-      "earliest_tick": "2017-08-17",
-      "status": "VERIFIED",
-      "sample_count": null,
-      "sample_sha256": "97337ca2765f4597647f7c4ec1efa0cad29b440b523a45fc0c7f3754dc081a76",
-      "archive_bytes": 23768802,
-      "sample_from": "2024-01-02T00:00:00.000Z",
-      "sample_to": "2024-01-02T23:59:59.999Z",
-      "verified_at": "2026-08-22T19:19:31.831Z",
-      "latency_ms": 2679
-    },
-    {
-      "symbol": "ETHUSDT",
-      "name": "Ether / USDT",
-      "class": "crypto",
-      "provider": "binance",
-      "provider_symbol": "ETHUSDT",
-      "point_size": 0.01,
-      "mode": "exchange_aggtrade_tick",
-      "earliest_tick": "2017-08-17",
-      "status": "VERIFIED",
-      "sample_count": null,
-      "sample_sha256": "61d2a38b40aed84b379007aaa93c433224cdc23ff6d00df568e55c9d0b2d92be",
-      "archive_bytes": 10701363,
-      "sample_from": "2024-01-02T00:00:00.000Z",
-      "sample_to": "2024-01-02T23:59:59.999Z",
-      "verified_at": "2026-08-22T19:19:33.720Z",
-      "latency_ms": 1888
+      "verified_at": "2026-08-22T19:21:50.397Z",
+      "latency_ms": 184
     }
   ]
 }
