@@ -1,0 +1,73 @@
+name: VectorForge Public Backtest Request
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: vectorforge-public-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  backtest:
+    if: startsWith(github.event.issue.title, '[VectorForge Backtest]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pinned Dukascopy adapter
+        run: npm install --no-save --ignore-scripts dukascopy-node@1.50.0
+
+      - name: Parse and validate public request
+        run: python backtest/chat/public_issue_request.py
+
+      - name: Run historical backtest
+        run: python backtest/chat/run_chat_job.py
+
+      - name: Validate result
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p=Path('backtest/chat/results')/f"public-issue-{os.environ['ISSUE_NUMBER']}.json"
+          x=json.loads(p.read_text())
+          assert x['status']=='PASS_COMPLETED', x
+          assert len(x['dataset_sha256'])==64
+          assert len(x['evaluation_id'])==64
+          print(json.dumps(x['result'], indent=2))
+          PY
+
+      - name: Persist public request and result
+        run: |
+          git config user.name 'vectorforge-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add backtest/chat/requests/ backtest/chat/results/
+          if ! git diff --cached --quiet; then
+            git commit -m "VectorForge public backtest issue #${{ github.event.issue.number }}"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      - name: Comment result link
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$ISSUE" --body "VectorForge backtest completed. Public audit JSON: https://github.com/${{ github.repository }}/blob/main/backtest/chat/results/public-issue-${ISSUE}.json"
