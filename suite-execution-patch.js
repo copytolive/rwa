@@ -1,5 +1,6 @@
 (()=>{
 'use strict';
+if(window.RWAExecutionBridge)return;
 const $=id=>document.getElementById(id);
 const toastSafe=t=>typeof toast==='function'?toast(t):console.log(t);
 const status=(text,kind='')=>{const e=$('tradeStatus');if(!e)return;e.textContent=text;e.className='suite-status'+(kind?' '+kind:'')};
