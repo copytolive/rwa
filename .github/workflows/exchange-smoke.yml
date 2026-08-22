@@ -32,9 +32,11 @@ jobs:
           node --check exchange-ui.js
           node --check exchange-actions.js
           node --check testnet-e2e.js
+          node --check token/deploy-guard.mjs
           python -m json.tool token/config.json >/dev/null
           test -s token/contracts/RWAToken.sol
           test -s token/contracts/RWAVestingVault.sol
+          test -s token/deploy-guard.mjs
           grep -Fq 'walletconnect.js?v=4' index.html
           grep -Fq 'wallet-core.js?v=3' index.html
           ! grep -Fq 'wallet-seamless.js' index.html
@@ -61,10 +63,13 @@ jobs:
           grep -Fq 'tgeEnabled' token/config.json
           grep -Fq '"tgeEnabled": false' token/config.json
           grep -Fq '"mainnetDeploymentEnabled": false' token/config.json
+          grep -Fq 'No private key is accepted or stored' token/deploy-guard.mjs
+          if node token/deploy-guard.mjs --network=testnet >/tmp/token-testnet.log 2>&1; then echo 'Token testnet guard unexpectedly allowed incomplete config'; cat /tmp/token-testnet.log; exit 1; else echo 'Token testnet guard correctly BLOCKED incomplete config'; fi
+          if node token/deploy-guard.mjs --network=mainnet >/tmp/token-mainnet.log 2>&1; then echo 'Token mainnet guard unexpectedly allowed deployment'; cat /tmp/token-mainnet.log; exit 1; else echo 'Token mainnet guard correctly BLOCKED'; fi
       - name: Publish source status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/exchange-source' -f description='Wallet, account, modify, E2E and token guardrails verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/exchange-source' -f description='Wallet, exchange, E2E and PRE-TGE token guardrails verified'
       - name: Verify GitHub Pages bundle
         shell: bash
         run: |
