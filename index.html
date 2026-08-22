@@ -21,23 +21,9 @@
 <body class="mview-overview">
 <div class="app">
 <header class="topbar">
-  <a class="brand" href="#terminal" aria-label="RWA Markets home">
-    <span class="brandmark"><i></i><b>R</b></span>
-    <span class="brandcopy"><strong>RWA</strong><small>LIVE MARKET NETWORK</small></span>
-  </a>
-  <nav class="topnav" aria-label="Primary navigation">
-    <button class="active">Markets</button>
-    <button onclick="toast('RWA Intelligence is available from Hub')">Intelligence</button>
-    <button onclick="toast('Verified asset marketplace is available from Hub')">Assets</button>
-    <button onclick="toast('Research workspace is available from Hub')">Research</button>
-    <button onclick="toast('Company workspace is available from Hub')">Company</button>
-  </nav>
-  <div class="top-actions">
-    <div class="status"><span id="liveDot" class="dot"></span><span id="liveText">Market network</span></div>
-    <button class="signin">Connect Wallet</button>
-    <button class="institutional" onclick="toast('Institutional onboarding is being prepared')">Request access</button>
-    <button class="mobile-social-head" style="display:none" data-mobile-header="social" aria-label="Open social trading">◎</button>
-  </div>
+  <a class="brand" href="#terminal" aria-label="RWA Markets home"><span class="brandmark"><i></i><b>R</b></span><span class="brandcopy"><strong>RWA</strong><small>LIVE MARKET NETWORK</small></span></a>
+  <nav class="topnav" aria-label="Primary navigation"><button class="active">Markets</button><button onclick="toast('RWA Intelligence is available from Hub')">Intelligence</button><button onclick="toast('Verified asset marketplace is available from Hub')">Assets</button><button onclick="toast('Research workspace is available from Hub')">Research</button><button onclick="toast('Company workspace is available from Hub')">Company</button></nav>
+  <div class="top-actions"><div class="status"><span id="liveDot" class="dot"></span><span id="liveText">Market network</span></div><button class="signin">Connect Wallet</button><button class="institutional" onclick="toast('Institutional onboarding is being prepared')">Request access</button><button class="mobile-social-head" style="display:none" data-mobile-header="social" aria-label="Open social trading">◎</button></div>
 </header>
 <div class="productbar"><div class="product-left"><strong>Markets</strong><span>Global Terminal</span><span class="beta">PUBLIC BETA</span></div><div class="product-nav"><button class="active">Live Markets</button><button onclick="toast('RWA Index is available from Intelligence')">RWA Index</button><button onclick="toast('Verified Assets is available from Hub')">Asset Marketplace</button><button onclick="toast('Research is available from Hub')">Research</button></div><div class="product-right"><span class="secure-dot"></span> Live infrastructure</div></div>
 <div class="trustbar"><span><b>DATA</b> Real-time public exchange feeds</span><span><b>EXECUTION</b> Wallet → RWA API → Hyperliquid</span><span><b>ACCOUNT</b> Non-custodial wallet identity</span><span><b>RWA</b> Built for real-world asset markets</span></div>
@@ -66,6 +52,7 @@
 <script src="execution-ops-bridge.js?v=3"></script>
 <script src="exchange-core.js?v=1"></script>
 <script src="exchange-ui.js?v=1"></script>
+<script src="testnet-e2e.js?v=1"></script>
 <script src="execution-ui.js?v=3"></script>
 <script src="suite-execution-patch.js?v=6"></script>
 <script src="mobile.js?v=12"></script>
