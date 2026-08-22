@@ -8,7 +8,6 @@ const AGENT_PREFIX='rwa_agent_wallet_v2';
 const DB_NAME='rwa-secure-v1';
 const STORE='keys';
 const AES_ID='agent-aes-v1';
-const ZERO='0x0000000000000000000000000000000000000000';
 let cfg=null;
 let mods=null;
 const metaCache=new Map();
@@ -168,10 +167,12 @@ async function agentAccount(testnet=false){
 async function revokeAgent(testnet=false){
   const row=readAgent(testnet);
   if(!row){localStorage.removeItem(recordKey(testnet));return{revoked:true,remote:false}}
+  const {generatePrivateKey,privateKeyToAccount}=await modules();
+  const throwaway=privateKeyToAccount(generatePrivateKey());
   const ex=await mainExchange(testnet);
-  await ex.approveAgent({agentAddress:ZERO,agentName:row.name});
+  await ex.approveAgent({agentAddress:throwaway.address,agentName:row.name});
   localStorage.removeItem(recordKey(testnet));
-  audit('execution.agent.revoked',{testnet,oldAgent:row.address});
+  audit('execution.agent.revoked',{testnet,oldAgent:row.address,replacedByDiscardedAgent:throwaway.address});
   window.dispatchEvent(new CustomEvent('rwa:agent-changed'));
   return{revoked:true,remote:true};
 }
