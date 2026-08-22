@@ -4,14 +4,11 @@ on:
   push:
     branches: ["main"]
   workflow_dispatch:
-  issues:
-    types: [opened]
 
 permissions:
   contents: read
   pages: write
   id-token: write
-  issues: write
 
 concurrency:
   group: "pages"
@@ -27,12 +24,6 @@ jobs:
         run: node --check app.js && node --check mobile.js
       - name: Verify production files
         run: test -s index.html && test -s app.js && test -s mobile.js && test -s styles.css && test -s mobile.css
-      - name: Report verification
-        if: github.event_name == 'issues'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.issues.createComment({owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body: 'MOBILE REPO INJECTION PASS. app.js + mobile.js syntax valid; mobile.css and production files verified. Starting Pages deployment.'})
 
   deploy:
     needs: verify
@@ -52,9 +43,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Report deployment
-        if: github.event_name == 'issues'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.issues.createComment({owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body: 'MOBILE REPO INJECTION DEPLOYMENT SUCCESS. Live at https://narzulalistiqlal.github.io/rwa/'})
