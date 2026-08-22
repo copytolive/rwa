@@ -4,8 +4,6 @@ on:
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch:
-  issues:
-    types: [opened]
   push:
     branches: ["main"]
     paths:
@@ -15,7 +13,6 @@ on:
 
 permissions:
   contents: write
-  issues: write
 
 concurrency:
   group: rwa-monitor
@@ -23,7 +20,6 @@ concurrency:
 
 jobs:
   monitor:
-    if: github.event_name != 'issues'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -50,38 +46,3 @@ jobs:
           git add monitor/status.json
           git commit -m 'chore: refresh 24x7 monitor status [skip ci]'
           git push
-
-  instant-ui-qa:
-    if: github.event_name == 'issues' && startsWith(github.event.issue.title, '[QA-INSTANT]')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Validate instant UI source
-        run: |
-          node --check app.js
-          node --check mobile.js
-          grep -Fq 'instantChartBoot' mobile.js
-          grep -Fq 'warmConnections' mobile.js
-          grep -Fq 'mobile.js?v=7' index.html
-          grep -Fq 'rel="preload" href="mobile.js?v=7"' index.html
-      - name: Report source pass
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh issue comment "${{ github.event.issue.number }}" --body "INSTANT UI SOURCE PASS. Syntax is valid; chart boot no longer waits for market-universe REST and feature assets are preloaded/warmed in parallel."
-      - name: Verify GitHub Pages bundle
-        run: |
-          ok=0
-          for i in {1..30}; do
-            q="${GITHUB_RUN_ID}-${i}"
-            if curl -fsSL "https://narzulalistiqlal.github.io/rwa/?v=$q" | grep -Fq 'mobile.js?v=7' && \
-               curl -fsSL "https://narzulalistiqlal.github.io/rwa/mobile.js?v=$q" | grep -Fq 'instantChartBoot' && \
-               curl -fsSL "https://narzulalistiqlal.github.io/rwa/mobile.js?v=$q" | grep -Fq 'warmConnections'; then
-              ok=1; break
-            fi
-            sleep 10
-          done
-          test "$ok" = "1"
-      - name: Report production success
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh issue comment "${{ github.event.issue.number }}" --body "INSTANT UI PRODUCTION SUCCESS. GitHub Pages is serving mobile.js v7 with immediate fallback/cached chart paint, immediate TradingView start, duplicate chart reload suppression, and parallel feature warmup."
