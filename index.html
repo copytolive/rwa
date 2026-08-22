@@ -7,14 +7,14 @@
 <title>RWA Markets — Global Real-World Asset Market Infrastructure</title>
 <meta name="description" content="A premium live market terminal for real-world-asset discovery, professional charting, market depth and hundreds of active instruments.">
 <link rel="stylesheet" href="styles.css?v=6">
-<link rel="stylesheet" href="mobile.css?v=4">
+<link rel="stylesheet" href="mobile.css?v=5">
 </head>
 <body class="mview-overview">
 <div class="app">
 <header class="topbar">
   <a class="brand" href="#terminal" aria-label="RWA Markets home">
     <span class="brandmark"><i></i><b>R</b></span>
-    <span class="brandcopy"><strong>RWA</strong><small>MARKET INFRASTRUCTURE</small></span>
+    <span class="brandcopy"><strong>RWA</strong><small>LIVE MARKET NETWORK</small></span>
   </a>
   <nav class="topnav" aria-label="Primary navigation">
     <button class="active">Markets</button>
@@ -27,7 +27,7 @@
     <div class="status"><span id="liveDot" class="dot"></span><span id="liveText">Connecting market…</span></div>
     <button class="signin" onclick="toast('Account access will be enabled with identity and wallet integration')">Sign in</button>
     <button class="institutional" onclick="toast('Institutional onboarding is being prepared')">Request access</button>
-    <button class="mobile-profile" onclick="toast('Account access will be enabled with identity and wallet integration')" aria-label="Account">◎</button>
+    <button class="mobile-social-head" style="display:none" data-mobile-header="social" aria-label="Open social trading">◎</button>
   </div>
 </header>
 <div class="productbar"><div class="product-left"><strong>Markets</strong><span>Global Terminal</span><span class="beta">PUBLIC BETA</span></div><div class="product-nav"><button class="active">Live Markets</button><button onclick="toast('RWA Index is being prepared')">RWA Index</button><button onclick="toast('Verified Assets is being prepared')">Asset Marketplace</button><button onclick="toast('Research workspace is being prepared')">Research</button></div><div class="product-right"><span class="secure-dot"></span> Live infrastructure</div></div>
@@ -58,11 +58,32 @@
 <aside class="right" id="depth"><div class="aside-label"><span>MARKET DEPTH</span><small>Execution intelligence</small></div><section class="right-section order-section"><div class="right-title"><span>ORDER BOOK</span><small>Top 10</small></div><div class="book-head"><span>Price</span><span>Amount</span><span>Total</span></div><div id="asks"></div><div id="midPrice" class="midprice">—</div><div id="bids"></div></section><section class="right-section mover-section"><div class="right-title"><span>TOP MOVERS</span><small>24h</small></div><div id="movers" class="movers"></div></section><section class="right-section activity-section"><div class="right-title"><span>LIVE ACTIVITY</span><small>Market events</small></div><div id="activity" class="activity"><div class="empty">Waiting for live activity…</div></div></section><section class="institutional-card"><div class="institutional-orb"></div><small>RWA INSTITUTIONAL</small><h3>Infrastructure for markets tied to the real economy.</h3><p>Designed to evolve from public market discovery into verified assets, issuance, ownership and institutional workflows.</p><button onclick="toast('Institutional onboarding is being prepared')">Explore institutional access <span>→</span></button></section></aside>
 </div>
 
+<section class="social-screen" id="social" style="display:none" aria-label="RWA social trading">
+  <div class="social-head">
+    <div><small>RWA SOCIAL</small><h2>Trading network</h2></div>
+    <span class="social-live"><i></i> LIVE</span>
+  </div>
+  <div class="social-pulse-card">
+    <div class="social-pulse-main"><small id="socialPair">BTC / USDT</small><strong id="socialBuyPct">50%</strong><span>buy pressure</span></div>
+    <div class="social-pulse-side"><div><small>TRADES</small><b id="socialTrades">0</b></div><div><small>24H</small><b id="socialChange">—</b></div></div>
+  </div>
+  <div class="social-section-head"><div><small>DISCOVERY</small><h3>Trending now</h3></div><span>Live markets</span></div>
+  <div id="socialTrending" class="social-trending"><div class="social-empty">Loading live market trends…</div></div>
+  <div class="thesis-composer">
+    <div class="composer-head"><div><small>YOUR THESIS</small><b id="thesisPair">BTC / USDT</b></div><span>Private beta</span></div>
+    <div class="thesis-side"><button class="active long" data-thesis-side="LONG">Long</button><button class="short" data-thesis-side="SHORT">Short</button></div>
+    <textarea id="thesisText" maxlength="180" placeholder="Share your market thesis, catalyst or level…"></textarea>
+    <div class="composer-foot"><small id="thesisCount">0 / 180</small><button id="publishThesis">Post thesis</button></div>
+  </div>
+  <div class="social-section-head"><div><small>NETWORK</small><h3>Trading feed</h3></div><span>Local thesis + live signals</span></div>
+  <div id="socialFeed" class="social-feed"><div class="social-empty">Live signals will appear here.</div></div>
+</section>
+
 <section class="credibility-strip"><div><small>PRODUCT</small><strong>Professional market terminal</strong></div><div><small>DATA LAYER</small><strong>Live public market feeds</strong></div><div><small>ASSET VISION</small><strong>Verified real-world markets</strong></div><div><small>EXPERIENCE</small><strong>Desktop + mobile first</strong></div></section>
-<nav class="mobile-tabs" aria-label="Mobile navigation"><a href="#markets" data-mobile-nav="markets"><span>⌕</span><small>Markets</small></a><a class="active" href="#terminal" data-mobile-nav="chart"><span>⌁</span><small>Chart</small></a><a href="#depth" data-mobile-nav="depth"><span>≋</span><small>Depth</small></a></nav>
+<nav class="mobile-tabs" aria-label="Mobile navigation"><a href="#markets" data-mobile-nav="markets"><span>⌕</span><small>Markets</small></a><a class="active" href="#terminal" data-mobile-nav="chart"><span>⌁</span><small>Chart</small></a><a href="#social" data-mobile-nav="social"><span>◎</span><small>Social</small></a><a href="#depth" data-mobile-nav="depth"><span>≋</span><small>Depth</small></a></nav>
 </div>
 <div id="toast" class="toast"></div>
 <script src="app.js?v=6"></script>
-<script src="mobile.js?v=5"></script>
+<script src="mobile.js?v=6"></script>
 </body>
 </html>
