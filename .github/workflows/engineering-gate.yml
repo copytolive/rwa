@@ -1,0 +1,56 @@
+name: RWA Engineering Gate
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "*.js"
+      - "*.json"
+      - "agent-worker/**"
+      - "launch/**"
+      - "tools/**"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  engineering:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+      - name: Validate final engineering package
+        run: |
+          node --check execution-api.js
+          node --check exchange-core.js
+          node --check testnet-e2e.js
+          node --check copy-24x7-client.js
+          node --check launch-status.js
+          node --check beta-proof-client.js
+          node --check agent-worker/execution.mjs
+          node --check agent-worker/copy-engine.mjs
+          node --check agent-worker/worker.mjs
+          node --check tools/security-gate.mjs
+          node --check tools/launch-gate.mjs
+          node --check tools/worker-watch.mjs
+          node --check tools/e2e-proof.mjs
+          node --check tools/rwa-verify.mjs
+          node --check tools/beta-proof.mjs
+          node tools/security-gate.mjs
+          node tools/launch-gate.mjs --require-engineering >/tmp/engineering.json
+          node -e "const x=require('/tmp/engineering.json');if(!x.engineering_ready)process.exit(1);console.log('ENGINEERING COMPLETE')"
+      - name: Publish engineering success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/engineering-gate' -f description='Engineering COMPLETE; only real external launch proofs remain'
+      - name: Publish engineering failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/engineering-gate' -f description='Engineering package incomplete'
