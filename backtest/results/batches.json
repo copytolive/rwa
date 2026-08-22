@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "batches": [
+    {
+      "month": "2018-01",
+      "engine_version": "vectorforge-batch-1.0.0",
+      "dataset_sha256": "ca0ce287bd3029753de6af6f29cdea1e5821d41291f93b925dd7902ebdb2812b",
+      "valid_samples": 1905718,
+      "evaluations_computed": 59,
+      "new_unique_evaluations": 59,
+      "completed_at": "2026-08-22T18:42:38.218609+00:00"
+    }
+  ]
+}
