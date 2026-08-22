@@ -31,6 +31,7 @@ Enabled=1
 Expert=ChatGPT\DeterministicPendingSmoke
 Symbol=CT_EURUSD
 Period=M1
+Login=26082301
 Model=4
 ExecutionMode=0
 Optimization=0
