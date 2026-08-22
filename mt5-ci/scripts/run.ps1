@@ -22,7 +22,11 @@ Symbol=EURUSD
 Period=M1
 ShutdownTerminal=1
 "@|Set-Content -Encoding Unicode $seedIni;$p=Start-Process $terminal -ArgumentList '/portable',"/config:$seedIni" -PassThru;if(!$p.WaitForExit(180000)){$p.Kill();throw 'seed timeout'};$seedStatus=Join-Path $files 'seed_status.csv';if(!(Test-Path $seedStatus)){throw 'seed_status.csv missing'};Copy-Item $seedStatus $out;$st=Get-Content $seedStatus -Raw;if($st -notmatch 'PASS'){throw "seed failed $st"}
- Stage TESTER 'Running Strategy Tester Model 4 real ticks';$ini=Join-Path $env:RUNNER_TEMP 'tester.ini';@"
+ Stage TESTER 'Running Strategy Tester Model 4 real ticks with offline Common identity';$ini=Join-Path $env:RUNNER_TEMP 'tester.ini';@"
+[Common]
+Login=26082301
+Server=MetaQuotes-Demo
+Password=
 [Experts]
 AllowLiveTrading=0
 AllowDllImport=0
