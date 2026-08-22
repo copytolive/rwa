@@ -45,9 +45,14 @@ jobs:
           grep -Fq 'execution-ops-bridge.js?v=2' suite-nav.js
           grep -Fq 'execution-ui.js?v=2' suite-nav.js
           grep -Fq 'suite-execution-patch.js?v=5' suite-nav.js
+          grep -Fq "version:'2.0.0'" execution-api.js
           grep -Fq 'approveAgent' execution-api.js
           grep -Fq 'AES-GCM' execution-api.js
-          grep -Fq 'orders:{limit,market,cancel,modify,cancelAll' execution-api.js
+          grep -Fq 'async function limit' execution-api.js
+          grep -Fq 'async function market' execution-api.js
+          grep -Fq 'async function cancel(' execution-api.js
+          grep -Fq 'async function modify' execution-api.js
+          grep -Fq 'async function cancelAll' execution-api.js
           grep -Fq 'RWAExecutionOpsBridge' execution-ops-bridge.js
           grep -Fq 'if(window.RWAExecutionBridge)return;' suite-execution-patch.js
           grep -Fq "executionEngine'))return true;" execution-ui.js
@@ -84,9 +89,11 @@ jobs:
                ! grep -Fq 'instantChartBoot();loadSuite()' <<<"$mobile" && \
                grep -Fq 'execution-api.js?v=2' <<<"$nav" && \
                grep -Fq 'execution-ops-bridge.js?v=2' <<<"$nav" && \
+               grep -Fq "version:'2.0.0'" <<<"$execapi" && \
                grep -Fq 'approveAgent' <<<"$execapi" && \
                grep -Fq 'approveBuilderFee' <<<"$execapi" && \
                grep -Fq 'AES-GCM' <<<"$execapi" && \
+               grep -Fq 'async function cancelAll' <<<"$execapi" && \
                grep -Fq 'FAST API WALLET' <<<"$execui" && \
                grep -Fq "executionEngine'))return true;" <<<"$execui" && \
                grep -Fq 'execution.cancel_all' <<<"$execops" && \
