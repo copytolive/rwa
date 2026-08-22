@@ -38,6 +38,8 @@ jobs:
           node --check provider-failover.js
           node --check monitor-client.js
           node --check social-safety-patch.js
+          node --check audit-hooks.js
+          node --check verification-sign-patch.js
           node --check backtest/app.js
           node --check backtest/worker.js
           node --check backtest/public-request.js
@@ -64,6 +66,8 @@ jobs:
           test -s provider-failover.js
           test -s monitor-client.js
           test -s social-safety-patch.js
+          test -s audit-hooks.js
+          test -s verification-sign-patch.js
           test -s suite.css
           test -s rwa-assets.json
           test -s monitor/config.json
@@ -73,21 +77,26 @@ jobs:
           python -m json.tool rwa-assets.json >/dev/null
           python -m json.tool monitor/config.json >/dev/null
           python -m json.tool monitor/status.json >/dev/null
-          grep -q "suite-nav.js" mobile.js
-          grep -q "ops-suite.js" suite-nav.js
-          grep -q "walletconnect.js" suite-nav.js
-          grep -q "provider-failover.js" suite-nav.js
-          grep -q "monitor-client.js" suite-nav.js
-          grep -q "social-safety-patch.js" suite-nav.js
-          grep -q "RWARisk" ops-suite.js
-          grep -q "RWAOps" ops-suite.js
-          grep -q "RWAWalletConnect" walletconnect.js
-          grep -q "RWAFailover" provider-failover.js
-          grep -q "RWASocialSafety" social-safety-patch.js
-          grep -q "wallet-signature-required" monitor/config.json
-          grep -q "cron: '*/5" .github/workflows/monitor.yml
-          grep -q "RWAProvider" suite-execution-patch.js
-          grep -q "RWARisk" suite-execution-patch.js
+          grep -Fq "suite-nav.js" mobile.js
+          grep -Fq "ops-suite.js" suite-nav.js
+          grep -Fq "walletconnect.js" suite-nav.js
+          grep -Fq "provider-failover.js" suite-nav.js
+          grep -Fq "monitor-client.js" suite-nav.js
+          grep -Fq "social-safety-patch.js" suite-nav.js
+          grep -Fq "audit-hooks.js" suite-nav.js
+          grep -Fq "verification-sign-patch.js" suite-nav.js
+          grep -Fq "RWARisk" ops-suite.js
+          grep -Fq "RWAOps" ops-suite.js
+          grep -Fq "RWAWalletConnect" walletconnect.js
+          grep -Fq "RWAFailover" provider-failover.js
+          grep -Fq "RWASocialSafety" social-safety-patch.js
+          grep -Fq "RWAAuditHooks" audit-hooks.js
+          grep -Fq "RWAVerificationSign" verification-sign-patch.js
+          grep -Fq "wallet-signature-required" monitor/config.json
+          grep -Fq "cron: '*/5" .github/workflows/monitor.yml
+          grep -Fq "RWAProvider" suite-execution-patch.js
+          grep -Fq "RWARisk" suite-execution-patch.js
+          grep -Fq "updateLeverage" suite-execution-patch.js
           test -s backtest/index.html
           test -s backtest/app.js
           test -s backtest/worker.js
