@@ -1,10 +1,22 @@
 {
   "status": "BLOCKED_MISSING_MT5_DEMO_SECRETS",
+  "runner": "windows-2022",
+  "github_public_runner": "PASS",
+  "official_mt5_install": "PASS",
+  "mql5_compile": "PASS_0_ERRORS_0_WARNINGS",
+  "history_seed": "PASS",
+  "ticks": 7201,
+  "m1_bars": 121,
+  "strategy_tester": "BLOCKED_BEFORE_RUN",
+  "parity_pct": null,
   "required": [
     "MT5_LOGIN",
     "MT5_PASSWORD",
     "MT5_SERVER"
   ],
-  "message": "Add a valid free demo account as GitHub Actions repository secrets. Never commit credentials.",
-  "utc": "2026-08-22T18:27:57.9237327Z"
+  "message": "Add a valid free MT5 demo account as GitHub Actions repository secrets. Never commit credentials. FINAL remains prohibited until native Strategy Tester emits deals and parity_pct is exactly 100.0.",
+  "evidence_run_id": 32590874961,
+  "evidence_artifact_id": 9480323630,
+  "evidence_artifact_sha256": "19221377a79c14adb6ef0b4b1ec59ba77d4c77ad8fdc1e2593bbbdf2a5ef43ea",
+  "utc": "2026-08-22T18:32:50Z"
 }
