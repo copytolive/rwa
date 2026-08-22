@@ -46,7 +46,7 @@ jobs:
           MT5_SERVER: ${{ secrets.MT5_SERVER }}
         run: ./mt5-ci/scripts/run.ps1
 
-      - name: Upload all evidence
+      - name: Upload short-lived native evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -55,7 +55,7 @@ jobs:
             mt5-ci/generated/**
             mt5-ci/results/latest/**
           if-no-files-found: warn
-          retention-days: 30
+          retention-days: 1
 
       - name: Commit compact latest evidence
         if: always() && github.event_name != 'pull_request'
