@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "required": ["request_id", "asset", "start", "end"],
+  "defaults": {
+    "strategy": "sma_cross",
+    "trade_side": "both",
+    "fast": 50,
+    "slow": 1000,
+    "stop_points": 15,
+    "rr": 2,
+    "spread_points": 1,
+    "slippage_points": 0,
+    "cost_r": 0,
+    "rsi_lower": 30,
+    "rsi_upper": 70
+  },
+  "strategies": ["price_sma", "sma_cross", "ema_cross", "rsi_revert", "donchian"],
+  "trade_sides": ["both", "long", "short"],
+  "date_rule": "start is inclusive; end is exclusive",
+  "result_path": "backtest/chat/results/<request_id>.json"
+}
