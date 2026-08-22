@@ -27,6 +27,8 @@ jobs:
         run: |
           node --check app.js
           node --check realtime-core.js
+          node --check chart-core.js
+          node --check wallet-core.js
           node --check mobile.js
           node --check suite-ui.js
           node --check suite.js
@@ -34,10 +36,12 @@ jobs:
           node --check execution-api.js
           node --check execution-ui.js
           node --check execution-ops-bridge.js
+          node --check exchange-core.js
+          node --check exchange-ui.js
+          node --check exchange-actions.js
+          node --check testnet-e2e.js
           node --check suite-execution-patch.js
-          node --check wallet-auth.js
           node --check walletconnect.js
-          node --check walletconnect-auth-patch.js
           node --check ops-suite.js
           node --check risk-hardening.js
           node --check provider-failover.js
@@ -60,6 +64,8 @@ jobs:
           test -s index.html
           test -s app.js
           test -s realtime-core.js
+          test -s chart-core.js
+          test -s wallet-core.js
           test -s mobile.js
           test -s styles.css
           test -s mobile.css
@@ -69,12 +75,14 @@ jobs:
           test -s execution-api.js
           test -s execution-ui.js
           test -s execution-ops-bridge.js
+          test -s exchange-core.js
+          test -s exchange-ui.js
+          test -s exchange-actions.js
+          test -s testnet-e2e.js
           test -s rwa-execution-config.json
           test -s EXECUTION_API.md
           test -s suite-execution-patch.js
-          test -s wallet-auth.js
           test -s walletconnect.js
-          test -s walletconnect-auth-patch.js
           test -s ops-suite.js
           test -s ops.css
           test -s risk-hardening.js
@@ -106,6 +114,9 @@ jobs:
           python -m json.tool rwa-execution-config.json >/dev/null
 
           grep -Fq "realtime-core.js?v=2" index.html
+          grep -Fq "walletconnect.js?v=4" index.html
+          grep -Fq "wallet-core.js?v=3" index.html
+          ! grep -Fq "wallet-seamless.js" index.html
           ! grep -Fq "browser-recovery.js" index.html
           ! grep -Fq "instantChartBoot();loadSuite()" mobile.js
           grep -Fq "data-stream.binance.vision" realtime-core.js
@@ -114,14 +125,15 @@ jobs:
           grep -Fq "REST fallback" realtime-core.js
 
           grep -Fq "suite-nav.js" mobile.js
-          grep -Fq "execution-api.js?v=2" suite-nav.js
-          grep -Fq "execution-ops-bridge.js?v=2" suite-nav.js
-          grep -Fq "execution-ui.js?v=2" suite-nav.js
-          grep -Fq "suite-execution-patch.js?v=5" suite-nav.js
-          grep -Fq "wallet-auth.js" suite-nav.js
-          grep -Fq "ops-suite.js" suite-nav.js
+          grep -Fq "walletconnect.js?v=4" suite-nav.js
+          grep -Fq "execution-api.js?v=3" suite-nav.js
+          grep -Fq "execution-ops-bridge.js?v=4" suite-nav.js
+          grep -Fq "ops-suite.js?v=2" suite-nav.js
+          grep -Fq "execution-ui.js?v=3" suite-nav.js
+          grep -Fq "suite-execution-patch.js?v=6" suite-nav.js
+          ! grep -Fq "load('wallet-auth.js" suite-nav.js
+          ! grep -Fq "load('walletconnect-auth-patch.js" suite-nav.js
           grep -Fq "risk-hardening.js" suite-nav.js
-          grep -Fq "walletconnect.js" suite-nav.js
           grep -Fq "provider-failover.js" suite-nav.js
           grep -Fq "monitor-client.js" suite-nav.js
           grep -Fq "monitor-config-client.js" suite-nav.js
@@ -129,15 +141,28 @@ jobs:
           grep -Fq "audit-hooks.js" suite-nav.js
           grep -Fq "rwa-verify-client.js" suite-nav.js
 
-          # Wallet-first exchange architecture.
+          # Wallet v3 is the only runtime auth owner.
+          grep -Fq "version:'3.0.0'" wallet-core.js
+          grep -Fq "eip6963:requestProvider" wallet-core.js
+          grep -Fq "personal_sign" wallet-core.js
+          grep -Fq "personal_ecRecover" wallet-core.js
+          grep -Fq "Wallet account switched" wallet-core.js
+
+          # Wallet-first exchange architecture and single Hyperliquid write path.
           grep -Fq "version:'2.0.0'" execution-api.js
+          grep -Fq "hardening:'single-write-path-v1'" execution-api.js
           grep -Fq "approveAgent" execution-api.js
           grep -Fq "approveBuilderFee" execution-api.js
           grep -Fq "AES-GCM" execution-api.js
           grep -Fq "frontendOpenOrders" execution-api.js
           grep -Fq "historicalOrders" execution-api.js
           grep -Fq "clearinghouseState" execution-api.js
+          grep -Fq "async function trigger" execution-api.js
           grep -Fq "cancelAll" execution-api.js
+          ! grep -Fq "ExchangeClient" execution-ops-bridge.js
+          ! grep -Fq "ExchangeClient" ops-suite.js
+          ! grep -Fq "ExchangeClient" risk-hardening.js
+          ! grep -Fq "ExchangeClient" suite-execution-patch.js
           grep -Fq "RWAExecutionAPI" execution-ui.js
           grep -Fq "FAST API WALLET" execution-ui.js
           grep -Fq "RWAExecutionAPI" execution-ops-bridge.js
@@ -146,9 +171,20 @@ jobs:
           grep -Fq "orders.market" suite-execution-patch.js
           grep -Fq "orders.limit" suite-execution-patch.js
           grep -Fq "RWARisk" suite-execution-patch.js
+          grep -Fq "path:'RWAExecutionAPI'" ops-suite.js
           grep -Fq '"venue": "hyperliquid"' rwa-execution-config.json
           grep -Fq '"testnet": true' rwa-execution-config.json
           grep -Fq '"enabled": false' rwa-execution-config.json
+
+          # Mainnet remains testnet-gated and evidence is venue-backed + wallet-bound.
+          grep -Fq "safety:'wallet-bound-mainnet-gate-v2'" exchange-core.js
+          grep -Fq "const state={env:'testnet'" exchange-core.js
+          grep -Fq "status:'E2E_VERIFIED'" testnet-e2e.js
+          grep -Fq "wallet:s.wallet" testnet-e2e.js
+          grep -Fq "source='venue'" testnet-e2e.js
+          grep -Fq "REAL E2E RESULT" testnet-e2e.js
+          grep -Fq "Unlock Mainnet after PASS" testnet-e2e.js
+          ! grep -Fq "RWATestnetE2E?.mark" exchange-actions.js
 
           grep -Fq "RWARisk" ops-suite.js
           grep -Fq "RWAOps" ops-suite.js
