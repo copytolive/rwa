@@ -1,0 +1,1 @@
+Social trading terminal deployment verification trigger.
