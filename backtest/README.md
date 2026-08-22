@@ -1,44 +1,87 @@
 # VectorForge Historical Simulation Lab
 
-Public URL (GitHub Pages):
+Public GitHub Pages URL:
 
 `https://narzulalistiqlal.github.io/rwa/backtest/`
 
-## What is included
+VectorForge is a browser-native historical market research and simulation lab. It does not require Visual Studio Code or a locally running server.
 
-- Browser-native historical simulation; no local IDE is required.
-- EURUSD public 1-second quote data catalog from 2009-05 through 2018-07.
-- 111 monthly source-file references in `data/manifest.json`.
-- Streaming Web Worker engine so monthly data does not need to be committed into this repository.
-- Models: Price/SMA cross, SMA fast/slow cross, EMA fast/slow cross, RSI mean reversion, Donchian breakout.
-- Fixed exit-distance and target-ratio simulation with bid/ask handling when the source provides both columns.
-- Results: net R, positive-event rate, gain/loss ratio, max drawdown in R, event count, events/week and evaluated samples.
-- SHA-256 fingerprint for each interactive run.
-- GitHub Actions batch evaluator with dataset SHA-256 and unique evaluation IDs.
-- Campaign ledger in `results/campaign.json` with a 1,000,000,000,000-evaluation research target. Target and completed counts are intentionally separate.
+## Interactive browser engine
 
-## Data architecture
+The page currently supports:
 
-The large historical files are not copied into this repo. The page fetches them directly from:
+- Public EURUSD 1-second source catalog: 2009-05 through 2018-07.
+- 111 monthly source-file references, all indexed in `data/manifest.json`.
+- Local custom TXT / CSV / TSV upload without uploading the file to the repository.
+- Configurable 1-based Bid column and optional Ask column for custom files.
+- Configurable sample interval and point size.
+- Models:
+  - Price / SMA cross
+  - SMA fast / slow cross
+  - EMA fast / slow cross
+  - RSI mean reversion
+  - Donchian breakout
+- Direction filters: long + short, long only, short only.
+- Stop distance and target ratio.
+- Bid / ask handling with fallback spread.
+- Slippage per side.
+- Round-trip cost in R.
+- Results including net R, positive-outcome rate, gain/loss ratio, drawdown, expectancy, frequency, loss streak, long/short counts, signals and sample count.
+- SHA-256 fingerprint for every interactive run.
+- JSON export for the latest interactive result.
+- Responsive desktop/mobile interface.
+
+## Tick-data architecture
+
+The multi-gigabyte monthly raw files are deliberately not duplicated into this GitHub Pages repository. Instead, every verified available source file is indexed and the browser streams the selected raw files directly from:
 
 `https://github.com/zcbmlijygrdwa/fx_EUR_USD_tick`
 
-This avoids duplicating several gigabytes of public data inside a GitHub Pages repository and avoids GitHub single-file/repository-size problems. Every available monthly file is indexed in `data/manifest.json`.
+This gives the site access to the complete verified upstream file set without bloating the Pages repository or violating GitHub single-file/repository-size limits.
 
-The upstream README describes the data as EUR/USD sell/buy prices sampled once a second, five days per week. The verified available range used here ends at 2018-07; the application does not invent later files.
+The upstream README describes the dataset as EUR/USD sell/buy prices sampled once per second, five days per week. The verified upstream coverage used by VectorForge is May 2009 through July 2018. VectorForge does not invent later files.
 
-## Verified batch
+For another instrument or a different tick format, choose **Custom tick/quote TXT or CSV** in the page and set Bid/Ask columns, point size and sample interval.
 
-`.github/workflows/vectorforge-batch.yml` runs `factory/run_batch.py` on GitHub-hosted compute. The first batch evaluates SMA periods 50 through 1500 in steps of 25 against a selected source month. Each evaluation gets a deterministic SHA-256 ID based on dataset hash, month, model, parameters and engine version.
+## Verified GitHub batch factory
 
-Outputs:
+`.github/workflows/vectorforge-batch.yml` runs `factory/run_batch.py` on GitHub-hosted compute. The verified baseline factory currently evaluates SMA periods 50 through 1500 in steps of 25 against one source month at a time.
 
-- `results/latest_batch.json`
-- `results/evaluation_ids.json`
-- `results/campaign.json`
+Each verified factory evaluation receives a deterministic ID based on:
 
-Re-running the same batch does not increase the unique verified count because identical evaluation IDs are deduplicated.
+`SHA256(dataset hash + month + model + parameters + engine version)`
 
-## Trillion-scale rule
+Persistent outputs:
 
-`target_evaluations = 1,000,000,000,000` is a campaign objective, not a claim that one trillion evaluations have already completed. GitHub Pages is static hosting. Actual trillion-scale execution requires distributed runners/compute while preserving the same evaluation-ID and dataset-hash scheme.
+- `results/latest_batch.json` — full latest verified batch.
+- `results/evaluation_ids.json` — unique evaluation-ID ledger.
+- `results/batches.json` — append-only batch/source history.
+- `results/campaign.json` — campaign totals, source coverage and latest batch status.
+
+Duplicate evaluation IDs do not increase the verified count.
+
+## Automatic source campaign
+
+The workflow can be started manually with a specific `YYYY-MM` source month or with `auto`.
+
+`auto` selects the next source month that has not yet been processed. The scheduled campaign runs every 6 hours and can process up to four sequential source months per scheduled workflow run. All changes are committed back to the repository by `vectorforge-bot`.
+
+The GitHub Pages dashboard reads the campaign ledger and shows:
+
+- target evaluations,
+- verified completed evaluations,
+- processed source-month coverage,
+- verified source samples,
+- latest batch,
+- latest dataset SHA-256,
+- latest verified batch research table.
+
+## Deployment QA
+
+`.github/workflows/pages.yml` checks the RWA site and VectorForge before deployment. VectorForge QA includes JavaScript syntax, required production files, JSON integrity, the exact 111-file source catalog, unique source months, source coverage boundaries, and consistency between `verified_completed` and the unique evaluation-ID ledger.
+
+## One-trillion rule
+
+`target_evaluations = 1,000,000,000,000` is a research campaign objective. It is **not** presented as completed until that many unique evaluation hashes have actually been computed and persisted.
+
+GitHub Pages itself is static hosting. Free GitHub-hosted Actions are appropriate for control, verification and bounded batches, but a genuine one-trillion full-history campaign requires distributed compute/self-hosted runners while preserving the same dataset hashes, evaluation IDs and audit ledger.
