@@ -27,6 +27,15 @@
       "evaluations_computed": 59,
       "new_unique_evaluations": 59,
       "completed_at": "2026-08-22T19:00:42.414398+00:00"
+    },
+    {
+      "month": "2009-07",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "ef0d6c00e60fed261cbeca384ee2a0d9bc8a1a67ce5350a3f77e0b241ed9e317",
+      "valid_samples": 1960814,
+      "evaluations_computed": 59,
+      "new_unique_evaluations": 59,
+      "completed_at": "2026-08-22T19:01:33.307582+00:00"
     }
   ]
 }
