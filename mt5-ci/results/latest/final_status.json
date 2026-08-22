@@ -1,5 +1,10 @@
 {
-  "status": "FAIL",
-  "error": "deal ledger missing; tester did not produce native deals",
-  "utc": "2026-08-22T18:25:47.6384708Z"
+  "status": "BLOCKED_MISSING_MT5_DEMO_SECRETS",
+  "required": [
+    "MT5_LOGIN",
+    "MT5_PASSWORD",
+    "MT5_SERVER"
+  ],
+  "message": "Add a valid free demo account as GitHub Actions repository secrets. Never commit credentials.",
+  "utc": "2026-08-22T18:27:19.9677379Z"
 }
