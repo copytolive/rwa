@@ -29,6 +29,7 @@ jobs:
           node --check suite.js
           node --check suite-nav.js
           node --check suite-execution-patch.js
+          node --check wallet-auth.js
           node --check backtest/app.js
           node --check backtest/worker.js
 
@@ -43,6 +44,7 @@ jobs:
           test -s suite.js
           test -s suite-nav.js
           test -s suite-execution-patch.js
+          test -s wallet-auth.js
           test -s suite.css
           test -s rwa-assets.json
           python -m json.tool rwa-assets.json >/dev/null
@@ -50,6 +52,9 @@ jobs:
           grep -q "suite.js" mobile.js
           grep -q "suite-nav.js" mobile.js
           grep -q "suite-execution-patch.js" suite-nav.js
+          grep -q "wallet-auth.js" suite-nav.js
+          grep -q "RWAWalletAuth" wallet-auth.js
+          grep -q "accountsChanged" wallet-auth.js
           test -s backtest/index.html
           test -s backtest/app.js
           test -s backtest/worker.js
