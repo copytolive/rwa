@@ -13,6 +13,7 @@ This directory prepares token infrastructure without launching a live token.
 
 - `contracts/RWAToken.sol`: fixed supply, ERC-20 Permit, ERC20Votes governance-ready token. No post-deployment minting.
 - `contracts/RWAVestingVault.sol`: immutable cliff + linear vesting vault for team/investor/partner allocations.
+- `.github/workflows/token-contracts.yml` permanently compiles both contracts with pinned Solidity `0.8.24` and OpenZeppelin `5.1.0`, and verifies that PRE-TGE/mainnet guards remain closed.
 
 ## Deployment guard
 
