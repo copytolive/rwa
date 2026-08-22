@@ -54,17 +54,20 @@ Each verified factory evaluation receives a deterministic ID based on:
 Persistent outputs:
 
 - `results/latest_batch.json` — full latest verified batch.
-- `results/evaluation_ids.json` — unique evaluation-ID ledger.
+- `results/evaluation_ids.json` — explicit unique evaluation-ID ledger used during the current small-scale validation phase.
 - `results/batches.json` — append-only batch/source history.
-- `results/campaign.json` — campaign totals, source coverage and latest batch status.
+- `results/shards.json` — compact deterministic Merkle verification shards.
+- `results/campaign.json` — campaign totals, source coverage, shard status and latest batch status.
 
 Duplicate evaluation IDs do not increase the verified count.
+
+`factory/rebuild_shards.py` reconstructs each deterministic batch, verifies that its evaluation-ID union exactly matches the explicit ID ledger, and publishes a SHA-256 Merkle root per shard. `factory/test_contract.py` independently checks the manifest, campaign count, batch reconstruction and Merkle roots on every verified workflow run.
 
 ## Automatic source campaign
 
 The workflow can be started manually with a specific `YYYY-MM` source month or with `auto`.
 
-`auto` selects the next source month that has not yet been processed. The scheduled campaign runs every 6 hours and can process up to four sequential source months per scheduled workflow run. All changes are committed back to the repository by `vectorforge-bot`.
+`auto` selects the next source month that has not yet been processed. The scheduled campaign runs every 6 hours and can process up to eight sequential source months per scheduled workflow run. All result changes are committed back to the repository by `vectorforge-bot`.
 
 The GitHub Pages dashboard reads the campaign ledger and shows:
 
@@ -78,10 +81,17 @@ The GitHub Pages dashboard reads the campaign ledger and shows:
 
 ## Deployment QA
 
-`.github/workflows/pages.yml` checks the RWA site and VectorForge before deployment. VectorForge QA includes JavaScript syntax, required production files, JSON integrity, the exact 111-file source catalog, unique source months, source coverage boundaries, and consistency between `verified_completed` and the unique evaluation-ID ledger.
+`.github/workflows/pages.yml` checks the RWA site and VectorForge before deployment. VectorForge QA includes JavaScript syntax, required production files, JSON integrity, the exact 111-file source catalog, unique source months, source coverage boundaries, DOM-to-JavaScript ID consistency, unique evaluation IDs, dataset hashes, Merkle roots and consistency between the shard total and `verified_completed`.
 
-## One-trillion rule
+## One-trillion verification contract
 
-`target_evaluations = 1,000,000,000,000` is a research campaign objective. It is **not** presented as completed until that many unique evaluation hashes have actually been computed and persisted.
+The frozen scaling rules live in:
 
-GitHub Pages itself is static hosting. Free GitHub-hosted Actions are appropriate for control, verification and bounded batches, but a genuine one-trillion full-history campaign requires distributed compute/self-hosted runners while preserving the same dataset hashes, evaluation IDs and audit ledger.
+- `factory/scale_contract.json`
+- `factory/TRILLION_SCALE.md`
+
+`target_evaluations = 1,000,000,000,000` is a research campaign objective. It is **not** presented as completed until accepted, non-overlapping verification shards sum to that many unique actually computed evaluations.
+
+Keeping one trillion 64-character SHA-256 strings directly in the repository would itself require tens of terabytes. The trillion-scale design therefore uses compact Merkle shards while preserving exact dataset hashes, engine versions, canonical parameter ranges and evaluation counts.
+
+GitHub Pages is the interactive static layer. GitHub Actions is the control/verification layer. A genuine trillion-evaluation campaign ultimately requires distributed/self-hosted compute workers while preserving the same frozen verification contract.
