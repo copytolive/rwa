@@ -10,6 +10,7 @@ const { getHistoricalRates } = require('dukascopy-node');
     instrument,
     dates: { from: new Date(fromIso), to: new Date(toIso) },
     timeframe: 'tick',
+    format: 'json',
     batchSize: 4,
     pauseBetweenBatchesMs: 150
   });
