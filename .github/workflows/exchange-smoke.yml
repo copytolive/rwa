@@ -11,6 +11,9 @@ on:
       - "walletconnect.js"
       - "execution-api.js"
       - "execution-ops-bridge.js"
+      - "ops-suite.js"
+      - "risk-hardening.js"
+      - "suite-execution-patch.js"
       - "index.html"
       - "token/**"
       - ".github/workflows/exchange-smoke.yml"
@@ -28,6 +31,9 @@ jobs:
           node --check walletconnect.js
           node --check execution-api.js
           node --check execution-ops-bridge.js
+          node --check ops-suite.js
+          node --check risk-hardening.js
+          node --check suite-execution-patch.js
           node --check exchange-core.js
           node --check exchange-ui.js
           node --check exchange-actions.js
@@ -47,6 +53,15 @@ jobs:
           grep -Fq "version:'4.0.0'" walletconnect.js
           grep -Fq "version:'3.0.0'" wallet-core.js
           grep -Fq 'Wallet account switched' wallet-core.js
+          grep -Fq "version:'2.0.0'" execution-api.js
+          grep -Fq "hardening:'single-write-path-v1'" execution-api.js
+          grep -Fq 'async function trigger' execution-api.js
+          grep -Fq 'wallet-core.js?v=3' execution-ops-bridge.js
+          ! grep -Fq 'ExchangeClient' execution-ops-bridge.js
+          ! grep -Fq 'ExchangeClient' ops-suite.js
+          ! grep -Fq 'ExchangeClient' risk-hardening.js
+          ! grep -Fq 'ExchangeClient' suite-execution-patch.js
+          grep -Fq "path:'RWAExecutionAPI'" ops-suite.js
           grep -Fq "version:'1.0.0'" exchange-core.js
           grep -Fq 'Run Testnet E2E Preflight' exchange-ui.js
           grep -Fq 'Enable API Wallet' exchange-ui.js
@@ -69,7 +84,7 @@ jobs:
       - name: Publish source status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/exchange-source' -f description='Wallet, exchange, E2E and PRE-TGE token guardrails verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/exchange-source' -f description='Single write path, wallet, exchange, E2E and PRE-TGE guards verified'
       - name: Verify GitHub Pages bundle
         shell: bash
         run: |
@@ -82,8 +97,11 @@ jobs:
             actions="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/exchange-actions.js?v=$q" || true)"
             wallet="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/wallet-core.js?v=$q" || true)"
             wc="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/walletconnect.js?v=$q" || true)"
+            execapi="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/execution-api.js?v=$q" || true)"
+            bridge="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/execution-ops-bridge.js?v=$q" || true)"
+            ops="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/ops-suite.js?v=$q" || true)"
             e2e="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/testnet-e2e.js?v=$q" || true)"
-            if grep -Fq 'walletconnect.js?v=4' <<<"$html" && grep -Fq 'wallet-core.js?v=3' <<<"$html" && ! grep -Fq 'wallet-seamless.js' <<<"$html" && grep -Fq 'exchange-core.js?v=1' <<<"$html" && grep -Fq 'exchange-ui.js?v=1' <<<"$html" && grep -Fq 'testnet-e2e.js?v=1' <<<"$html" && grep -Fq "version:'4.0.0'" <<<"$wc" && grep -Fq "version:'3.0.0'" <<<"$wallet" && grep -Fq 'Wallet account switched' <<<"$wallet" && grep -Fq "version:'1.0.0'" <<<"$core" && grep -Fq 'RWA EXCHANGE CORE' <<<"$ui" && grep -Fq 'Get Testnet USDC' <<<"$actions" && grep -Fq 'data-ex-modify' <<<"$actions" && grep -Fq 'REAL E2E RESULT' <<<"$e2e"; then ok=1; break; fi
+            if grep -Fq 'walletconnect.js?v=4' <<<"$html" && grep -Fq 'wallet-core.js?v=3' <<<"$html" && ! grep -Fq 'wallet-seamless.js' <<<"$html" && grep -Fq 'exchange-core.js?v=1' <<<"$html" && grep -Fq 'exchange-ui.js?v=1' <<<"$html" && grep -Fq 'testnet-e2e.js?v=1' <<<"$html" && grep -Fq "version:'4.0.0'" <<<"$wc" && grep -Fq "version:'3.0.0'" <<<"$wallet" && grep -Fq 'Wallet account switched' <<<"$wallet" && grep -Fq "hardening:'single-write-path-v1'" <<<"$execapi" && grep -Fq 'async function trigger' <<<"$execapi" && ! grep -Fq 'ExchangeClient' <<<"$bridge" && ! grep -Fq 'ExchangeClient' <<<"$ops" && grep -Fq "version:'1.0.0'" <<<"$core" && grep -Fq 'RWA EXCHANGE CORE' <<<"$ui" && grep -Fq 'Get Testnet USDC' <<<"$actions" && grep -Fq 'data-ex-modify' <<<"$actions" && grep -Fq 'REAL E2E RESULT' <<<"$e2e"; then ok=1; break; fi
             sleep 5
           done
           test "$ok" = "1"
@@ -91,7 +109,7 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/exchange-live' -f description='Live one-screen exchange + real testnet E2E gate verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/exchange-live' -f description='Live one-screen exchange + single write path + E2E gate verified'
       - name: Publish failure status
         if: failure()
         env:
