@@ -33,7 +33,7 @@ jobs:
     timeout-minutes: 180
     env:
       VF_MONTH: ${{ github.event.inputs.month || 'auto' }}
-      VF_BATCH_COUNT: ${{ github.event_name == 'schedule' && '4' || github.event.inputs.batch_count || '1' }}
+      VF_BATCH_COUNT: ${{ github.event_name == 'schedule' && '8' || github.event.inputs.batch_count || '1' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -57,7 +57,6 @@ jobs:
           for i in $(seq 1 "$COUNT"); do
             echo "=== VectorForge batch $i/$COUNT · request=$VF_MONTH ==="
             VF_MONTH="$VF_MONTH" python backtest/factory/run_batch.py
-            # An explicit month should only be evaluated once per workflow run.
             if [ "$VF_MONTH" != "auto" ]; then
               break
             fi
