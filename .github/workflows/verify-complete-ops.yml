@@ -47,6 +47,10 @@ jobs:
           grep -Fq "wallet-signature-required" monitor/config.json
           grep -Fq "cron: '*/5" .github/workflows/monitor.yml
           grep -Fq "verification-sign-patch.js" suite-nav.js
+      - name: Report source pass
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment "${{ github.event.issue.number }}" --body "FINAL RWA SOURCE PASS. All operation modules compile and required contracts are present. Waiting for latest GitHub Pages bundle."
       - name: Verify latest production bundle
         run: |
           ok=0
