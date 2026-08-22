@@ -455,7 +455,8 @@ async function health(testnet=false){
 }
 
 window.RWAExecutionAPI={
-  version:'2.1.0',
+  version:'2.0.0',
+  revision:'2.1.0',
   hardening:'single-write-path-v1',
   riskGate:'mandatory-internal-v1',
   bracket:'atomic-normal-tpsl-v1',
