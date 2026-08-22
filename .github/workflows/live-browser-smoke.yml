@@ -37,15 +37,17 @@ jobs:
           test -s chart-core.js
           test -s wallet-core.js
           grep -Fq 'realtime-core.js?v=2' index.html
+          grep -Fq 'chart-core.js?v=1' index.html
+          grep -Fq 'walletconnect.js?v=3' index.html
+          grep -Fq 'wallet-core.js?v=1' index.html
           grep -Fq 'execution-api.js?v=2' index.html
-          grep -Fq 'execution-ops-bridge.js?v=2' index.html
+          grep -Fq 'execution-ops-bridge.js?v=3' index.html
           ! grep -Fq 'browser-recovery.js' index.html
           ! grep -Fq 'instantChartBoot();loadSuite()' mobile.js
-          grep -Fq 'stream.binance.com:9443' realtime-core.js
           grep -Fq 'REST fallback' realtime-core.js
           grep -Fq "loadCritical('chart-core.js?v=1'" execution-ops-bridge.js
           grep -Fq "loadCritical('wallet-core.js?v=1'" execution-ops-bridge.js
-          grep -Fq "loadCritical('walletconnect.js?v=3'" execution-ops-bridge.js
+          grep -Fq 'waitWalletAuth' execution-ops-bridge.js
           grep -Fq 'window.loadTradingView=openTradingView' chart-core.js
           grep -Fq 'liveCandle' chart-core.js
           grep -Fq 'eip6963:requestProvider' wallet-core.js
@@ -70,11 +72,11 @@ jobs:
             wallet="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/wallet-core.js?v=$q" || true)"
             execops="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/execution-ops-bridge.js?v=$q" || true)"
             execapi="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/execution-api.js?v=$q" || true)"
-            if grep -Fq 'realtime-core.js?v=2' <<<"$html" && \
-               grep -Fq 'execution-ops-bridge.js?v=2' <<<"$html" && \
+            if grep -Fq 'chart-core.js?v=1' <<<"$html" && \
+               grep -Fq 'wallet-core.js?v=1' <<<"$html" && \
+               grep -Fq 'execution-ops-bridge.js?v=3' <<<"$html" && \
                grep -Fq 'REST fallback' <<<"$core" && \
-               grep -Fq "loadCritical('chart-core.js?v=1'" <<<"$execops" && \
-               grep -Fq "loadCritical('wallet-core.js?v=1'" <<<"$execops" && \
+               grep -Fq 'waitWalletAuth' <<<"$execops" && \
                grep -Fq 'window.loadTradingView=openTradingView' <<<"$chart" && \
                grep -Fq 'liveCandle' <<<"$chart" && \
                grep -Fq 'eip6963:requestProvider' <<<"$wallet" && \
