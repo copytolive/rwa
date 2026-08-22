@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "assets": [
+    {"symbol":"EURUSD","class":"forex","provider":"dukascopy","provider_symbol":"eurusd","point_size":0.0001,"mode":"bid_ask_tick"},
+    {"symbol":"GBPUSD","class":"forex","provider":"dukascopy","provider_symbol":"gbpusd","point_size":0.0001,"mode":"bid_ask_tick"},
+    {"symbol":"USDJPY","class":"forex","provider":"dukascopy","provider_symbol":"usdjpy","point_size":0.01,"mode":"bid_ask_tick"},
+    {"symbol":"USDCHF","class":"forex","provider":"dukascopy","provider_symbol":"usdchf","point_size":0.0001,"mode":"bid_ask_tick"},
+    {"symbol":"AUDUSD","class":"forex","provider":"dukascopy","provider_symbol":"audusd","point_size":0.0001,"mode":"bid_ask_tick"},
+    {"symbol":"USDCAD","class":"forex","provider":"dukascopy","provider_symbol":"usdcad","point_size":0.0001,"mode":"bid_ask_tick"},
+    {"symbol":"NZDUSD","class":"forex","provider":"dukascopy","provider_symbol":"nzdusd","point_size":0.0001,"mode":"bid_ask_tick"},
+    {"symbol":"EURGBP","class":"forex","provider":"dukascopy","provider_symbol":"eurgbp","point_size":0.0001,"mode":"bid_ask_tick"},
+    {"symbol":"EURJPY","class":"forex","provider":"dukascopy","provider_symbol":"eurjpy","point_size":0.01,"mode":"bid_ask_tick"},
+    {"symbol":"GBPJPY","class":"forex","provider":"dukascopy","provider_symbol":"gbpjpy","point_size":0.01,"mode":"bid_ask_tick"},
+    {"symbol":"AUDJPY","class":"forex","provider":"dukascopy","provider_symbol":"audjpy","point_size":0.01,"mode":"bid_ask_tick"},
+    {"symbol":"EURAUD","class":"forex","provider":"dukascopy","provider_symbol":"euraud","point_size":0.0001,"mode":"bid_ask_tick"},
+    {"symbol":"EURCHF","class":"forex","provider":"dukascopy","provider_symbol":"eurchf","point_size":0.0001,"mode":"bid_ask_tick"},
+    {"symbol":"GBPCHF","class":"forex","provider":"dukascopy","provider_symbol":"gbpchf","point_size":0.0001,"mode":"bid_ask_tick"},
+    {"symbol":"XAUUSD","class":"metal","provider":"dukascopy","provider_symbol":"xauusd","point_size":0.01,"mode":"bid_ask_tick"},
+    {"symbol":"BTCUSD","class":"crypto","provider":"dukascopy","provider_symbol":"btcusd","point_size":0.01,"mode":"bid_ask_tick"},
+    {"symbol":"BTCUSDT","class":"crypto","provider":"binance","provider_symbol":"BTCUSDT","point_size":0.01,"mode":"exchange_aggtrade_tick"},
+    {"symbol":"ETHUSDT","class":"crypto","provider":"binance","provider_symbol":"ETHUSDT","point_size":0.01,"mode":"exchange_aggtrade_tick"}
+  ],
+  "notes": [
+    "Dukascopy symbols are processed as historical bid/ask quote ticks.",
+    "Binance symbols are processed as historical aggregate trade events; a configurable synthetic spread is applied for execution simulation.",
+    "Raw historical archives are fetched on demand and are not committed into the GitHub Pages repository."
+  ]
+}
