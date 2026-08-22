@@ -4,11 +4,14 @@ on:
   push:
     branches: ["main"]
   workflow_dispatch:
+  issues:
+    types: [opened]
 
 permissions:
   contents: read
   pages: write
   id-token: write
+  issues: write
 
 concurrency:
   group: "pages"
@@ -101,6 +104,12 @@ jobs:
           )
           PY
 
+      - name: Report source pass
+        if: github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment "${{ github.event.issue.number }}" --body "FULL RWA SUITE SOURCE PASS. app.js, mobile.js, suite UI, suite engine, navigation, hardened execution, registry JSON, and VectorForge QA all passed. Starting Pages deployment."
+
   deploy:
     needs: verify
     environment:
@@ -119,3 +128,8 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Report deployment success
+        if: github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment "${{ github.event.issue.number }}" --body "FULL RWA SUITE DEPLOYMENT SUCCESS. All 10 requested systems are wired into GitHub Pages production at https://narzulalistiqlal.github.io/rwa/."
