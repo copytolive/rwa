@@ -33,7 +33,7 @@ jobs:
     timeout-minutes: 180
     env:
       VF_MONTH: ${{ github.event.inputs.month || 'auto' }}
-      VF_BATCH_COUNT: ${{ github.event_name == 'schedule' && '8' || github.event.inputs.batch_count || '1' }}
+      VF_BATCH_COUNT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.batch_count || '8' }}
     steps:
       - uses: actions/checkout@v4
         with:
