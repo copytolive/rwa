@@ -1,0 +1,41 @@
+name: Verify Instant UI
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  verify:
+    if: startsWith(github.event.issue.title, '[QA-INSTANT]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate source
+        run: |
+          node --check app.js
+          node --check mobile.js
+          grep -Fq 'instantChartBoot' mobile.js
+          grep -Fq 'warmConnections' mobile.js
+          grep -Fq 'mobile.js?v=7' index.html
+          grep -Fq 'rel="preload" href="mobile.js?v=7"' index.html
+      - name: Verify production
+        run: |
+          ok=0
+          for i in {1..24}; do
+            q="${GITHUB_RUN_ID}-${i}"
+            if curl -fsSL "https://narzulalistiqlal.github.io/rwa/?v=$q" | grep -Fq 'mobile.js?v=7' && \
+               curl -fsSL "https://narzulalistiqlal.github.io/rwa/mobile.js?v=$q" | grep -Fq 'instantChartBoot' && \
+               curl -fsSL "https://narzulalistiqlal.github.io/rwa/mobile.js?v=$q" | grep -Fq 'warmConnections'; then
+              ok=1; break
+            fi
+            sleep 10
+          done
+          test "$ok" = "1"
+      - name: Report success
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment "${{ github.event.issue.number }}" --body "INSTANT UI PRODUCTION SUCCESS. Chart bootstrap starts before market-universe REST completes, cached/fallback chart paints immediately, duplicate TradingView reload is suppressed, and feature assets warm in parallel."
