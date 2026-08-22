@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate browser source
+      - name: Validate browser and execution source
         run: |
           node --check app.js
           node --check realtime-core.js
@@ -30,7 +30,12 @@ jobs:
           node --check execution-ops-bridge.js
           node --check suite-execution-patch.js
           python -m json.tool rwa-execution-config.json >/dev/null
+          test -s EXECUTION_API.md
           grep -Fq 'realtime-core.js?v=2' index.html
+          grep -Fq 'execution-api.js?v=2' index.html
+          grep -Fq 'execution-ops-bridge.js?v=2' index.html
+          grep -Fq 'execution-ui.js?v=3' index.html
+          grep -Fq 'suite-execution-patch.js?v=6' index.html
           ! grep -Fq 'browser-recovery.js' index.html
           ! grep -Fq 'instantChartBoot();loadSuite()' mobile.js
           grep -Fq 'stream.binance.com:9443' realtime-core.js
@@ -39,13 +44,17 @@ jobs:
           grep -Fq 'execution-api.js?v=2' suite-nav.js
           grep -Fq 'execution-ops-bridge.js?v=2' suite-nav.js
           grep -Fq 'execution-ui.js?v=2' suite-nav.js
+          grep -Fq 'suite-execution-patch.js?v=5' suite-nav.js
           grep -Fq 'approveAgent' execution-api.js
+          grep -Fq 'AES-GCM' execution-api.js
           grep -Fq 'orders:{limit,market,cancel,modify,cancelAll' execution-api.js
-          grep -Fq 'RWAExecutionAPI' suite-execution-patch.js
+          grep -Fq 'RWAExecutionOpsBridge' execution-ops-bridge.js
+          grep -Fq 'if(window.RWAExecutionBridge)return;' suite-execution-patch.js
+          grep -Fq "if($('executionEngine'))return true" execution-ui.js
       - name: Publish source success
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/execution-source' -f description='Wallet login + execution API source contracts verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/execution-source' -f description='Wallet login + dedicated execution API source verified'
       - name: Wait for GitHub Pages propagation
         id: live
         shell: bash
@@ -63,6 +72,10 @@ jobs:
             execbridge="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/suite-execution-patch.js?v=$q" || true)"
             cfg="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-execution-config.json?v=$q" || true)"
             if grep -Fq 'realtime-core.js?v=2' <<<"$html" && \
+               grep -Fq 'execution-api.js?v=2' <<<"$html" && \
+               grep -Fq 'execution-ops-bridge.js?v=2' <<<"$html" && \
+               grep -Fq 'execution-ui.js?v=3' <<<"$html" && \
+               grep -Fq 'suite-execution-patch.js?v=6' <<<"$html" && \
                grep -Fq 'styles.css?v=7' <<<"$html" && \
                grep -Fq 'mobile.css?v=6' <<<"$html" && \
                ! grep -Fq 'browser-recovery.js' <<<"$html" && \
@@ -71,28 +84,33 @@ jobs:
                ! grep -Fq 'instantChartBoot();loadSuite()' <<<"$mobile" && \
                grep -Fq 'execution-api.js?v=2' <<<"$nav" && \
                grep -Fq 'execution-ops-bridge.js?v=2' <<<"$nav" && \
-               grep -Fq 'execution-ui.js?v=2' <<<"$nav" && \
                grep -Fq 'approveAgent' <<<"$execapi" && \
                grep -Fq 'approveBuilderFee' <<<"$execapi" && \
                grep -Fq 'AES-GCM' <<<"$execapi" && \
                grep -Fq 'FAST API WALLET' <<<"$execui" && \
+               grep -Fq "if($('executionEngine'))return true" <<<"$execui" && \
                grep -Fq 'execution.cancel_all' <<<"$execops" && \
+               grep -Fq 'if(window.RWAExecutionBridge)return;' <<<"$execbridge" && \
                grep -Fq 'RWAExecutionAPI' <<<"$execbridge" && \
                grep -Fq '"venue": "hyperliquid"' <<<"$cfg"; then
               ok=1
-              echo "Live wallet + execution bundle verified on attempt $i"
+              echo "Live wallet + dedicated execution API verified on attempt $i"
               break
             fi
             sleep 5
           done
           test "$ok" = "1"
-      - name: Publish live success status
+      - name: Publish live success statuses
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/live-browser-smoke' -f description='Live wallet login + execution API + realtime verified'
-      - name: Publish live failure status
+        run: |
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/live-browser-smoke' -f description='Live wallet + realtime application verified'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/execution-api-smoke' -f description='Dedicated execution API and agent wallet bundle verified live'
+      - name: Publish live failure statuses
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/live-browser-smoke' -f description='Live exchange smoke failed; source status may still be valid'
+        run: |
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/live-browser-smoke' -f description='Live browser smoke failed; source status may still be valid'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/execution-api-smoke' -f description='Dedicated execution API live verification failed'
