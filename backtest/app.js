@@ -28,6 +28,19 @@ function renderCatalog(filter=''){
   $('fileCount').textContent=`${shown.length} / ${months.length} files`;
 }
 
+async function loadCampaign(){
+  try{
+    const r=await fetch(`./results/campaign.json?cb=${Date.now()}`,{cache:'no-store'});
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    const c=await r.json();
+    $('cTarget').textContent=Number(c.target_evaluations).toLocaleString();
+    $('cVerified').textContent=Number(c.verified_completed).toLocaleString();
+    $('cStatus').textContent=`STATUS · ${c.status}`;
+    const b=c.last_verified_batch;
+    if(b){$('cBatch').textContent=Number(b.evaluations).toLocaleString();$('cBatchMonth').textContent=`${b.month} · ${b.engine_version}`;$('cHash').textContent=b.dataset_sha256||'—';$('cHash').title=b.dataset_sha256||''}
+  }catch(err){$('cVerified').textContent='unavailable';$('cStatus').textContent='ledger fetch failed'}
+}
+
 function selectedMonths(){
   const a=months.indexOf($('fromMonth').value), b=months.indexOf($('toMonth').value);
   if(a<0||b<0) return [];
@@ -56,7 +69,7 @@ function setBusy(v){
   $('runState').textContent=v?'RUNNING':'IDLE';
 }
 function addLog(s){const d=document.createElement('div');d.textContent=s;$('log').prepend(d)}
-function fmt(n,d=2){return Number.isFinite(n)?Number(n).toLocaleString(undefined,{maximumFractionDigits:d,minimumFractionDigits:d}):'—'}
+function fmt(n,d=2){if(n===Infinity)return '∞';return Number.isFinite(n)?Number(n).toLocaleString(undefined,{maximumFractionDigits:d,minimumFractionDigits:d}):'—'}
 async function sha256(text){const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('')}
 
 let worker=null;
@@ -96,4 +109,4 @@ $('stopBtn').addEventListener('click',()=>{worker?.terminate();worker=null;setBu
 $('catalogSearch').addEventListener('input',e=>renderCatalog(e.target.value));
 $('sourceRepo').href=SOURCE_REPO;
 $('strategy').addEventListener('change',()=>{if($('strategy').value==='rsi_revert'&&+$('fast').value===50)$('fast').value=14});
-fillMonths();renderCatalog();
+fillMonths();renderCatalog();loadCampaign();
