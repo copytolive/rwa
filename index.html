@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#070b12" />
+  <title>RWA — Real World Assets</title>
+  <meta name="description" content="RWA — infrastructure for bringing real-world assets onchain." />
+  <style>
+    :root{--bg:#070b12;--panel:#0d1420;--line:#1d2b3d;--text:#f5f7fb;--muted:#92a0b4;--accent:#51e1b7;--accent2:#6ba7ff}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 80% 0%,rgba(81,225,183,.12),transparent 28%),radial-gradient(circle at 10% 20%,rgba(107,167,255,.10),transparent 24%),var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    a{color:inherit;text-decoration:none}.wrap{width:min(1180px,calc(100% - 40px));margin:auto}
+    nav{height:76px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06)}
+    .brand{font-size:24px;font-weight:900;letter-spacing:-.04em}.brand span{color:var(--accent)}
+    .navlinks{display:flex;gap:28px;color:var(--muted);font-size:14px}.navbtn{padding:11px 16px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.025)}
+    .hero{padding:105px 0 80px;display:grid;grid-template-columns:1.2fr .8fr;gap:64px;align-items:center}.eyebrow{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border:1px solid rgba(81,225,183,.25);background:rgba(81,225,183,.06);border-radius:999px;color:#a8f3dd;font-size:13px}.dot{width:7px;height:7px;background:var(--accent);border-radius:50%;box-shadow:0 0 18px var(--accent)}
+    h1{font-size:clamp(54px,8vw,96px);line-height:.94;letter-spacing:-.065em;margin:24px 0}.grad{background:linear-gradient(90deg,var(--text),#9cc8ff 55%,#67ebc5);-webkit-background-clip:text;color:transparent}.lead{font-size:20px;line-height:1.65;color:var(--muted);max-width:700px}.actions{display:flex;gap:12px;margin-top:34px}.btn{padding:15px 20px;border-radius:14px;font-weight:700;font-size:15px}.primary{background:var(--text);color:#071016}.secondary{border:1px solid var(--line);background:rgba(255,255,255,.025)}
+    .visual{position:relative;min-height:460px}.orb{position:absolute;inset:40px;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.16),rgba(81,225,183,.08) 25%,rgba(107,167,255,.05) 55%,transparent 70%);border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 0 70px rgba(81,225,183,.08),0 0 80px rgba(81,225,183,.05)}.ring{position:absolute;inset:78px;border:1px solid rgba(107,167,255,.18);border-radius:50%;transform:rotate(18deg) scaleY(.48)}.ring.r2{inset:20px;transform:rotate(-22deg) scaleY(.65);border-color:rgba(81,225,183,.16)}
+    .asset-card{position:absolute;background:rgba(13,20,32,.82);backdrop-filter:blur(15px);border:1px solid var(--line);border-radius:18px;padding:18px;min-width:190px;box-shadow:0 22px 55px rgba(0,0,0,.25)}.asset-card b{display:block;font-size:17px}.asset-card small{color:var(--muted)}.a1{top:55px;right:0}.a2{left:0;top:195px}.a3{right:35px;bottom:35px}.asset-value{margin-top:12px;color:var(--accent);font-weight:800}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0 90px}.stat{padding:24px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.012))}.stat strong{display:block;font-size:29px;letter-spacing:-.04em}.stat span{color:var(--muted);font-size:13px}
+    section{padding:78px 0}.section-kicker{font-size:13px;color:var(--accent);font-weight:800;letter-spacing:.12em;text-transform:uppercase}.section-title{font-size:clamp(36px,5vw,58px);letter-spacing:-.05em;line-height:1.03;margin:12px 0 16px}.section-copy{color:var(--muted);font-size:18px;max-width:700px;line-height:1.65}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:42px}.card{padding:28px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(81,225,183,.08);border:1px solid rgba(81,225,183,.15);font-size:20px}.card h3{font-size:20px;margin:22px 0 10px}.card p{margin:0;color:var(--muted);line-height:1.6}
+    .flow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:40px}.step{padding:24px 22px;border-top:1px solid var(--line)}.step .num{font-size:12px;color:var(--accent);font-weight:800}.step h4{font-size:18px;margin:14px 0 8px}.step p{color:var(--muted);font-size:14px;line-height:1.55;margin:0}
+    .cta{margin:70px 0;padding:58px;border:1px solid rgba(81,225,183,.23);border-radius:28px;background:linear-gradient(135deg,rgba(81,225,183,.08),rgba(107,167,255,.06));display:flex;align-items:center;justify-content:space-between;gap:28px}.cta h2{font-size:42px;letter-spacing:-.05em;margin:0}.cta p{color:var(--muted);margin:9px 0 0}
+    footer{padding:30px 0 55px;color:var(--muted);border-top:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;font-size:13px}
+    @media(max-width:850px){.navlinks{display:none}.hero{grid-template-columns:1fr;padding-top:70px}.visual{min-height:350px}.stats{grid-template-columns:1fr 1fr}.grid,.flow{grid-template-columns:1fr}.cta{padding:34px;display:block}.cta .btn{display:inline-block;margin-top:24px}}
+  </style>
+</head>
+<body>
+  <header class="wrap">
+    <nav>
+      <a class="brand" href="#">RWA<span>.</span></a>
+      <div class="navlinks"><a href="#assets">Assets</a><a href="#how">How it works</a><a href="#infrastructure">Infrastructure</a></div>
+      <a class="navbtn" href="#contact">Launch Asset</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="wrap hero">
+      <div>
+        <div class="eyebrow"><span class="dot"></span> Real World Assets, Onchain</div>
+        <h1>Own the <span class="grad">real world.</span></h1>
+        <p class="lead">A modern infrastructure layer to originate, verify, tokenize and distribute real-world assets with transparent ownership and programmable finance.</p>
+        <div class="actions"><a class="btn primary" href="#assets">Explore RWA</a><a class="btn secondary" href="#how">How it works →</a></div>
+      </div>
+      <div class="visual" aria-hidden="true">
+        <div class="orb"></div><div class="ring"></div><div class="ring r2"></div>
+        <div class="asset-card a1"><small>Real Estate</small><b>Property #001</b><div class="asset-value">Tokenized</div></div>
+        <div class="asset-card a2"><small>Warehouse</small><b>Asset #028</b><div class="asset-value">Verified</div></div>
+        <div class="asset-card a3"><small>Infrastructure</small><b>Project #014</b><div class="asset-value">Onchain</div></div>
+      </div>
+    </div>
+
+    <div class="wrap stats">
+      <div class="stat"><strong>24/7</strong><span>Global access</span></div>
+      <div class="stat"><strong>1:1</strong><span>Asset-backed structure</span></div>
+      <div class="stat"><strong>100%</strong><span>Ownership traceability</span></div>
+      <div class="stat"><strong>∞</strong><span>Programmable possibilities</span></div>
+    </div>
+
+    <section id="assets">
+      <div class="wrap"><div class="section-kicker">Asset universe</div><h2 class="section-title">Bring valuable assets<br/>into one liquid network.</h2><p class="section-copy">RWA connects physical value to digital rails without hiding the underlying asset, documentation, economics or ownership structure.</p>
+        <div class="grid">
+          <article class="card"><div class="icon">⌂</div><h3>Real Estate</h3><p>Land, residential, commercial and income-producing property represented with transparent asset records.</p></article>
+          <article class="card"><div class="icon">▦</div><h3>Warehouses</h3><p>Individual warehouse units and logistics assets linked to real usage, revenue and verifiable ownership.</p></article>
+          <article class="card"><div class="icon">◇</div><h3>Infrastructure</h3><p>Digitize long-life physical infrastructure into structured, auditable investment instruments.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="how">
+      <div class="wrap"><div class="section-kicker">How it works</div><h2 class="section-title">From physical asset<br/>to digital ownership.</h2>
+        <div class="flow">
+          <div class="step"><span class="num">01</span><h4>Originate</h4><p>Select a real asset with clear commercial value.</p></div>
+          <div class="step"><span class="num">02</span><h4>Verify</h4><p>Validate legal, operational and economic documentation.</p></div>
+          <div class="step"><span class="num">03</span><h4>Tokenize</h4><p>Create a digital representation tied to the asset structure.</p></div>
+          <div class="step"><span class="num">04</span><h4>Distribute</h4><p>Enable transparent access, ownership and transactions.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="infrastructure">
+      <div class="wrap"><div class="section-kicker">Infrastructure</div><h2 class="section-title">Built for trust first.</h2><p class="section-copy">Every asset should be understandable before it is investable. RWA is designed around verifiable data, clear rights and transparent asset lifecycle tracking.</p></div>
+    </section>
+
+    <div class="wrap" id="contact"><div class="cta"><div><h2>Make the real world programmable.</h2><p>RWA is building the bridge between physical assets and digital markets.</p></div><a class="btn primary" href="https://github.com/narzulalistiqlal/rwa">View GitHub</a></div></div>
+  </main>
+
+  <footer class="wrap"><span>© 2026 RWA.</span><span>Real World Assets • Built on open infrastructure</span></footer>
+</body>
+</html>
