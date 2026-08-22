@@ -14,9 +14,10 @@ function load(src,key){if(document.querySelector(`script[data-rwa-${key}]`))retu
 load('walletconnect.js?v=4','walletconnect');
 /* wallet-core.js v3 is the only auth owner and is loaded by index.html. */
 /* Single write-path: API and capture bridge register before secondary UI handlers. */
-load('execution-api.js?v=3','execution-api');
+load('execution-api.js?v=4','execution-api');
 load('execution-ops-bridge.js?v=4','execution-ops');
 load('ops-suite.js?v=2','ops');
+load('rwa-verification-evidence.js?v=1','rwa-evidence');
 load('risk-hardening.js?v=1','risk-hardening');
 load('provider-failover.js?v=2','failover');
 load('monitor-client.js?v=2','monitor-client');
