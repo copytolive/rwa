@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "venue": "hyperliquid",
+  "mainnetApi": "https://api.hyperliquid.xyz",
+  "testnetApi": "https://api.hyperliquid-testnet.xyz",
+  "agentName": "RWA-EXECUTION",
+  "agentStorage": "encrypted-browser",
+  "defaults": {
+    "testnet": true,
+    "expiresAfterMs": 15000,
+    "marketSlippageBps": 30
+  },
+  "builder": {
+    "enabled": false,
+    "address": "",
+    "feeTenthsBp": 0,
+    "maxFeeRate": "0.000%"
+  }
+}
