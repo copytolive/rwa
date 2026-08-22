@@ -65,8 +65,12 @@ jobs:
       - name: Rebuild scalable Merkle shard ledger
         run: python backtest/factory/rebuild_shards.py
 
+      - name: Run audit contract self-test
+        run: python backtest/factory/test_contract.py
+
       - name: Validate result JSON and ledger invariants
         run: |
+          python -m json.tool backtest/factory/scale_contract.json >/dev/null
           python -m json.tool backtest/results/campaign.json >/dev/null
           python -m json.tool backtest/results/latest_batch.json >/dev/null
           python -m json.tool backtest/results/evaluation_ids.json >/dev/null
