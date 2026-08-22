@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>VectorForge Historical Simulation Lab</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<main class="shell">
+  <header class="hero">
+    <div><div class="eyebrow">OPEN RESEARCH ENGINE · GITHUB PAGES</div><h1>VectorForge <span>Historical Simulation Lab</span></h1><p>Reproducible historical market-strategy simulation directly in your browser. No local IDE required.</p></div>
+    <div class="status-stack"><span class="badge ok">● ENGINE ONLINE</span><span class="badge">EURUSD · 1 SECOND</span></div>
+  </header>
+  <section class="notice"><strong>Verified source coverage:</strong> public EURUSD 1-second quote files, May 2009 through July 2018. Source files are fetched on demand from GitHub.</section>
+  <section class="grid">
+    <aside class="panel controls">
+      <div class="panel-title">Simulation Configuration</div>
+      <label>Dataset<select id="dataset"><option value="eurusd1s">EURUSD · 1-second · public GitHub quote data</option></select></label>
+      <div class="row2"><label>From month<select id="fromMonth"></select></label><label>To month<select id="toMonth"></select></label></div>
+      <label>Model<select id="strategy"><option value="price_sma">Price / SMA cross</option><option value="sma_cross">SMA fast / slow cross</option><option value="ema_cross">EMA fast / slow cross</option><option value="rsi_revert">RSI mean-reversion model</option><option value="donchian">Donchian breakout model</option></select></label>
+      <div class="row2"><label>Fast / period<input id="fast" type="number" min="2" value="50"></label><label>Slow / lookback<input id="slow" type="number" min="3" value="1000"></label></div>
+      <div class="row3"><label>Exit distance (pips)<input id="slPips" type="number" min="0.1" step="0.1" value="15"></label><label>Target ratio<input id="rr" type="number" min="0.1" step="0.1" value="2"></label><label>Fallback spread (pips)<input id="spreadPips" type="number" min="0" step="0.1" value="1"></label></div>
+      <div class="row2"><label>RSI lower<input id="rsiBuy" type="number" min="1" max="49" value="30"></label><label>RSI upper<input id="rsiSell" type="number" min="51" max="99" value="70"></label></div>
+      <div class="actions"><button id="runBtn" class="primary">Run Historical Simulation</button><button id="stopBtn" class="secondary" disabled>Stop</button></div>
+      <div class="hint">Large multi-month runs download tens to hundreds of MB. Start with one month, then expand.</div>
+    </aside>
+    <section class="panel output">
+      <div class="panel-title split"><span>Results</span><span id="runState" class="muted">IDLE</span></div>
+      <div id="progressWrap" class="progress-wrap hidden"><div id="progressBar" class="progress-bar"></div></div><div id="progressText" class="progress-text">Ready.</div>
+      <div class="metrics"><article><span>Net outcome (R)</span><strong id="mReturn">—</strong></article><article><span>Positive outcomes</span><strong id="mWr">—</strong></article><article><span>Gain / loss ratio</span><strong id="mPf">—</strong></article><article><span>Max drawdown (R)</span><strong id="mDd">—</strong></article><article><span>Events</span><strong id="mTrades">—</strong></article><article><span>Events / week</span><strong id="mFreq">—</strong></article><article><span>Ending R</span><strong id="mEquity">—</strong></article><article><span>Evaluated samples</span><strong id="mSamples">—</strong></article></div>
+      <div class="subpanel"><div class="subhead">Verification fingerprint</div><code id="fingerprint">Run a simulation to generate SHA-256.</code></div>
+      <div class="subpanel"><div class="subhead">Monthly execution log</div><div id="log" class="log"></div></div>
+    </section>
+  </section>
+  <section class="panel catalog"><div class="panel-title split"><span>Source File Catalog</span><span id="fileCount" class="muted"></span></div><div class="catalog-tools"><input id="catalogSearch" placeholder="Filter month, e.g. 2017-03"><a id="sourceRepo" target="_blank" rel="noopener">Open source repository ↗</a></div><div id="catalogList" class="catalog-list"></div></section>
+  <section class="panel methodology"><div class="panel-title">Auditable evaluation count</div><p>One evaluation is one unique combination of dataset, period, model, parameters, execution assumptions and engine version.</p><div class="formula">evaluation_id = SHA256(dataset + period + model + parameters + engine_version)</div><p class="muted">The interactive lab runs in the browser. Trillion-scale research requires distributed compute; GitHub Pages itself is static hosting.</p></section>
+  <footer>VectorForge · historical research and simulation software.</footer>
+</main>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
