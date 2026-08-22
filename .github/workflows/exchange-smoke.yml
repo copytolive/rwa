@@ -6,7 +6,6 @@ on:
       - "exchange-core.js"
       - "exchange-ui.js"
       - "wallet-core.js"
-      - "wallet-seamless.js"
       - "execution-api.js"
       - "execution-ops-bridge.js"
       - "index.html"
@@ -23,27 +22,33 @@ jobs:
       - name: Validate source contracts
         run: |
           node --check wallet-core.js
-          node --check wallet-seamless.js
           node --check execution-api.js
           node --check execution-ops-bridge.js
           node --check exchange-core.js
           node --check exchange-ui.js
           python -m json.tool token/config.json >/dev/null
-          grep -Fq 'wallet-core.js?v=2' index.html
-          grep -Fq 'wallet-seamless.js?v=1' index.html
+          test -s token/RWAToken.sol
+          test -s token/RWAVestingVault.sol
+          grep -Fq 'wallet-core.js?v=3' index.html
+          ! grep -Fq 'wallet-seamless.js' index.html
           grep -Fq 'exchange-core.js?v=1' index.html
           grep -Fq 'exchange-ui.js?v=1' index.html
+          grep -Fq "version:'3.0.0'" wallet-core.js
+          grep -Fq 'Wallet account switched' wallet-core.js
           grep -Fq "version:'1.0.0'" exchange-core.js
           grep -Fq 'Run Testnet E2E Preflight' exchange-ui.js
           grep -Fq 'Enable API Wallet' exchange-ui.js
-          grep -Fq 'accountsChanged' wallet-seamless.js
+          grep -Fq 'BALANCE' exchange-ui.js
+          grep -Fq 'OPEN POSITIONS' exchange-ui.js
+          grep -Fq 'OPEN ORDERS' exchange-ui.js
+          grep -Fq 'Trade History' exchange-ui.js
           grep -Fq 'tgeEnabled' token/config.json
           grep -Fq '"tgeEnabled": false' token/config.json
           grep -Fq '"mainnetDeploymentEnabled": false' token/config.json
       - name: Publish source status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/exchange-source' -f description='Wallet, account, trade, execution and token guardrails verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/exchange-source' -f description='Seamless wallet, account, trade, execution and token guardrails verified'
       - name: Verify GitHub Pages bundle
         shell: bash
         run: |
@@ -53,8 +58,8 @@ jobs:
             html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/?v=$q" || true)"
             core="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/exchange-core.js?v=$q" || true)"
             ui="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/exchange-ui.js?v=$q" || true)"
-            seamless="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/wallet-seamless.js?v=$q" || true)"
-            if grep -Fq 'wallet-core.js?v=2' <<<"$html" && grep -Fq 'wallet-seamless.js?v=1' <<<"$html" && grep -Fq 'exchange-core.js?v=1' <<<"$html" && grep -Fq 'exchange-ui.js?v=1' <<<"$html" && grep -Fq "version:'1.0.0'" <<<"$core" && grep -Fq 'RWA EXCHANGE CORE' <<<"$ui" && grep -Fq 'accountsChanged' <<<"$seamless"; then ok=1; break; fi
+            wallet="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/wallet-core.js?v=$q" || true)"
+            if grep -Fq 'wallet-core.js?v=3' <<<"$html" && ! grep -Fq 'wallet-seamless.js' <<<"$html" && grep -Fq 'exchange-core.js?v=1' <<<"$html" && grep -Fq 'exchange-ui.js?v=1' <<<"$html" && grep -Fq "version:'3.0.0'" <<<"$wallet" && grep -Fq 'Wallet account switched' <<<"$wallet" && grep -Fq "version:'1.0.0'" <<<"$core" && grep -Fq 'RWA EXCHANGE CORE' <<<"$ui"; then ok=1; break; fi
             sleep 5
           done
           test "$ok" = "1"
@@ -62,7 +67,7 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/exchange-live' -f description='Live one-screen exchange core verified on GitHub Pages'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/exchange-live' -f description='Live Hyperliquid-style one-screen exchange core verified'
       - name: Publish failure status
         if: failure()
         env:
