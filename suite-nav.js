@@ -27,5 +27,6 @@ load('suite-execution-patch.js?v=6','exec-patch');
 load('audit-hooks.js?v=2','audit-hooks');
 load('rwa-verify-client.js?v=1','rwa-verify');
 load('copy-24x7-client.js?v=1','copy-24x7');
+load('launch-status.js?v=1','launch-status');
 if(autoWalletLogin){let n=0;const timer=setInterval(()=>{n++;if(window.RWAWalletAuth?.login){clearInterval(timer);window.RWAWalletAuth.login().catch?.(e=>console.warn('Wallet login',e))}else if(n>80)clearInterval(timer)},50)}
 })();
