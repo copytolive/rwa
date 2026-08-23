@@ -32,6 +32,8 @@ jobs:
           node --check copy-24x7-client.js
           node --check launch-status.js
           node --check beta-proof-client.js
+          node --check rwa-verify-client.js
+          node --check rwa-verification-evidence.js
           node --check agent-worker/execution.mjs
           node --check agent-worker/copy-engine.mjs
           node --check agent-worker/worker.mjs
@@ -39,16 +41,25 @@ jobs:
           node --check tools/launch-gate.mjs
           node --check tools/worker-watch.mjs
           node --check tools/e2e-proof.mjs
+          node --check tools/rwa-evidence-policy.mjs
           node --check tools/rwa-verify.mjs
           node --check tools/beta-proof.mjs
+          node --test tools/test/*.test.mjs
+          grep -Fq 'HEALTHCHECK' agent-worker/Dockerfile
+          grep -Fq 'restart: unless-stopped' agent-worker/docker-compose.yml
+          grep -Fq 'RWA_KEY_ENCRYPTION_SECRET' agent-worker/.env.example
+          grep -Fq 'RWA_PUBLIC_ORIGIN' agent-worker/.env.example
+          grep -Fq 'rwa-verification-evidence.js?v=1' suite-nav.js
+          grep -Fq 'public-https-distinct-probed-v1' tools/rwa-evidence-policy.mjs
+          grep -Fq 'probeEvidencePayload' tools/rwa-verify.mjs
           node tools/security-gate.mjs
           node tools/launch-gate.mjs --require-engineering >/tmp/engineering.json
-          node -e "const x=require('/tmp/engineering.json');if(!x.engineering_ready)process.exit(1);console.log('ENGINEERING COMPLETE')"
+          node -e "const x=require('/tmp/engineering.json');if(!x.engineering_ready||x.schema<4)process.exit(1);console.log('ENGINEERING COMPLETE schema='+x.schema)"
       - name: Publish engineering success
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/engineering-gate' -f description='Engineering COMPLETE; only real external launch proofs remain'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/engineering-gate' -f description='Engineering COMPLETE: software security tests worker deploy proofs beta monitoring automation PASS'
       - name: Publish engineering failure
         if: failure()
         env:
