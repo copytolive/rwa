@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#08090c">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://esm.sh https://api.hyperliquid.xyz https://api.hyperliquid-testnet.xyz wss://api.hyperliquid.xyz wss://api.hyperliquid-testnet.xyz; style-src 'self'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none';">
+  <title>RWA Trade</title>
+  <meta name="description" content="Simple non-custodial Hyperliquid trading interface for RWA Markets.">
+  <link rel="stylesheet" href="./styles.css?v=1">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">R</div>
+        <div>
+          <strong>RWA Trade</strong>
+          <small>Hyperliquid execution</small>
+        </div>
+      </div>
+      <div class="top-actions">
+        <span id="networkBadge" class="network-badge testnet">TESTNET</span>
+        <span id="status" class="status-pill">Connect wallet</span>
+        <button id="walletBtn" class="button primary">Connect wallet</button>
+      </div>
+    </header>
+
+    <section class="onboarding card">
+      <div class="section-title">
+        <div>
+          <small>ONE-CLICK SETUP</small>
+          <h2>Trade without wallet popups on every order</h2>
+        </div>
+        <span id="agentMode" class="mode-badge">SETUP REQUIRED</span>
+      </div>
+
+      <div class="steps">
+        <div id="stepWallet" class="step active">
+          <span>1</span>
+          <div><small>Wallet</small><b id="stepWalletValue">Connect</b></div>
+        </div>
+        <div id="stepFund" class="step">
+          <span>2</span>
+          <div><small>Collateral</small><b id="stepFundValue">Required</b></div>
+        </div>
+        <div id="stepAgent" class="step">
+          <span>3</span>
+          <div><small>Trading</small><b id="stepAgentValue">Enable once</b></div>
+        </div>
+      </div>
+
+      <div class="setup-actions">
+        <button id="fundBtn" class="button secondary" hidden>Fund TESTNET</button>
+        <button id="enableTradingBtn" class="button primary" hidden>Enable 1-click trading</button>
+        <button id="revokeAgentBtn" class="button danger-outline" hidden>Revoke API wallet</button>
+      </div>
+
+      <p class="security-note">
+        Regular BUY/SELL orders require a verified delegated API wallet. RWA never falls back to the master wallet for risk-increasing trades.
+        Withdrawals always require the master wallet and an explicit confirmation.
+      </p>
+    </section>
+
+    <main class="trade-layout">
+      <section class="market card">
+        <div class="market-head">
+          <div>
+            <small>MARKET</small>
+            <h1 id="marketName">BTC-PERP</h1>
+          </div>
+          <div class="price-block">
+            <small>MARK PRICE</small>
+            <b id="marketPrice">—</b>
+          </div>
+          <select id="coin" class="select" aria-label="Market"></select>
+        </div>
+
+        <div class="market-grid">
+          <div class="book-panel">
+            <div class="panel-head"><b>Order book</b><span>WebSocket</span></div>
+            <div class="book-head"><span>Price</span><span>Size</span></div>
+            <div id="asks"><div class="empty">Waiting for book…</div></div>
+            <div class="mid-row">
+              <span>Bid <b id="bestBid">—</b></span>
+              <span>Ask <b id="bestAsk">—</b></span>
+            </div>
+            <div id="bids"><div class="empty">Waiting for book…</div></div>
+          </div>
+
+          <div class="tape-panel">
+            <div class="panel-head"><b>Trade tape</b><span>Realtime</span></div>
+            <div id="tape" class="tape"><div class="empty">Waiting for trades…</div></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="order card">
+        <div class="section-title compact">
+          <div>
+            <small>ORDER</small>
+            <h2>Trade</h2>
+          </div>
+          <label class="network-switch">
+            <span>TESTNET</span>
+            <input id="testnetToggle" type="checkbox" checked>
+            <i></i>
+          </label>
+        </div>
+
+        <div class="segmented">
+          <select id="side" class="select">
+            <option value="BUY">BUY / LONG</option>
+            <option value="SELL">SELL / SHORT</option>
+          </select>
+          <select id="orderType" class="select">
+            <option value="MARKET">MARKET</option>
+            <option value="LIMIT">LIMIT</option>
+          </select>
+        </div>
+
+        <label class="field">
+          <span>Amount (USD)</span>
+          <input id="orderUsd" type="number" min="1" step="1" value="25">
+        </label>
+
+        <div class="two-col">
+          <label class="field">
+            <span>Leverage</span>
+            <input id="leverage" type="number" min="1" max="5" step="1" value="1">
+          </label>
+          <label id="limitWrap" class="field" hidden>
+            <span>Limit price</span>
+            <input id="limitPrice" type="number" min="0" step="any">
+          </label>
+        </div>
+
+        <div class="two-col">
+          <label class="field">
+            <span>Take profit</span>
+            <input id="tp" type="number" min="0" step="any" placeholder="Optional">
+          </label>
+          <label class="field">
+            <span>Stop loss</span>
+            <input id="sl" type="number" min="0" step="any" placeholder="Optional">
+          </label>
+        </div>
+
+        <div class="preview">
+          <div><small>ORDER</small><b id="previewSide">BUY BTC</b></div>
+          <div><small>NOTIONAL</small><b id="previewNotional">$25</b></div>
+          <div><small>SIZE</small><b id="previewSize">—</b></div>
+          <div><small>TP / SL</small><b id="previewProtection">None</b></div>
+          <div class="wide"><small>SIGNER</small><b id="previewSigner">Not ready</b></div>
+        </div>
+
+        <button id="tradeBtn" class="button trade-button" disabled>Connect wallet</button>
+        <p class="microcopy">
+          Entry + TP/SL are submitted as one atomic Hyperliquid order group when protection is provided.
+        </p>
+      </aside>
+    </main>
+
+    <section class="account-grid">
+      <div class="stat card">
+        <small>Equity</small>
+        <b id="equity">—</b>
+      </div>
+      <div class="stat card">
+        <small>Unrealized P&amp;L</small>
+        <b id="pnl">—</b>
+      </div>
+      <div class="stat card">
+        <small>Current position</small>
+        <b id="position">FLAT</b>
+      </div>
+    </section>
+
+    <section class="account card">
+      <div class="tabs-head">
+        <div>
+          <small>ACCOUNT</small>
+          <h2>Positions &amp; orders</h2>
+        </div>
+        <div class="actions-row">
+          <button id="refreshBtn" class="button ghost">Refresh</button>
+          <button id="cancelAllBtn" class="button ghost">Cancel all</button>
+          <button id="withdrawBtn" class="button danger-outline">Withdraw · master wallet</button>
+        </div>
+      </div>
+
+      <details open>
+        <summary>Open positions</summary>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Asset</th><th>Side</th><th>Size</th><th>Entry</th><th>P&amp;L</th><th></th></tr></thead>
+            <tbody id="positionsBody"><tr><td colspan="6" class="empty">No open positions.</td></tr></tbody>
+          </table>
+        </div>
+      </details>
+
+      <details>
+        <summary>Open orders</summary>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Asset</th><th>Side</th><th>Price</th><th>Size</th><th></th></tr></thead>
+            <tbody id="ordersBody"><tr><td colspan="5" class="empty">No open orders.</td></tr></tbody>
+          </table>
+        </div>
+      </details>
+
+      <details>
+        <summary>Trade history</summary>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Asset</th><th>Side</th><th>Price</th><th>Size</th><th>Time</th></tr></thead>
+            <tbody id="fillsBody"><tr><td colspan="5" class="empty">No fills yet.</td></tr></tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+
+    <section class="advanced card">
+      <details>
+        <summary>Advanced safety diagnostics</summary>
+        <div class="diag-head">
+          <p>Technical details are hidden from normal trading. Use this only for troubleshooting.</p>
+          <button id="preflightBtn" class="button ghost">Run preflight</button>
+        </div>
+        <div class="diag-grid">
+          <div><small>Wallet</small><b id="diagWallet">ACTION</b></div>
+          <div><small>Venue API</small><b id="diagVenue">—</b></div>
+          <div><small>Collateral</small><b id="diagCollateral">—</b></div>
+          <div><small>API wallet</small><b id="diagAgent">—</b></div>
+          <div><small>Mainnet</small><b id="diagMainnet">LOCKED</b></div>
+          <div><small>Build</small><b id="version">—</b></div>
+        </div>
+        <p id="mainnetLockText" class="security-note">Mainnet locked</p>
+      </details>
+    </section>
+
+    <footer>
+      <span>RWA Trade · non-custodial execution interface</span>
+      <span>TESTNET first · mainnet locked by default</span>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script type="module" src="./app.js?v=1"></script>
+</body>
+</html>
