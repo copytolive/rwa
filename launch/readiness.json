@@ -1,11 +1,12 @@
 {
-  "schema": 3,
-  "generated_at": "2026-08-22T23:57:34.041Z",
+  "schema": 4,
+  "generated_at": "2026-08-23T00:04:39.008Z",
   "status": "BLOCKED",
-  "engineering_ready": true,
+  "engineering_ready": false,
   "beta_ready": false,
   "beta_passed": false,
   "mainnet_ready": false,
+  "evidence_policy": "public-https-distinct-probed-v1",
   "beta": {
     "thresholds": {
       "internal": 3,
@@ -40,25 +41,41 @@
       "ok": true,
       "detail": "no withdrawal/transfer API exposed"
     },
+    "tests_pipeline": {
+      "ok": true,
+      "detail": "copy lifecycle simulation + security + engineering gates are automated"
+    },
+    "deployment_package": {
+      "ok": true,
+      "detail": "Docker + persistent volume + healthcheck + environment contract"
+    },
     "e2e_verifier_pipeline": {
       "ok": true,
-      "detail": "wallet signature + Hyperliquid testnet verifier workflow"
+      "detail": "wallet signature + session-bound Hyperliquid testnet verifier"
     },
     "rwa_verifier_pipeline": {
       "ok": true,
-      "detail": "reviewer signature + evidence + registry workflow"
+      "detail": "reviewer signature + public-https-distinct-probed-v1"
     },
     "beta_verifier_pipeline": {
       "ok": true,
-      "detail": "wallet + worker session + venue beta verifier workflow"
+      "detail": "wallet + exact worker session + venue beta verifier"
+    },
+    "beta_infrastructure": {
+      "ok": true,
+      "detail": "machine beta thresholds 3/20/100"
     },
     "security_ci_pipeline": {
       "ok": true,
-      "detail": "repository-wide source security workflow"
+      "detail": "repository-wide execution/fund/evidence security workflow"
     },
-    "watchdog_pipeline": {
+    "monitoring_pipeline": {
+      "ok": false,
+      "detail": "health + readiness + metrics + five-minute fail-safe watchdog"
+    },
+    "launch_automation": {
       "ok": true,
-      "detail": "5-minute worker fail-safe watchdog"
+      "detail": "machine readiness auto-refresh + CI launch status"
     },
     "real_wallet_e2e": {
       "ok": false,
@@ -70,7 +87,7 @@
     },
     "verified_rwa_asset": {
       "ok": false,
-      "detail": "0 verified asset(s)"
+      "detail": "0 verified asset(s) · public-https-distinct-probed-v1"
     },
     "worker_configured": {
       "ok": false,
@@ -107,6 +124,10 @@
   },
   "blockers": [
     {
+      "gate": "monitoring_pipeline",
+      "detail": "health + readiness + metrics + five-minute fail-safe watchdog"
+    },
+    {
       "gate": "real_wallet_e2e",
       "detail": "0 registered wallet proof(s)"
     },
@@ -116,7 +137,7 @@
     },
     {
       "gate": "verified_rwa_asset",
-      "detail": "0 verified asset(s)"
+      "detail": "0 verified asset(s) · public-https-distinct-probed-v1"
     },
     {
       "gate": "worker_configured",
