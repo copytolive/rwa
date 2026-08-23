@@ -1,5 +1,6 @@
 import {readFile,readdir} from 'node:fs/promises';
 import {join,relative} from 'node:path';
+import {publicHttps,RWA_EVIDENCE_POLICY} from './rwa-evidence-policy.mjs';
 
 const ROOT=process.cwd();
 const allowExchangeClient=new Set(['execution-api.js','agent-worker/execution.mjs']);
@@ -32,7 +33,7 @@ for(const f of runtime){
 if(!findings.some(x=>x.gate==='single_write_path'))ok('single_write_path','ExchangeClient limited to browser/worker execution owners');
 if(!findings.some(x=>x.gate==='direct_exchange_http'))ok('direct_exchange_http','No secondary direct Hyperliquid exchange HTTP write path found');
 
-const execution=await txt('execution-api.js'),core=await txt('exchange-core.js'),worker=await txt('agent-worker/worker.mjs'),workerExec=await txt('agent-worker/execution.mjs'),suiteNav=await txt('suite-nav.js');
+const execution=await txt('execution-api.js'),core=await txt('exchange-core.js'),worker=await txt('agent-worker/worker.mjs'),workerExec=await txt('agent-worker/execution.mjs'),suiteNav=await txt('suite-nav.js'),rwaVerify=await txt('tools/rwa-verify.mjs'),rwaPolicy=await txt('tools/rwa-evidence-policy.mjs'),rwaClient=await txt('rwa-verify-client.js');
 const execChecks=[
   ['browser_risk',execution.includes("riskGate:'mandatory-internal-v1'")&&execution.includes('dailyLoss')&&execution.includes('maxLeverage')&&execution.includes('maxExposure')&&execution.includes('perAsset')&&execution.includes('kill')],
   ['atomic_tpsl',execution.includes("bracket:'atomic-normal-tpsl-v1'")&&execution.includes("grouping:'normalTpsl'")],
@@ -42,7 +43,8 @@ const execChecks=[
   ['worker_idempotency',workerExec.includes("WORKER_IDEMPOTENCY='deterministic-cloid-v1'")&&workerExec.includes("info('orderStatus'")&&worker.includes('sourceFillId')&&worker.includes('cloidFor')&&worker.includes('copy.retry_pending')],
   ['worker_replay_auth',worker.includes('consumeNonce')&&worker.includes('RWA_PUBLIC_ORIGIN')&&worker.includes('RWA_ALLOWED_ORIGINS')],
   ['worker_agent_revoke',worker.includes('api.verifyAgent()')&&worker.includes("reason:'agent-not-authorized'")&&worker.includes('delete rec.agent.secret')],
-  ['single_auth_owner',suiteNav.includes('wallet-core.js v3 is the only auth owner')&&!suiteNav.includes("load('wallet-auth.js")&&!suiteNav.includes("load('walletconnect-auth-patch.js")]
+  ['single_auth_owner',suiteNav.includes('wallet-core.js v3 is the only auth owner')&&!suiteNav.includes("load('wallet-auth.js")&&!suiteNav.includes("load('walletconnect-auth-patch.js")],
+  ['rwa_evidence_policy',rwaVerify.includes('probeEvidencePayload')&&rwaVerify.includes('RWA_EVIDENCE_POLICY')&&rwaPolicy.includes("public-https-distinct-probed-v1")&&rwaClient.includes('schema:2')&&rwaClient.includes('kyb:v.kyb')&&rwaClient.includes('disclosure:v.disclosure')&&suiteNav.includes('rwa-verification-evidence.js?v=1')]
 ];
 for(const [gate,value] of execChecks)value?ok(gate,'PASS'):fail(gate,'required safety marker missing');
 
@@ -54,7 +56,12 @@ const token=JSON.parse(await readFile('token/config.json','utf8'));
 if(token.tgeEnabled===false&&token.mainnetDeploymentEnabled===false)ok('token_deferred','TGE and token mainnet deployment remain disabled');else fail('token_deferred','Token/TGE mainnet controls are not deferred');
 const reviewers=JSON.parse(await readFile('rwa-reviewers.json','utf8')),assets=JSON.parse(await readFile('rwa-assets.json','utf8'));
 if(Array.isArray(reviewers.reviewers)&&Array.isArray(assets.verified))ok('rwa_registry_contract','Reviewer and verified-asset registries are explicit');else fail('rwa_registry_contract','RWA registries malformed');
+for(const a of assets.verified||[]){
+  const urls=['ownership','appraisal','legal','kyb','disclosure'].map(k=>a?.[k]);
+  if(a.status!=='VERIFIED'||Number(a.nav)<=0||a.evidence_policy!==RWA_EVIDENCE_POLICY||urls.some(x=>!publicHttps(x))||new Set(urls).size!==5||!Array.isArray(a.evidence_probes)||a.evidence_probes.length!==5)fail('rwa_verified_asset_integrity',`${a?.id||a?.name||'asset'} does not meet the current evidence policy`);
+}
+if(!findings.some(x=>x.gate==='rwa_verified_asset_integrity'))ok('rwa_verified_asset_integrity','All registry VERIFIED assets satisfy the current evidence policy');
 
-const report={schema:1,generated_at:new Date().toISOString(),status:findings.length?'FAIL':'PASS',checked_runtime_files:runtime.length,passes:pass,findings};
+const report={schema:2,generated_at:new Date().toISOString(),status:findings.length?'FAIL':'PASS',checked_runtime_files:runtime.length,evidence_policy:RWA_EVIDENCE_POLICY,passes:pass,findings};
 console.log(JSON.stringify(report,null,2));
 if(findings.length)process.exit(2);
