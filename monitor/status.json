@@ -17,23 +17,23 @@
     },
     "binance_vision": {
       "active": true,
-      "latency_ms": 2170,
+      "latency_ms": 1561,
       "markets": 3684,
       "ok": true
     },
     "coinbase": {
-      "latency_ms": 69,
+      "latency_ms": 190,
       "ok": true
     },
     "hyperliquid": {
-      "latency_ms": 251,
+      "latency_ms": 376,
       "markets": 949,
       "ok": true
     },
     "kraken": {
-      "latency_ms": 51,
+      "latency_ms": 88,
       "ok": true
     }
   },
-  "updated_at": 1787474175879
+  "updated_at": 1787475676363
 }
