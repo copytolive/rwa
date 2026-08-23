@@ -1,5 +1,5 @@
 export const CONFIG = Object.freeze({
-  version: '1.0.0',
+  version: '1.0.1',
   build: 'github-pages-safe-terminal-2026-08-23',
   sdkUrl: 'https://esm.sh/@nktkas/hyperliquid@0.33.3?target=es2022',
   viemUrl: 'https://esm.sh/viem@2.37.3?target=es2022',
@@ -22,6 +22,6 @@ export const CONFIG = Object.freeze({
   keepAliveTimeoutMs: 10000,
   mainnetUnlockPhrase: 'I UNDERSTAND MAINNET RISK',
   zeroAddress: '0x0000000000000000000000000000000000000000',
-  officialTestnetUrl: 'https://app.hyperliquid-testnet.xyz/drip',
+  officialTestnetUrl: './fund.html',
   officialMainnetUrl: 'https://app.hyperliquid.xyz',
 });
