@@ -1,15 +1,9 @@
 import { CONFIG } from './config.js';
-import { saveAgent, getAgentRecord, loadAgentPrivateKey, markAgentReady, deleteAgent } from './storage.js';
 
 let depsPromise;
 async function deps() {
   if (!depsPromise) {
-    depsPromise = Promise.all([
-      import(CONFIG.sdkUrl),
-      import(CONFIG.viemUrl),
-      import(CONFIG.viemAccountsUrl),
-      import(CONFIG.viemChainsUrl),
-    ]).then(([hl, viem, accounts, chains]) => ({ hl, viem, accounts, chains }));
+    depsPromise = import(CONFIG.sdkUrl).then(hl => ({ hl }));
   }
   return depsPromise;
 }
@@ -27,14 +21,29 @@ function formatUsd(n) { return `$${num(n).toLocaleString(undefined, { maximumFra
 function errText(error) {
   return String(error?.cause?.message || error?.shortMessage || error?.details || error?.message || error || 'Unknown error');
 }
-function assertResult(result, label = 'Action') {
-  if (result?.status === 'err') throw new Error(`${label} rejected: ${String(result.response || 'venue error')}`);
-  const statuses = result?.response?.data?.statuses;
-  if (Array.isArray(statuses)) {
-    const bad = statuses.find(s => s && typeof s === 'object' && s.error);
-    if (bad?.error) throw new Error(`${label} rejected: ${bad.error}`);
+
+const SESSION_KEY = 'rwa_wallet_link_v1';
+let executionPromise;
+async function executionApi() {
+  if (window.RWAExecutionAPI?.version === '2.0.0') return window.RWAExecutionAPI;
+  if (!executionPromise) {
+    executionPromise = new Promise((resolve, reject) => {
+      const existing = document.querySelector('script[data-rwa-trade-execution]');
+      if (existing) {
+        existing.addEventListener('load', () => window.RWAExecutionAPI ? resolve(window.RWAExecutionAPI) : reject(new Error('RWA Execution API failed to initialize')), { once: true });
+        existing.addEventListener('error', () => reject(new Error('RWA Execution API failed to load')), { once: true });
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = '../execution-api.js?v=2';
+      script.async = true;
+      script.dataset.rwaTradeExecution = '1';
+      script.onload = () => window.RWAExecutionAPI ? resolve(window.RWAExecutionAPI) : reject(new Error('RWA Execution API failed to initialize'));
+      script.onerror = () => reject(new Error('RWA Execution API failed to load'));
+      document.head.appendChild(script);
+    }).catch(error => { executionPromise = null; throw error; });
   }
-  return result;
+  return executionPromise;
 }
 
 export class RWAHyperliquid {
@@ -46,6 +55,26 @@ export class RWAHyperliquid {
     this.subscriptions = [];
     this.wsTransport = null;
     this.subscriptionClient = null;
+  }
+
+  async _execution() {
+    const api = await executionApi();
+    if (!api || api.version !== '2.0.0') throw new Error('RWA Execution API is not ready');
+    return api;
+  }
+
+  _syncSession(wallet) {
+    const address = assertAddress(wallet, 'wallet');
+    let row = {};
+    try { row = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}') || {}; } catch {}
+    row.wallet = address;
+    row.provider = row.provider || 'injected';
+    row.connectedAt = row.connectedAt || Date.now();
+    row.lastSeenAt = Date.now();
+    localStorage.setItem(SESSION_KEY, JSON.stringify(row));
+    window.RWAProvider = window.ethereum;
+    this.master = address;
+    return address;
   }
 
   setEnvironment(testnet) {
@@ -61,10 +90,12 @@ export class RWAHyperliquid {
     const { hl } = await deps();
     return new hl.HttpTransport({ isTestnet: this.testnet, timeout: CONFIG.exchangeTimeoutMs });
   }
+
   async _info() {
     const { hl } = await deps();
     return new hl.InfoClient({ transport: await this._http() });
   }
+
   async _ws() {
     if (this.wsTransport) return this.wsTransport;
     const { hl } = await deps();
@@ -80,54 +111,16 @@ export class RWAHyperliquid {
   async connectWallet() {
     if (!window.ethereum) throw new Error('Wallet provider not found. Install MetaMask or a compatible wallet.');
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-    this.master = assertAddress(accounts?.[0], 'wallet');
-    return this.master;
+    return this._syncSession(accounts?.[0]);
   }
 
   async currentWallet() {
     if (!window.ethereum) return '';
     const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-    const a = String(accounts?.[0] || '').toLowerCase();
-    if (/^0x[0-9a-f]{40}$/.test(a)) this.master = a;
-    return this.master;
-  }
-
-  async _ensureArbitrum() {
-    if (!window.ethereum) throw new Error('Wallet provider unavailable');
-    try {
-      await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0xa4b1' }] });
-    } catch (error) {
-      if (Number(error?.code) === 4902) {
-        await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{
-          chainId: '0xa4b1',
-          chainName: 'Arbitrum One',
-          nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-          rpcUrls: ['https://arb1.arbitrum.io/rpc'],
-          blockExplorerUrls: ['https://arbiscan.io'],
-        }] });
-      } else throw error;
-    }
-  }
-
-  async _masterWallet() {
-    const { viem, chains } = await deps();
-    const master = this.master || await this.currentWallet();
-    if (!master) throw new Error('Connect wallet first');
-    await this._ensureArbitrum();
-    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-    const live = assertAddress(accounts?.[0], 'connected wallet');
-    if (live !== master) throw new Error('Connected wallet changed. Reconnect the intended wallet.');
-    return viem.createWalletClient({ account: master, chain: chains.arbitrum, transport: viem.custom(window.ethereum) });
-  }
-
-  async _masterExchange() {
-    const { hl } = await deps();
-    return new hl.ExchangeClient({
-      transport: await this._http(),
-      wallet: await this._masterWallet(),
-      signatureChainId: '0xa4b1',
-      defaultExpiresAfter: () => Date.now() + 15000,
-    });
+    const address = String(accounts?.[0] || '').toLowerCase();
+    if (/^0x[0-9a-f]{40}$/.test(address)) return this._syncSession(address);
+    this.master = '';
+    return '';
   }
 
   async meta() {
@@ -201,6 +194,26 @@ export class RWAHyperliquid {
     };
   }
 
+  async verifyAgent() {
+    const user = this.master || await this.currentWallet();
+    if (!user) return { valid: false, reason: 'wallet-not-connected' };
+    const api = await this._execution();
+    const verified = await api.agent.verify(this.testnet, { force: true });
+    return verified || { valid: false, reason: 'verification-failed' };
+  }
+
+  async _requireAgent() {
+    const api = await this._execution();
+    const verified = await api.agent.verify(this.testnet, { force: true });
+    if (verified?.valid !== true) throw new Error('API Wallet required. Enable 1-click trading before placing an order.');
+    const account = await api.agent.account(this.testnet);
+    if (!account) throw new Error('API Wallet key is unavailable. Re-enable trading.');
+    const local = String(account.address || '').toLowerCase();
+    const expected = String(verified?.row?.address || verified?.remote?.address || '').toLowerCase();
+    if (!local || !expected || local !== expected) throw new Error('API Wallet integrity check failed');
+    return { api, verified, account };
+  }
+
   async preflight() {
     const wallet = this.master || await this.currentWallet();
     if (!wallet) return { wallet: false, venue: false, equity: 0, agent: false, ready: false, reason: 'Connect wallet' };
@@ -221,79 +234,25 @@ export class RWAHyperliquid {
     };
   }
 
-  async verifyAgent() {
-    const user = this.master || await this.currentWallet();
-    if (!user) return { valid: false, reason: 'wallet-not-connected' };
-    const row = await getAgentRecord(user, this.testnet);
-    if (!row) return { valid: false, reason: 'not-configured' };
-    if (row.pending) return { valid: false, reason: 'approval-incomplete', row };
-    if (row.expiresAt && Date.now() >= Number(row.expiresAt)) {
-      await deleteAgent(user, this.testnet);
-      return { valid: false, reason: 'expired' };
-    }
-    const info = await this._info();
-    const agents = await info.extraAgents({ user });
-    const remote = (Array.isArray(agents) ? agents : []).find(a => String(a?.address || '').toLowerCase() === row.address);
-    const remoteExpiry = Number(remote?.validUntil || remote?.valid_until || 0);
-    const valid = !!remote && (!remoteExpiry || remoteExpiry > Date.now());
-    if (!valid) {
-      await deleteAgent(user, this.testnet);
-      return { valid: false, reason: 'not-authorized', row, remote: remote || null };
-    }
-    return { valid: true, row, remote };
-  }
-
   async enableAgent() {
     const user = this.master || await this.connectWallet();
+    this._syncSession(user);
     const state = await this.accountState();
-    if (!(state.equity > 0)) throw new Error('DEPOSIT REQUIRED: Hyperliquid account equity is 0. Fund the selected environment before enabling trading.');
+    if (!(state.equity > 0)) throw new Error('DEPOSIT REQUIRED: Hyperliquid account equity is 0. Fund TESTNET before enabling trading.');
     const existing = await this.verifyAgent().catch(() => ({ valid: false }));
     if (existing.valid) return existing;
-    const { accounts } = await deps();
-    const privateKey = accounts.generatePrivateKey();
-    const agent = accounts.privateKeyToAccount(privateKey);
-    const expiresAt = Date.now() + CONFIG.agentTtlDays * 86400000;
-    const agentName = `${CONFIG.agentName} valid_until ${expiresAt}`;
-    await saveAgent({ master: user, testnet: this.testnet, privateKey, address: agent.address, agentName, expiresAt, pending: true });
-    try {
-      const exchange = await this._masterExchange();
-      assertResult(await exchange.approveAgent({ agentAddress: agent.address, agentName }), 'API wallet approval');
-      await markAgentReady(user, this.testnet);
-      const verified = await this.verifyAgent();
-      if (!verified.valid) throw new Error('Agent approval was not confirmed by Hyperliquid');
-      return verified;
-    } catch (error) {
-      await deleteAgent(user, this.testnet);
-      throw error;
-    }
+    const api = await this._execution();
+    await api.agent.authorize(this.testnet);
+    const verified = await api.agent.verify(this.testnet, { force: true });
+    if (verified?.valid !== true) throw new Error('API wallet approval was not confirmed by Hyperliquid');
+    return verified;
   }
 
   async revokeAgent() {
     const user = this.master || await this.currentWallet();
     if (!user) throw new Error('Connect wallet first');
-    const row = await getAgentRecord(user, this.testnet);
-    if (!row) return { revoked: true, remote: false };
-    const exchange = await this._masterExchange();
-    assertResult(await exchange.approveAgent({ agentAddress: CONFIG.zeroAddress, agentName: row.agentName }), 'API wallet revoke');
-    await deleteAgent(user, this.testnet);
-    return { revoked: true, remote: true };
-  }
-
-  async _agentExchange() {
-    const user = this.master || await this.currentWallet();
-    if (!user) throw new Error('Connect wallet first');
-    const verified = await this.verifyAgent();
-    if (!verified.valid) throw new Error('API Wallet required. Enable 1-click trading before placing an order.');
-    const privateKey = await loadAgentPrivateKey(user, this.testnet);
-    if (!privateKey) throw new Error('API Wallet key is unavailable or expired. Re-enable trading.');
-    const { hl, accounts } = await deps();
-    const wallet = accounts.privateKeyToAccount(privateKey);
-    if (wallet.address.toLowerCase() !== verified.row.address) throw new Error('API Wallet integrity check failed');
-    return new hl.ExchangeClient({
-      transport: await this._ws(),
-      wallet,
-      defaultExpiresAfter: () => Date.now() + 15000,
-    });
+    const api = await this._execution();
+    return api.agent.revoke(this.testnet);
   }
 
   async riskCheck({ coin, orderUsd, leverage }) {
@@ -315,85 +274,69 @@ export class RWAHyperliquid {
   async placeOrder({ coin, side, type = 'MARKET', orderUsd, leverage = 1, limitPrice = 0, tp = 0, sl = 0 }) {
     if (!this.testnet && !CONFIG.mainnetEnabled) throw new Error('MAINNET is locked');
     coin = String(coin).toUpperCase();
-    const isBuy = String(side).toUpperCase() === 'BUY';
     const asset = await this.resolveAsset(coin);
     const lev = Math.min(Number(asset.maxLeverage || CONFIG.maxLeverage), num(leverage));
     await this.riskCheck({ coin, orderUsd, leverage: lev });
     const mid = await this.mid(coin);
-    const utils = await import('https://esm.sh/@nktkas/hyperliquid@0.33.3/utils?target=es2022');
     const size = num(orderUsd) / mid;
-    const sizeStr = utils.formatSize(size, asset.szDecimals);
-    if (!(num(sizeStr) > 0)) throw new Error('Order size rounds to zero');
-    let entryPrice;
-    let tif;
-    if (String(type).toUpperCase() === 'LIMIT') {
-      if (!(num(limitPrice) > 0)) throw new Error('Enter a valid limit price');
-      entryPrice = utils.formatPrice(num(limitPrice), asset.szDecimals, true);
-      tif = 'Gtc';
-    } else {
-      const slip = CONFIG.marketSlippageBps / 10000;
-      entryPrice = utils.formatPrice(mid * (1 + (isBuy ? slip : -slip)), asset.szDecimals, true);
-      tif = 'Ioc';
-    }
-    const exchange = await this._agentExchange();
-    assertResult(await exchange.updateLeverage({ asset: asset.index, isCross: true, leverage: Math.max(1, Math.round(lev)) }), 'Leverage update');
-    const orders = [{ a: asset.index, b: isBuy, p: entryPrice, s: sizeStr, r: false, t: { limit: { tif } } }];
-    const closeIsBuy = !isBuy;
+    if (!(size > 0)) throw new Error('Order size is invalid');
+    const { api } = await this._requireAgent();
+    const args = {
+      coin,
+      side: String(side).toUpperCase() === 'SELL' ? 'SELL' : 'BUY',
+      size,
+      leverage: Math.max(1, Math.round(lev)),
+      testnet: this.testnet,
+      preferAgent: true,
+    };
     const tpNum = num(tp), slNum = num(sl);
-    if (tpNum > 0) {
-      const px = utils.formatPrice(tpNum, asset.szDecimals, true);
-      orders.push({ a: asset.index, b: closeIsBuy, p: px, s: sizeStr, r: true, t: { trigger: { isMarket: true, triggerPx: px, tpsl: 'tp' } } });
+    let out;
+    if (tpNum > 0 || slNum > 0) {
+      out = await api.orders.bracket({
+        ...args,
+        type: String(type).toUpperCase() === 'LIMIT' ? 'LIMIT' : 'MARKET',
+        price: String(type).toUpperCase() === 'LIMIT' ? num(limitPrice) : null,
+        tp: tpNum || null,
+        sl: slNum || null,
+      });
+    } else if (String(type).toUpperCase() === 'LIMIT') {
+      if (!(num(limitPrice) > 0)) throw new Error('Enter a valid limit price');
+      out = await api.orders.limit({ ...args, price: num(limitPrice), tif: 'Gtc' });
+    } else {
+      out = await api.orders.market(args);
     }
-    if (slNum > 0) {
-      const px = utils.formatPrice(slNum, asset.szDecimals, true);
-      orders.push({ a: asset.index, b: closeIsBuy, p: px, s: sizeStr, r: true, t: { trigger: { isMarket: true, triggerPx: px, tpsl: 'sl' } } });
-    }
-    const result = assertResult(await exchange.order({ orders, grouping: orders.length > 1 ? 'normalTpsl' : 'na' }), 'Order');
-    return { result, mid, entryPrice, size: sizeStr, signer: 'delegated-agent' };
+    if (out?.mode && out.mode !== 'agent') throw new Error('SECURITY BLOCK: risk-increasing order did not use delegated API wallet');
+    return { ...out, mid, signer: 'delegated-agent' };
   }
 
   async cancelOrder({ coin, oid }) {
-    const asset = await this.resolveAsset(coin);
-    let exchange;
-    try { exchange = await this._agentExchange(); }
-    catch { exchange = await this._masterExchange(); }
-    return assertResult(await exchange.cancel({ cancels: [{ a: asset.index, o: Number(oid) }] }), 'Cancel');
+    const api = await this._execution();
+    return api.orders.cancel({ coin, oid, testnet: this.testnet, preferAgent: true });
   }
 
   async cancelAll() {
-    const state = await this.accountState();
-    for (const order of state.orders) {
-      const coin = String(order.coin || order?.order?.coin || '');
-      const oid = Number(order.oid || order?.order?.oid);
-      if (coin && oid) await this.cancelOrder({ coin, oid });
-    }
-    return true;
+    const api = await this._execution();
+    return api.orders.cancelAll({ testnet: this.testnet, preferAgent: true });
   }
 
   async closePosition(position) {
     const coin = String(position?.coin || '').toUpperCase();
     const szi = num(position?.szi);
     if (!coin || !szi) return true;
-    const asset = await this.resolveAsset(coin);
-    const mid = await this.mid(coin);
-    const utils = await import('https://esm.sh/@nktkas/hyperliquid@0.33.3/utils?target=es2022');
-    const isBuy = szi < 0;
-    const slip = CONFIG.marketSlippageBps / 10000;
-    const px = utils.formatPrice(mid * (1 + (isBuy ? slip : -slip)), asset.szDecimals, true);
-    const size = utils.formatSize(Math.abs(szi), asset.szDecimals);
-    let exchange;
-    try { exchange = await this._agentExchange(); }
-    catch { exchange = await this._masterExchange(); }
-    return assertResult(await exchange.order({ orders: [{ a: asset.index, b: isBuy, p: px, s: size, r: true, t: { limit: { tif: 'Ioc' } } }], grouping: 'na' }), 'Close position');
+    const api = await this._execution();
+    return api.orders.market({
+      coin,
+      side: szi > 0 ? 'SELL' : 'BUY',
+      size: Math.abs(szi),
+      reduceOnly: true,
+      leverage: 1,
+      testnet: this.testnet,
+      preferAgent: true,
+    });
   }
 
-  async withdraw({ destination, amount, confirmText }) {
-    if (String(confirmText) !== 'WITHDRAW') throw new Error('High-security confirmation required: type WITHDRAW');
-    destination = assertAddress(destination, 'withdrawal destination');
-    amount = num(amount);
-    if (!(amount > 0)) throw new Error('Withdrawal amount must be positive');
-    const exchange = await this._masterExchange();
-    return assertResult(await exchange.withdraw3({ destination, amount: String(amount) }), 'Withdrawal');
+  async withdraw() {
+    throw new Error('Withdrawal is intentionally disabled in this TESTNET-only terminal. Mainnet withdrawal must remain master-wallet-only and will only be enabled with the global launch gate.');
   }
 
   async startRealtime({ coin, user, onMids, onBook, onTrades, onAccount, onOrders, onFills, onError }) {
