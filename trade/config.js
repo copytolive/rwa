@@ -22,6 +22,6 @@ export const CONFIG = Object.freeze({
   keepAliveTimeoutMs: 10000,
   mainnetUnlockPhrase: 'I UNDERSTAND MAINNET RISK',
   zeroAddress: '0x0000000000000000000000000000000000000000',
-  officialTestnetUrl: 'https://app.hyperliquid-testnet.xyz',
+  officialTestnetUrl: 'https://app.hyperliquid-testnet.xyz/drip',
   officialMainnetUrl: 'https://app.hyperliquid.xyz',
 });
