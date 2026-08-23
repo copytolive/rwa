@@ -288,6 +288,78 @@
       "evaluations_computed": 59,
       "new_unique_evaluations": 59,
       "completed_at": "2026-08-23T06:59:37.644902+00:00"
+    },
+    {
+      "month": "2011-12",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "a1aee0835079041ea0aaeaa66fb1b5118e66ce6552b60749624fbe9e3797bd02",
+      "valid_samples": 1889099,
+      "evaluations_computed": 59,
+      "new_unique_evaluations": 59,
+      "completed_at": "2026-08-23T13:00:50.341252+00:00"
+    },
+    {
+      "month": "2012-01",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "61224548bff7b479332423be3cae5ede4710d8e9f2e3ab711ad883b6680e091e",
+      "valid_samples": 3534466,
+      "evaluations_computed": 59,
+      "new_unique_evaluations": 59,
+      "completed_at": "2026-08-23T13:00:54.629871+00:00"
+    },
+    {
+      "month": "2012-02",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "e956409a7a441ff737a55e9d793cb5357f228ba15d664dddc041a000ca53e7b4",
+      "valid_samples": 1755839,
+      "evaluations_computed": 59,
+      "new_unique_evaluations": 59,
+      "completed_at": "2026-08-23T13:00:56.967290+00:00"
+    },
+    {
+      "month": "2012-03",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "d0de0f15ee44651f6debdb629ad7363330d433b15f766808194b8d81c1a46bec",
+      "valid_samples": 1886817,
+      "evaluations_computed": 59,
+      "new_unique_evaluations": 59,
+      "completed_at": "2026-08-23T13:00:59.417863+00:00"
+    },
+    {
+      "month": "2012-04",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "4b5366ffc8c85ef39c278c279a56945fe6079d1c369d0ee3dce253687955e18d",
+      "valid_samples": 1809837,
+      "evaluations_computed": 59,
+      "new_unique_evaluations": 59,
+      "completed_at": "2026-08-23T13:01:01.673269+00:00"
+    },
+    {
+      "month": "2012-05",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "4a05bf2703883df281a3d58f6708eba0cfce339e38f9a92f2851ae90b2cb3870",
+      "valid_samples": 1909500,
+      "evaluations_computed": 59,
+      "new_unique_evaluations": 59,
+      "completed_at": "2026-08-23T13:01:04.041086+00:00"
+    },
+    {
+      "month": "2012-06",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "eafabf589ead0085ec3c77e96e42e2d6d6cdfa4e88cffd97a529e42ec657b236",
+      "valid_samples": 1658577,
+      "evaluations_computed": 59,
+      "new_unique_evaluations": 59,
+      "completed_at": "2026-08-23T13:01:06.262865+00:00"
+    },
+    {
+      "month": "2012-07",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "c415701ff5f54c31c626d908f8a910141ac7effcd30ad98ad14ffc108d627609",
+      "valid_samples": 1901295,
+      "evaluations_computed": 59,
+      "new_unique_evaluations": 59,
+      "completed_at": "2026-08-23T13:01:08.766192+00:00"
     }
   ]
 }
