@@ -42,7 +42,16 @@ check(!/api\.hyperliquid(?:-testnet)?\.xyz\/exchange|['"]\/exchange['"]/.test(pr
 check(exec.includes("hardening:'single-write-path-v1'"),'single write path hardening missing');
 check(exec.includes("riskSigner:'agent-only-fail-closed-v1'"),'delegated fail-closed signer missing');
 check(exec.includes("grouping:'normalTpsl'"),'atomic bracket execution missing');
-check(cfg.includes('mainnetEnabled: false'),'PUBLIC TESTNET BETA must keep mainnet locked');
+
+check(cfg.includes("version:'1.4.0'"),'trade config must be v1.4.0 machine-gated build');
+check(cfg.includes('../launch/readiness.json'),'global readiness source missing');
+check(cfg.includes('../launch/e2e-registry.json'),'wallet E2E registry source missing');
+check(cfg.includes("status==='READY_FOR_MAINNET'"),'READY_FOR_MAINNET requirement missing');
+check(cfg.includes("x?.status==='E2E_VERIFIED'"),'wallet E2E requirement missing');
+check(cfg.includes("Object.defineProperty(BASE,'mainnetEnabled'"),'dynamic mainnet gate missing');
+check(cfg.includes("get:()=>canMainnet()"),'mainnetEnabled must derive from machine gate');
+check(cfg.includes("toggle.dispatchEvent(new Event('change'"),'gate revocation must force environment back to TESTNET');
+check(!/\bmainnetEnabled\s*:\s*true\b/.test(cfg),'mainnet must never be hardcoded enabled');
 
 const controls=[...html.matchAll(/<(button|input|select|textarea)\b[^>]*>/g)].map(m=>m[0]);
 check(controls.length>=45,`unexpectedly small interactive surface: ${controls.length} controls`);
@@ -51,4 +60,4 @@ check(html.includes('data-type-btn="MARKET"')&&html.includes('data-type-btn="LIM
 check(html.includes('data-close-fraction="0.25"')&&html.includes('data-close-fraction="0.5"')&&html.includes('data-close-fraction="1"'),'partial-close controls missing');
 
 if(fail.length){console.error(JSON.stringify({ok:false,fail},null,2));process.exit(1)}
-console.log(JSON.stringify({ok:true,ids:ids.length,controls:controls.length,js_refs:new Set(refs).size,contract:'rwa-trade-ui-operability-v1'},null,2));
+console.log(JSON.stringify({ok:true,ids:ids.length,controls:controls.length,js_refs:new Set(refs).size,contract:'rwa-trade-ui-operability-v2-machine-gated'},null,2));
