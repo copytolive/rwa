@@ -2,7 +2,6 @@ import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 
 const BASE=process.env.RWA_BASE_URL||'http://127.0.0.1:4173/';
-const wait=ms=>new Promise(r=>setTimeout(r,ms));
 
 async function desktop(browser){
   const ctx=await browser.newContext({viewport:{width:1440,height:900}});
@@ -41,7 +40,7 @@ async function desktop(browser){
 
   await page.evaluate(()=>window.RWAProductOS?.openCommand?.('asset BTC'));
   await page.waitForSelector('#rwaCommandLayer:not([hidden])',{timeout:5000});
-  const assetCmd=page.locator('.rwa-command-item').filter({has:page.locator('span', {hasText:'ASSET'})}).last();
+  const assetCmd=page.locator('.rwa-command-item').filter({has:page.locator('span',{hasText:'ASSET'})}).last();
   assert.ok(await assetCmd.count(),'ASSET command must exist');
   await assetCmd.click();
   await page.waitForTimeout(100);
@@ -58,20 +57,23 @@ async function mobile(browser){
   const page=await ctx.newPage();
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});
   await page.waitForFunction(()=>!!window.RWAFundamentals,{timeout:15000});
-  await page.waitForSelector('.rwa-fundamentals-trigger',{state:'visible',timeout:10000});
+  await page.waitForSelector('.rwa-fundamentals-mobile-trigger',{state:'visible',timeout:10000});
+  assert.equal((await page.locator('.rwa-fundamentals-mobile-trigger').innerText()).trim(),'Fundamentals');
   const path=new URL(page.url()).pathname;
-  await page.click('.rwa-fundamentals-trigger');
+  await page.click('.rwa-fundamentals-mobile-trigger');
   await page.waitForFunction(()=>document.getElementById('rwaFundamentals')?.classList.contains('open'));
   const box=await page.locator('#rwaFundamentals').boundingBox();
   assert.ok(box&&box.width<=391&&box.x>=-1,`mobile fundamentals overflow: ${JSON.stringify(box)}`);
-  assert.equal(new URL(page.url()).pathname,path);
+  assert.equal(new URL(page.url()).pathname,path,'mobile Fundamentals must remain on canonical root');
   assert.equal(await page.locator('[data-rwa-fund-tab]').count(),9);
   await page.click('[data-rwa-fund-tab="documents"]');
+  const docs=await page.locator('#rwaFundBody').innerText();
+  assert.match(docs,/Documents|evidence/i);
   await page.click('.rwa-fund-close');
   await page.waitForTimeout(80);
   assert.equal(await page.locator('#rwaFundamentals').getAttribute('aria-hidden'),'true');
   await ctx.close();
-  return{width:box.width,path};
+  return{width:box.width,path,mobileTrigger:'Fundamentals'};
 }
 
 const browser=await chromium.launch({headless:true});
