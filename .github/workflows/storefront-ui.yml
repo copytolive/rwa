@@ -8,6 +8,8 @@ on:
       - "rwa-storefront-safety-patch.js"
       - "rwa-store-draft-ui.js"
       - "rwa-store-draft-ui.css"
+      - "rwa-home-commerce.js"
+      - "rwa-home-commerce.css"
       - "rwa-ui-pro.css"
       - "quick-actions.js"
       - "trade/ui-polish.js"
@@ -34,6 +36,7 @@ jobs:
           node --check rwa-storefront.js
           node --check rwa-storefront-safety-patch.js
           node --check rwa-store-draft-ui.js
+          node --check rwa-home-commerce.js
           node --check quick-actions.js
           node --check trade/ui-polish.js
           node --check tools/storefront-ui-contract.mjs
@@ -43,6 +46,7 @@ jobs:
           grep -Fq 'preview-no-fake-price-trade-v1' rwa-storefront-safety-patch.js
           grep -Fq 'ONE_TOKEN_ONE_PHYSICAL_STORE_V1' rwa-store-draft-ui.js
           grep -Fq 'UNVERIFIED_LOCAL_DRAFT' rwa-store-draft-ui.js
+          grep -Fq 'landing-commerce-surface-v1' rwa-home-commerce.js
       - name: Install Playwright Chromium
         run: |
           npm install --no-save playwright@1.55.0
@@ -57,14 +61,17 @@ jobs:
             store="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-storefront.js?v=$q" || true)"
             safety="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-storefront-safety-patch.js?v=$q" || true)"
             draft="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-store-draft-ui.js?v=$q" || true)"
+            home="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-home-commerce.js?v=$q" || true)"
             reg="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-commerce-registry.json?v=$q" || true)"
             trade="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/ui-polish.js?v=$q" || true)"
             if grep -Fq "premium-shell-storefront-v1" <<<"$quick" \
               && grep -Fq "rwa-storefront-safety-patch.js?v=1" <<<"$quick" \
               && grep -Fq "rwa-store-draft-ui.js?v=1" <<<"$quick" \
+              && grep -Fq "rwa-home-commerce.js?v=1" <<<"$quick" \
               && grep -Fq "ONE_TOKEN_ONE_PHYSICAL_STORE_V1" <<<"$store" \
               && grep -Fq "preview-no-fake-price-trade-v1" <<<"$safety" \
               && grep -Fq "UNVERIFIED_LOCAL_DRAFT" <<<"$draft" \
+              && grep -Fq "landing-commerce-surface-v1" <<<"$home" \
               && grep -Fq '"one_token_one_physical_store": true' <<<"$reg" \
               && grep -Fq "desktop-mobile-commerce-polish-v1" <<<"$trade"; then ok=1; break; fi
             sleep 5
@@ -75,7 +82,7 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/storefront-ui' -f description='Desktop/mobile token-store ecommerce + physical-store onboarding UI PASS'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/storefront-ui' -f description='Commerce landing + desktop/mobile token-store ecommerce + physical-store onboarding PASS'
       - name: Publish storefront UI failure
         if: failure()
         env:
