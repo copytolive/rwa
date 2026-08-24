@@ -66,7 +66,7 @@ jobs:
           grep -Fq 'Wallet account switched' wallet-core.js
 
           grep -Fq "version:'2.0.0'" execution-api.js
-          grep -Fq "revision:'2.1.0'" execution-api.js
+          grep -Fq "revision:'2.2.0'" execution-api.js
           grep -Fq "hardening:'single-write-path-v1'" execution-api.js
           grep -Fq "riskGate:'mandatory-internal-v1'" execution-api.js
           grep -Fq "bracket:'atomic-normal-tpsl-v1'" execution-api.js
