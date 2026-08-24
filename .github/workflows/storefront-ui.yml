@@ -61,6 +61,7 @@ jobs:
           grep -Fq 'physical-store-evidence-detail-v1' rwa-store-detail.js
           grep -Fq 'backend-gated-checkout-preview-v1' rwa-checkout-ui.js
           grep -Fq 'Place order after backend verification' rwa-checkout-ui.js
+          grep -Fq 'async function shellRoute' quick-actions.js
       - name: Install Playwright Chromium
         run: |
           npm install --no-save playwright@1.55.0
@@ -84,6 +85,7 @@ jobs:
             reg="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-commerce-registry.json?v=$q" || true)"
             trade="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/ui-polish.js?v=$q" || true)"
             if grep -Fq "premium-shell-storefront-v1" <<<"$quick" \
+              && grep -Fq "async function shellRoute" <<<"$quick" \
               && grep -Fq "rwa-storefront-safety-patch.js?v=1" <<<"$quick" \
               && grep -Fq "rwa-store-draft-ui.js?v=1" <<<"$quick" \
               && grep -Fq "rwa-home-commerce.js?v=1" <<<"$quick" \
@@ -109,7 +111,7 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/storefront-ui' -f description='Desktop/mobile store detail + cart + checkout preview + onboarding PASS'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/storefront-ui' -f description='Frontend COMPLETE: desktop/mobile navigation store detail cart checkout preview onboarding PASS'
       - name: Publish storefront UI failure
         if: failure()
         env:
