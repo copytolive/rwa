@@ -1,6 +1,6 @@
 {
   "schema": 4,
-  "generated_at": "2026-08-24T02:11:17.300Z",
+  "generated_at": "2026-08-24T02:20:36.880Z",
   "status": "BLOCKED",
   "engineering_ready": false,
   "beta_ready": false,
@@ -82,8 +82,8 @@
       "detail": "1 registered wallet proof(s)"
     },
     "reviewer_registry": {
-      "ok": false,
-      "detail": "0 authorized reviewer(s)"
+      "ok": true,
+      "detail": "1 authorized reviewer(s)"
     },
     "verified_rwa_asset": {
       "ok": false,
@@ -126,10 +126,6 @@
     {
       "gate": "monitoring_pipeline",
       "detail": "health + readiness + metrics + five-minute fail-safe watchdog"
-    },
-    {
-      "gate": "reviewer_registry",
-      "detail": "0 authorized reviewer(s)"
     },
     {
       "gate": "verified_rwa_asset",
