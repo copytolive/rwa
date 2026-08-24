@@ -28,7 +28,7 @@ permissions:
 jobs:
   source-and-browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -106,3 +106,23 @@ jobs:
           if(!r.checks?.browser_global_mainnet_lock?.ok)throw new Error('global mainnet lock no longer proven');
           console.log('LAUNCH SAFETY BOUNDARY PASS · current status='+r.status);
           NODE
+      - name: Wait for canonical Pages deployment
+        if: github.event_name == 'push'
+        run: |
+          url='https://narzulalistiqlal.github.io/rwa/'
+          for i in {1..90}; do
+            body="$(curl -fsSL --max-time 20 "$url" || true)"
+            if printf '%s' "$body" | grep -q 'global-asset-terminal.js?v=1'; then
+              echo 'PUBLIC PAGES GLOBAL ASSET TERMINAL READY'
+              exit 0
+            fi
+            echo "Waiting for Pages deployment ($i/90)..."
+            sleep 6
+          done
+          echo 'Pages did not expose the merged Global Asset Terminal in time.'
+          exit 1
+      - name: Public Pages desktop + mobile proof
+        if: github.event_name == 'push'
+        env:
+          BASE_URL: https://narzulalistiqlal.github.io/rwa/
+        run: node tools/global-asset-terminal-browser.mjs
