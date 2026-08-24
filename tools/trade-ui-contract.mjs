@@ -3,6 +3,7 @@ import {readFile,access} from 'node:fs/promises';
 const html=await readFile('trade/index.html','utf8');
 const app=await readFile('trade/app.js','utf8');
 const pro=await readFile('trade/terminal-pro.js','utf8');
+const runtime=await readFile('trade/release-runtime.js','utf8');
 const exec=await readFile('execution-api.js','utf8');
 const cfg=await readFile('trade/config.js','utf8');
 const fail=[];
@@ -43,7 +44,7 @@ check(exec.includes("hardening:'single-write-path-v1'"),'single write path harde
 check(exec.includes("riskSigner:'agent-only-fail-closed-v1'"),'delegated fail-closed signer missing');
 check(exec.includes("grouping:'normalTpsl'"),'atomic bracket execution missing');
 
-check(cfg.includes("version:'1.4.0'"),'trade config must be v1.4.0 machine-gated build');
+check(cfg.includes("version:'1.4.1'"),'trade config must be v1.4.1 release runtime build');
 check(cfg.includes('../launch/readiness.json'),'global readiness source missing');
 check(cfg.includes('../launch/e2e-registry.json'),'wallet E2E registry source missing');
 check(cfg.includes("status==='READY_FOR_MAINNET'"),'READY_FOR_MAINNET requirement missing');
@@ -51,7 +52,17 @@ check(cfg.includes("x?.status==='E2E_VERIFIED'"),'wallet E2E requirement missing
 check(cfg.includes("Object.defineProperty(BASE,'mainnetEnabled'"),'dynamic mainnet gate missing');
 check(cfg.includes("get:()=>canMainnet()"),'mainnetEnabled must derive from machine gate');
 check(cfg.includes("toggle.dispatchEvent(new Event('change'"),'gate revocation must force environment back to TESTNET');
+check(cfg.includes("import('./release-runtime.js?v=1')"),'release runtime must load from config');
 check(!/\bmainnetEnabled\s*:\s*true\b/.test(cfg),'mainnet must never be hardcoded enabled');
+
+check(runtime.includes('EMERGENCY EXIT'),'emergency exit confirmation missing');
+check(runtime.includes('orders.cancelAll'),'emergency cancel-all missing');
+check(runtime.includes('reduceOnly:true'),'emergency closes must be reduce-only');
+check(runtime.includes("r.kill=!!value"),'emergency kill switch missing');
+check(runtime.includes('URLSearchParams'),'safe market/order deep-link prefill missing');
+check(runtime.includes("b.disabled=true")&&runtime.includes("Withdraw · mainnet only"),'TESTNET withdrawal must be visibly disabled');
+check(!runtime.includes('ExchangeClient'),'release runtime must not own exchange write client');
+check(!/api\.hyperliquid(?:-testnet)?\.xyz\/exchange|['"]\/exchange['"]/.test(runtime),'release runtime must not call exchange write endpoint directly');
 
 const controls=[...html.matchAll(/<(button|input|select|textarea)\b[^>]*>/g)].map(m=>m[0]);
 check(controls.length>=45,`unexpectedly small interactive surface: ${controls.length} controls`);
@@ -60,4 +71,4 @@ check(html.includes('data-type-btn="MARKET"')&&html.includes('data-type-btn="LIM
 check(html.includes('data-close-fraction="0.25"')&&html.includes('data-close-fraction="0.5"')&&html.includes('data-close-fraction="1"'),'partial-close controls missing');
 
 if(fail.length){console.error(JSON.stringify({ok:false,fail},null,2));process.exit(1)}
-console.log(JSON.stringify({ok:true,ids:ids.length,controls:controls.length,js_refs:new Set(refs).size,contract:'rwa-trade-ui-operability-v2-machine-gated'},null,2));
+console.log(JSON.stringify({ok:true,ids:ids.length,controls:controls.length,js_refs:new Set(refs).size,contract:'rwa-trade-ui-operability-v3-release-runtime'},null,2));
