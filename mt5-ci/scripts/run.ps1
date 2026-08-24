@@ -1,17 +1,17 @@
 $ErrorActionPreference='Stop';Set-StrictMode -Version Latest
-$repo=(Resolve-Path '.').Path;$out=Join-Path $repo 'mt5-ci\results\latest';New-Item -ItemType Directory -Force -Path $out|Out-Null;$script:mt5=$null
+$repo=(Resolve-Path '.').Path;$out=Join-Path $repo 'mt5-ci\results\latest';if(Test-Path $out){Remove-Item -Recurse -Force $out};New-Item -ItemType Directory -Force -Path $out|Out-Null;$script:mt5=$null
 $login=$env:MT5_LOGIN;$password=$env:MT5_PASSWORD;$server=$env:MT5_SERVER
 function Stage($s,$m){[ordered]@{stage=$s;message=$m;utc=[DateTime]::UtcNow.ToString('o')}|ConvertTo-Json|Set-Content -Encoding UTF8 (Join-Path $out 'stage.json');Write-Host "[$s] $m"}
 function SafeLog([string]$src,[string]$dst){try{$x=Get-Content $src -Raw -ErrorAction Stop;if($login){$x=$x.Replace($login,'<MT5_LOGIN>')};if($password){$x=$x.Replace($password,'<MT5_PASSWORD>')};Set-Content -Encoding UTF8 $dst $x}catch{}}
 function Diagnostics(){
- if($script:mt5 -and (Test-Path $script:mt5)){Get-ChildItem $script:mt5 -Filter '*.log' -Recurse -ErrorAction SilentlyContinue|Select-Object -First 30|ForEach-Object{SafeLog $_.FullName (Join-Path $out ('mt5_'+$_.Directory.Name+'_'+$_.Name))}}
- $mq=Join-Path $env:APPDATA 'MetaQuotes';if(Test-Path $mq){Get-ChildItem $mq -Filter '*.log' -Recurse -ErrorAction SilentlyContinue|Sort-Object LastWriteTime -Descending|Select-Object -First 30|ForEach-Object{SafeLog $_.FullName (Join-Path $out ('app_'+$_.Directory.Name+'_'+$_.Name))}}
+ if($script:mt5 -and (Test-Path $script:mt5)){Get-ChildItem $script:mt5 -Filter '*.log' -Recurse -ErrorAction SilentlyContinue|Select-Object -First 40|ForEach-Object{SafeLog $_.FullName (Join-Path $out ('mt5_'+$_.Directory.Name+'_'+$_.Name))}}
+ $mq=Join-Path $env:APPDATA 'MetaQuotes';if(Test-Path $mq){Get-ChildItem $mq -Filter '*.log' -Recurse -ErrorAction SilentlyContinue|Sort-Object LastWriteTime -Descending|Select-Object -First 40|ForEach-Object{SafeLog $_.FullName (Join-Path $out ('app_'+$_.Directory.Name+'_'+$_.Name))}}
 }
 try{
  Stage INSTALL 'Downloading official MetaTrader 5 installer';$setup=Join-Path $env:RUNNER_TEMP 'mt5setup.exe';Invoke-WebRequest -UseBasicParsing -Uri 'https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe' -OutFile $setup;(Get-FileHash $setup -Algorithm SHA256).Hash|Set-Content (Join-Path $out 'installer_sha256.txt');Start-Process $setup -ArgumentList '/auto' -Wait;Start-Sleep 8;Get-Process terminal64,metaeditor64 -ErrorAction SilentlyContinue|Stop-Process -Force -ErrorAction SilentlyContinue
  $found=Get-ChildItem 'C:\Program Files' -Filter terminal64.exe -Recurse -ErrorAction SilentlyContinue|Select-Object -First 1;if(!$found){throw 'terminal64.exe not found'};$install=$found.Directory.FullName;$script:mt5=Join-Path $env:RUNNER_TEMP 'mt5-portable';if(Test-Path $script:mt5){Remove-Item -Recurse -Force $script:mt5};Copy-Item -Recurse -Force $install $script:mt5;$terminal=Join-Path $script:mt5 'terminal64.exe';$editor=Join-Path $script:mt5 'metaeditor64.exe'
  $ea=Join-Path $script:mt5 'MQL5\Experts\ChatGPT';$sc=Join-Path $script:mt5 'MQL5\Scripts\ChatGPT';$files=Join-Path $script:mt5 'MQL5\Files';New-Item -ItemType Directory -Force -Path $ea,$sc,$files|Out-Null;Copy-Item 'mt5-ci\mql5\SeedCustomTicks.mq5' $sc;Copy-Item 'mt5-ci\mql5\DeterministicPendingSmoke.mq5' $ea;Copy-Item 'mt5-ci\generated\smoke_ticks.csv' $files
- function Compile([string]$src){Stage COMPILE ([IO.Path]::GetFileName($src));Start-Process $editor -ArgumentList "/compile:`"$src`"",'/log' -Wait;$log=[IO.Path]::ChangeExtension($src,'.log');if(!(Test-Path $log)){throw 'compile log missing'};SafeLog $log (Join-Path $out ([IO.Path]::GetFileName($log)));$txt=Get-Content $log -Raw;if($txt -notmatch '0 errors'){throw 'MQL5 compile failed'};if(!(Test-Path ([IO.Path]::ChangeExtension($src,'.ex5')))){throw 'EX5 missing'}}
+ function Compile([string]$src){Stage COMPILE ([IO.Path]::GetFileName($src));Start-Process $editor -ArgumentList "/compile:`"$src`"",'/log' -Wait;$log=[IO.Path]::ChangeExtension($src,'.log');if(!(Test-Path $log)){throw 'compile log missing'};SafeLog $log (Join-Path $out ([IO.Path]::GetFileName($log)));$txt=Get-Content $log -Raw;if($txt -notmatch '0 errors, 0 warnings'){throw 'MQL5 compile failed or warnings present'};if(!(Test-Path ([IO.Path]::ChangeExtension($src,'.ex5')))){throw 'EX5 missing'}}
  Compile (Join-Path $sc 'SeedCustomTicks.mq5');Compile (Join-Path $ea 'DeterministicPendingSmoke.mq5')
  Stage SEED 'Importing frozen custom Bid Ask ticks and deterministic M1 history';$seedIni=Join-Path $env:RUNNER_TEMP 'seed.ini';@"
 [Experts]
@@ -28,46 +28,19 @@ ShutdownTerminal=1
    [ordered]@{status='BLOCKED_MISSING_MT5_DEMO_SECRETS';compile='PASS';history_seed='PASS';required=@('MT5_LOGIN','MT5_PASSWORD','MT5_SERVER');message='Add a valid free demo account as GitHub Actions repository secrets. Never commit credentials.';utc=[DateTime]::UtcNow.ToString('o')}|ConvertTo-Json|Set-Content -Encoding UTF8 (Join-Path $out 'final_status.json');throw 'MT5 demo credentials are not configured in GitHub Actions secrets'
  }
  [ordered]@{credentials_source='GitHub Actions secrets';login_present=$true;password_present=$true;server_present=$true;server=$server;password_never_exported=$true}|ConvertTo-Json|Set-Content -Encoding UTF8 (Join-Path $out 'credential_gate.json')
- Stage AUTH 'Pre-authenticating MT5 demo account and waiting for trade-server synchronization';python -m pip install --disable-pip-version-check --quiet MetaTrader5
- $authPy=Join-Path $env:RUNNER_TEMP 'mt5_auth.py';@'
-import json, os, sys, time
-import MetaTrader5 as mt5
-path=os.environ['MT5_TERMINAL_PATH']
-login=int(os.environ['MT5_LOGIN'])
-password=os.environ['MT5_PASSWORD']
-server=os.environ['MT5_SERVER']
-out=os.environ['MT5_AUTH_OUT']
-last=''
-ok=False
-for attempt in range(1,4):
-    try:
-        if mt5.initialize(path=path, login=login, password=password, server=server, timeout=60000, portable=True):
-            for _ in range(30):
-                ti=mt5.terminal_info(); ai=mt5.account_info()
-                if ti is not None and ai is not None and bool(getattr(ti,'connected',False)) and int(ai.login)==login:
-                    ok=True; break
-                time.sleep(2)
-            if ok: break
-            last=f'not synchronized after initialize attempt {attempt}'
-        else:
-            last=f'initialize failed attempt {attempt}: {mt5.last_error()}'
-    except Exception as e:
-        last=f'auth exception attempt {attempt}: {type(e).__name__}: {e}'
-    finally:
-        try: mt5.shutdown()
-        except Exception: pass
-    time.sleep(3)
-with open(out,'w',encoding='utf-8') as f:
-    json.dump({'status':'PASS' if ok else 'FAIL','server':server,'login_present':True,'connected':ok,'message':None if ok else last},f,indent=2)
-if not ok:
-    print(last)
-    sys.exit(2)
-print('MT5 demo account synchronized successfully')
-'@|Set-Content -Encoding UTF8 $authPy
- $env:MT5_TERMINAL_PATH=$terminal;$env:MT5_AUTH_OUT=(Join-Path $out 'auth_preflight.json');python $authPy
- if($LASTEXITCODE-ne0){throw 'MT5 demo account pre-authentication/synchronization failed'}
- Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue|Stop-Process -Force -ErrorAction SilentlyContinue;Start-Sleep 3
- Stage TESTER 'Running Strategy Tester Model 4 real ticks from synchronized demo context';$ini=Join-Path $env:RUNNER_TEMP 'tester.ini';@"
+ Stage AUTH 'Warming native MT5 account session before Strategy Tester';$authIni=Join-Path $env:RUNNER_TEMP 'auth.ini';@"
+[Common]
+Login=$login
+Server=$server
+Password=$password
+[Experts]
+AllowLiveTrading=0
+AllowDllImport=0
+Enabled=0
+"@|Set-Content -Encoding Unicode $authIni
+ $p=Start-Process $terminal -ArgumentList '/portable',"/config:$authIni" -PassThru;Start-Sleep 45;Diagnostics;if(!$p.HasExited){$p.CloseMainWindow()|Out-Null;Start-Sleep 3;if(!$p.HasExited){$p.Kill()}};Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue|Stop-Process -Force -ErrorAction SilentlyContinue;Start-Sleep 3
+ [ordered]@{status='PASS_NATIVE_WARMUP_COMPLETED';server=$server;login_present=$true;warmup_seconds=45;note='No Python MetaTrader5 IPC dependency; Strategy Tester is authoritative for synchronization.'}|ConvertTo-Json|Set-Content -Encoding UTF8 (Join-Path $out 'auth_preflight.json')
+ Stage TESTER 'Running native Strategy Tester Model 4 real ticks';$ini=Join-Path $env:RUNNER_TEMP 'tester.ini';@"
 [Common]
 Login=$login
 Server=$server
