@@ -24,3 +24,13 @@ test('Midtrans payment fails closed for non-IDR order',async()=>{
   const p=new MidtransPayment({serverKey:'server-secret',fetchImpl:async()=>{throw new Error('should not call')}});
   await assert.rejects(()=>p.createForOrder({...order,currency:'USD'}),e=>e.code==='midtrans_requires_idr');
 });
+
+test('refund path is full-order only and uses a stable provider key',async()=>{
+  let seen=null;
+  const p=new MidtransPayment({serverKey:'server-secret',fetchImpl:async(_url,opts)=>{seen=JSON.parse(opts.body);return{ok:true,status:200,json:async()=>({refund_key:seen.refund_key,status_code:'200'})}}});
+  await assert.rejects(()=>p.refund(order,{amountCents:10000}),e=>e.code==='partial_refund_not_supported');
+  const out=await p.refund(order,{reason:'Full customer refund'});
+  assert.equal(seen.amount,12500);
+  assert.equal(seen.refund_key,'refund-ord_test');
+  assert.equal(out.refund_key,'refund-ord_test');
+});
