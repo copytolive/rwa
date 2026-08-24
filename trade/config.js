@@ -21,10 +21,10 @@ if(typeof window!=='undefined'){
 }
 
 const BASE={
-  version:'1.5.1',
+  version:'1.5.0',
   build:'github-pages-rwa-trade-unified-product-2026-08-25',
   releaseChannel:'PUBLIC_TESTNET_BETA',
-  uiRelease:'unified-product-v3',
+  uiRelease:'terminal-pro-commerce-v2',
   publicBetaEnabled:true,
   sdkUrl:'https://esm.sh/@nktkas/hyperliquid@0.33.3?target=es2022',
   viemUrl:'https://esm.sh/viem@2.37.3?target=es2022',
