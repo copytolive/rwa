@@ -1,4 +1,5 @@
 import './provider-runtime.js?v=1';
+import './ui-polish.js?v=1';
 
 const GATE={readiness:null,e2e:null,checkedAt:0,error:''};
 const wallet=()=>{try{const w=String(JSON.parse(localStorage.getItem('rwa_wallet_link_v1')||'{}')?.wallet||'').toLowerCase();return /^0x[a-f0-9]{40}$/.test(w)?w:''}catch{return''}};
@@ -18,9 +19,9 @@ if(typeof window!=='undefined'){
 
 const BASE={
   version:'1.5.0',
-  build:'github-pages-rwa-trade-pro-parity-2026-08-24',
+  build:'github-pages-rwa-trade-commerce-polish-2026-08-24',
   releaseChannel:'PUBLIC_TESTNET_BETA',
-  uiRelease:'terminal-pro-v1',
+  uiRelease:'terminal-pro-commerce-v2',
   publicBetaEnabled:true,
   sdkUrl:'https://esm.sh/@nktkas/hyperliquid@0.33.3?target=es2022',
   viemUrl:'https://esm.sh/viem@2.37.3?target=es2022',
