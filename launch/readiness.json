@@ -1,6 +1,6 @@
 {
   "schema": 4,
-  "generated_at": "2026-08-24T01:18:15.876Z",
+  "generated_at": "2026-08-24T02:11:17.300Z",
   "status": "BLOCKED",
   "engineering_ready": false,
   "beta_ready": false,
@@ -78,8 +78,8 @@
       "detail": "machine readiness auto-refresh + CI launch status"
     },
     "real_wallet_e2e": {
-      "ok": false,
-      "detail": "0 registered wallet proof(s)"
+      "ok": true,
+      "detail": "1 registered wallet proof(s)"
     },
     "reviewer_registry": {
       "ok": false,
@@ -126,10 +126,6 @@
     {
       "gate": "monitoring_pipeline",
       "detail": "health + readiness + metrics + five-minute fail-safe watchdog"
-    },
-    {
-      "gate": "real_wallet_e2e",
-      "detail": "0 registered wallet proof(s)"
     },
     {
       "gate": "reviewer_registry",
