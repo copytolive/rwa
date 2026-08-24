@@ -56,6 +56,11 @@ jobs:
           New-Item -ItemType Directory -Force "$root\MQL5\Scripts\AutoValidation" | Out-Null
           New-Item -ItemType Directory -Force "$root\MQL5\Files" | Out-Null
           Copy-Item C:\mt5val\downloads\SmokeEA.mq5 "$root\MQL5\Experts\AutoValidation\SmokeEA.mq5"
+          $eaPath = "$root\MQL5\Experts\AutoValidation\SmokeEA.mq5"
+          $eaText = Get-Content $eaPath -Raw
+          $eaText = $eaText.Replace('<Include\Trade\Trade.mqh>','<Trade\Trade.mqh>')
+          Set-Content $eaPath -Value $eaText -Encoding ASCII
+          'Mechanical staging patch: Include\Trade\Trade.mqh -> Trade\Trade.mqh' | Out-File C:\mt5val\out\staging_patch.txt
           Copy-Item C:\mt5val\downloads\XAUUSD_M1.csv "$root\MQL5\Files\XAUUSD_M1.csv"
 
       - name: Build custom-symbol importer
