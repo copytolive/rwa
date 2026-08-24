@@ -1,18 +1,14 @@
-name: RWA Renko Tick Traditional
+name: RWA Renko Private Traditional
 
 on:
   pull_request:
     paths:
       - "renko/**"
-      - "tools/renko-browser-smoke.mjs"
-      - "tools/renko-live-smoke.mjs"
       - ".github/workflows/renko-smoke.yml"
   push:
     branches: ["main"]
     paths:
       - "renko/**"
-      - "tools/renko-browser-smoke.mjs"
-      - "tools/renko-live-smoke.mjs"
       - ".github/workflows/renko-smoke.yml"
 
 permissions:
@@ -26,87 +22,151 @@ concurrency:
 jobs:
   renko:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate Renko v3 source contract
+
+      - name: Validate Renko v4 source contract
         run: |
-          node --check renko/renko-v3.js
-          node --check tools/renko-browser-smoke.mjs
-          node --check tools/renko-live-smoke.mjs
+          set -euo pipefail
+          node --check renko/renko-v4.js
           test -s renko/index.html
-          test -s renko/renko.css
-          test -s renko/renko-v2.css
           test -s renko/renko-v3.css
-          grep -Fq "version:'3.0.0'" renko/renko-v3.js
-          grep -Fq "source:'raw-trade-ticks-only'" renko/renko-v3.js
-          grep -Fq "method:'traditional-fixed-box'" renko/renko-v3.js
-          grep -Fq "reversalBoxes:2" renko/renko-v3.js
-          grep -Fq "universe:'top-500-liquidity-plus-search-all'" renko/renko-v3.js
-          grep -Fq "history:'all-bricks-from-chart-genesis'" renko/renko-v3.js
-          grep -Fq "historyScope:'chart-genesis-not-exchange-lifetime'" renko/renko-v3.js
-          grep -Fq 'RENDER_LIMIT=500' renko/renko-v3.js
-          grep -Fq 'RAW_BUFFER_LIMIT=250000' renko/renko-v3.js
-          grep -Fq '/api/v3/trades?symbol=' renko/renko-v3.js
-          grep -Fq '@trade' renko/renko-v3.js
-          grep -Fq '/api/v3/ticker/24hr' renko/renko-v3.js
-          ! grep -Fq '/api/v3/klines' renko/renko-v3.js
-          ! grep -Fq '@kline_' renko/renko-v3.js
-          ! grep -Fq '@aggTrade' renko/renko-v3.js
-          ! grep -Fq 'ATR' renko/renko-v3.js
-          grep -Fq 'renko-v3.js?v=3' renko/index.html
-          grep -Fq 'renko-v3.css?v=3' renko/index.html
+          grep -Fq 'renko-v4.js?v=4' renko/index.html
+          grep -Fq 'PRIVATE FULL HISTORY' renko/index.html
           grep -Fq 'ALL HISTORY' renko/index.html
-          grep -Fq 'Full brick history retained from chart genesis' renko/index.html
-          grep -Fq 'first 500' renko/index.html
+          grep -Fq 'Traditional 2-brick' renko/index.html
+          grep -Fq 'const TOP_VISIBLE=500' renko/renko-v4.js
+          grep -Fq 'const PAGE=25000' renko/renko-v4.js
+          grep -Fq 'offset:String(offset)' renko/renko-v4.js
+          grep -Fq '/api/charting/hyperliquid/renko/' renko/renko-v4.js
+          grep -Fq '/api/charting/hyperliquid/stream/' renko/renko-v4.js
+          grep -Fq '@trade' renko/renko-v4.js
+          ! grep -Fq '/api/v3/klines' renko/renko-v4.js
+          ! grep -Fq '@aggTrade' renko/renko-v4.js
+
       - name: Install Playwright Chromium
         run: |
-          npm install --no-save playwright@1.55.0
-          npx playwright install --with-deps chromium
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install chromium
+
       - name: Start local site
         run: |
-          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/rwa-renko-http.log 2>&1 &
+          python3 -m http.server 4173 --bind 0.0.0.0 >/tmp/rwa-renko-http.log 2>&1 &
           echo $! >/tmp/rwa-renko-http.pid
-          for i in {1..20}; do curl -fsS http://127.0.0.1:4173/renko/ >/dev/null && exit 0; sleep 1; done
+          for i in {1..20}; do curl -fsS http://localhost:4173/renko/ >/dev/null && exit 0; sleep 1; done
           cat /tmp/rwa-renko-http.log
           exit 1
-      - name: Test top-500 Traditional Renko all-history engine and responsive UI
-        run: node tools/renko-browser-smoke.mjs
-      - name: Wait for Renko v3 GitHub Pages bundle
+
+      - name: Test private full-history UI, top 500 and responsive navigation
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:1440,height:900}});
+            const errors=[];
+            page.on('pageerror',e=>errors.push(String(e)));
+            await page.goto('http://localhost:4173/renko/',{waitUntil:'domcontentloaded',timeout:30000});
+            await page.waitForFunction(()=>window.RWARenkoV4===true,null,{timeout:10000});
+            await page.waitForFunction(()=>{
+              const n=Number((document.querySelector('#brickCount')?.textContent||'0').replace(/[^0-9]/g,''));
+              return n>5000 && (document.querySelector('#historyIntegrity')?.textContent||'').includes('REAL_MARKET_OBSERVATIONS');
+            },null,{timeout:120000});
+            const desktop=await page.evaluate(()=>({
+              bricks:Number((document.querySelector('#brickCount').textContent||'0').replace(/[^0-9]/g,'')),
+              pairs:document.querySelectorAll('#pairList .pair-row').length,
+              mode:document.querySelector('#modePill')?.textContent,
+              source:document.querySelector('#sourceText')?.textContent,
+              integrity:document.querySelector('#historyIntegrity')?.textContent,
+              coverage:document.querySelector('#historyCoverage')?.textContent,
+              from:document.querySelector('#historyFrom')?.textContent,
+              to:document.querySelector('#historyTo')?.textContent,
+              width:document.documentElement.scrollWidth,inner:innerWidth,
+              canvas:document.querySelector('#renkoCanvas')?.getBoundingClientRect().toJSON()
+            }));
+            if(desktop.bricks<=5000) throw Error('private full history missing');
+            if(desktop.pairs!==500) throw Error('top 500 not rendered: '+desktop.pairs);
+            if(!desktop.mode.includes('PRIVATE FULL HISTORY')) throw Error('private mode missing');
+            if(!desktop.integrity.includes('REAL_MARKET_OBSERVATIONS')) throw Error('history integrity missing');
+            if(!String(desktop.coverage).startsWith('ALL')) throw Error('ALL HISTORY is not default');
+            if(desktop.from==='—'||desktop.to==='—') throw Error('history dates missing');
+            if(desktop.width>desktop.inner+2) throw Error('desktop overflow');
+            if(!(desktop.canvas?.width>600&&desktop.canvas?.height>250)) throw Error('canvas unusable');
+            await page.click('#historyStart');
+            await page.waitForFunction(()=>document.querySelector('#historyCoverage').textContent.startsWith('WINDOW'));
+            await page.click('#historyLive');
+            await page.click('#historyAll');
+            await page.waitForFunction(()=>document.querySelector('#historyCoverage').textContent.startsWith('ALL'));
+            await page.setViewportSize({width:390,height:844});
+            await page.waitForTimeout(500);
+            const mobile=await page.evaluate(()=>({width:document.documentElement.scrollWidth,inner:innerWidth,chart:document.querySelector('#chartWrap')?.getBoundingClientRect().width,pairs:getComputedStyle(document.querySelector('.markets')).display,button:getComputedStyle(document.querySelector('#openPairs')).display}));
+            if(mobile.width>mobile.inner+2||mobile.chart>mobile.inner+2) throw Error('mobile overflow');
+            if(mobile.button==='none') throw Error('mobile pair button hidden');
+            if(errors.length) throw Error('page errors: '+errors.join(' | '));
+            console.log('RENKO_V4_BROWSER_PASS',desktop,mobile);
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+
+      - name: Wait for Renko v4 GitHub Pages bundle
         if: github.event_name == 'push'
         run: |
+          set -euo pipefail
           ok=0
           for i in {1..120}; do
             q="${GITHUB_RUN_ID}-${i}"
-            html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/renko/?v=$q" || true)"
-            js="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/renko/renko-v3.js?v=$q" || true)"
-            if grep -Fq 'RWA Renko' <<<"$html" \
-              && grep -Fq 'renko-v3.js?v=3' <<<"$html" \
-              && grep -Fq 'ALL HISTORY' <<<"$html" \
-              && grep -Fq "version:'3.0.0'" <<<"$js" \
-              && grep -Fq "source:'raw-trade-ticks-only'" <<<"$js" \
-              && grep -Fq "method:'traditional-fixed-box'" <<<"$js" \
-              && grep -Fq "reversalBoxes:2" <<<"$js" \
-              && grep -Fq "history:'all-bricks-from-chart-genesis'" <<<"$js" \
-              && grep -Fq 'RENDER_LIMIT=500' <<<"$js"; then ok=1; break; fi
+            html="$(curl --connect-timeout 5 --max-time 15 -fsSL "https://narzulalistiqlal.github.io/rwa/renko/?v=$q" || true)"
+            js="$(curl --connect-timeout 5 --max-time 15 -fsSL "https://narzulalistiqlal.github.io/rwa/renko/renko-v4.js?v=$q" || true)"
+            if grep -Fq 'renko-v4.js?v=4' <<<"$html" \
+              && grep -Fq 'PRIVATE FULL HISTORY' <<<"$html" \
+              && grep -Fq 'const TOP_VISIBLE=500' <<<"$js" \
+              && grep -Fq 'const PAGE=25000' <<<"$js"; then ok=1; break; fi
             sleep 5
           done
           test "$ok" = "1"
-      - name: Verify live top-500 raw-tick Renko page moving price and full history
+
+      - name: Verify live GitHub Pages full history and moving venue price
         if: github.event_name == 'push'
         env:
-          RWA_RENKO_LIVE_URL: https://narzulalistiqlal.github.io/rwa/renko/?v=${{ github.run_id }}
-        run: node tools/renko-live-smoke.mjs
+          URL: https://narzulalistiqlal.github.io/rwa/renko/?v=${{ github.run_id }}
+        run: |
+          node <<'JS'
+          const { chromium }=require('playwright');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:1365,height:768}});
+            const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+            await page.goto(process.env.URL,{waitUntil:'domcontentloaded',timeout:30000});
+            await page.waitForFunction(()=>window.RWARenkoV4===true,null,{timeout:15000});
+            await page.waitForFunction(()=>Number((document.querySelector('#brickCount')?.textContent||'0').replace(/[^0-9]/g,''))>5000,null,{timeout:120000});
+            await page.waitForFunction(()=>String(document.querySelector('#feedPill b')?.textContent||'').includes('LIVE'),null,{timeout:60000});
+            const before=await page.evaluate(()=>({price:document.querySelector('#lastPrice')?.textContent,bricks:Number((document.querySelector('#brickCount')?.textContent||'0').replace(/[^0-9]/g,'')),integrity:document.querySelector('#historyIntegrity')?.textContent,pairs:document.querySelectorAll('#pairList .pair-row').length}));
+            let moved=false;
+            for(let i=0;i<30;i++){await page.waitForTimeout(1000);const p=await page.textContent('#lastPrice');if(p&&p!==before.price&&p!=='—'){moved=true;break}}
+            const after=await page.evaluate(()=>({price:document.querySelector('#lastPrice')?.textContent,feed:document.querySelector('#feedPill b')?.textContent,health:document.querySelector('#tickHealth')?.textContent,width:document.documentElement.scrollWidth,inner:innerWidth}));
+            if(before.bricks<=5000) throw Error('live full history absent');
+            if(before.pairs!==500) throw Error('live top 500 absent');
+            if(!String(before.integrity).includes('REAL_MARKET_OBSERVATIONS')) throw Error('live history source unverified');
+            if(!moved) throw Error(`live venue price did not change in observation window: ${before.price}`);
+            if(after.width>after.inner+2) throw Error('live horizontal overflow');
+            if(errors.length) throw Error('live page errors: '+errors.join(' | '));
+            console.log('RENKO_V4_LIVE_PASS',before,after);
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+
       - name: Publish Renko status
         if: success() && github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-live' -f description='LIVE top-500 crypto Traditional Renko + moving raw ticks + all chart-genesis history PASS'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-live' -f description='Private full-history Traditional Renko + top 500 + moving live venue price PASS'
+
       - name: Publish Renko failure
         if: failure() && github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/renko-live' -f description='Live Renko v3 top-500/all-history gate failed'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/renko-live' -f description='Renko private full-history/live gate failed'
