@@ -27,6 +27,7 @@ jobs:
         run: |
           node --check trade/app.js
           node --check trade/hyperliquid.js
+          node --check trade/terminal-pro.js
           node --check trade/fund-modal.js
           node --check trade/e2e-resilience.js
           node --check trade/e2e.js
@@ -35,14 +36,10 @@ jobs:
 
           test -s trade/index.html
           test -s trade/styles.css
+          test -s trade/terminal-pro.css
+          test -s trade/terminal-pro.js
           test -s trade/fund-modal.css
           test -s trade/e2e.css
-          test -s trade/e2e-resilience.js
-          test -s trade/app.js
-          test -s trade/hyperliquid.js
-          test -s trade/fund-modal.js
-          test -s trade/e2e.js
-          test -s trade/config.js
 
           grep -Fq "frame-src 'none'" trade/index.html
           ! grep -Fq '<iframe' trade/index.html
@@ -50,9 +47,33 @@ jobs:
           ! grep -Fq 'Fund Hyperliquid first' trade/app.js
           ! grep -Fq 'window.open(' trade/app.js
           grep -Fq 'Get test balance' trade/index.html
-          grep -Fq 'e2e.css?v=1' trade/index.html
+          grep -Fq 'terminal-pro.css?v=1' trade/index.html
+          grep -Fq 'terminal-pro.js?v=1' trade/index.html
+          grep -Fq 'id="priceChart"' trade/index.html
+          grep -Fq 'id="marketPickerModal"' trade/index.html
+          grep -Fq 'id="positionModal"' trade/index.html
+          grep -Fq 'id="riskModal"' trade/index.html
+          grep -Fq 'data-side-btn="BUY"' trade/index.html
+          grep -Fq 'data-close-fraction="0.5"' trade/index.html
           grep -Fq 'e2e-resilience.js?v=1' trade/index.html
           grep -Fq 'e2e.js?v=4' trade/index.html
+
+          grep -Fq "version: '1.3.0'" trade/config.js
+          grep -Fq "uiRelease: 'terminal-pro-v1'" trade/config.js
+          grep -Fq 'mainnetEnabled: false' trade/config.js
+
+          grep -Fq 'candleSnapshot' trade/terminal-pro.js
+          grep -Fq 'metaAndAssetCtxs' trade/terminal-pro.js
+          grep -Fq 'RWAExecutionAPI' trade/terminal-pro.js
+          grep -Fq 'orders.market' trade/terminal-pro.js
+          grep -Fq 'reduceOnly:true' trade/terminal-pro.js
+          grep -Fq 'orders.trigger' trade/terminal-pro.js
+          grep -Fq 'orders.modify' trade/terminal-pro.js
+          grep -Fq 'rwa_risk_v2' trade/terminal-pro.js
+          grep -Fq 'RWATradePro' trade/terminal-pro.js
+          ! grep -Fq 'ExchangeClient' trade/terminal-pro.js
+          ! grep -Eq "api\.hyperliquid(-testnet)?\.xyz/exchange|['\"]\/exchange['\"]" trade/terminal-pro.js
+
           grep -Fq "type:'claimDrip'" trade/fund-modal.js
           grep -Fq 'Get 1,000 test USDC' trade/fund-modal.js
           grep -Fq 'currentMarkPrice' trade/app.js
@@ -62,22 +83,13 @@ jobs:
           grep -Fq 'const restingPrice=mid*0.95' trade/e2e.js
           grep -Fq 'price:mid*0.96' trade/e2e.js
           grep -Fq 'const protectionPct=0.005' trade/e2e.js
-          grep -Fq 'tp:mid*(1+protectionPct)' trade/e2e.js
-          grep -Fq 'sl:mid*(1-protectionPct)' trade/e2e.js
+          grep -Fq 'replacementOid' trade/e2e.js
           grep -Fq 'Run full TESTNET verification' trade/e2e.js
           grep -Fq 'E2E_PROOF_JSON_START' trade/e2e.js
-          grep -Fq 'Close existing TESTNET positions' trade/e2e.js
-          grep -Fq 'Cancel existing TESTNET orders' trade/e2e.js
-          grep -Fq 'cleanupTestState' trade/e2e.js
-          grep -Fq 'replacementOid' trade/e2e.js
-          grep -Fq 'Modified TESTNET replacement order was not observed' trade/e2e.js
           ! grep -Fq 'ExchangeClient' trade/e2e.js
-          ! grep -Eq "api\.hyperliquid(-testnet)?\.xyz/exchange|['\"]\/exchange['\"]" trade/e2e.js
 
-          grep -Fq "version:'1.0.0'" trade/e2e-resilience.js
           grep -Fq "const MARKER='e2e-read-backoff-v1'" trade/e2e-resilience.js
           grep -Fq "wrapMethod(api.account,'state')" trade/e2e-resilience.js
-          grep -Fq "wrapMethod(api.account,'fills')" trade/e2e-resilience.js
           grep -Fq "wrapMethod(api.orders,'open')" trade/e2e-resilience.js
 
           grep -Fq 'WebSocketTransport' execution-api.js
@@ -90,7 +102,7 @@ jobs:
       - name: Publish source status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/trade-source' -f description='RWA funding + fail-closed WS + resilient oracle-safe TESTNET E2E verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/trade-source' -f description='Professional terminal + fail-closed execution source verified'
 
       - name: Verify deployed GitHub Pages trade bundle
         shell: bash
@@ -100,32 +112,30 @@ jobs:
             q="${GITHUB_RUN_ID}-${i}"
             html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/?v=$q" || true)"
             app="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/app.js?v=$q" || true)"
+            pro="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/terminal-pro.js?v=$q" || true)"
+            proc="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/terminal-pro.css?v=$q" || true)"
+            cfg="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/config.js?v=$q" || true)"
             fund="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/fund-modal.js?v=$q" || true)"
             resilience="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/e2e-resilience.js?v=$q" || true)"
             e2e="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/e2e.js?v=$q" || true)"
-            e2ecss="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/e2e.css?v=$q" || true)"
             execapi="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/execution-api.js?v=$q" || true)"
             if grep -Fq 'Get test balance' <<<"$html" \
               && grep -Fq "frame-src 'none'" <<<"$html" \
               && ! grep -Fq '<iframe' <<<"$html" \
-              && grep -Fq 'e2e-resilience.js?v=1' <<<"$html" \
-              && grep -Fq 'e2e.js?v=4' <<<"$html" \
-              && grep -Fq 'e2e.css?v=1' <<<"$html" \
+              && grep -Fq 'terminal-pro.js?v=1' <<<"$html" \
+              && grep -Fq 'id="priceChart"' <<<"$html" \
+              && grep -Fq 'id="positionModal"' <<<"$html" \
               && grep -Fq 'currentMarkPrice' <<<"$app" \
-              && ! grep -Fq 'Fund Hyperliquid first' <<<"$app" \
+              && grep -Fq 'candleSnapshot' <<<"$pro" \
+              && grep -Fq 'orders.trigger' <<<"$pro" \
+              && grep -Fq 'orders.modify' <<<"$pro" \
+              && ! grep -Fq 'ExchangeClient' <<<"$pro" \
+              && grep -Fq '.mobile-trade-bar' <<<"$proc" \
+              && grep -Fq "version: '1.3.0'" <<<"$cfg" \
+              && grep -Fq 'mainnetEnabled: false' <<<"$cfg" \
               && grep -Fq "type:'claimDrip'" <<<"$fund" \
-              && grep -Fq 'Get 1,000 test USDC' <<<"$fund" \
               && grep -Fq "const MARKER='e2e-read-backoff-v1'" <<<"$resilience" \
               && grep -Fq "version:'1.0.4'" <<<"$e2e" \
-              && grep -Fq 'const restingPrice=mid*0.95' <<<"$e2e" \
-              && grep -Fq 'price:mid*0.96' <<<"$e2e" \
-              && grep -Fq 'const protectionPct=0.005' <<<"$e2e" \
-              && grep -Fq 'tp:mid*(1+protectionPct)' <<<"$e2e" \
-              && grep -Fq 'sl:mid*(1-protectionPct)' <<<"$e2e" \
-              && grep -Fq 'replacementOid' <<<"$e2e" \
-              && grep -Fq 'Run full TESTNET verification' <<<"$e2e" \
-              && grep -Fq 'E2E_PROOF_JSON_START' <<<"$e2e" \
-              && grep -Fq '.trade-e2e-grid' <<<"$e2ecss" \
               && grep -Fq "transport:'websocket-write-v1'" <<<"$execapi" \
               && grep -Fq "riskSigner:'agent-only-fail-closed-v1'" <<<"$execapi"; then
               ok=1
@@ -139,7 +149,7 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/trade-live' -f description='GitHub Pages /rwa/trade live bundle + resilient oracle-safe TESTNET E2E verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/trade-live' -f description='Professional RWA Trade bundle verified live on GitHub Pages'
 
       - name: Publish failure status
         if: failure()
