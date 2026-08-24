@@ -5,6 +5,7 @@ on:
     branches: ["main"]
     paths:
       - "agent-worker/cloudflare/**"
+      - "agent-worker/package.json"
       - "agent-worker/execution.mjs"
       - "agent-worker/copy-engine.mjs"
       - ".github/workflows/cloudflare-free-worker.yml"
@@ -32,19 +33,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22.12.0"
-      - name: Install free worker dependencies
-        working-directory: agent-worker/cloudflare
+      - name: Install worker dependencies
+        working-directory: agent-worker
         run: npm install --ignore-scripts
-      - name: Validate source and Cloudflare bundle
-        working-directory: agent-worker/cloudflare
-        run: |
-          node --check src/index.mjs
-          npx wrangler deploy --dry-run --outdir /tmp/rwa-worker-dist
-          test -s /tmp/rwa-worker-dist/index.js
+      - name: Validate Node + Cloudflare source
+        working-directory: agent-worker
+        run: npm run check
+      - name: Validate Cloudflare bundle
+        working-directory: agent-worker
+        run: npx wrangler deploy --config cloudflare/wrangler.toml --dry-run --outdir /tmp/rwa-worker-dist
       - name: Publish free-worker build status
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/free-worker-build' -f description='Cloudflare Workers Free + Durable Object bundle PASS'
+      - name: Publish free-worker build failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/free-worker-build' -f description='Cloudflare free worker build failed'
 
   deploy:
     if: github.event_name == 'workflow_dispatch' && inputs.deploy == true
@@ -65,20 +71,20 @@ jobs:
           test -n "$CLOUDFLARE_API_TOKEN" || { echo 'Missing CLOUDFLARE_API_TOKEN'; exit 2; }
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo 'Missing CLOUDFLARE_ACCOUNT_ID'; exit 2; }
       - name: Install worker dependencies
-        working-directory: agent-worker/cloudflare
+        working-directory: agent-worker
         run: npm install --ignore-scripts
       - name: Create persistent encryption secret once
-        working-directory: agent-worker/cloudflare
+        working-directory: agent-worker
         run: |
-          if ! npx wrangler secret list --json | grep -q 'RWA_KEY_ENCRYPTION_SECRET'; then
-            openssl rand -hex 48 | npx wrangler secret put RWA_KEY_ENCRYPTION_SECRET
+          if ! npx wrangler secret list --config cloudflare/wrangler.toml --json | grep -q 'RWA_KEY_ENCRYPTION_SECRET'; then
+            openssl rand -hex 48 | npx wrangler secret put RWA_KEY_ENCRYPTION_SECRET --config cloudflare/wrangler.toml
           fi
       - name: Deploy free Cloudflare Worker
         id: deploy
-        working-directory: agent-worker/cloudflare
+        working-directory: agent-worker
         run: |
           set -o pipefail
-          npx wrangler deploy 2>&1 | tee /tmp/rwa-worker-deploy.log
+          npx wrangler deploy --config cloudflare/wrangler.toml 2>&1 | tee /tmp/rwa-worker-deploy.log
           URL="$(grep -Eo 'https://[A-Za-z0-9._-]+\.workers\.dev' /tmp/rwa-worker-deploy.log | tail -1)"
           test -n "$URL" || { echo 'Could not resolve workers.dev URL'; exit 3; }
           echo "url=$URL" >> "$GITHUB_OUTPUT"
