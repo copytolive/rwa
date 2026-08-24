@@ -6,6 +6,7 @@ on:
     paths:
       - "trade/**"
       - "execution-api.js"
+      - "tools/trade-ui-contract.mjs"
       - ".github/workflows/trade-smoke.yml"
   workflow_dispatch:
 
@@ -33,6 +34,8 @@ jobs:
           node --check trade/e2e.js
           node --check trade/config.js
           node --check execution-api.js
+          node --check tools/trade-ui-contract.mjs
+          node tools/trade-ui-contract.mjs
 
           test -s trade/index.html
           test -s trade/styles.css
@@ -102,7 +105,7 @@ jobs:
       - name: Publish source status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/trade-source' -f description='Professional terminal + fail-closed execution source verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/trade-source' -f description='Professional terminal + UI operability + fail-closed execution verified'
 
       - name: Verify deployed GitHub Pages trade bundle
         shell: bash
