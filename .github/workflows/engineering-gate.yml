@@ -34,6 +34,7 @@ jobs:
           node --check beta-proof-client.js
           node --check rwa-verify-client.js
           node --check rwa-verification-evidence.js
+          node --check social-notification-defaults.js
           node --check social-trading-pro.js
           node --check agent-worker/execution.mjs
           node --check agent-worker/copy-engine.mjs
@@ -54,7 +55,9 @@ jobs:
           grep -Fq 'rwa-verification-evidence.js?v=1' suite-nav.js
           grep -Fq 'public-https-distinct-probed-v1' tools/rwa-evidence-policy.mjs
           grep -Fq 'probeEvidencePayload' tools/rwa-verify.mjs
+          grep -Fq "policy:'explicit-opt-in-v1'" social-notification-defaults.js
           grep -Fq 'venue-backed-social-feed-v1' social-trading-pro.js
+          grep -Fq 'social-notification-defaults.js?v=1' index.html
           grep -Fq 'social-trading-pro.js?v=1' index.html
           node tools/security-gate.mjs
           node tools/product-parity-contract.mjs
@@ -64,7 +67,7 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/engineering-gate' -f description='Engineering COMPLETE: trading social parity security worker proofs beta monitoring automation PASS'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/engineering-gate' -f description='Engineering COMPLETE: trading social parity opt-in privacy security worker proofs beta monitoring PASS'
       - name: Publish engineering failure
         if: failure()
         env:
