@@ -1,4 +1,5 @@
 name: RWA Renko V7 TradingView-style E2E
+# V7 gate: validate the real renderer in Chromium before merge.
 
 on:
   pull_request:
