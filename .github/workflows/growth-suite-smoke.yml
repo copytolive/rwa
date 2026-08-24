@@ -9,6 +9,8 @@ on:
       - "suite.css"
       - "suite-v2.css"
       - "social-trade-monitor.js"
+      - "social-trading-pro.js"
+      - "index.html"
       - "rwa-assets.json"
       - "rwa-execution-config.json"
       - ".github/workflows/growth-suite-smoke.yml"
@@ -29,6 +31,7 @@ jobs:
           node --check suite-v2.js
           node --check suite-ui.js
           node --check social-trade-monitor.js
+          node --check social-trading-pro.js
           test -s suite-v2.css
           python -m json.tool rwa-assets.json >/dev/null
           python -m json.tool rwa-execution-config.json >/dev/null
@@ -49,7 +52,16 @@ jobs:
           grep -Fq "clearinghouseState" social-trade-monitor.js
           grep -Fq "verifyMessage" social-trade-monitor.js
           grep -Fq "Notification.requestPermission" social-trade-monitor.js
+          grep -Fq "venue-backed-social-feed-v1" social-trading-pro.js
+          grep -Fq "userFillsByTime" social-trading-pro.js
+          grep -Fq "data-rwa-feed-trade" social-trading-pro.js
+          grep -Fq "Following trades" social-trading-pro.js
+          grep -Fq "Top-trader activity" social-trading-pro.js
+          grep -Fq "Trending market alerts" social-trading-pro.js
+          grep -Fq "New follower alerts" social-trading-pro.js
+          grep -Fq "social-trading-pro.js?v=1" index.html
           ! grep -Fq "ExchangeClient" social-trade-monitor.js
+          ! grep -Fq "ExchangeClient" social-trading-pro.js
           grep -Fq "Revenue OFF" suite-ui.js
           grep -Fq "Copy trader" suite-ui.js
           grep -Fq "Verified portfolio & P&L" suite-ui.js
@@ -60,7 +72,7 @@ jobs:
       - name: Publish source status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/growth-suite-source' -f description='Portfolio, leaderboard, copy, social position alerts and RWA source verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/growth-suite-source' -f description='Portfolio, leaderboard, copy, venue social feed, notifications and RWA source verified'
       - name: Wait for GitHub Pages propagation
         shell: bash
         run: |
@@ -70,6 +82,8 @@ jobs:
             loader="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/suite.js?v=$q" || true)"
             core="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/suite-v2.js?v=$q" || true)"
             social="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-trade-monitor.js?v=$q" || true)"
+            socialpro="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-trading-pro.js?v=$q" || true)"
+            html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/?v=$q" || true)"
             ui="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/suite-ui.js?v=$q" || true)"
             css="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/suite-v2.css?v=$q" || true)"
             cfg="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-execution-config.json?v=$q" || true)"
@@ -82,6 +96,10 @@ jobs:
               && grep -Fq "RWAFollowedTradeMonitor" <<<"$social" \
               && grep -Fq "rwa:followed-trader-position" <<<"$social" \
               && ! grep -Fq "ExchangeClient" <<<"$social" \
+              && grep -Fq "venue-backed-social-feed-v1" <<<"$socialpro" \
+              && grep -Fq "data-rwa-feed-trade" <<<"$socialpro" \
+              && ! grep -Fq "ExchangeClient" <<<"$socialpro" \
+              && grep -Fq "social-trading-pro.js?v=1" <<<"$html" \
               && grep -Fq "Verified portfolio & P&L" <<<"$ui" \
               && grep -Fq "leader-wallet-search" <<<"$css" \
               && grep -Fq '"enabled": false' <<<"$cfg"; then ok=1; break; fi
@@ -92,7 +110,7 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/growth-suite-live' -f description='Verified growth suite + social trader alerts are live on GitHub Pages'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/growth-suite-live' -f description='Verified growth suite + venue social trader activity are live on GitHub Pages'
       - name: Publish failure statuses
         if: failure()
         env:
