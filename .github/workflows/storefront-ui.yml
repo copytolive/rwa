@@ -5,6 +5,7 @@ on:
     paths:
       - "rwa-commerce-registry.json"
       - "rwa-storefront.js"
+      - "rwa-storefront-safety-patch.js"
       - "rwa-ui-pro.css"
       - "quick-actions.js"
       - "trade/ui-polish.js"
@@ -29,12 +30,14 @@ jobs:
       - name: Validate storefront source contract
         run: |
           node --check rwa-storefront.js
+          node --check rwa-storefront-safety-patch.js
           node --check quick-actions.js
           node --check trade/ui-polish.js
           node --check tools/storefront-ui-contract.mjs
           node --check tools/storefront-browser.mjs
           python -m json.tool rwa-commerce-registry.json >/dev/null
           node tools/storefront-ui-contract.mjs
+          grep -Fq 'preview-no-fake-price-trade-v1' rwa-storefront-safety-patch.js
       - name: Install Playwright Chromium
         run: |
           npm install --no-save playwright@1.55.0
@@ -47,10 +50,13 @@ jobs:
             q="${GITHUB_RUN_ID}-${i}"
             quick="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/quick-actions.js?v=$q" || true)"
             store="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-storefront.js?v=$q" || true)"
+            safety="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-storefront-safety-patch.js?v=$q" || true)"
             reg="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-commerce-registry.json?v=$q" || true)"
             trade="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/ui-polish.js?v=$q" || true)"
             if grep -Fq "premium-shell-storefront-v1" <<<"$quick" \
+              && grep -Fq "rwa-storefront-safety-patch.js?v=1" <<<"$quick" \
               && grep -Fq "ONE_TOKEN_ONE_PHYSICAL_STORE_V1" <<<"$store" \
+              && grep -Fq "preview-no-fake-price-trade-v1" <<<"$safety" \
               && grep -Fq '"one_token_one_physical_store": true' <<<"$reg" \
               && grep -Fq "desktop-mobile-commerce-polish-v1" <<<"$trade"; then ok=1; break; fi
             sleep 5
@@ -61,7 +67,7 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/storefront-ui' -f description='Desktop + mobile physical-store ecommerce UI and trade/store navigation PASS'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/storefront-ui' -f description='Desktop + mobile physical-store ecommerce UI, honest preview states and trade/store navigation PASS'
       - name: Publish storefront UI failure
         if: failure()
         env:
