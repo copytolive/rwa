@@ -61,7 +61,9 @@ jobs:
           ! grep -Eq '(withdraw3|usdClassTransfer|spotSend|sendAsset)' agent-worker/execution.mjs agent-worker/worker.mjs
           grep -Fq "version:'1.5.0'" trade/config.js
           grep -Fq "status==='READY_FOR_MAINNET'" trade/config.js
-          grep -Fq "import './ui-polish.js?v=1'" trade/config.js
+          grep -Fq "import './ui-polish.js?v=2'" trade/config.js
+          grep -Fq "runtime:'stable-no-observer-v2'" trade/ui-polish.js
+          ! grep -Fq 'MutationObserver' trade/ui-polish.js
           grep -Fq 'quick-actions.js?v=1' index.html
           grep -Fq 'social-notification-defaults.js?v=1' index.html
           grep -Fq 'social-trading-pro.js?v=1' index.html
@@ -113,10 +115,11 @@ jobs:
               && grep -Fq 'social-trading-pro.js?v=1' <<<"$root" \
               && grep -Fq 'id="priceChart"' <<<"$trade" \
               && grep -Fq "version:'1.5.0'" <<<"$cfg" \
-              && grep -Fq "import './ui-polish.js?v=1'" <<<"$cfg" \
+              && grep -Fq "import './ui-polish.js?v=2'" <<<"$cfg" \
               && grep -Fq 'RWAMarginRuntime' <<<"$margin" \
               && grep -Fq 'RWAChartTradeOverlay' <<<"$overlay" \
-              && grep -Fq 'desktop-mobile-commerce-polish-v1' <<<"$tradeui" \
+              && grep -Fq 'stable-no-observer-v2' <<<"$tradeui" \
+              && ! grep -Fq 'MutationObserver' <<<"$tradeui" \
               && grep -Fq 'premium-shell-storefront-v1' <<<"$quick" \
               && grep -Fq 'rwa-storefront-safety-patch.js?v=1' <<<"$quick" \
               && grep -Fq 'rwa-store-draft-ui.js?v=1' <<<"$quick" \
