@@ -57,7 +57,7 @@ jobs:
           grep -Fq 'renko-v2.css?v=2' renko/index.html
           grep -Fq 'RAW TICK · TRADITIONAL' renko/index.html
           grep -Fq '2-BRICK REVERSAL' renko/index.html
-          grep -Fq 'Top 500' renko/index.html
+          grep -Fq 'first 500' renko/index.html
       - name: Install Playwright Chromium
         run: |
           npm install --no-save playwright@1.55.0
