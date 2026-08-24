@@ -2,54 +2,80 @@
 'use strict';
 
 // Independent cross-feed acquisition for frozen P45 certification.
-// Source: Dukascopy via dukascopy-node 1.50.0. No strategy parameters here.
-// Rate-limit-safe acquisition: one daily artifact per batch, explicit pauses, retries, cache.
+// Source bytes are a public static GitHub mirror of Dukascopy XAUUSD M1 BID/ASK.
+// Strategy parameters are not present here and are never tuned by this downloader.
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { getHistoricalRates } = require('dukascopy-node');
+const https = require('https');
 
+const MIRROR_REPO = 'kevingtlin/Market-Data-Lab';
+const MIRROR_COMMIT = '3fbaf3280338474b379e3a01ac3396f85d4a60be';
+const RAW_BASE = `https://raw.githubusercontent.com/${MIRROR_REPO}/${MIRROR_COMMIT}/xauusd`;
 const OUT = path.resolve('crossfeed_data');
-const CACHE = path.resolve('.dukascopy-cache');
 fs.mkdirSync(OUT, { recursive: true });
-fs.mkdirSync(CACHE, { recursive: true });
 
 function sha256(buf) {
   return crypto.createHash('sha256').update(buf).digest('hex');
 }
 
-async function acquire(priceType) {
-  // December 2024 is warm-up only. It supplies >200 M15 bars plus a prior-week boundary
-  // before the untouched 2025 scoring window. Strategy logic and 2025 score window are unchanged.
-  console.log(`Acquiring Dukascopy XAUUSD ${priceType.toUpperCase()} M1: 2024-12-01..2026-01-01 UTC`);
-  const csv = await getHistoricalRates({
-    instrument: 'xauusd',
-    dates: {
-      from: new Date('2024-12-01T00:00:00Z'),
-      to: new Date('2026-01-01T00:00:00Z'),
-    },
-    timeframe: 'm1',
-    priceType,
-    utcOffset: 0,
-    volumes: false,
-    ignoreFlats: false,
-    format: 'csv',
-    batchSize: 1,
-    pauseBetweenBatchesMs: 1500,
-    useCache: true,
-    cacheFolderPath: CACHE,
-    retryCount: 6,
-    retryOnEmpty: false,
-    failAfterRetryCount: true,
-    pauseBetweenRetriesMs: 5000,
+function get(url, redirects = 5) {
+  return new Promise((resolve, reject) => {
+    const req = https.get(url, { headers: { 'User-Agent': 'p45-crossfeed-cert/1.0' } }, (res) => {
+      if ([301,302,303,307,308].includes(res.statusCode) && res.headers.location && redirects > 0) {
+        res.resume(); return resolve(get(res.headers.location, redirects - 1));
+      }
+      if (res.statusCode !== 200) {
+        let body = '';
+        res.setEncoding('utf8');
+        res.on('data', c => body += c.slice(0, 1000));
+        res.on('end', () => reject(new Error(`HTTP ${res.statusCode} ${url}: ${body}`)));
+        return;
+      }
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => resolve(Buffer.concat(chunks)));
+    });
+    req.setTimeout(120000, () => req.destroy(new Error(`timeout ${url}`)));
+    req.on('error', reject);
   });
-  if (typeof csv !== 'string' || csv.length < 100000) {
-    throw new Error(`Unexpected ${priceType} payload: type=${typeof csv}, length=${csv?.length}`);
+}
+
+function months() {
+  const out = [{ y: 2024, m: 12 }];
+  for (let m = 1; m <= 12; m++) out.push({ y: 2025, m });
+  return out;
+}
+
+async function acquire(side) {
+  const parts = [];
+  const manifest = [];
+  for (const { y, m } of months()) {
+    const mm = String(m).padStart(2, '0');
+    const name = `xauusd_${side}_m1_${y}_${mm}.csv`;
+    const url = `${RAW_BASE}/${side}/m1/${name}`;
+    console.log(`download ${url}`);
+    const b = await get(url);
+    if (b.length < 1000) throw new Error(`unexpectedly small ${name}: ${b.length}`);
+    const text = b.toString('utf8').replace(/^\uFEFF/, '').trimEnd();
+    const lines = text.split(/\r?\n/);
+    if (lines[0].trim().toLowerCase() !== 'timestamp,open,high,low,close') {
+      throw new Error(`unexpected header ${name}: ${lines[0]}`);
+    }
+    if (parts.length === 0) parts.push(lines.join('\n'));
+    else parts.push(lines.slice(1).join('\n'));
+    manifest.push({ name, url, bytes: b.length, sha256: sha256(b), data_rows: lines.length - 1 });
   }
-  const p = path.join(OUT, `dukascopy_${priceType}.csv`);
-  fs.writeFileSync(p, csv, 'utf8');
-  const b = fs.readFileSync(p);
-  console.log(JSON.stringify({ priceType, path: p, bytes: b.length, sha256: sha256(b) }));
+  const combined = Buffer.from(parts.join('\n') + '\n', 'utf8');
+  const p = path.join(OUT, `dukascopy_${side}.csv`);
+  fs.writeFileSync(p, combined);
+  const meta = {
+    provider: 'Dukascopy', mirror_repo: MIRROR_REPO, mirror_commit: MIRROR_COMMIT,
+    side, combined_path: p, combined_bytes: combined.length, combined_sha256: sha256(combined),
+    months: manifest,
+  };
+  fs.writeFileSync(path.join(OUT, `dukascopy_${side}_manifest.json`), JSON.stringify(meta, null, 2));
+  console.log(JSON.stringify(meta));
 }
 
 (async () => {
