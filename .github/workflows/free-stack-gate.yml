@@ -38,7 +38,11 @@ jobs:
           PY
           grep -Fq 'workers_dev = true' agent-worker/cloudflare/wrangler.toml
           grep -Fq 'new_sqlite_classes' agent-worker/cloudflare/wrangler.toml
-          grep -Fq 'mainnetEnabled: false' trade/config.js
+          grep -Fq "Object.defineProperty(BASE,'mainnetEnabled'" trade/config.js
+          grep -Fq "get:()=>canMainnet()" trade/config.js
+          grep -Fq "status==='READY_FOR_MAINNET'" trade/config.js
+          grep -Fq "x?.status==='E2E_VERIFIED'" trade/config.js
+          ! grep -Eq 'mainnetEnabled[[:space:]]*:[[:space:]]*true' trade/config.js
           python - <<'PY'
           import json
           x=json.load(open('agent-worker/public-config.json'))
@@ -48,7 +52,7 @@ jobs:
       - name: Publish zero-cost status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/free-stack-gate' -f description='GitHub Pages + public Actions + Cloudflare Workers Free; no Replit/Vercel/paid worker DB'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/free-stack-gate' -f description='GitHub Pages + public Actions + Cloudflare Workers Free; dynamic machine-gated mainnet; no paid worker stack'
       - name: Publish zero-cost failure
         if: failure()
         env:
