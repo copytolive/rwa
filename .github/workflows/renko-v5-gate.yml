@@ -1,18 +1,18 @@
-name: RWA Renko V5 End-to-End Gate
+name: RWA Renko V6 Lazy History Gate
 
 on:
   pull_request:
     paths:
       - 'renko/**'
-      - 'tools/renko-v5-browser-smoke.mjs'
-      - 'tools/renko-live-smoke.mjs'
+      - 'tools/renko-v6-browser-smoke.mjs'
+      - 'tools/renko-v6-live-smoke.mjs'
       - '.github/workflows/renko-v5-gate.yml'
   push:
     branches: [main]
     paths:
       - 'renko/**'
-      - 'tools/renko-v5-browser-smoke.mjs'
-      - 'tools/renko-live-smoke.mjs'
+      - 'tools/renko-v6-browser-smoke.mjs'
+      - 'tools/renko-v6-live-smoke.mjs'
       - '.github/workflows/renko-v5-gate.yml'
 
 permissions:
@@ -28,32 +28,28 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Static raw-tick-only contract
+      - name: Static V6 contract
         run: |
           set -euo pipefail
           node --check renko/renko-v3.js
           node --check renko/renko-v5.js
-          node --check renko/renko-v5-auto.js
+          node --check renko/renko-v6-lazy.js
           node --check renko/archive-worker-v5.js
-          node --check tools/renko-v5-browser-smoke.mjs
-          grep -Fq "version:'5.3.0'" renko/renko-v5.js
-          grep -Fq "version:'5.4.0'" renko/renko-v5-auto.js
-          grep -Fq "preview:'owned-history-ui-traditional-bricks'" renko/renko-v5-auto.js
-          grep -Fq "emit('archive-chunk'" renko/renko-v5.js
-          grep -Fq "post('chunk'" renko/archive-worker-v5.js
+          node --check tools/renko-v6-browser-smoke.mjs
+          node --check tools/renko-v6-live-smoke.mjs
+          grep -Fq "version:'6.0.0'" renko/renko-v6-lazy.js
+          grep -Fq "mode:'tradingview-compatible-lazy-50'" renko/renko-v6-lazy.js
+          grep -Fq "historicalSource:'binance-1m-close'" renko/renko-v6-lazy.js
+          grep -Fq "rawAudit:'binance-vision-individual-trades'" renko/renko-v6-lazy.js
+          grep -Fq '/api/v3/klines?' renko/renko-v6-lazy.js
+          grep -Fq 'WINDOW=50' renko/renko-v6-lazy.js
+          grep -Fq 'ALL ${fmtN(rows.length)} Binance spot crypto pairs searchable' renko/renko-v6-lazy.js
+          grep -Fq 'renko-v6-lazy.js?v=60' renko/index.html
+          grep -Fq '>50 BRICKS<' renko/index.html
+          ! grep -Fq 'renko-v5-auto.js' renko/index.html
           grep -Fq '/data/spot/monthly/trades/' renko/archive-worker-v5.js
           grep -Fq '/data/spot/daily/trades/' renko/archive-worker-v5.js
           grep -Fq '@trade' renko/renko-v3.js
-          grep -Fq 'TRADITIONAL FIXED BOX' renko/index.html
-          grep -Fq 'id="v5HistoryCount"' renko/index.html
-          grep -Fq 'id="historyCount" hidden' renko/index.html
-          grep -Fq 'renko-v5.js?v=54' renko/index.html
-          grep -Fq 'renko-v5-auto.js?v=54' renko/index.html
-          for f in renko/renko-v5.js renko/renko-v5-auto.js renko/archive-worker-v5.js; do
-            ! grep -Fq '/klines' "$f"
-            ! grep -Fq '@aggTrade' "$f"
-            ! grep -Fq '@kline_' "$f"
-          done
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.55.0
@@ -63,8 +59,8 @@ jobs:
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/renko.log 2>&1 &
           for i in {1..20}; do curl -fsS http://127.0.0.1:4173/renko/ >/dev/null && exit 0; sleep 1; done
           cat /tmp/renko.log; exit 1
-      - name: Browser desktop + mobile + owned history renderer
-        run: node tools/renko-v5-browser-smoke.mjs
+      - name: Browser V6 lazy history + full universe
+        run: node tools/renko-v6-browser-smoke.mjs
 
   live-after-main:
     if: github.event_name == 'push'
@@ -80,45 +76,25 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Wait for Pages V5.4 UI
+      - name: Wait for Pages V6
         run: |
           set -euo pipefail
           for i in {1..120}; do
             q="${GITHUB_RUN_ID}-${i}"
             h="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/?v=$q" || true)"
-            a="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/renko-v5-auto.js?v=$q" || true)"
-            if grep -Fq 'renko-v5-auto.js?v=54' <<<"$h" \
-              && grep -Fq 'id="v5HistoryCount"' <<<"$h" \
-              && grep -Fq "version:'5.4.0'" <<<"$a" \
-              && grep -Fq "owned-history-ui-traditional-bricks" <<<"$a"; then exit 0; fi
+            v="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/renko-v6-lazy.js?v=$q" || true)"
+            if grep -Fq 'renko-v6-lazy.js?v=60' <<<"$h" \
+              && grep -Fq '>50 BRICKS<' <<<"$h" \
+              && grep -Fq "version:'6.0.0'" <<<"$v" \
+              && grep -Fq "tradingview-compatible-lazy-50" <<<"$v"; then exit 0; fi
             sleep 5
           done
           exit 1
-      - name: Live moving tick + real archive decode
+      - name: Verify public 50-brick lazy history and live raw ticks
         env:
           RWA_RENKO_LIVE_URL: https://narzulalistiqlal.github.io/rwa/renko/?v=${{ github.run_id }}
-        run: node tools/renko-live-smoke.mjs
-      - name: Verify actual public auto history is visible
-        run: |
-          cat > verify-auto-history.mjs <<'NODE'
-          import { chromium } from 'playwright';
-          import assert from 'node:assert/strict';
-          const u=`https://narzulalistiqlal.github.io/rwa/renko/?autohistory=${Date.now()}`;
-          const b=await chromium.launch({headless:true});
-          try{
-            const p=await b.newPage({viewport:{width:1440,height:900}});
-            await p.goto(u,{waitUntil:'domcontentloaded',timeout:30000});
-            await p.waitForFunction(()=>window.RWARenko?.version==='5.3.0'&&window.RWARenkoV5Auto?.version==='5.4.0',{timeout:30000});
-            await p.waitForFunction(()=>window.RWARenkoV3?.state?.symbols?.length>=500,{timeout:30000});
-            await p.evaluate(()=>{const i=document.querySelector('#brickSize');if(i)i.value='100';document.querySelector('#applyBrick')?.click()});
-            await p.waitForFunction(()=>window.RWARenkoV5Auto?.state?.previewCount>0,{timeout:150000});
-            await p.waitForTimeout(800);
-            const s=await p.evaluate(()=>({count:window.RWARenkoV5Auto.state.previewCount,ticks:window.RWARenkoV5Auto.state.previewTicks,history:document.querySelector('#v5HistoryCount')?.textContent,legacy:document.querySelector('#historyCount')?.textContent,coverage:document.querySelector('#v5HistoryCoverage')?.textContent,display:document.querySelector('#archivePreview')?.style.display,width:document.querySelector('#archivePreview')?.getBoundingClientRect().width,height:document.querySelector('#archivePreview')?.getBoundingClientRect().height,status:document.querySelector('#archiveStatus')?.textContent}));
-            assert.ok(s.count>0);assert.ok(s.ticks>0);assert.match(String(s.history),/historical bricks/i);assert.notEqual(String(s.history),'0 historical bricks');assert.notEqual(s.display,'none');assert.ok(s.width>700&&s.height>250);console.log(JSON.stringify({ok:true,s},null,2));
-          } finally { await b.close(); }
-          NODE
-          node verify-auto-history.mjs
+        run: node tools/renko-v6-live-smoke.mjs
       - name: Publish status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-v5-e2e' -f description='V5.4 raw-tick Traditional Renko + visible total history PASS'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-v6-e2e' -f description='V6 50-brick lazy Traditional history + all spot search + live @trade PASS'
