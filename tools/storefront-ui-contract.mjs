@@ -1,7 +1,7 @@
 import {readFile} from 'node:fs/promises';
 const read=p=>readFile(p,'utf8');
-const [registryText,storefront,safety,draftUi,draftCss,homeCommerce,homeCss,marketLabels,detail,detailCss,uiCss,quick,tradePolish,tradeCss,tradeCfg,assetsText]=await Promise.all([
-  read('rwa-commerce-registry.json'),read('rwa-storefront.js'),read('rwa-storefront-safety-patch.js'),read('rwa-store-draft-ui.js'),read('rwa-store-draft-ui.css'),read('rwa-home-commerce.js'),read('rwa-home-commerce.css'),read('rwa-market-labels.js'),read('rwa-store-detail.js'),read('rwa-store-detail.css'),read('rwa-ui-pro.css'),read('quick-actions.js'),read('trade/ui-polish.js'),read('trade/ui-polish.css'),read('trade/config.js'),read('rwa-assets.json')
+const [registryText,storefront,safety,draftUi,draftCss,homeCommerce,homeCss,marketLabels,detail,detailCss,checkout,checkoutCss,uiCss,quick,tradePolish,tradeCss,tradeCfg,assetsText]=await Promise.all([
+  read('rwa-commerce-registry.json'),read('rwa-storefront.js'),read('rwa-storefront-safety-patch.js'),read('rwa-store-draft-ui.js'),read('rwa-store-draft-ui.css'),read('rwa-home-commerce.js'),read('rwa-home-commerce.css'),read('rwa-market-labels.js'),read('rwa-store-detail.js'),read('rwa-store-detail.css'),read('rwa-checkout-ui.js'),read('rwa-checkout-ui.css'),read('rwa-ui-pro.css'),read('quick-actions.js'),read('trade/ui-polish.js'),read('trade/ui-polish.css'),read('trade/config.js'),read('rwa-assets.json')
 ]);
 const registry=JSON.parse(registryText),assets=JSON.parse(assetsText),fail=[];const ok=(v,m)=>{if(!v)fail.push(m)};
 const stores=Array.isArray(registry.stores)?registry.stores:[],tokens=stores.map(x=>String(x.token||'').toLowerCase()),addresses=stores.map(x=>String(x.physical_store?.full_address||'').trim().toLowerCase()).filter(Boolean);
@@ -33,14 +33,19 @@ ok(detail.includes('Trade after venue + RWA verification')&&detail.includes('sto
 ok(detail.includes('storefront_photo_url')&&detail.includes('business_registration_url')&&detail.includes('merchant_identity_url'),'store detail evidence links incomplete');
 ok(detail.includes('Open map')&&detail.includes('External catalog')&&detail.includes('Store products'),'store detail commerce surface incomplete');
 ok(detailCss.includes('.rwa-store-detail-layer')&&detailCss.includes('@media(max-width:760px)')&&detailCss.includes('@media(max-width:420px)'),'store detail responsive CSS missing');
-const uiRuntime=storefront+safety+draftUi+homeCommerce+marketLabels+detail+tradePolish;
+ok(checkout.includes("runtime:'backend-gated-checkout-preview-v1'")&&checkout.includes('Fulfillment')&&checkout.includes('Contact')&&checkout.includes('Review'),'checkout stepper runtime missing');
+ok(checkout.includes('Store pickup')&&checkout.includes('Shipping')&&checkout.includes('Provider integration pending'),'checkout fulfillment/payment preview incomplete');
+ok(checkout.includes('does not persist customer PII')&&checkout.includes('does not collect card numbers'),'checkout privacy guard missing');
+ok(checkout.includes('Place order after backend verification')&&checkout.includes('disabled'),'final order creation must remain backend-gated');
+ok(checkoutCss.includes('.rwa-checkout-layer')&&checkoutCss.includes('@media(max-width:680px)'),'responsive checkout CSS missing');
+const uiRuntime=storefront+safety+draftUi+homeCommerce+marketLabels+detail+checkout+tradePolish;
 ok(!/api\.hyperliquid(?:-testnet)?\.xyz\/exchange|['"]\/exchange['"]/.test(uiRuntime),'commerce UI must not create an exchange write route');
 ok(!uiRuntime.includes('ExchangeClient'),'commerce UI must not instantiate exchange clients');
 ok(uiCss.includes('.rwa-shop-screen')&&uiCss.includes('@media(max-width:680px)'),'responsive storefront CSS missing');
-ok(quick.includes("loadScript('rwa-storefront.js?v=1')")&&quick.includes("loadScript('rwa-storefront-safety-patch.js?v=1')")&&quick.includes("loadScript('rwa-store-draft-ui.js?v=1')")&&quick.includes("loadScript('rwa-home-commerce.js?v=1')")&&quick.includes("loadScript('rwa-market-labels.js?v=1')")&&quick.includes("loadScript('rwa-store-detail.js?v=1')")&&quick.includes("runtime:'premium-shell-storefront-v1'"),'root shell does not load the complete storefront UI stack');
+ok(quick.includes("loadScript('rwa-storefront.js?v=1')")&&quick.includes("loadScript('rwa-storefront-safety-patch.js?v=1')")&&quick.includes("loadScript('rwa-store-draft-ui.js?v=1')")&&quick.includes("loadScript('rwa-home-commerce.js?v=1')")&&quick.includes("loadScript('rwa-market-labels.js?v=1')")&&quick.includes("loadScript('rwa-store-detail.js?v=1')")&&quick.includes("loadScript('rwa-checkout-ui.js?v=1')")&&quick.includes("runtime:'premium-shell-storefront-v1'"),'root shell does not load the complete storefront UI stack');
 ok(quick.includes('async function shellRoute')&&quick.includes("openTab('intel')")&&quick.includes("openTab('rwa')")&&quick.includes("openTab('profile')"),'desktop shell navigation is not wired to real product panels');
 ok(tradeCfg.includes("import './ui-polish.js?v=1'"),'trade shell does not load UI polish runtime');
 ok(tradePolish.includes('rwa-store-link')&&tradePolish.includes('../?shop=1'),'trade-to-store navigation missing');
 ok(tradeCss.includes('.order{position:sticky')&&tradeCss.includes('.rwa-trade-mobile-store'),'desktop sticky order / mobile store polish missing');
-if(fail.length){console.error(JSON.stringify({ok:false,contract:'rwa-physical-commerce-ui-v6',fail},null,2));process.exit(1)}
-console.log(JSON.stringify({ok:true,contract:'rwa-physical-commerce-ui-v6',policy:registry.policy,marketLabelPolicy:'public-rwa-linked-vs-store-token-v1',liveStores:registry.stores.length,verifiedAssets:assets.verified.length,frontend:'desktop+mobile+functional-nav+landing+shop+cart+command-palette+store-detail+physical-store-onboarding',checkout:'BACKEND_GATED'},null,2));
+if(fail.length){console.error(JSON.stringify({ok:false,contract:'rwa-physical-commerce-ui-v7',fail},null,2));process.exit(1)}
+console.log(JSON.stringify({ok:true,contract:'rwa-physical-commerce-ui-v7',policy:registry.policy,marketLabelPolicy:'public-rwa-linked-vs-store-token-v1',liveStores:registry.stores.length,verifiedAssets:assets.verified.length,frontend:'desktop+mobile+functional-nav+landing+shop+cart+checkout-preview+command-palette+store-detail+physical-store-onboarding',checkout:'BACKEND_GATED'},null,2));
