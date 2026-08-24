@@ -119,12 +119,20 @@ jobs:
         shell: powershell
         run: |
           $meta = Join-Path $env:MT5_ROOT 'metaeditor64.exe'
-          & $meta /portable /compile:"$env:MT5_ROOT\MQL5\Scripts\AutoValidation\ImportXAUUSD.mq5" /log:"C:\mt5val\out\compile_importer.log"
-          & $meta /portable /compile:"$env:MT5_ROOT\MQL5\Experts\AutoValidation\SmokeEA.mq5" /log:"C:\mt5val\out\compile_ea.log"
-          Get-Content C:\mt5val\out\compile_importer.log
-          Get-Content C:\mt5val\out\compile_ea.log
-          if (!(Test-Path "$env:MT5_ROOT\MQL5\Scripts\AutoValidation\ImportXAUUSD.ex5")) { throw 'Importer compile failed' }
-          if (!(Test-Path "$env:MT5_ROOT\MQL5\Experts\AutoValidation\SmokeEA.ex5")) { throw 'EA compile failed' }
+          $importSrc = "$env:MT5_ROOT\MQL5\Scripts\AutoValidation\ImportXAUUSD.mq5"
+          $eaSrc = "$env:MT5_ROOT\MQL5\Experts\AutoValidation\SmokeEA.mq5"
+          Start-Process $meta -ArgumentList "/compile:`"$importSrc`"",'/log','/portable' -Wait
+          Start-Process $meta -ArgumentList "/compile:`"$eaSrc`"",'/log','/portable' -Wait
+          $importLog = [IO.Path]::ChangeExtension($importSrc,'.log')
+          $eaLog = [IO.Path]::ChangeExtension($eaSrc,'.log')
+          Copy-Item $importLog C:\mt5val\out\compile_importer.log
+          Copy-Item $eaLog C:\mt5val\out\compile_ea.log
+          Get-Content $importLog
+          Get-Content $eaLog
+          if ((Get-Content $importLog -Raw) -notmatch '0 errors') { throw 'Importer compile errors' }
+          if ((Get-Content $eaLog -Raw) -notmatch '0 errors') { throw 'EA compile errors' }
+          if (!(Test-Path "$env:MT5_ROOT\MQL5\Scripts\AutoValidation\ImportXAUUSD.ex5")) { throw 'Importer EX5 missing' }
+          if (!(Test-Path "$env:MT5_ROOT\MQL5\Experts\AutoValidation\SmokeEA.ex5")) { throw 'EA EX5 missing' }
 
       - name: Import dataset into MT5
         shell: powershell
