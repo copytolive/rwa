@@ -28,6 +28,8 @@ jobs:
           node --check wallet-core.js
           node --check walletconnect.js
           node --check mobile.js
+          node --check product-os-v3.js
+          node --check product-os-mobile-contract-v3.js
           node --check suite-nav.js
           node --check execution-api.js
           node --check execution-ui.js
@@ -45,10 +47,16 @@ jobs:
           python -m json.tool launch/readiness.json >/dev/null
           test -s EXECUTION_API.md
           test -s stable-shell.css
+          test -s unified-design-v3.css
+          test -s trader/index.html
+          test -s asset/index.html
           grep -Fq 'realtime-core.js?v=3' index.html
           grep -Fq 'chart-core.js?v=1' index.html
-          grep -Fq 'market-performance.js?v=1' index.html
-          grep -Fq 'stable-shell.css?v=1' index.html
+          grep -Fq 'market-performance.js?v=2' index.html
+          grep -Fq 'stable-shell.css?v=3' index.html
+          grep -Fq 'unified-design-v3.css?v=1' index.html
+          grep -Fq 'product-os-v3.js?v=1' index.html
+          grep -Fq 'product-os-mobile-contract-v3.js?v=1' index.html
           grep -Fq 'walletconnect.js?v=4' index.html
           grep -Fq 'wallet-core.js?v=3' index.html
           ! grep -Fq 'wallet-seamless.js' index.html
@@ -63,6 +71,10 @@ jobs:
           grep -Fq 'depth10@1000ms' realtime-core.js
           grep -Fq "runtime:'root-terminal-low-jank-v1'" market-performance.js
           grep -Fq "observer_policy='hot-dom-periodic-1200ms'" market-performance.js
+          grep -Fq 'data-mobile-nav="trade"' product-os-v3.js
+          grep -Fq 'Risk Engine' product-os-v3.js
+          grep -Fq 'market-drawer-open' product-os-mobile-contract-v3.js
+          grep -Fq 'tabular-nums' unified-design-v3.css
           grep -Fq 'waitWalletAuth' execution-ops-bridge.js
           grep -Fq 'wallet-core.js?v=3' execution-ops-bridge.js
           grep -Fq 'window.loadTradingView=openTradingView' chart-core.js
@@ -110,6 +122,11 @@ jobs:
             chart="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/chart-core.js?v=$q" || true)"
             perf="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/market-performance.js?v=$q" || true)"
             shell="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/stable-shell.css?v=$q" || true)"
+            unified="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/unified-design-v3.css?v=$q" || true)"
+            product="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/product-os-v3.js?v=$q" || true)"
+            mobile_contract="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/product-os-mobile-contract-v3.js?v=$q" || true)"
+            trader="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trader/?v=$q" || true)"
+            asset="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/asset/?symbol=BTC&v=$q" || true)"
             wallet="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/wallet-core.js?v=$q" || true)"
             wc="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/walletconnect.js?v=$q" || true)"
             execapi="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/execution-api.js?v=$q" || true)"
@@ -119,7 +136,39 @@ jobs:
             exui="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/exchange-ui.js?v=$q" || true)"
             e2e="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/testnet-e2e.js?v=$q" || true)"
             launch="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/launch/readiness.json?v=$q" || true)"
-            if grep -Fq 'realtime-core.js?v=3' <<<"$html" && grep -Fq 'market-performance.js?v=1' <<<"$html" && grep -Fq 'stable-shell.css?v=1' <<<"$html" && grep -Fq 'walletconnect.js?v=4' <<<"$html" && grep -Fq 'wallet-core.js?v=3' <<<"$html" && ! grep -Fq 'wallet-seamless.js' <<<"$html" && grep -Fq 'REST fallback' <<<"$core" && grep -Fq 'depth10@1000ms' <<<"$core" && grep -Fq 'liveCandle' <<<"$chart" && grep -Fq "runtime:'root-terminal-low-jank-v1'" <<<"$perf" && grep -Fq 'rwa-exchange' <<<"$shell" && grep -Fq "version:'4.0.0'" <<<"$wc" && grep -Fq "version:'3.0.0'" <<<"$wallet" && grep -Fq 'Wallet account switched' <<<"$wallet" && grep -Fq "hardening:'single-write-path-v1'" <<<"$execapi" && grep -Fq "riskGate:'mandatory-internal-v1'" <<<"$execapi" && ! grep -Fq 'ExchangeClient' <<<"$bridge" && ! grep -Fq 'ExchangeClient' <<<"$ops" && grep -Fq "version:'1.1.0'" <<<"$excore" && grep -Fq "safety:'wallet-and-global-launch-gate-v3'" <<<"$excore" && grep -Fq 'RWA EXCHANGE CORE' <<<"$exui" && grep -Fq "version:'3.1.0'" <<<"$e2e" && grep -Fq 'Save Wallet E2E Gate' <<<"$e2e" && grep -Eq '"status"[[:space:]]*:[[:space:]]*"(BLOCKED|READY_FOR_BETA|BETA_PASSED_AWAITING_MAINNET|READY_FOR_MAINNET)"' <<<"$launch"; then ok=1; break; fi
+            if grep -Fq 'realtime-core.js?v=3' <<<"$html" \
+              && grep -Fq 'market-performance.js?v=2' <<<"$html" \
+              && grep -Fq 'stable-shell.css?v=3' <<<"$html" \
+              && grep -Fq 'unified-design-v3.css?v=1' <<<"$html" \
+              && grep -Fq 'product-os-v3.js?v=1' <<<"$html" \
+              && grep -Fq 'product-os-mobile-contract-v3.js?v=1' <<<"$html" \
+              && grep -Fq 'walletconnect.js?v=4' <<<"$html" \
+              && grep -Fq 'wallet-core.js?v=3' <<<"$html" \
+              && ! grep -Fq 'wallet-seamless.js' <<<"$html" \
+              && grep -Fq 'REST fallback' <<<"$core" \
+              && grep -Fq 'depth10@1000ms' <<<"$core" \
+              && grep -Fq 'liveCandle' <<<"$chart" \
+              && grep -Fq "runtime:'root-terminal-low-jank-v1'" <<<"$perf" \
+              && grep -Fq 'rwa-exchange' <<<"$shell" \
+              && grep -Fq 'tabular-nums' <<<"$unified" \
+              && grep -Fq 'data-mobile-nav="trade"' <<<"$product" \
+              && grep -Fq 'Risk Engine' <<<"$product" \
+              && grep -Fq 'market-drawer-open' <<<"$mobile_contract" \
+              && grep -Fq '<title>RWA Trader</title>' <<<"$trader" \
+              && grep -Fq '<title>RWA Asset</title>' <<<"$asset" \
+              && grep -Fq "version:'4.0.0'" <<<"$wc" \
+              && grep -Fq "version:'3.0.0'" <<<"$wallet" \
+              && grep -Fq 'Wallet account switched' <<<"$wallet" \
+              && grep -Fq "hardening:'single-write-path-v1'" <<<"$execapi" \
+              && grep -Fq "riskGate:'mandatory-internal-v1'" <<<"$execapi" \
+              && ! grep -Fq 'ExchangeClient' <<<"$bridge" \
+              && ! grep -Fq 'ExchangeClient' <<<"$ops" \
+              && grep -Fq "version:'1.1.0'" <<<"$excore" \
+              && grep -Fq "safety:'wallet-and-global-launch-gate-v3'" <<<"$excore" \
+              && grep -Fq 'RWA EXCHANGE CORE' <<<"$exui" \
+              && grep -Fq "version:'3.1.0'" <<<"$e2e" \
+              && grep -Fq 'Save Wallet E2E Gate' <<<"$e2e" \
+              && grep -Eq '"status"[[:space:]]*:[[:space:]]*"(BLOCKED|READY_FOR_BETA|BETA_PASSED_AWAITING_MAINNET|READY_FOR_MAINNET)"' <<<"$launch"; then ok=1; break; fi
             sleep 5
           done
           test "$ok" = "1"
@@ -128,7 +177,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/live-browser-smoke' -f description='Chart + wallet + hardened exchange verified live'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/live-browser-smoke' -f description='Unified product + chart + wallet + hardened exchange verified live'
           gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/chart-wallet-smoke' -f description='Chart and wallet login verified live'
           gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/execution-api-smoke' -f description='Execution API + global launch gate verified live'
       - name: Publish live failure statuses
