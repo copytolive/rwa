@@ -37,7 +37,7 @@ async function noOverflow(page,label){const m=await page.evaluate(()=>({w:innerW
   await context.close();
 }
 
-// Trade desktop: deep-link, order controls, modals, chart interval and margin-mode interactions.
+// Trade desktop: deep-link, order controls, modals, chart interval, margin and locked fund controls.
 {
   const {context,page,errors}=await pageFor({width:1440,height:1100});
   await page.goto(`${BASE}trade/?coin=BTC&side=SELL&type=LIMIT&usd=50&leverage=2&browser-smoke=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:30000});
@@ -46,6 +46,9 @@ async function noOverflow(page,label){const m=await page.evaluate(()=>({w:innerW
   check(await visible(page,'#marketPickerBtn'),'trade desktop: market picker missing');
   check(await visible(page,'#marginModeControl',12000),'trade desktop: margin selector missing');
   check(await visible(page,'#chartTradeOverlay',12000),'trade desktop: chart overlay missing');
+  check(await visible(page,'#mainnetDepositBtn',12000),'trade desktop: mainnet deposit control missing');
+  check(await page.locator('#mainnetDepositBtn').isDisabled().catch(()=>false),'trade desktop: mainnet deposit must remain disabled while TESTNET/launch-locked');
+  check(await page.locator('#withdrawBtn').isDisabled().catch(()=>false),'trade desktop: withdrawal must remain disabled while TESTNET/launch-locked');
   check(await page.locator('[data-side-btn="SELL"]').evaluate(e=>e.classList.contains('active')).catch(()=>false),'trade desktop: SELL deep-link not applied');
   check(await page.locator('[data-type-btn="LIMIT"]').evaluate(e=>e.classList.contains('active')).catch(()=>false),'trade desktop: LIMIT deep-link not applied');
   check((await page.locator('#orderUsd').inputValue().catch(()=>''))==='50','trade desktop: USD deep-link not applied');
@@ -81,6 +84,8 @@ for(const [name,path] of [['root mobile',''],['trade mobile','trade/?side=BUY&ty
     check(await visible(page,'.mobile-trade-bar'),'trade mobile: fixed trade bar missing');
     check(await visible(page,'#marginModeControl',12000),'trade mobile: margin selector missing');
     check(await visible(page,'#priceChart'),'trade mobile: chart missing');
+    check(await visible(page,'#mainnetDepositBtn',12000),'trade mobile: mainnet deposit control missing');
+    check(await page.locator('#mainnetDepositBtn').isDisabled().catch(()=>false),'trade mobile: mainnet funding must stay locked in public beta');
   }
   await noOverflow(page,name);
   check(errors.length===0,`${name}: uncaught JS error(s): ${errors.join(' | ')}`);
@@ -88,5 +93,5 @@ for(const [name,path] of [['root mobile',''],['trade mobile','trade/?side=BUY&ty
 }
 
 await browser.close();
-if(failures.length){console.error(JSON.stringify({ok:false,contract:'rwa-browser-operability-v1',failures},null,2));process.exit(1)}
-console.log(JSON.stringify({ok:true,contract:'rwa-browser-operability-v1',desktop:['root actions','trade controls','modals','margin','chart'],mobile:['root hub','trade bar','margin','chart','no horizontal overflow']},null,2));
+if(failures.length){console.error(JSON.stringify({ok:false,contract:'rwa-browser-operability-v2',failures},null,2));process.exit(1)}
+console.log(JSON.stringify({ok:true,contract:'rwa-browser-operability-v2',desktop:['root actions','trade controls','modals','margin','chart','locked funds'],mobile:['root hub','trade bar','margin','chart','locked funds','no horizontal overflow']},null,2));
