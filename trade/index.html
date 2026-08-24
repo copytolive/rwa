@@ -7,8 +7,9 @@
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://esm.sh https://api.hyperliquid.xyz https://api.hyperliquid-testnet.xyz wss://api.hyperliquid.xyz wss://api.hyperliquid-testnet.xyz; style-src 'self'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none';">
   <title>RWA Trade</title>
-  <meta name="description" content="Secure non-custodial trading interface for RWA Markets.">
+  <meta name="description" content="Secure non-custodial RWA trading with live markets, risk controls and one-click execution.">
   <link rel="stylesheet" href="./styles.css?v=3">
+  <link rel="stylesheet" href="./terminal-pro.css?v=1">
   <link rel="stylesheet" href="./fund-modal.css?v=3">
   <link rel="stylesheet" href="./e2e.css?v=1">
 </head>
@@ -17,65 +18,65 @@
     <header class="topbar">
       <div class="brand">
         <div class="brand-mark">R</div>
-        <div>
-          <strong>RWA Trade</strong>
-          <small>RWA execution network · public TESTNET beta</small>
-        </div>
+        <div><strong>RWA Trade</strong><small>Professional non-custodial execution</small></div>
       </div>
       <div class="top-actions">
+        <span class="terminal-status"><i id="liveDot" class="live-dot"></i><span id="liveText">CONNECTING</span></span>
         <span id="networkBadge" class="network-badge testnet">TESTNET</span>
         <span id="status" class="status-pill">Connect wallet</span>
         <button id="walletBtn" class="button primary">Connect wallet</button>
       </div>
     </header>
 
+    <nav class="product-nav" aria-label="RWA products">
+      <a class="active" href="./">Trade</a>
+      <a href="../">Discover &amp; Copy</a>
+      <a href="../backtest/">Backtest</a>
+      <a href="../launch/">Launch status</a>
+    </nav>
+
     <section class="onboarding card">
       <div class="section-title">
-        <div>
-          <small>ONE-CLICK SETUP</small>
-          <h2>Trade without wallet popups on every order</h2>
-        </div>
+        <div><small>ONE-CLICK SETUP</small><h2>Trade without wallet popups on every order</h2></div>
         <span id="agentMode" class="mode-badge">SETUP REQUIRED</span>
       </div>
-
       <div class="steps">
-        <div id="stepWallet" class="step active">
-          <span>1</span>
-          <div><small>Wallet</small><b id="stepWalletValue">Connect</b></div>
-        </div>
-        <div id="stepFund" class="step">
-          <span>2</span>
-          <div><small>Test balance</small><b id="stepFundValue">Required</b></div>
-        </div>
-        <div id="stepAgent" class="step">
-          <span>3</span>
-          <div><small>Trading</small><b id="stepAgentValue">Enable once</b></div>
-        </div>
+        <div id="stepWallet" class="step active"><span>1</span><div><small>Wallet</small><b id="stepWalletValue">Connect</b></div></div>
+        <div id="stepFund" class="step"><span>2</span><div><small>Test balance</small><b id="stepFundValue">Required</b></div></div>
+        <div id="stepAgent" class="step"><span>3</span><div><small>Trading</small><b id="stepAgentValue">Enable once</b></div></div>
       </div>
-
       <div class="setup-actions">
         <button id="fundBtn" class="button secondary" hidden>Get test balance</button>
         <button id="enableTradingBtn" class="button primary" hidden>Enable trading</button>
         <button id="revokeAgentBtn" class="button danger-outline" hidden>Disable 1-click trading</button>
       </div>
-
-      <p class="security-note">
-        RWA uses one secure wallet approval to enable trading. New orders stay inside configured risk limits, while withdrawals always require a fresh wallet confirmation.
-      </p>
+      <p class="security-note">RWA uses one secure wallet approval to enable trading. New orders stay inside configured risk limits; reduce-only exits and cancellation remain available for safety.</p>
     </section>
 
     <main class="trade-layout">
       <section class="market card">
         <div class="market-head">
-          <div>
-            <small>MARKET</small>
-            <h1 id="marketName">BTC-PERP</h1>
+          <div><small>MARKET</small><h1 id="marketName">BTC-PERP</h1></div>
+          <div class="price-block"><small>MARK PRICE</small><b id="marketPrice">—</b></div>
+          <select id="coin" class="market-native-select" aria-label="Market"></select>
+          <button id="marketPickerBtn" class="market-picker-button" type="button"><span id="marketPickerLabel">BTC-PERP</span><span class="market-shortcut">/ Search</span></button>
+        </div>
+
+        <div class="market-metrics" aria-label="Market statistics">
+          <div class="market-metric"><small>24H change</small><b id="metricChange" class="metric-value">—</b></div>
+          <div class="market-metric"><small>24H volume</small><b id="metricVolume">—</b></div>
+          <div class="market-metric"><small>Open interest</small><b id="metricOI">—</b></div>
+          <div class="market-metric"><small>Funding</small><b id="metricFunding">—</b></div>
+        </div>
+
+        <div class="chart-shell">
+          <div class="chart-toolbar">
+            <div class="chart-intervals" aria-label="Chart interval">
+              <button type="button" data-interval="1m">1m</button><button type="button" data-interval="5m">5m</button><button type="button" data-interval="15m">15m</button><button type="button" data-interval="1h">1h</button><button type="button" data-interval="4h">4h</button><button type="button" data-interval="1d">1d</button>
+            </div>
+            <span id="chartStatus" class="chart-status">Loading chart…</span>
           </div>
-          <div class="price-block">
-            <small>MARK PRICE</small>
-            <b id="marketPrice">—</b>
-          </div>
-          <select id="coin" class="select" aria-label="Market"></select>
+          <div class="chart-canvas-wrap"><canvas id="priceChart" aria-label="Live candlestick chart"></canvas><div class="chart-legend">Venue-backed candles · live mark price</div></div>
         </div>
 
         <div class="market-grid">
@@ -83,168 +84,84 @@
             <div class="panel-head"><b>Order book</b><span>Live</span></div>
             <div class="book-head"><span>Price</span><span>Size</span></div>
             <div id="asks"><div class="empty">Waiting for book…</div></div>
-            <div class="mid-row">
-              <span>Bid <b id="bestBid">—</b></span>
-              <span>Ask <b id="bestAsk">—</b></span>
-            </div>
+            <div class="mid-row"><span>Bid <b id="bestBid">—</b></span><span>Ask <b id="bestAsk">—</b></span></div>
             <div id="bids"><div class="empty">Waiting for book…</div></div>
           </div>
-
-          <div class="tape-panel">
-            <div class="panel-head"><b>Trade tape</b><span>Live</span></div>
-            <div id="tape" class="tape"><div class="empty">Waiting for trades…</div></div>
-          </div>
+          <div class="tape-panel"><div class="panel-head"><b>Trade tape</b><span>Live</span></div><div id="tape" class="tape"><div class="empty">Waiting for trades…</div></div></div>
         </div>
       </section>
 
       <aside class="order card">
         <div class="section-title compact">
-          <div>
-            <small>ORDER</small>
-            <h2>Trade</h2>
+          <div><small>ORDER</small><h2>Trade</h2></div>
+          <label class="network-switch"><span>TESTNET</span><input id="testnetToggle" type="checkbox" checked><i></i></label>
+        </div>
+
+        <select id="side" class="pro-native-segment"><option value="BUY">BUY / LONG</option><option value="SELL">SELL / SHORT</option></select>
+        <div class="trade-segment side"><button type="button" data-side-btn="BUY">BUY / LONG</button><button type="button" data-side-btn="SELL">SELL / SHORT</button></div>
+        <select id="orderType" class="pro-native-segment"><option value="MARKET">MARKET</option><option value="LIMIT">LIMIT</option></select>
+        <div class="trade-segment type"><button type="button" data-type-btn="MARKET">MARKET</button><button type="button" data-type-btn="LIMIT">LIMIT</button></div>
+
+        <label class="field"><span>Amount (USD)</span><input id="orderUsd" type="number" min="1" step="1" value="25" inputmode="decimal"></label>
+        <div class="quick-row"><button type="button" data-usd-preset="10">$10</button><button type="button" data-usd-preset="25">$25</button><button type="button" data-usd-preset="50">$50</button><button type="button" data-usd-preset="100">$100</button><button type="button" data-equity-preset="0.25">25% equity</button></div>
+
+        <div class="leverage-wrap">
+          <label class="field"><span>Leverage</span><input id="leverage" type="number" min="1" max="5" step="1" value="1"></label>
+          <label class="leverage-range-wrap"><input id="leverageRange" type="range" min="1" max="5" step="1" value="1" aria-label="Leverage slider"></label>
+        </div>
+        <label id="limitWrap" class="field" hidden><span>Limit price</span><input id="limitPrice" type="number" min="0" step="any" inputmode="decimal"></label>
+
+        <div class="protection-block">
+          <div class="two-col">
+            <label class="field"><span>Take profit</span><input id="tp" type="number" min="0" step="any" placeholder="Optional" inputmode="decimal"></label>
+            <label class="field"><span>Stop loss</span><input id="sl" type="number" min="0" step="any" placeholder="Optional" inputmode="decimal"></label>
           </div>
-          <label class="network-switch">
-            <span>TESTNET</span>
-            <input id="testnetToggle" type="checkbox" checked>
-            <i></i>
-          </label>
+          <div class="protection-presets">
+            <div><small>Quick TP</small><div class="quick-row"><button type="button" data-tp-pct="0.5">0.5%</button><button type="button" data-tp-pct="1">1%</button><button type="button" data-tp-pct="2">2%</button></div></div>
+            <div><small>Quick SL</small><div class="quick-row"><button type="button" data-sl-pct="0.5">0.5%</button><button type="button" data-sl-pct="1">1%</button><button type="button" data-sl-pct="2">2%</button></div></div>
+          </div>
         </div>
 
-        <div class="segmented">
-          <select id="side" class="select">
-            <option value="BUY">BUY / LONG</option>
-            <option value="SELL">SELL / SHORT</option>
-          </select>
-          <select id="orderType" class="select">
-            <option value="MARKET">MARKET</option>
-            <option value="LIMIT">LIMIT</option>
-          </select>
+        <div class="order-risk-head"><span>Risk preview</span><button id="riskSettingsBtn" type="button">Edit limits</button></div>
+        <div class="risk-preview">
+          <div><small>Margin est.</small><b id="riskMargin">—</b></div><div><small>Risk at SL</small><b id="riskLoss">—</b></div>
+          <div><small>Reward at TP</small><b id="riskReward">—</b></div><div><small>R:R</small><b id="riskRR">—</b></div>
+          <div><small>Slippage cap</small><b id="riskSlippage">35 bps</b></div><div><small>Limits</small><b id="riskSummary">—</b></div>
         </div>
-
-        <label class="field">
-          <span>Amount (USD)</span>
-          <input id="orderUsd" type="number" min="1" step="1" value="25">
-        </label>
-
-        <div class="two-col">
-          <label class="field">
-            <span>Leverage</span>
-            <input id="leverage" type="number" min="1" max="5" step="1" value="1">
-          </label>
-          <label id="limitWrap" class="field" hidden>
-            <span>Limit price</span>
-            <input id="limitPrice" type="number" min="0" step="any">
-          </label>
-        </div>
-
-        <div class="two-col">
-          <label class="field">
-            <span>Take profit</span>
-            <input id="tp" type="number" min="0" step="any" placeholder="Optional">
-          </label>
-          <label class="field">
-            <span>Stop loss</span>
-            <input id="sl" type="number" min="0" step="any" placeholder="Optional">
-          </label>
-        </div>
+        <div id="orderValidation" class="order-validation">Protection optional</div>
 
         <div class="preview">
-          <div><small>ORDER</small><b id="previewSide">BUY BTC</b></div>
-          <div><small>NOTIONAL</small><b id="previewNotional">$25</b></div>
-          <div><small>SIZE</small><b id="previewSize">—</b></div>
-          <div><small>TP / SL</small><b id="previewProtection">None</b></div>
+          <div><small>ORDER</small><b id="previewSide">BUY BTC</b></div><div><small>NOTIONAL</small><b id="previewNotional">$25</b></div>
+          <div><small>SIZE</small><b id="previewSize">—</b></div><div><small>TP / SL</small><b id="previewProtection">None</b></div>
           <div class="wide"><small>STATUS</small><b id="previewSigner">Not ready</b></div>
         </div>
-
         <button id="tradeBtn" class="button trade-button" disabled>Connect wallet</button>
-        <p class="microcopy">If TP/SL is provided, RWA submits protection together with the entry.</p>
+        <button id="killSwitchBtn" class="kill-button" type="button">Kill switch</button>
+        <p class="microcopy">Market/limit entries and optional TP/SL use the single RWA execution path. TP/SL is submitted atomically with the entry when provided.</p>
       </aside>
     </main>
 
-    <section class="account-grid">
-      <div class="stat card">
-        <small>Equity</small>
-        <b id="equity">—</b>
-      </div>
-      <div class="stat card">
-        <small>Unrealized P&amp;L</small>
-        <b id="pnl">—</b>
-      </div>
-      <div class="stat card">
-        <small>Current position</small>
-        <b id="position">FLAT</b>
-      </div>
-    </section>
+    <section class="account-grid"><div class="stat card"><small>Equity</small><b id="equity">—</b></div><div class="stat card"><small>Unrealized P&amp;L</small><b id="pnl">—</b></div><div class="stat card"><small>Current position</small><b id="position">FLAT</b></div></section>
 
     <section class="account card">
-      <div class="tabs-head">
-        <div>
-          <small>ACCOUNT</small>
-          <h2>Positions &amp; orders</h2>
-        </div>
-        <div class="actions-row">
-          <button id="refreshBtn" class="button ghost">Refresh</button>
-          <button id="cancelAllBtn" class="button ghost">Cancel all</button>
-          <button id="withdrawBtn" class="button danger-outline">Withdraw</button>
-        </div>
-      </div>
-
-      <details open>
-        <summary>Open positions</summary>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Asset</th><th>Side</th><th>Size</th><th>Entry</th><th>P&amp;L</th><th></th></tr></thead>
-            <tbody id="positionsBody"><tr><td colspan="6" class="empty">No open positions.</td></tr></tbody>
-          </table>
-        </div>
-      </details>
-
-      <details>
-        <summary>Open orders</summary>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Asset</th><th>Side</th><th>Price</th><th>Size</th><th></th></tr></thead>
-            <tbody id="ordersBody"><tr><td colspan="5" class="empty">No open orders.</td></tr></tbody>
-          </table>
-        </div>
-      </details>
-
-      <details>
-        <summary>Trade history</summary>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Asset</th><th>Side</th><th>Price</th><th>Size</th><th>Time</th></tr></thead>
-            <tbody id="fillsBody"><tr><td colspan="5" class="empty">No fills yet.</td></tr></tbody>
-          </table>
-        </div>
-      </details>
+      <div class="tabs-head"><div><small>ACCOUNT</small><h2>Positions &amp; orders</h2></div><div class="actions-row"><button id="refreshBtn" class="button ghost">Refresh</button><button id="cancelAllBtn" class="button ghost">Cancel all</button><button id="withdrawBtn" class="button danger-outline">Withdraw</button></div></div>
+      <details open><summary>Open positions</summary><div class="table-wrap"><table><thead><tr><th>Asset</th><th>Side</th><th>Size</th><th>Entry</th><th>P&amp;L</th><th></th></tr></thead><tbody id="positionsBody"><tr><td colspan="6" class="empty">No open positions.</td></tr></tbody></table></div></details>
+      <details open><summary>Open orders</summary><div class="table-wrap"><table><thead><tr><th>Asset</th><th>Side</th><th>Price</th><th>Size</th><th></th></tr></thead><tbody id="ordersBody"><tr><td colspan="5" class="empty">No open orders.</td></tr></tbody></table></div></details>
+      <details><summary>Trade history</summary><div class="table-wrap"><table><thead><tr><th>Asset</th><th>Side</th><th>Price</th><th>Size</th><th>Time</th></tr></thead><tbody id="fillsBody"><tr><td colspan="5" class="empty">No fills yet.</td></tr></tbody></table></div></details>
     </section>
 
-    <section class="advanced card">
-      <details>
-        <summary>Advanced safety diagnostics</summary>
-        <div class="diag-head">
-          <p>Technical details are hidden from normal trading. Use this only for troubleshooting.</p>
-          <button id="preflightBtn" class="button ghost">Run preflight</button>
-        </div>
-        <div class="diag-grid">
-          <div><small>Wallet</small><b id="diagWallet">ACTION</b></div>
-          <div><small>Execution API</small><b id="diagVenue">—</b></div>
-          <div><small>Collateral</small><b id="diagCollateral">—</b></div>
-          <div><small>API wallet</small><b id="diagAgent">—</b></div>
-          <div><small>Mainnet</small><b id="diagMainnet">LOCKED</b></div>
-          <div><small>Build</small><b id="version">—</b></div>
-        </div>
-        <p id="mainnetLockText" class="security-note">Mainnet locked</p>
-      </details>
-    </section>
+    <section class="advanced card"><details><summary>Advanced safety diagnostics</summary><div class="diag-head"><p>Technical details are hidden from normal trading. Use this only for troubleshooting and release verification.</p><button id="preflightBtn" class="button ghost">Run preflight</button></div><div class="diag-grid"><div><small>Wallet</small><b id="diagWallet">ACTION</b></div><div><small>Execution API</small><b id="diagVenue">—</b></div><div><small>Collateral</small><b id="diagCollateral">—</b></div><div><small>API wallet</small><b id="diagAgent">—</b></div><div><small>Mainnet</small><b id="diagMainnet">LOCKED</b></div><div><small>Build</small><b id="version">—</b></div></div><p id="mainnetLockText" class="security-note">Mainnet locked</p></details></section>
 
-    <footer>
-      <span>RWA Trade · PUBLIC TESTNET BETA · non-custodial</span>
-      <span><a href="../launch/">Launch status</a> · MAINNET locked until all machine gates pass</span>
-    </footer>
+    <footer><span>RWA Trade · RELEASE CANDIDATE UI · PUBLIC TESTNET BETA</span><span><a href="../launch/">Launch status</a> · MAINNET stays locked until machine gates pass</span></footer>
   </div>
 
+  <div id="marketPickerModal" class="modal-layer" hidden><div class="modal-backdrop"></div><section class="modal-card large" role="dialog" aria-modal="true" aria-label="Choose market"><div class="modal-head"><div><h3>Choose market</h3><small>Search all available perpetual markets</small></div><button class="icon-button" data-close-modal="marketPickerModal" type="button">×</button></div><div class="modal-body"><input id="marketSearch" class="market-search" type="search" placeholder="Search BTC, ETH, PAXG…" autocomplete="off"><div id="marketList" class="market-list"></div></div></section></div>
+
+  <div id="riskModal" class="modal-layer" hidden><div class="modal-backdrop"></div><section class="modal-card" role="dialog" aria-modal="true" aria-label="Risk settings"><div class="modal-head"><div><h3>Risk limits</h3><small>Stricter user limits inside platform caps</small></div><button class="icon-button" data-close-modal="riskModal" type="button">×</button></div><div class="modal-body"><div class="risk-cap-note">Platform hard caps remain in force. Kill switch blocks risk-increasing orders while reduce-only exits and cancellations stay available.</div><div class="risk-form"><label class="field"><span>Daily max loss (USD)</span><input id="riskDailyLoss" type="number" min="1" max="250" step="1"></label><label class="field"><span>Max leverage</span><input id="riskMaxLeverage" type="number" min="1" max="5" step="1"></label><label class="field"><span>Total exposure (USD)</span><input id="riskMaxExposure" type="number" min="1" max="5000" step="1"></label><label class="field"><span>Per-asset exposure (USD)</span><input id="riskPerAsset" type="number" min="1" max="2000" step="1"></label><label class="toggle-row full"><span>Kill switch — block new entries</span><input id="riskKill" type="checkbox"></label></div><div class="manage-actions"><button id="saveRiskBtn" class="button primary" type="button">Save risk limits</button></div></div></section></div>
+
+  <div id="positionModal" class="modal-layer" hidden><div class="modal-backdrop"></div><section class="modal-card large" role="dialog" aria-modal="true" aria-label="Manage position"><div class="modal-head"><div><h3 id="manageCoin">Position</h3><small>Reduce, protect, or exit without creating new exposure</small></div><button class="icon-button" data-close-modal="positionModal" type="button">×</button></div><div class="modal-body"><div class="position-summary"><div><small>Side</small><b id="manageSide">—</b></div><div><small>Size</small><b id="manageSize">—</b></div><div><small>Entry</small><b id="manageEntry">—</b></div><div><small>P&amp;L</small><b id="managePnl">—</b></div><div><small>Network</small><b id="manageNetwork">TESTNET</b></div></div><div class="manage-section"><h4>Reduce position</h4><div class="close-grid"><button type="button" data-close-fraction="0.25">Close 25%</button><button type="button" data-close-fraction="0.5">Close 50%</button><button type="button" data-close-fraction="1">Close 100%</button></div></div><div class="manage-section"><h4>Add position protection</h4><div class="two-col"><label class="field"><span>Take profit price</span><input id="manageTp" type="number" min="0" step="any" placeholder="Optional"></label><label class="field"><span>Stop loss price</span><input id="manageSl" type="number" min="0" step="any" placeholder="Optional"></label></div><div class="manage-actions"><button id="breakEvenBtn" class="button ghost" type="button">Fill break-even SL</button><button id="addProtectionBtn" class="button primary" type="button">Add protection</button><button id="cancelTriggersBtn" class="button danger-outline" type="button">Cancel triggers</button></div><p class="modal-note">Position TP/SL orders are reduce-only. Adding protection does not increase position size.</p></div></div></section></div>
+
+  <div class="mobile-trade-bar" aria-label="Mobile trade actions"><button id="mobileBuy" class="buy" type="button">BUY</button><button id="mobileSell" class="sell" type="button">SELL</button></div>
   <div id="toast" class="toast"></div>
   <script src="./fund-modal.js?v=4"></script>
   <script src="../execution-api.js?v=3"></script>
@@ -252,5 +169,6 @@
   <script src="./e2e-resilience.js?v=1"></script>
   <script src="./e2e.js?v=4"></script>
   <script type="module" src="./app.js?v=3"></script>
+  <script type="module" src="./terminal-pro.js?v=1"></script>
 </body>
 </html>
