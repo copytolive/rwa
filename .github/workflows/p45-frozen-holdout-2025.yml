@@ -1,5 +1,11 @@
 name: P45 Frozen Holdout 2025
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'research/p45-live-cert/p45_holdout_2025.py'
+      - '.github/workflows/p45-frozen-holdout-2025.yml'
   pull_request:
     paths:
       - 'research/p45-live-cert/p45_holdout_2025.py'
