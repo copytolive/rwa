@@ -1,7 +1,7 @@
 import {readFile} from 'node:fs/promises';
 const read=p=>readFile(p,'utf8');
-const [tradeHtml,tradeCfg,tradePro,margin,overlay,release,fund,hl,execCfg,rootHtml,quick,suiteUi,suiteCore,social,exec,worker,readiness]=await Promise.all([
-  read('trade/index.html'),read('trade/config.js'),read('trade/terminal-pro.js'),read('trade/margin-runtime.js'),read('trade/chart-overlays.js'),read('trade/release-runtime.js'),read('trade/fund-modal.js'),read('trade/hyperliquid.js'),read('rwa-execution-config.json'),read('index.html'),read('quick-actions.js'),read('suite-ui.js'),read('suite-v2.js'),read('social-trade-monitor.js'),read('execution-api.js'),read('agent-worker/worker.mjs'),read('launch/readiness.json')
+const [tradeHtml,tradeCfg,tradePro,margin,overlay,release,fund,hl,execCfg,rootHtml,quick,suiteUi,suiteCore,social,socialPro,exec,worker,readiness]=await Promise.all([
+  read('trade/index.html'),read('trade/config.js'),read('trade/terminal-pro.js'),read('trade/margin-runtime.js'),read('trade/chart-overlays.js'),read('trade/release-runtime.js'),read('trade/fund-modal.js'),read('trade/hyperliquid.js'),read('rwa-execution-config.json'),read('index.html'),read('quick-actions.js'),read('suite-ui.js'),read('suite-v2.js'),read('social-trade-monitor.js'),read('social-trading-pro.js'),read('execution-api.js'),read('agent-worker/worker.mjs'),read('launch/readiness.json')
 ]);
 const fail=[];const ok=(v,m)=>{if(!v)fail.push(m)};
 // Trading UX comparable to modern social-first perpetual products.
@@ -31,13 +31,19 @@ ok(suiteCore.includes('VERIFIED BY HYPERLIQUID')&&suiteCore.includes('userFillsB
 ok(suiteCore.includes('startCopy')&&suiteCore.includes('orders.market'),'copy execution path missing');
 ok(social.includes('rwa:followed-trader-position')&&social.includes('Notification.requestPermission'),'followed trader live alerts missing');
 ok(social.includes("'Notification'in window"),'notification capability guard missing');
+ok(socialPro.includes("runtime:'venue-backed-social-feed-v1'")&&socialPro.includes('userFillsByTime'),'venue-backed social trade feed missing');
+ok(socialPro.includes('rwa-wallet-link-v2')&&socialPro.includes('verifyMessage'),'social feed wallet verification missing');
+ok(socialPro.includes('data-rwa-feed-trade')&&socialPro.includes('data-rwa-feed-copy'),'trade/copy actions missing from social activity feed');
+ok(socialPro.includes('Following trades')&&socialPro.includes('Top-trader activity')&&socialPro.includes('Trending market alerts')&&socialPro.includes('New follower alerts'),'social notification settings incomplete');
+ok(socialPro.includes("new URL('trade/'")&&socialPro.includes("state.mode='following'"),'social feed navigation/filtering incomplete');
 ok(quick.includes("openTab('watch')")&&quick.includes('navigator.share')&&quick.includes("new URL('trade/'"),'market quick actions missing');
-ok(rootHtml.includes('quick-actions.js?v=1'),'quick actions not loaded on root product');
+ok(rootHtml.includes('quick-actions.js?v=1')&&rootHtml.includes('social-trading-pro.js?v=1'),'social/quick action runtimes not loaded on root product');
 // Security/operations invariants.
-ok(!margin.includes('ExchangeClient')&&!overlay.includes('ExchangeClient')&&!quick.includes('ExchangeClient')&&!social.includes('ExchangeClient'),'UI enhancement created a write client');
+ok(!margin.includes('ExchangeClient')&&!overlay.includes('ExchangeClient')&&!quick.includes('ExchangeClient')&&!social.includes('ExchangeClient')&&!socialPro.includes('ExchangeClient'),'UI enhancement created a write client');
+ok(!/api\.hyperliquid(?:-testnet)?\.xyz\/exchange|['"]\/exchange['"]/.test(socialPro),'social runtime contains a direct exchange write route');
 ok(exec.includes("hardening:'single-write-path-v1'"),'browser single-write contract missing');
 ok(worker.includes("u.pathname==='/healthz'")&&worker.includes("u.pathname==='/readyz'"),'24/7 worker health endpoints missing');
 const launch=JSON.parse(readiness);ok(launch.engineering_ready===true,'machine engineering gate is not ready');
 ok(launch.mainnet_ready===false||launch.status==='READY_FOR_MAINNET','invalid launch gate state');
-if(fail.length){console.error(JSON.stringify({ok:false,contract:'rwa-social-trading-parity-v2',fail},null,2));process.exit(1)}
-console.log(JSON.stringify({ok:true,contract:'rwa-social-trading-parity-v2',trade:'one-click+atomic-tpsl+margin+overlays+master-funds',social:'leaderboard+copy+feed+follow-alerts',security:'single-write+machine-wallet-gated-mainnet'},null,2));
+if(fail.length){console.error(JSON.stringify({ok:false,contract:'rwa-social-trading-parity-v3',fail},null,2));process.exit(1)}
+console.log(JSON.stringify({ok:true,contract:'rwa-social-trading-parity-v3',trade:'one-click+atomic-tpsl+margin+overlays+master-funds',social:'leaderboard+copy+venue-fills+following+notifications+feed-actions',security:'single-write+machine-wallet-gated-mainnet'},null,2));
