@@ -6,8 +6,10 @@ on:
       - 'global-asset-terminal.js'
       - 'global-asset-terminal.css'
       - 'global-fundamental-shard-bridge.js'
+      - 'GLOBAL_ASSET_TERMINAL_1_50.md'
       - 'data/global/**'
       - 'tools/global-*.mjs'
+      - 'tools/sync-sec-us-*.mjs'
       - '.github/workflows/global-asset-terminal-smoke.yml'
   push:
     branches: [main]
@@ -16,8 +18,10 @@ on:
       - 'global-asset-terminal.js'
       - 'global-asset-terminal.css'
       - 'global-fundamental-shard-bridge.js'
+      - 'GLOBAL_ASSET_TERMINAL_1_50.md'
       - 'data/global/**'
       - 'tools/global-*.mjs'
+      - 'tools/sync-sec-us-*.mjs'
       - '.github/workflows/global-asset-terminal-smoke.yml'
 permissions:
   contents: read
@@ -37,31 +41,46 @@ jobs:
           node --check tools/global-candle-10m.mjs
           node --check tools/global-fundamental-normalizer.mjs
           node --check tools/global-data-audit.mjs
+          node --check tools/global-dividend-engine.mjs
+          node --check tools/global-corporate-actions.mjs
+          node --check tools/global-quality-score.mjs
+          node --check tools/global-security-index.mjs
+          node --check tools/global-readiness-1-50.mjs
           node --check tools/sync-sec-us-catalog.mjs
           node --check tools/sync-sec-us-fundamentals.mjs
+          node --check tools/sync-sec-us-frames.mjs
       - name: 10m candle self-test
         run: node tools/global-candle-10m.mjs
       - name: Fundamental normalizer self-test
         run: node tools/global-fundamental-normalizer.mjs
+      - name: Dividend self-test
+        run: node tools/global-dividend-engine.mjs
+      - name: Corporate action self-test
+        run: node tools/global-corporate-actions.mjs
+      - name: Quality score self-test
+        run: node tools/global-quality-score.mjs
       - name: Fail-closed data audit
         run: node tools/global-data-audit.mjs
+      - name: Build compact security index
+        run: node tools/global-security-index.mjs
+      - name: Global 1-50 machine gate
+        run: node tools/global-readiness-1-50.mjs
       - name: Canonical root source contract
         run: |
           node - <<'NODE'
           const fs=require('fs');
           const h=fs.readFileSync('index.html','utf8');
           const js=fs.readFileSync('global-asset-terminal.js','utf8');
-          const must=[
-            'global-asset-terminal.css?v=1',
-            'global-fundamental-shard-bridge.js?v=1',
-            'global-asset-terminal.js?v=1'
-          ];
+          const must=['global-asset-terminal.css?v=1','global-fundamental-shard-bridge.js?v=1','global-asset-terminal.js?v=1'];
           for(const x of must)if(!h.includes(x))throw new Error('missing '+x);
           if(!js.includes("const STOCK_TF='10'"))throw new Error('stock timeframe is not locked to 10m');
           if(!js.includes('No unlicensed depth data'))throw new Error('stock depth fail-closed guard missing');
           if(!js.includes('stock data is never labelled VERIFIED'))throw new Error('stock/RWA verification separation missing');
           if(/location\.(href|assign|replace)\s*=/.test(js))throw new Error('global terminal must not navigate away from canonical root');
-          console.log('GLOBAL ROOT CONTRACT PASS');
+          const r=JSON.parse(fs.readFileSync('data/global/readiness-1-50.json','utf8'));
+          if(r.engineering_passed!==50||r.engineering_complete!==true)throw new Error('1-50 engineering gate incomplete');
+          if(r.global_data_complete!==false)throw new Error('global data coverage must not be fabricated as complete');
+          console.log('GLOBAL ROOT CONTRACT PASS · engineering 50/50 · external coverage fail-closed');
           NODE
       - name: Install browser proof dependency
         run: |
