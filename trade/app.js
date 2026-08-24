@@ -4,6 +4,7 @@ const $ = id => document.getElementById(id);
 const app = new RWAHyperliquid({ testnet: true });
 let wallet = '';
 let currentCoin = 'BTC';
+let currentMarkPrice = 0;
 let accountPoll = null;
 let realtimeSeq = 0;
 
@@ -18,12 +19,12 @@ function short(a) { return a ? `${a.slice(0, 6)}…${a.slice(-4)}` : 'Connect'; 
 function money(v, digits = 2) {
   const n = Number(v);
   if (!Number.isFinite(n)) return '—';
-  return `$${n.toLocaleString(undefined, { minimumFractionDigits: n < 1 ? Math.min(4, digits) : 2, maximumFractionDigits: n < 1 ? 6 : digits })}`;
+  return `$${n.toLocaleString('en-US', { minimumFractionDigits: n < 1 ? Math.min(4, digits) : 2, maximumFractionDigits: n < 1 ? 6 : digits })}`;
 }
 function qty(v) {
   const n = Number(v);
   if (!Number.isFinite(n)) return '—';
-  return n.toLocaleString(undefined, { maximumFractionDigits: 6 });
+  return n.toLocaleString('en-US', { maximumFractionDigits: 8 });
 }
 function time(v) {
   const n = Number(v);
@@ -63,7 +64,7 @@ function bind() {
   });
 
   $('fundBtn').addEventListener('click', () => {
-    window.open(app.testnet ? CONFIG.officialTestnetUrl : CONFIG.officialMainnetUrl, '_blank', 'noopener,noreferrer');
+    window.RWAFundingPanel?.open?.();
   });
 
   $('enableTradingBtn').addEventListener('click', async () => {
@@ -78,12 +79,12 @@ function bind() {
   });
 
   $('revokeAgentBtn').addEventListener('click', async () => {
-    if (!confirm('Revoke the delegated API wallet? New entries will stop until trading is enabled again.')) return;
+    if (!confirm('Disable 1-click trading? New entries will stop until trading is enabled again.')) return;
     const b = $('revokeAgentBtn');
     try {
-      busy(b, true, 'Revoking…');
+      busy(b, true, 'Disabling…');
       await app.revokeAgent();
-      toast('API wallet revoked', 'success');
+      toast('1-click trading disabled', 'success');
       await refreshAll();
     } catch (e) { toast(errText(e), 'error'); }
     finally { busy(b, false); }
@@ -93,6 +94,7 @@ function bind() {
     const wantsTestnet = $('testnetToggle').checked;
     try {
       app.setEnvironment(wantsTestnet);
+      currentMarkPrice = 0;
       $('networkBadge').textContent = wantsTestnet ? 'TESTNET' : 'MAINNET';
       $('networkBadge').className = `network-badge ${wantsTestnet ? 'testnet' : 'mainnet'}`;
       await loadMarkets();
@@ -106,7 +108,9 @@ function bind() {
 
   $('coin').addEventListener('change', async () => {
     currentCoin = $('coin').value;
+    currentMarkPrice = 0;
     $('marketName').textContent = `${currentCoin}-PERP`;
+    $('marketPrice').textContent = '—';
     await restartRealtime();
     updatePreview();
   });
@@ -120,13 +124,17 @@ function bind() {
   $('tradeBtn').addEventListener('click', submitTrade);
   $('refreshBtn').addEventListener('click', refreshAll);
   $('cancelAllBtn').addEventListener('click', async () => {
-    if (!confirm('Cancel all open Hyperliquid orders?')) return;
+    if (!confirm('Cancel all open orders?')) return;
     try { busy($('cancelAllBtn'), true, 'Cancelling…'); await app.cancelAll(); toast('Open orders cancelled', 'success'); await refreshAccount(); }
     catch (e) { toast(errText(e), 'error'); }
     finally { busy($('cancelAllBtn'), false); }
   });
   $('withdrawBtn').addEventListener('click', withdrawFlow);
   $('preflightBtn').addEventListener('click', runPreflight);
+
+  window.addEventListener('rwa:funding-changed', () => {
+    if (wallet) refreshAll().catch(() => {});
+  });
 
   window.ethereum?.on?.('accountsChanged', async accounts => {
     wallet = String(accounts?.[0] || '').toLowerCase();
@@ -159,7 +167,7 @@ async function loadMarkets() {
     $('diagVenue').textContent = `PASS · ${markets.length} perps`;
   } catch (e) {
     $('diagVenue').textContent = 'ERROR';
-    toast(`Venue metadata: ${errText(e)}`, 'error');
+    toast(`Market metadata: ${errText(e)}`, 'error');
   }
 }
 
@@ -203,15 +211,15 @@ function renderSetup(p) {
   $('stepFundValue').textContent = funded ? money(p.equity) : 'Required';
   $('stepAgent').className = `step ${agent ? 'done' : funded ? 'active' : ''}`;
   $('stepAgentValue').textContent = agent ? 'Enabled' : 'Enable once';
-  $('agentMode').textContent = agent ? 'FAST API WALLET' : 'SETUP REQUIRED';
+  $('agentMode').textContent = agent ? 'READY' : 'SETUP REQUIRED';
   $('agentMode').className = `mode-badge ${agent ? 'ready' : ''}`;
   $('fundBtn').hidden = !connected || funded;
   $('enableTradingBtn').hidden = !connected || !funded || agent;
   $('revokeAgentBtn').hidden = !agent;
-  $('status').textContent = !connected ? 'Connect wallet' : !funded ? 'Deposit required' : !agent ? 'Enable trading once' : 'Trading ready';
-  $('previewSigner').textContent = agent ? 'Delegated API wallet' : 'Not ready';
+  $('status').textContent = !connected ? 'Connect wallet' : !funded ? 'Test balance required' : !agent ? 'Enable trading once' : 'Trading ready';
+  $('previewSigner').textContent = agent ? 'Ready' : 'Not ready';
   $('tradeBtn').disabled = !agent;
-  $('tradeBtn').textContent = !connected ? 'Connect wallet' : !funded ? 'Fund TESTNET first' : !agent ? 'Enable trading first' : `${$('side').value} ${currentCoin}`;
+  $('tradeBtn').textContent = !connected ? 'Connect wallet' : !funded ? 'Get test balance first' : !agent ? 'Enable trading first' : `${$('side').value} ${currentCoin}`;
   $('diagCollateral').textContent = !p ? '—' : funded ? `PASS · ${money(p.equity)}` : 'ACTION · equity 0';
   $('diagAgent').textContent = agent ? 'PASS · delegated' : connected ? 'ACTION · setup' : '—';
 }
@@ -254,7 +262,11 @@ async function restartRealtime() {
       onMids: mids => {
         if (seq !== realtimeSeq) return;
         const px = Number(mids?.[currentCoin]);
-        if (px > 0) { $('marketPrice').textContent = money(px); updatePreview(); }
+        if (px > 0) {
+          currentMarkPrice = px;
+          $('marketPrice').textContent = money(px);
+          updatePreview();
+        }
       },
       onBook: data => seq === realtimeSeq && renderBook(data),
       onTrades: data => seq === realtimeSeq && renderTrades(data),
@@ -267,7 +279,9 @@ async function restartRealtime() {
     console.warn('Realtime unavailable; REST refresh remains active', e);
     try {
       const px = await app.mid(currentCoin);
+      currentMarkPrice = Number(px) || 0;
       $('marketPrice').textContent = money(px);
+      updatePreview();
       const info = await app._info();
       renderBook(await info.l2Book({ coin: currentCoin }));
     } catch {}
@@ -294,8 +308,7 @@ function renderTrades(data) {
 
 function updatePreview() {
   const usd = Number($('orderUsd').value || 0);
-  const priceText = $('marketPrice').textContent.replace(/[$,]/g, '');
-  const price = Number(priceText);
+  const price = Number(currentMarkPrice);
   $('previewSide').textContent = `${$('side').value} ${currentCoin}`;
   $('previewNotional').textContent = money(usd);
   $('previewSize').textContent = price > 0 ? qty(usd / price) : '—';
@@ -319,8 +332,8 @@ async function submitTrade() {
   if (!confirm(`${params.side} ${currentCoin} for ${money(params.orderUsd)} at ${params.leverage}x${params.tp || params.sl ? ' with TP/SL' : ''}?`)) return;
   try {
     busy(b, true, 'Submitting…');
-    const out = await app.placeOrder(params);
-    toast(`Order accepted · ${out.signer}`, 'success');
+    await app.placeOrder(params);
+    toast('Order accepted', 'success');
     await refreshAccount();
   } catch (e) { toast(errText(e), 'error'); }
   finally { busy(b, false); renderSetup(await app.preflight().catch(() => null)); }
@@ -332,7 +345,7 @@ async function withdrawFlow() {
   if (amount == null) return;
   const destination = prompt('Destination EVM address:', wallet);
   if (destination == null) return;
-  if (!confirm(`Withdraw ${amount} USDC to ${destination}? This action uses your MASTER WALLET.`)) return;
+  if (!confirm(`Withdraw ${amount} USDC to ${destination}? A fresh wallet confirmation is required.`)) return;
   const phrase = prompt('For security, type exactly: WITHDRAW');
   if (phrase == null) return;
   try {
