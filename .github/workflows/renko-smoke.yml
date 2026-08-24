@@ -5,12 +5,14 @@ on:
     paths:
       - "renko/**"
       - "tools/renko-browser-smoke.mjs"
+      - "tools/renko-live-smoke.mjs"
       - ".github/workflows/renko-smoke.yml"
   push:
     branches: ["main"]
     paths:
       - "renko/**"
       - "tools/renko-browser-smoke.mjs"
+      - "tools/renko-live-smoke.mjs"
       - ".github/workflows/renko-smoke.yml"
 
 permissions:
@@ -24,7 +26,7 @@ concurrency:
 jobs:
   renko:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -34,6 +36,7 @@ jobs:
         run: |
           node --check renko/renko.js
           node --check tools/renko-browser-smoke.mjs
+          node --check tools/renko-live-smoke.mjs
           test -s renko/index.html
           test -s renko/renko.css
           grep -Fq "source:'raw-trade-ticks-only'" renko/renko.js
@@ -60,13 +63,34 @@ jobs:
           exit 1
       - name: Test Traditional Renko engine and responsive UI
         run: node tools/renko-browser-smoke.mjs
+      - name: Wait for Renko GitHub Pages bundle
+        if: github.event_name == 'push'
+        run: |
+          ok=0
+          for i in {1..120}; do
+            q="${GITHUB_RUN_ID}-${i}"
+            html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/renko/?v=$q" || true)"
+            js="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/renko/renko.js?v=$q" || true)"
+            if grep -Fq 'RWA Renko' <<<"$html" \
+              && grep -Fq 'CRYPTO ONLY' <<<"$html" \
+              && grep -Fq "source:'raw-trade-ticks-only'" <<<"$js" \
+              && grep -Fq "method:'traditional-fixed-box'" <<<"$js" \
+              && grep -Fq "reversalBoxes:2" <<<"$js"; then ok=1; break; fi
+            sleep 5
+          done
+          test "$ok" = "1"
+      - name: Verify live raw-tick Renko page
+        if: github.event_name == 'push'
+        env:
+          RWA_RENKO_LIVE_URL: https://narzulalistiqlal.github.io/rwa/renko/?v=${{ github.run_id }}
+        run: node tools/renko-live-smoke.mjs
       - name: Publish Renko status
         if: success() && github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-live' -f description='Raw tick Traditional Renko engine + desktop/mobile UI PASS'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-live' -f description='LIVE Pages raw-tick Traditional Renko + desktop/mobile PASS'
       - name: Publish Renko failure
         if: failure() && github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/renko-live' -f description='Renko tick Traditional gate failed'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/renko-live' -f description='Live Renko tick Traditional gate failed'
