@@ -4,23 +4,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#131722">
-<title>RWA Renko — Smooth Traditional Renko</title>
-<meta name="description" content="Smooth TradingView-style Traditional Renko with 50-brick first view, wheel zoom, drag/pinch navigation, background lazy history, all eligible Binance spot crypto searchable, and live individual trade ticks.">
+<title>RWA Renko — Native TradingView-Style Traditional Renko</title>
+<meta name="description" content="Traditional Renko rendered with TradingView Lightweight Charts: native kinetic pan, wheel/pinch scale, 50-brick first view, lazy older history, all eligible Binance spot crypto searchable, and live individual trade ticks.">
 <link rel="preconnect" href="https://data-api.binance.vision" crossorigin>
 <link rel="preconnect" href="https://data-stream.binance.vision" crossorigin>
 <link rel="preconnect" href="https://data.binance.vision" crossorigin>
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="stylesheet" href="renko.css?v=1">
 <link rel="stylesheet" href="renko-v2.css?v=2">
 <link rel="stylesheet" href="renko-v3.css?v=3">
 <link rel="stylesheet" href="renko-v5.css?v=61">
-<link rel="stylesheet" href="renko-v8-smooth.css?v=80">
+<link rel="stylesheet" href="renko-v9-lwc.css?v=90">
+<script src="https://unpkg.com/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
 <div class="app">
   <header class="topbar">
     <a class="brand" href="../" aria-label="Back to RWA Markets"><span class="brandmark">R</span><strong>RWA</strong></a>
     <nav class="nav"><a href="../">Markets</a><a class="active" href="./">Renko</a><a href="../trade/">Trade</a></nav>
-    <div class="top-status"><span id="modePill" class="mode-pill">TRADITIONAL · SMOOTH</span><span id="feedPill" class="feed-pill"><i></i><b>CONNECTING</b></span></div>
+    <div class="top-status"><span id="modePill" class="mode-pill">TRADITIONAL · NATIVE CHART</span><span id="feedPill" class="feed-pill"><i></i><b>CONNECTING</b></span></div>
   </header>
 
   <main class="workspace">
@@ -35,7 +37,7 @@
       <div class="instrument-bar">
         <div class="instrument">
           <div id="pairIcon" class="pair-icon">BT</div>
-          <div><div class="pair-title"><b id="pairName">BTC / USDT</b><span>SPOT</span></div><small id="sourceText">History: Binance 1m CLOSE in background worker · Live: Binance individual @trade · Traditional Renko</small></div>
+          <div><div class="pair-title"><b id="pairName">BTC / USDT</b><span>SPOT</span></div><small id="sourceText">Native TradingView Lightweight Charts interaction · History: completed Binance 1m CLOSE · Live: individual @trade</small></div>
         </div>
         <div class="stats">
           <div><small>LAST</small><b id="lastPrice">—</b></div>
@@ -61,7 +63,7 @@
 
       <div id="chartWrap" class="chart-wrap">
         <canvas id="renkoCanvas"></canvas>
-        <div id="chartEmpty" class="chart-empty"><span class="spinner"></span><b>Preparing Renko…</b><small>Cached 50-brick view paints first when available; fresh history loads in the background.</small></div>
+        <div id="chartEmpty" class="chart-empty"><span class="spinner"></span><b>Preparing Renko…</b><small>Cached 50-brick view paints first when available. Older history loads only near the left edge.</small></div>
         <div id="tooltip" class="tooltip" hidden></div>
         <div id="tvLoading" class="tv-loading" hidden>Loading older history</div>
         <div class="tv-chart-status"><span id="tvCoverage">Preparing history</span></div>
@@ -71,20 +73,22 @@
           <span id="tvZoomValue" class="zoom-value">50</span>
           <button id="tvZoomIn" title="Zoom in">+</button>
           <button id="tvPanNewer" title="Newer history">→</button>
-          <button id="tvReset" title="Reset view">⌂</button>
+          <button id="tvReset" title="Reset to latest 50">⌂</button>
           <button id="tvLive" class="live" title="Return to live">LIVE</button>
         </div>
       </div>
+      <div class="lwc-attribution">Charts powered by&nbsp;<a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView Lightweight Charts™</a></div>
 
       <details class="methodology">
         <summary>Renko methodology & data sources</summary>
         <div class="method-grid">
+          <div><b>Native chart interaction</b><p>The plotting surface uses TradingView Lightweight Charts 5.1 with native kinetic scrolling, wheel zoom, pressed-mouse drag, touch drag, pinch scaling, price-axis scaling and double-click axis reset.</p></div>
           <div><b>Traditional placement</b><p>Fixed absolute box. Continuation requires 1 box; reversal requires 2 boxes.</p></div>
-          <div><b>Smooth navigation</b><p>Mouse wheel zooms around the cursor, horizontal wheel or Shift+wheel pans, drag pans continuously, and pinch zoom works on touch devices. Older history loads without blocking the chart.</p></div>
-          <div><b>Historical source</b><p>Completed Binance 1-minute CLOSE bars are reconstructed in a Web Worker for responsive TradingView-style historical operation. The first view targets 50 Renko bricks and older pages are loaded progressively.</p></div>
-          <div><b>Live source</b><p>Realtime price and current Renko extension use Binance individual <code>@trade</code> ticks. The blue price line is the live venue price, not a synthetic execution price.</p></div>
+          <div><b>First paint & lazy history</b><p>The latest 50 Renko bricks are targeted first. Scrolling near the left edge fetches earlier completed history in the background while preserving the visible range.</p></div>
+          <div><b>Historical source</b><p>Completed Binance 1-minute CLOSE observations are reconstructed off the UI thread. This is the fast historical layer used for TradingView-like operation; it is not falsely labelled lifetime raw-tick history.</p></div>
+          <div><b>Live source</b><p>Realtime price and current Renko extension use Binance individual <code>@trade</code> ticks. The live price line is venue price, not a synthetic fill price.</p></div>
           <div><b>Crypto universe</b><p>All eligible Binance spot crypto pairs returned by the live exchange universe are searchable; the highest-liquidity 500 are pre-rendered for fast browsing.</p></div>
-          <div><b>Raw tick audit</b><p>Binance Vision individual <code>trades</code> archives remain available in the underlying audit engine. They are intentionally separate from the fast historical chart layer.</p></div>
+          <div><b>Raw tick audit</b><p>Binance Vision individual <code>trades</code> archives remain available in the underlying audit engine and stay separate from the fast historical plotting layer.</p></div>
         </div>
       </details>
 
@@ -101,7 +105,6 @@
 </div>
 <script src="renko-v3.js?v=3"></script>
 <script src="renko-v5.js?v=54"></script>
-<script src="renko-v8-smooth.js?v=80"></script>
-<script src="renko-v8-controls.js?v=82"></script>
+<script src="renko-v9-lwc.js?v=90"></script>
 </body>
 </html>
