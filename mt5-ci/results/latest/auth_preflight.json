@@ -1,0 +1,7 @@
+{
+  "status": "FAIL",
+  "server": "Exness-MT5Trial17",
+  "login_present": true,
+  "connected": false,
+  "message": "initialize failed attempt 3: (-10005, 'IPC timeout')"
+}

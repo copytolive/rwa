@@ -1,5 +1,5 @@
 {
-  "stage": "TESTER",
-  "message": "Authenticating demo context and running Strategy Tester Model 4 real ticks",
-  "utc": "2026-08-24T17:40:17.3638499Z"
+  "stage": "AUTH",
+  "message": "Pre-authenticating MT5 demo account and waiting for trade-server synchronization",
+  "utc": "2026-08-24T18:36:33.7241408Z"
 }
