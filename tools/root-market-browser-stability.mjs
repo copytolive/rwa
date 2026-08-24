@@ -40,8 +40,9 @@ async function desktop(browser){
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:20000});
   await page.waitForFunction(()=>window.RWAMarketPerformanceGuard?.runtime==='root-terminal-low-jank-v1',{timeout:10000});
   await page.waitForFunction(()=>document.querySelectorAll('#pairList .pairrow').length>10,{timeout:10000});
-  const info=await page.evaluate(()=>({rows:document.querySelectorAll('#pairList .pairrow').length,total:S.pairs.length,scrollWidth:document.documentElement.scrollWidth,innerWidth,guard:window.RWAMarketPerformanceGuard,quick:window.RWAQuickActions?.performance}));
+  const info=await page.evaluate(()=>{const h=document.querySelector('.topbar');const r=h.getBoundingClientRect();return {rows:document.querySelectorAll('#pairList .pairrow').length,total:S.pairs.length,scrollWidth:document.documentElement.scrollWidth,innerWidth,guard:window.RWAMarketPerformanceGuard,quick:window.RWAQuickActions?.performance,header:{h:r.height,scrollH:h.scrollHeight,scrollW:h.scrollWidth,clientW:h.clientWidth,single:h.dataset.rwaSingleRow,productbar:!!document.querySelector('.productbar'),trustbar:!!document.querySelector('.trustbar')}}});
   assert.equal(info.total,520);assert.ok(info.rows<=140&&info.rows>=10,`desktop market DOM cap invalid: ${info.rows}`);assert.ok(info.scrollWidth<=info.innerWidth+2,`desktop horizontal overflow ${info.scrollWidth}/${info.innerWidth}`);
+  assert.equal(info.header.single,'1');assert.equal(info.header.productbar,false);assert.equal(info.header.trustbar,false);assert.ok(info.header.h<=49&&info.header.scrollH<=49,`desktop header wrapped: ${JSON.stringify(info.header)}`);
   const stress=await page.evaluate(async()=>{
     const start=performance.now();for(let n=0;n<40;n++)for(const x of S.pairs)updatePairDOM(x,x.price);const queueMs=performance.now()-start;
     let observerCalls=0;const mo=new MutationObserver(()=>observerCalls++);mo.observe(document.documentElement,{subtree:true,childList:true,characterData:true});
@@ -56,17 +57,17 @@ async function desktop(browser){
 
 async function compactDesktop(browser){
   const context=await browser.newContext({viewport:{width:1024,height:820}});await installMocks(context);const page=await context.newPage();await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:20000});await page.waitForFunction(()=>window.RWAMarketPerformanceGuard,{timeout:10000});
-  const x=await page.evaluate(()=>({right:getComputedStyle(document.querySelector('.right')).display,layout:document.querySelector('.layout').getBoundingClientRect().width,scrollWidth:document.documentElement.scrollWidth,innerWidth}));
-  assert.equal(x.right,'none');assert.ok(x.layout<=x.innerWidth+1);assert.ok(x.scrollWidth<=x.innerWidth+2);await context.close();return x;
+  const x=await page.evaluate(()=>({right:getComputedStyle(document.querySelector('.right')).display,layout:document.querySelector('.layout').getBoundingClientRect().width,scrollWidth:document.documentElement.scrollWidth,innerWidth,headerH:document.querySelector('.topbar').scrollHeight}));
+  assert.equal(x.right,'none');assert.ok(x.layout<=x.innerWidth+1);assert.ok(x.scrollWidth<=x.innerWidth+2);assert.ok(x.headerH<=49,`compact header wrapped to ${x.headerH}`);await context.close();return x;
 }
 
 async function mobile(browser){
   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});await installMocks(context);const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:20000});await page.waitForFunction(()=>window.RWAMarketPerformanceGuard,{timeout:10000});await page.waitForTimeout(800);
   const m=await page.evaluate(()=>{
-    const de=document.documentElement,chart=document.querySelector('.chart-wrap')?.getBoundingClientRect(),exchange=document.querySelector('#rwaExchange')?.getBoundingClientRect(),app=document.querySelector('.app')?.getBoundingClientRect();
-    return {innerWidth,scrollWidth:de.scrollWidth,bodyWidth:document.body.scrollWidth,chart:chart&&{w:chart.width,h:chart.height},exchange:exchange&&{x:exchange.x,w:exchange.width},app:app&&{x:app.x,w:app.width},rows:document.querySelectorAll('#pairList .pairrow').length};
+    const de=document.documentElement,chart=document.querySelector('.chart-wrap')?.getBoundingClientRect(),exchange=document.querySelector('#rwaExchange')?.getBoundingClientRect(),app=document.querySelector('.app')?.getBoundingClientRect(),h=document.querySelector('.topbar'),hr=h.getBoundingClientRect();
+    return {innerWidth,scrollWidth:de.scrollWidth,bodyWidth:document.body.scrollWidth,chart:chart&&{w:chart.width,h:chart.height},exchange:exchange&&{x:exchange.x,w:exchange.width},app:app&&{x:app.x,w:app.width},rows:document.querySelectorAll('#pairList .pairrow').length,header:{h:hr.height,scrollH:h.scrollHeight,scrollW:h.scrollWidth,clientW:h.clientWidth,single:h.dataset.rwaSingleRow}};
   });
-  assert.ok(m.scrollWidth<=m.innerWidth+2,`mobile html overflow ${m.scrollWidth}/${m.innerWidth}`);assert.ok(m.bodyWidth<=m.innerWidth+2,`mobile body overflow ${m.bodyWidth}/${m.innerWidth}`);assert.ok(m.app.w<=m.innerWidth+1&&m.app.x>=-1,`mobile app width invalid ${JSON.stringify(m.app)}`);assert.ok(m.chart.w<=m.innerWidth+1&&m.chart.h>=280&&m.chart.h<=505,`mobile chart invalid ${JSON.stringify(m.chart)}`);if(m.exchange)assert.ok(m.exchange.w<=m.innerWidth+1&&m.exchange.x>=-1,`mobile exchange overflow ${JSON.stringify(m.exchange)}`);assert.ok(m.rows<=70,`mobile pair DOM cap invalid ${m.rows}`);
+  assert.ok(m.scrollWidth<=m.innerWidth+2,`mobile html overflow ${m.scrollWidth}/${m.innerWidth}`);assert.ok(m.bodyWidth<=m.innerWidth+2,`mobile body overflow ${m.bodyWidth}/${m.innerWidth}`);assert.ok(m.app.w<=m.innerWidth+1&&m.app.x>=-1,`mobile app width invalid ${JSON.stringify(m.app)}`);assert.ok(m.chart.w<=m.innerWidth+1&&m.chart.h>=280&&m.chart.h<=505,`mobile chart invalid ${JSON.stringify(m.chart)}`);if(m.exchange)assert.ok(m.exchange.w<=m.innerWidth+1&&m.exchange.x>=-1,`mobile exchange overflow ${JSON.stringify(m.exchange)}`);assert.ok(m.rows<=70,`mobile pair DOM cap invalid ${m.rows}`);assert.equal(m.header.single,'1');assert.ok(m.header.h<=47&&m.header.scrollH<=47,`mobile header wrapped: ${JSON.stringify(m.header)}`);
   await page.evaluate(()=>document.querySelector('[data-mobile-nav="markets"]')?.click());await page.waitForTimeout(80);const drawer=await page.evaluate(()=>({open:document.body.classList.contains('market-drawer-open'),left:getComputedStyle(document.querySelector('.left')).display,scrollWidth:document.documentElement.scrollWidth}));assert.equal(drawer.open,true);assert.notEqual(drawer.left,'none');assert.ok(drawer.scrollWidth<=390+2);
   assert.equal(errors.length,0,`mobile page errors: ${errors.join(' | ')}`);await context.close();return {m,drawer};
 }
@@ -74,5 +75,5 @@ async function mobile(browser){
 const browser=await chromium.launch({headless:true});
 try{
   const d=await desktop(browser),c=await compactDesktop(browser),m=await mobile(browser);
-  console.log(JSON.stringify({ok:true,contract:'rwa-root-market-browser-stability-v1',desktop:d,compact:c,mobile:m},null,2));
+  console.log(JSON.stringify({ok:true,contract:'rwa-root-market-browser-stability-v2-single-row-header',desktop:d,compact:c,mobile:m},null,2));
 }finally{await browser.close()}
