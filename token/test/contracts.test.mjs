@@ -66,6 +66,7 @@ const outsiderAddress=await outsider.getAddress();
 
 const supply=ethers.parseEther('1000000');
 const token=await deploy(tokenA,deployer,['RWA PRE-TGE TEST','RWATEST',treasuryAddress,supply]);
+const tokenAddress=await token.getAddress();
 assert.equal(await token.totalSupply(),supply,'fixed total supply mismatch');
 assert.equal(await token.balanceOf(treasuryAddress),supply,'treasury must receive full fixed supply');
 assert.equal(tokenA.abi.some(x=>x.type==='function'&&x.name==='mint'),false,'post-deployment mint function must not exist');
@@ -87,16 +88,17 @@ const start=Number(latest.timestamp)+10;
 const cliffSeconds=100;
 const durationSeconds=1000;
 const allocation=ethers.parseEther('1000');
-const vesting=await deploy(vestA,deployer,[await token.getAddress(),beneficiaryAddress,start,cliffSeconds,durationSeconds,allocation]);
-await (await token.connect(treasury).transfer(await vesting.getAddress(),allocation)).wait();
-assert.equal(await token.balanceOf(await vesting.getAddress()),allocation,'vesting vault funding mismatch');
+const vesting=await deploy(vestA,deployer,[tokenAddress,beneficiaryAddress,start,cliffSeconds,durationSeconds,allocation]);
+const vestingAddress=await vesting.getAddress();
+await (await token.connect(treasury).transfer(vestingAddress,allocation)).wait();
+assert.equal(await token.balanceOf(vestingAddress),allocation,'vesting vault funding mismatch');
 assert.equal(await vesting.vestedAt(start+cliffSeconds-1),0n,'vesting must be zero before cliff');
 assert.equal(await vesting.vestedAt(start+500),allocation*500n/1000n,'linear midpoint vesting mismatch');
 assert.equal(await vesting.vestedAt(start+durationSeconds),allocation,'full allocation must vest at duration end');
 
 const vestFactory=new ethers.ContractFactory(vestA.abi,'0x'+vestA.evm.bytecode.object,deployer);
-await expectRevert(()=>vestFactory.deploy(await token.getAddress(),ethers.ZeroAddress,start,0,100,1n),'zero beneficiary must revert');
-await expectRevert(()=>vestFactory.deploy(await token.getAddress(),beneficiaryAddress,start,101,100,1n),'cliff greater than duration must revert');
+await expectRevert(()=>vestFactory.deploy(tokenAddress,ethers.ZeroAddress,start,0,100,1n),'zero beneficiary must revert');
+await expectRevert(()=>vestFactory.deploy(tokenAddress,beneficiaryAddress,start,101,100,1n),'cliff greater than duration must revert');
 
 let now=(await provider.getBlock('latest')).timestamp;
 await provider.send('evm_increaseTime',[Math.max(0,start+500-now)]);
@@ -114,7 +116,7 @@ await provider.send('evm_increaseTime',[Math.max(0,start+durationSeconds+1-now)]
 await provider.send('evm_mine',[]);
 await (await vesting.connect(beneficiary).release()).wait();
 assert.equal(await vesting.released(),allocation,'released amount must equal allocation after full vesting');
-assert.equal(await token.balanceOf(await vesting.getAddress()),0n,'vesting vault must be empty after full release');
+assert.equal(await token.balanceOf(vestingAddress),0n,'vesting vault must be empty after full release');
 assert.equal(await token.balanceOf(outsiderAddress),0n,'outsider must receive no vested tokens');
 
 console.log('PRE-TGE contract unit tests PASS: fixed supply, permit/votes surface, immutable vesting schedule, cliff, linear release, access control.');
