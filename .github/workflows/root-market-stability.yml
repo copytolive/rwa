@@ -61,12 +61,14 @@ jobs:
           node --check mobile.js
           node --check tools/root-market-browser-stability.mjs
           grep -Fq 'market-performance.js?v=2' index.html
-          grep -Fq 'stable-shell.css?v=2' index.html
+          grep -Fq 'stable-shell.css?v=3' index.html
           grep -Fq 'realtime-core.js?v=3' index.html
           grep -Fq "runtime:'root-terminal-low-jank-v1'" market-performance.js
           grep -Fq "header='single-row-global-shell-v1'" market-performance.js
           grep -Fq "observer_policy='hot-dom-periodic-1200ms'" market-performance.js
           grep -Fq 'STRICT SINGLE TOP ROW' stable-shell.css
+          grep -Fq 'COMPACT EXCHANGE CORE' stable-shell.css
+          grep -Fq 'rwa-ex-main>.rwa-ex-card:first-child' stable-shell.css
           grep -Fq 'depth10@1000ms' realtime-core.js
           grep -Fq 'setInterval(persistUniverse,30000)' realtime-core.js
           grep -Fq "performance:'lazy-storefront-no-global-observer-v1'" quick-actions.js
