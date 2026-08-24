@@ -27,8 +27,11 @@ jobs:
       - name: Validate test source
         run: |
           node --check tools/browser-operability.mjs
+          node --check quick-actions.js
           node --check social-notification-defaults.js
           node --check social-trading-pro.js
+          grep -Fq 'data-rwa-social-nav' quick-actions.js
+          grep -Fq "openTab('feed')" quick-actions.js
       - name: Install Playwright Chromium
         run: |
           npm install --no-save playwright@1.55.0
@@ -45,6 +48,7 @@ jobs:
             html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/?v=${GITHUB_RUN_ID}-${i}" || true)"
             if grep -Fq "version:'1.5.0'" <<<"$cfg" \
               && grep -Fq 'RWAQuickActions' <<<"$quick" \
+              && grep -Fq 'data-rwa-social-nav' <<<"$quick" \
               && grep -Fq "policy:'explicit-opt-in-v1'" <<<"$defaults" \
               && grep -Fq 'friends:false' <<<"$defaults" \
               && grep -Fq "venue-backed-social-feed-v1" <<<"$social" \
@@ -58,7 +62,7 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/browser-operability' -f description='Desktop + mobile live UI, social trader feed and explicit notification opt-in verified in Chromium'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/browser-operability' -f description='Desktop + mobile live UI, desktop Social nav, trader feed and explicit opt-in verified in Chromium'
       - name: Publish browser failure
         if: failure()
         env:
