@@ -15,18 +15,24 @@ async function pageFor(viewport){
 async function visible(page,selector,timeout=10000){try{await page.locator(selector).first().waitFor({state:'visible',timeout});return true}catch{return false}}
 async function noOverflow(page,label){const m=await page.evaluate(()=>({w:innerWidth,sw:document.documentElement.scrollWidth}));check(m.sw<=m.w+3,`${label}: horizontal overflow ${m.sw}>${m.w}`)}
 
-// Desktop root: Hub navigation and formerly-placeholder market actions must be real controls.
+// Desktop root: live social feed, Hub navigation and formerly-placeholder market actions must be real controls.
 {
   const {context,page,errors}=await pageFor({width:1440,height:1000});
   await page.goto(`${BASE}?browser-smoke=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:30000});
-  await page.waitForTimeout(1200);
+  await page.waitForTimeout(1600);
   check(await visible(page,'[data-rwa-trade-now]'), 'root desktop: Trade Perps action not injected');
+  check(await visible(page,'#rwaLiveTradeFeed',12000),'root desktop: venue-backed social trade feed not injected');
+  check(await visible(page,'#rwaTradeFeedRefresh',12000),'root desktop: social trade refresh missing');
+  if(await visible(page,'#rwaTradeFeedRefresh',2000))await page.locator('#rwaTradeFeedRefresh').click();
   const watch=page.locator('.instrument-actions button').filter({hasText:'Watch'}).first();
   check(await watch.isVisible().catch(()=>false),'root desktop: Watch action missing');
   if(await watch.isVisible().catch(()=>false)){
     await watch.click();
     check(await visible(page,'#suite',15000),'root desktop: Watch did not open Hub');
     check(await page.locator('[data-suite-panel="watch"]').evaluate(e=>e.classList.contains('active')).catch(()=>false),'root desktop: Watch panel not active');
+    check(await visible(page,'#rwaSocialNotify',12000),'root desktop: social notification controls missing');
+    check(await visible(page,'#rwaNotifySave',12000),'root desktop: social notification save control missing');
+    if(await visible(page,'#rwaNotifySave',2000))await page.locator('#rwaNotifySave').click();
   }
   const close=page.locator('[data-suite-close]').first();if(await close.isVisible().catch(()=>false))await close.click();
   const trade=page.locator('[data-rwa-trade-now]').first();
@@ -75,9 +81,15 @@ async function noOverflow(page,label){const m=await page.evaluate(()=>({w:innerW
 for(const [name,path] of [['root mobile',''],['trade mobile','trade/?side=BUY&type=MARKET&usd=25']]){
   const {context,page,errors}=await pageFor({width:390,height:844});
   await page.goto(`${BASE}${path}${path.includes('?')?'&':'?'}browser-smoke=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:30000});
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(1700);
   if(name==='root mobile'){
     check(await visible(page,'.mobile-tabs'),'root mobile: bottom navigation missing');
+    const social=page.locator('[data-mobile-nav="social"]').first();
+    check(await social.isVisible().catch(()=>false),'root mobile: Social navigation missing');
+    if(await social.isVisible().catch(()=>false)){
+      await social.click();
+      check(await visible(page,'#rwaLiveTradeFeed',12000),'root mobile: live trader feed missing from Social');
+    }
     const hub=page.locator('[data-mobile-nav="hub"]').first();check(await hub.isVisible().catch(()=>false),'root mobile: Hub navigation missing');
     if(await hub.isVisible().catch(()=>false)){await hub.click();check(await visible(page,'#suite',15000),'root mobile: Hub did not open')}
   }else{
@@ -93,5 +105,5 @@ for(const [name,path] of [['root mobile',''],['trade mobile','trade/?side=BUY&ty
 }
 
 await browser.close();
-if(failures.length){console.error(JSON.stringify({ok:false,contract:'rwa-browser-operability-v2',failures},null,2));process.exit(1)}
-console.log(JSON.stringify({ok:true,contract:'rwa-browser-operability-v2',desktop:['root actions','trade controls','modals','margin','chart','locked funds'],mobile:['root hub','trade bar','margin','chart','locked funds','no horizontal overflow']},null,2));
+if(failures.length){console.error(JSON.stringify({ok:false,contract:'rwa-browser-operability-v3',failures},null,2));process.exit(1)}
+console.log(JSON.stringify({ok:true,contract:'rwa-browser-operability-v3',desktop:['root actions','venue social feed','notification settings','trade controls','modals','margin','chart','locked funds'],mobile:['social feed','root hub','trade bar','margin','chart','locked funds','no horizontal overflow']},null,2));
