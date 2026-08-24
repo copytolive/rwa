@@ -15,7 +15,7 @@ on:
         description: "Deploy/refresh the free Cloudflare worker"
         required: true
         type: boolean
-        default: false
+        default: true
 
 permissions:
   contents: write
@@ -53,7 +53,6 @@ jobs:
         run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/free-worker-build' -f description='Cloudflare free worker build failed'
 
   deploy:
-    if: github.event_name == 'workflow_dispatch' && inputs.deploy == true
     needs: build
     runs-on: ubuntu-latest
     env:
@@ -66,20 +65,32 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22.12.0"
-      - name: Require Cloudflare free-plan credentials
+      - name: Detect free Cloudflare credentials
+        id: creds
         run: |
-          test -n "$CLOUDFLARE_API_TOKEN" || { echo 'Missing CLOUDFLARE_API_TOKEN'; exit 2; }
-          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo 'Missing CLOUDFLARE_ACCOUNT_ID'; exit 2; }
+          if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo 'available=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'available=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Publish credential-waiting status
+        if: steps.creds.outputs.available != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=pending -f context='rwa/free-worker-live' -f description='Free worker bundle ready; add Cloudflare Free API token + account ID as GitHub Actions secrets'
       - name: Install worker dependencies
+        if: steps.creds.outputs.available == 'true'
         working-directory: agent-worker
         run: npm install --ignore-scripts
       - name: Create persistent encryption secret once
+        if: steps.creds.outputs.available == 'true'
         working-directory: agent-worker
         run: |
           if ! npx wrangler secret list --config cloudflare/wrangler.toml --json | grep -q 'RWA_KEY_ENCRYPTION_SECRET'; then
             openssl rand -hex 48 | npx wrangler secret put RWA_KEY_ENCRYPTION_SECRET --config cloudflare/wrangler.toml
           fi
       - name: Deploy free Cloudflare Worker
+        if: steps.creds.outputs.available == 'true'
         id: deploy
         working-directory: agent-worker
         run: |
@@ -89,12 +100,14 @@ jobs:
           test -n "$URL" || { echo 'Could not resolve workers.dev URL'; exit 3; }
           echo "url=$URL" >> "$GITHUB_OUTPUT"
       - name: Verify deployed health contract
+        if: steps.creds.outputs.available == 'true'
         env:
           URL: ${{ steps.deploy.outputs.url }}
         run: |
           body="$(curl -fsSL --max-time 20 "$URL/healthz")"
           node -e "const x=JSON.parse(process.argv[1]); if(!(x.ok===true&&x.single_write_path==='RWAWorkerExecutionAPI'&&x.idempotency==='deterministic-cloid-v1'&&x.origin_bound===true)) process.exit(1)" "$body"
       - name: Activate TESTNET worker only
+        if: steps.creds.outputs.available == 'true'
         env:
           URL: ${{ steps.deploy.outputs.url }}
         run: |
@@ -110,10 +123,13 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add agent-worker/public-config.json agent-worker/control.json
-          git commit -m 'worker: activate free Cloudflare TESTNET runtime'
-          git pull --rebase origin main
-          git push origin HEAD:main
+          if ! git diff --cached --quiet; then
+            git commit -m 'worker: activate free Cloudflare TESTNET runtime'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
       - name: Wait for repository control and ready gate
+        if: steps.creds.outputs.available == 'true'
         env:
           URL: ${{ steps.deploy.outputs.url }}
         run: |
@@ -125,6 +141,7 @@ jobs:
           done
           test "$ok" = "1"
       - name: Publish free worker live status
+        if: steps.creds.outputs.available == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/free-worker-live' -f description='Cloudflare Workers Free runtime health + ready PASS; TESTNET only'
