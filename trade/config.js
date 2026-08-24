@@ -1,5 +1,5 @@
 import './provider-runtime.js?v=1';
-import './ui-polish.js?v=1';
+import './ui-polish.js?v=2';
 
 const GATE={readiness:null,e2e:null,checkedAt:0,error:''};
 const wallet=()=>{try{const w=String(JSON.parse(localStorage.getItem('rwa_wallet_link_v1')||'{}')?.wallet||'').toLowerCase();return /^0x[a-f0-9]{40}$/.test(w)?w:''}catch{return''}};
