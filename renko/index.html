@@ -9,6 +9,10 @@
 <link rel="preconnect" href="https://data-api.binance.vision" crossorigin>
 <link rel="preconnect" href="https://data-stream.binance.vision" crossorigin>
 <link rel="stylesheet" href="renko.css?v=1">
+<style>
+.mobile-pair-button{display:none;border:1px solid #29323d;background:#111821;color:#dfe6ed;border-radius:8px;height:29px;padding:0 8px;font:800 8px/1 system-ui;cursor:pointer}
+@media(max-width:760px){.mobile-pair-button{display:flex!important;align-items:center;justify-content:center}}
+</style>
 </head>
 <body>
 <div class="app">
@@ -44,7 +48,7 @@
         <div class="field brick-field"><label>FIXED BRICK SIZE</label><div class="brick-input"><input id="brickSize" inputmode="decimal" value="100"><button id="applyBrick">Apply</button></div></div>
         <div class="field"><label>VISIBLE BRICKS</label><div class="stepper"><button id="zoomOut" aria-label="Show more bricks">−</button><b id="visibleValue">120</b><button id="zoomIn" aria-label="Show fewer bricks">+</button></div></div>
         <label class="toggle"><input id="followLive" type="checkbox" checked><span></span><b>FOLLOW LIVE</b></label>
-        <button id="resetChart" class="ghost">Reset ticks</button>
+        <button id="resetChart" class="ghost">Rebuild ticks</button>
         <div class="thresholds"><span>UP <b id="nextUp">—</b></span><span>DOWN <b id="nextDown">—</b></span></div>
       </div>
 
