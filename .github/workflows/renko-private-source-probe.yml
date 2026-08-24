@@ -11,45 +11,28 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Inspect private Renko history contract
+      - name: Verify private Renko full window and CORS
         shell: bash
         run: |
           set -euo pipefail
-          origin='https://seablueprint.com'
+          url='https://seablueprint.com/api/charting/hyperliquid/renko/BTC?limit=100000&live=1&history=all'
+          echo '== CORS HEADERS =='
+          curl -sS -D /tmp/headers -o /tmp/body --max-time 60 -H 'Origin: https://narzulalistiqlal.github.io' "$url"
+          grep -iE '^(HTTP/|access-control|content-type|content-length|vary:|x-renko-cache)' /tmp/headers || true
+          echo '== CONTRACT =='
           python3 - <<'PY'
-          import json, subprocess, urllib.parse
-          origin='https://seablueprint.com'
-          variants=[
-            ('baseline', {'limit':'5000','live':'1','smaPeriod':'10','sma':'10'}),
-            ('history_all', {'limit':'20000','live':'1','history':'all'}),
-            ('tick_only', {'limit':'5000','live':'1','tickOnly':'1'}),
-            ('source_ticks', {'limit':'5000','live':'1','source':'ticks'}),
-            ('recorded_ticks_only', {'limit':'5000','live':'1','recordedTicksOnly':'1'}),
-          ]
-          for name,qs in variants:
-              url=origin+'/api/charting/hyperliquid/renko/BTC?'+urllib.parse.urlencode(qs)
-              print('\n==',name,url,'==')
-              p=subprocess.run(['curl','-sS','--max-time','45',url],capture_output=True,text=True)
-              if p.returncode:
-                  print('curl_error',p.returncode,p.stderr.strip()); continue
-              try:d=json.loads(p.stdout)
-              except Exception as e:
-                  print('json_error',e,'prefix',p.stdout[:200]); continue
-              c=d.get('candles') if isinstance(d,dict) else None
-              print('count',len(c) if isinstance(c,list) else None)
-              for k in ('source','construction','dataQuality','recordedTickCount','recordedTickStart','historyStart','historyEnd','windowStart','windowEnd','hasMore','truncated','returnedCount','inputBars','brickSize','reversalBricks','timeframe'):
-                  print(k,repr(d.get(k)))
-              if isinstance(c,list) and c:
-                  print('first',c[0]); print('last',c[-1])
+          import json
+          d=json.load(open('/tmp/body'))
+          c=d.get('candles',[])
+          print('candles',len(c))
+          for k in ('source','construction','dataQuality','historyStart','historyEnd','windowStart','windowEnd','hasMore','truncated','returnedCount','inputBars','brickSize','reversalBricks','recordedTickCount','recordedTickStart'):
+              print(k,repr(d.get(k)))
+          if c: print('first',c[0]); print('last',c[-1])
           PY
 
-      - name: Probe public Binance raw trade archive headers
+      - name: Verify Binance raw trade archive
         shell: bash
         run: |
           set -euo pipefail
-          for u in \
-            'https://data.binance.vision/data/spot/daily/trades/BTCUSDT/BTCUSDT-trades-2026-08-23.zip' \
-            'https://data.binance.vision/data/spot/monthly/trades/BTCUSDT/BTCUSDT-trades-2026-07.zip'; do
-            echo "== $u =="
-            curl -sSI --max-time 20 "$u" | sed -n '1,30p' || true
-          done
+          u='https://data.binance.vision/data/spot/daily/trades/BTCUSDT/BTCUSDT-trades-2026-08-23.zip'
+          curl -sSI --max-time 20 -H 'Origin: https://narzulalistiqlal.github.io' "$u" | grep -iE '^(HTTP/|content-type|content-length|access-control|accept-ranges)' || true
