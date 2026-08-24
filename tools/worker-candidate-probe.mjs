@@ -1,5 +1,5 @@
 import {readFile} from 'node:fs/promises';
-
+// 2026-08-25 operational re-probe: no contract change; force a fresh public health/ready check.
 const cfg=JSON.parse(await readFile('agent-worker/public-config.json','utf8'));
 const base=String(cfg.candidate_base_url||'').trim().replace(/\/$/,'');
 if(!/^https:\/\//i.test(base))throw new Error('candidate_base_url_https_required');
