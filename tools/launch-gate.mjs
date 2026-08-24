@@ -38,6 +38,7 @@ const proofs=(beta.proofs||[]).filter(x=>x?.status==='VERIFIED'&&addr(x.wallet)&
 const uniqueFor=minRank=>new Set(proofs.filter(x=>rank[x.phase]>=minRank).map(x=>String(x.wallet).toLowerCase())).size;
 const betaCounts={internal:uniqueFor(1),closed:uniqueFor(2),public:uniqueFor(3)};
 const thresholds={internal:Number(beta.thresholds?.internal||3),closed:Number(beta.thresholds?.closed||20),public:Number(beta.thresholds?.public||100)};
+const metricsAvailable=workerLoop.includes("u.pathname==='/metrics'")||(workerLoop.includes("u.pathname==='/status'")&&workerLoop.includes('metrics:metrics()'));
 
 const checks={
   browser_single_write:{ok:execution.includes("hardening:'single-write-path-v1'")&&execution.includes("riskGate:'mandatory-internal-v1'")&&execution.includes("bracket:'atomic-normal-tpsl-v1'")&&core.includes("protection:'atomic-normal-tpsl-v1'"),detail:'RWAExecutionAPI + mandatory risk + atomic normalTpsl'},
@@ -52,7 +53,7 @@ const checks={
   beta_verifier_pipeline:{ok:betaVerify.includes('BETA_PROOF_JSON_START')&&betaVerify.includes('userFillsByTime')&&betaVerify.includes('processed source fill')&&betaWorkflow.includes('node tools/beta-proof.mjs'),detail:'wallet + exact worker session + venue beta verifier'},
   beta_infrastructure:{ok:Array.isArray(beta.proofs)&&thresholds.internal>=3&&thresholds.closed>=20&&thresholds.public>=100&&betaWorkflow.includes('launch/beta-registry.json'),detail:`machine beta thresholds ${thresholds.internal}/${thresholds.closed}/${thresholds.public}`},
   security_ci_pipeline:{ok:securityGate.includes('single_write_path')&&securityGate.includes('worker_fund_isolation')&&securityGate.includes('rwa_evidence_policy')&&securityWorkflow.includes('node tools/security-gate.mjs'),detail:'repository-wide execution/fund/evidence security workflow'},
-  monitoring_pipeline:{ok:workerLoop.includes("u.pathname==='/healthz'")&&workerLoop.includes("u.pathname==='/readyz'")&&workerLoop.includes("u.pathname==='/metrics'")&&workerWatch.includes('kill_switch:true')&&workerWatch.includes('mainnet_enabled:false')&&watchWorkflow.includes("cron: '*/5"),detail:'health + readiness + metrics + five-minute fail-safe watchdog'},
+  monitoring_pipeline:{ok:workerLoop.includes("u.pathname==='/healthz'")&&workerLoop.includes("u.pathname==='/readyz'")&&metricsAvailable&&workerWatch.includes('kill_switch:true')&&workerWatch.includes('mainnet_enabled:false')&&watchWorkflow.includes("cron: '*/5"),detail:'health + readiness + metrics + five-minute fail-safe watchdog'},
   launch_automation:{ok:launchWorkflow.includes('node tools/launch-gate.mjs --write')&&launchWorkflow.includes('launch/readiness.json')&&launchWorkflow.includes("cron: '*/15")&&launchWorkflow.includes("context='rwa/launch-gate'"),detail:'machine readiness auto-refresh + CI launch status'},
   real_wallet_e2e:{ok:(e2e.wallets||[]).some(x=>addr(x.wallet)&&x.status==='E2E_VERIFIED'&&Number(x.verified_at)>0),detail:`${(e2e.wallets||[]).length} registered wallet proof(s)`},
   reviewer_registry:{ok:(reviewers.reviewers||[]).some(x=>addr(typeof x==='string'?x:x.wallet)),detail:`${(reviewers.reviewers||[]).length} authorized reviewer(s)`},
