@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07090d">
 <title>RWA Renko — Raw Tick Lifetime Traditional Crypto Chart</title>
-<meta name="description" content="RWA Traditional Renko terminal: Binance raw individual trade archives to live @trade, top-500 crypto markets, automatic lifetime tick-history coverage.">
+<meta name="description" content="RWA Traditional Renko terminal: Binance raw individual trade archives to live @trade, top-500 crypto markets, automatic progressive lifetime tick-history coverage.">
 <link rel="preconnect" href="https://data-api.binance.vision" crossorigin>
 <link rel="preconnect" href="https://data-stream.binance.vision" crossorigin>
 <link rel="preconnect" href="https://data.binance.vision" crossorigin>
@@ -60,7 +60,7 @@
       </div>
 
       <div class="archivebar" aria-label="Raw tick lifetime archive coverage">
-        <div class="archive-summary"><small>TOTAL TICK HISTORY · AUTO</small><b id="archiveStatus" class="archive-status loading">AUTO LOADING TOTAL RAW TICK HISTORY</b><span id="archiveDetail">Each selected market automatically loads its oldest available Binance Vision individual-trade archive through live @trade.</span></div>
+        <div class="archive-summary"><small>TOTAL TICK HISTORY · AUTO</small><b id="archiveStatus" class="archive-status loading">AUTO LOADING TOTAL RAW TICK HISTORY</b><span id="archiveDetail">Each selected market automatically loads its oldest available Binance Vision individual-trade archive through live @trade. Historical bricks appear progressively while the archive is processed.</span></div>
         <div><div class="archive-progress"><i id="archiveProgressFill"></i></div><small id="archiveProgressText">Discovering archive coverage…</small><div id="archiveCoverage">Archive coverage: discovering…</div></div>
         <div class="archive-actions"><button id="archiveLoad" class="primary">RELOAD TOTAL TICK HISTORY</button><button id="archiveCancel" class="ghost" disabled>CANCEL</button></div>
       </div>
@@ -70,7 +70,7 @@
         <div class="history-actions"><button id="historyStart">START</button><button id="historyPrev" aria-label="Older history">←</button><button id="historyAll" class="active">ALL HISTORY</button><button id="historyNext" aria-label="Newer history">→</button><button id="historyLive">LIVE</button></div>
         <input id="historyRange" class="history-range-input" type="range" min="0" max="0" value="0" disabled aria-label="History position">
         <div class="history-dates"><span id="historyFrom">—</span><i>→</i><span id="historyTo">LIVE</span></div>
-        <div id="historyIntegrity" class="history-integrity">Raw-tick lifetime backfill starts automatically. COMPLETE is shown only after every discovered archive segment is processed.</div>
+        <div id="historyIntegrity" class="history-integrity">Raw-tick lifetime backfill starts automatically and draws the accumulated history immediately. COMPLETE is shown only after every discovered archive segment is processed.</div>
       </div>
 
       <div id="chartWrap" class="chart-wrap">
@@ -91,7 +91,7 @@
           <div><b>Historical source</b><p>Binance Vision spot <code>trades</code> archives: individual executions. Missing archive segments keep status PARTIAL; they are never replaced by candles.</p></div>
           <div><b>Live source</b><p>Binance Spot <code>@trade</code> individual-trade WebSocket. The last archived tick is joined to live venue ticks.</p></div>
           <div><b>Traditional box</b><p>The box is a fixed absolute value. Continuation requires one box; reversal requires two boxes. AUTO/pct controls only select the fixed box size.</p></div>
-          <div><b>Total history</b><p>Every selected coin automatically starts lifetime raw-tick backfill in a Web Worker. START/ALL HISTORY/LIVE navigate the resulting full Renko sequence without trimming older bricks.</p></div>
+          <div><b>Total history</b><p>Every selected coin automatically starts lifetime raw-tick backfill in a Web Worker. Historical brick chunks are drawn progressively; after completion, START/ALL HISTORY/LIVE navigate the retained full Renko sequence.</p></div>
           <div><b>500-market universe</b><p>The first 500 eligible crypto markets are shown by 24h USD-equivalent liquidity; the complete eligible universe remains searchable.</p></div>
           <div><b>Synthetic chart</b><p>Renko brick prices are synthetic. Trading/fills must use actual venue prices through the RWA execution path.</p></div>
         </div>
@@ -101,6 +101,6 @@
 </div>
 <script src="renko-v3.js?v=3"></script>
 <script src="renko-v5.js?v=5"></script>
-<script src="renko-v5-auto.js?v=51"></script>
+<script src="renko-v5-auto.js?v=52"></script>
 </body>
 </html>
