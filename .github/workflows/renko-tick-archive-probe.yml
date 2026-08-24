@@ -1,0 +1,21 @@
+name: Renko Raw Tick Archive Probe
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/renko-tick-archive-probe.yml'
+      - 'renko/**'
+      - 'tools/renko-tick-archive-probe.mjs'
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Probe Binance Vision raw trades lifetime index and CORS
+        run: node tools/renko-tick-archive-probe.mjs
