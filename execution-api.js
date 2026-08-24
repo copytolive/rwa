@@ -13,6 +13,7 @@ let cfg=null;
 let mods=null;
 const metaCache=new Map();
 const agentVerifyCache=new Map();
+const writeTransportCache=new Map();
 
 const audit=(type,details={})=>window.RWAAudit?.log?.(type,details);
 const provider=()=>window.RWAProvider||window.ethereum;
@@ -130,14 +131,25 @@ async function masterWallet(){
     throw Error(`Wallet signer unavailable: ${detail}`);
   }
 }
-async function transport(testnet=false){
-  const {HttpTransport}=await modules();
-  return new HttpTransport({isTestnet:testnet,timeout:15000});
+
+async function writeTransport(testnet=false){
+  const key=env(testnet);
+  const hit=writeTransportCache.get(key);
+  if(hit)return hit;
+  const {WebSocketTransport}=await modules();
+  const transport=new WebSocketTransport({
+    isTestnet:testnet,
+    timeout:15000,
+    reconnect:{maxRetries:12,reconnectionDelay:750},
+    keepAlive:{interval:30000,timeout:10000}
+  });
+  writeTransportCache.set(key,transport);
+  return transport;
 }
 async function mainExchange(testnet=false){
   const {ExchangeClient}=await modules();
   return new ExchangeClient({
-    transport:await transport(testnet),
+    transport:await writeTransport(testnet),
     wallet:await masterWallet(),
     defaultExpiresAfter:()=>Date.now()+15000
   });
@@ -258,16 +270,21 @@ async function verifyAgent(testnet=false,{force=false}={}){
     return{valid:null,row,remote:null,reason:'verification-unavailable',error:String(e?.message||e)};
   }
 }
-async function exchange(testnet=false,{preferAgent=true}={}){
+
+async function exchange(testnet=false,{preferAgent=true,allowMaster=false}={}){
   const {ExchangeClient}=await modules();
   let wallet=null;
-  let mode='master';
+  let mode='agent';
   if(preferAgent){
-    const verified=await verifyAgent(testnet);
-    if(verified.valid!==false){wallet=await agentAccount(testnet);if(wallet)mode='agent'}
+    const verified=await verifyAgent(testnet,{force:true});
+    if(verified.valid===true)wallet=await agentAccount(testnet);
   }
-  if(!wallet)wallet=await masterWallet();
-  const client=new ExchangeClient({transport:await transport(testnet),wallet,defaultExpiresAfter:()=>Date.now()+15000});
+  if(!wallet){
+    if(!allowMaster)throw Error('1-click trading is not ready. Enable trading once before risk-increasing actions.');
+    wallet=await masterWallet();
+    mode='master';
+  }
+  const client=new ExchangeClient({transport:await writeTransport(testnet),wallet,defaultExpiresAfter:()=>Date.now()+15000});
   return{client,mode};
 }
 
@@ -340,7 +357,7 @@ async function setLeverage({coin,leverage,isCross=true,testnet=false,preferAgent
   const {idx}=await asset(coin,testnet);
   const value=Math.max(1,Math.floor(Number(leverage)||1));
   await mandatoryRiskCheck({coin,price:0,size:0,leverage:value,reduceOnly:false,kind:'leverage'},testnet);
-  const {client,mode}=await exchange(testnet,{preferAgent});
+  const {client,mode}=await exchange(testnet,{preferAgent,allowMaster:false});
   const result=assertWriteResult(await client.updateLeverage({asset:idx,isCross:!!isCross,leverage:value}),'Leverage update');
   audit('execution.leverage',{coin,leverage:value,testnet,mode});
   return result;
@@ -351,7 +368,7 @@ async function limit({coin,side='BUY',price,size,reduceOnly=false,tif='Gtc',leve
   const p=fmtPx(price,u.szDecimals);
   const s=fmtSz(size,u.szDecimals);
   await mandatoryRiskCheck({coin,price:Number(p),size:Number(s),leverage:Number(leverage||1),reduceOnly:!!reduceOnly,kind:'limit'},testnet);
-  const {client,mode}=await exchange(testnet,{preferAgent});
+  const {client,mode}=await exchange(testnet,{preferAgent,allowMaster:!!reduceOnly});
   if(leverage!=null)assertWriteResult(await client.updateLeverage({asset:idx,isCross:true,leverage:Math.max(1,Math.floor(Number(leverage)||1))}),'Leverage update');
   const builder=await builderParam();
   const args={orders:[{a:idx,b:String(side).toUpperCase()==='BUY',p,s,r:!!reduceOnly,t:{limit:{tif}}}],grouping:'na',...(builder?{builder}:{})};
@@ -394,7 +411,7 @@ async function bracket({coin,side='BUY',size,type='MARKET',price=null,tp=null,sl
   if(tpN>0&&((buy&&tpN<=reference)||(!buy&&tpN>=reference)))throw Error(buy?'Take profit must be above entry':'Take profit must be below entry');
   if(slN>0&&((buy&&slN>=reference)||(!buy&&slN<=reference)))throw Error(buy?'Stop loss must be below entry':'Stop loss must be above entry');
   await mandatoryRiskCheck({coin,price:Number(p),size:Number(s),leverage:Number(leverage||1),reduceOnly:false,kind:'bracket'},testnet);
-  const {client,mode}=await exchange(testnet,{preferAgent});
+  const {client,mode}=await exchange(testnet,{preferAgent,allowMaster:false});
   if(leverage!=null)assertWriteResult(await client.updateLeverage({asset:idx,isCross:true,leverage:Math.max(1,Math.floor(Number(leverage)||1))}),'Leverage update');
   const orders=[{a:idx,b:buy,p,s,r:false,t:{limit:{tif:kind==='MARKET'?'Ioc':tif}}}];
   const closeBuy=!buy;
@@ -412,7 +429,7 @@ async function trigger({coin,side,size,triggerPx,tpsl='sl',testnet=false,preferA
   const s=fmtSz(Math.abs(Number(size)),u.szDecimals);
   const kind=String(tpsl).toLowerCase()==='tp'?'tp':'sl';
   await mandatoryRiskCheck({coin,price:Number(p),size:Number(s),leverage:1,reduceOnly:true,kind:'trigger'},testnet);
-  const {client,mode}=await exchange(testnet,{preferAgent});
+  const {client,mode}=await exchange(testnet,{preferAgent,allowMaster:true});
   const builder=await builderParam();
   const args={orders:[{a:idx,b:String(side).toUpperCase()==='BUY',p,s,r:true,t:{trigger:{isMarket:true,triggerPx:p,tpsl:kind}}}],grouping:'positionTpsl',...(builder?{builder}:{})};
   const result=assertWriteResult(await client.order(args),'TP/SL trigger');
@@ -423,7 +440,7 @@ async function cancel({coin,oid,testnet=false,preferAgent=true}){
   coin=String(coin).toUpperCase();
   const {idx}=await asset(coin,testnet);
   await mandatoryRiskCheck({coin,price:0,size:0,leverage:0,reduceOnly:true,kind:'cancel'},testnet);
-  const {client,mode}=await exchange(testnet,{preferAgent});
+  const {client,mode}=await exchange(testnet,{preferAgent,allowMaster:true});
   const result=assertWriteResult(await client.cancel({cancels:[{a:idx,o:Number(oid)}]}),'Cancel order');
   audit('execution.cancel',{coin,oid,testnet,mode});
   return{result,mode};
@@ -434,7 +451,7 @@ async function modify({coin,oid,side,price,size,reduceOnly=false,testnet=false,p
   const p=fmtPx(price,u.szDecimals);
   const s=fmtSz(size,u.szDecimals);
   await mandatoryRiskCheck({coin,price:Number(p),size:Number(s),leverage:1,reduceOnly:!!reduceOnly,kind:'modify'},testnet);
-  const {client,mode}=await exchange(testnet,{preferAgent});
+  const {client,mode}=await exchange(testnet,{preferAgent,allowMaster:!!reduceOnly});
   const result=assertWriteResult(await client.modify({oid:Number(oid),order:{a:idx,b:String(side).toUpperCase()==='BUY'||side==='B',p,s,r:!!reduceOnly,t:{limit:{tif:'Gtc'}}}}),'Modify order');
   audit('execution.modify',{coin,oid,price:p,size:s,reduceOnly:!!reduceOnly,testnet,mode});
   return{result,mode};
@@ -449,7 +466,7 @@ async function health(testnet=false){
   const c=await config();
   let verification={valid:false,reason:'not-configured'};if(readAgent(testnet))verification=await verifyAgent(testnet);
   const a=readAgent(testnet);
-  const out={venue:c.venue,master:master(),walletProvider:!!provider(),agent:!!a,agentAddress:a?.address||'',agentExpiresAt:a?.expiresAt||0,agentVerified:verification.valid===true,agentVerification:verification.reason,environment:env(testnet),builder:await builderStatus(testnet),risk:riskCfg()};
+  const out={venue:c.venue,master:master(),walletProvider:!!provider(),agent:!!a,agentAddress:a?.address||'',agentExpiresAt:a?.expiresAt||0,agentVerified:verification.valid===true,agentVerification:verification.reason,environment:env(testnet),builder:await builderStatus(testnet),risk:riskCfg(),writeTransport:'websocket'};
   try{await info('allMids',{},testnet);out.api='ok'}catch(e){out.api='error';out.error=e.message}
   return out;
 }
@@ -460,6 +477,8 @@ window.RWAExecutionAPI={
   hardening:'single-write-path-v1',
   riskGate:'mandatory-internal-v1',
   bracket:'atomic-normal-tpsl-v1',
+  transport:'websocket-write-v1',
+  riskSigner:'agent-only-fail-closed-v1',
   config,
   auth:{master,provider},
   agent:{authorize:authorizeAgent,revoke:revokeAgent,status:(t=false)=>readAgent(t),account:agentAccount,verify:verifyAgent},
