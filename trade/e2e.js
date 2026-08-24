@@ -79,6 +79,19 @@ async function agentReady(api){
   if(verified?.valid!==true)throw Error('Trading approval was not verified by the TESTNET venue');
   return verified;
 }
+async function cleanupTestState(api,coin){
+  if(!api)return;
+  try{await api.orders.cancelAll({testnet:true,preferAgent:true})}catch{}
+  if(!coin)return;
+  try{
+    const rows=await currentPositions(api);
+    const position=rows.find(p=>String(p?.coin||'').toUpperCase()===String(coin).toUpperCase());
+    if(position){
+      const size=Math.abs(Number(position.szi||0));
+      if(size>0)await api.orders.market({coin:String(coin).toUpperCase(),side:Number(position.szi)>0?'SELL':'BUY',size,reduceOnly:true,leverage:null,testnet:true,preferAgent:true});
+    }
+  }catch{}
+}
 function setBusy(yes,label='Running…'){
   const button=document.getElementById('tradeE2ERun');
   if(!button)return;
@@ -97,82 +110,92 @@ async function run(){
   if(!address)throw Error('Connect wallet first');
   if(!confirm('Run full TESTNET verification? RWA will place a small test order, verify TP/SL + modify/cancel, then close the position. No mainnet order can be placed.'))return false;
   clear();
-  setBusy(true,'Verifying wallet…');
-  statusText('Wallet confirmation required once to bind the verification session.');
-  await signChallenge(address);
-  mark('wallet',short(address),'wallet-signature');
+  let api=null,coin='';
+  try{
+    setBusy(true,'Verifying wallet…');
+    statusText('Wallet confirmation required once to bind the verification session.');
+    await signChallenge(address);
+    mark('wallet',short(address),'wallet-signature');
 
-  const api=await execution();
-  const equity=await currentEquity(api);
-  if(!(equity>0))throw Error('Get test balance first');
-  mark('collateral',`equity ${money(equity)}`);
+    api=await execution();
+    const equity=await currentEquity(api);
+    if(!(equity>0))throw Error('Get test balance first');
+    mark('collateral',`equity ${money(equity)}`);
 
-  setBusy(true,'Checking approval…');
-  const verified=await agentReady(api);
-  const agentAddress=String(verified?.row?.address||verified?.remote?.address||api.agent.status(true)?.address||'').toLowerCase();
-  if(!/^0x[a-f0-9]{40}$/.test(agentAddress))throw Error('Verified trading approval address is unavailable');
-  mark('agent',agentAddress);
+    const [existingPositions,existingOrders]=await Promise.all([currentPositions(api),api.orders.open(true)]);
+    if(existingPositions.length)throw Error('Close existing TESTNET positions before running release verification');
+    if(Array.isArray(existingOrders)&&existingOrders.length)throw Error('Cancel existing TESTNET orders before running release verification');
 
-  const mids=await api.info('allMids',{},true);
-  const coin=Number(mids?.BTC)>0?'BTC':Object.keys(mids||{}).find(name=>Number(mids[name])>0);
-  if(!coin)throw Error('No TESTNET market is available');
-  const mid=Number(mids[coin]);
-  const notional=Math.max(12,Math.min(25,equity*0.02));
+    setBusy(true,'Checking approval…');
+    const verified=await agentReady(api);
+    const agentAddress=String(verified?.row?.address||verified?.remote?.address||api.agent.status(true)?.address||'').toLowerCase();
+    if(!/^0x[a-f0-9]{40}$/.test(agentAddress))throw Error('Verified trading approval address is unavailable');
+    mark('agent',agentAddress);
 
-  setBusy(true,'Testing modify / cancel…');
-  const restingPrice=mid*0.95;
-  const restingSize=notional/restingPrice;
-  const resting=await api.orders.limit({coin,side:'BUY',price:restingPrice,size:restingSize,reduceOnly:false,leverage:1,testnet:true,preferAgent:true});
-  let oid=[...orderIds(resting)][0]||'';
-  if(!oid){
-    oid=String(await waitFor(async()=>{
-      const rows=await api.orders.open(true);
-      const row=(rows||[]).find(x=>String(x?.coin||'').toUpperCase()===coin&&String(x?.side||'').toUpperCase().includes('B'));
-      return row?.oid||null;
-    },10000)||'');
+    const mids=await api.info('allMids',{},true);
+    coin=Number(mids?.BTC)>0?'BTC':Object.keys(mids||{}).find(name=>Number(mids[name])>0);
+    if(!coin)throw Error('No TESTNET market is available');
+    const mid=Number(mids[coin]);
+    const notional=Math.max(12,Math.min(25,equity*0.02));
+
+    setBusy(true,'Testing modify / cancel…');
+    const restingPrice=mid*0.70;
+    const restingSize=notional/restingPrice;
+    const resting=await api.orders.limit({coin,side:'BUY',price:restingPrice,size:restingSize,reduceOnly:false,leverage:1,testnet:true,preferAgent:true});
+    let oid=[...orderIds(resting)][0]||'';
+    if(!oid){
+      oid=String(await waitFor(async()=>{
+        const rows=await api.orders.open(true);
+        const row=(rows||[]).find(x=>String(x?.coin||'').toUpperCase()===coin&&String(x?.side||'').toUpperCase().includes('B'));
+        return row?.oid||null;
+      },10000)||'');
+    }
+    if(!oid)throw Error('Resting TESTNET order was not observed');
+    const modified=await api.orders.modify({coin,oid:Number(oid),side:'BUY',price:mid*0.71,size:restingSize,reduceOnly:false,testnet:true,preferAgent:true});
+    mark('modify',venueDetail(modified,`${coin} #${oid}`));
+    const canceled=await api.orders.cancel({coin,oid:Number(oid),testnet:true,preferAgent:true});
+    mark('cancel',venueDetail(canceled,`${coin} #${oid}`));
+
+    setBusy(true,'Testing protected entry…');
+    const size=notional/mid;
+    const bracket=await api.orders.bracket({coin,side:'BUY',size,type:'MARKET',tp:mid*1.05,sl:mid*0.95,leverage:1,testnet:true,preferAgent:true});
+    if(bracket?.mode&&bracket.mode!=='agent')throw Error('Risk-increasing entry did not use delegated trading approval');
+    mark('entry',venueDetail(bracket,`MARKET ${coin}`));
+    mark('tpsl',venueDetail(bracket,'atomic TP + SL'));
+
+    const position=await waitFor(async()=>{
+      const rows=await currentPositions(api);
+      return rows.find(p=>String(p?.coin||'').toUpperCase()===coin)||null;
+    },18000);
+    if(!position)throw Error('Filled TESTNET position was not observed');
+    mark('position',`${coin} ${position.szi}`);
+
+    setBusy(true,'Closing test position…');
+    const closeSide=Number(position.szi)>0?'SELL':'BUY';
+    const closed=await api.orders.market({coin,side:closeSide,size:Math.abs(Number(position.szi)),reduceOnly:true,leverage:null,testnet:true,preferAgent:true});
+    mark('close',venueDetail(closed,coin));
+    try{await api.orders.cancelAll({testnet:true,preferAgent:true})}catch{}
+    const flat=await waitFor(async()=>{
+      const rows=await currentPositions(api);
+      return !rows.some(p=>String(p?.coin||'').toUpperCase()===coin);
+    },18000);
+    if(!flat)throw Error('TESTNET position did not return to flat');
+
+    setBusy(true,'Verifying venue history…');
+    const fills=await api.account.fills(true);
+    if(!Array.isArray(fills)||fills.length<2)throw Error('Venue trade history does not show enough fills');
+    mark('history',`${fills.length} venue fills`);
+    const recent=fills.slice(0,20);
+    const closedPnl=recent.reduce((sum,row)=>sum+(Number(row?.closedPnl)||0),0);
+    mark('pnl',`closed PnL ${money(closedPnl)} · account refreshed`);
+
+    render();
+    statusText('PASS · venue-backed TESTNET lifecycle completed. Publish the signed proof to register it.','success');
+    return true;
+  }catch(error){
+    await cleanupTestState(api,coin);
+    throw error;
   }
-  if(!oid)throw Error('Resting TESTNET order was not observed');
-  const modified=await api.orders.modify({coin,oid:Number(oid),side:'BUY',price:mid*0.96,size:restingSize,reduceOnly:false,testnet:true,preferAgent:true});
-  mark('modify',venueDetail(modified,`${coin} #${oid}`));
-  const canceled=await api.orders.cancel({coin,oid:Number(oid),testnet:true,preferAgent:true});
-  mark('cancel',venueDetail(canceled,`${coin} #${oid}`));
-
-  setBusy(true,'Testing protected entry…');
-  const size=notional/mid;
-  const bracket=await api.orders.bracket({coin,side:'BUY',size,type:'MARKET',tp:mid*1.05,sl:mid*0.95,leverage:1,testnet:true,preferAgent:true});
-  if(bracket?.mode&&bracket.mode!=='agent')throw Error('Risk-increasing entry did not use delegated trading approval');
-  mark('entry',venueDetail(bracket,`MARKET ${coin}`));
-  mark('tpsl',venueDetail(bracket,'atomic TP + SL'));
-
-  const position=await waitFor(async()=>{
-    const rows=await currentPositions(api);
-    return rows.find(p=>String(p?.coin||'').toUpperCase()===coin)||null;
-  },18000);
-  if(!position)throw Error('Filled TESTNET position was not observed');
-  mark('position',`${coin} ${position.szi}`);
-
-  setBusy(true,'Closing test position…');
-  const closeSide=Number(position.szi)>0?'SELL':'BUY';
-  const closed=await api.orders.market({coin,side:closeSide,size:Math.abs(Number(position.szi)),reduceOnly:true,leverage:null,testnet:true,preferAgent:true});
-  mark('close',venueDetail(closed,coin));
-  try{await api.orders.cancelAll({testnet:true,preferAgent:true})}catch{}
-  const flat=await waitFor(async()=>{
-    const rows=await currentPositions(api);
-    return !rows.some(p=>String(p?.coin||'').toUpperCase()===coin);
-  },18000);
-  if(!flat)throw Error('TESTNET position did not return to flat');
-
-  setBusy(true,'Verifying venue history…');
-  const fills=await api.account.fills(true);
-  if(!Array.isArray(fills)||fills.length<2)throw Error('Venue trade history does not show enough fills');
-  mark('history',`${fills.length} venue fills`);
-  const recent=fills.slice(0,20);
-  const closedPnl=recent.reduce((sum,row)=>sum+(Number(row?.closedPnl)||0),0);
-  mark('pnl',`closed PnL ${money(closedPnl)} · account refreshed`);
-
-  render();
-  statusText('PASS · venue-backed TESTNET lifecycle completed. Publish the signed proof to register it.','success');
-  return true;
 }
 
 async function sha256(text){
@@ -221,6 +244,6 @@ function render(){
   const publishButton=document.getElementById('tradeE2EPublish');if(publishButton)publishButton.disabled=!ok;
 }
 
-window.RWATradeE2E={version:'1.0.0',run,publish,status:()=>({wallet:wallet(),passed:passed(),evidence:load()}),reset:clear};
+window.RWATradeE2E={version:'1.0.1',run,publish,status:()=>({wallet:wallet(),passed:passed(),evidence:load()}),reset:clear};
 let attempts=0;const timer=setInterval(()=>{attempts++;if(ensureUi()){clearInterval(timer);render()}if(attempts>100)clearInterval(timer)},100);
 })();
