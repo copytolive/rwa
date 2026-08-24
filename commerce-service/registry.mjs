@@ -32,11 +32,21 @@ export class RegistryService{
   constructor(db,{registryPath=process.env.RWA_COMMERCE_REGISTRY_PATH||resolve(ROOT,'rwa-commerce-registry.json'),assetsPath=process.env.RWA_COMMERCE_ASSETS_PATH||resolve(ROOT,'rwa-assets.json')}={}){this.db=db;this.registryPath=registryPath;this.assetsPath=assetsPath}
   read(){const registry=readJson(this.registryPath),assets=readJson(this.assetsPath);if(registry?.policy!=='ONE_TOKEN_ONE_PHYSICAL_STORE_V1')throw Error('registry_policy_mismatch');return{registry,assets}}
   sync({actor='system'}={}){
-    const {registry,assets}=this.read(),assetSet=verifiedAssets(assets),rows=Array.isArray(registry.stores)?registry.stores:[],seenToken=new Set(),seenAddress=new Set(),accepted=[];
-    for(const raw of rows){const s=validateStore(raw,assetSet),address=s.fullAddress.toLowerCase();if(seenToken.has(s.token))throw Error(`registry_duplicate_token:${s.token}`);if(seenAddress.has(address))throw Error(`registry_duplicate_physical_store:${s.token}`);seenToken.add(s.token);seenAddress.add(address);accepted.push(s)}
-    this.db.transaction(()=>{for(const s of accepted)this.db.upsertStore(s)});
-    this.db.audit(actor,'registry.sync','registry','rwa-commerce-registry',{accepted:accepted.length,policy:registry.policy});
-    return{ok:true,policy:registry.policy,stores:accepted.length,tokens:accepted.map(x=>x.token)};
+    let registry=null;
+    try{
+      const loaded=this.read();registry=loaded.registry;const assetSet=verifiedAssets(loaded.assets),rows=Array.isArray(registry.stores)?registry.stores:[],seenToken=new Set(),seenAddress=new Set(),accepted=[];
+      for(const raw of rows){const s=validateStore(raw,assetSet),address=s.fullAddress.toLowerCase();if(seenToken.has(s.token))throw Error(`registry_duplicate_token:${s.token}`);if(seenAddress.has(address))throw Error(`registry_duplicate_physical_store:${s.token}`);seenToken.add(s.token);seenAddress.add(address);accepted.push(s)}
+      const previousLive=this.db.stores().map(x=>x.token),acceptedSet=new Set(accepted.map(x=>x.token)),revoked=previousLive.filter(x=>!acceptedSet.has(x));
+      this.db.transaction(()=>{for(const s of accepted)this.db.upsertStore(s);this.db.revokeStoresExcept(accepted.map(x=>x.token));this.db.audit(actor,'registry.sync','registry','rwa-commerce-registry',{accepted:accepted.length,revoked,policy:registry.policy})});
+      return{ok:true,policy:registry.policy,stores:accepted.length,tokens:accepted.map(x=>x.token),revoked};
+    }catch(e){
+      // A persisted store must never remain LIVE when the current registry or
+      // matching verified-asset document becomes invalid. Registry files are
+      // local release inputs, so verification failure is treated as a hard
+      // fail-closed event instead of serving stale proof from a prior boot.
+      try{this.db.transaction(()=>{this.db.revokeStoresExcept([]);this.db.audit(actor,'registry.sync_failed','registry','rwa-commerce-registry',{error:String(e?.message||e),policy:registry?.policy||null})})}catch(revokeError){console.error('[commerce] registry fail-closed revoke failed:',revokeError.message)}
+      throw e;
+    }
   }
   snapshot(){return{stores:this.db.stores().map(s=>({token:s.token,name:s.name,category:s.category,full_address:s.full_address,geo:{lat:s.lat,lng:s.lng},contact:s.contact,opening_hours:s.opening_hours,storefront_photo_url:s.storefront_photo_url,business_registration_url:s.business_registration_url,merchant_identity_url:s.merchant_identity_url,catalog_url:s.catalog_url,asset_verified:!!s.asset_verified,store_verified:!!s.store_verified,trade_enabled:!!s.trade_enabled,status:s.status,updated_at:s.updated_at})),products:this.db.products().map(p=>({id:p.id,store_token:p.store_token,sku:p.sku,name:p.name,description:p.description,price_cents:p.price_cents,currency:p.currency,available:p.available,pickup:!!p.pickup,shipping:!!p.shipping,image_url:p.image_url}))}}
 }
