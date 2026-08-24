@@ -1,0 +1,9 @@
+(()=>{
+'use strict';
+if(window.RWAHomeCommerce)return;
+function css(){if(document.querySelector('link[data-rwa-home-commerce]'))return;const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-home-commerce.css?v=1';l.dataset.rwaHomeCommerce='1';document.head.appendChild(l)}
+function inject(){css();if(document.getElementById('rwaCommerceBanner'))return;const trust=document.querySelector('.trustbar'),anchor=trust||document.querySelector('.productbar');if(!anchor)return;const wrap=document.createElement('section');wrap.id='rwaCommerceBanner';wrap.className='rwa-commerce-banner';wrap.innerHTML='<div class="rwa-commerce-banner-inner"><div class="rwa-commerce-banner-copy"><span class="rwa-commerce-banner-mark">1:1</span><div><small>RWA × REAL COMMERCE</small><b>Trade the token. Shop the physical store.</b><p>Every RWA store-token must map to one verified real-world storefront, with ecommerce products, pickup/shipping and evidence-backed merchant identity.</p></div></div><div class="rwa-commerce-banner-actions"><button type="button" class="primary" data-rwa-home-shop>Open Physical Stores</button><button type="button" data-rwa-home-rules>Verification Rules</button></div></div>';anchor.insertAdjacentElement('afterend',wrap)}
+function bind(){inject();document.addEventListener('click',e=>{if(e.target.closest?.('[data-rwa-home-shop]')){e.preventDefault();window.RWAStorefront?.open?.('stores');return}if(e.target.closest?.('[data-rwa-home-rules]')){e.preventDefault();window.RWAStorefront?.open?.('requirements')}});new MutationObserver(inject).observe(document.documentElement,{childList:true,subtree:true})}
+window.RWAHomeCommerce={version:'1.0.0',runtime:'landing-commerce-surface-v1',refresh:inject};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
+})();
