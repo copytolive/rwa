@@ -8,6 +8,8 @@ on:
       - "realtime-core.js"
       - "chart-core.js"
       - "market-performance.js"
+      - "product-os-v3.js"
+      - "product-os-mobile-contract-v3.js"
       - "styles.css"
       - "mobile.css"
       - "stable-shell.css"
@@ -25,6 +27,8 @@ on:
       - "realtime-core.js"
       - "chart-core.js"
       - "market-performance.js"
+      - "product-os-v3.js"
+      - "product-os-mobile-contract-v3.js"
       - "styles.css"
       - "mobile.css"
       - "stable-shell.css"
@@ -57,12 +61,17 @@ jobs:
           node --check realtime-core.js
           node --check chart-core.js
           node --check market-performance.js
+          node --check product-os-v3.js
+          node --check product-os-mobile-contract-v3.js
           node --check quick-actions.js
           node --check mobile.js
           node --check tools/root-market-browser-stability.mjs
           grep -Fq 'market-performance.js?v=2' index.html
           grep -Fq 'stable-shell.css?v=3' index.html
           grep -Fq 'realtime-core.js?v=3' index.html
+          grep -Fq 'product-os-mobile-contract-v3.js?v=1' index.html
+          grep -Fq 'Canonical root contract' product-os-mobile-contract-v3.js
+          grep -Fq "localStorage.setItem('rwa_default_landing_v3','markets')" product-os-mobile-contract-v3.js
           grep -Fq "runtime:'root-terminal-low-jank-v1'" market-performance.js
           grep -Fq "header='single-row-global-shell-v1'" market-performance.js
           grep -Fq "observer_policy='hot-dom-periodic-1200ms'" market-performance.js
