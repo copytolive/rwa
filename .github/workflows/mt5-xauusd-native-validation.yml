@@ -44,7 +44,10 @@ jobs:
           $terminal = $null
           for($i=0; $i -lt 72 -and -not $terminal; $i++) {
             Start-Sleep 5
-            $terminal = Get-ChildItem 'C:\Program Files' -Filter terminal64.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            $candidate = Get-ChildItem 'C:\Program Files' -Filter terminal64.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            if($candidate -and (Test-Path (Join-Path $candidate.Directory.FullName 'MQL5\Include\Trade\Trade.mqh'))) {
+              $terminal = $candidate
+            }
           }
           Get-Process terminal64,metaeditor64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
           if($installer -and -not $installer.HasExited) { $installer.Kill() }
