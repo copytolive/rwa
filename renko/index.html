@@ -4,29 +4,29 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07090d">
-<title>RWA Renko — Raw Tick Traditional Crypto Chart</title>
-<meta name="description" content="Traditional Renko rules with Binance individual raw-trade history, live @trade continuation, top-500 crypto markets and full-history navigation.">
+<title>RWA Renko — TradingView-Compatible Lazy History + Raw Tick Audit</title>
+<meta name="description" content="Traditional Renko with a fast 50-brick TradingView-compatible 1-minute-close history window, lazy older-history loading, all Binance spot crypto pairs searchable, and separate raw individual-trade audit.">
 <link rel="preconnect" href="https://data-api.binance.vision" crossorigin>
 <link rel="preconnect" href="https://data-stream.binance.vision" crossorigin>
 <link rel="preconnect" href="https://data.binance.vision" crossorigin>
 <link rel="stylesheet" href="renko.css?v=1">
 <link rel="stylesheet" href="renko-v2.css?v=2">
 <link rel="stylesheet" href="renko-v3.css?v=3">
-<link rel="stylesheet" href="renko-v5.css?v=54">
+<link rel="stylesheet" href="renko-v5.css?v=61">
 </head>
 <body>
 <div class="app">
   <header class="topbar">
     <a class="brand" href="../" aria-label="Back to RWA Markets"><span class="brandmark">R</span><strong>RWA</strong></a>
     <nav class="nav"><a href="../">Markets</a><a class="active" href="./">Renko</a><a href="../trade/">Trade</a></nav>
-    <div class="top-status"><span id="modePill" class="mode-pill">RAW TICK · TRADITIONAL</span><span id="feedPill" class="feed-pill"><i></i><b>CONNECTING</b></span></div>
+    <div class="top-status"><span id="modePill" class="mode-pill">TRADITIONAL · 50 BRICK LAZY</span><span id="feedPill" class="feed-pill"><i></i><b>CONNECTING</b></span></div>
   </header>
 
   <main class="workspace">
     <aside class="markets" aria-label="Crypto pair selector">
-      <div class="aside-head"><div><small>CRYPTO MARKETS</small><h1>Renko Markets</h1></div><span id="pairTotal">—</span></div>
-      <div class="search"><span>⌕</span><input id="pairSearch" autocomplete="off" placeholder="Search BTC, ETH, SOL…"></div>
-      <div class="quote-note"><b id="pairShown">Top markets</b><span id="universeNote">Loading top crypto markets…</span></div>
+      <div class="aside-head"><div><small>ALL SPOT CRYPTO</small><h1>Renko Markets</h1></div><span id="pairTotal">—</span></div>
+      <div class="search"><span>⌕</span><input id="pairSearch" autocomplete="off" placeholder="Search any Binance spot crypto pair…"></div>
+      <div class="quote-note"><b id="pairShown">Top markets</b><span id="universeNote">Loading complete spot crypto universe…</span></div>
       <div id="pairList" class="pair-list"><div class="empty">Loading crypto markets…</div></div>
     </aside>
 
@@ -34,13 +34,13 @@
       <div class="instrument-bar">
         <div class="instrument">
           <div id="pairIcon" class="pair-icon">BT</div>
-          <div><div class="pair-title"><b id="pairName">BTC / USDT</b><span>SPOT</span></div><small id="sourceText">Binance individual raw trades · archive → @trade live</small></div>
+          <div><div class="pair-title"><b id="pairName">BTC / USDT</b><span>SPOT</span></div><small id="sourceText">History: Binance 1m CLOSE · Live: Binance individual @trade · Raw-tick audit available</small></div>
         </div>
         <div class="stats">
           <div><small>LAST</small><b id="lastPrice">—</b></div>
           <div><small>BRICK</small><b id="brickValue">—</b></div>
-          <div><small>BRICKS</small><b id="brickCount">0</b></div>
-          <div><small>TICKS</small><b id="tickCount">0</b></div>
+          <div><small>LIVE BRICKS</small><b id="brickCount">0</b></div>
+          <div><small>LIVE TICKS</small><b id="tickCount">0</b></div>
         </div>
       </div>
 
@@ -53,54 +53,62 @@
 
       <div class="controlbar">
         <div class="field brick-field"><label>TRADITIONAL FIXED BOX</label><div class="brick-input"><input id="brickSize" inputmode="decimal" value="100"><button id="applyBrick">Apply</button></div></div>
-        <div class="field"><label>VISIBLE BRICKS</label><div class="stepper"><button id="zoomOut" aria-label="Show more bricks">−</button><b id="visibleValue">ALL</b><button id="zoomIn" aria-label="Show fewer bricks">+</button></div></div>
+        <div class="field"><label>HISTORY VIEW</label><div class="stepper"><button id="zoomOut" aria-label="Show more live bricks">−</button><b id="visibleValue">50</b><button id="zoomIn" aria-label="Show fewer live bricks">+</button></div></div>
         <label class="toggle"><input id="followLive" type="checkbox" checked><span></span><b>FOLLOW LIVE</b></label>
-        <button id="resetChart" class="ghost">Rebuild ticks</button>
+        <button id="resetChart" class="ghost">Rebuild live ticks</button>
         <div class="thresholds"><span>UP <b id="nextUp">—</b></span><span>DOWN <b id="nextDown">—</b></span></div>
       </div>
 
-      <div class="archivebar" aria-label="Raw tick lifetime archive coverage">
-        <div class="archive-summary"><small>TOTAL TICK HISTORY · AUTO</small><b id="archiveStatus" class="archive-status loading">AUTO LOADING TOTAL RAW TICK HISTORY</b><span id="archiveDetail">Every selected market loads its oldest available Binance Vision individual-trade archive and draws Traditional Renko history progressively.</span></div>
-        <div><div class="archive-progress"><i id="archiveProgressFill"></i></div><small id="archiveProgressText">Discovering archive coverage…</small><div id="archiveCoverage">Archive coverage: discovering…</div></div>
-        <div class="archive-actions"><button id="archiveLoad" class="primary">RELOAD TOTAL TICK HISTORY</button><button id="archiveCancel" class="ghost" disabled>CANCEL</button></div>
+      <div class="archivebar" aria-label="Lazy historical coverage and raw tick audit">
+        <div class="archive-summary"><small>TRADINGVIEW-COMPATIBLE HISTORY · LAZY</small><b id="fastArchiveStatus" class="archive-status loading">50-BRICK WINDOW BOOTSTRAP</b><span id="fastArchiveDetail">The newest 50 Traditional Renko bricks are shown first. Older 1-minute history is fetched only when you move the chart backward.</span></div>
+        <div><div class="archive-progress"><i id="fastArchiveProgressFill"></i></div><small id="fastArchiveProgressText">Preparing first 50 bricks…</small><div id="fastArchiveCoverage">Most recent history first · older data on demand</div></div>
+        <div class="archive-actions"><button id="archiveLoad" class="primary">RAW TICK AUDIT</button><button id="archiveCancel" class="ghost" disabled>CANCEL AUDIT</button></div>
       </div>
 
-      <div class="historybar" aria-label="Full Renko history navigation">
-        <div class="history-summary"><small>RENKO HISTORY</small><b id="v5HistoryCoverage">LOADING OLDEST RAW TICK → LIVE</b><span id="v5HistoryCount">0 historical bricks</span><b id="historyCoverage" hidden></b><span id="historyCount" hidden>0 bricks</span></div>
-        <div class="history-actions"><button id="historyStart">START</button><button id="historyPrev" aria-label="Older history">←</button><button id="historyAll" class="active">ALL HISTORY</button><button id="historyNext" aria-label="Newer history">→</button><button id="historyLive">LIVE</button></div>
-        <input id="historyRange" class="history-range-input" type="range" min="0" max="0" value="0" disabled aria-label="History position">
-        <div class="history-dates"><span id="v5HistoryFrom">—</span><i>→</i><span id="v5HistoryTo">LIVE</span><span id="historyFrom" hidden>—</span><span id="historyTo" hidden>LIVE</span></div>
-        <div id="historyIntegrity" class="history-integrity">Traditional rule: continuation = 1 box, reversal = 2 boxes. Historical construction uses individual raw trades; candles/OHLC are never substituted.</div>
+      <div class="historybar" aria-label="Renko lazy history navigation">
+        <div class="history-summary"><small>RENKO HISTORY</small><b id="fastHistoryCoverage">BUILDING FIRST 50 BRICKS</b><span id="fastHistoryCount">0 BRICKS</span></div>
+        <div class="history-actions"><button id="historyStart">OLDEST LOADED</button><button id="historyPrev" aria-label="Load older history">← OLDER</button><button id="historyAll" class="active">50 BRICKS</button><button id="historyNext" aria-label="Move newer">NEWER →</button><button id="historyLive">LIVE</button></div>
+        <div class="history-dates"><span id="fastHistoryFrom">—</span><i>→</i><span id="fastHistoryTo">—</span></div>
+        <div class="history-integrity"><b>TradingView-compatible fast mode:</b> Traditional fixed-box placement, 1-box continuation, 2-box reversal, historical input from Binance 1-minute CLOSE. <b>Raw Tick Audit</b> remains separate and uses Binance Vision individual <code>trades</code> archives.</div>
       </div>
 
       <div id="chartWrap" class="chart-wrap">
         <canvas id="renkoCanvas"></canvas>
-        <div id="chartEmpty" class="chart-empty"><span class="spinner"></span><b>Loading raw ticks…</b><small>Total historical bricks will appear progressively as archives are processed.</small></div>
+        <div id="chartEmpty" class="chart-empty"><span class="spinner"></span><b>Preparing Renko…</b><small>Cache is used first when available; otherwise the newest 1-minute bars are fetched immediately.</small></div>
         <div id="tooltip" class="tooltip" hidden></div>
-        <div class="chart-badges"><span>RAW TRADES</span><span>TRADITIONAL FIXED BOX</span><span>2-BRICK REVERSAL</span><span>V5.4 HISTORY</span></div>
+        <div class="chart-badges"><span>50 BRICK WINDOW</span><span>TRADITIONAL FIXED BOX</span><span>2-BRICK REVERSAL</span><span>LAZY OLDER HISTORY</span></div>
       </div>
 
       <div class="footerbar">
-        <div><span id="v5HistoryState">Automatic raw-tick lifetime backfill pending</span><span id="historyState" hidden></span><small>COMPLETE means every discovered individual-trade archive segment from the oldest available date through the latest archived day was processed, then live continues from Binance @trade. If an archive is missing, status remains PARTIAL.</small></div>
+        <div><span id="fastHistoryState">Waiting for first 50 historical bricks</span><small>Drag the chart to the right or horizontal-scroll left to load older history. LIVE returns to the individual @trade chart. A first-ever uncached symbol still needs its first network response; cached symbol+box windows render synchronously on revisit.</small></div>
         <div class="legend"><span><i class="up"></i> Up brick</span><span><i class="down"></i> Down brick</span></div>
       </div>
 
       <details class="methodology">
-        <summary>Traditional Renko methodology & raw-tick history integrity</summary>
+        <summary>Renko methodology, TradingView compatibility & raw-tick audit</summary>
         <div class="method-grid">
-          <div><b>Traditional placement</b><p>Fixed absolute box. Same Traditional placement rule used by TradingView: continuation needs one box; a reversal needs two boxes from the previous brick close.</p></div>
-          <div><b>Historical source</b><p>Binance Vision spot <code>trades</code> archives containing individual executions. This is intentionally more granular than TradingView historical Renko, which reconstructs history from its underlying chart resolution.</p></div>
-          <div><b>Live source</b><p>Binance Spot <code>@trade</code> individual-trade WebSocket. No kline, OHLC or aggregate-trade substitution.</p></div>
-          <div><b>Total history</b><p>Each selected coin automatically backfills from its oldest available raw-trade archive. ALL HISTORY shows the full historical overview; START shows the earliest bricks; LIVE returns to the current live chart.</p></div>
-          <div><b>500-market universe</b><p>The first 500 eligible crypto markets are shown by 24h USD-equivalent liquidity; the complete eligible universe remains searchable.</p></div>
-          <div><b>Execution</b><p>Renko prices are synthetic chart levels. Orders and fills must continue to use actual venue prices through the RWA execution path.</p></div>
+          <div><b>Traditional placement</b><p>Fixed absolute box. Continuation requires 1 box; reversal requires 2 boxes. This follows TradingView's documented Traditional placement rule.</p></div>
+          <div><b>Fast historical source</b><p>Binance 1-minute CLOSE bars are used for the responsive history layer because TradingView historical Renko is also reconstructed from the underlying chart resolution rather than complete historical ticks.</p></div>
+          <div><b>Lazy history UX</b><p>The latest 50 bricks are the initial viewport. Moving backward fetches earlier 1-minute pages, rebuilds the loaded Renko window, and reveals older bricks progressively instead of downloading lifetime tick archives before first paint.</p></div>
+          <div><b>Raw-tick audit</b><p>The separate audit engine still uses Binance Vision spot <code>trades</code> archives containing individual executions. It is intentionally slower and is not silently substituted into the fast history layer.</p></div>
+          <div><b>All crypto universe</b><p>All eligible Binance spot crypto pairs are searchable. The highest-liquidity 500 are pre-rendered for speed; search is performed against the full loaded spot universe.</p></div>
+          <div><b>Execution</b><p>Renko brick levels are synthetic chart prices. Actual trading/fills must continue to use venue prices through the RWA execution path.</p></div>
         </div>
       </details>
+
+      <div hidden aria-hidden="true">
+        <b id="archiveStatus"></b><span id="archiveDetail"></span><i id="archiveProgressFill"></i><small id="archiveProgressText"></small><div id="archiveCoverage"></div>
+        <b id="historyCoverage"></b><span id="historyCount">0 bricks</span><span id="historyFrom">—</span><span id="historyTo">LIVE</span><span id="historyState"></span>
+        <input id="historyRange" type="range" min="0" max="0" value="0" disabled>
+        <div id="historyIntegrity"></div>
+      </div>
     </section>
   </main>
 </div>
+<script>window.RWA_RENKO_HISTORY_MODE='lazy-tv-compatible';</script>
 <script src="renko-v3.js?v=3"></script>
 <script src="renko-v5.js?v=54"></script>
-<script src="renko-v5-auto.js?v=54"></script>
+<script src="renko-v61-lazy.js?v=61"></script>
+<script src="renko-v6-ui.js?v=61"></script>
 </body>
 </html>
