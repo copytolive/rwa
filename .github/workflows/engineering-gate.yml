@@ -37,6 +37,9 @@ jobs:
           node --check social-notification-defaults.js
           node --check social-trading-pro.js
           node --check rwa-storefront.js
+          node --check rwa-storefront-safety-patch.js
+          node --check rwa-store-draft-ui.js
+          node --check rwa-home-commerce.js
           node --check trade/ui-polish.js
           node --check agent-worker/execution.mjs
           node --check agent-worker/copy-engine.mjs
@@ -64,6 +67,9 @@ jobs:
           grep -Fq 'social-notification-defaults.js?v=1' index.html
           grep -Fq 'social-trading-pro.js?v=1' index.html
           grep -Fq 'ONE_TOKEN_ONE_PHYSICAL_STORE_V1' rwa-storefront.js
+          grep -Fq 'preview-no-fake-price-trade-v1' rwa-storefront-safety-patch.js
+          grep -Fq 'UNVERIFIED_LOCAL_DRAFT' rwa-store-draft-ui.js
+          grep -Fq 'landing-commerce-surface-v1' rwa-home-commerce.js
           grep -Fq '"one_token_one_physical_store": true' rwa-commerce-registry.json
           grep -Fq "import './ui-polish.js?v=1'" trade/config.js
           node tools/security-gate.mjs
