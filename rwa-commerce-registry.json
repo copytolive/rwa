@@ -8,6 +8,7 @@
     "one_token_one_physical_store": true,
     "verified_store_required_for_live_commerce": true,
     "verified_asset_required_for_live_token_store": true,
+    "trade_requires_verified_venue_market": true,
     "checkout_requires_backend": true,
     "inventory_requires_backend": true,
     "payment_requires_backend": true,
