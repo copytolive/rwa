@@ -1,5 +1,8 @@
+import '../product-os-v3.js?v=1';
 import './provider-runtime.js?v=1';
 import './ui-polish.js?v=2';
+
+if(typeof document!=='undefined'&&!document.querySelector('link[data-rwa-unified-v3]')){const l=document.createElement('link');l.rel='stylesheet';l.href='../unified-design-v3.css?v=1';l.dataset.rwaUnifiedV3='1';document.head.appendChild(l)}
 
 const GATE={readiness:null,e2e:null,checkedAt:0,error:''};
 const wallet=()=>{try{const w=String(JSON.parse(localStorage.getItem('rwa_wallet_link_v1')||'{}')?.wallet||'').toLowerCase();return /^0x[a-f0-9]{40}$/.test(w)?w:''}catch{return''}};
@@ -10,7 +13,7 @@ function gateReason(){if(GATE.error)return`Launch gate unavailable: ${GATE.error
 function syncGateUi(){const ok=canMainnet(),toggle=document.getElementById('testnetToggle'),diag=document.getElementById('diagMainnet'),note=document.getElementById('mainnetLockText');if(toggle){const wasMainnet=toggle.checked===false;toggle.disabled=!ok;if(!ok){toggle.checked=true;if(wasMainnet)toggle.dispatchEvent(new Event('change',{bubbles:true}))}}if(diag)diag.textContent=ok?'GATE READY':'LOCKED';if(note)note.textContent=ok?'Production gate is READY. Mainnet remains opt-in and requires switching environment explicitly.':`Mainnet locked · ${gateReason()}`;window.dispatchEvent(new CustomEvent('rwa:trade-launch-gate',{detail:{ready:ok,reason:gateReason()}}))}
 async function refreshGate(){try{const q=`?t=${Date.now()}`,[rr,er]=await Promise.all([fetch(`../launch/readiness.json${q}`,{cache:'no-store'}),fetch(`../launch/e2e-registry.json${q}`,{cache:'no-store'})]);if(!rr.ok||!er.ok)throw Error(`HTTP ${rr.status}/${er.status}`);GATE.readiness=await rr.json();GATE.e2e=await er.json();GATE.checkedAt=Date.now();GATE.error=''}catch(e){GATE.error=String(e?.message||e)}syncGateUi();return{ready:canMainnet(),reason:gateReason(),readiness:GATE.readiness,checkedAt:GATE.checkedAt}}
 if(typeof window!=='undefined'){
-  window.RWATradeLaunchGate={version:'1.0.2',refresh:refreshGate,canMainnet,reason:gateReason,state:()=>({...GATE,wallet:wallet(),walletE2E:walletE2E()})};
+  window.RWATradeLaunchGate={version:'1.0.3',refresh:refreshGate,canMainnet,reason:gateReason,state:()=>({...GATE,wallet:wallet(),walletE2E:walletE2E()})};
   setTimeout(refreshGate,0);setInterval(refreshGate,60000);window.addEventListener('focus',()=>refreshGate());
   import('./release-runtime.js?v=1').catch(e=>console.warn('RWA release runtime unavailable',e));
   import('./margin-runtime.js?v=1').catch(e=>console.warn('RWA margin runtime unavailable',e));
@@ -18,10 +21,10 @@ if(typeof window!=='undefined'){
 }
 
 const BASE={
-  version:'1.5.0',
-  build:'github-pages-rwa-trade-commerce-polish-2026-08-24',
+  version:'1.5.1',
+  build:'github-pages-rwa-trade-unified-product-2026-08-25',
   releaseChannel:'PUBLIC_TESTNET_BETA',
-  uiRelease:'terminal-pro-commerce-v2',
+  uiRelease:'unified-product-v3',
   publicBetaEnabled:true,
   sdkUrl:'https://esm.sh/@nktkas/hyperliquid@0.33.3?target=es2022',
   viemUrl:'https://esm.sh/viem@2.37.3?target=es2022',
