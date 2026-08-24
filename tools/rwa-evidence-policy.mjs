@@ -54,6 +54,11 @@ async function probeOne(kind,url){
   return{kind,url:String(url),final_url:String(r.url||url),http_status:r.status,content_type:String(r.headers.get('content-type')||'').slice(0,160)};
 }
 
+export async function probePublicEvidence(kind,url){
+  if(!publicHttps(url))throw Error(`${kind} evidence must be a public HTTPS URL`);
+  return probeOne(kind,url);
+}
+
 export async function probeEvidencePayload(p){
   validateEvidencePayload(p);
   const out=[];
