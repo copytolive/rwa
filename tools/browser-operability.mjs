@@ -13,17 +13,17 @@ async function pageFor(viewport){
   return{context,page,errors};
 }
 async function visible(page,selector,timeout=10000){try{await page.locator(selector).first().waitFor({state:'visible',timeout});return true}catch{return false}}
+async function exists(page,selector,timeout=10000){try{await page.locator(selector).first().waitFor({state:'attached',timeout});return true}catch{return false}}
 async function noOverflow(page,label){const m=await page.evaluate(()=>({w:innerWidth,sw:document.documentElement.scrollWidth}));check(m.sw<=m.w+3,`${label}: horizontal overflow ${m.sw}>${m.w}`)}
 
-// Desktop root: live social feed, Hub navigation and formerly-placeholder market actions must be real controls.
+// Desktop root: live social feed exists in the Social surface, Hub navigation and market actions must be real controls.
 {
   const {context,page,errors}=await pageFor({width:1440,height:1000});
   await page.goto(`${BASE}?browser-smoke=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:30000});
   await page.waitForTimeout(1600);
   check(await visible(page,'[data-rwa-trade-now]'), 'root desktop: Trade Perps action not injected');
-  check(await visible(page,'#rwaLiveTradeFeed',12000),'root desktop: venue-backed social trade feed not injected');
-  check(await visible(page,'#rwaTradeFeedRefresh',12000),'root desktop: social trade refresh missing');
-  if(await visible(page,'#rwaTradeFeedRefresh',2000))await page.locator('#rwaTradeFeedRefresh').click();
+  check(await exists(page,'#rwaLiveTradeFeed',12000),'root desktop: venue-backed social trade feed not attached');
+  check(await exists(page,'#rwaTradeFeedRefresh',12000),'root desktop: social trade refresh missing');
   const watch=page.locator('.instrument-actions button').filter({hasText:'Watch'}).first();
   check(await watch.isVisible().catch(()=>false),'root desktop: Watch action missing');
   if(await watch.isVisible().catch(()=>false)){
@@ -32,6 +32,10 @@ async function noOverflow(page,label){const m=await page.evaluate(()=>({w:innerW
     check(await page.locator('[data-suite-panel="watch"]').evaluate(e=>e.classList.contains('active')).catch(()=>false),'root desktop: Watch panel not active');
     check(await visible(page,'#rwaSocialNotify',12000),'root desktop: social notification controls missing');
     check(await visible(page,'#rwaNotifySave',12000),'root desktop: social notification save control missing');
+    check(!(await page.locator('#rwaNotifyFriends').isChecked().catch(()=>true)),'root desktop: following notifications must default OFF');
+    check(!(await page.locator('#rwaNotifyTop').isChecked().catch(()=>true)),'root desktop: top-trader notifications must default OFF');
+    check(!(await page.locator('#rwaNotifyTrending').isChecked().catch(()=>true)),'root desktop: trending notifications must default OFF');
+    check(!(await page.locator('#rwaNotifyFollowers').isChecked().catch(()=>true)),'root desktop: follower notifications must default OFF');
     if(await visible(page,'#rwaNotifySave',2000))await page.locator('#rwaNotifySave').click();
   }
   const close=page.locator('[data-suite-close]').first();if(await close.isVisible().catch(()=>false))await close.click();
@@ -105,5 +109,5 @@ for(const [name,path] of [['root mobile',''],['trade mobile','trade/?side=BUY&ty
 }
 
 await browser.close();
-if(failures.length){console.error(JSON.stringify({ok:false,contract:'rwa-browser-operability-v3',failures},null,2));process.exit(1)}
-console.log(JSON.stringify({ok:true,contract:'rwa-browser-operability-v3',desktop:['root actions','venue social feed','notification settings','trade controls','modals','margin','chart','locked funds'],mobile:['social feed','root hub','trade bar','margin','chart','locked funds','no horizontal overflow']},null,2));
+if(failures.length){console.error(JSON.stringify({ok:false,contract:'rwa-browser-operability-v4',failures},null,2));process.exit(1)}
+console.log(JSON.stringify({ok:true,contract:'rwa-browser-operability-v4',desktop:['root actions','social feed attached','opt-in notification settings','trade controls','modals','margin','chart','locked funds'],mobile:['social feed','root hub','trade bar','margin','chart','locked funds','no horizontal overflow']},null,2));
