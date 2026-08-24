@@ -4,20 +4,27 @@ on:
     paths:
       - 'index.html'
       - 'product-os-v3.js'
+      - 'product-os-mobile-contract-v3.js'
       - 'unified-design-v3.css'
       - 'trade/config.js'
       - 'trader/**'
       - 'asset/**'
+      - '.github/workflows/pages.yml'
+      - '.github/workflows/live-browser-smoke.yml'
       - '.github/workflows/unified-product-smoke.yml'
   push:
     branches: [main]
     paths:
       - 'index.html'
       - 'product-os-v3.js'
+      - 'product-os-mobile-contract-v3.js'
       - 'unified-design-v3.css'
       - 'trade/config.js'
       - 'trader/**'
       - 'asset/**'
+      - '.github/workflows/pages.yml'
+      - '.github/workflows/live-browser-smoke.yml'
+      - '.github/workflows/unified-product-smoke.yml'
 jobs:
   smoke:
     runs-on: ubuntu-latest
@@ -26,11 +33,13 @@ jobs:
       - name: JavaScript syntax
         run: |
           node --check product-os-v3.js
+          node --check product-os-mobile-contract-v3.js
           node --input-type=module --check < trade/config.js
       - name: Product shell is activated
         run: |
           grep -q 'unified-design-v3.css' index.html
           grep -q 'product-os-v3.js' index.html
+          grep -q 'product-os-mobile-contract-v3.js' index.html
           grep -q "product-os-v3.js" trade/config.js
           grep -q "unified-design-v3.css" trade/config.js
       - name: 1-22 product surfaces exist
@@ -38,6 +47,7 @@ jobs:
           test -f trader/index.html
           test -f asset/index.html
           grep -q 'data-mobile-nav="trade"' product-os-v3.js
+          grep -q 'market-drawer-open' product-os-mobile-contract-v3.js
           grep -q 'rwa-home-dashboard' unified-design-v3.css
           grep -q 'tabular-nums' unified-design-v3.css
           grep -q 'Risk Engine' product-os-v3.js
@@ -47,6 +57,18 @@ jobs:
           grep -q -- '--rwa-control-lg:44px' unified-design-v3.css
           grep -q 'mobile-tabs a>small{font-size:10px' unified-design-v3.css
           grep -q 'suite-field input.*font-size:13px' unified-design-v3.css
+      - name: Pages and live deployment contracts
+        run: |
+          grep -q 'realtime-core.js?v=3' .github/workflows/pages.yml
+          grep -q 'market-performance.js?v=2' .github/workflows/pages.yml
+          grep -q 'stable-shell.css?v=3' .github/workflows/pages.yml
+          grep -q 'unified-design-v3.css?v=1' .github/workflows/pages.yml
+          grep -q 'product-os-v3.js?v=1' .github/workflows/pages.yml
+          grep -q 'product-os-mobile-contract-v3.js?v=1' .github/workflows/pages.yml
+          grep -q 'unified-design-v3.css?v=1' .github/workflows/live-browser-smoke.yml
+          grep -q 'product-os-v3.js?v=1' .github/workflows/live-browser-smoke.yml
+          grep -q '<title>RWA Trader</title>' .github/workflows/live-browser-smoke.yml
+          grep -q '<title>RWA Asset</title>' .github/workflows/live-browser-smoke.yml
       - name: Safety invariants preserved
         run: |
           grep -q "mainnetEnabled" trade/config.js
