@@ -1,4 +1,4 @@
-name: RWA Renko Traditional Lazy History
+name: RWA Renko V6.1 Traditional Lazy History
 
 on:
   pull_request:
@@ -29,20 +29,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate V6 lazy Traditional contract
+      - name: Validate V6.1 lazy Traditional contract
         run: |
           set -euo pipefail
           node --check renko/renko-v3.js
           node --check renko/renko-v5.js
-          node --check renko/renko-v6-lazy.js
+          node --check renko/renko-v61-lazy.js
           node --check renko/archive-worker-v5.js
           node --check tools/renko-v6-browser-smoke.mjs
           node --check tools/renko-v6-live-smoke.mjs
-          grep -Fq "version:'6.0.0'" renko/renko-v6-lazy.js
-          grep -Fq "mode:'tradingview-compatible-lazy-50'" renko/renko-v6-lazy.js
-          grep -Fq "traditional:{continuationBoxes:1,reversalBoxes:2}" renko/renko-v6-lazy.js
-          grep -Fq '/api/v3/klines?' renko/renko-v6-lazy.js
-          grep -Fq 'renko-v6-lazy.js?v=60' renko/index.html
+          grep -Fq "version:'6.1.0'" renko/renko-v61-lazy.js
+          grep -Fq "mode:'tradingview-compatible-lazy-50'" renko/renko-v61-lazy.js
+          grep -Fq "traditional:{continuationBoxes:1,reversalBoxes:2}" renko/renko-v61-lazy.js
+          grep -Fq 'generation:0' renko/renko-v61-lazy.js
+          grep -Fq '/api/v3/klines?' renko/renko-v61-lazy.js
+          grep -Fq 'renko-v61-lazy.js?v=61' renko/index.html
           grep -Fq '50 BRICKS' renko/index.html
           grep -Fq 'RAW TICK AUDIT' renko/index.html
           ! grep -Fq 'renko-v5-auto.js' renko/index.html
@@ -57,21 +58,21 @@ jobs:
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/rwa-renko-http.log 2>&1 &
           for i in {1..20}; do curl -fsS http://127.0.0.1:4173/renko/ >/dev/null && exit 0; sleep 1; done
           cat /tmp/rwa-renko-http.log; exit 1
-      - name: Test V6 50-brick lazy history and all-spot search
+      - name: Test V6.1 50-brick lazy history and all-spot search
         run: node tools/renko-v6-browser-smoke.mjs
-      - name: Wait for V6 Pages
+      - name: Wait for V6.1 Pages
         if: github.event_name == 'push'
         run: |
           set -euo pipefail
           for i in {1..120}; do
             q="${GITHUB_RUN_ID}-${i}"
             h="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/?v=$q" || true)"
-            v="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/renko-v6-lazy.js?v=$q" || true)"
-            if grep -Fq 'renko-v6-lazy.js?v=60' <<<"$h" && grep -Fq "version:'6.0.0'" <<<"$v"; then exit 0; fi
+            v="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/renko-v61-lazy.js?v=$q" || true)"
+            if grep -Fq 'renko-v61-lazy.js?v=61' <<<"$h" && grep -Fq "version:'6.1.0'" <<<"$v"; then exit 0; fi
             sleep 5
           done
           exit 1
-      - name: Verify public V6 lazy history and live raw ticks
+      - name: Verify public V6.1 lazy history and live raw ticks
         if: github.event_name == 'push'
         env:
           RWA_RENKO_LIVE_URL: https://narzulalistiqlal.github.io/rwa/renko/?v=${{ github.run_id }}
@@ -80,9 +81,9 @@ jobs:
         if: success() && github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-live' -f description='LIVE V6: 50-brick lazy history + all spot search + @trade PASS'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-live' -f description='LIVE V6.1: 50-brick lazy history + all Binance spot search + @trade PASS'
       - name: Publish Renko failure
         if: failure() && github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/renko-live' -f description='Renko V6 lazy history gate failed'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/renko-live' -f description='Renko V6.1 lazy history gate failed'
