@@ -16,19 +16,42 @@ function lockCanonicalRoot(){
   else document.getElementById('terminal')?.scrollIntoView({behavior:'auto',block:'start'});
 }
 
+function commandSymbol(){
+  const q=String(document.getElementById('rwaCommandInput')?.value||'').toUpperCase();
+  const skip=new Set(['TRADE','BACKTEST','RENKO','ASSET','MARKET','OPEN','SHOW','COPY','PORTFOLIO','SOCIAL','HOME','INTELLIGENCE','RWA','LEADERBOARD','DEFAULT','TERMINAL']);
+  return(q.match(/\b[A-Z0-9]{2,12}\b/g)||[]).find(x=>!skip.has(x))||String(document.getElementById('selName')?.textContent||'BTC').split(/[\s\/-]/)[0]||'BTC';
+}
+function openRootFundamentals(symbol){
+  const layer=document.getElementById('rwaCommandLayer');if(layer)layer.hidden=true;
+  window.RWAFundamentals?.open?.(String(symbol||commandSymbol()).toUpperCase());
+}
+
 lockCanonicalRoot();
 addEventListener('rwa:product-os-ready',lockCanonicalRoot);
 addEventListener('hashchange',lockCanonicalRoot);
 
 document.addEventListener('click',e=>{
   const nav=e.target.closest?.('[data-mobile-nav="markets"]');
-  if(!nav||innerWidth>680)return;
-  e.preventDefault();
-  e.stopImmediatePropagation();
-  document.body.classList.remove('rwa-home-open','social-open','suite-open');
-  document.body.classList.add('market-drawer-open');
-  const suite=document.getElementById('suite');if(suite)suite.style.display='none';
-  document.querySelectorAll('[data-mobile-nav]').forEach(a=>a.classList.toggle('active',a.dataset.mobileNav==='markets'));
-  setTimeout(()=>document.getElementById('search')?.focus(),80);
+  if(nav&&innerWidth<=680){
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    document.body.classList.remove('rwa-home-open','social-open','suite-open');
+    document.body.classList.add('market-drawer-open');
+    const suite=document.getElementById('suite');if(suite)suite.style.display='none';
+    document.querySelectorAll('[data-mobile-nav]').forEach(a=>a.classList.toggle('active',a.dataset.mobileNav==='markets'));
+    setTimeout(()=>document.getElementById('search')?.focus(),80);
+    return;
+  }
+  const cmd=e.target.closest?.('.rwa-command-item');
+  const tag=cmd?.lastElementChild?.textContent?.trim?.().toUpperCase();
+  if(cmd&&tag==='ASSET'){
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    openRootFundamentals(commandSymbol());
+  }
 },true);
+
+addEventListener('rwa:product-os-ready',()=>{
+  if(window.RWAProductOS)window.RWAProductOS.openAsset=s=>openRootFundamentals(s);
+});
 })();
