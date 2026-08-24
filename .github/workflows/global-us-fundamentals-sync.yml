@@ -1,0 +1,51 @@
+name: Global US Fundamentals Sync
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '43 9 * * 6'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/global-us-fundamentals-sync.yml'
+      - 'tools/sync-sec-us-frames.mjs'
+permissions:
+  contents: write
+concurrency:
+  group: global-us-fundamentals-sync
+  cancel-in-progress: false
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Refresh official SEC US issuer associations first
+        run: |
+          mkdir -p tmp/sec
+          curl --fail --location --retry 4 --retry-delay 2 \
+            -A 'RWA-Global-Asset-Terminal/1.0 (+https://github.com/narzulalistiqlal/rwa)' \
+            -o tmp/sec/company_tickers_exchange.json \
+            https://www.sec.gov/files/company_tickers_exchange.json
+          node tools/sync-sec-us-catalog.mjs tmp/sec/company_tickers_exchange.json
+      - name: Build 10-year regulator-backed financial bootstrap
+        env:
+          SEC_USER_AGENT: RWA-Global-Asset-Terminal/1.0 (+https://github.com/narzulalistiqlal/rwa)
+        run: node tools/sync-sec-us-frames.mjs
+      - name: Accuracy and provenance gate
+        run: node tools/global-data-audit.mjs
+      - name: Commit generated US regulator data
+        run: |
+          if git diff --quiet -- data/global/security-master.json data/global/fundamental-shards/US data/global/coverage/us.json; then
+            echo 'No regulator data change.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/global/security-master.json data/global/fundamental-shards/US data/global/coverage/us.json
+          git commit -m 'data: sync SEC regulator-backed US fundamentals'
+          git push
