@@ -21,6 +21,9 @@ function formatUsd(n) { return `$${num(n).toLocaleString('en-US', { maximumFract
 function errText(error) {
   return String(error?.cause?.message || error?.shortMessage || error?.details || error?.message || error || 'Unknown error');
 }
+function walletProvider() {
+  return window.RWAProviderRuntime?.provider?.() || window.RWAProvider || window.ethereum || null;
+}
 
 const SESSION_KEY = 'rwa_wallet_link_v1';
 let executionPromise;
@@ -65,20 +68,21 @@ export class RWAHyperliquid {
 
   _syncSession(wallet) {
     const address = assertAddress(wallet, 'wallet');
+    const p = walletProvider();
     let row = {};
     try { row = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}') || {}; } catch {}
     row.wallet = address;
-    row.provider = row.provider || 'injected';
+    row.provider = window.RWAProviderRuntime?.providers?.()?.length ? 'eip6963' : (row.provider || 'injected');
     row.connectedAt = row.connectedAt || Date.now();
     row.lastSeenAt = Date.now();
     localStorage.setItem(SESSION_KEY, JSON.stringify(row));
-    window.RWAProvider = window.ethereum;
+    if (p) window.RWAProvider = p;
     this.master = address;
     return address;
   }
 
   setEnvironment(testnet) {
-    if (!testnet && !CONFIG.mainnetEnabled) throw new Error('MAINNET is locked in this build');
+    if (!testnet && !CONFIG.mainnetEnabled) throw new Error('MAINNET is locked by the production release gate');
     if (this.testnet === !!testnet) return;
     this.testnet = !!testnet;
     this.metaCache = null;
@@ -109,14 +113,18 @@ export class RWAHyperliquid {
   }
 
   async connectWallet() {
-    if (!window.ethereum) throw new Error('Wallet provider not found. Install MetaMask or a compatible wallet.');
-    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const p = walletProvider();
+    if (!p?.request) throw new Error('Wallet provider not found. Use a compatible EVM wallet or wallet browser.');
+    window.RWAProvider = p;
+    const accounts = await p.request({ method: 'eth_requestAccounts' });
     return this._syncSession(accounts?.[0]);
   }
 
   async currentWallet() {
-    if (!window.ethereum) return '';
-    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+    const p = walletProvider();
+    if (!p?.request) return '';
+    window.RWAProvider = p;
+    const accounts = await p.request({ method: 'eth_accounts' });
     const address = String(accounts?.[0] || '').toLowerCase();
     if (/^0x[0-9a-f]{40}$/.test(address)) return this._syncSession(address);
     this.master = '';
@@ -230,7 +238,7 @@ export class RWAHyperliquid {
       equity: state.equity,
       agent: verified.valid === true,
       ready: state.equity > 0 && verified.valid === true,
-      reason: state.equity <= 0 ? 'Get test balance first' : verified.valid !== true ? 'Enable trading once' : 'Ready',
+      reason: state.equity <= 0 ? (this.testnet ? 'Get test balance first' : 'Deposit mainnet collateral first') : verified.valid !== true ? 'Enable trading once' : 'Ready',
     };
   }
 
@@ -238,13 +246,13 @@ export class RWAHyperliquid {
     const user = this.master || await this.connectWallet();
     this._syncSession(user);
     const state = await this.accountState();
-    if (!(state.equity > 0)) throw new Error('TEST BALANCE REQUIRED: get TESTNET balance before enabling trading.');
+    if (!(state.equity > 0)) throw new Error(this.testnet ? 'TEST BALANCE REQUIRED: get TESTNET balance before enabling trading.' : 'MAINNET COLLATERAL REQUIRED: deposit collateral before enabling trading.');
     const existing = await this.verifyAgent().catch(() => ({ valid: false }));
     if (existing.valid) return existing;
     const api = await this._execution();
     await api.agent.authorize(this.testnet);
     const verified = await api.agent.verify(this.testnet, { force: true });
-    if (verified?.valid !== true) throw new Error('Trading approval was not confirmed by the TESTNET network');
+    if (verified?.valid !== true) throw new Error('Trading approval was not confirmed by the network');
     return verified;
   }
 
@@ -261,7 +269,7 @@ export class RWAHyperliquid {
     if (notional > CONFIG.maxOrderUsd) throw new Error(`Max order is ${formatUsd(CONFIG.maxOrderUsd)}`);
     if (!(num(leverage) >= 1 && num(leverage) <= CONFIG.maxLeverage)) throw new Error(`Leverage must be 1-${CONFIG.maxLeverage}x`);
     const state = await this.accountState();
-    if (!(state.equity > 0)) throw new Error('TEST BALANCE REQUIRED: account equity is 0');
+    if (!(state.equity > 0)) throw new Error(this.testnet ? 'TEST BALANCE REQUIRED: account equity is 0' : 'MAINNET COLLATERAL REQUIRED: account equity is 0');
     if (state.dailyPnl < -CONFIG.dailyLossUsd) throw new Error(`Daily loss limit reached (${formatUsd(CONFIG.dailyLossUsd)})`);
     if (state.exposure + notional > CONFIG.maxExposureUsd) throw new Error(`Total exposure limit exceeded (${formatUsd(CONFIG.maxExposureUsd)})`);
     const assetExposure = state.positions
@@ -335,8 +343,18 @@ export class RWAHyperliquid {
     });
   }
 
-  async withdraw() {
-    throw new Error('Withdrawal is intentionally disabled in this TESTNET-only terminal. It will remain disabled until the global launch gate permits production withdrawals.');
+  async deposit({ amount, confirmText = '' } = {}) {
+    if (this.testnet) throw new Error('Use the TESTNET balance request instead of a real deposit.');
+    if (!CONFIG.mainnetEnabled) throw new Error('MAINNET is locked');
+    const api = await this._execution();
+    return api.funds.depositMainnet({ amount, confirmText });
+  }
+
+  async withdraw({ destination, amount, confirmText = '' } = {}) {
+    if (this.testnet) throw new Error('Withdrawal is disabled on TESTNET because test balance has no monetary value.');
+    if (!CONFIG.mainnetEnabled) throw new Error('MAINNET is locked');
+    const api = await this._execution();
+    return api.funds.withdrawMainnet({ destination, amount, confirmText });
   }
 
   async startRealtime({ coin, user, onMids, onBook, onTrades, onAccount, onOrders, onFills, onError }) {
