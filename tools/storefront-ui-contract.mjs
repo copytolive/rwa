@@ -38,8 +38,9 @@ ok(!/api\.hyperliquid(?:-testnet)?\.xyz\/exchange|['"]\/exchange['"]/.test(uiRun
 ok(!uiRuntime.includes('ExchangeClient'),'commerce UI must not instantiate exchange clients');
 ok(uiCss.includes('.rwa-shop-screen')&&uiCss.includes('@media(max-width:680px)'),'responsive storefront CSS missing');
 ok(quick.includes("loadScript('rwa-storefront.js?v=1')")&&quick.includes("loadScript('rwa-storefront-safety-patch.js?v=1')")&&quick.includes("loadScript('rwa-store-draft-ui.js?v=1')")&&quick.includes("loadScript('rwa-home-commerce.js?v=1')")&&quick.includes("loadScript('rwa-market-labels.js?v=1')")&&quick.includes("loadScript('rwa-store-detail.js?v=1')")&&quick.includes("runtime:'premium-shell-storefront-v1'"),'root shell does not load the complete storefront UI stack');
+ok(quick.includes('async function shellRoute')&&quick.includes("openTab('intel')")&&quick.includes("openTab('rwa')")&&quick.includes("openTab('profile')"),'desktop shell navigation is not wired to real product panels');
 ok(tradeCfg.includes("import './ui-polish.js?v=1'"),'trade shell does not load UI polish runtime');
 ok(tradePolish.includes('rwa-store-link')&&tradePolish.includes('../?shop=1'),'trade-to-store navigation missing');
 ok(tradeCss.includes('.order{position:sticky')&&tradeCss.includes('.rwa-trade-mobile-store'),'desktop sticky order / mobile store polish missing');
-if(fail.length){console.error(JSON.stringify({ok:false,contract:'rwa-physical-commerce-ui-v5',fail},null,2));process.exit(1)}
-console.log(JSON.stringify({ok:true,contract:'rwa-physical-commerce-ui-v5',policy:registry.policy,marketLabelPolicy:'public-rwa-linked-vs-store-token-v1',liveStores:registry.stores.length,verifiedAssets:assets.verified.length,frontend:'desktop+mobile+landing+shop+cart+command-palette+store-detail+physical-store-onboarding',checkout:'BACKEND_GATED'},null,2));
+if(fail.length){console.error(JSON.stringify({ok:false,contract:'rwa-physical-commerce-ui-v6',fail},null,2));process.exit(1)}
+console.log(JSON.stringify({ok:true,contract:'rwa-physical-commerce-ui-v6',policy:registry.policy,marketLabelPolicy:'public-rwa-linked-vs-store-token-v1',liveStores:registry.stores.length,verifiedAssets:assets.verified.length,frontend:'desktop+mobile+functional-nav+landing+shop+cart+command-palette+store-detail+physical-store-onboarding',checkout:'BACKEND_GATED'},null,2));
