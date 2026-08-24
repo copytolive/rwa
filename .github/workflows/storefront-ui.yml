@@ -4,6 +4,36 @@ on:
     branches: ["main"]
     paths:
       - "rwa-commerce-registry.json"
+      - "rwa-assets.json"
+      - "rwa-commerce-api.js"
+      - "rwa-commerce-live.js"
+      - "rwa-commerce-config.json"
+      - "rwa-storefront.js"
+      - "rwa-storefront-safety-patch.js"
+      - "rwa-store-draft-ui.js"
+      - "rwa-store-draft-ui.css"
+      - "rwa-home-commerce.js"
+      - "rwa-home-commerce.css"
+      - "rwa-market-labels.js"
+      - "rwa-store-detail.js"
+      - "rwa-store-detail.css"
+      - "rwa-checkout-ui.js"
+      - "rwa-checkout-ui.css"
+      - "rwa-ui-pro.css"
+      - "quick-actions.js"
+      - "trade/ui-polish.js"
+      - "trade/ui-polish.css"
+      - "trade/config.js"
+      - "tools/storefront-ui-contract.mjs"
+      - "tools/storefront-browser.mjs"
+      - ".github/workflows/storefront-ui.yml"
+  pull_request:
+    paths:
+      - "rwa-commerce-registry.json"
+      - "rwa-assets.json"
+      - "rwa-commerce-api.js"
+      - "rwa-commerce-live.js"
+      - "rwa-commerce-config.json"
       - "rwa-storefront.js"
       - "rwa-storefront-safety-patch.js"
       - "rwa-store-draft-ui.js"
@@ -28,7 +58,7 @@ permissions:
   contents: read
   statuses: write
 concurrency:
-  group: rwa-storefront-ui
+  group: rwa-storefront-ui-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   storefront:
@@ -38,6 +68,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Validate storefront source contract
         run: |
+          node --check rwa-commerce-api.js
+          node --check rwa-commerce-live.js
           node --check rwa-storefront.js
           node --check rwa-storefront-safety-patch.js
           node --check rwa-store-draft-ui.js
@@ -50,6 +82,7 @@ jobs:
           node --check tools/storefront-ui-contract.mjs
           node --check tools/storefront-browser.mjs
           python -m json.tool rwa-commerce-registry.json >/dev/null
+          python -m json.tool rwa-commerce-config.json >/dev/null
           test -s rwa-store-detail.css
           test -s rwa-checkout-ui.css
           node tools/storefront-ui-contract.mjs
@@ -61,18 +94,24 @@ jobs:
           grep -Fq 'physical-store-evidence-detail-v1' rwa-store-detail.js
           grep -Fq 'backend-gated-checkout-preview-v1' rwa-checkout-ui.js
           grep -Fq 'Place order after backend verification' rwa-checkout-ui.js
+          grep -Fq 'commerce-adapter-v1' quick-actions.js
+          grep -Fq 'checkout_ready' rwa-commerce-live.js
           grep -Fq 'async function shellRoute' quick-actions.js
       - name: Install Playwright Chromium
+        if: github.event_name != 'pull_request'
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
       - name: Wait for Pages and run desktop/mobile storefront smoke
+        if: github.event_name != 'pull_request'
         shell: bash
         run: |
           ok=0
           for i in {1..60}; do
             q="${GITHUB_RUN_ID}-${i}"
             quick="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/quick-actions.js?v=$q" || true)"
+            api="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-commerce-api.js?v=$q" || true)"
+            live="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-commerce-live.js?v=$q" || true)"
             store="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-storefront.js?v=$q" || true)"
             safety="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-storefront-safety-patch.js?v=$q" || true)"
             draft="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-store-draft-ui.js?v=$q" || true)"
@@ -84,15 +123,14 @@ jobs:
             checkoutcss="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-checkout-ui.css?v=$q" || true)"
             reg="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-commerce-registry.json?v=$q" || true)"
             trade="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/ui-polish.js?v=$q" || true)"
-            if grep -Fq "premium-shell-storefront-v1" <<<"$quick" \
-              && grep -Fq "async function shellRoute" <<<"$quick" \
-              && grep -Fq "rwa-storefront-safety-patch.js?v=1" <<<"$quick" \
-              && grep -Fq "rwa-store-draft-ui.js?v=1" <<<"$quick" \
-              && grep -Fq "rwa-home-commerce.js?v=1" <<<"$quick" \
-              && grep -Fq "rwa-market-labels.js?v=1" <<<"$quick" \
-              && grep -Fq "rwa-store-detail.js?v=1" <<<"$quick" \
-              && grep -Fq "rwa-checkout-ui.js?v=1" <<<"$quick" \
+            if grep -Fq "premium-shell-storefront-v1+commerce-adapter-v1" <<<"$quick" \
+              && grep -Fq "rwa-commerce-api.js?v=1" <<<"$quick" \
+              && grep -Fq "rwa-commerce-live.js?v=1" <<<"$quick" \
+              && grep -Fq "Commerce backend is not deployed" <<<"$api" \
+              && grep -Fq "checkout_ready" <<<"$live" \
               && grep -Fq "ONE_TOKEN_ONE_PHYSICAL_STORE_V1" <<<"$store" \
+              && grep -Fq "business_registration_url" <<<"$store" \
+              && grep -Fq "merchant_identity_url" <<<"$store" \
               && grep -Fq "preview-no-fake-price-trade-v1" <<<"$safety" \
               && grep -Fq "UNVERIFIED_LOCAL_DRAFT" <<<"$draft" \
               && grep -Fq "landing-commerce-surface-v1" <<<"$home" \
@@ -108,12 +146,12 @@ jobs:
           test "$ok" = "1"
           node tools/storefront-browser.mjs
       - name: Publish storefront UI status
-        if: success()
+        if: success() && github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/storefront-ui' -f description='Frontend COMPLETE: desktop/mobile navigation store detail cart checkout preview onboarding PASS'
       - name: Publish storefront UI failure
-        if: failure()
+        if: failure() && github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/storefront-ui' -f description='Physical-store ecommerce UI validation failed'
