@@ -1,5 +1,5 @@
 {
   "status": "FAIL",
-  "error": "tester timeout",
-  "utc": "2026-08-24T19:46:38.1831417Z"
+  "error": "tester timeout after forced persisted demo login",
+  "utc": "2026-08-24T20:31:20.0083582Z"
 }

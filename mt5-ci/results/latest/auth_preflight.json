@@ -2,6 +2,8 @@
   "status": "PASS_NATIVE_WARMUP_COMPLETED",
   "server": "Exness-MT5Trial17",
   "login_present": true,
-  "warmup_seconds": 45,
-  "note": "No Python MetaTrader5 IPC dependency; Strategy Tester is authoritative for synchronization."
+  "warmup_seconds": 90,
+  "keep_private": 1,
+  "forced_login_switch": true,
+  "note": "Session persisted in portable terminal before Strategy Tester."
 }
