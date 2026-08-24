@@ -1,0 +1,169 @@
+name: MT5 XAUUSD Native Validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [mt5-ci-smoke]
+    paths:
+      - .github/workflows/mt5-xauusd-native-validation.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    timeout-minutes: 50
+    steps:
+      - name: Prepare folders
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force C:\mt5val\out | Out-Null
+          New-Item -ItemType Directory -Force C:\mt5val\downloads | Out-Null
+
+      - name: Download public validation inputs
+        shell: powershell
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          Invoke-WebRequest 'https://drive.usercontent.google.com/download?id=1_TuvWqYsct8v9o0_HVYWrZPjz2lXN0n-&export=download&confirm=t' -OutFile C:\mt5val\downloads\SmokeEA.mq5
+          Invoke-WebRequest 'https://drive.usercontent.google.com/download?id=1s9OP9HyLqMDGPQCO1QtRzv6YOSbklo1c&export=download&confirm=t' -OutFile C:\mt5val\downloads\XAUUSD_M1.csv
+          if ((Get-Item C:\mt5val\downloads\XAUUSD_M1.csv).Length -lt 20000000) { throw 'Dataset download is incomplete' }
+          Get-FileHash C:\mt5val\downloads\SmokeEA.mq5 -Algorithm SHA256 | Format-List | Out-File C:\mt5val\out\input_hashes.txt
+          Get-FileHash C:\mt5val\downloads\XAUUSD_M1.csv -Algorithm SHA256 | Format-List | Out-File C:\mt5val\out\input_hashes.txt -Append
+
+      - name: Install MetaTrader 5
+        shell: powershell
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          Invoke-WebRequest 'https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe' -OutFile C:\mt5val\mt5setup.exe
+          Start-Process C:\mt5val\mt5setup.exe -ArgumentList '/auto "C:\mt5val\terminal"' -Wait
+          $terminal = Get-ChildItem C:\mt5val -Filter terminal64.exe -Recurse | Select-Object -First 1
+          if (-not $terminal) { throw 'terminal64.exe not installed' }
+          $root = $terminal.Directory.FullName
+          "MT5_ROOT=$root" | Out-File -FilePath $env:GITHUB_ENV -Append
+          New-Item -ItemType Directory -Force "$root\MQL5\Experts\AutoValidation" | Out-Null
+          New-Item -ItemType Directory -Force "$root\MQL5\Scripts\AutoValidation" | Out-Null
+          New-Item -ItemType Directory -Force "$root\MQL5\Files" | Out-Null
+          Copy-Item C:\mt5val\downloads\SmokeEA.mq5 "$root\MQL5\Experts\AutoValidation\SmokeEA.mq5"
+          Copy-Item C:\mt5val\downloads\XAUUSD_M1.csv "$root\MQL5\Files\XAUUSD_M1.csv"
+
+      - name: Build custom-symbol importer
+        shell: powershell
+        run: |
+          @'
+          #property script_show_inputs
+          input string InpFile="XAUUSD_M1.csv";
+          input string InpSymbol="XAUUSD-test";
+          void OnStart()
+          {
+             ResetLastError();
+             if(!CustomSymbolCreate(InpSymbol,"Validation"))
+             {
+                int e=GetLastError();
+                if(e!=5304) { Print("CustomSymbolCreate failed ",e); ExpertRemove(); return; }
+             }
+             CustomSymbolSetString(InpSymbol,SYMBOL_DESCRIPTION,"XAUUSD validation dataset");
+             CustomSymbolSetInteger(InpSymbol,SYMBOL_DIGITS,2);
+             CustomSymbolSetDouble(InpSymbol,SYMBOL_POINT,0.01);
+             CustomSymbolSetDouble(InpSymbol,SYMBOL_TRADE_TICK_SIZE,0.01);
+             CustomSymbolSetDouble(InpSymbol,SYMBOL_TRADE_TICK_VALUE,1.0);
+             CustomSymbolSetDouble(InpSymbol,SYMBOL_TRADE_CONTRACT_SIZE,100.0);
+             CustomSymbolSetInteger(InpSymbol,SYMBOL_TRADE_MODE,SYMBOL_TRADE_MODE_FULL);
+             int h=FileOpen(InpFile,FILE_READ|FILE_CSV|FILE_ANSI,'\t');
+             if(h==INVALID_HANDLE) { Print("FileOpen failed ",GetLastError()); ExpertRemove(); return; }
+             string d,t;
+             long tv,vol;
+             double o,hi,lo,c;
+             int spread;
+             d=FileReadString(h); t=FileReadString(h);
+             o=FileReadNumber(h); hi=FileReadNumber(h); lo=FileReadNumber(h); c=FileReadNumber(h);
+             tv=(long)FileReadNumber(h); vol=(long)FileReadNumber(h); spread=(int)FileReadNumber(h);
+             MqlRates rates[];
+             ArrayResize(rates,0,50000);
+             while(!FileIsEnding(h))
+             {
+                d=FileReadString(h); if(FileIsEnding(h) && d=="") break;
+                t=FileReadString(h);
+                o=FileReadNumber(h); hi=FileReadNumber(h); lo=FileReadNumber(h); c=FileReadNumber(h);
+                tv=(long)FileReadNumber(h); vol=(long)FileReadNumber(h); spread=(int)FileReadNumber(h);
+                datetime tm=StringToTime(d+" "+t);
+                if(tm<=0) continue;
+                int n=ArraySize(rates);
+                ArrayResize(rates,n+1,50000);
+                rates[n].time=tm; rates[n].open=o; rates[n].high=hi; rates[n].low=lo; rates[n].close=c;
+                rates[n].tick_volume=tv; rates[n].real_volume=vol; rates[n].spread=spread;
+             }
+             FileClose(h);
+             int total=ArraySize(rates);
+             if(total<1000) { Print("Too few rates ",total); ExpertRemove(); return; }
+             int written=CustomRatesReplace(InpSymbol,0,LONG_MAX,rates);
+             Print("IMPORT_RESULT total=",total," written=",written," error=",GetLastError());
+             int out=FileOpen("import_result.txt",FILE_WRITE|FILE_TXT|FILE_ANSI);
+             if(out!=INVALID_HANDLE) { FileWrite(out,"total=",total," written=",written," error=",GetLastError()); FileClose(out); }
+             ExpertRemove();
+          }
+          '@ | Set-Content "$env:MT5_ROOT\MQL5\Scripts\AutoValidation\ImportXAUUSD.mq5" -Encoding ASCII
+
+      - name: Compile importer and EA
+        shell: powershell
+        run: |
+          $meta = Join-Path $env:MT5_ROOT 'metaeditor64.exe'
+          & $meta /portable /compile:"$env:MT5_ROOT\MQL5\Scripts\AutoValidation\ImportXAUUSD.mq5" /log:"C:\mt5val\out\compile_importer.log"
+          & $meta /portable /compile:"$env:MT5_ROOT\MQL5\Experts\AutoValidation\SmokeEA.mq5" /log:"C:\mt5val\out\compile_ea.log"
+          Get-Content C:\mt5val\out\compile_importer.log
+          Get-Content C:\mt5val\out\compile_ea.log
+          if (!(Test-Path "$env:MT5_ROOT\MQL5\Scripts\AutoValidation\ImportXAUUSD.ex5")) { throw 'Importer compile failed' }
+          if (!(Test-Path "$env:MT5_ROOT\MQL5\Experts\AutoValidation\SmokeEA.ex5")) { throw 'EA compile failed' }
+
+      - name: Import dataset into MT5
+        shell: powershell
+        run: |
+          @"
+          [StartUp]
+          Script=AutoValidation\ImportXAUUSD
+          Symbol=EURUSD
+          Period=M1
+          ShutdownTerminal=1
+          "@ | Set-Content C:\mt5val\import.ini -Encoding ASCII
+          $p=Start-Process "$env:MT5_ROOT\terminal64.exe" -ArgumentList '/portable','/config:C:\mt5val\import.ini' -PassThru
+          if(-not $p.WaitForExit(600000)) { $p.Kill(); throw 'Import timed out' }
+          Copy-Item "$env:MT5_ROOT\MQL5\Files\import_result.txt" C:\mt5val\out\ -ErrorAction SilentlyContinue
+          Get-ChildItem "$env:MT5_ROOT\logs" -Filter *.log | Copy-Item -Destination C:\mt5val\out\ -ErrorAction SilentlyContinue
+          if (!(Test-Path C:\mt5val\out\import_result.txt)) { throw 'Import result missing' }
+          Get-Content C:\mt5val\out\import_result.txt
+
+      - name: Run MT5 Strategy Tester
+        shell: powershell
+        run: |
+          @"
+          [Tester]
+          Expert=AutoValidation\SmokeEA
+          Symbol=XAUUSD-test
+          Period=H1
+          Model=1
+          ExecutionMode=0
+          Optimization=0
+          FromDate=2024.01.01
+          ToDate=2025.01.01
+          ForwardMode=0
+          Deposit=10000
+          Currency=USD
+          Leverage=100
+          Report=C:\mt5val\out\mt5_report
+          ReplaceReport=1
+          ShutdownTerminal=1
+          Visual=0
+          "@ | Set-Content C:\mt5val\tester.ini -Encoding ASCII
+          $p=Start-Process "$env:MT5_ROOT\terminal64.exe" -ArgumentList '/portable','/config:C:\mt5val\tester.ini' -PassThru
+          if(-not $p.WaitForExit(1200000)) { $p.Kill(); throw 'Tester timed out' }
+          Get-ChildItem "$env:MT5_ROOT\Tester\logs" -Filter *.log -Recurse | Copy-Item -Destination C:\mt5val\out\ -ErrorAction SilentlyContinue
+          Get-ChildItem C:\mt5val\out -Recurse | Select-Object FullName,Length | Format-Table | Out-File C:\mt5val\out\manifest.txt
+          if (!(Get-ChildItem C:\mt5val\out -Filter 'mt5_report*' -ErrorAction SilentlyContinue)) { throw 'Native MT5 report missing' }
+
+      - name: Upload native MT5 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mt5-xauusd-native-evidence
+          path: C:\mt5val\out
+          if-no-files-found: error
