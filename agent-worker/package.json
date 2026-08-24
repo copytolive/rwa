@@ -1,15 +1,20 @@
 {
   "name": "rwa-agent-worker",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
   "engines": {"node": ">=22.12.0"},
   "scripts": {
     "start": "node worker.mjs",
-    "check": "node --check execution.mjs && node --check copy-engine.mjs && node --check worker.mjs && node --test test/*.test.mjs"
+    "check": "node --check execution.mjs && node --check copy-engine.mjs && node --check worker.mjs && node --check cloudflare/src/index.mjs && node --test test/*.test.mjs",
+    "cloudflare:dry": "wrangler deploy --config cloudflare/wrangler.toml --dry-run --outdir /tmp/rwa-worker-dist",
+    "cloudflare:deploy": "wrangler deploy --config cloudflare/wrangler.toml"
   },
   "dependencies": {
     "@nktkas/hyperliquid": "0.33.3",
     "viem": "2.37.3"
+  },
+  "devDependencies": {
+    "wrangler": "4.33.1"
   }
 }
