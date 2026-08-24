@@ -34,9 +34,16 @@ export class RegistryService{
   sync({actor='system'}={}){
     const {registry,assets}=this.read(),assetSet=verifiedAssets(assets),rows=Array.isArray(registry.stores)?registry.stores:[],seenToken=new Set(),seenAddress=new Set(),accepted=[];
     for(const raw of rows){const s=validateStore(raw,assetSet),address=s.fullAddress.toLowerCase();if(seenToken.has(s.token))throw Error(`registry_duplicate_token:${s.token}`);if(seenAddress.has(address))throw Error(`registry_duplicate_physical_store:${s.token}`);seenToken.add(s.token);seenAddress.add(address);accepted.push(s)}
-    this.db.transaction(()=>{for(const s of accepted)this.db.upsertStore(s)});
-    this.db.audit(actor,'registry.sync','registry','rwa-commerce-registry',{accepted:accepted.length,policy:registry.policy});
-    return{ok:true,policy:registry.policy,stores:accepted.length,tokens:accepted.map(x=>x.token)};
+    const previousLive=this.db.stores().map(x=>x.token),acceptedSet=new Set(accepted.map(x=>x.token)),revoked=previousLive.filter(x=>!acceptedSet.has(x));
+    this.db.transaction(()=>{
+      // Registry sync is authoritative. A store removed from or no longer accepted by
+      // the verified registry must fail closed immediately instead of remaining live
+      // forever in the persistent database from an earlier successful sync.
+      this.db.db.prepare("UPDATE stores SET asset_verified=0,store_verified=0,trade_enabled=0,status='REVOKED',updated_at=?").run(Date.now());
+      for(const s of accepted)this.db.upsertStore(s);
+    });
+    this.db.audit(actor,'registry.sync','registry','rwa-commerce-registry',{accepted:accepted.length,revoked,policy:registry.policy});
+    return{ok:true,policy:registry.policy,stores:accepted.length,tokens:accepted.map(x=>x.token),revoked};
   }
   snapshot(){return{stores:this.db.stores().map(s=>({token:s.token,name:s.name,category:s.category,full_address:s.full_address,geo:{lat:s.lat,lng:s.lng},contact:s.contact,opening_hours:s.opening_hours,storefront_photo_url:s.storefront_photo_url,business_registration_url:s.business_registration_url,merchant_identity_url:s.merchant_identity_url,catalog_url:s.catalog_url,asset_verified:!!s.asset_verified,store_verified:!!s.store_verified,trade_enabled:!!s.trade_enabled,status:s.status,updated_at:s.updated_at})),products:this.db.products().map(p=>({id:p.id,store_token:p.store_token,sku:p.sku,name:p.name,description:p.description,price_cents:p.price_cents,currency:p.currency,available:p.available,pickup:!!p.pickup,shipping:!!p.shipping,image_url:p.image_url}))}}
 }
