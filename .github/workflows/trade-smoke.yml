@@ -52,15 +52,18 @@ jobs:
           grep -Fq 'Get test balance' trade/index.html
           grep -Fq 'e2e.css?v=1' trade/index.html
           grep -Fq 'e2e-resilience.js?v=1' trade/index.html
-          grep -Fq 'e2e.js?v=3' trade/index.html
+          grep -Fq 'e2e.js?v=4' trade/index.html
           grep -Fq "type:'claimDrip'" trade/fund-modal.js
           grep -Fq 'Get 1,000 test USDC' trade/fund-modal.js
           grep -Fq 'currentMarkPrice' trade/app.js
           ! grep -Fq "marketPrice').textContent.replace" trade/app.js
 
-          grep -Fq "version:'1.0.3'" trade/e2e.js
+          grep -Fq "version:'1.0.4'" trade/e2e.js
           grep -Fq 'const restingPrice=mid*0.95' trade/e2e.js
           grep -Fq 'price:mid*0.96' trade/e2e.js
+          grep -Fq 'const protectionPct=0.005' trade/e2e.js
+          grep -Fq 'tp:mid*(1+protectionPct)' trade/e2e.js
+          grep -Fq 'sl:mid*(1-protectionPct)' trade/e2e.js
           grep -Fq 'Run full TESTNET verification' trade/e2e.js
           grep -Fq 'E2E_PROOF_JSON_START' trade/e2e.js
           grep -Fq 'Close existing TESTNET positions' trade/e2e.js
@@ -87,7 +90,7 @@ jobs:
       - name: Publish source status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/trade-source' -f description='RWA funding + fail-closed WS + resilient reference-safe TESTNET E2E verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/trade-source' -f description='RWA funding + fail-closed WS + resilient oracle-safe TESTNET E2E verified'
 
       - name: Verify deployed GitHub Pages trade bundle
         shell: bash
@@ -106,16 +109,19 @@ jobs:
               && grep -Fq "frame-src 'none'" <<<"$html" \
               && ! grep -Fq '<iframe' <<<"$html" \
               && grep -Fq 'e2e-resilience.js?v=1' <<<"$html" \
-              && grep -Fq 'e2e.js?v=3' <<<"$html" \
+              && grep -Fq 'e2e.js?v=4' <<<"$html" \
               && grep -Fq 'e2e.css?v=1' <<<"$html" \
               && grep -Fq 'currentMarkPrice' <<<"$app" \
               && ! grep -Fq 'Fund Hyperliquid first' <<<"$app" \
               && grep -Fq "type:'claimDrip'" <<<"$fund" \
               && grep -Fq 'Get 1,000 test USDC' <<<"$fund" \
               && grep -Fq "const MARKER='e2e-read-backoff-v1'" <<<"$resilience" \
-              && grep -Fq "version:'1.0.3'" <<<"$e2e" \
+              && grep -Fq "version:'1.0.4'" <<<"$e2e" \
               && grep -Fq 'const restingPrice=mid*0.95' <<<"$e2e" \
               && grep -Fq 'price:mid*0.96' <<<"$e2e" \
+              && grep -Fq 'const protectionPct=0.005' <<<"$e2e" \
+              && grep -Fq 'tp:mid*(1+protectionPct)' <<<"$e2e" \
+              && grep -Fq 'sl:mid*(1-protectionPct)' <<<"$e2e" \
               && grep -Fq 'replacementOid' <<<"$e2e" \
               && grep -Fq 'Run full TESTNET verification' <<<"$e2e" \
               && grep -Fq 'E2E_PROOF_JSON_START' <<<"$e2e" \
@@ -133,7 +139,7 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/trade-live' -f description='GitHub Pages /rwa/trade live bundle + resilient reference-safe TESTNET E2E verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/trade-live' -f description='GitHub Pages /rwa/trade live bundle + resilient oracle-safe TESTNET E2E verified'
 
       - name: Publish failure status
         if: failure()
