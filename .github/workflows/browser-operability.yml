@@ -7,9 +7,12 @@ on:
       - "quick-actions.js"
       - "social-notification-defaults.js"
       - "social-trading-pro.js"
+      - "rwa-*.js"
+      - "rwa-*.css"
       - "suite*.js"
       - "trade/**"
       - "tools/browser-operability.mjs"
+      - "tools/storefront-browser.mjs"
       - ".github/workflows/browser-operability.yml"
   workflow_dispatch:
 permissions:
@@ -21,50 +24,63 @@ concurrency:
 jobs:
   browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 22
     steps:
       - uses: actions/checkout@v4
       - name: Validate test source
         run: |
           node --check tools/browser-operability.mjs
+          node --check tools/storefront-browser.mjs
           node --check quick-actions.js
           node --check social-notification-defaults.js
           node --check social-trading-pro.js
+          node --check rwa-storefront.js
+          node --check rwa-store-detail.js
+          node --check rwa-checkout-ui.js
           grep -Fq 'data-rwa-social-nav' quick-actions.js
           grep -Fq "openTab('feed')" quick-actions.js
+          grep -Fq 'physical-store-evidence-detail-v1' rwa-store-detail.js
+          grep -Fq 'backend-gated-checkout-preview-v1' rwa-checkout-ui.js
       - name: Install Playwright Chromium
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Wait for Pages and run desktop/mobile interactions
+      - name: Wait for Pages and run full desktop/mobile interactions
         shell: bash
         run: |
           ok=0
-          for i in {1..40}; do
-            cfg="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/config.js?v=${GITHUB_RUN_ID}-${i}" || true)"
-            quick="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/quick-actions.js?v=${GITHUB_RUN_ID}-${i}" || true)"
-            defaults="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-notification-defaults.js?v=${GITHUB_RUN_ID}-${i}" || true)"
-            social="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-trading-pro.js?v=${GITHUB_RUN_ID}-${i}" || true)"
-            html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/?v=${GITHUB_RUN_ID}-${i}" || true)"
+          for i in {1..60}; do
+            q="${GITHUB_RUN_ID}-${i}"
+            cfg="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/config.js?v=$q" || true)"
+            quick="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/quick-actions.js?v=$q" || true)"
+            defaults="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-notification-defaults.js?v=$q" || true)"
+            social="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-trading-pro.js?v=$q" || true)"
+            detail="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-store-detail.js?v=$q" || true)"
+            checkout="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-checkout-ui.js?v=$q" || true)"
+            html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/?v=$q" || true)"
             if grep -Fq "version:'1.5.0'" <<<"$cfg" \
               && grep -Fq 'RWAQuickActions' <<<"$quick" \
               && grep -Fq 'data-rwa-social-nav' <<<"$quick" \
+              && grep -Fq 'rwa-checkout-ui.js?v=1' <<<"$quick" \
               && grep -Fq "policy:'explicit-opt-in-v1'" <<<"$defaults" \
               && grep -Fq 'friends:false' <<<"$defaults" \
               && grep -Fq "venue-backed-social-feed-v1" <<<"$social" \
+              && grep -Fq 'physical-store-evidence-detail-v1' <<<"$detail" \
+              && grep -Fq 'backend-gated-checkout-preview-v1' <<<"$checkout" \
               && grep -Fq 'social-notification-defaults.js?v=1' <<<"$html" \
               && grep -Fq 'social-trading-pro.js?v=1' <<<"$html"; then ok=1; break; fi
             sleep 5
           done
           test "$ok" = "1"
           node tools/browser-operability.mjs
+          node tools/storefront-browser.mjs
       - name: Publish browser status
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/browser-operability' -f description='Desktop + mobile live UI, desktop Social nav, trader feed and explicit opt-in verified in Chromium'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/browser-operability' -f description='Frontend COMPLETE: trading social storefront store detail cart checkout desktop/mobile Chromium PASS'
       - name: Publish browser failure
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/browser-operability' -f description='Live desktop/mobile browser operability failed'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/browser-operability' -f description='Full desktop/mobile browser operability failed'
