@@ -40,11 +40,15 @@ jobs:
         run: |
           $ProgressPreference = 'SilentlyContinue'
           Invoke-WebRequest 'https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe' -OutFile C:\mt5val\mt5setup.exe
-          Start-Process C:\mt5val\mt5setup.exe -ArgumentList '/auto' -Wait
-          Start-Sleep 8
+          $installer = Start-Process C:\mt5val\mt5setup.exe -ArgumentList '/auto' -PassThru
+          $terminal = $null
+          for($i=0; $i -lt 72 -and -not $terminal; $i++) {
+            Start-Sleep 5
+            $terminal = Get-ChildItem 'C:\Program Files' -Filter terminal64.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          }
           Get-Process terminal64,metaeditor64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-          $terminal = Get-ChildItem 'C:\Program Files' -Filter terminal64.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-          if (-not $terminal) { throw 'terminal64.exe not installed' }
+          if($installer -and -not $installer.HasExited) { $installer.Kill() }
+          if (-not $terminal) { throw 'terminal64.exe not installed after 6 minutes' }
           $root = 'C:\mt5val\terminal'
           Copy-Item -Recurse -Force $terminal.Directory.FullName $root
           "MT5_ROOT=$root" | Out-File -FilePath $env:GITHUB_ENV -Append
