@@ -20,6 +20,7 @@ window.__RWA_SUITE_EXTENSIONS_LOADING=true;
       ['beta-proof-client.js?v=1','beta-proof'],
       ['provider-failover.js?v=1','provider-failover'],
       ['social-safety-patch.js?v=1','social-safety'],
+      ['social-trade-monitor.js?v=1','social-trade-monitor'],
       ['monitor-client.js?v=1','monitor'],
       ['monitor-config-client.js?v=1','monitor-config'],
       ['audit-hooks.js?v=1','audit-hooks']
