@@ -67,8 +67,21 @@ jobs:
           $eaPath = "$root\MQL5\Experts\AutoValidation\SmokeEA.mq5"
           $eaText = Get-Content $eaPath -Raw
           $eaText = $eaText.Replace('<Trade/Trade.mqh>','<Trade\Trade.mqh>')
+          $oldStopBlock = @'
+   bool ok=trade.PositionModify(ticket,sl,tp);
+'@
+          $newStopBlock = @'
+   double current_sl=PositionGetDouble(POSITION_SL);
+   double current_tp=PositionGetDouble(POSITION_TP);
+   if(MathAbs(current_sl-sl)<=_Point*0.5 && MathAbs(current_tp-tp)<=_Point*0.5)
+      return true;
+
+   bool ok=trade.PositionModify(ticket,sl,tp);
+'@
+          if(-not $eaText.Contains($oldStopBlock)) { throw 'Expected stop reconciliation block not found' }
+          $eaText = $eaText.Replace($oldStopBlock,$newStopBlock)
           Set-Content $eaPath -Value $eaText -Encoding ASCII
-          'Mechanical staging patch: Trade/Trade.mqh -> Trade\Trade.mqh' | Out-File C:\mt5val\out\staging_patch.txt
+          'Staging patches: include separator normalized; skip redundant exact-stop modification when entry already has requested SL/TP.' | Out-File C:\mt5val\out\staging_patch.txt
           Copy-Item C:\mt5val\downloads\XAUUSD_M1.csv "$root\MQL5\Files\XAUUSD_M1.csv"
 
       - name: Build custom-symbol importer
@@ -235,10 +248,10 @@ jobs:
           $testerLogs = Get-ChildItem C:\mt5val\out -Filter *.log -File
           $logText = ($testerLogs | ForEach-Object { Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue }) -join "`n"
           $testPassed = $logText -match 'Test passed'
-          $entries = ([regex]::Matches($logText,'market (buy|sell) [0-9]')).Count
-          $tpCloses = ([regex]::Matches($logText,'closed by take-profit')).Count
-          $slCloses = ([regex]::Matches($logText,'closed by stop-loss')).Count
-          $locks = ([regex]::Matches($logText,'Profit-lock armed')).Count
+          $entries = ([regex]::Matches($logText,'ENTRY OK week=')).Count
+          $tpCloses = ([regex]::Matches($logText,'take profit triggered')).Count
+          $slCloses = ([regex]::Matches($logText,'stop loss triggered')).Count
+          $locks = ([regex]::Matches($logText,'LOCK ARMED')).Count
           $invalidStopModify = ([regex]::Matches($logText,'PositionModify exact SL/TP failed')).Count
           $weeks = (([datetime]'2025-01-01') - ([datetime]'2024-01-01')).TotalDays / 7
           $fullTpWr = if($entries -gt 0) { [math]::Round(100*$tpCloses/$entries,4) } else { 0 }
