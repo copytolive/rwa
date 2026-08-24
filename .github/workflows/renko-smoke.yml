@@ -4,14 +4,14 @@ on:
   pull_request:
     paths:
       - "renko/**"
-      - "tools/renko-browser-smoke.mjs"
+      - "tools/renko-v5-browser-smoke.mjs"
       - "tools/renko-live-smoke.mjs"
       - ".github/workflows/renko-smoke.yml"
   push:
     branches: ["main"]
     paths:
       - "renko/**"
-      - "tools/renko-browser-smoke.mjs"
+      - "tools/renko-v5-browser-smoke.mjs"
       - "tools/renko-live-smoke.mjs"
       - ".github/workflows/renko-smoke.yml"
 
@@ -32,40 +32,43 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate Renko v3 source contract
+
+      - name: Validate Renko V5 raw-tick lifetime contract
         run: |
+          set -euo pipefail
           node --check renko/renko-v3.js
-          node --check tools/renko-browser-smoke.mjs
+          node --check renko/renko-v5.js
+          node --check renko/renko-v5-auto.js
+          node --check renko/archive-worker-v5.js
+          node --check tools/renko-v5-browser-smoke.mjs
           node --check tools/renko-live-smoke.mjs
           test -s renko/index.html
-          test -s renko/renko.css
-          test -s renko/renko-v2.css
-          test -s renko/renko-v3.css
-          grep -Fq "version:'3.0.0'" renko/renko-v3.js
-          grep -Fq "source:'raw-trade-ticks-only'" renko/renko-v3.js
-          grep -Fq "method:'traditional-fixed-box'" renko/renko-v3.js
-          grep -Fq "reversalBoxes:2" renko/renko-v3.js
-          grep -Fq "universe:'top-500-liquidity-plus-search-all'" renko/renko-v3.js
-          grep -Fq "history:'all-bricks-from-chart-genesis'" renko/renko-v3.js
-          grep -Fq "historyScope:'chart-genesis-not-exchange-lifetime'" renko/renko-v3.js
-          grep -Fq 'RENDER_LIMIT=500' renko/renko-v3.js
-          grep -Fq 'RAW_BUFFER_LIMIT=250000' renko/renko-v3.js
-          grep -Fq '/api/v3/trades?symbol=' renko/renko-v3.js
-          grep -Fq '@trade' renko/renko-v3.js
-          grep -Fq '/api/v3/ticker/24hr' renko/renko-v3.js
-          ! grep -Fq '/api/v3/klines' renko/renko-v3.js
-          ! grep -Fq '@kline_' renko/renko-v3.js
-          ! grep -Fq '@aggTrade' renko/renko-v3.js
-          ! grep -Fq 'ATR' renko/renko-v3.js
-          grep -Fq 'renko-v3.js?v=3' renko/index.html
-          grep -Fq 'renko-v3.css?v=3' renko/index.html
+          test -s renko/renko-v5.css
+          grep -Fq "version:'5.0.0'" renko/renko-v5.js
+          grep -Fq "source:'raw-trade-ticks-only'" renko/renko-v5.js
+          grep -Fq "history:'raw-tick-lifetime-archives'" renko/renko-v5.js
+          grep -Fq "historyScope:'oldest-available-binance-vision-raw-trade-to-live'" renko/renko-v5.js
+          grep -Fq "reversalBoxes:2" renko/renko-v5.js
+          grep -Fq "mode:'auto-selected-market-lifetime-raw-tick'" renko/renko-v5-auto.js
+          grep -Fq '/data/spot/monthly/trades/' renko/archive-worker-v5.js
+          grep -Fq '/data/spot/daily/trades/' renko/archive-worker-v5.js
+          grep -Fq 'renko-v5.js?v=5' renko/index.html
+          grep -Fq 'renko-v5-auto.js?v=51' renko/index.html
+          grep -Fq 'TOTAL TICK HISTORY · AUTO' renko/index.html
           grep -Fq 'ALL HISTORY' renko/index.html
-          grep -Fq 'Full brick history retained from chart genesis' renko/index.html
           grep -Fq 'first 500' renko/index.html
+          for f in renko/renko-v5.js renko/renko-v5-auto.js renko/archive-worker-v5.js; do
+            ! grep -Fq '/klines' "$f"
+            ! grep -Fq '@kline_' "$f"
+            ! grep -Fq '@aggTrade' "$f"
+            ! grep -Fq 'OHLC fallback' "$f"
+          done
+
       - name: Install Playwright Chromium
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
+
       - name: Start local site
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/rwa-renko-http.log 2>&1 &
@@ -73,40 +76,45 @@ jobs:
           for i in {1..20}; do curl -fsS http://127.0.0.1:4173/renko/ >/dev/null && exit 0; sleep 1; done
           cat /tmp/rwa-renko-http.log
           exit 1
-      - name: Test top-500 Traditional Renko all-history engine and responsive UI
-        run: node tools/renko-browser-smoke.mjs
-      - name: Wait for Renko v3 GitHub Pages bundle
+
+      - name: Test V5 top-500 UI, Traditional engine and archive worker
+        run: node tools/renko-v5-browser-smoke.mjs
+
+      - name: Wait for Renko V5 GitHub Pages bundle
         if: github.event_name == 'push'
         run: |
+          set -euo pipefail
           ok=0
           for i in {1..120}; do
             q="${GITHUB_RUN_ID}-${i}"
             html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/renko/?v=$q" || true)"
-            js="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/renko/renko-v3.js?v=$q" || true)"
-            if grep -Fq 'RWA Renko' <<<"$html" \
-              && grep -Fq 'renko-v3.js?v=3' <<<"$html" \
-              && grep -Fq 'ALL HISTORY' <<<"$html" \
-              && grep -Fq "version:'3.0.0'" <<<"$js" \
-              && grep -Fq "source:'raw-trade-ticks-only'" <<<"$js" \
-              && grep -Fq "method:'traditional-fixed-box'" <<<"$js" \
-              && grep -Fq "reversalBoxes:2" <<<"$js" \
-              && grep -Fq "history:'all-bricks-from-chart-genesis'" <<<"$js" \
-              && grep -Fq 'RENDER_LIMIT=500' <<<"$js"; then ok=1; break; fi
+            v5="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/renko/renko-v5.js?v=$q" || true)"
+            auto="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/renko/renko-v5-auto.js?v=$q" || true)"
+            worker="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/renko/archive-worker-v5.js?v=$q" || true)"
+            if grep -Fq 'TOTAL TICK HISTORY · AUTO' <<<"$html" \
+              && grep -Fq 'renko-v5-auto.js?v=51' <<<"$html" \
+              && grep -Fq "version:'5.0.0'" <<<"$v5" \
+              && grep -Fq "history:'raw-tick-lifetime-archives'" <<<"$v5" \
+              && grep -Fq "mode:'auto-selected-market-lifetime-raw-tick'" <<<"$auto" \
+              && grep -Fq '/data/spot/monthly/trades/' <<<"$worker"; then ok=1; break; fi
             sleep 5
           done
           test "$ok" = "1"
-      - name: Verify live top-500 raw-tick Renko page moving price and full history
+
+      - name: Verify live V5 moving ticks and real archive decoding
         if: github.event_name == 'push'
         env:
           RWA_RENKO_LIVE_URL: https://narzulalistiqlal.github.io/rwa/renko/?v=${{ github.run_id }}
         run: node tools/renko-live-smoke.mjs
+
       - name: Publish Renko status
         if: success() && github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-live' -f description='LIVE top-500 crypto Traditional Renko + moving raw ticks + all chart-genesis history PASS'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-live' -f description='LIVE V5: top-500 + moving raw ticks + auto lifetime archive path PASS'
+
       - name: Publish Renko failure
         if: failure() && github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/renko-live' -f description='Live Renko v3 top-500/all-history gate failed'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/renko-live' -f description='Live Renko V5 raw-tick lifetime gate failed'
