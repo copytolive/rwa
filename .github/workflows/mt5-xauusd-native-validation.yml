@@ -44,16 +44,21 @@ jobs:
           $terminal = $null
           for($i=0; $i -lt 72 -and -not $terminal; $i++) {
             Start-Sleep 5
-            $candidate = Get-ChildItem 'C:\Program Files' -Filter terminal64.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-            if($candidate -and (Test-Path (Join-Path $candidate.Directory.FullName 'MQL5\Include\Trade\Trade.mqh'))) {
-              $terminal = $candidate
-            }
+            $terminal = Get-ChildItem 'C:\Program Files' -Filter terminal64.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
           }
           Get-Process terminal64,metaeditor64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
           if($installer -and -not $installer.HasExited) { $installer.Kill() }
           if (-not $terminal) { throw 'terminal64.exe not installed after 6 minutes' }
           $root = 'C:\mt5val\terminal'
           Copy-Item -Recurse -Force $terminal.Directory.FullName $root
+          $bootstrap = Start-Process "$root\terminal64.exe" -ArgumentList '/portable' -PassThru
+          for($i=0; $i -lt 30 -and !(Test-Path "$root\MQL5\Include\Trade\Trade.mqh"); $i++) { Start-Sleep 3 }
+          if($bootstrap -and -not $bootstrap.HasExited) { $bootstrap.Kill() }
+          if(!(Test-Path "$root\MQL5\Include\Trade\Trade.mqh")) {
+            $tradeLib = Get-ChildItem "$env:APPDATA\MetaQuotes" -Filter Trade.mqh -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            if($tradeLib) { Copy-Item -Recurse -Force $tradeLib.Directory.Parent.FullName "$root\MQL5\Include" }
+          }
+          if(!(Test-Path "$root\MQL5\Include\Trade\Trade.mqh")) { throw 'MT5 standard library bootstrap failed' }
           "MT5_ROOT=$root" | Out-File -FilePath $env:GITHUB_ENV -Append
           New-Item -ItemType Directory -Force "$root\MQL5\Experts\AutoValidation" | Out-Null
           New-Item -ItemType Directory -Force "$root\MQL5\Scripts\AutoValidation" | Out-Null
