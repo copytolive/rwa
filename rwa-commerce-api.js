@@ -14,16 +14,24 @@ async function wallet(){const p=await provider(),a=await p.request({method:'eth_
 async function login(){const p=await provider(),w=await wallet(),ch=await request('/v1/auth/challenge',{method:'POST',body:{wallet:w},auth:false});const message=ch?.data?.message;if(!message)throw Error('Commerce challenge unavailable');const signature=await p.request({method:'personal_sign',params:[message,w]});const v=await request('/v1/auth/verify',{method:'POST',body:{wallet:w,signature},auth:false});if(!v?.data?.token)throw Error('Commerce session failed');setToken(v.data.token);return{wallet:w.toLowerCase(),expires_at:v.data.expiresAt||v.data.expires_at}}
 async function ensureLogin(){if(token())return true;await login();return true}
 async function logout(){try{if(token())await request('/v1/auth/logout',{method:'POST'})}finally{setToken('')}}
+const logged=fn=>async(...args)=>{await ensureLogin();return fn(...args)};
 const api={
-  version:'1.0.0',policy:'ONE_TOKEN_ONE_PHYSICAL_STORE_V1',config,enabled:async()=>!!(await config()).api_base,session:()=>({authenticated:!!token()}),login,ensureLogin,logout,idem,
+  version:'1.1.0',policy:'ONE_TOKEN_ONE_PHYSICAL_STORE_V1',config,enabled:async()=>!!(await config()).api_base,session:()=>({authenticated:!!token()}),login,ensureLogin,logout,idem,
   service:()=>request('/v1/config',{auth:false}),stores:()=>request('/v1/stores',{auth:false}),products:store=>request(`/v1/products${store?`?store=${encodeURIComponent(store)}`:''}`,{auth:false}),product:id=>request(`/v1/products/${encodeURIComponent(id)}`,{auth:false}),
-  quote:async payload=>{await ensureLogin();return request('/v1/quote',{method:'POST',body:payload})},
-  createOrder:async payload=>{await ensureLogin();return request('/v1/orders',{method:'POST',body:payload,idempotencyKey:idem()})},
-  orders:async()=>{await ensureLogin();return request('/v1/orders')},
-  createPayment:async orderId=>{await ensureLogin();return request(`/v1/orders/${encodeURIComponent(orderId)}/payment`,{method:'POST',body:{},idempotencyKey:idem()})},
-  paymentStatus:async orderId=>{await ensureLogin();return request(`/v1/orders/${encodeURIComponent(orderId)}/payment-status`)},
-  cancelOrder:async orderId=>{await ensureLogin();return request(`/v1/orders/${encodeURIComponent(orderId)}/cancel`,{method:'POST',body:{}})},
-  requestRefund:async(orderId,reason,amount_cents=null)=>{await ensureLogin();return request(`/v1/orders/${encodeURIComponent(orderId)}/refund-request`,{method:'POST',body:{reason,amount_cents}})}
+  quote:logged(payload=>request('/v1/quote',{method:'POST',body:payload})),
+  createOrder:logged(payload=>request('/v1/orders',{method:'POST',body:payload,idempotencyKey:idem()})),
+  orders:logged(()=>request('/v1/orders')),
+  order:logged(orderId=>request(`/v1/orders/${encodeURIComponent(orderId)}`)),
+  createPayment:logged(orderId=>request(`/v1/orders/${encodeURIComponent(orderId)}/payment`,{method:'POST',body:{},idempotencyKey:idem()})),
+  paymentStatus:logged(orderId=>request(`/v1/orders/${encodeURIComponent(orderId)}/payment-status`)),
+  cancelOrder:logged(orderId=>request(`/v1/orders/${encodeURIComponent(orderId)}/cancel`,{method:'POST',body:{}})),
+  requestRefund:logged((orderId,reason,amount_cents=null)=>request(`/v1/orders/${encodeURIComponent(orderId)}/refund-request`,{method:'POST',body:{reason,amount_cents}})),
+  sellerStores:logged(()=>request('/v1/seller/stores')),
+  sellerProducts:logged(storeToken=>request(`/v1/seller/products?store=${encodeURIComponent(storeToken)}`)),
+  sellerUpsertProduct:logged(payload=>request('/v1/seller/products',{method:'POST',body:payload})),
+  sellerSetInventory:logged((productId,on_hand)=>request(`/v1/seller/inventory/${encodeURIComponent(productId)}`,{method:'PUT',body:{on_hand}})),
+  sellerOrders:logged(()=>request('/v1/seller/orders')),
+  sellerSetOrderStatus:logged((orderId,status)=>request(`/v1/seller/orders/${encodeURIComponent(orderId)}/status`,{method:'PUT',body:{status}}))
 };
 window.RWACommerceAPI=api;
 })();
