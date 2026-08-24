@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "api_base": "",
+  "mode": "LOCKED_UNTIL_BACKEND_DEPLOYED",
+  "policy": "ONE_TOKEN_ONE_PHYSICAL_STORE_V1",
+  "note": "Set api_base only after HTTPS healthz/readyz, payment configuration and verified store evidence are proven. Empty means frontend remains honest preview-only."
+}

@@ -1,0 +1,51 @@
+name: RWA Commerce Service
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "commerce-service/**"
+      - "rwa-commerce-api.js"
+      - "rwa-commerce-live.js"
+      - "rwa-commerce-config.json"
+      - "quick-actions.js"
+      - ".github/workflows/commerce-service.yml"
+  pull_request:
+    paths:
+      - "commerce-service/**"
+      - "rwa-commerce-api.js"
+      - "rwa-commerce-live.js"
+      - "rwa-commerce-config.json"
+      - "quick-actions.js"
+      - ".github/workflows/commerce-service.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  commerce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+      - name: Install backend dependencies
+        working-directory: commerce-service
+        run: npm install --no-audit --no-fund
+      - name: Backend unit/integration checks
+        working-directory: commerce-service
+        run: npm run check
+      - name: Frontend commerce adapter syntax/lock checks
+        run: |
+          node --check rwa-commerce-api.js
+          node --check rwa-commerce-live.js
+          node --check quick-actions.js
+          python -m json.tool rwa-commerce-config.json >/dev/null
+          test "$(python -c 'import json; print(json.load(open("rwa-commerce-config.json"))["api_base"])')" = ""
+          grep -Fq 'ONE_TOKEN_ONE_PHYSICAL_STORE_V1' rwa-commerce-api.js
+          grep -Fq 'Commerce backend is not deployed' rwa-commerce-api.js
+          grep -Fq 'midtrans_requires_idr' commerce-service/commerce-core.mjs
+          grep -Fq 'invalid_payment_signature' commerce-service/server.mjs
+          grep -Fq 'idempotency' commerce-service/server.mjs
+      - name: Build deployment image
+        run: docker build -f commerce-service/Dockerfile -t rwa-commerce:${GITHUB_SHA} .
