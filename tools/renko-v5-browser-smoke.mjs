@@ -34,17 +34,17 @@ try{
   const desktop=await page.evaluate(()=>({version:window.RWARenko.version,source:window.RWARenko.source,history:window.RWARenko.history,scope:window.RWARenko.historyScope,pairs:document.querySelectorAll('.pair-row').length,total:window.RWARenkoV3.state.symbols.length,last:window.RWARenkoV3.state.lastPrice,width:document.documentElement.scrollWidth,inner:innerWidth,archive:document.querySelector('.archivebar')?.getBoundingClientRect().toJSON(),button:document.querySelector('#archiveLoad')?.textContent}));
   assert.equal(desktop.version,'5.0.0');assert.equal(desktop.source,'raw-trade-ticks-only');assert.equal(desktop.history,'raw-tick-lifetime-archives');assert.match(desktop.scope,/oldest-available/);assert.equal(desktop.pairs,500);assert.ok(desktop.total>=650);assert.equal(desktop.last,112);assert.ok(desktop.width<=desktop.inner+2);assert.ok(desktop.archive?.width>700);assert.match(desktop.button,/TOTAL TICK HISTORY/);
 
-  const selftest=await page.evaluate(async()=>{
-    const zip=await fetch('fixture/raw.zip').then(r=>r.arrayBuffer());
+  const archive=await page.evaluate(async()=>{
+    const url='https://data.binance.vision/data/spot/monthly/trades/BTCUSDT/BTCUSDT-trades-2017-08.zip';
     const w=new Worker('archive-worker-v5.js?v=5');
-    return await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('worker selftest timeout')),15000);w.onmessage=e=>{if(e.data?.type==='selftest'){clearTimeout(t);w.terminate();resolve(e.data)}else if(e.data?.type==='error'){clearTimeout(t);w.terminate();reject(Error(e.data.message))}};w.onerror=e=>reject(Error(e.message));w.postMessage({type:'selftest',box:10,zip},[zip])});
+    return await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('real archive worker timeout')),120000);w.onmessage=e=>{if(e.data?.type==='archiveurltest'){clearTimeout(t);w.terminate();resolve(e.data)}else if(e.data?.type==='error'){clearTimeout(t);w.terminate();reject(Error(e.data.message))}};w.onerror=e=>reject(Error(e.message));w.postMessage({type:'archiveurltest',box:100,url})});
   });
-  assert.equal(selftest.ok,true);assert.equal(selftest.rows,7);assert.equal(selftest.ticks,7);assert.deepEqual(selftest.bricks.map(b=>[b[0],b[1],b[2]]),[[100,110,1],[110,120,1],[110,100,-1],[100,90,-1],[100,110,1]]);
+  assert.equal(archive.ok,true);assert.ok(archive.rows>1000,`raw archive rows ${archive.rows}`);assert.equal(archive.ticks,archive.rows);assert.ok(archive.bricks>0);assert.ok(archive.firstTime>=Date.UTC(2017,7,1));assert.ok(archive.lastTime<Date.UTC(2017,8,2));
 
   await page.setViewportSize({width:390,height:844});await page.waitForTimeout(250);
   const mobile=await page.evaluate(()=>({width:document.documentElement.scrollWidth,inner:innerWidth,archive:document.querySelector('.archivebar')?.getBoundingClientRect().toJSON(),chart:document.querySelector('#chartWrap')?.getBoundingClientRect().toJSON(),button:document.querySelector('#archiveLoad')?.getBoundingClientRect().toJSON()}));
   assert.ok(mobile.width<=392,`mobile overflow ${mobile.width}`);assert.ok(mobile.archive.width<=390);assert.ok(mobile.chart.width<=390);assert.ok(mobile.button.width>100);
   assert.equal(errors.length,0,errors.join(' | '));
-  console.log(JSON.stringify({ok:true,contract:'rwa-renko-v5-raw-tick-lifetime',desktop,selftest,mobile},null,2));
+  console.log(JSON.stringify({ok:true,contract:'rwa-renko-v5-raw-tick-lifetime',desktop,archive,mobile},null,2));
   await context.close();
 }finally{await browser.close()}
