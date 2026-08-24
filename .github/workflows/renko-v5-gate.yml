@@ -37,12 +37,15 @@ jobs:
           node --check renko/archive-worker-v5.js
           node --check tools/renko-v5-browser-smoke.mjs
           grep -Fq "version:'5.0.0'" renko/renko-v5.js
+          grep -Fq "version:'5.2.0'" renko/renko-v5-auto.js
           grep -Fq "mode:'auto-selected-market-lifetime-raw-tick'" renko/renko-v5-auto.js
+          grep -Fq "preview:'progressive-archive-brick-stream'" renko/renko-v5-auto.js
+          grep -Fq "post('chunk'" renko/archive-worker-v5.js
           grep -Fq '/data/spot/monthly/trades/' renko/archive-worker-v5.js
           grep -Fq '/data/spot/daily/trades/' renko/archive-worker-v5.js
           grep -Fq '@trade' renko/renko-v3.js
           grep -Fq 'TOTAL TICK HISTORY · AUTO' renko/index.html
-          grep -Fq 'renko-v5-auto.js?v=51' renko/index.html
+          grep -Fq 'renko-v5-auto.js?v=52' renko/index.html
           for f in renko/renko-v5.js renko/renko-v5-auto.js renko/archive-worker-v5.js; do
             ! grep -Fq '/klines' "$f"
             ! grep -Fq '@aggTrade' "$f"
@@ -74,13 +77,18 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Wait for Pages V5
+      - name: Wait for Pages V5.2
         run: |
           set -euo pipefail
           for i in {1..120}; do
             q="${GITHUB_RUN_ID}-${i}"
             h="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/?v=$q" || true)"
-            if grep -Fq 'TOTAL TICK HISTORY · AUTO' <<<"$h" && grep -Fq 'renko-v5-auto.js?v=51' <<<"$h"; then exit 0; fi
+            a="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/renko-v5-auto.js?v=$q" || true)"
+            w="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/archive-worker-v5.js?v=$q" || true)"
+            if grep -Fq 'renko-v5-auto.js?v=52' <<<"$h" \
+              && grep -Fq "version:'5.2.0'" <<<"$a" \
+              && grep -Fq "preview:'progressive-archive-brick-stream'" <<<"$a" \
+              && grep -Fq "post('chunk'" <<<"$w"; then exit 0; fi
             sleep 5
           done
           exit 1
@@ -91,4 +99,4 @@ jobs:
       - name: Publish status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-v5-e2e' -f description='V5 raw-tick lifetime Renko end-to-end PASS'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-v5-e2e' -f description='V5.2 raw-tick lifetime + progressive history end-to-end PASS'
