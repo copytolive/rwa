@@ -40,10 +40,13 @@ jobs:
         run: |
           $ProgressPreference = 'SilentlyContinue'
           Invoke-WebRequest 'https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe' -OutFile C:\mt5val\mt5setup.exe
-          Start-Process C:\mt5val\mt5setup.exe -ArgumentList '/auto "C:\mt5val\terminal"' -Wait
-          $terminal = Get-ChildItem C:\mt5val -Filter terminal64.exe -Recurse | Select-Object -First 1
+          Start-Process C:\mt5val\mt5setup.exe -ArgumentList '/auto' -Wait
+          Start-Sleep 8
+          Get-Process terminal64,metaeditor64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          $terminal = Get-ChildItem 'C:\Program Files' -Filter terminal64.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
           if (-not $terminal) { throw 'terminal64.exe not installed' }
-          $root = $terminal.Directory.FullName
+          $root = 'C:\mt5val\terminal'
+          Copy-Item -Recurse -Force $terminal.Directory.FullName $root
           "MT5_ROOT=$root" | Out-File -FilePath $env:GITHUB_ENV -Append
           New-Item -ItemType Directory -Force "$root\MQL5\Experts\AutoValidation" | Out-Null
           New-Item -ItemType Directory -Force "$root\MQL5\Scripts\AutoValidation" | Out-Null
