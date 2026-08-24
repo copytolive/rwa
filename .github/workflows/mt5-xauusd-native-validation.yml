@@ -67,17 +67,8 @@ jobs:
           $eaPath = "$root\MQL5\Experts\AutoValidation\SmokeEA.mq5"
           $eaText = Get-Content $eaPath -Raw
           $eaText = $eaText.Replace('<Trade/Trade.mqh>','<Trade\Trade.mqh>')
-          $oldStopBlock = @'
-   bool ok=trade.PositionModify(ticket,sl,tp);
-'@
-          $newStopBlock = @'
-   double current_sl=PositionGetDouble(POSITION_SL);
-   double current_tp=PositionGetDouble(POSITION_TP);
-   if(MathAbs(current_sl-sl)<=_Point*0.5 && MathAbs(current_tp-tp)<=_Point*0.5)
-      return true;
-
-   bool ok=trade.PositionModify(ticket,sl,tp);
-'@
+          $oldStopBlock = "   bool ok=trade.PositionModify(ticket,sl,tp);"
+          $newStopBlock = "   double current_sl=PositionGetDouble(POSITION_SL);`r`n   double current_tp=PositionGetDouble(POSITION_TP);`r`n   if(MathAbs(current_sl-sl)<=_Point*0.5 && MathAbs(current_tp-tp)<=_Point*0.5)`r`n      return true;`r`n`r`n   bool ok=trade.PositionModify(ticket,sl,tp);"
           if(-not $eaText.Contains($oldStopBlock)) { throw 'Expected stop reconciliation block not found' }
           $eaText = $eaText.Replace($oldStopBlock,$newStopBlock)
           Set-Content $eaPath -Value $eaText -Encoding ASCII
