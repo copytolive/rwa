@@ -11,28 +11,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Verify private Renko full window and CORS
+      - name: Diagnose live private Renko CORS
         shell: bash
         run: |
           set -euo pipefail
-          url='https://seablueprint.com/api/charting/hyperliquid/renko/BTC?limit=100000&live=1&history=all'
-          echo '== CORS HEADERS =='
-          curl -sS -D /tmp/headers -o /tmp/body --max-time 60 -H 'Origin: https://narzulalistiqlal.github.io' "$url"
-          grep -iE '^(HTTP/|access-control|content-type|content-length|vary:|x-renko-cache)' /tmp/headers || true
-          echo '== CONTRACT =='
-          python3 - <<'PY'
+          for origin in https://seablueprint.com https://copytolive.com; do
+            for limit in 5000 25000; do
+              echo "=== $origin limit=$limit ==="
+              curl -sS --max-time 60 -D /tmp/h -o /tmp/b \
+                -H 'Origin: https://narzulalistiqlal.github.io' \
+                "$origin/api/charting/hyperliquid/renko/BTC?limit=$limit&offset=0&live=1&history=all" || true
+              grep -iE '^(HTTP/|access-control|content-type|content-length|vary:|x-renko-cache)' /tmp/h || true
+              python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/body'))
-          c=d.get('candles',[])
-          print('candles',len(c))
-          for k in ('source','construction','dataQuality','historyStart','historyEnd','windowStart','windowEnd','hasMore','truncated','returnedCount','inputBars','brickSize','reversalBricks','recordedTickCount','recordedTickStart'):
-              print(k,repr(d.get(k)))
-          if c: print('first',c[0]); print('last',c[-1])
+          try:
+              d=json.load(open('/tmp/b'))
+              print('error',repr(d.get('error')),'count',d.get('count'),'returned',d.get('returnedCount'),'hasMore',d.get('hasMore'),'window',d.get('windowStart'),d.get('windowEnd'))
+          except Exception as e: print('BODY_NOT_JSON',e)
           PY
-
-      - name: Verify Binance raw trade archive
-        shell: bash
-        run: |
-          set -euo pipefail
-          u='https://data.binance.vision/data/spot/daily/trades/BTCUSDT/BTCUSDT-trades-2026-08-23.zip'
-          curl -sSI --max-time 20 -H 'Origin: https://narzulalistiqlal.github.io' "$u" | grep -iE '^(HTTP/|content-type|content-length|access-control|accept-ranges)' || true
+            done
+          done
