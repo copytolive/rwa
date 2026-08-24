@@ -20,7 +20,7 @@ function seed(){
   if(!x){x={symbol:'BTCUSDT',base:'BTC',quote:'USDT',price:null,open:null,change:null,high:null,low:null,vol:null,rwa:false};S.pairs=[x,...(S.pairs||[]).filter(p=>p.symbol!=='BTCUSDT')];S.map=new Map((S.pairs||[]).map(p=>[p.symbol,p]));}
   try{const c=JSON.parse(localStorage.getItem(CACHE)||'null');if(c&&Array.isArray(c.pairs)&&c.pairs.length>10&&Date.now()-Number(c.ts||0)<12*60*60*1000){S.pairs=c.pairs;S.map=new Map(c.pairs.map(p=>[p.symbol,p]));}}
   catch(_){ }
-  try{renderPairs();renderMovers();const p=S.map.get(S.selected);if(p)renderHeader(p)}catch(_){ }
+  requestAnimationFrame(()=>{try{renderPairs();renderMovers();const p=S.map.get(S.selected);if(p)renderHeader(p)}catch(_){ }});
 }
 function ensurePair(sym){
   let x=S.map.get(sym);if(x)return x;
