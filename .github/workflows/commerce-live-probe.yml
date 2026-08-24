@@ -37,7 +37,9 @@ jobs:
       - name: Probe candidate
         id: probe
         continue-on-error: true
-        run: node tools/commerce-candidate-probe.mjs --require-live | tee /tmp/commerce-candidate.log
+        run: |
+          set -o pipefail
+          node tools/commerce-candidate-probe.mjs --require-live | tee /tmp/commerce-candidate.log
       - name: Publish live status
         if: steps.probe.outcome == 'success'
         env:
