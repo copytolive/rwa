@@ -7,6 +7,11 @@ on:
       - "rwa-commerce-config.json"
       - "tools/commerce-candidate-probe.mjs"
       - ".github/workflows/commerce-live-probe.yml"
+  pull_request:
+    paths:
+      - "rwa-commerce-config.json"
+      - "tools/commerce-candidate-probe.mjs"
+      - ".github/workflows/commerce-live-probe.yml"
   schedule:
     - cron: '*/30 * * * *'
   workflow_dispatch:
