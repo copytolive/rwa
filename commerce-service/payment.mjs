@@ -23,10 +23,14 @@ export class MidtransPayment {
     return{provider:'midtrans',order_id:order.id,token:data.token||'',redirect_url:data.redirect_url||'',gross_amount:(String(grossAmount)),currency:'IDR'};
   }
   async status(orderId){const data=await this.request(`${this.coreBase}/${encodeURIComponent(orderId)}/status`);return data}
-  async refund(order,{amountCents=null,reason='Customer refund'}={}){
-    midtransExpectedGrossAmountCents(order);const max=Number(order.total_cents),amount=amountCents===null?max:Number(amountCents);
-    if(!Number.isSafeInteger(amount)||amount<=0||amount>max||amount%100!==0)throw new CommerceError('invalid_refund_amount',400);
-    const payload={refund_key:`refund-${order.id}-${Date.now()}`,reason:String(reason||'Customer refund').slice(0,255),amount:amount/100};
+  async refund(order,{amountCents=null,reason='Customer refund',refundKey=''}={}){
+    midtransExpectedGrossAmountCents(order);const total=Number(order.total_cents),amount=amountCents===null?total:Number(amountCents);
+    if(!Number.isSafeInteger(amount)||amount<=0||amount>total||amount%100!==0)throw new CommerceError('invalid_refund_amount',400);
+    if(amount!==total)throw new CommerceError('partial_refund_not_supported',409,{requested_cents:amount,total_cents:total});
+    // Only full-order refunds exist in this release, so one deterministic provider
+    // key per order makes a retry after a network/process interruption idempotent.
+    const stableKey=String(refundKey||`refund-${order.id}`).replace(/[^A-Za-z0-9._-]/g,'-').slice(0,128);
+    const payload={refund_key:stableKey,reason:String(reason||'Customer refund').slice(0,255),amount:amount/100};
     return this.request(`${this.coreBase}/${encodeURIComponent(order.id)}/refund`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   }
   verifyNotification(body={}){
