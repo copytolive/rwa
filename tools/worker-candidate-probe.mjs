@@ -9,6 +9,7 @@ const get=async path=>{
   const body=await r.json().catch(()=>({}));
   return{status:r.status,ok:r.ok,body};
 };
+const safeBody=b=>Object.fromEntries(['ok','service','version','single_write_path','idempotency','origin_bound','control_enabled','kill_switch','production_ready','mainnet_allowed','encrypted_state','mode','ready'].filter(k=>k in (b||{})).map(k=>[k,b[k]]));
 
 let result;
 try{
@@ -29,7 +30,9 @@ try{
     production_ready:health.body?.production_ready===true,
     mainnet_allowed:health.body?.mainnet_allowed===true,
     users:Number(health.body?.users||0),
-    http:{health:health.status,ready:ready.status}
+    http:{health:health.status,ready:ready.status},
+    health_contract:safeBody(health.body),
+    ready_contract:safeBody(ready.body)
   };
 }catch(e){
   result={schema:1,candidate_base_url:base,service_live:false,service_ready:false,safe_testnet:false,contract:false,control_enabled:false,kill_switch:true,production_ready:false,mainnet_allowed:false,error:String(e?.message||e)};
