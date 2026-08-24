@@ -5,6 +5,7 @@ on:
     paths:
       - "index.html"
       - "quick-actions.js"
+      - "social-notification-defaults.js"
       - "social-trading-pro.js"
       - "suite*.js"
       - "trade/**"
@@ -26,6 +27,7 @@ jobs:
       - name: Validate test source
         run: |
           node --check tools/browser-operability.mjs
+          node --check social-notification-defaults.js
           node --check social-trading-pro.js
       - name: Install Playwright Chromium
         run: |
@@ -38,11 +40,15 @@ jobs:
           for i in {1..40}; do
             cfg="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/config.js?v=${GITHUB_RUN_ID}-${i}" || true)"
             quick="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/quick-actions.js?v=${GITHUB_RUN_ID}-${i}" || true)"
+            defaults="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-notification-defaults.js?v=${GITHUB_RUN_ID}-${i}" || true)"
             social="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-trading-pro.js?v=${GITHUB_RUN_ID}-${i}" || true)"
             html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/?v=${GITHUB_RUN_ID}-${i}" || true)"
             if grep -Fq "version:'1.5.0'" <<<"$cfg" \
               && grep -Fq 'RWAQuickActions' <<<"$quick" \
+              && grep -Fq "policy:'explicit-opt-in-v1'" <<<"$defaults" \
+              && grep -Fq 'friends:false' <<<"$defaults" \
               && grep -Fq "venue-backed-social-feed-v1" <<<"$social" \
+              && grep -Fq 'social-notification-defaults.js?v=1' <<<"$html" \
               && grep -Fq 'social-trading-pro.js?v=1' <<<"$html"; then ok=1; break; fi
             sleep 5
           done
@@ -52,7 +58,7 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/browser-operability' -f description='Desktop + mobile live UI interactions including social trader feed verified in Chromium'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/browser-operability' -f description='Desktop + mobile live UI, social trader feed and explicit notification opt-in verified in Chromium'
       - name: Publish browser failure
         if: failure()
         env:
