@@ -34,7 +34,7 @@ async function maybeStart(reason='auto'){
 async function boot(){
   for(let i=0;i<150&&!window.RWARenkoV5;i++)await sleep(100);
   if(!window.RWARenkoV5)throw Error('Renko V5 unavailable');
-  window.RWARenkoV5Auto={version:'5.2.0',mode:'auto-selected-market-lifetime-raw-tick',preview:'progressive-archive-brick-stream',state,maybeStart,drawPreview};
+  window.RWARenkoV5Auto={version:'5.2.0',mode:'auto-selected-market-lifetime-raw-tick',preview:'progressive-archive-brick-stream',state,maybeStart,drawPreview,previewChunk:absorbChunk,resetPreview};
   const b=$('archiveLoad');if(b)b.title='Reload total raw-tick history for the selected market';
   setInterval(()=>{attachWorker();const {key}=current();if(key&&key!==state.lastKey){state.armed=false;maybeStart('selection-or-box-change').catch(console.error)}},150);
   window.addEventListener('resize',()=>{if(state.previewActive)scheduleDraw()},{passive:true});
