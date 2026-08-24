@@ -49,6 +49,7 @@ jobs:
           node --check tools/sync-sec-us-catalog.mjs
           node --check tools/sync-sec-us-fundamentals.mjs
           node --check tools/sync-sec-us-frames.mjs
+          node --check tools/sync-sec-us-dividends.mjs
       - name: 10m candle self-test
         run: node tools/global-candle-10m.mjs
       - name: Fundamental normalizer self-test
