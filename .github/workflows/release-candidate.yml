@@ -20,6 +20,8 @@ jobs:
           node --check exchange-core.js
           node --check suite-v2.js
           node --check social-trade-monitor.js
+          node --check social-notification-defaults.js
+          node --check social-trading-pro.js
           node --check quick-actions.js
           node --check trade/app.js
           node --check trade/hyperliquid.js
@@ -48,10 +50,14 @@ jobs:
           grep -Fq "version:'1.5.0'" trade/config.js
           grep -Fq "status==='READY_FOR_MAINNET'" trade/config.js
           grep -Fq 'quick-actions.js?v=1' index.html
+          grep -Fq 'social-notification-defaults.js?v=1' index.html
+          grep -Fq 'social-trading-pro.js?v=1' index.html
+          grep -Fq "policy:'explicit-opt-in-v1'" social-notification-defaults.js
+          grep -Fq "venue-backed-social-feed-v1" social-trading-pro.js
           grep -Fq 'social-trade-monitor.js?v=1' suite.js
           grep -Fq 'RWAMarginRuntime' trade/margin-runtime.js
           grep -Fq 'RWAChartTradeOverlay' trade/chart-overlays.js
-          ! grep -Fq 'ExchangeClient' trade/margin-runtime.js trade/chart-overlays.js quick-actions.js social-trade-monitor.js
+          ! grep -Fq 'ExchangeClient' trade/margin-runtime.js trade/chart-overlays.js quick-actions.js social-trade-monitor.js social-trading-pro.js
       - name: Verify public GitHub Pages release surfaces
         shell: bash
         run: |
@@ -64,14 +70,20 @@ jobs:
             margin="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/margin-runtime.js?v=$q" || true)"
             overlay="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/chart-overlays.js?v=$q" || true)"
             quick="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/quick-actions.js?v=$q" || true)"
+            defaults="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-notification-defaults.js?v=$q" || true)"
+            socialpro="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-trading-pro.js?v=$q" || true)"
             suite="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/suite-v2.js?v=$q" || true)"
             social="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-trade-monitor.js?v=$q" || true)"
             if grep -Fq 'quick-actions.js?v=1' <<<"$root" \
+              && grep -Fq 'social-notification-defaults.js?v=1' <<<"$root" \
+              && grep -Fq 'social-trading-pro.js?v=1' <<<"$root" \
               && grep -Fq 'id="priceChart"' <<<"$trade" \
               && grep -Fq "version:'1.5.0'" <<<"$cfg" \
               && grep -Fq 'RWAMarginRuntime' <<<"$margin" \
               && grep -Fq 'RWAChartTradeOverlay' <<<"$overlay" \
               && grep -Fq 'RWAQuickActions' <<<"$quick" \
+              && grep -Fq "policy:'explicit-opt-in-v1'" <<<"$defaults" \
+              && grep -Fq "venue-backed-social-feed-v1" <<<"$socialpro" \
               && grep -Fq "version:'2.0.0'" <<<"$suite" \
               && grep -Fq 'RWAFollowedTradeMonitor' <<<"$social"; then ok=1; break; fi
             sleep 5
@@ -80,7 +92,7 @@ jobs:
       - name: Publish release candidate status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/release-candidate' -f description='Code-side release candidate and live Pages surfaces verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/release-candidate' -f description='Code-side release candidate, venue social feed and live Pages surfaces verified'
       - name: Publish release candidate failure
         if: failure()
         env:
