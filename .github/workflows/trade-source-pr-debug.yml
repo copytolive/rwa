@@ -1,0 +1,68 @@
+name: RWA Trade Source Diagnostic
+
+on:
+  pull_request:
+    paths:
+      - 'trade/**'
+      - 'execution-api.js'
+      - 'tools/trade-ui-contract.mjs'
+      - '.github/workflows/trade-source-pr-debug.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+      - name: Full source diagnostics
+        run: |
+          set -euxo pipefail
+          node --check trade/app.js
+          node --check trade/hyperliquid.js
+          node --check trade/terminal-pro.js
+          node --check trade/provider-runtime.js
+          node --check trade/margin-runtime.js
+          node --check trade/chart-overlays.js
+          node --check trade/release-runtime.js
+          node --check trade/fund-modal.js
+          node --check trade/e2e-resilience.js
+          node --check trade/e2e.js
+          node --check trade/config.js
+          node --check execution-api.js
+          node tools/trade-ui-contract.mjs
+          grep -Fq "frame-src 'none'" trade/index.html
+          ! grep -Fq '<iframe' trade/index.html
+          grep -Fq 'Get test balance' trade/index.html
+          grep -Fq "version:'1.5.0'" trade/config.js
+          grep -Fq "uiRelease:'terminal-pro-v1'" trade/config.js
+          grep -Fq "import './provider-runtime.js?v=1'" trade/config.js
+          grep -Fq "import('./margin-runtime.js?v=1')" trade/config.js
+          grep -Fq "import('./chart-overlays.js?v=1')" trade/config.js
+          grep -Fq "status==='READY_FOR_MAINNET'" trade/config.js
+          ! grep -Eq 'mainnetEnabled[[:space:]]*:[[:space:]]*true' trade/config.js
+          grep -Fq 'RWAProviderRuntime' trade/provider-runtime.js
+          grep -Fq 'api.risk.setLeverage' trade/margin-runtime.js
+          grep -Fq 'RWAChartTradeOverlay' trade/chart-overlays.js
+          grep -Fq 'candleSnapshot' trade/terminal-pro.js
+          grep -Fq 'orders.trigger' trade/terminal-pro.js
+          grep -Fq 'orders.modify' trade/terminal-pro.js
+          grep -Fq "type:'claimDrip'" trade/fund-modal.js
+          grep -Fq 'currentMarkPrice' trade/app.js
+          grep -Fq "version:'1.0.4'" trade/e2e.js
+          grep -Fq 'const restingPrice=mid*0.95' trade/e2e.js
+          grep -Fq 'price:mid*0.96' trade/e2e.js
+          grep -Fq 'const protectionPct=0.005' trade/e2e.js
+          grep -Fq 'replacementOid' trade/e2e.js
+          grep -Fq "const MARKER='e2e-read-backoff-v1'" trade/e2e-resilience.js
+          grep -Fq "wrapMethod(api.account,'state')" trade/e2e-resilience.js
+          grep -Fq 'WebSocketTransport' execution-api.js
+          grep -Fq "transport:'websocket-write-v1'" execution-api.js
+          grep -Fq "riskSigner:'agent-only-fail-closed-v1'" execution-api.js
+          grep -Fq 'allowMaster:false' execution-api.js
+          grep -Fq "riskGate:'mandatory-internal-v1'" execution-api.js
+          grep -Fq "grouping:'normalTpsl'" execution-api.js
