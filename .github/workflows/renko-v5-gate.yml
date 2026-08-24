@@ -1,4 +1,4 @@
-name: RWA Renko V6 Lazy History Gate
+name: RWA Renko V6.1 Lazy History Gate
 
 on:
   pull_request:
@@ -28,23 +28,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Static V6 contract
+      - name: Static V6.1 contract
         run: |
           set -euo pipefail
           node --check renko/renko-v3.js
           node --check renko/renko-v5.js
-          node --check renko/renko-v6-lazy.js
+          node --check renko/renko-v61-lazy.js
           node --check renko/archive-worker-v5.js
           node --check tools/renko-v6-browser-smoke.mjs
           node --check tools/renko-v6-live-smoke.mjs
-          grep -Fq "version:'6.0.0'" renko/renko-v6-lazy.js
-          grep -Fq "mode:'tradingview-compatible-lazy-50'" renko/renko-v6-lazy.js
-          grep -Fq "historicalSource:'binance-1m-close'" renko/renko-v6-lazy.js
-          grep -Fq "rawAudit:'binance-vision-individual-trades'" renko/renko-v6-lazy.js
-          grep -Fq '/api/v3/klines?' renko/renko-v6-lazy.js
-          grep -Fq 'WINDOW=50' renko/renko-v6-lazy.js
-          grep -Fq 'ALL ${fmtN(rows.length)} Binance spot crypto pairs searchable' renko/renko-v6-lazy.js
-          grep -Fq 'renko-v6-lazy.js?v=60' renko/index.html
+          grep -Fq "version:'6.1.0'" renko/renko-v61-lazy.js
+          grep -Fq "mode:'tradingview-compatible-lazy-50'" renko/renko-v61-lazy.js
+          grep -Fq "historicalSource:'binance-1m-close'" renko/renko-v61-lazy.js
+          grep -Fq "rawAudit:'binance-vision-individual-trades'" renko/renko-v61-lazy.js
+          grep -Fq 'generation:0' renko/renko-v61-lazy.js
+          grep -Fq 'generation!==state.generation' renko/renko-v61-lazy.js
+          grep -Fq '/api/v3/klines?' renko/renko-v61-lazy.js
+          grep -Fq 'WINDOW=50' renko/renko-v61-lazy.js
+          grep -Fq 'ALL ${fmtN(rows.length)} Binance spot crypto pairs searchable' renko/renko-v61-lazy.js
+          grep -Fq 'renko-v61-lazy.js?v=61' renko/index.html
           grep -Fq '>50 BRICKS<' renko/index.html
           ! grep -Fq 'renko-v5-auto.js' renko/index.html
           grep -Fq '/data/spot/monthly/trades/' renko/archive-worker-v5.js
@@ -59,7 +61,7 @@ jobs:
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/renko.log 2>&1 &
           for i in {1..20}; do curl -fsS http://127.0.0.1:4173/renko/ >/dev/null && exit 0; sleep 1; done
           cat /tmp/renko.log; exit 1
-      - name: Browser V6 lazy history + full universe
+      - name: Browser V6.1 lazy history + full universe
         run: node tools/renko-v6-browser-smoke.mjs
 
   live-after-main:
@@ -76,16 +78,16 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Wait for Pages V6
+      - name: Wait for Pages V6.1
         run: |
           set -euo pipefail
           for i in {1..120}; do
             q="${GITHUB_RUN_ID}-${i}"
             h="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/?v=$q" || true)"
-            v="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/renko-v6-lazy.js?v=$q" || true)"
-            if grep -Fq 'renko-v6-lazy.js?v=60' <<<"$h" \
+            v="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/renko-v61-lazy.js?v=$q" || true)"
+            if grep -Fq 'renko-v61-lazy.js?v=61' <<<"$h" \
               && grep -Fq '>50 BRICKS<' <<<"$h" \
-              && grep -Fq "version:'6.0.0'" <<<"$v" \
+              && grep -Fq "version:'6.1.0'" <<<"$v" \
               && grep -Fq "tradingview-compatible-lazy-50" <<<"$v"; then exit 0; fi
             sleep 5
           done
@@ -97,4 +99,4 @@ jobs:
       - name: Publish status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-v6-e2e' -f description='V6 50-brick lazy Traditional history + all spot search + live @trade PASS'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-v61-e2e' -f description='V6.1 50-brick lazy Traditional history + all Binance spot search + live @trade PASS'
