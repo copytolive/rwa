@@ -1,0 +1,133 @@
+name: RWA Income Fundamentals Smoke
+
+on:
+  pull_request:
+    paths:
+      - "index.html"
+      - "rwa-fundamentals.js"
+      - "rwa-fundamentals.css"
+      - "rwa-verify-client.js"
+      - "product-os-mobile-contract-v3.js"
+      - "tools/rwa-verify.mjs"
+      - "tools/rwa-evidence-policy.mjs"
+      - "tools/rwa-fundamentals-browser.mjs"
+      - "rwa-assets.json"
+      - ".github/workflows/rwa-fundamentals-smoke.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "index.html"
+      - "rwa-fundamentals.js"
+      - "rwa-fundamentals.css"
+      - "rwa-verify-client.js"
+      - "product-os-mobile-contract-v3.js"
+      - "tools/rwa-verify.mjs"
+      - "tools/rwa-evidence-policy.mjs"
+      - "tools/rwa-fundamentals-browser.mjs"
+      - "rwa-assets.json"
+      - ".github/workflows/rwa-fundamentals-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: rwa-income-fundamentals-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fundamentals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate source and verification contracts
+        run: |
+          node --check rwa-fundamentals.js
+          node --check rwa-verify-client.js
+          node --check product-os-mobile-contract-v3.js
+          node --check tools/rwa-verify.mjs
+          node --check tools/rwa-evidence-policy.mjs
+          node --check tools/rwa-fundamentals-browser.mjs
+          python -m json.tool rwa-assets.json >/dev/null
+          grep -Fq 'rwa-fundamentals.css?v=1' index.html
+          grep -Fq 'rwa-fundamentals.js?v=1' index.html
+          grep -Fq "runtime:'canonical-root-income-fundamentals-v1'" rwa-fundamentals.js
+          grep -Fq "['overview','income','financials','valuation','asset','holders','documents','calendar','audit']" rwa-fundamentals.js
+          grep -Fq 'No verified income rights for this market' rwa-fundamentals.js
+          grep -Fq 'DRAFT · UNVERIFIED' rwa-fundamentals.js
+          grep -Fq 'Where does my yield come from?' rwa-fundamentals.js
+          grep -Fq 'Income-bearing RWA requires public HTTPS income-right evidence' tools/rwa-verify.mjs
+          grep -Fq 'fundamentals_evidence_probes' tools/rwa-verify.mjs
+          grep -Fq 'probePublicEvidence' tools/rwa-evidence-policy.mjs
+          grep -Fq 'INCOME EVIDENCE REQUIRED' rwa-verify-client.js
+          grep -Fq 'fundamentals:d?.fundamentals' rwa-verify-client.js
+          grep -Fq "tag==='ASSET'" product-os-mobile-contract-v3.js
+          grep -Fq 'RWAFundamentals?.open' product-os-mobile-contract-v3.js
+          ! grep -Fq 'window.location.href' rwa-fundamentals.js
+          ! grep -Fq "location.href='../asset" product-os-mobile-contract-v3.js
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start deterministic root site
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/rwa-fund-http.log 2>&1 &
+          echo $! >/tmp/rwa-fund-http.pid
+          for i in {1..20}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/rwa-fund-http.log
+          exit 1
+
+      - name: Browser proof desktop and mobile
+        run: node tools/rwa-fundamentals-browser.mjs
+
+      - name: Publish source status
+        if: success() && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/fundamentals-source' -f description='Root-only Income + NAV + financials + evidence workspace browser PASS'
+
+      - name: Wait for Pages and verify live root
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          ok=0
+          for i in {1..120}; do
+            q="${GITHUB_RUN_ID}-${i}"
+            html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/?v=$q" || true)"
+            js="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-fundamentals.js?v=$q" || true)"
+            css="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-fundamentals.css?v=$q" || true)"
+            contract="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/product-os-mobile-contract-v3.js?v=$q" || true)"
+            verify="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-verify-client.js?v=$q" || true)"
+            if grep -Fq 'rwa-fundamentals.css?v=1' <<<"$html" \
+              && grep -Fq 'rwa-fundamentals.js?v=1' <<<"$html" \
+              && grep -Fq "runtime:'canonical-root-income-fundamentals-v1'" <<<"$js" \
+              && grep -Fq 'Where does my yield come from?' <<<"$js" \
+              && grep -Fq 'Integrated RWA Income & Fundamentals workspace' <<<"$css" \
+              && grep -Fq 'RWAFundamentals?.open' <<<"$contract" \
+              && grep -Fq 'INCOME EVIDENCE REQUIRED' <<<"$verify"; then ok=1; break; fi
+            sleep 5
+          done
+          test "$ok" = "1"
+          RWA_BASE_URL='https://narzulalistiqlal.github.io/rwa/' node tools/rwa-fundamentals-browser.mjs
+
+      - name: Publish live status
+        if: success() && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/fundamentals-live' -f description='Live /rwa/ Income Fundamentals desktop/mobile canonical-root PASS'
+
+      - name: Publish failure status
+        if: failure() && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/fundamentals-source' -f description='RWA fundamentals source/browser verification failed'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/fundamentals-live' -f description='RWA fundamentals live /rwa/ verification failed'
