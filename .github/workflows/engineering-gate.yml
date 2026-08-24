@@ -36,6 +36,8 @@ jobs:
           node --check rwa-verification-evidence.js
           node --check social-notification-defaults.js
           node --check social-trading-pro.js
+          node --check rwa-storefront.js
+          node --check trade/ui-polish.js
           node --check agent-worker/execution.mjs
           node --check agent-worker/copy-engine.mjs
           node --check agent-worker/worker.mjs
@@ -47,6 +49,8 @@ jobs:
           node --check tools/rwa-verify.mjs
           node --check tools/beta-proof.mjs
           node --check tools/product-parity-contract.mjs
+          node --check tools/storefront-ui-contract.mjs
+          python -m json.tool rwa-commerce-registry.json >/dev/null
           node --test tools/test/*.test.mjs
           grep -Fq 'HEALTHCHECK' agent-worker/Dockerfile
           grep -Fq 'restart: unless-stopped' agent-worker/docker-compose.yml
@@ -59,15 +63,19 @@ jobs:
           grep -Fq 'venue-backed-social-feed-v1' social-trading-pro.js
           grep -Fq 'social-notification-defaults.js?v=1' index.html
           grep -Fq 'social-trading-pro.js?v=1' index.html
+          grep -Fq 'ONE_TOKEN_ONE_PHYSICAL_STORE_V1' rwa-storefront.js
+          grep -Fq '"one_token_one_physical_store": true' rwa-commerce-registry.json
+          grep -Fq "import './ui-polish.js?v=1'" trade/config.js
           node tools/security-gate.mjs
           node tools/product-parity-contract.mjs
+          node tools/storefront-ui-contract.mjs
           node tools/launch-gate.mjs --require-engineering >/tmp/engineering.json
           node -e "const x=require('/tmp/engineering.json');if(!x.engineering_ready||x.schema<4)process.exit(1);console.log('ENGINEERING COMPLETE schema='+x.schema)"
       - name: Publish engineering success
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/engineering-gate' -f description='Engineering COMPLETE: trading social parity opt-in privacy security worker proofs beta monitoring PASS'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/engineering-gate' -f description='Engineering COMPLETE: trading social physical-commerce UI privacy security worker proofs beta monitoring PASS'
       - name: Publish engineering failure
         if: failure()
         env:
