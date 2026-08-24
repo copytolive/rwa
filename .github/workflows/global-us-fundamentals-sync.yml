@@ -8,6 +8,7 @@ on:
     paths:
       - '.github/workflows/global-us-fundamentals-sync.yml'
       - 'tools/sync-sec-us-frames.mjs'
+      - 'tools/sync-sec-us-dividends.mjs'
 permissions:
   contents: write
 concurrency:
@@ -16,7 +17,7 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,6 +37,10 @@ jobs:
         env:
           SEC_USER_AGENT: RWA-Global-Asset-Terminal/1.0 (+https://github.com/narzulalistiqlal/rwa)
         run: node tools/sync-sec-us-frames.mjs
+      - name: Add SEC-filed dividend-per-share history
+        env:
+          SEC_USER_AGENT: RWA-Global-Asset-Terminal/1.0 (+https://github.com/narzulalistiqlal/rwa)
+        run: node tools/sync-sec-us-dividends.mjs
       - name: Accuracy and provenance gate
         run: node tools/global-data-audit.mjs
       - name: Commit generated US regulator data
@@ -47,5 +52,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add data/global/security-master.json data/global/fundamental-shards/US data/global/coverage/us.json
-          git commit -m 'data: sync SEC regulator-backed US fundamentals'
+          git commit -m 'data: sync SEC regulator-backed US fundamentals and dividends'
           git push
