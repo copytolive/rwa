@@ -1,0 +1,94 @@
+name: RWA Root Market Stability
+
+on:
+  pull_request:
+    paths:
+      - "index.html"
+      - "app.js"
+      - "realtime-core.js"
+      - "chart-core.js"
+      - "market-performance.js"
+      - "styles.css"
+      - "mobile.css"
+      - "stable-shell.css"
+      - "quick-actions.js"
+      - "mobile.js"
+      - "exchange-ui.js"
+      - "execution-ui.js"
+      - "tools/root-market-browser-stability.mjs"
+      - ".github/workflows/root-market-stability.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "index.html"
+      - "app.js"
+      - "realtime-core.js"
+      - "chart-core.js"
+      - "market-performance.js"
+      - "styles.css"
+      - "mobile.css"
+      - "stable-shell.css"
+      - "quick-actions.js"
+      - "mobile.js"
+      - "exchange-ui.js"
+      - "execution-ui.js"
+      - "tools/root-market-browser-stability.mjs"
+      - ".github/workflows/root-market-stability.yml"
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: rwa-root-market-stability-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  stability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate stable source contract
+        run: |
+          node --check realtime-core.js
+          node --check chart-core.js
+          node --check market-performance.js
+          node --check quick-actions.js
+          node --check mobile.js
+          node --check tools/root-market-browser-stability.mjs
+          grep -Fq 'market-performance.js?v=1' index.html
+          grep -Fq 'stable-shell.css?v=1' index.html
+          grep -Fq 'realtime-core.js?v=3' index.html
+          grep -Fq "runtime:'root-terminal-low-jank-v1'" market-performance.js
+          grep -Fq "observer_policy='hot-dom-periodic-1200ms'" market-performance.js
+          grep -Fq 'depth10@1000ms' realtime-core.js
+          grep -Fq 'setInterval(persistUniverse,30000)' realtime-core.js
+          grep -Fq "performance:'lazy-storefront-no-global-observer-v1'" quick-actions.js
+          ! grep -Fq 'new MutationObserver(injectTrade)' quick-actions.js
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start deterministic local site
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/rwa-http.log 2>&1 &
+          echo $! >/tmp/rwa-http.pid
+          for i in {1..20}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/rwa-http.log
+          exit 1
+      - name: Stress desktop compact and mobile UI
+        run: node tools/root-market-browser-stability.mjs
+      - name: Publish stability status
+        if: success() && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/root-market-stability' -f description='Root market desktop/mobile low-jank stress test PASS'
+      - name: Publish failure status
+        if: failure() && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/root-market-stability' -f description='Root market desktop/mobile stability failed'

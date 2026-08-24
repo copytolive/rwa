@@ -20,7 +20,7 @@ function seed(){
   if(!x){x={symbol:'BTCUSDT',base:'BTC',quote:'USDT',price:null,open:null,change:null,high:null,low:null,vol:null,rwa:false};S.pairs=[x,...(S.pairs||[]).filter(p=>p.symbol!=='BTCUSDT')];S.map=new Map((S.pairs||[]).map(p=>[p.symbol,p]));}
   try{const c=JSON.parse(localStorage.getItem(CACHE)||'null');if(c&&Array.isArray(c.pairs)&&c.pairs.length>10&&Date.now()-Number(c.ts||0)<12*60*60*1000){S.pairs=c.pairs;S.map=new Map(c.pairs.map(p=>[p.symbol,p]));}}
   catch(_){ }
-  try{renderPairs();renderMovers();const p=S.map.get(S.selected);if(p)renderHeader(p)}catch(_){ }
+  requestAnimationFrame(()=>{try{renderPairs();renderMovers();const p=S.map.get(S.selected);if(p)renderHeader(p)}catch(_){ }});
 }
 function ensurePair(sym){
   let x=S.map.get(sym);if(x)return x;
@@ -47,14 +47,14 @@ window.connectDetail=function(force=false){
   const old=S.detailWS;if(!force&&old&&old.__rwaSymbol===S.selected&&old.readyState<=1)return;
   if(old){old.__rwaManual=true;try{old.close()}catch(_){}}
   clearTimeout(detailRetry);
-  const l=S.selected.toLowerCase(),streams=`${l}@ticker/${l}@bookTicker/${l}@depth10@100ms/${l}@aggTrade`,url=DETAIL[detailAttempt%DETAIL.length]+streams;
+  const l=S.selected.toLowerCase(),streams=`${l}@ticker/${l}@bookTicker/${l}@depth10@1000ms/${l}@aggTrade`,url=DETAIL[detailAttempt%DETAIL.length]+streams;
   let opened=false;
   const ws=new WebSocket(url);ws.__rwaSymbol=S.selected;ws.__rwaEndpoint=detailAttempt%DETAIL.length;S.detailWS=ws;
-  const watchdog=setTimeout(()=>{if(!opened&&S.detailWS===ws){try{ws.close()}catch(_){}}},2400);
+  const watchdog=setTimeout(()=>{if(!opened&&S.detailWS===ws){try{ws.close()}catch(_){}}},3000);
   ws.onopen=()=>{opened=true;clearTimeout(watchdog);live(`LIVE · feed ${ws.__rwaEndpoint+1}/${DETAIL.length}`)};
   ws.onmessage=e=>{try{const p=JSON.parse(e.data),m=p.data||p;detailMessage(m)}catch(_){}};
   ws.onerror=()=>{try{ws.close()}catch(_){}};
-  ws.onclose=()=>{clearTimeout(watchdog);if(ws.__rwaManual||S.detailWS!==ws)return;detailAttempt=(detailAttempt+1)%DETAIL.length;detailRetry=setTimeout(()=>connectDetail(true),350)};
+  ws.onclose=()=>{clearTimeout(watchdog);if(ws.__rwaManual||S.detailWS!==ws)return;detailAttempt=(detailAttempt+1)%DETAIL.length;detailRetry=setTimeout(()=>connectDetail(true),900)};
 };
 window.connectAllTicker=function(force=false){
   if(typeof S==='undefined')return;
@@ -62,11 +62,11 @@ window.connectAllTicker=function(force=false){
   if(old){old.__rwaManual=true;try{old.close()}catch(_){}}
   clearTimeout(allRetry);
   const ws=new WebSocket(ALL[allAttempt%ALL.length]);S.marketWS=ws;let opened=false;
-  const watchdog=setTimeout(()=>{if(!opened&&S.marketWS===ws){try{ws.close()}catch(_){}}},2600);
+  const watchdog=setTimeout(()=>{if(!opened&&S.marketWS===ws){try{ws.close()}catch(_){}}},3000);
   ws.onopen=()=>{opened=true;clearTimeout(watchdog);live(`LIVE · market feed ${allAttempt%ALL.length+1}/${ALL.length}`)};
   ws.onmessage=e=>{lastAllMessage=Date.now();try{const arr=JSON.parse(e.data);if(!Array.isArray(arr))return;for(const t of arr){const x=S.map.get(t.s);if(!x)continue;const oldPx=x.price;x.price=n(t.c);x.open=n(t.o);x.high=n(t.h);x.low=n(t.l);x.vol=n(t.q);if(x.open)x.change=(x.price-x.open)/x.open*100;updatePairDOM(x,oldPx);if(t.s===S.selected)renderHeader(x)}if(typeof renderMoversThrottled==='function')renderMoversThrottled()}catch(_){}};
   ws.onerror=()=>{try{ws.close()}catch(_){}};
-  ws.onclose=()=>{clearTimeout(watchdog);if(ws.__rwaManual||S.marketWS!==ws)return;allAttempt=(allAttempt+1)%ALL.length;allRetry=setTimeout(()=>connectAllTicker(true),650)};
+  ws.onclose=()=>{clearTimeout(watchdog);if(ws.__rwaManual||S.marketWS!==ws)return;allAttempt=(allAttempt+1)%ALL.length;allRetry=setTimeout(()=>connectAllTicker(true),1100)};
 };
 const tv=typeof loadTradingView==='function'?loadTradingView:null;
 window.RWAOpenTradingView=()=>{if(tv)tv()};
@@ -78,10 +78,10 @@ function prefetchFeatures(){
   for(const href of a){if(document.querySelector(`link[data-rwa-prefetch="${href}"]`))continue;const l=document.createElement('link');l.rel='prefetch';l.href=href;l.as=href.includes('.css')?'style':'script';l.dataset.rwaPrefetch=href;document.head.appendChild(l)}
 }
 async function restHeartbeat(){
-  if(Date.now()-lastDetailMessage<5500)return;
+  if(Date.now()-lastDetailMessage<9000)return;
   const sym=S.selected;
   for(const base of ['https://data-api.binance.vision','https://api.binance.com','https://api1.binance.com']){
-    const c=new AbortController(),tm=setTimeout(()=>c.abort(),1800);
+    const c=new AbortController(),tm=setTimeout(()=>c.abort(),2200);
     try{
       const r=await fetch(`${base}/api/v3/ticker/24hr?symbol=${encodeURIComponent(sym)}`,{cache:'no-store',signal:c.signal});clearTimeout(tm);if(!r.ok)continue;
       const m=await r.json(),x=ensurePair(sym);x.price=n(m.lastPrice);x.change=n(m.priceChangePercent);x.high=n(m.highPrice);x.low=n(m.lowPrice);x.vol=n(m.quoteVolume);renderHeader(x);updatePairDOM(x,null);live('LIVE · REST fallback');lastDetailMessage=Date.now();return;
@@ -90,9 +90,10 @@ async function restHeartbeat(){
 }
 seed();
 try{connectDetail(true);loadKlines();}catch(_){ }
-setTimeout(()=>{try{connectAllTicker(true)}catch(_){ }},50);
-setInterval(persistUniverse,3000);
-setInterval(()=>{try{const now=Date.now();if(S.detailWS&&S.detailWS.readyState===1&&lastDetailMessage&&now-lastDetailMessage>4500){S.detailWS.__rwaManual=false;try{S.detailWS.close()}catch(_){}}if(S.marketWS&&S.marketWS.readyState===1&&lastAllMessage&&now-lastAllMessage>7000){S.marketWS.__rwaManual=false;try{S.marketWS.close()}catch(_){}}}catch(_){}},2200);
-setInterval(restHeartbeat,5000);
-window.addEventListener('load',()=>setTimeout(prefetchFeatures,700),{once:true});
+setTimeout(()=>{try{connectAllTicker(true)}catch(_){ }},80);
+setInterval(persistUniverse,30000);
+window.addEventListener('pagehide',persistUniverse,{passive:true});
+setInterval(()=>{try{const now=Date.now();if(S.detailWS&&S.detailWS.readyState===1&&lastDetailMessage&&now-lastDetailMessage>9000){S.detailWS.__rwaManual=false;try{S.detailWS.close()}catch(_){}}if(S.marketWS&&S.marketWS.readyState===1&&lastAllMessage&&now-lastAllMessage>14000){S.marketWS.__rwaManual=false;try{S.marketWS.close()}catch(_){}}}catch(_){}},5000);
+setInterval(restHeartbeat,10000);
+window.addEventListener('load',()=>setTimeout(prefetchFeatures,5000),{once:true});
 })();
