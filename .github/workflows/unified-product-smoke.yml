@@ -1,0 +1,55 @@
+name: Unified Product Smoke
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'product-os-v3.js'
+      - 'unified-design-v3.css'
+      - 'trade/config.js'
+      - 'trader/**'
+      - 'asset/**'
+      - '.github/workflows/unified-product-smoke.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'product-os-v3.js'
+      - 'unified-design-v3.css'
+      - 'trade/config.js'
+      - 'trader/**'
+      - 'asset/**'
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: JavaScript syntax
+        run: |
+          node --check product-os-v3.js
+          node --input-type=module --check < trade/config.js
+      - name: Product shell is activated
+        run: |
+          grep -q 'unified-design-v3.css' index.html
+          grep -q 'product-os-v3.js' index.html
+          grep -q "product-os-v3.js" trade/config.js
+          grep -q "unified-design-v3.css" trade/config.js
+      - name: 1-22 product surfaces exist
+        run: |
+          test -f trader/index.html
+          test -f asset/index.html
+          grep -q 'data-mobile-nav="trade"' product-os-v3.js
+          grep -q 'rwa-home-dashboard' unified-design-v3.css
+          grep -q 'tabular-nums' unified-design-v3.css
+          grep -q 'Risk Engine' product-os-v3.js
+      - name: Typography floors and touch targets
+        run: |
+          grep -q -- '--rwa-text-2xs:9px' unified-design-v3.css
+          grep -q -- '--rwa-control-lg:44px' unified-design-v3.css
+          grep -q 'mobile-tabs a>small{font-size:10px' unified-design-v3.css
+          grep -q 'suite-field input.*font-size:13px' unified-design-v3.css
+      - name: Safety invariants preserved
+        run: |
+          grep -q "mainnetEnabled" trade/config.js
+          grep -q "canMainnet" trade/config.js
+          grep -q "defaultTestnet:true" trade/config.js
+          ! grep -R --line-number -E 'private[_ -]?key|seed phrase|withdraw.*automatic' product-os-v3.js trader/index.html asset/index.html unified-design-v3.css
