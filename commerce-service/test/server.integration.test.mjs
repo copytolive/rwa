@@ -49,8 +49,11 @@ test('HTTP commerce lifecycle is authoritative, idempotent, signature-verified a
     const cancelPaid=await api(base,`/v1/orders/${orderId}/cancel`,{method:'POST',token:buyerToken,body:{}});assert.equal(cancelPaid.status,409);assert.equal(cancelPaid.data.error,'cancel_not_allowed');
 
     const owner=await api(base,'/v1/admin/stores/STORE1/owners',{method:'POST',admin:adminSecret,body:{wallet:buyer.address,role:'OWNER'}});assert.equal(owner.status,200);assert.equal(owner.data.data.wallet,buyer.address.toLowerCase());
+    const sellerStores=await api(base,'/v1/seller/stores',{token:buyerToken});assert.equal(sellerStores.status,200);assert.equal(sellerStores.data.data.length,1);assert.equal(sellerStores.data.data[0].token,'STORE1');assert.equal(sellerStores.data.data[0].store_verified,true);assert.equal(sellerStores.data.data[0].asset_verified,true);
+    const sellerProducts=await api(base,'/v1/seller/products?store=STORE1',{token:buyerToken});assert.equal(sellerProducts.status,200);assert.equal(sellerProducts.data.data.length,1);assert.equal(sellerProducts.data.data[0].id,'p1');
     const sellerOrders=await api(base,'/v1/seller/orders',{token:buyerToken});assert.equal(sellerOrders.status,200);assert.equal(sellerOrders.data.data.some(x=>x.id===orderId),true);
     const outsider=privateKeyToAccount('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),outsiderToken=await login(base,outsider);
+    const forbiddenProducts=await api(base,'/v1/seller/products?store=STORE1',{token:outsiderToken});assert.equal(forbiddenProducts.status,403);assert.equal(forbiddenProducts.data.error,'forbidden');
     const forbiddenInventory=await api(base,'/v1/seller/inventory/p1',{method:'PUT',token:outsiderToken,body:{on_hand:5}});assert.equal(forbiddenInventory.status,403);assert.equal(forbiddenInventory.data.error,'forbidden');
 
     const refund=await api(base,`/v1/orders/${orderId}/refund-request`,{method:'POST',token:buyerToken,body:{reason:'Customer requested refund',amount_cents:1250000}});assert.equal(refund.status,201);assert.equal(refund.data.data.status,'REQUESTED');
