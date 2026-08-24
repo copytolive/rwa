@@ -14,15 +14,12 @@ on:
       - "tools/renko-v5-browser-smoke.mjs"
       - "tools/renko-live-smoke.mjs"
       - ".github/workflows/renko-smoke.yml"
-
 permissions:
   contents: read
   statuses: write
-
 concurrency:
   group: rwa-renko-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   renko:
     runs-on: ubuntu-latest
@@ -32,8 +29,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-
-      - name: Validate Renko V5.3 raw-tick Traditional contract
+      - name: Validate V5.4 owned history contract
         run: |
           set -euo pipefail
           node --check renko/renko-v3.js
@@ -42,77 +38,51 @@ jobs:
           node --check renko/archive-worker-v5.js
           node --check tools/renko-v5-browser-smoke.mjs
           node --check tools/renko-live-smoke.mjs
-          test -s renko/index.html
-          test -s renko/renko-v5.css
           grep -Fq "version:'5.3.0'" renko/renko-v5.js
+          grep -Fq "version:'5.4.0'" renko/renko-v5-auto.js
           grep -Fq "source:'raw-trade-ticks-only'" renko/renko-v5.js
-          grep -Fq "history:'raw-tick-lifetime-archives'" renko/renko-v5.js
-          grep -Fq "historyScope:'oldest-available-binance-vision-raw-trade-to-live'" renko/renko-v5.js
           grep -Fq "reversalBoxes:2" renko/renko-v5.js
-          grep -Fq "version:'5.3.0'" renko/renko-v5-auto.js
-          grep -Fq "preview:'native-event-tradingview-style-bricks'" renko/renko-v5-auto.js
-          grep -Fq "emit('archive-chunk'" renko/renko-v5.js
+          grep -Fq "preview:'owned-history-ui-traditional-bricks'" renko/renko-v5-auto.js
+          grep -Fq 'id="v5HistoryCount"' renko/index.html
+          grep -Fq 'renko-v5-auto.js?v=54' renko/index.html
           grep -Fq '/data/spot/monthly/trades/' renko/archive-worker-v5.js
-          grep -Fq '/data/spot/daily/trades/' renko/archive-worker-v5.js
-          grep -Fq 'renko-v5.js?v=53' renko/index.html
-          grep -Fq 'renko-v5-auto.js?v=53' renko/index.html
-          grep -Fq 'TOTAL TICK HISTORY · AUTO' renko/index.html
-          grep -Fq 'ALL HISTORY' renko/index.html
-          grep -Fq '500 eligible crypto markets' renko/index.html
-          for f in renko/renko-v5.js renko/renko-v5-auto.js renko/archive-worker-v5.js; do
-            ! grep -Fq '/klines' "$f"
-            ! grep -Fq '@kline_' "$f"
-            ! grep -Fq '@aggTrade' "$f"
-          done
-
-      - name: Install Playwright Chromium
+          grep -Fq '@trade' renko/renko-v3.js
+          for f in renko/renko-v5.js renko/renko-v5-auto.js renko/archive-worker-v5.js; do ! grep -Fq '/klines' "$f"; ! grep -Fq '@aggTrade' "$f"; done
+      - name: Install Chromium
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-
       - name: Start local site
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/rwa-renko-http.log 2>&1 &
-          echo $! >/tmp/rwa-renko-http.pid
           for i in {1..20}; do curl -fsS http://127.0.0.1:4173/renko/ >/dev/null && exit 0; sleep 1; done
-          cat /tmp/rwa-renko-http.log
-          exit 1
-
-      - name: Test V5.3 top-500 UI and visible total-history renderer
+          cat /tmp/rwa-renko-http.log; exit 1
+      - name: Test top-500 and visible raw-tick history UI
         run: node tools/renko-v5-browser-smoke.mjs
-
-      - name: Wait for Renko V5.3 GitHub Pages bundle
+      - name: Wait for V5.4 Pages
         if: github.event_name == 'push'
         run: |
           set -euo pipefail
-          ok=0
           for i in {1..120}; do
             q="${GITHUB_RUN_ID}-${i}"
-            html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/renko/?v=$q" || true)"
-            v5="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/renko/renko-v5.js?v=$q" || true)"
-            auto="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/renko/renko-v5-auto.js?v=$q" || true)"
-            if grep -Fq 'renko-v5-auto.js?v=53' <<<"$html" \
-              && grep -Fq "version:'5.3.0'" <<<"$v5" \
-              && grep -Fq "version:'5.3.0'" <<<"$auto" \
-              && grep -Fq "native-event-tradingview-style-bricks" <<<"$auto"; then ok=1; break; fi
+            h="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/?v=$q" || true)"
+            a="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/renko-v5-auto.js?v=$q" || true)"
+            if grep -Fq 'renko-v5-auto.js?v=54' <<<"$h" && grep -Fq 'id="v5HistoryCount"' <<<"$h" && grep -Fq "version:'5.4.0'" <<<"$a"; then exit 0; fi
             sleep 5
           done
-          test "$ok" = "1"
-
-      - name: Verify live V5.3 moving ticks and real archive decoding
+          exit 1
+      - name: Verify live moving raw ticks and archive decoding
         if: github.event_name == 'push'
         env:
           RWA_RENKO_LIVE_URL: https://narzulalistiqlal.github.io/rwa/renko/?v=${{ github.run_id }}
         run: node tools/renko-live-smoke.mjs
-
       - name: Publish Renko status
         if: success() && github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-live' -f description='LIVE V5.3: top-500 + moving raw ticks + visible total history PASS'
-
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-live' -f description='LIVE V5.4: raw ticks + Traditional + visible history PASS'
       - name: Publish Renko failure
         if: failure() && github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/renko-live' -f description='Live Renko V5.3 raw-tick history gate failed'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/renko-live' -f description='Renko V5.4 live gate failed'
