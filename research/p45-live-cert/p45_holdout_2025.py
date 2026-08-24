@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Certification trigger 2026-08-25: no strategy-logic change.
 from __future__ import annotations
 import argparse, hashlib, json, urllib.request
 from pathlib import Path
