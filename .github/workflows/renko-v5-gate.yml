@@ -36,16 +36,17 @@ jobs:
           node --check renko/renko-v5-auto.js
           node --check renko/archive-worker-v5.js
           node --check tools/renko-v5-browser-smoke.mjs
-          grep -Fq "version:'5.0.0'" renko/renko-v5.js
-          grep -Fq "version:'5.2.0'" renko/renko-v5-auto.js
-          grep -Fq "mode:'auto-selected-market-lifetime-raw-tick'" renko/renko-v5-auto.js
-          grep -Fq "preview:'progressive-archive-brick-stream'" renko/renko-v5-auto.js
+          grep -Fq "version:'5.3.0'" renko/renko-v5.js
+          grep -Fq "version:'5.3.0'" renko/renko-v5-auto.js
+          grep -Fq "preview:'native-event-tradingview-style-bricks'" renko/renko-v5-auto.js
+          grep -Fq "emit('archive-chunk'" renko/renko-v5.js
           grep -Fq "post('chunk'" renko/archive-worker-v5.js
           grep -Fq '/data/spot/monthly/trades/' renko/archive-worker-v5.js
           grep -Fq '/data/spot/daily/trades/' renko/archive-worker-v5.js
           grep -Fq '@trade' renko/renko-v3.js
-          grep -Fq 'TOTAL TICK HISTORY · AUTO' renko/index.html
-          grep -Fq 'renko-v5-auto.js?v=52' renko/index.html
+          grep -Fq 'TRADITIONAL FIXED BOX' renko/index.html
+          grep -Fq 'renko-v5.js?v=53' renko/index.html
+          grep -Fq 'renko-v5-auto.js?v=53' renko/index.html
           for f in renko/renko-v5.js renko/renko-v5-auto.js renko/archive-worker-v5.js; do
             ! grep -Fq '/klines' "$f"
             ! grep -Fq '@aggTrade' "$f"
@@ -60,14 +61,14 @@ jobs:
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/renko.log 2>&1 &
           for i in {1..20}; do curl -fsS http://127.0.0.1:4173/renko/ >/dev/null && exit 0; sleep 1; done
           cat /tmp/renko.log; exit 1
-      - name: Browser desktop + mobile + worker selftest
+      - name: Browser desktop + mobile + native history renderer
         run: node tools/renko-v5-browser-smoke.mjs
 
   live-after-main:
     if: github.event_name == 'push'
     needs: local-e2e
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -77,26 +78,47 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Wait for Pages V5.2
+      - name: Wait for Pages V5.3
         run: |
           set -euo pipefail
           for i in {1..120}; do
             q="${GITHUB_RUN_ID}-${i}"
             h="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/?v=$q" || true)"
+            v="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/renko-v5.js?v=$q" || true)"
             a="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/renko-v5-auto.js?v=$q" || true)"
-            w="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/archive-worker-v5.js?v=$q" || true)"
-            if grep -Fq 'renko-v5-auto.js?v=52' <<<"$h" \
-              && grep -Fq "version:'5.2.0'" <<<"$a" \
-              && grep -Fq "preview:'progressive-archive-brick-stream'" <<<"$a" \
-              && grep -Fq "post('chunk'" <<<"$w"; then exit 0; fi
+            if grep -Fq 'renko-v5.js?v=53' <<<"$h" \
+              && grep -Fq 'renko-v5-auto.js?v=53' <<<"$h" \
+              && grep -Fq "version:'5.3.0'" <<<"$v" \
+              && grep -Fq "version:'5.3.0'" <<<"$a" \
+              && grep -Fq "emit('archive-chunk'" <<<"$v"; then exit 0; fi
             sleep 5
           done
           exit 1
-      - name: Live moving tick + real Binance Vision archive decode
+      - name: Live moving tick + real archive decode
         env:
           RWA_RENKO_LIVE_URL: https://narzulalistiqlal.github.io/rwa/renko/?v=${{ github.run_id }}
         run: node tools/renko-live-smoke.mjs
+      - name: Verify actual auto history emits visible bricks
+        run: |
+          cat > verify-auto-history.mjs <<'NODE'
+          import { chromium } from 'playwright';
+          import assert from 'node:assert/strict';
+          const u=`https://narzulalistiqlal.github.io/rwa/renko/?autohistory=${Date.now()}`;
+          const b=await chromium.launch({headless:true});
+          try{
+            const p=await b.newPage({viewport:{width:1440,height:900}});
+            await p.goto(u,{waitUntil:'domcontentloaded',timeout:30000});
+            await p.waitForFunction(()=>window.RWARenko?.version==='5.3.0'&&window.RWARenkoV5Auto?.version==='5.3.0',{timeout:30000});
+            await p.waitForFunction(()=>window.RWARenkoV3?.state?.symbols?.length>=500,{timeout:30000});
+            await p.evaluate(()=>{const i=document.querySelector('#brickSize');if(i)i.value='100';document.querySelector('#applyBrick')?.click()});
+            await p.waitForFunction(()=>window.RWARenkoV5Auto?.state?.previewCount>0,{timeout:150000});
+            await p.waitForTimeout(500);
+            const s=await p.evaluate(()=>({count:window.RWARenkoV5Auto.state.previewCount,mode:window.RWARenkoV5Auto.state.mode,history:document.querySelector('#historyCount')?.textContent,coverage:document.querySelector('#historyCoverage')?.textContent,display:document.querySelector('#archivePreview')?.style.display,width:document.querySelector('#archivePreview')?.getBoundingClientRect().width,height:document.querySelector('#archivePreview')?.getBoundingClientRect().height,status:document.querySelector('#archiveStatus')?.textContent}));
+            assert.ok(s.count>0);assert.match(String(s.history),/historical bricks/i);assert.notEqual(s.display,'none');assert.ok(s.width>700&&s.height>250);console.log(JSON.stringify({ok:true,s},null,2));
+          } finally { await b.close(); }
+          NODE
+          node verify-auto-history.mjs
       - name: Publish status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-v5-e2e' -f description='V5.2 raw-tick lifetime + progressive history end-to-end PASS'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-v5-e2e' -f description='V5.3 raw-tick Traditional Renko + visible total history PASS'
