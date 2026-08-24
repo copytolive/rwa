@@ -2,11 +2,34 @@
 'use strict';
 if(window.RWAMarketPerformanceGuard)return;
 
-const PERF={version:'1.0.0',runtime:'root-terminal-low-jank-v1'};
+const PERF={version:'1.1.0',runtime:'root-terminal-low-jank-v1'};
 const hotIds=new Set(['pairList','pairCount','liveDot','statHigh','statLow','statVol','statChange','buyPct','tradeCount']);
 const NativeMutationObserver=window.MutationObserver;
 const periodic=new Map();
 let periodicTimer=0;
+
+function installSingleRowHeader(){
+  const top=document.querySelector('.topbar');
+  const product=document.querySelector('.productbar');
+  const trust=document.querySelector('.trustbar');
+  const actions=top?.querySelector('.top-actions');
+  if(!top||!actions||top.dataset.rwaSingleRow==='1')return;
+  const meta=document.createElement('div');
+  meta.className='rwa-one-row-meta';
+  if(product){
+    for(const selector of ['.product-left','.product-nav','.product-right']){
+      const node=product.querySelector(selector);if(node)meta.appendChild(node);
+    }
+  }
+  if(trust){
+    const trustRow=document.createElement('div');trustRow.className='rwa-one-row-trust';
+    while(trust.firstChild)trustRow.appendChild(trust.firstChild);
+    meta.appendChild(trustRow);
+  }
+  top.insertBefore(meta,actions);
+  product?.remove();trust?.remove();
+  top.dataset.rwaSingleRow='1';
+}
 
 function startPeriodic(){
   if(periodicTimer)return;
@@ -153,6 +176,8 @@ function suspendWhenHidden(){
 }
 document.addEventListener('visibilitychange',suspendWhenHidden,{passive:true});
 
+installSingleRowHeader();
+PERF.header='single-row-global-shell-v1';
 PERF.row_limit=()=>innerWidth<=680?70:innerWidth<=1100?90:140;
 PERF.observer_policy='hot-dom-periodic-1200ms';
 PERF.market_dom_flush_ms=500;
