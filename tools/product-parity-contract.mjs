@@ -38,7 +38,7 @@ ok(socialPro.includes('Following trades')&&socialPro.includes('Top-trader activi
 ok(socialPro.includes("new URL('trade/'")&&socialPro.includes("m==='following'?'following':'global'"),'social feed navigation/filtering incomplete');
 ok(socialDefaults.includes("policy:'explicit-opt-in-v1'")&&socialDefaults.includes('friends:false')&&socialDefaults.includes('top:false')&&socialDefaults.includes('trending:false')&&socialDefaults.includes('newFollowers:false'),'social notification defaults must be explicit opt-in');
 ok(rootHtml.indexOf('social-notification-defaults.js?v=1')>=0&&rootHtml.indexOf('social-notification-defaults.js?v=1')<rootHtml.indexOf('social-trading-pro.js?v=1'),'notification opt-in policy must load before social runtime');
-ok(quick.includes("openTab('watch')")&&quick.includes('navigator.share')&&quick.includes("new URL('trade/'"),'market quick actions missing');
+ok(quick.includes("openTab('watch')")&&quick.includes("openTab('feed')")&&quick.includes('data-rwa-social-nav')&&quick.includes('navigator.share')&&quick.includes("new URL('trade/'"),'market/social quick actions missing');
 ok(rootHtml.includes('quick-actions.js?v=1')&&rootHtml.includes('social-trading-pro.js?v=1'),'social/quick action runtimes not loaded on root product');
 // Security/operations invariants.
 ok(!margin.includes('ExchangeClient')&&!overlay.includes('ExchangeClient')&&!quick.includes('ExchangeClient')&&!social.includes('ExchangeClient')&&!socialPro.includes('ExchangeClient'),'UI enhancement created a write client');
@@ -47,5 +47,5 @@ ok(exec.includes("hardening:'single-write-path-v1'"),'browser single-write contr
 ok(worker.includes("u.pathname==='/healthz'")&&worker.includes("u.pathname==='/readyz'"),'24/7 worker health endpoints missing');
 const launch=JSON.parse(readiness);ok(launch.engineering_ready===true,'machine engineering gate is not ready');
 ok(launch.mainnet_ready===false||launch.status==='READY_FOR_MAINNET','invalid launch gate state');
-if(fail.length){console.error(JSON.stringify({ok:false,contract:'rwa-social-trading-parity-v4',fail},null,2));process.exit(1)}
-console.log(JSON.stringify({ok:true,contract:'rwa-social-trading-parity-v4',trade:'one-click+atomic-tpsl+margin+overlays+master-funds',social:'leaderboard+copy+venue-fills+following+opt-in-notifications+feed-actions',security:'single-write+machine-wallet-gated-mainnet'},null,2));
+if(fail.length){console.error(JSON.stringify({ok:false,contract:'rwa-social-trading-parity-v5',fail},null,2));process.exit(1)}
+console.log(JSON.stringify({ok:true,contract:'rwa-social-trading-parity-v5',trade:'one-click+atomic-tpsl+margin+overlays+master-funds',social:'desktop-nav+leaderboard+copy+venue-fills+following+opt-in-notifications+feed-actions',security:'single-write+machine-wallet-gated-mainnet'},null,2));
