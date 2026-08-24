@@ -22,6 +22,7 @@ jobs:
           node --check social-trade-monitor.js
           node --check social-notification-defaults.js
           node --check social-trading-pro.js
+          node --check rwa-storefront.js
           node --check quick-actions.js
           node --check trade/app.js
           node --check trade/hyperliquid.js
@@ -30,17 +31,20 @@ jobs:
           node --check trade/margin-runtime.js
           node --check trade/chart-overlays.js
           node --check trade/release-runtime.js
+          node --check trade/ui-polish.js
           node --check trade/e2e.js
           node --check trade/e2e-resilience.js
           node --check trade/config.js
           node --check agent-worker/worker.mjs
           node --check agent-worker/execution.mjs
           node --check agent-worker/copy-engine.mjs
+          python -m json.tool rwa-commerce-registry.json >/dev/null
           node tools/trade-ui-contract.mjs
           node tools/product-parity-contract.mjs
+          node tools/storefront-ui-contract.mjs
           node tools/security-gate.mjs
           node tools/launch-gate.mjs --require-engineering
-      - name: Validate immutable safety markers
+      - name: Validate immutable safety and commerce markers
         run: |
           grep -Fq "hardening:'single-write-path-v1'" execution-api.js
           grep -Fq "riskSigner:'agent-only-fail-closed-v1'" execution-api.js
@@ -49,15 +53,19 @@ jobs:
           ! grep -Eq '(withdraw3|usdClassTransfer|spotSend|sendAsset)' agent-worker/execution.mjs agent-worker/worker.mjs
           grep -Fq "version:'1.5.0'" trade/config.js
           grep -Fq "status==='READY_FOR_MAINNET'" trade/config.js
+          grep -Fq "import './ui-polish.js?v=1'" trade/config.js
           grep -Fq 'quick-actions.js?v=1' index.html
           grep -Fq 'social-notification-defaults.js?v=1' index.html
           grep -Fq 'social-trading-pro.js?v=1' index.html
           grep -Fq "policy:'explicit-opt-in-v1'" social-notification-defaults.js
           grep -Fq "venue-backed-social-feed-v1" social-trading-pro.js
+          grep -Fq "ONE_TOKEN_ONE_PHYSICAL_STORE_V1" rwa-storefront.js
+          grep -Fq '"one_token_one_physical_store": true' rwa-commerce-registry.json
+          grep -Fq 'verifiedStore(s)&&verifiedAsset(s.token)' rwa-storefront.js
           grep -Fq 'social-trade-monitor.js?v=1' suite.js
           grep -Fq 'RWAMarginRuntime' trade/margin-runtime.js
           grep -Fq 'RWAChartTradeOverlay' trade/chart-overlays.js
-          ! grep -Fq 'ExchangeClient' trade/margin-runtime.js trade/chart-overlays.js quick-actions.js social-trade-monitor.js social-trading-pro.js
+          ! grep -Fq 'ExchangeClient' trade/margin-runtime.js trade/chart-overlays.js quick-actions.js social-trade-monitor.js social-trading-pro.js rwa-storefront.js trade/ui-polish.js
       - name: Verify public GitHub Pages release surfaces
         shell: bash
         run: |
@@ -69,7 +77,10 @@ jobs:
             cfg="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/config.js?v=$q" || true)"
             margin="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/margin-runtime.js?v=$q" || true)"
             overlay="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/chart-overlays.js?v=$q" || true)"
+            tradeui="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/ui-polish.js?v=$q" || true)"
             quick="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/quick-actions.js?v=$q" || true)"
+            storefront="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-storefront.js?v=$q" || true)"
+            commerce="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-commerce-registry.json?v=$q" || true)"
             defaults="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-notification-defaults.js?v=$q" || true)"
             socialpro="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-trading-pro.js?v=$q" || true)"
             suite="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/suite-v2.js?v=$q" || true)"
@@ -79,9 +90,13 @@ jobs:
               && grep -Fq 'social-trading-pro.js?v=1' <<<"$root" \
               && grep -Fq 'id="priceChart"' <<<"$trade" \
               && grep -Fq "version:'1.5.0'" <<<"$cfg" \
+              && grep -Fq "import './ui-polish.js?v=1'" <<<"$cfg" \
               && grep -Fq 'RWAMarginRuntime' <<<"$margin" \
               && grep -Fq 'RWAChartTradeOverlay' <<<"$overlay" \
-              && grep -Fq 'RWAQuickActions' <<<"$quick" \
+              && grep -Fq 'desktop-mobile-commerce-polish-v1' <<<"$tradeui" \
+              && grep -Fq 'premium-shell-storefront-v1' <<<"$quick" \
+              && grep -Fq 'ONE_TOKEN_ONE_PHYSICAL_STORE_V1' <<<"$storefront" \
+              && grep -Fq '"one_token_one_physical_store": true' <<<"$commerce" \
               && grep -Fq "policy:'explicit-opt-in-v1'" <<<"$defaults" \
               && grep -Fq "venue-backed-social-feed-v1" <<<"$socialpro" \
               && grep -Fq "version:'2.0.0'" <<<"$suite" \
@@ -92,7 +107,7 @@ jobs:
       - name: Publish release candidate status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/release-candidate' -f description='Code-side release candidate, venue social feed and live Pages surfaces verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/release-candidate' -f description='Trading, social, physical-store ecommerce UI and live Pages release surfaces verified'
       - name: Publish release candidate failure
         if: failure()
         env:
