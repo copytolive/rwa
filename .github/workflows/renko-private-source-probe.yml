@@ -1,0 +1,58 @@
+name: Renko Private Source Probe
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/renko-private-source-probe.yml'
+      - 'renko/**'
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe Seablueprint Renko source
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://seablueprint.com/api/charting/hyperliquid/renko/BTC?limit=5000&live=1&smaPeriod=10&sma=10'
+          echo "== HEAD =="
+          curl -sS -D /tmp/h -o /tmp/b --max-time 20 "$url" || true
+          sed -n '1,30p' /tmp/h || true
+          echo "== BODY (first 4000 bytes) =="
+          head -c 4000 /tmp/b || true
+          echo
+          echo "== JSON summary =="
+          python3 - <<'PY'
+          import json, pathlib
+          p=pathlib.Path('/tmp/b')
+          if not p.exists():
+              print('no body'); raise SystemExit(0)
+          raw=p.read_text(errors='replace')
+          try:
+              d=json.loads(raw)
+          except Exception as e:
+              print('not json:',e); raise SystemExit(0)
+          print('type',type(d).__name__)
+          if isinstance(d,dict):
+              print('keys',sorted(d.keys()))
+              c=d.get('candles')
+              if isinstance(c,list):
+                  print('candles',len(c))
+                  if c:
+                      print('first',c[0])
+                      print('last',c[-1])
+              for k in ('lockedSma','lockedSmaPeriod','lockedProfile','source','provider','symbol'):
+                  if k in d: print(k,d[k])
+          PY
+
+      - name: Probe public Binance raw trade archive headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          for u in \
+            'https://data.binance.vision/data/spot/daily/trades/BTCUSDT/BTCUSDT-trades-2026-08-23.zip' \
+            'https://data.binance.vision/data/spot/monthly/trades/BTCUSDT/BTCUSDT-trades-2026-07.zip'; do
+            echo "== $u =="
+            curl -sSI --max-time 20 "$u" | sed -n '1,30p' || true
+          done
