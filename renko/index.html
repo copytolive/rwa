@@ -92,7 +92,7 @@
           <div><b>Lazy history UX</b><p>The latest 50 bricks are the initial viewport. Moving backward fetches earlier 1-minute pages, rebuilds the loaded Renko window, and reveals older bricks progressively instead of downloading lifetime tick archives before first paint.</p></div>
           <div><b>Raw-tick audit</b><p>The separate audit engine still uses Binance Vision spot <code>trades</code> archives containing individual executions. It is intentionally slower and is not silently substituted into the fast history layer.</p></div>
           <div><b>All crypto universe</b><p>All eligible Binance spot crypto pairs are searchable. The highest-liquidity 500 are pre-rendered for speed; search is performed against the full loaded spot universe.</p></div>
-          <div><b>Execution</b><p>Renko brick levels are synthetic chart prices. Actual trading/fills must continue to use venue prices through the execution path.</p></div>
+          <div><b>Execution</b><p>Renko brick levels are synthetic chart prices. Actual trading/fills must continue to use venue prices through the RWA execution path.</p></div>
         </div>
       </details>
 
@@ -109,5 +109,6 @@
 <script src="renko-v3.js?v=3"></script>
 <script src="renko-v5.js?v=54"></script>
 <script src="renko-v6-lazy.js?v=60"></script>
+<script src="renko-v6-ui.js?v=60"></script>
 </body>
 </html>
