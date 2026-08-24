@@ -48,6 +48,9 @@ jobs:
           test -f asset/index.html
           grep -q 'data-mobile-nav="trade"' product-os-v3.js
           grep -q 'market-drawer-open' product-os-mobile-contract-v3.js
+          grep -q 'Canonical root contract' product-os-mobile-contract-v3.js
+          grep -q "localStorage.setItem('rwa_default_landing_v3','markets')" product-os-mobile-contract-v3.js
+          grep -q "hash&&hash!='markets'\|hash&&hash!=='markets'" product-os-mobile-contract-v3.js
           grep -q 'rwa-home-dashboard' unified-design-v3.css
           grep -q 'tabular-nums' unified-design-v3.css
           grep -q 'Risk Engine' product-os-v3.js
