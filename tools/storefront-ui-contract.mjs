@@ -15,7 +15,10 @@ ok(new Set(tokens).size===tokens.length,'duplicate token mapping found in physic
 ok(new Set(addresses).size===addresses.length,'one physical store address is mapped to multiple tokens');
 ok(Array.isArray(assets.verified),'RWA asset registry malformed');
 ok(storefront.includes("policy:'ONE_TOKEN_ONE_PHYSICAL_STORE_V1'"),'storefront policy marker missing');
+ok(storefront.includes("boundary:'canonical-product-rwa-property-separation-v1'"),'canonical property/product RWA boundary marker missing');
 ok(storefront.includes('verifiedStore(s)&&verifiedAsset(s.token)'),'live store must require physical-store + RWA asset verification');
+ok(storefront.includes('The Product RWA represents the defined redeemable product entitlement')&&storefront.includes('not HGB/HM'),'storefront must state product entitlement and property-title separation');
+ok(!storefront.includes('owns a real physical storefront')&&!storefront.includes('Tokenized ownership layer'),'storefront contains prohibited ownership wording');
 ok(storefront.includes('Shopping cart')&&storefront.includes('Checkout activates with backend + verified store'),'cart / backend-gated checkout UI missing');
 ok(storefront.includes('data-mobile-nav="shop"')&&storefront.includes('rwaCommandLayer'),'mobile Shop navigation or command palette missing');
 ok(storefront.includes('data-open-store')&&storefront.includes('Trade token')&&storefront.includes('trade/?coin='),'store detail/trade routing missing');
@@ -47,5 +50,5 @@ ok(quick.includes('async function shellRoute')&&quick.includes("openTab('intel')
 ok(tradeCfg.includes("import './ui-polish.js?v=1'"),'trade shell does not load UI polish runtime');
 ok(tradePolish.includes('rwa-store-link')&&tradePolish.includes('../?shop=1'),'trade-to-store navigation missing');
 ok(tradeCss.includes('.order{position:sticky')&&tradeCss.includes('.rwa-trade-mobile-store'),'desktop sticky order / mobile store polish missing');
-if(fail.length){console.error(JSON.stringify({ok:false,contract:'rwa-physical-commerce-ui-v7',fail},null,2));process.exit(1)}
-console.log(JSON.stringify({ok:true,contract:'rwa-physical-commerce-ui-v7',policy:registry.policy,marketLabelPolicy:'public-rwa-linked-vs-store-token-v1',liveStores:registry.stores.length,verifiedAssets:assets.verified.length,frontend:'desktop+mobile+functional-nav+landing+shop+cart+checkout-preview+command-palette+store-detail+physical-store-onboarding',checkout:'BACKEND_GATED'},null,2));
+if(fail.length){console.error(JSON.stringify({ok:false,contract:'rwa-physical-commerce-ui-v8',fail},null,2));process.exit(1)}
+console.log(JSON.stringify({ok:true,contract:'rwa-physical-commerce-ui-v8',policy:registry.policy,boundary:'canonical-product-rwa-property-separation-v1',marketLabelPolicy:'public-rwa-linked-vs-store-token-v1',liveStores:registry.stores.length,verifiedAssets:assets.verified.length,frontend:'desktop+mobile+functional-nav+landing+shop+cart+checkout-preview+command-palette+store-detail+physical-store-onboarding',checkout:'BACKEND_GATED'},null,2));
