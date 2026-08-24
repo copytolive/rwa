@@ -1,0 +1,12 @@
+/* RWA Renko V7 — TradingView-style terminal surface. Visual compatibility only; TradingView is not embedded. */
+.chart-wrap{background:#131722!important;border:1px solid #2a2e39!important;border-radius:4px!important;min-height:560px!important;box-shadow:none!important;overflow:hidden!important;touch-action:pan-y!important}
+#tvRenkoCanvas{image-rendering:auto}
+.chart-wrap .chart-badges{z-index:9!important;top:8px!important;right:88px!important;gap:4px!important;pointer-events:none}
+.chart-wrap .chart-badges span{background:rgba(19,23,34,.9)!important;border:1px solid #2a2e39!important;color:#9598a1!important;border-radius:3px!important;font-size:9px!important;letter-spacing:.05em!important;padding:3px 6px!important}
+.archivebar,.historybar{border-color:#2a2e39!important;background:#131722!important}
+.history-actions button,.archive-actions button,.controlbar button,.easybar button{border-radius:4px!important}
+.history-actions button.active,.archive-actions .primary{background:#2962ff!important;border-color:#2962ff!important;color:#fff!important}
+.mode-pill{border-color:#2a2e39!important;background:#1e222d!important;color:#d1d4dc!important}
+.terminal{background:#0f1118!important}
+.instrument-bar,.easybar,.controlbar,.footerbar{border-color:#2a2e39!important}
+@media(max-width:760px){.chart-wrap{min-height:440px!important}.chart-wrap .chart-badges{display:none!important}}

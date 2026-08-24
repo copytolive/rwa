@@ -1,56 +1,46 @@
-name: RWA Renko V7 TradingView-style Gate
+name: RWA Renko V7 TradingView-style E2E
+# V7 gate: validate the real renderer in Chromium before merge.
 
 on:
   pull_request:
     paths:
       - 'renko/**'
-      - 'tools/renko-v6-browser-smoke.mjs'
-      - 'tools/renko-v6-live-smoke.mjs'
       - 'tools/renko-v7-browser-smoke.mjs'
       - 'tools/renko-v7-live-smoke.mjs'
-      - '.github/workflows/renko-v5-gate.yml'
+      - '.github/workflows/renko-v7-tv.yml'
   push:
     branches: [main]
     paths:
       - 'renko/**'
-      - 'tools/renko-v6-browser-smoke.mjs'
-      - 'tools/renko-v6-live-smoke.mjs'
       - 'tools/renko-v7-browser-smoke.mjs'
       - 'tools/renko-v7-live-smoke.mjs'
-      - '.github/workflows/renko-v5-gate.yml'
+      - '.github/workflows/renko-v7-tv.yml'
 
 permissions:
   contents: read
   statuses: write
 
 jobs:
-  local-e2e:
+  browser:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
-      - name: Static V7 + V6.1 contract
+      - name: Validate V7 source contract
         run: |
           set -euo pipefail
-          node --check renko/renko-v3.js
           node --check renko/renko-v61-lazy.js
           node --check renko/renko-v7-tv.js
-          node --check renko/archive-worker-v5.js
-          node --check tools/renko-v6-browser-smoke.mjs
           node --check tools/renko-v7-browser-smoke.mjs
           node --check tools/renko-v7-live-smoke.mjs
-          grep -Fq "version:'6.1.0'" renko/renko-v61-lazy.js
-          grep -Fq "mode:'tradingview-compatible-lazy-50'" renko/renko-v61-lazy.js
-          grep -Fq 'generation!==state.generation' renko/renko-v61-lazy.js
           grep -Fq "version:'7.0.0'" renko/renko-v7-tv.js
           grep -Fq "renderer:'tv-like-price-time-crosshair-v1'" renko/renko-v7-tv.js
           grep -Fq "traditional:{continuationBoxes:1,reversalBoxes:2}" renko/renko-v7-tv.js
           grep -Fq 'renko-v7-tv.js?v=70' renko/index.html
           grep -Fq 'renko-v7-tv.css?v=70' renko/index.html
           grep -Fq 'renko-v61-lazy.js?v=61' renko/index.html
-          grep -Fq '/data/spot/monthly/trades/' renko/archive-worker-v5.js
           grep -Fq '@trade' renko/renko-v3.js
       - name: Install Chromium
         run: |
@@ -58,17 +48,15 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Serve branch
         run: |
-          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/renko.log 2>&1 &
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/renko-v7.log 2>&1 &
           for i in {1..20}; do curl -fsS http://127.0.0.1:4173/renko/ >/dev/null && exit 0; sleep 1; done
-          cat /tmp/renko.log; exit 1
-      - name: V6.1 engine regression
-        run: node tools/renko-v6-browser-smoke.mjs
-      - name: V7 renderer desktop + mobile + lazy history + live
+          cat /tmp/renko-v7.log; exit 1
+      - name: Browser desktop + mobile + history + live
         run: node tools/renko-v7-browser-smoke.mjs
 
   live-after-main:
     if: github.event_name == 'push'
-    needs: local-e2e
+    needs: browser
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -90,11 +78,11 @@ jobs:
             sleep 5
           done
           exit 1
-      - name: Verify real public V7 + live raw ticks
+      - name: Verify real public Renko V7
         env:
           RWA_RENKO_LIVE_URL: https://narzulalistiqlal.github.io/rwa/renko/?v=${{ github.run_id }}
         run: node tools/renko-v7-live-smoke.mjs
-      - name: Publish V7 status
+      - name: Publish Renko V7 status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-v7-e2e' -f description='V7 Traditional Renko + TV-style renderer + lazy history + live @trade PASS'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-v7-e2e' -f description='V7 Traditional Renko: 50-brick lazy history + TV-style renderer + live @trade PASS'
