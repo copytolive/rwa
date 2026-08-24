@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "target": "40,000-50,000+ listed companies across approved markets",
+  "stock_timeframe_minutes": 10,
+  "states": ["ENGINEERING_READY","SOURCE_REVIEW_REQUIRED","API_CREDENTIAL_REQUIRED","MARKET_DATA_LICENSE_REQUIRED","BLOCKED"],
+  "adapters": [
+    {"country":"US","label":"United States","fundamental_source":"SEC","format":"XBRL/iXBRL","identity":"ENGINEERING_READY","fundamentals":"ENGINEERING_READY","dividends":"ENGINEERING_READY","market_10m":"SOURCE_REVIEW_REQUIRED"},
+    {"country":"ID","label":"Indonesia","fundamental_source":"OJK_IDX","format":"XBRL/PDF","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"JP","label":"Japan","fundamental_source":"EDINET","format":"XBRL","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"KR","label":"South Korea","fundamental_source":"DART","format":"XBRL/API","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"API_CREDENTIAL_REQUIRED","dividends":"API_CREDENTIAL_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"IN","label":"India","fundamental_source":"NSE_BSE","format":"XBRL/disclosures","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"GB","label":"United Kingdom","fundamental_source":"COMPANIES_HOUSE","format":"iXBRL/API","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"DE","label":"Germany","fundamental_source":"ESEF","format":"iXBRL","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"FR","label":"France","fundamental_source":"AMF_ESEF","format":"iXBRL","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"NL","label":"Netherlands","fundamental_source":"ESEF","format":"iXBRL","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"ES","label":"Spain","fundamental_source":"ESEF","format":"iXBRL","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"IT","label":"Italy","fundamental_source":"ESEF","format":"iXBRL","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"BR","label":"Brazil","fundamental_source":"CVM","format":"Open data/DFP/ITR","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"TW","label":"Taiwan","fundamental_source":"MOPS","format":"XBRL/disclosures","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"SA","label":"Saudi Arabia","fundamental_source":"SAUDI_EXCHANGE","format":"XBRL/financials","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"HK","label":"Hong Kong","fundamental_source":"HKEX","format":"Filings/PDF/XHTML","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"CA","label":"Canada","fundamental_source":"SEDAR_PLUS","format":"Issuer filings","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"AU","label":"Australia","fundamental_source":"ASX_ASIC","format":"Filings/announcements","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"SG","label":"Singapore","fundamental_source":"SGX","format":"Issuer disclosures","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"CN","label":"China","fundamental_source":"SSE_SZSE_CNINFO","format":"Issuer filings","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"MY","label":"Malaysia","fundamental_source":"BURSA_MY","format":"Issuer filings","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"TH","label":"Thailand","fundamental_source":"SET_TH","format":"Issuer filings","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"ZA","label":"South Africa","fundamental_source":"JSE_SENS","format":"SENS/reports","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"AE","label":"United Arab Emirates","fundamental_source":"DFM","format":"Issuer disclosures","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"MX","label":"Mexico","fundamental_source":"BMV_CNBV","format":"Issuer filings","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"},
+    {"country":"CH","label":"Switzerland","fundamental_source":"ISSUER_OAM","format":"Issuer reports","identity":"SOURCE_REVIEW_REQUIRED","fundamentals":"SOURCE_REVIEW_REQUIRED","dividends":"SOURCE_REVIEW_REQUIRED","market_10m":"MARKET_DATA_LICENSE_REQUIRED"}
+  ]
+}
