@@ -61,9 +61,16 @@ jobs:
           grep -Fq 'e2e-resilience.js?v=1' trade/index.html
           grep -Fq 'e2e.js?v=4' trade/index.html
 
-          grep -Fq "version: '1.3.0'" trade/config.js
-          grep -Fq "uiRelease: 'terminal-pro-v1'" trade/config.js
-          grep -Fq 'mainnetEnabled: false' trade/config.js
+          grep -Fq "version:'1.4.0'" trade/config.js
+          grep -Fq "uiRelease:'terminal-pro-v1'" trade/config.js
+          grep -Fq '../launch/readiness.json' trade/config.js
+          grep -Fq '../launch/e2e-registry.json' trade/config.js
+          grep -Fq "status==='READY_FOR_MAINNET'" trade/config.js
+          grep -Fq "x?.status==='E2E_VERIFIED'" trade/config.js
+          grep -Fq "Object.defineProperty(BASE,'mainnetEnabled'" trade/config.js
+          grep -Fq "get:()=>canMainnet()" trade/config.js
+          grep -Fq "toggle.dispatchEvent(new Event('change'" trade/config.js
+          ! grep -Eq 'mainnetEnabled[[:space:]]*:[[:space:]]*true' trade/config.js
 
           grep -Fq 'candleSnapshot' trade/terminal-pro.js
           grep -Fq 'metaAndAssetCtxs' trade/terminal-pro.js
@@ -105,7 +112,7 @@ jobs:
       - name: Publish source status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/trade-source' -f description='Professional terminal + UI operability + fail-closed execution verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/trade-source' -f description='Professional terminal + machine gate + fail-closed execution verified'
 
       - name: Verify deployed GitHub Pages trade bundle
         shell: bash
@@ -134,8 +141,12 @@ jobs:
               && grep -Fq 'orders.modify' <<<"$pro" \
               && ! grep -Fq 'ExchangeClient' <<<"$pro" \
               && grep -Fq '.mobile-trade-bar' <<<"$proc" \
-              && grep -Fq "version: '1.3.0'" <<<"$cfg" \
-              && grep -Fq 'mainnetEnabled: false' <<<"$cfg" \
+              && grep -Fq "version:'1.4.0'" <<<"$cfg" \
+              && grep -Fq '../launch/readiness.json' <<<"$cfg" \
+              && grep -Fq '../launch/e2e-registry.json' <<<"$cfg" \
+              && grep -Fq "status==='READY_FOR_MAINNET'" <<<"$cfg" \
+              && grep -Fq "Object.defineProperty(BASE,'mainnetEnabled'" <<<"$cfg" \
+              && ! grep -Eq 'mainnetEnabled[[:space:]]*:[[:space:]]*true' <<<"$cfg" \
               && grep -Fq "type:'claimDrip'" <<<"$fund" \
               && grep -Fq "const MARKER='e2e-read-backoff-v1'" <<<"$resilience" \
               && grep -Fq "version:'1.0.4'" <<<"$e2e" \
@@ -152,7 +163,7 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/trade-live' -f description='Professional RWA Trade bundle verified live on GitHub Pages'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/trade-live' -f description='Machine-gated professional RWA Trade verified live on GitHub Pages'
 
       - name: Publish failure status
         if: failure()
