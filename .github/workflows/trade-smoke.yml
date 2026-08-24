@@ -1,0 +1,101 @@
+name: RWA Trade Live Smoke
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "trade/**"
+      - "execution-api.js"
+      - ".github/workflows/trade-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: rwa-trade-live-smoke
+  cancel-in-progress: true
+
+jobs:
+  trade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate RWA Trade source
+        run: |
+          node --check trade/app.js
+          node --check trade/hyperliquid.js
+          node --check trade/fund-modal.js
+          node --check trade/config.js
+          node --check execution-api.js
+
+          test -s trade/index.html
+          test -s trade/styles.css
+          test -s trade/fund-modal.css
+          test -s trade/app.js
+          test -s trade/hyperliquid.js
+          test -s trade/fund-modal.js
+          test -s trade/config.js
+
+          grep -Fq "frame-src 'none'" trade/index.html
+          ! grep -Fq '<iframe' trade/index.html
+          ! grep -Fq 'Fund Hyperliquid first' trade/index.html
+          ! grep -Fq 'Fund Hyperliquid first' trade/app.js
+          ! grep -Fq 'window.open(' trade/app.js
+          grep -Fq 'Get test balance' trade/index.html
+          grep -Fq "type:'claimDrip'" trade/fund-modal.js
+          grep -Fq 'Get 1,000 test USDC' trade/fund-modal.js
+          grep -Fq 'currentMarkPrice' trade/app.js
+          ! grep -Fq "marketPrice').textContent.replace" trade/app.js
+
+          grep -Fq 'WebSocketTransport' execution-api.js
+          grep -Fq "transport:'websocket-write-v1'" execution-api.js
+          grep -Fq "riskSigner:'agent-only-fail-closed-v1'" execution-api.js
+          grep -Fq 'allowMaster:false' execution-api.js
+          grep -Fq "riskGate:'mandatory-internal-v1'" execution-api.js
+          grep -Fq "grouping:'normalTpsl'" execution-api.js
+
+      - name: Publish source status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/trade-source' -f description='RWA-native funding + locale-safe sizing + fail-closed WS execution verified'
+
+      - name: Verify deployed GitHub Pages trade bundle
+        shell: bash
+        run: |
+          ok=0
+          for i in {1..120}; do
+            q="${GITHUB_RUN_ID}-${i}"
+            html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/?v=$q" || true)"
+            app="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/app.js?v=$q" || true)"
+            fund="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/fund-modal.js?v=$q" || true)"
+            execapi="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/execution-api.js?v=$q" || true)"
+            if grep -Fq 'Get test balance' <<<"$html" \
+              && grep -Fq "frame-src 'none'" <<<"$html" \
+              && ! grep -Fq '<iframe' <<<"$html" \
+              && grep -Fq 'currentMarkPrice' <<<"$app" \
+              && ! grep -Fq 'Fund Hyperliquid first' <<<"$app" \
+              && grep -Fq "type:'claimDrip'" <<<"$fund" \
+              && grep -Fq 'Get 1,000 test USDC' <<<"$fund" \
+              && grep -Fq "transport:'websocket-write-v1'" <<<"$execapi" \
+              && grep -Fq "riskSigner:'agent-only-fail-closed-v1'" <<<"$execapi"; then
+              ok=1
+              break
+            fi
+            sleep 5
+          done
+          test "$ok" = "1"
+
+      - name: Publish live status
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/trade-live' -f description='GitHub Pages /rwa/trade live bundle verified'
+
+      - name: Publish failure status
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/trade-live' -f description='RWA Trade live verification failed'
