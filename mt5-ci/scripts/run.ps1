@@ -28,7 +28,46 @@ ShutdownTerminal=1
    [ordered]@{status='BLOCKED_MISSING_MT5_DEMO_SECRETS';compile='PASS';history_seed='PASS';required=@('MT5_LOGIN','MT5_PASSWORD','MT5_SERVER');message='Add a valid free demo account as GitHub Actions repository secrets. Never commit credentials.';utc=[DateTime]::UtcNow.ToString('o')}|ConvertTo-Json|Set-Content -Encoding UTF8 (Join-Path $out 'final_status.json');throw 'MT5 demo credentials are not configured in GitHub Actions secrets'
  }
  [ordered]@{credentials_source='GitHub Actions secrets';login_present=$true;password_present=$true;server_present=$true;server=$server;password_never_exported=$true}|ConvertTo-Json|Set-Content -Encoding UTF8 (Join-Path $out 'credential_gate.json')
- Stage TESTER 'Authenticating demo context and running Strategy Tester Model 4 real ticks';$ini=Join-Path $env:RUNNER_TEMP 'tester.ini';@"
+ Stage AUTH 'Pre-authenticating MT5 demo account and waiting for trade-server synchronization';python -m pip install --disable-pip-version-check --quiet MetaTrader5
+ $authPy=Join-Path $env:RUNNER_TEMP 'mt5_auth.py';@'
+import json, os, sys, time
+import MetaTrader5 as mt5
+path=os.environ['MT5_TERMINAL_PATH']
+login=int(os.environ['MT5_LOGIN'])
+password=os.environ['MT5_PASSWORD']
+server=os.environ['MT5_SERVER']
+out=os.environ['MT5_AUTH_OUT']
+last=''
+ok=False
+for attempt in range(1,4):
+    try:
+        if mt5.initialize(path=path, login=login, password=password, server=server, timeout=60000, portable=True):
+            for _ in range(30):
+                ti=mt5.terminal_info(); ai=mt5.account_info()
+                if ti is not None and ai is not None and bool(getattr(ti,'connected',False)) and int(ai.login)==login:
+                    ok=True; break
+                time.sleep(2)
+            if ok: break
+            last=f'not synchronized after initialize attempt {attempt}'
+        else:
+            last=f'initialize failed attempt {attempt}: {mt5.last_error()}'
+    except Exception as e:
+        last=f'auth exception attempt {attempt}: {type(e).__name__}: {e}'
+    finally:
+        try: mt5.shutdown()
+        except Exception: pass
+    time.sleep(3)
+with open(out,'w',encoding='utf-8') as f:
+    json.dump({'status':'PASS' if ok else 'FAIL','server':server,'login_present':True,'connected':ok,'message':None if ok else last},f,indent=2)
+if not ok:
+    print(last)
+    sys.exit(2)
+print('MT5 demo account synchronized successfully')
+'@|Set-Content -Encoding UTF8 $authPy
+ $env:MT5_TERMINAL_PATH=$terminal;$env:MT5_AUTH_OUT=(Join-Path $out 'auth_preflight.json');python $authPy
+ if($LASTEXITCODE-ne0){throw 'MT5 demo account pre-authentication/synchronization failed'}
+ Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue|Stop-Process -Force -ErrorAction SilentlyContinue;Start-Sleep 3
+ Stage TESTER 'Running Strategy Tester Model 4 real ticks from synchronized demo context';$ini=Join-Path $env:RUNNER_TEMP 'tester.ini';@"
 [Common]
 Login=$login
 Server=$server
@@ -71,7 +110,7 @@ Model=4
 FromDate=2024.01.02
 ToDate=2024.01.03
 "@|Set-Content -Encoding UTF8 (Join-Path $out 'tester_config_SANITIZED.ini')
- $p=Start-Process $terminal -ArgumentList '/portable',"/config:$ini" -PassThru;if(!$p.WaitForExit(300000)){$p.Kill();throw 'tester timeout'};Start-Sleep 3;Diagnostics
+ $p=Start-Process $terminal -ArgumentList '/portable',"/config:$ini" -PassThru;if(!$p.WaitForExit(300000)){$p.Kill();Get-Process metatester64 -ErrorAction SilentlyContinue|Stop-Process -Force -ErrorAction SilentlyContinue;throw 'tester timeout'};Start-Sleep 3;Diagnostics
  $report=Get-ChildItem $script:mt5 -Filter 'smoke_report*' -Recurse -ErrorAction SilentlyContinue|Select-Object -First 1;if(!$report){$mq=Join-Path $env:APPDATA 'MetaQuotes';if(Test-Path $mq){$report=Get-ChildItem $mq -Filter 'smoke_report*' -Recurse -ErrorAction SilentlyContinue|Select-Object -First 1}};if($report){Copy-Item $report.FullName (Join-Path $out $report.Name) -Force}
  $common=Join-Path $env:APPDATA 'MetaQuotes\Terminal\Common\Files\mt5_smoke_deals.csv';$ledger=$null;if(Test-Path $common){$ledger=$common}else{$mq=Join-Path $env:APPDATA 'MetaQuotes';if(Test-Path $mq){$x=Get-ChildItem $mq -Filter mt5_smoke_deals.csv -Recurse -ErrorAction SilentlyContinue|Select-Object -First 1;if($x){$ledger=$x.FullName}}};if(!$ledger){throw 'deal ledger missing; native tester did not produce deals'};Copy-Item $ledger (Join-Path $out 'mt5_smoke_deals.csv') -Force
  Stage PARITY 'Comparing native MT5 ledger to independent Python ledger';python mt5-ci/scripts/verify_parity.py mt5-ci/generated/expected_ledger.json (Join-Path $out 'mt5_smoke_deals.csv') (Join-Path $out 'parity.json');$r=Get-Content (Join-Path $out 'parity.json') -Raw|ConvertFrom-Json;if([double]$r.parity_pct-ne100){throw 'parity below 100'};[ordered]@{status='PASS_NATIVE_PARITY';parity_pct=100;report_found=[bool]$report;mt5_file_version=(Get-Item $terminal).VersionInfo.FileVersion;utc=[DateTime]::UtcNow.ToString('o')}|ConvertTo-Json|Set-Content -Encoding UTF8 (Join-Path $out 'final_status.json');Stage DONE 'Native MT5 parity exactly 100%'
