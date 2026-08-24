@@ -87,11 +87,16 @@ jobs:
                 if(e!=5304) { Print("CustomSymbolCreate failed ",e); ExpertRemove(); return; }
              }
              CustomSymbolSetString(InpSymbol,SYMBOL_DESCRIPTION,"XAUUSD validation dataset");
+             CustomSymbolSetString(InpSymbol,SYMBOL_CURRENCY_BASE,"XAU");
+             CustomSymbolSetString(InpSymbol,SYMBOL_CURRENCY_PROFIT,"USD");
+             CustomSymbolSetString(InpSymbol,SYMBOL_CURRENCY_MARGIN,"USD");
              CustomSymbolSetInteger(InpSymbol,SYMBOL_DIGITS,2);
              CustomSymbolSetDouble(InpSymbol,SYMBOL_POINT,0.01);
              CustomSymbolSetDouble(InpSymbol,SYMBOL_TRADE_TICK_SIZE,0.01);
              CustomSymbolSetDouble(InpSymbol,SYMBOL_TRADE_TICK_VALUE,1.0);
              CustomSymbolSetDouble(InpSymbol,SYMBOL_TRADE_CONTRACT_SIZE,100.0);
+             CustomSymbolSetDouble(InpSymbol,SYMBOL_MARGIN_INITIAL,1.0);
+             CustomSymbolSetDouble(InpSymbol,SYMBOL_MARGIN_MAINTENANCE,1.0);
              CustomSymbolSetDouble(InpSymbol,SYMBOL_VOLUME_MIN,0.01);
              CustomSymbolSetDouble(InpSymbol,SYMBOL_VOLUME_MAX,100.0);
              CustomSymbolSetDouble(InpSymbol,SYMBOL_VOLUME_STEP,0.01);
