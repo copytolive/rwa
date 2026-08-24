@@ -6,6 +6,10 @@ on:
     branches: [mt5-ci-smoke]
     paths:
       - .github/workflows/mt5-xauusd-native-validation.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/mt5-xauusd-native-validation.yml
 
 permissions:
   contents: read
