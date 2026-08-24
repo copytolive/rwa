@@ -15,15 +15,16 @@ function monthKey(d){return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}`}
 function monthDays(y,m){return new Date(Date.UTC(y,m,0)).getUTCDate()}
 function monthlyPath(symbol,y,m){return `/data/spot/monthly/trades/${symbol}/${symbol}-trades-${y}-${pad(m)}.zip`}
 function dailyPath(symbol,y,m,d){return `/data/spot/daily/trades/${symbol}/${symbol}-trades-${y}-${pad(m)}-${pad(d)}.zip`}
-async function safeHead(url){try{const r=await fetch(url,{method:'HEAD',mode:'cors',credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(20000)});return {status:r.status,ok:r.ok,len:Number(r.headers.get('content-length')||0)}}catch(e){return {status:0,ok:false,len:0,error:e.message}}}
-async function chooseBase(bases){const path=monthlyPath('BTCUSDT',2017,8);for(const base of bases){const p=await safeHead(base+path);if(p.ok)return base}throw Error('No browser-accessible raw tick archive source. Controlled CORS proxy is required.')}
+function totalFromHeaders(r){const cr=r.headers.get('content-range')||'';const m=cr.match(/\/(\d+)$/);if(m)return Number(m[1]);return Number(r.headers.get('content-length')||0)}
+async function probeArchive(url){try{const r=await fetch(url,{method:'GET',mode:'cors',credentials:'omit',cache:'no-store',headers:{Range:'bytes=0-0'},signal:AbortSignal.timeout(20000)});const len=totalFromHeaders(r);try{await r.body?.cancel()}catch{}return {status:r.status,ok:r.ok,len}}catch(e){return {status:0,ok:false,len:0,error:e.message}}}
+async function chooseBase(bases){const path=monthlyPath('BTCUSDT',2017,8),candidates=['https://data.binance.vision',...bases.filter(x=>x!=='https://data.binance.vision')];for(const base of candidates){const p=await probeArchive(base+path);if(p.ok)return base}throw Error('No browser-accessible raw tick archive source.')}
 async function discover(base,symbol){
   const yesterday=new Date(Date.now()-86400000);yesterday.setUTCHours(0,0,0,0);
   const currentMonth=Date.UTC(yesterday.getUTCFullYear(),yesterday.getUTCMonth(),1);
   const plan=[];let seen=false;let probe=0;
   for(let t=START_UTC;t<currentMonth;t=Date.UTC(new Date(t).getUTCFullYear(),new Date(t).getUTCMonth()+1,1)){
     if(cancelled)throw Error('cancelled');
-    const d=new Date(t),y=d.getUTCFullYear(),m=d.getUTCMonth()+1,path=monthlyPath(symbol,y,m),h=await safeHead(base+path);probe++;
+    const d=new Date(t),y=d.getUTCFullYear(),m=d.getUTCMonth()+1,path=monthlyPath(symbol,y,m),h=await probeArchive(base+path);probe++;
     if(h.ok){seen=true;if(h.len>0&&h.len<=MAX_MONTHLY_COMPRESSED)plan.push({kind:'monthly',key:`M:${y}-${pad(m)}`,path,size:h.len,required:true});else{for(let day=1;day<=monthDays(y,m);day++)plan.push({kind:'daily',key:`D:${y}-${pad(m)}-${pad(day)}`,path:dailyPath(symbol,y,m,day),size:0,required:true})}}
     else if(seen){for(let day=1;day<=monthDays(y,m);day++)plan.push({kind:'daily',key:`D:${y}-${pad(m)}-${pad(day)}`,path:dailyPath(symbol,y,m,day),size:0,required:true})}
     if(probe%10===0)post('discover',{probed:probe,plan:plan.length,month:monthKey(d)});
