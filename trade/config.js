@@ -1,6 +1,8 @@
 export const CONFIG = Object.freeze({
-  version: '1.1.0',
-  build: 'github-pages-rwa-native-funding-ws-2026-08-24',
+  version: '1.2.0',
+  build: 'github-pages-rwa-public-testnet-beta-2026-08-24',
+  releaseChannel: 'PUBLIC_TESTNET_BETA',
+  publicBetaEnabled: true,
   sdkUrl: 'https://esm.sh/@nktkas/hyperliquid@0.33.3?target=es2022',
   viemUrl: 'https://esm.sh/viem@2.37.3?target=es2022',
   viemAccountsUrl: 'https://esm.sh/viem@2.37.3/accounts?target=es2022',
