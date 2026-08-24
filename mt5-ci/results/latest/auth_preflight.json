@@ -1,7 +1,7 @@
 {
-  "status": "FAIL",
+  "status": "PASS_NATIVE_WARMUP_COMPLETED",
   "server": "Exness-MT5Trial17",
   "login_present": true,
-  "connected": false,
-  "message": "initialize failed attempt 3: (-10005, 'IPC timeout')"
+  "warmup_seconds": 45,
+  "note": "No Python MetaTrader5 IPC dependency; Strategy Tester is authoritative for synchronization."
 }

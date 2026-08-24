@@ -1,2 +1,14 @@
-FL	0	18:36:29.847	Tester	Cloud servers switched off
+RL	0	19:40:43.586	Tester	Cloud servers switched off
+KR	0	19:40:48.108	Tester	Cloud servers switched off
+OI	0	19:41:39.189	Tester	Cloud servers switched off
+CN	2	19:42:26.499	Tester	not synchronized with trade server
+IE	0	19:42:26.513	Tester	Local network farm switched off
+GP	0	19:42:26.513	Tester	"ChatGPT\DeterministicPendingSmoke.ex5" X64
+PK	0	19:42:26.531	Tester	CT_EURUSD: history data begins from 2024.01.01 00:00
+KM	0	19:42:26.532	Tester	CT_EURUSD: ticks data begins from 2024.01.01 00:00
+HJ	0	19:42:26.541	Core 1	agent process started on 127.0.0.1:3000
+IM	0	19:42:26.541	Core 1	connecting to 127.0.0.1:3000
+RJ	0	19:42:27.046	Core 1	connected
+DS	0	19:42:27.054	Core 1	authorized (agent build 6140)
+QF	0	19:42:27.060	Tester	CT_EURUSD,M1 (Exness-MT5Trial17): testing of Experts\ChatGPT\DeterministicPendingSmoke.ex5 from 2024.01.02 00:00 to 2024.01.03 00:00
 
