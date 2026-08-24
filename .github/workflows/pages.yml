@@ -30,6 +30,9 @@ jobs:
           node --check chart-core.js
           node --check wallet-core.js
           node --check mobile.js
+          node --check product-os-v3.js
+          node --check product-os-mobile-contract-v3.js
+          node --input-type=module --check < trade/config.js
           node --check suite-ui.js
           node --check suite.js
           node --check suite-nav.js
@@ -72,7 +75,8 @@ jobs:
       - name: Verify production files and contracts
         run: |
           for f in \
-            index.html app.js realtime-core.js chart-core.js wallet-core.js mobile.js styles.css mobile.css \
+            index.html app.js realtime-core.js chart-core.js wallet-core.js mobile.js styles.css mobile.css stable-shell.css \
+            unified-design-v3.css product-os-v3.js product-os-mobile-contract-v3.js trader/index.html asset/index.html trade/config.js \
             suite-ui.js suite.js suite-nav.js suite.css execution-api.js execution-ui.js execution-ops-bridge.js \
             exchange-core.js exchange-ui.js exchange-actions.js testnet-e2e.js suite-execution-patch.js walletconnect.js \
             ops-suite.js ops.css risk-hardening.js provider-failover.js monitor-client.js monitor-config-client.js \
@@ -87,7 +91,16 @@ jobs:
 
           for j in rwa-execution-config.json rwa-assets.json rwa-reviewers.json moderation.json launch/readiness.json launch/e2e-registry.json launch/beta-registry.json agent-worker/control.json agent-worker/public-config.json monitor/config.json monitor/status.json monitor/admin-wallets.json token/config.json; do python -m json.tool "$j" >/dev/null; done
 
-          grep -Fq "realtime-core.js?v=2" index.html
+          grep -Fq "realtime-core.js?v=3" index.html
+          grep -Fq "market-performance.js?v=2" index.html
+          grep -Fq "stable-shell.css?v=3" index.html
+          grep -Fq "unified-design-v3.css?v=1" index.html
+          grep -Fq "product-os-v3.js?v=1" index.html
+          grep -Fq "product-os-mobile-contract-v3.js?v=1" index.html
+          grep -Fq 'data-mobile-nav="trade"' product-os-v3.js
+          grep -Fq 'Risk Engine' product-os-v3.js
+          grep -Fq 'market-drawer-open' product-os-mobile-contract-v3.js
+          grep -Fq 'tabular-nums' unified-design-v3.css
           grep -Fq "walletconnect.js?v=4" index.html
           grep -Fq "wallet-core.js?v=3" index.html
           ! grep -Fq "wallet-seamless.js" index.html
