@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#08090c">
   <meta name="referrer" content="no-referrer">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://esm.sh https://api.hyperliquid.xyz https://api.hyperliquid-testnet.xyz wss://api.hyperliquid.xyz wss://api.hyperliquid-testnet.xyz; style-src 'self'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src https://app.hyperliquid-testnet.xyz;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh; connect-src 'self' https://esm.sh https://api.hyperliquid.xyz https://api.hyperliquid-testnet.xyz wss://api.hyperliquid.xyz wss://api.hyperliquid-testnet.xyz; style-src 'self'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none';">
   <title>RWA Trade</title>
-  <meta name="description" content="Simple non-custodial Hyperliquid trading interface for RWA Markets.">
+  <meta name="description" content="Secure non-custodial trading interface for RWA Markets.">
   <link rel="stylesheet" href="./styles.css?v=1">
-  <link rel="stylesheet" href="./fund-modal.css?v=1">
+  <link rel="stylesheet" href="./fund-modal.css?v=2">
 </head>
 <body>
   <div class="app-shell">
@@ -18,7 +18,7 @@
         <div class="brand-mark">R</div>
         <div>
           <strong>RWA Trade</strong>
-          <small>Hyperliquid execution</small>
+          <small>RWA execution network</small>
         </div>
       </div>
       <div class="top-actions">
@@ -53,7 +53,7 @@
       </div>
 
       <div class="setup-actions">
-        <button id="fundBtn" class="button secondary" hidden>Fund TESTNET</button>
+        <button id="fundBtn" class="button secondary" hidden>Test collateral</button>
         <button id="enableTradingBtn" class="button primary" hidden>Enable 1-click trading</button>
         <button id="revokeAgentBtn" class="button danger-outline" hidden>Revoke API wallet</button>
       </div>
@@ -158,7 +158,7 @@
 
         <button id="tradeBtn" class="button trade-button" disabled>Connect wallet</button>
         <p class="microcopy">
-          Entry + TP/SL are submitted as one atomic Hyperliquid order group when protection is provided.
+          Entry + TP/SL are submitted as one atomic protected order group when protection is provided.
         </p>
       </aside>
     </main>
@@ -231,7 +231,7 @@
         </div>
         <div class="diag-grid">
           <div><small>Wallet</small><b id="diagWallet">ACTION</b></div>
-          <div><small>Venue API</small><b id="diagVenue">—</b></div>
+          <div><small>Execution API</small><b id="diagVenue">—</b></div>
           <div><small>Collateral</small><b id="diagCollateral">—</b></div>
           <div><small>API wallet</small><b id="diagAgent">—</b></div>
           <div><small>Mainnet</small><b id="diagMainnet">LOCKED</b></div>
@@ -248,7 +248,7 @@
   </div>
 
   <div id="toast" class="toast"></div>
-  <script src="./fund-modal.js?v=1"></script>
+  <script src="./fund-modal.js?v=3"></script>
   <script src="../execution-api.js?v=2"></script>
   <script type="module" src="./app.js?v=2"></script>
 </body>
