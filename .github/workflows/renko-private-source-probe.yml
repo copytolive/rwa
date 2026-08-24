@@ -9,42 +9,39 @@ on:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 7
+    timeout-minutes: 8
     steps:
-      - name: Probe private Renko live origins
+      - name: Inspect private Renko history contract
         shell: bash
         run: |
           set -euo pipefail
-          for origin in 'https://copytolive.com' 'https://seablueprint.com'; do
-            url="$origin/api/charting/hyperliquid/renko/BTC?limit=5000&live=1&smaPeriod=10&sma=10"
-            slug=$(echo "$origin" | tr -cd '[:alnum:]')
-            echo "== $url =="
-            rm -f "/tmp/h-$slug" "/tmp/b-$slug"
-            curl -sS -D "/tmp/h-$slug" -o "/tmp/b-$slug" --max-time 45 "$url" || true
-            sed -n '1,30p' "/tmp/h-$slug" || true
-            python3 - "$slug" <<'PY'
-          import json, pathlib, sys
-          slug=sys.argv[1]
-          p=pathlib.Path('/tmp/b-'+slug)
-          if not p.exists():
-              print('no body'); raise SystemExit(0)
-          raw=p.read_text(errors='replace')
-          print('body_bytes',len(raw.encode()))
-          try:d=json.loads(raw)
-          except Exception as e:
-              print('not json:',e,'prefix=',raw[:300]); raise SystemExit(0)
-          print('type',type(d).__name__)
-          if isinstance(d,dict):
-              print('keys',sorted(d.keys()))
-              c=d.get('candles')
-              if isinstance(c,list):
-                  print('candles',len(c))
-                  if c:
-                      print('first',c[0]); print('last',c[-1])
-              for k in ('lockedSma','lockedSmaPeriod','lockedProfile','source','provider','symbol'):
-                  if k in d: print(k,d[k])
+          origin='https://seablueprint.com'
+          python3 - <<'PY'
+          import json, subprocess, urllib.parse
+          origin='https://seablueprint.com'
+          variants=[
+            ('baseline', {'limit':'5000','live':'1','smaPeriod':'10','sma':'10'}),
+            ('history_all', {'limit':'20000','live':'1','history':'all'}),
+            ('tick_only', {'limit':'5000','live':'1','tickOnly':'1'}),
+            ('source_ticks', {'limit':'5000','live':'1','source':'ticks'}),
+            ('recorded_ticks_only', {'limit':'5000','live':'1','recordedTicksOnly':'1'}),
+          ]
+          for name,qs in variants:
+              url=origin+'/api/charting/hyperliquid/renko/BTC?'+urllib.parse.urlencode(qs)
+              print('\n==',name,url,'==')
+              p=subprocess.run(['curl','-sS','--max-time','45',url],capture_output=True,text=True)
+              if p.returncode:
+                  print('curl_error',p.returncode,p.stderr.strip()); continue
+              try:d=json.loads(p.stdout)
+              except Exception as e:
+                  print('json_error',e,'prefix',p.stdout[:200]); continue
+              c=d.get('candles') if isinstance(d,dict) else None
+              print('count',len(c) if isinstance(c,list) else None)
+              for k in ('source','construction','dataQuality','recordedTickCount','recordedTickStart','historyStart','historyEnd','windowStart','windowEnd','hasMore','truncated','returnedCount','inputBars','brickSize','reversalBricks','timeframe'):
+                  print(k,repr(d.get(k)))
+              if isinstance(c,list) and c:
+                  print('first',c[0]); print('last',c[-1])
           PY
-          done
 
       - name: Probe public Binance raw trade archive headers
         shell: bash
