@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "venue": "hyperliquid",
   "mainnetApi": "https://api.hyperliquid.xyz",
   "testnetApi": "https://api.hyperliquid-testnet.xyz",
@@ -10,6 +10,17 @@
     "testnet": true,
     "expiresAfterMs": 15000,
     "marketSlippageBps": 30
+  },
+  "funding": {
+    "mainnetEnabledByMachineGateOnly": true,
+    "arbitrumChainId": 42161,
+    "arbitrumChainIdHex": "0xa4b1",
+    "usdcAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+    "usdcDecimals": 6,
+    "bridgeAddress": "0x2df1c51e09aecf9cacb7bc98cb1742757f163df7",
+    "minimumDepositUsdc": 5,
+    "route": "native-arbitrum-usdc-bridge2",
+    "routePolicy": "machine-gated-master-wallet-only"
   },
   "builder": {
     "enabled": false,
