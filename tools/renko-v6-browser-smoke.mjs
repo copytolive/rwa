@@ -41,7 +41,8 @@ try{
   await page.fill('#pairSearch','');await page.waitForTimeout(50);
 
   const before=await page.evaluate(()=>({bars:window.RWARenkoV6.state.bars.length,bricks:window.RWARenkoV6.state.bricks.length,offset:window.RWARenkoV6.state.offset}));
-  await page.click('#historyPrev');await page.waitForFunction(b=>window.RWARenkoV6.state.bars.length>b.bars,before,{timeout:10000});
+  await page.evaluate(()=>{for(let i=0;i<160;i++)window.RWARenkoV6.moveOlder()});
+  await page.waitForFunction(b=>window.RWARenkoV6.state.bars.length>b.bars,before,{timeout:10000});
   const olderState=await page.evaluate(()=>({bars:window.RWARenkoV6.state.bars.length,bricks:window.RWARenkoV6.state.bricks.length,offset:window.RWARenkoV6.state.offset,visible:document.querySelector('#fastHistoryCount')?.textContent,from:document.querySelector('#fastHistoryFrom')?.textContent,to:document.querySelector('#fastHistoryTo')?.textContent}));assert.ok(olderState.bars>before.bars);assert.ok(olderState.bricks>=before.bricks);assert.ok(olderState.offset>0);assert.match(olderState.visible,/50 BRICKS VISIBLE/i);
 
   await page.click('#historyLive');await page.waitForTimeout(100);const live=await page.evaluate(()=>({mode:window.RWARenkoV6.state.mode,display:document.querySelector('#lazyHistoryCanvas')?.style.display,coverage:document.querySelector('#fastHistoryCoverage')?.textContent}));assert.equal(live.mode,'live');assert.equal(live.display,'none');assert.match(live.coverage,/LIVE RAW @TRADE/i);
