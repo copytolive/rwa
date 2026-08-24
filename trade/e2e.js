@@ -42,6 +42,11 @@ function venueDetail(result,fallback){
 }
 function money(value){const n=Number(value);return Number.isFinite(n)?`$${n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`:'—'}
 function short(value){return value?`${value.slice(0,6)}…${value.slice(-4)}`:'—'}
+function buySide(value){
+  const side=String(value||'').toUpperCase();
+  return side==='B'||side==='BUY'||side.includes('BUY');
+}
+function sameCoinOrder(row,coin){return String(row?.coin||'').toUpperCase()===String(coin||'').toUpperCase()&&buySide(row?.side)}
 async function execution(){
   for(let i=0;i<80;i++){
     if(window.RWAExecutionAPI?.version==='2.0.0')return window.RWAExecutionAPI;
@@ -71,6 +76,10 @@ async function currentPositions(api){
   const state=await api.account.state(true);
   return (state?.assetPositions||[]).map(x=>x?.position||x).filter(x=>Number(x?.szi||0)!==0);
 }
+async function currentOpenBuy(api,coin){
+  const rows=await api.orders.open(true);
+  return (Array.isArray(rows)?rows:[]).filter(row=>sameCoinOrder(row,coin));
+}
 async function agentReady(api){
   const check=await api.agent.verify(true,{force:true}).catch(()=>({valid:false}));
   if(check?.valid===true)return check;
@@ -95,8 +104,9 @@ async function cleanupTestState(api,coin){
 function setBusy(yes,label='Running…'){
   const button=document.getElementById('tradeE2ERun');
   if(!button)return;
-  if(yes){button.dataset.old=button.textContent;button.textContent=label;button.disabled=true}
-  else{button.textContent=button.dataset.old||'Run full TESTNET verification';button.disabled=false}
+  if(!button.dataset.base)button.dataset.base='Run full TESTNET verification';
+  if(yes){button.textContent=label;button.disabled=true}
+  else{button.textContent=button.dataset.base;button.disabled=false}
 }
 function statusText(text,type=''){
   const el=document.getElementById('tradeE2EStatus');
@@ -144,17 +154,35 @@ async function run(){
     const resting=await api.orders.limit({coin,side:'BUY',price:restingPrice,size:restingSize,reduceOnly:false,leverage:1,testnet:true,preferAgent:true});
     let oid=[...orderIds(resting)][0]||'';
     if(!oid){
-      oid=String(await waitFor(async()=>{
-        const rows=await api.orders.open(true);
-        const row=(rows||[]).find(x=>String(x?.coin||'').toUpperCase()===coin&&String(x?.side||'').toUpperCase().includes('B'));
-        return row?.oid||null;
-      },10000)||'');
+      const row=await waitFor(async()=>{
+        const rows=await currentOpenBuy(api,coin);
+        return rows[0]||null;
+      },10000);
+      oid=String(row?.oid||'');
     }
     if(!oid)throw Error('Resting TESTNET order was not observed');
+
     const modified=await api.orders.modify({coin,oid:Number(oid),side:'BUY',price:mid*0.71,size:restingSize,reduceOnly:false,testnet:true,preferAgent:true});
-    mark('modify',venueDetail(modified,`${coin} #${oid}`));
-    const canceled=await api.orders.cancel({coin,oid:Number(oid),testnet:true,preferAgent:true});
-    mark('cancel',venueDetail(canceled,`${coin} #${oid}`));
+    const modifiedIds=[...orderIds(modified)].map(String);
+    const replacement=await waitFor(async()=>{
+      const rows=await currentOpenBuy(api,coin);
+      if(!rows.length)return null;
+      const responseMatch=rows.find(row=>modifiedIds.includes(String(row?.oid||'')));
+      if(responseMatch)return responseMatch;
+      const newOid=rows.find(row=>String(row?.oid||'')!==String(oid));
+      return newOid||rows[0]||null;
+    },12000);
+    const replacementOid=String(replacement?.oid||'');
+    if(!replacementOid)throw Error('Modified TESTNET replacement order was not observed');
+    mark('modify',`${coin} #${oid}${replacementOid!==String(oid)?` → #${replacementOid}`:''} · venue accepted`);
+
+    const canceled=await api.orders.cancel({coin,oid:Number(replacementOid),testnet:true,preferAgent:true});
+    const gone=await waitFor(async()=>{
+      const rows=await currentOpenBuy(api,coin);
+      return !rows.some(row=>String(row?.oid||'')===replacementOid);
+    },10000);
+    if(!gone)throw Error('Canceled TESTNET order is still open at the venue');
+    mark('cancel',venueDetail(canceled,`${coin} #${replacementOid}`));
 
     setBusy(true,'Testing protected entry…');
     const size=notional/mid;
@@ -244,6 +272,6 @@ function render(){
   const publishButton=document.getElementById('tradeE2EPublish');if(publishButton)publishButton.disabled=!ok;
 }
 
-window.RWATradeE2E={version:'1.0.1',run,publish,status:()=>({wallet:wallet(),passed:passed(),evidence:load()}),reset:clear};
+window.RWATradeE2E={version:'1.0.2',run,publish,status:()=>({wallet:wallet(),passed:passed(),evidence:load()}),reset:clear};
 let attempts=0;const timer=setInterval(()=>{attempts++;if(ensureUi()){clearInterval(timer);render()}if(attempts>100)clearInterval(timer)},100);
 })();
