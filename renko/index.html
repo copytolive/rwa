@@ -4,21 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07090d">
-<title>RWA Renko — Full History Tick Traditional Crypto Chart</title>
-<meta name="description" content="RWA raw-tick Traditional Renko terminal with top-500 crypto markets and all formed brick history from chart genesis.">
+<title>RWA Renko — Raw Tick Lifetime Traditional Crypto Chart</title>
+<meta name="description" content="RWA Traditional Renko terminal: Binance raw individual trade archives to live @trade, top-500 crypto markets, explicit full-history coverage.">
 <link rel="preconnect" href="https://data-api.binance.vision" crossorigin>
 <link rel="preconnect" href="https://data-stream.binance.vision" crossorigin>
-<link rel="preconnect" href="https://api.binance.com" crossorigin>
 <link rel="stylesheet" href="renko.css?v=1">
 <link rel="stylesheet" href="renko-v2.css?v=2">
 <link rel="stylesheet" href="renko-v3.css?v=3">
+<link rel="stylesheet" href="renko-v5.css?v=5">
 </head>
 <body>
 <div class="app">
   <header class="topbar">
     <a class="brand" href="../" aria-label="Back to RWA Markets"><span class="brandmark">R</span><strong>RWA</strong></a>
     <nav class="nav"><a href="../">Markets</a><a class="active" href="./">Renko</a><a href="../trade/">Trade</a></nav>
-    <div class="top-status"><span class="mode-pill">RAW TICK · TRADITIONAL</span><span id="feedPill" class="feed-pill"><i></i><b>CONNECTING</b></span></div>
+    <div class="top-status"><span id="modePill" class="mode-pill">RAW TICK · TRADITIONAL</span><span id="feedPill" class="feed-pill"><i></i><b>CONNECTING</b></span></div>
   </header>
 
   <main class="workspace">
@@ -33,7 +33,7 @@
       <div class="instrument-bar">
         <div class="instrument">
           <div id="pairIcon" class="pair-icon">BT</div>
-          <div><div class="pair-title"><b id="pairName">BTC / USDT</b><span>SPOT</span></div><small id="sourceText">Binance raw trade tick · BTCUSDT@trade</small></div>
+          <div><div class="pair-title"><b id="pairName">BTC / USDT</b><span>SPOT</span></div><small id="sourceText">Binance raw individual trades · recent warmup → @trade live</small></div>
         </div>
         <div class="stats">
           <div><small>LAST</small><b id="lastPrice">—</b></div>
@@ -58,40 +58,47 @@
         <div class="thresholds"><span>UP <b id="nextUp">—</b></span><span>DOWN <b id="nextDown">—</b></span></div>
       </div>
 
+      <div class="archivebar" aria-label="Raw tick lifetime archive coverage">
+        <div class="archive-summary"><small>TOTAL TICK HISTORY</small><b id="archiveStatus" class="archive-status partial">RAW TICK HISTORY · NOT LOADED</b><span id="archiveDetail">Lifetime history uses Binance Vision individual trade archives only.</span></div>
+        <div><div class="archive-progress"><i id="archiveProgressFill"></i></div><small id="archiveProgressText">Discovering archive coverage…</small><div id="archiveCoverage">Archive coverage: —</div></div>
+        <div class="archive-actions"><button id="archiveLoad" class="primary">LOAD TOTAL TICK HISTORY</button><button id="archiveCancel" class="ghost" disabled>CANCEL</button></div>
+      </div>
+
       <div class="historybar" aria-label="Full Renko history navigation">
-        <div class="history-summary"><small>HISTORY</small><b id="historyCoverage">ALL · genesis → live</b><span id="historyCount">0 bricks</span></div>
+        <div class="history-summary"><small>RENKO HISTORY</small><b id="historyCoverage">RECENT RAW TICKS → LIVE</b><span id="historyCount">0 bricks</span></div>
         <div class="history-actions"><button id="historyStart">START</button><button id="historyPrev" aria-label="Older history">←</button><button id="historyAll" class="active">ALL HISTORY</button><button id="historyNext" aria-label="Newer history">→</button><button id="historyLive">LIVE</button></div>
         <input id="historyRange" class="history-range-input" type="range" min="0" max="0" value="0" disabled aria-label="History position">
         <div class="history-dates"><span id="historyFrom">—</span><i>→</i><span id="historyTo">—</span></div>
-        <div id="historyIntegrity" class="history-integrity">Full brick history retained from chart genesis</div>
+        <div id="historyIntegrity" class="history-integrity">Recent raw-trade warmup. COMPLETE is shown only after every discovered archive segment is processed.</div>
       </div>
 
       <div id="chartWrap" class="chart-wrap">
         <canvas id="renkoCanvas"></canvas>
         <div id="chartEmpty" class="chart-empty"><span class="spinner"></span><b>Loading raw ticks…</b><small>No candle/OHLC fallback is used.</small></div>
         <div id="tooltip" class="tooltip" hidden></div>
-        <div class="chart-badges"><span>RAW TICKS</span><span>FIXED BOX</span><span>2-BRICK REVERSAL</span><span>FULL HISTORY</span></div>
+        <div class="chart-badges"><span>RAW TRADES</span><span>FIXED BOX</span><span>2-BRICK REVERSAL</span><span>TICK ARCHIVE V5</span></div>
       </div>
 
       <div class="footerbar">
-        <div><span id="historyState">Warmup pending</span><small>Chart genesis starts from the first raw trade loaded for this chart. Every brick formed after genesis remains visible in ALL HISTORY. This is chart history, not the exchange's lifetime trade archive.</small></div>
+        <div><span id="historyState">Recent raw tick warmup pending</span><small>Historical COMPLETE means the oldest available Binance Vision individual trade archive through the latest archived day has been processed, then live continues from Binance @trade. The page never substitutes candles, OHLC, klines or aggTrades for missing tick history.</small></div>
         <div class="legend"><span><i class="up"></i> Up brick</span><span><i class="down"></i> Down brick</span></div>
       </div>
 
       <details class="methodology">
-        <summary>Traditional Renko methodology & history integrity</summary>
+        <summary>Traditional Renko methodology & raw-tick history integrity</summary>
         <div class="method-grid">
-          <div><b>Tick source</b><p>Bricks are calculated only from individual public trade events. No candle, OHLC, kline, ATR or aggregate-trade source is used.</p></div>
-          <div><b>Traditional box</b><p>The box is a fixed absolute value. Continuation requires one box; reversal requires two boxes. AUTO and percentage buttons only choose a fixed box, then the engine remains Traditional.</p></div>
-          <div><b>Full chart history</b><p>ALL HISTORY renders every brick formed since this chart's genesis. START and LIVE switch to a readable navigation window without deleting older bricks.</p></div>
-          <div><b>500-market universe</b><p>Crypto spot markets are ranked by 24h USD-equivalent liquidity. The first 500 are shown and the full eligible universe remains searchable.</p></div>
-          <div><b>Raw-tick buffer</b><p>Older bricks are never trimmed during the chart session. Raw ticks are buffered separately for rebuilds; if that raw buffer eventually compacts, changing box size starts a new chart genesis rather than silently inventing history.</p></div>
-          <div><b>Synthetic chart</b><p>Renko brick prices are synthetic. Trading and fills must use the real venue price through the RWA execution path.</p></div>
+          <div><b>Historical source</b><p>Binance Vision spot <code>trades</code> archives: individual executions. Missing archive segments keep status PARTIAL; they are never replaced by candles.</p></div>
+          <div><b>Live source</b><p>Binance Spot <code>@trade</code> individual trade WebSocket. The last archived tick is joined to live venue ticks.</p></div>
+          <div><b>Traditional box</b><p>The box is a fixed absolute value. Continuation requires one box; reversal requires two boxes. AUTO/pct controls only select the fixed box size.</p></div>
+          <div><b>Total history</b><p>LOAD TOTAL TICK HISTORY runs archive decoding in a Web Worker so desktop/mobile UI remains responsive. COMPLETE is fail-closed and requires every discovered segment to process.</p></div>
+          <div><b>500-market universe</b><p>The first 500 eligible crypto markets are shown by 24h USD-equivalent liquidity; the complete eligible universe remains searchable.</p></div>
+          <div><b>Synthetic chart</b><p>Renko brick prices are synthetic. Trading/fills must use actual venue prices through the RWA execution path.</p></div>
         </div>
       </details>
     </section>
   </main>
 </div>
 <script src="renko-v3.js?v=3"></script>
+<script src="renko-v5.js?v=5"></script>
 </body>
 </html>
