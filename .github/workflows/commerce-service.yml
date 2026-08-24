@@ -6,6 +6,7 @@ on:
       - "commerce-service/**"
       - "rwa-commerce-api.js"
       - "rwa-commerce-live.js"
+      - "rwa-commerce-account.js"
       - "rwa-commerce-config.json"
       - "quick-actions.js"
       - ".github/workflows/commerce-service.yml"
@@ -14,6 +15,7 @@ on:
       - "commerce-service/**"
       - "rwa-commerce-api.js"
       - "rwa-commerce-live.js"
+      - "rwa-commerce-account.js"
       - "rwa-commerce-config.json"
       - "quick-actions.js"
       - ".github/workflows/commerce-service.yml"
@@ -39,13 +41,21 @@ jobs:
         run: |
           node --check rwa-commerce-api.js
           node --check rwa-commerce-live.js
+          node --check rwa-commerce-account.js
           node --check quick-actions.js
           python -m json.tool rwa-commerce-config.json >/dev/null
           test "$(python -c 'import json; print(json.load(open("rwa-commerce-config.json"))["api_base"])')" = ""
           grep -Fq 'ONE_TOKEN_ONE_PHYSICAL_STORE_V1' rwa-commerce-api.js
           grep -Fq 'Commerce backend is not deployed' rwa-commerce-api.js
+          grep -Fq 'sellerStores' rwa-commerce-api.js
+          grep -Fq 'authoritative-buyer-seller-account-v1' rwa-commerce-account.js
+          grep -Fq 'STORE VERIFIED' rwa-commerce-account.js
+          grep -Fq 'ASSET VERIFIED' rwa-commerce-account.js
+          grep -Fq "loadScript('rwa-commerce-account.js?v=1')" quick-actions.js
           grep -Fq 'midtrans_requires_idr' commerce-service/commerce-core.mjs
           grep -Fq 'invalid_payment_signature' commerce-service/server.mjs
+          grep -Fq '/v1/seller/stores' commerce-service/server.mjs
+          grep -Fq '/v1/seller/products' commerce-service/server.mjs
           grep -Fq 'idempotency' commerce-service/server.mjs
       - name: Build deployment image
         run: docker build -f commerce-service/Dockerfile -t rwa-commerce:${GITHUB_SHA} .
