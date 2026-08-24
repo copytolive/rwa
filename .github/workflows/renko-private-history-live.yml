@@ -1,0 +1,148 @@
+name: RWA Renko Private Full History
+
+on:
+  pull_request:
+    paths:
+      - 'renko/**'
+      - '.github/workflows/renko-private-history-live.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'renko/**'
+      - '.github/workflows/renko-private-history-live.yml'
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JavaScript and loader contract
+        run: |
+          set -euo pipefail
+          node --check renko/renko-v4.js
+          grep -q 'renko-v4.js?v=4' renko/index.html
+          grep -q 'PRIVATE FULL HISTORY' renko/index.html
+          grep -q 'Traditional 2-brick' renko/index.html
+
+      - name: Private Renko CORS and pagination contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://seablueprint.com/api/charting/hyperliquid/renko/BTC'
+          curl -sS --max-time 60 -D /tmp/h0 -o /tmp/p0.json \
+            -H 'Origin: https://narzulalistiqlal.github.io' \
+            "$BASE?limit=25000&offset=0&live=1&history=all"
+          grep -qi '^access-control-allow-origin: https://narzulalistiqlal.github.io' /tmp/h0
+          python3 - <<'PY'
+          import json, subprocess
+          p0=json.load(open('/tmp/p0.json'))
+          assert p0['construction'].startswith('Traditional 2-brick reversal'), p0.get('construction')
+          assert p0.get('dataQuality')=='REAL_MARKET_OBSERVATIONS', p0.get('dataQuality')
+          assert p0.get('reversalBricks')==2, p0.get('reversalBricks')
+          assert 1000 <= len(p0.get('candles',[])) <= 25000
+          total=int(p0.get('count') or 0)
+          assert total >= len(p0['candles'])
+          pages=[p0]
+          offset=len(p0['candles'])
+          while pages[-1].get('hasMore') and offset < total:
+              url=f"https://seablueprint.com/api/charting/hyperliquid/renko/BTC?limit=25000&offset={offset}&brickSize={p0['brickSize']}&live=1&history=all"
+              raw=subprocess.check_output(['curl','-sS','--max-time','60','-H','Origin: https://narzulalistiqlal.github.io',url],text=True)
+              p=json.loads(raw)
+              assert p['brickSize']==p0['brickSize']
+              pages.append(p)
+              offset += len(p.get('candles',[]))
+              assert len(pages) < 10
+          combined=[]
+          for p in reversed(pages): combined.extend(p.get('candles',[]))
+          keys=[]; seen=set()
+          for b in combined:
+              k=(b.get('time'),b.get('open'),b.get('close'))
+              if k not in seen: seen.add(k); keys.append(k)
+          assert len(keys)==total, (len(keys),total,[ (x.get('windowStart'),x.get('windowEnd')) for x in pages ])
+          assert pages[-1].get('windowStart')==0
+          print('FULL_HISTORY_PASS', total, 'bricks', len(pages), 'pages', p0['historyStart'], '->', p0['historyEnd'])
+          PY
+
+      - name: Top-500 crypto universe available
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -sS --max-time 30 'https://data-api.binance.vision/api/v3/exchangeInfo' -o /tmp/exchange.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/exchange.json'))
+          stable={'USDT','USDC','FDUSD','TUSD','USDP','DAI','BUSD'}
+          excluded=stable|{'EUR','GBP','TRY','BRL','AUD','RUB','UAH','NGN','ZAR','PLN','RON','ARS','CZK','MXN','JPY','IDR','AED'}
+          rows=[x for x in d.get('symbols',[]) if x.get('status')=='TRADING' and x.get('isSpotTradingAllowed',True) is not False and x.get('baseAsset') not in excluded and x.get('quoteAsset') in stable]
+          assert len(rows)>=500, len(rows)
+          print('CRYPTO_UNIVERSE_PASS',len(rows))
+          PY
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install chromium
+      - name: Serve branch
+        run: |
+          python3 -m http.server 5000 >/tmp/renko-http.log 2>&1 &
+          echo $! >/tmp/renko-http.pid
+          sleep 2
+      - name: Desktop and mobile Renko operability
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:1440,height:900}});
+            const errors=[];
+            page.on('pageerror',e=>errors.push(String(e)));
+            page.on('console',m=>{ if(m.type()==='error') errors.push('console:'+m.text()); });
+            await page.goto('http://127.0.0.1:5000/renko/',{waitUntil:'domcontentloaded',timeout:30000});
+            await page.waitForFunction(()=>window.RWARenkoV4===true,{timeout:10000});
+            await page.waitForFunction(()=>{
+              const n=Number((document.getElementById('brickCount')?.textContent||'0').replace(/[^0-9]/g,''));
+              return n>5000 && (document.getElementById('historyIntegrity')?.textContent||'').includes('REAL_MARKET_OBSERVATIONS');
+            },{timeout:90000});
+            const desktop=await page.evaluate(()=>({
+              bricks:Number((document.getElementById('brickCount').textContent||'0').replace(/[^0-9]/g,'')),
+              pairs:document.querySelectorAll('#pairList .pair-row').length,
+              mode:document.getElementById('modePill').textContent,
+              integrity:document.getElementById('historyIntegrity').textContent,
+              from:document.getElementById('historyFrom').textContent,
+              to:document.getElementById('historyTo').textContent,
+              width:document.documentElement.scrollWidth,
+              inner:innerWidth,
+              canvas:[document.getElementById('renkoCanvas').width,document.getElementById('renkoCanvas').height]
+            }));
+            if(desktop.bricks<=5000) throw Error('full history not loaded');
+            if(desktop.pairs<500) throw Error('top 500 not rendered: '+desktop.pairs);
+            if(!desktop.mode.includes('PRIVATE FULL HISTORY')) throw Error('wrong mode '+desktop.mode);
+            if(desktop.from==='—'||desktop.to==='—') throw Error('history dates missing');
+            if(desktop.width>desktop.inner+2) throw Error('desktop horizontal overflow '+desktop.width+'>'+desktop.inner);
+            if(!desktop.canvas[0]||!desktop.canvas[1]) throw Error('canvas not rendered');
+            await page.click('#historyStart');
+            await page.waitForFunction(()=>document.getElementById('historyCoverage').textContent.startsWith('WINDOW'));
+            await page.click('#historyLive');
+            await page.click('#historyAll');
+            await page.waitForFunction(()=>document.getElementById('historyCoverage').textContent.startsWith('ALL'));
+            await page.setViewportSize({width:390,height:844});
+            await page.waitForTimeout(500);
+            const mobile=await page.evaluate(()=>({width:document.documentElement.scrollWidth,inner:innerWidth,chart:document.getElementById('chartWrap').getBoundingClientRect().width}));
+            if(mobile.width>mobile.inner+2) throw Error('mobile horizontal overflow '+mobile.width+'>'+mobile.inner);
+            if(mobile.chart>mobile.inner+2) throw Error('mobile chart overflow');
+            const fatal=errors.filter(x=>!/favicon|ResizeObserver/i.test(x));
+            if(fatal.length) throw Error('browser errors: '+fatal.join(' | '));
+            console.log('BROWSER_PASS',desktop,mobile);
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
