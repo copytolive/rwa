@@ -39,7 +39,7 @@ jobs:
           ! grep -Fq '<iframe' trade/index.html
           grep -Fq 'Get test balance' trade/index.html
           grep -Fq "version:'1.5.0'" trade/config.js
-          grep -Fq "uiRelease:'terminal-pro-v1'" trade/config.js
+          grep -Fq "uiRelease:'terminal-pro-commerce-v2'" trade/config.js
           grep -Fq "import './provider-runtime.js?v=1'" trade/config.js
           grep -Fq "import('./margin-runtime.js?v=1')" trade/config.js
           grep -Fq "import('./chart-overlays.js?v=1')" trade/config.js
