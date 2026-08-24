@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07090d">
+<title>RWA Renko — Tick Traditional Crypto Chart</title>
+<meta name="description" content="RWA tick-based Traditional Renko terminal for crypto spot pairs using raw public trade ticks.">
+<link rel="preconnect" href="https://data-api.binance.vision" crossorigin>
+<link rel="preconnect" href="https://data-stream.binance.vision" crossorigin>
+<link rel="stylesheet" href="renko.css?v=1">
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to RWA Markets"><span class="brandmark">R</span><strong>RWA</strong></a>
+    <nav class="nav"><a href="../">Markets</a><a class="active" href="./">Renko</a><a href="../trade/">Trade</a></nav>
+    <div class="top-status"><span class="mode-pill">TICK · TRADITIONAL</span><span id="feedPill" class="feed-pill"><i></i><b>CONNECTING</b></span></div>
+  </header>
+
+  <main class="workspace">
+    <aside class="markets" aria-label="Crypto pair selector">
+      <div class="aside-head"><div><small>CRYPTO ONLY</small><h1>Renko Markets</h1></div><span id="pairTotal">—</span></div>
+      <div class="search"><span>⌕</span><input id="pairSearch" autocomplete="off" placeholder="Search BTC, ETH, SOL…"></div>
+      <div class="quote-note">USDT spot · raw trade ticks only</div>
+      <div id="pairList" class="pair-list"><div class="empty">Loading crypto pairs…</div></div>
+    </aside>
+
+    <section class="terminal">
+      <div class="instrument-bar">
+        <div class="instrument">
+          <div id="pairIcon" class="pair-icon">BT</div>
+          <div><div class="pair-title"><b id="pairName">BTC / USDT</b><span>SPOT</span></div><small id="sourceText">Binance raw trade stream</small></div>
+        </div>
+        <div class="stats">
+          <div><small>LAST</small><b id="lastPrice">—</b></div>
+          <div><small>BRICK</small><b id="brickValue">—</b></div>
+          <div><small>BRICKS</small><b id="brickCount">0</b></div>
+          <div><small>TICKS</small><b id="tickCount">0</b></div>
+        </div>
+      </div>
+
+      <div class="controlbar">
+        <div class="field brick-field"><label>FIXED BRICK SIZE</label><div class="brick-input"><input id="brickSize" inputmode="decimal" value="100"><button id="applyBrick">Apply</button></div></div>
+        <div class="field"><label>VISIBLE BRICKS</label><div class="stepper"><button id="zoomOut" aria-label="Show more bricks">−</button><b id="visibleValue">120</b><button id="zoomIn" aria-label="Show fewer bricks">+</button></div></div>
+        <label class="toggle"><input id="followLive" type="checkbox" checked><span></span><b>FOLLOW LIVE</b></label>
+        <button id="resetChart" class="ghost">Reset ticks</button>
+        <div class="thresholds"><span>UP <b id="nextUp">—</b></span><span>DOWN <b id="nextDown">—</b></span></div>
+      </div>
+
+      <div id="chartWrap" class="chart-wrap">
+        <canvas id="renkoCanvas"></canvas>
+        <div id="chartEmpty" class="chart-empty"><span class="spinner"></span><b>Loading raw ticks…</b><small>No candle/OHLC fallback is used.</small></div>
+        <div id="tooltip" class="tooltip" hidden></div>
+        <div class="chart-badges"><span>RAW TICKS</span><span>FIXED BOX</span><span>2-BRICK REVERSAL</span></div>
+      </div>
+
+      <div class="footerbar">
+        <div><span id="historyState">Warmup pending</span><small>Recent history: up to 1,000 raw public trades, then live <code>@trade</code>.</small></div>
+        <div class="legend"><span><i class="up"></i> Up brick</span><span><i class="down"></i> Down brick</span></div>
+      </div>
+
+      <details class="methodology">
+        <summary>Traditional Renko methodology & safety</summary>
+        <div class="method-grid">
+          <div><b>Tick source</b><p>Bricks are calculated only from individual public trade events. No 1m/5m candle, OHLC or ATR source is used.</p></div>
+          <div><b>Traditional box</b><p>The box size is a fixed absolute price value. Same-direction continuation needs 1 box; a direction reversal needs 2 boxes.</p></div>
+          <div><b>Synthetic chart</b><p>Renko brick open/close values are synthetic. Trading and fills must still use the real venue price through the RWA execution path.</p></div>
+        </div>
+      </details>
+    </section>
+  </main>
+</div>
+<script src="renko.js?v=1"></script>
+</body>
+</html>
