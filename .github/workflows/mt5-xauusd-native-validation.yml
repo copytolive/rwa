@@ -92,6 +92,13 @@ jobs:
              CustomSymbolSetDouble(InpSymbol,SYMBOL_TRADE_TICK_SIZE,0.01);
              CustomSymbolSetDouble(InpSymbol,SYMBOL_TRADE_TICK_VALUE,1.0);
              CustomSymbolSetDouble(InpSymbol,SYMBOL_TRADE_CONTRACT_SIZE,100.0);
+             CustomSymbolSetDouble(InpSymbol,SYMBOL_VOLUME_MIN,0.01);
+             CustomSymbolSetDouble(InpSymbol,SYMBOL_VOLUME_MAX,100.0);
+             CustomSymbolSetDouble(InpSymbol,SYMBOL_VOLUME_STEP,0.01);
+             CustomSymbolSetDouble(InpSymbol,SYMBOL_VOLUME_LIMIT,100.0);
+             CustomSymbolSetInteger(InpSymbol,SYMBOL_TRADE_CALC_MODE,SYMBOL_CALC_MODE_CFD);
+             CustomSymbolSetInteger(InpSymbol,SYMBOL_TRADE_STOPS_LEVEL,0);
+             CustomSymbolSetInteger(InpSymbol,SYMBOL_TRADE_FREEZE_LEVEL,0);
              CustomSymbolSetInteger(InpSymbol,SYMBOL_TRADE_MODE,SYMBOL_TRADE_MODE_FULL);
              int h=FileOpen(InpFile,FILE_READ|FILE_CSV|FILE_ANSI,'\t');
              if(h==INVALID_HANDLE) { Print("FileOpen failed ",GetLastError()); ExpertRemove(); return; }
@@ -194,7 +201,7 @@ jobs:
           UseLocal=1
           UseRemote=0
           UseCloud=0
-          Report=C:\mt5val\out\mt5_report
+          Report=mt5_report
           ReplaceReport=1
           ShutdownTerminal=1
           Visual=0
@@ -215,8 +222,32 @@ jobs:
           $p=Start-Process "$env:MT5_ROOT\terminal64.exe" -ArgumentList '/portable','/config:C:\mt5val\tester.ini' -PassThru
           if(-not $p.WaitForExit(1200000)) { $p.Kill(); throw 'Tester timed out' }
           Get-ChildItem "$env:MT5_ROOT\Tester\logs" -Filter *.log -Recurse | Copy-Item -Destination C:\mt5val\out\ -ErrorAction SilentlyContinue
+          $reportRoots = @($env:MT5_ROOT, "$env:APPDATA\MetaQuotes")
+          foreach($reportRoot in $reportRoots) {
+            Get-ChildItem $reportRoot -Filter 'mt5_report*' -File -Recurse -ErrorAction SilentlyContinue |
+              Copy-Item -Destination C:\mt5val\out\ -Force -ErrorAction SilentlyContinue
+          }
+          $testerLogs = Get-ChildItem C:\mt5val\out -Filter *.log -File
+          $logText = ($testerLogs | ForEach-Object { Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue }) -join "`n"
+          $testPassed = $logText -match 'Test passed'
+          $entries = ([regex]::Matches($logText,'market (buy|sell) [0-9]')).Count
+          $tpCloses = ([regex]::Matches($logText,'closed by take-profit')).Count
+          $slCloses = ([regex]::Matches($logText,'closed by stop-loss')).Count
+          $locks = ([regex]::Matches($logText,'Profit-lock armed')).Count
+          $invalidStopModify = ([regex]::Matches($logText,'PositionModify exact SL/TP failed')).Count
+          $weeks = (([datetime]'2025-01-01') - ([datetime]'2024-01-01')).TotalDays / 7
+          $fullTpWr = if($entries -gt 0) { [math]::Round(100*$tpCloses/$entries,4) } else { 0 }
+          $fillsPerWeek = [math]::Round($entries/$weeks,4)
+          $targetPassed = $testPassed -and $fullTpWr -ge 60 -and $fillsPerWeek -ge 2 -and $invalidStopModify -eq 0
+          [ordered]@{
+            test_passed=$testPassed; entries=$entries; full_tp_closes=$tpCloses; stop_loss_closes=$slCloses;
+            profit_locks=$locks; invalid_stop_modifications=$invalidStopModify; full_tp_win_rate_pct=$fullTpWr;
+            fills_per_week=$fillsPerWeek; target_full_tp_win_rate_pct=60; target_fills_per_week=2;
+            target_passed=$targetPassed; verdict=$(if($targetPassed){'TRADABLE_TARGET_PASS'}else{'NOT_TRADABLE_TARGET_FAIL'})
+          } | ConvertTo-Json | Set-Content C:\mt5val\out\native_summary.json -Encoding UTF8
+          Get-Content C:\mt5val\out\native_summary.json
           Get-ChildItem C:\mt5val\out -Recurse | Select-Object FullName,Length | Format-Table | Out-File C:\mt5val\out\manifest.txt
-          if (!(Get-ChildItem C:\mt5val\out -Filter 'mt5_report*' -ErrorAction SilentlyContinue)) { throw 'Native MT5 report missing' }
+          if(-not $testPassed) { throw 'MT5 Strategy Tester did not report Test passed' }
 
       - name: Upload native MT5 evidence
         if: always()
