@@ -23,6 +23,9 @@ jobs:
           node --check social-notification-defaults.js
           node --check social-trading-pro.js
           node --check rwa-storefront.js
+          node --check rwa-storefront-safety-patch.js
+          node --check rwa-store-draft-ui.js
+          node --check rwa-home-commerce.js
           node --check quick-actions.js
           node --check trade/app.js
           node --check trade/hyperliquid.js
@@ -60,12 +63,15 @@ jobs:
           grep -Fq "policy:'explicit-opt-in-v1'" social-notification-defaults.js
           grep -Fq "venue-backed-social-feed-v1" social-trading-pro.js
           grep -Fq "ONE_TOKEN_ONE_PHYSICAL_STORE_V1" rwa-storefront.js
+          grep -Fq "preview-no-fake-price-trade-v1" rwa-storefront-safety-patch.js
+          grep -Fq "UNVERIFIED_LOCAL_DRAFT" rwa-store-draft-ui.js
+          grep -Fq "landing-commerce-surface-v1" rwa-home-commerce.js
           grep -Fq '"one_token_one_physical_store": true' rwa-commerce-registry.json
           grep -Fq 'verifiedStore(s)&&verifiedAsset(s.token)' rwa-storefront.js
           grep -Fq 'social-trade-monitor.js?v=1' suite.js
           grep -Fq 'RWAMarginRuntime' trade/margin-runtime.js
           grep -Fq 'RWAChartTradeOverlay' trade/chart-overlays.js
-          ! grep -Fq 'ExchangeClient' trade/margin-runtime.js trade/chart-overlays.js quick-actions.js social-trade-monitor.js social-trading-pro.js rwa-storefront.js trade/ui-polish.js
+          ! grep -Fq 'ExchangeClient' trade/margin-runtime.js trade/chart-overlays.js quick-actions.js social-trade-monitor.js social-trading-pro.js rwa-storefront.js rwa-storefront-safety-patch.js rwa-store-draft-ui.js rwa-home-commerce.js trade/ui-polish.js
       - name: Verify public GitHub Pages release surfaces
         shell: bash
         run: |
@@ -80,6 +86,9 @@ jobs:
             tradeui="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/ui-polish.js?v=$q" || true)"
             quick="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/quick-actions.js?v=$q" || true)"
             storefront="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-storefront.js?v=$q" || true)"
+            safety="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-storefront-safety-patch.js?v=$q" || true)"
+            draft="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-store-draft-ui.js?v=$q" || true)"
+            home="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-home-commerce.js?v=$q" || true)"
             commerce="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-commerce-registry.json?v=$q" || true)"
             defaults="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-notification-defaults.js?v=$q" || true)"
             socialpro="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-trading-pro.js?v=$q" || true)"
@@ -95,7 +104,13 @@ jobs:
               && grep -Fq 'RWAChartTradeOverlay' <<<"$overlay" \
               && grep -Fq 'desktop-mobile-commerce-polish-v1' <<<"$tradeui" \
               && grep -Fq 'premium-shell-storefront-v1' <<<"$quick" \
+              && grep -Fq 'rwa-storefront-safety-patch.js?v=1' <<<"$quick" \
+              && grep -Fq 'rwa-store-draft-ui.js?v=1' <<<"$quick" \
+              && grep -Fq 'rwa-home-commerce.js?v=1' <<<"$quick" \
               && grep -Fq 'ONE_TOKEN_ONE_PHYSICAL_STORE_V1' <<<"$storefront" \
+              && grep -Fq 'preview-no-fake-price-trade-v1' <<<"$safety" \
+              && grep -Fq 'UNVERIFIED_LOCAL_DRAFT' <<<"$draft" \
+              && grep -Fq 'landing-commerce-surface-v1' <<<"$home" \
               && grep -Fq '"one_token_one_physical_store": true' <<<"$commerce" \
               && grep -Fq "policy:'explicit-opt-in-v1'" <<<"$defaults" \
               && grep -Fq "venue-backed-social-feed-v1" <<<"$socialpro" \
@@ -107,7 +122,7 @@ jobs:
       - name: Publish release candidate status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/release-candidate' -f description='Trading, social, physical-store ecommerce UI and live Pages release surfaces verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/release-candidate' -f description='Trading, social, landing, physical-store ecommerce UI and live Pages surfaces verified'
       - name: Publish release candidate failure
         if: failure()
         env:
