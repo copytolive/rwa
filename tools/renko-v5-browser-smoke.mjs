@@ -34,11 +34,11 @@ try{
   const desktop=await page.evaluate(()=>({version:window.RWARenko.version,auto:window.RWARenkoV5Auto.version,preview:window.RWARenkoV5Auto.preview,source:window.RWARenko.source,history:window.RWARenko.history,scope:window.RWARenko.historyScope,pairs:document.querySelectorAll('.pair-row').length,total:window.RWARenkoV3.state.symbols.length,last:window.RWARenkoV3.state.lastPrice,width:document.documentElement.scrollWidth,inner:innerWidth,archive:document.querySelector('.archivebar')?.getBoundingClientRect().toJSON(),button:document.querySelector('#archiveLoad')?.textContent}));
   assert.equal(desktop.version,'5.0.0');assert.equal(desktop.auto,'5.2.0');assert.equal(desktop.preview,'progressive-archive-brick-stream');assert.equal(desktop.source,'raw-trade-ticks-only');assert.equal(desktop.history,'raw-tick-lifetime-archives');assert.match(desktop.scope,/oldest-available/);assert.equal(desktop.pairs,500);assert.ok(desktop.total>=650);assert.equal(desktop.last,112);assert.ok(desktop.width<=desktop.inner+2);assert.ok(desktop.archive?.width>700);assert.match(desktop.button,/TOTAL TICK HISTORY/);
 
-  await page.evaluate(()=>window.RWARenkoV5?.cancel());
+  await page.waitForTimeout(1400);
+  await page.evaluate(()=>{window.RWARenkoV5?.cancel();const a=window.RWARenkoV5Auto,s=window.RWARenkoV3.state;a.state.lastKey=`${s.selected}|${Number(s.box)}`;a.state.armed=true;a.resetPreview()});
   const preview=await page.evaluate(async()=>{
     const first=Date.UTC(2017,7,17),bricks=[];let p=4200;
     for(let i=0;i<600;i++){const d=i%9===0?-1:1,o=p,c=p+d*100;bricks.push([o,c,d,first+i*60000,i]);p=c}
-    window.RWARenkoV5Auto.resetPreview();
     window.RWARenkoV5Auto.previewChunk({bricks,bricksTotal:600,ticks:25000,firstTime:first,lastTime:first+599*60000});
     await new Promise(r=>setTimeout(r,350));
     const c=document.querySelector('#archivePreview');
