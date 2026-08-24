@@ -1,0 +1,72 @@
+name: RWA Renko Tick Traditional
+
+on:
+  pull_request:
+    paths:
+      - "renko/**"
+      - "tools/renko-browser-smoke.mjs"
+      - ".github/workflows/renko-smoke.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "renko/**"
+      - "tools/renko-browser-smoke.mjs"
+      - ".github/workflows/renko-smoke.yml"
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: rwa-renko-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  renko:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate Renko source contract
+        run: |
+          node --check renko/renko.js
+          node --check tools/renko-browser-smoke.mjs
+          test -s renko/index.html
+          test -s renko/renko.css
+          grep -Fq "source:'raw-trade-ticks-only'" renko/renko.js
+          grep -Fq "method:'traditional-fixed-box'" renko/renko.js
+          grep -Fq "reversalBoxes:2" renko/renko.js
+          grep -Fq '/api/v3/trades?symbol=' renko/renko.js
+          grep -Fq '@trade' renko/renko.js
+          ! grep -Fq '/api/v3/klines' renko/renko.js
+          ! grep -Fq '@kline_' renko/renko.js
+          ! grep -Fq '@aggTrade' renko/renko.js
+          ! grep -Fq 'ATR' renko/renko.js
+          grep -Fq 'CRYPTO ONLY' renko/index.html
+          grep -Fq '2-BRICK REVERSAL' renko/index.html
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start local site
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/rwa-renko-http.log 2>&1 &
+          echo $! >/tmp/rwa-renko-http.pid
+          for i in {1..20}; do curl -fsS http://127.0.0.1:4173/renko/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/rwa-renko-http.log
+          exit 1
+      - name: Test Traditional Renko engine and responsive UI
+        run: node tools/renko-browser-smoke.mjs
+      - name: Publish Renko status
+        if: success() && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/renko-live' -f description='Raw tick Traditional Renko engine + desktop/mobile UI PASS'
+      - name: Publish Renko failure
+        if: failure() && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/renko-live' -f description='Renko tick Traditional gate failed'
