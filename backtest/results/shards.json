@@ -481,6 +481,86 @@
       "merkle_root": "f344f967ff7d8afa3daa581f81b4c06b77c85a80eb73c93955543b41fb2a7945",
       "valid_samples": 1744314,
       "completed_at": "2026-08-23T18:47:05.382380+00:00"
+    },
+    {
+      "shard_id": "310dd05b4d946a111e8609ba31f4f57647a5fedba54a3ff11e97431e43517bf0",
+      "month": "2013-04",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "ed39602d50ea0a366e228a96bf8dc511d1f12dd0c68d2381f5b835f895ec946f",
+      "evaluation_count": 59,
+      "merkle_root": "9ec2ad483fb36e5f527537dac456ae081ffd2e8937440f433139fe353893e155",
+      "valid_samples": 1855074,
+      "completed_at": "2026-08-24T01:56:26.430203+00:00"
+    },
+    {
+      "shard_id": "44cf6b2147a3f212af359e0e5d56bd845798bef1e83a9a4458da0f2bed78a6d1",
+      "month": "2013-05",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "b66f55d730ba5375ffd2f95b9e48ffb802117bd03d7ca1c24f4995c11695a173",
+      "evaluation_count": 59,
+      "merkle_root": "05cb9cfaa915aa1140db13a516fb2cbdc51cf4840e41a70ae68b65d8658b9f75",
+      "valid_samples": 1931381,
+      "completed_at": "2026-08-24T01:56:29.603435+00:00"
+    },
+    {
+      "shard_id": "c0f6b9b5deab0ace7437c1ffc415ab6958c8c76d4b9c3fa8e89dcdcd7f749896",
+      "month": "2013-06",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "b0aabc537cd19860233830905b09bd76c078ea2670f5565d54f0ade930527d03",
+      "evaluation_count": 59,
+      "merkle_root": "2ae71eceb98da57c6a12ebf8d5604d32639f5314d249d2dd9f5eef20618df409",
+      "valid_samples": 1582740,
+      "completed_at": "2026-08-24T01:56:32.544006+00:00"
+    },
+    {
+      "shard_id": "6f5b8856347b824395c6ccea255bd9cbddefba5fed7acec52ff4b7c7cc0ca43d",
+      "month": "2013-07",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "f27b02bfb3cc805a4b0fdbc282b1d41ec51f2f8e540b2bf07337d0e1d21cbcb0",
+      "evaluation_count": 59,
+      "merkle_root": "db57d0485dcf5002b3fc7eafc42181940f08ebea98d17a1166918557cf69c980",
+      "valid_samples": 1919100,
+      "completed_at": "2026-08-24T01:56:35.743194+00:00"
+    },
+    {
+      "shard_id": "21835f9fd65a7a9609451fc93db381e4267c92e18cd47d967d7ec697774488d6",
+      "month": "2013-08",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "5c15d64fe24826158e468bbb5cf8c1094ac62d3f6b1c3d0dcf85b2b3f5341257",
+      "evaluation_count": 59,
+      "merkle_root": "822346d3ed598a17e4f2a0b7e2bf9077f556299feaf018ab5ab25a0a3f12de8a",
+      "valid_samples": 1820099,
+      "completed_at": "2026-08-24T01:56:40.188351+00:00"
+    },
+    {
+      "shard_id": "c15c00fb34c7ddd29336beaef69618733379f65f9d328f2fa5215b76d0afb859",
+      "month": "2013-09",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "7f0d3e2f182799fbd4a321defec6ab7bd986c733b71f7ec4f782dd3890ac79e5",
+      "evaluation_count": 59,
+      "merkle_root": "4fffcffc3c0fb927e97e1086bc82d4056525c9daaf0256bbfcb25efb6dd1ca75",
+      "valid_samples": 1733061,
+      "completed_at": "2026-08-24T01:56:46.488905+00:00"
+    },
+    {
+      "shard_id": "cd783294c0ff8645a95d67320677a99a62c3de09efc23e59792f7545ea3ad034",
+      "month": "2013-10",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "e57272eeab34424d868cc3e89002d985a2e723637f9e38fa0843b89bdb389b27",
+      "evaluation_count": 59,
+      "merkle_root": "ce8ab137a4bce119e9dd05c98e85f6bffa86f054270c4245e69fbab30924cad4",
+      "valid_samples": 1911048,
+      "completed_at": "2026-08-24T01:56:49.931358+00:00"
+    },
+    {
+      "shard_id": "8f51923a0b7e2068b70cc26d3d4a1fef33c2436b9917a85d3ee1bb726eb13b61",
+      "month": "2013-11",
+      "engine_version": "vectorforge-batch-1.1.0",
+      "dataset_sha256": "a6742d8fa70997d48829be5e19e864ab649a3304dc3ea6aad0850d1b5590cce8",
+      "evaluation_count": 59,
+      "merkle_root": "54ffd8d402b684070bab5ed0399c29fd00f580482f311dd8889f81386aeb423c",
+      "valid_samples": 1668948,
+      "completed_at": "2026-08-24T01:56:53.338211+00:00"
     }
   ]
 }
