@@ -78,8 +78,13 @@ jobs:
           $expertDir=Join-Path $env:mt5root 'MQL5\Experts\P45Parity'
           New-Item -ItemType Directory -Force -Path $scriptDir,$expertDir | Out-Null
           Copy-Item 'research\p45-live-cert\mt5\P45ParityImporter.mq5' (Join-Path $scriptDir 'P45ParityImporter.mq5') -Force
-          Copy-Item replay_original.mq5 (Join-Path $expertDir 'P45ParityReplayInstrumented.mq5') -Force
-          Get-Content 'research\p45-live-cert\mt5\P45ParityInstrumentationTail.mq5' | Add-Content (Join-Path $expertDir 'P45ParityReplayInstrumented.mq5')
+          $eaPath=Join-Path $expertDir 'P45ParityReplayInstrumented.mq5'
+          $eaText=Get-Content replay_original.mq5 -Raw
+          $eaText=$eaText -replace 'Include\\Trade\\Trade\.mqh','Trade\Trade.mqh'
+          Set-Content -Path $eaPath -Value $eaText -Encoding UTF8
+          Get-Content 'research\p45-live-cert\mt5\P45ParityInstrumentationTail.mq5' | Add-Content $eaPath
+          "Replay EA source hash is enforced before this portable-only include normalization." | Out-File evidence\replay_portable_patch.txt
+          "Normalized only: Include\Trade\Trade.mqh -> Trade\Trade.mqh" | Out-File evidence\replay_portable_patch.txt -Append
 
       - name: Compile importer and parity replay
         shell: pwsh
