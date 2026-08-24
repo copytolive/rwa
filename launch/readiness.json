@@ -1,8 +1,8 @@
 {
   "schema": 4,
-  "generated_at": "2026-08-24T02:20:36.880Z",
+  "generated_at": "2026-08-24T02:22:13.831Z",
   "status": "BLOCKED",
-  "engineering_ready": false,
+  "engineering_ready": true,
   "beta_ready": false,
   "beta_passed": false,
   "mainnet_ready": false,
@@ -70,7 +70,7 @@
       "detail": "repository-wide execution/fund/evidence security workflow"
     },
     "monitoring_pipeline": {
-      "ok": false,
+      "ok": true,
       "detail": "health + readiness + metrics + five-minute fail-safe watchdog"
     },
     "launch_automation": {
@@ -123,10 +123,6 @@
     }
   },
   "blockers": [
-    {
-      "gate": "monitoring_pipeline",
-      "detail": "health + readiness + metrics + five-minute fail-safe watchdog"
-    },
     {
       "gate": "verified_rwa_asset",
       "detail": "0 verified asset(s) · public-https-distinct-probed-v1"
