@@ -28,10 +28,24 @@ function openRootFundamentals(symbol){
 function patchProductOS(){if(window.RWAProductOS)window.RWAProductOS.openAsset=s=>openRootFundamentals(s)}
 function installMobileFundamentals(){
   const tabs=document.querySelector('.mobile-detail-tabs');
-  if(!tabs||tabs.querySelector('.rwa-fundamentals-mobile-trigger'))return;
-  const b=document.createElement('button');
-  b.type='button';b.className='rwa-fundamentals-mobile-trigger';b.textContent='Fundamentals';b.setAttribute('aria-label','Open RWA income and fundamentals');
-  tabs.appendChild(b);
+  if(!tabs)return;
+  // The legacy mobile shell defines a 3-column, 42px detail row. Fundamentals is
+  // the fourth destination, so keep all four controls in the same touch row and
+  // explicitly place that row above the compact exchange card below it.
+  tabs.style.setProperty('grid-template-columns','repeat(4,minmax(0,1fr))','important');
+  tabs.style.setProperty('position','relative','important');
+  tabs.style.setProperty('z-index','180','important');
+  tabs.style.setProperty('overflow','visible','important');
+  let b=tabs.querySelector('.rwa-fundamentals-mobile-trigger');
+  if(!b){
+    b=document.createElement('button');
+    b.type='button';b.className='rwa-fundamentals-mobile-trigger';b.textContent='Fundamentals';b.setAttribute('aria-label','Open RWA income and fundamentals');
+    tabs.appendChild(b);
+  }
+  b.style.setProperty('position','relative','important');
+  b.style.setProperty('z-index','181','important');
+  b.style.setProperty('pointer-events','auto','important');
+  b.style.setProperty('touch-action','manipulation','important');
 }
 
 lockCanonicalRoot();
@@ -39,6 +53,7 @@ patchProductOS();
 installMobileFundamentals();
 addEventListener('rwa:product-os-ready',()=>{lockCanonicalRoot();patchProductOS();installMobileFundamentals()});
 addEventListener('hashchange',lockCanonicalRoot);
+addEventListener('resize',()=>{if(innerWidth<=680)installMobileFundamentals()},{passive:true});
 
 document.addEventListener('click',e=>{
   const fund=e.target.closest?.('.rwa-fundamentals-mobile-trigger');
