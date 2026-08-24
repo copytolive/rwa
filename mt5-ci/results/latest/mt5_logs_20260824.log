@@ -1,14 +1,94 @@
-HL	0	20:24:36.319	Tester	Cloud servers switched off
-IR	0	20:24:41.071	Tester	Cloud servers switched off
-LI	0	20:26:20.987	Tester	Cloud servers switched off
-IN	2	20:27:08.272	Tester	not synchronized with trade server
-KE	0	20:27:08.286	Tester	Local network farm switched off
-MP	0	20:27:08.286	Tester	"ChatGPT\DeterministicPendingSmoke.ex5" X64
-LK	0	20:27:08.305	Tester	CT_EURUSD: history data begins from 2024.01.01 00:00
-OM	0	20:27:08.306	Tester	CT_EURUSD: ticks data begins from 2024.01.01 00:00
-CJ	0	20:27:08.312	Core 1	agent process started on 127.0.0.1:3000
-FM	0	20:27:08.312	Core 1	connecting to 127.0.0.1:3000
-KJ	0	20:27:08.818	Core 1	connected
-KS	0	20:27:08.826	Core 1	authorized (agent build 6140)
-CF	0	20:27:08.826	Tester	CT_EURUSD,M1 (Exness-MT5Trial17): testing of Experts\ChatGPT\DeterministicPendingSmoke.ex5 from 2024.01.02 00:00 to 2024.01.03 00:00
+QL	0	21:33:14.421	Tester	Cloud servers switched off
+CR	0	21:33:19.192	Tester	Cloud servers switched off
+QG	2	21:34:06.657	Tester	not synchronized with trade server
+OS	0	21:34:06.681	Tester	Local network farm switched off
+QF	0	21:34:06.681	Tester	"ChatGPT\DeterministicPendingSmoke.ex5" X64
+RM	0	21:34:06.700	Tester	CT_EURUSD: history data begins from 2024.01.01 00:00
+GF	0	21:34:06.701	Tester	CT_EURUSD: ticks data begins from 2024.01.01 00:00
+LE	0	21:34:06.709	Core 1	agent process started on 127.0.0.1:3000
+MR	0	21:34:06.709	Core 1	connecting to 127.0.0.1:3000
+PS	0	21:34:07.215	Core 1	connected
+EE	0	21:34:07.224	Core 1	authorized (agent build 6140)
+IL	0	21:34:07.228	Tester	CT_EURUSD,M1 (Exness-MT5Trial17): testing of Experts\ChatGPT\DeterministicPendingSmoke.ex5 from 2024.01.02 00:00 to 2024.01.03 00:00
+NM	0	21:34:07.250	Core 1	common synchronization completed
+EI	0	21:34:07.344	Core 1	CT_EURUSD: history for 2023 year synchronized
+HP	0	21:34:07.344	Core 1	CT_EURUSD: history for 2024 year synchronized
+MP	0	21:34:07.344	Core 1	CT_EURUSD: history synchronization completed [1 Kb]
+JE	0	21:34:07.344	Core 1	CT_EURUSD: 1.40 Kb of history processed in 0:00:00.000
+RL	0	21:34:07.345	Core 1	CT_EURUSD: ticks synchronization completed [3 Kb]
+JF	0	21:42:30.144	Core 1	EURUSD: history for 2023 year synchronized
+NM	0	21:42:30.145	Core 1	EURUSD: history for 2024 year synchronized
+CK	0	21:42:30.145	Core 1	EURUSD: history synchronization completed [737 Kb]
+HK	0	21:42:30.145	Core 1	EURUSD: 737.56 Kb of history processed in 0:08:22.797
+CO	0	21:42:30.148	Core 1	EURUSD: ticks synchronized already [43 bytes]
+NE	0	21:42:30.188	Core 1	MetaTester 5 started on 127.0.0.1:3000
+RO	0	21:42:30.188	Core 1	cloud network mode is off
+OK	0	21:42:30.188	Core 1	initialization finished
+HR	0	21:42:30.188	Core 1	login (build 6140)
+GN	0	21:42:30.188	Core 1	9148 bytes of account info loaded
+IJ	0	21:42:30.188	Core 1	1478 bytes of tester parameters loaded
+DM	0	21:42:30.188	Core 1	3780 bytes of input parameters loaded
+EK	0	21:42:30.188	Core 1	38699 bytes of symbols list loaded (10158 symbols)
+CQ	0	21:42:30.188	Core 1	expert file added: Experts\ChatGPT\DeterministicPendingSmoke.ex5. 13611 bytes loaded
+KO	0	21:42:30.188	Core 1	13011 Mb available, 162 blocks set for ticks generating
+OJ	0	21:42:30.188	Core 1	initial deposit 10000.00 USD, leverage 1:100
+LG	0	21:42:30.188	Core 1	successfully initialized
+LI	0	21:42:30.188	Core 1	57 Kb of total initialization data received
+LR	0	21:42:30.188	Core 1	AMD EPYC 7763 64-Core, 16382 MB
+CK	0	21:42:30.188	Core 1	CT_EURUSD: symbol to be synchronized
+JO	0	21:42:30.188	Core 1	CT_EURUSD: symbol synchronized, 3720 bytes of symbol info received
+FS	0	21:42:30.188	Core 1	CT_EURUSD: load 1437 bytes of history data to synchronize in 0:00:00.002
+CD	0	21:42:30.188	Core 1	CT_EURUSD: history synchronized from 2024.01.01 to 2024.01.02
+JH	0	21:42:30.188	Core 1	CT_EURUSD: ticks synchronization started
+DL	0	21:42:30.188	Core 1	CT_EURUSD: load 3177 bytes of tick data to synchronize in 0:00:00.000
+RH	0	21:42:30.188	Core 1	CT_EURUSD: history ticks synchronized from 2024.01.02 to 2024.01.02
+QE	0	21:42:30.188	Core 1	CT_EURUSD,M1: history cache allocated for 1149 bars and contains 120 bars from 2024.01.01 22:00 to 2024.01.01 23:59
+QE	0	21:42:30.188	Core 1	CT_EURUSD,M1: history begins from 2024.01.01 22:00
+MS	0	21:42:30.188	Core 1	CT_EURUSD,M1 (Exness-MT5Trial17): generating based on real ticks
+HM	0	21:42:30.188	Core 1	CT_EURUSD,M1: testing of Experts\ChatGPT\DeterministicPendingSmoke.ex5 from 2024.01.02 00:00 to 2024.01.03 00:00 started with inputs:
+GL	0	21:42:30.188	Core 1	  Lots=0.1
+NH	0	21:42:30.188	Core 1	  DistancePoints=20
+JG	0	21:42:30.188	Core 1	  RiskPoints=20
+LL	0	21:42:30.188	Core 1	  RewardPoints=40
+KJ	0	21:42:30.188	Core 1	  BuyOrderTime=1704154200
+DL	0	21:42:30.188	Core 1	  SellOrderTime=1704157800
+IR	0	21:42:30.188	Core 1	  Magic=26082301
+CJ	0	21:42:30.188	Core 1	CT_EURUSD : real ticks begin from 2024.01.02 00:00:00
+HL	0	21:42:30.188	Core 1	2024.01.02 00:10:00   buy stop 0.1 CT_EURUSD at 1.10030 sl: 1.10010 tp: 1.10070 (1.10000 / 1.10010)
+QQ	0	21:42:30.188	Core 1	2024.01.02 00:10:00   OrderSend retcode=10009 order=2 comment=Request executed
+JR	0	21:42:30.188	Core 1	2024.01.02 00:10:20   order [#2 buy stop 0.1 CT_EURUSD at 1.10030] triggered
+MF	0	21:42:30.188	Core 1	EURUSD: symbol to be synchronized
+FR	0	21:42:30.188	Core 1	EURUSD: symbol synchronized, 3720 bytes of symbol info received
+GQ	0	21:42:30.188	Core 1	EURUSD: load 738 Kb of history data to synchronize in 0:08:22.789
+HH	0	21:42:30.188	Core 1	EURUSD: history synchronized from 2023.01.02 to 2024.01.03
+LE	0	21:42:30.188	Core 1	EURUSD: ticks synchronization started
+CR	0	21:42:30.188	Core 1	EURUSD: load 34 bytes of tick data to synchronize in 0:00:00.000
+QG	0	21:42:30.188	Core 1	2024.01.02 00:10:20   deal #2 buy 0.1 CT_EURUSD at 1.10030 done (based on order #2)
+ME	0	21:42:30.188	Core 1	2024.01.02 00:10:20   deal performed [#2 buy 0.1 CT_EURUSD at 1.10030]
+JP	0	21:42:30.188	Core 1	2024.01.02 00:10:20   order performed buy 0.1 at 1.10030 [#2 buy stop 0.1 CT_EURUSD at 1.10030]
+FL	3	21:42:30.188	Core 1	EURUSD : 2024.01.02 00:00 - 2024.01.03 00:00  no real ticks, every tick generation used
+IR	0	21:42:30.188	Core 1	2024.01.02 00:10:50   take profit triggered #2 buy 0.1 CT_EURUSD 1.10030 sl: 1.10010 tp: 1.10070 [#3 sell 0.1 CT_EURUSD at 1.10070]
+FS	0	21:42:30.188	Core 1	2024.01.02 00:10:50   deal #3 sell 0.1 CT_EURUSD at 1.10070 done (based on order #3)
+ON	0	21:42:30.188	Core 1	2024.01.02 00:10:50   deal performed [#3 sell 0.1 CT_EURUSD at 1.10070]
+RL	0	21:42:30.188	Core 1	2024.01.02 00:10:50   order performed sell 0.1 at 1.10070 [#3 sell 0.1 CT_EURUSD at 1.10070]
+FM	0	21:42:30.188	Core 1	2024.01.02 01:10:00   sell stop 0.1 CT_EURUSD at 1.09980 sl: 1.10000 tp: 1.09940 (1.10000 / 1.10010)
+HL	0	21:42:30.188	Core 1	2024.01.02 01:10:00   OrderSend retcode=10009 order=4 comment=Request executed
+IK	0	21:42:30.188	Core 1	2024.01.02 01:10:20   order [#4 sell stop 0.1 CT_EURUSD at 1.09980] triggered
+NF	0	21:42:30.188	Core 1	2024.01.02 01:10:20   deal #4 sell 0.1 CT_EURUSD at 1.09980 done (based on order #4)
+FK	0	21:42:30.188	Core 1	2024.01.02 01:10:20   deal performed [#4 sell 0.1 CT_EURUSD at 1.09980]
+IR	0	21:42:30.188	Core 1	2024.01.02 01:10:20   order performed sell 0.1 at 1.09980 [#4 sell stop 0.1 CT_EURUSD at 1.09980]
+MR	0	21:42:30.188	Core 1	2024.01.02 01:10:50   take profit triggered #4 sell 0.1 CT_EURUSD 1.09980 sl: 1.10000 tp: 1.09940 [#5 buy 0.1 CT_EURUSD at 1.09940]
+IL	0	21:42:30.188	Core 1	2024.01.02 01:10:50   deal #5 buy 0.1 CT_EURUSD at 1.09940 done (based on order #5)
+HQ	0	21:42:30.188	Core 1	2024.01.02 01:10:50   deal performed [#5 buy 0.1 CT_EURUSD at 1.09940]
+IL	0	21:42:30.188	Core 1	2024.01.02 01:10:50   order performed buy 0.1 at 1.09940 [#5 buy 0.1 CT_EURUSD at 1.09940]
+NL	0	21:42:30.188	Core 1	final balance 10008.84 USD
+OQ	0	21:42:30.188	Core 1	CT_EURUSD,M1: 7201 ticks, 121 bars generated. Environment synchronized in 0:00:00.107. Test passed in 0:08:22.859.
+GF	0	21:42:30.188	Core 1	CT_EURUSD,M1: total time from login to stop testing 0:08:22.966 (including 0:08:22.896 for history data synchronization)
+ME	0	21:42:30.188	Core 1	212116 total ticks for all symbols
+LN	0	21:42:30.188	Core 1	CT_EURUSD: generate 7201 ticks in 0:00:00.000, passed to tester 7202 ticks
+OG	0	21:42:30.188	Core 1	EURUSD: generate 204984 ticks in 0:00:00.000, passed to tester 204915 ticks
+FI	0	21:42:30.188	Core 1	54 Mb memory used including 0.47 Mb of history data, 64 Mb of tick data
+KI	0	21:42:30.188	Core 1	log file "D:\a\_temp\mt5-portable\Tester\Agent-127.0.0.1-3000\logs\20260824.log" written
+PL	0	21:42:30.200	Tester	automatic testing finished
+PD	0	21:42:30.200	Core 1	connection closed
 

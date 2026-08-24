@@ -1,5 +1,7 @@
 {
-  "status": "FAIL",
-  "error": "tester timeout after forced persisted demo login",
-  "utc": "2026-08-24T20:31:20.0083582Z"
+  "status": "PASS_NATIVE_PARITY",
+  "parity_pct": 100,
+  "report_found": true,
+  "mt5_file_version": "5.0.0.6140",
+  "utc": "2026-08-24T21:42:34.9412789Z"
 }

@@ -1,0 +1,66 @@
+{
+  "status": "PASS_NATIVE_PARITY",
+  "parity_pct": 100.0,
+  "expected_trade_count": 2,
+  "actual_trade_count": 2,
+  "checks": [
+    {
+      "index": 0,
+      "pass": true,
+      "fields": {
+        "side": true,
+        "entry_time": true,
+        "entry_price": true,
+        "exit_time": true,
+        "exit_price": true,
+        "positive": true
+      },
+      "expected": {
+        "side": "BUY",
+        "entry_time_msc": 1704154220000,
+        "entry_price": 1.1003,
+        "exit_time_msc": 1704154250000,
+        "exit_price": 1.1007,
+        "outcome": "TP",
+        "rr": 2.0
+      },
+      "actual": {
+        "side": "BUY",
+        "entry_time_msc": 1704154220000,
+        "entry_price": 1.1003,
+        "exit_time_msc": 1704154250000,
+        "exit_price": 1.1007,
+        "profit": 4.42
+      }
+    },
+    {
+      "index": 1,
+      "pass": true,
+      "fields": {
+        "side": true,
+        "entry_time": true,
+        "entry_price": true,
+        "exit_time": true,
+        "exit_price": true,
+        "positive": true
+      },
+      "expected": {
+        "side": "SELL",
+        "entry_time_msc": 1704157820000,
+        "entry_price": 1.0998,
+        "exit_time_msc": 1704157850000,
+        "exit_price": 1.0994,
+        "outcome": "TP",
+        "rr": 2.0
+      },
+      "actual": {
+        "side": "SELL",
+        "entry_time_msc": 1704157820000,
+        "entry_price": 1.0998,
+        "exit_time_msc": 1704157850000,
+        "exit_price": 1.0994,
+        "profit": 4.42
+      }
+    }
+  ]
+}

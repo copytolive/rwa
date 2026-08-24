@@ -1,9 +1,0 @@
-{
-  "status": "PASS_NATIVE_WARMUP_COMPLETED",
-  "server": "Exness-MT5Trial17",
-  "login_present": true,
-  "warmup_seconds": 90,
-  "keep_private": 1,
-  "forced_login_switch": true,
-  "note": "Session persisted in portable terminal before Strategy Tester."
-}

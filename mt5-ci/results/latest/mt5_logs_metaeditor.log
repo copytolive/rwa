@@ -1,265 +1,263 @@
-0	2026.08.24 20:24:37.345	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Advisors\ExpertMACD.mq5 - 0 errors, 0 warnings, 1185 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:37.345	Compiler	compiled ExpertMACD.mq5
-0	2026.08.24 20:24:38.315	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Advisors\ExpertMAMA.mq5 - 0 errors, 0 warnings, 961 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:38.315	Compiler	compiled ExpertMAMA.mq5
-0	2026.08.24 20:24:39.018	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Advisors\ExpertMAPSAR.mq5 - 0 errors, 0 warnings
-
-0	2026.08.24 20:24:41.972	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Advisors\ExpertMAPSAR.mq5 - 0 errors, 0 warnings, 1216 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:41.978	Compiler	compiled ExpertMAPSAR.mq5
-0	2026.08.24 20:24:42.996	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Advisors\ExpertMAPSARSizeOptimized.mq5 - 0 errors, 0 warnings, 1013 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:42.996	Compiler	compiled ExpertMAPSARSizeOptimized.mq5
-0	2026.08.24 20:24:43.392	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Examples\ChartInChart\ChartInChart.mq5 - 0 errors, 0 warnings, 388 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:43.392	Compiler	compiled ChartInChart.mq5
-0	2026.08.24 20:24:44.518	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Examples\Controls\Controls.mq5 - 0 errors, 0 warnings, 1129 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:44.533	Compiler	compiled Controls.mq5
-0	2026.08.24 20:24:46.018	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Examples\Correlation Matrix 3D\Correlation Matrix 3D.mqproj - 0 errors, 0 warnings, 1485 ms elapsed, cpu='X64 Regular'
-0	2026.08.24 20:24:46.018	Compiler	compiled Correlation Matrix 3D.mqproj
-0	2026.08.24 20:24:46.471	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Examples\MACD\MACD Sample.mq5 - 0 errors, 0 warnings, 446 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:46.471	Compiler	compiled MACD Sample.mq5
-0	2026.08.24 20:24:46.956	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Examples\Math 3D\Math 3D.mqproj - 0 errors, 0 warnings, 481 ms elapsed, cpu='X64 Regular'
-0	2026.08.24 20:24:46.956	Compiler	compiled Math 3D.mqproj
-0	2026.08.24 20:24:48.176	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Examples\Math 3D Morpher\Math 3D Morpher.mqproj - 0 errors, 0 warnings, 1211 ms elapsed, cpu='X64 Regular'
-0	2026.08.24 20:24:48.176	Compiler	compiled Math 3D Morpher.mqproj
-0	2026.08.24 20:24:48.598	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Examples\Moving Average\Moving Average.mq5 - 0 errors, 0 warnings, 404 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:48.598	Compiler	compiled Moving Average.mq5
-0	2026.08.24 20:24:49.041	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BlackCrows WhiteSoldiers CCI.mq5 - 0 errors, 0 warnings, 441 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:49.041	Compiler	compiled BlackCrows WhiteSoldiers CCI.mq5
-0	2026.08.24 20:24:49.489	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BlackCrows WhiteSoldiers MFI.mq5 - 0 errors, 0 warnings, 444 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:49.489	Compiler	compiled BlackCrows WhiteSoldiers MFI.mq5
-0	2026.08.24 20:24:49.942	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BlackCrows WhiteSoldiers RSI.mq5 - 0 errors, 0 warnings, 438 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:49.942	Compiler	compiled BlackCrows WhiteSoldiers RSI.mq5
-0	2026.08.24 20:24:50.380	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BlackCrows WhiteSoldiers Stoch.mq5 - 0 errors, 0 warnings, 444 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:50.396	Compiler	compiled BlackCrows WhiteSoldiers Stoch.mq5
-0	2026.08.24 20:24:50.834	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish Engulfing CCI.mq5 - 0 errors, 0 warnings, 442 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:50.834	Compiler	compiled BullishBearish Engulfing CCI.mq5
-0	2026.08.24 20:24:51.287	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish Engulfing MFI.mq5 - 0 errors, 0 warnings, 443 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:51.287	Compiler	compiled BullishBearish Engulfing MFI.mq5
-0	2026.08.24 20:24:51.741	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish Engulfing RSI.mq5 - 0 errors, 0 warnings, 439 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:51.741	Compiler	compiled BullishBearish Engulfing RSI.mq5
-0	2026.08.24 20:24:52.179	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish Engulfing Stoch.mq5 - 0 errors, 0 warnings, 444 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:52.195	Compiler	compiled BullishBearish Engulfing Stoch.mq5
-0	2026.08.24 20:24:52.648	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish Harami CCI.mq5 - 0 errors, 0 warnings, 452 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:52.648	Compiler	compiled BullishBearish Harami CCI.mq5
-0	2026.08.24 20:24:53.102	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish Harami MFI.mq5 - 0 errors, 0 warnings, 442 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:53.102	Compiler	compiled BullishBearish Harami MFI.mq5
-0	2026.08.24 20:24:53.540	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish Harami RSI.mq5 - 0 errors, 0 warnings, 443 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:53.556	Compiler	compiled BullishBearish Harami RSI.mq5
-0	2026.08.24 20:24:54.043	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish Harami Stoch.mq5 - 0 errors, 0 warnings, 482 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:54.043	Compiler	compiled BullishBearish Harami Stoch.mq5
-0	2026.08.24 20:24:54.548	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish MeetingLines CCI.mq5 - 0 errors, 0 warnings, 499 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:54.553	Compiler	compiled BullishBearish MeetingLines CCI.mq5
-0	2026.08.24 20:24:55.021	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish MeetingLines MFI.mq5 - 0 errors, 0 warnings, 472 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:55.031	Compiler	compiled BullishBearish MeetingLines MFI.mq5
-0	2026.08.24 20:24:55.517	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish MeetingLines RSI.mq5 - 0 errors, 0 warnings, 485 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:55.525	Compiler	compiled BullishBearish MeetingLines RSI.mq5
-0	2026.08.24 20:24:56.004	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish MeetingLines Stoch.mq5 - 0 errors, 0 warnings, 478 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:56.004	Compiler	compiled BullishBearish MeetingLines Stoch.mq5
-0	2026.08.24 20:24:56.488	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\DarkCloud PiercingLine CCI.mq5 - 0 errors, 0 warnings, 477 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:56.494	Compiler	compiled DarkCloud PiercingLine CCI.mq5
-0	2026.08.24 20:24:56.971	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\DarkCloud PiercingLine MFI.mq5 - 0 errors, 0 warnings, 473 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:56.971	Compiler	compiled DarkCloud PiercingLine MFI.mq5
-0	2026.08.24 20:24:57.458	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\DarkCloud PiercingLine RSI.mq5 - 0 errors, 0 warnings, 482 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:57.464	Compiler	compiled DarkCloud PiercingLine RSI.mq5
-0	2026.08.24 20:24:57.903	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\DarkCloud PiercingLine Stoch.mq5 - 0 errors, 0 warnings, 437 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:57.903	Compiler	compiled DarkCloud PiercingLine Stoch.mq5
-0	2026.08.24 20:24:58.340	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\HangingMan Hammer CCI.mq5 - 0 errors, 0 warnings, 435 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:58.340	Compiler	compiled HangingMan Hammer CCI.mq5
-0	2026.08.24 20:24:58.778	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\HangingMan Hammer MFI.mq5 - 0 errors, 0 warnings, 432 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:58.778	Compiler	compiled HangingMan Hammer MFI.mq5
-0	2026.08.24 20:24:59.216	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\HangingMan Hammer RSI.mq5 - 0 errors, 0 warnings, 433 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:59.216	Compiler	compiled HangingMan Hammer RSI.mq5
-0	2026.08.24 20:24:59.653	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\HangingMan Hammer Stoch.mq5 - 0 errors, 0 warnings, 433 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:24:59.669	Compiler	compiled HangingMan Hammer Stoch.mq5
-0	2026.08.24 20:25:00.107	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\MorningEvening StarDoji CCI.mq5 - 0 errors, 0 warnings, 434 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:00.107	Compiler	compiled MorningEvening StarDoji CCI.mq5
-0	2026.08.24 20:25:00.545	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\MorningEvening StarDoji MFI.mq5 - 0 errors, 0 warnings, 434 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:00.551	Compiler	compiled MorningEvening StarDoji MFI.mq5
-0	2026.08.24 20:25:00.983	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\MorningEvening StarDoji RSI.mq5 - 0 errors, 0 warnings, 435 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:00.983	Compiler	compiled MorningEvening StarDoji RSI.mq5
-0	2026.08.24 20:25:01.436	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\MorningEvening StarDoji Stoch.mq5 - 0 errors, 0 warnings, 440 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:01.436	Compiler	compiled MorningEvening StarDoji Stoch.mq5
-0	2026.08.24 20:25:01.734	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Accelerator.mq5 - 0 errors, 0 warnings, 292 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:01.734	Compiler	compiled Accelerator.mq5
-0	2026.08.24 20:25:02.017	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\AD.mq5 - 0 errors, 0 warnings, 283 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:02.017	Compiler	compiled AD.mq5
-0	2026.08.24 20:25:02.328	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ADX.mq5 - 0 errors, 0 warnings, 307 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:02.344	Compiler	compiled ADX.mq5
-0	2026.08.24 20:25:02.657	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ADXW.mq5 - 0 errors, 0 warnings, 319 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:02.657	Compiler	compiled ADXW.mq5
-0	2026.08.24 20:25:02.970	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Alligator.mq5 - 0 errors, 0 warnings, 301 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:02.970	Compiler	compiled Alligator.mq5
-0	2026.08.24 20:25:03.267	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\AMA.mq5 - 0 errors, 0 warnings, 292 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:03.267	Compiler	compiled AMA.mq5
-0	2026.08.24 20:25:03.564	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ASI.mq5 - 0 errors, 0 warnings, 290 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:03.564	Compiler	compiled ASI.mq5
-0	2026.08.24 20:25:03.861	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ATR.mq5 - 0 errors, 0 warnings, 291 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:03.861	Compiler	compiled ATR.mq5
-0	2026.08.24 20:25:04.158	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Awesome_Oscillator.mq5 - 0 errors, 0 warnings, 286 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:04.158	Compiler	compiled Awesome_Oscillator.mq5
-0	2026.08.24 20:25:04.470	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\BB.mq5 - 0 errors, 0 warnings, 310 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:04.470	Compiler	compiled BB.mq5
-0	2026.08.24 20:25:04.767	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Bears.mq5 - 0 errors, 0 warnings, 286 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:04.767	Compiler	compiled Bears.mq5
-0	2026.08.24 20:25:05.064	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Bulls.mq5 - 0 errors, 0 warnings, 289 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:05.064	Compiler	compiled Bulls.mq5
-0	2026.08.24 20:25:05.346	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\BW-ZoneTrade.mq5 - 0 errors, 0 warnings, 287 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:05.346	Compiler	compiled BW-ZoneTrade.mq5
-0	2026.08.24 20:25:05.753	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Canvas\FlameChart.mq5 - 0 errors, 0 warnings, 395 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:05.753	Compiler	compiled FlameChart.mq5
-0	2026.08.24 20:25:06.050	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\CCI.mq5 - 0 errors, 0 warnings, 297 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:06.066	Compiler	compiled CCI.mq5
-0	2026.08.24 20:25:06.394	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\CHO.mq5 - 0 errors, 0 warnings, 325 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:06.394	Compiler	compiled CHO.mq5
-0	2026.08.24 20:25:06.724	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\CHV.mq5 - 0 errors, 0 warnings, 323 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:06.724	Compiler	compiled CHV.mq5
-0	2026.08.24 20:25:07.012	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ColorBars.mq5 - 0 errors, 0 warnings, 286 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:07.019	Compiler	compiled ColorBars.mq5
-0	2026.08.24 20:25:07.303	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ColorCandlesDaily.mq5 - 0 errors, 0 warnings, 291 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:07.303	Compiler	compiled ColorCandlesDaily.mq5
-0	2026.08.24 20:25:07.600	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ColorLine.mq5 - 0 errors, 0 warnings, 287 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:07.600	Compiler	compiled ColorLine.mq5
-0	2026.08.24 20:25:07.913	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Custom Moving Average.mq5 - 0 errors, 0 warnings, 313 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:07.928	Compiler	compiled Custom Moving Average.mq5
-0	2026.08.24 20:25:08.225	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\DEMA.mq5 - 0 errors, 0 warnings, 295 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:08.225	Compiler	compiled DEMA.mq5
-0	2026.08.24 20:25:08.522	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\DeMarker.mq5 - 0 errors, 0 warnings, 301 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:08.538	Compiler	compiled DeMarker.mq5
-0	2026.08.24 20:25:08.835	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\DPO.mq5 - 0 errors, 0 warnings, 297 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:08.835	Compiler	compiled DPO.mq5
-0	2026.08.24 20:25:09.132	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Envelopes.mq5 - 0 errors, 0 warnings, 297 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:09.132	Compiler	compiled Envelopes.mq5
-0	2026.08.24 20:25:09.429	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Force_Index.mq5 - 0 errors, 0 warnings, 289 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:09.429	Compiler	compiled Force_Index.mq5
-0	2026.08.24 20:25:09.726	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Fractals.mq5 - 0 errors, 0 warnings, 289 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:09.726	Compiler	compiled Fractals.mq5
-0	2026.08.24 20:25:10.039	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\FrAMA.mq5 - 0 errors, 0 warnings, 299 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:10.039	Compiler	compiled FrAMA.mq5
-0	2026.08.24 20:25:10.336	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Gator.mq5 - 0 errors, 0 warnings, 300 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:10.336	Compiler	compiled Gator.mq5
-0	2026.08.24 20:25:10.649	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Gator_2.mq5 - 0 errors, 0 warnings, 297 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:10.649	Compiler	compiled Gator_2.mq5
-0	2026.08.24 20:25:10.931	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Heiken_Ashi.mq5 - 0 errors, 0 warnings, 286 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:10.931	Compiler	compiled Heiken_Ashi.mq5
-0	2026.08.24 20:25:11.243	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Ichimoku.mq5 - 0 errors, 0 warnings, 306 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:11.243	Compiler	compiled Ichimoku.mq5
-0	2026.08.24 20:25:11.556	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\MACD.mq5 - 0 errors, 0 warnings, 301 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:11.556	Compiler	compiled MACD.mq5
-0	2026.08.24 20:25:11.854	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\MarketFacilitationIndex.mq5 - 0 errors, 0 warnings, 292 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:11.854	Compiler	compiled MarketFacilitationIndex.mq5
-0	2026.08.24 20:25:12.166	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\MFI.mq5 - 0 errors, 0 warnings, 298 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:12.166	Compiler	compiled MFI.mq5
-0	2026.08.24 20:25:12.479	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\MI.mq5 - 0 errors, 0 warnings, 319 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:12.495	Compiler	compiled MI.mq5
-0	2026.08.24 20:25:12.792	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Momentum.mq5 - 0 errors, 0 warnings, 295 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:12.792	Compiler	compiled Momentum.mq5
-0	2026.08.24 20:25:13.073	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\OBV.mq5 - 0 errors, 0 warnings, 286 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:13.073	Compiler	compiled OBV.mq5
-0	2026.08.24 20:25:13.417	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\OsMA.mq5 - 0 errors, 0 warnings, 328 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:13.417	Compiler	compiled OsMA.mq5
-0	2026.08.24 20:25:14.277	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Panels\ChartPanel\ChartPanel.mq5 - 0 errors, 0 warnings, 855 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:14.277	Compiler	compiled ChartPanel.mq5
-0	2026.08.24 20:25:15.167	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Panels\SimplePanel\SimplePanel.mq5 - 0 errors, 0 warnings, 892 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:15.183	Compiler	compiled SimplePanel.mq5
-0	2026.08.24 20:25:15.480	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ParabolicSAR.mq5 - 0 errors, 0 warnings, 301 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:15.480	Compiler	compiled ParabolicSAR.mq5
-0	2026.08.24 20:25:15.777	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Price_Channel.mq5 - 0 errors, 0 warnings, 292 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:15.792	Compiler	compiled Price_Channel.mq5
-0	2026.08.24 20:25:16.074	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\PVT.mq5 - 0 errors, 0 warnings, 286 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:16.074	Compiler	compiled PVT.mq5
-0	2026.08.24 20:25:16.371	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ROC.mq5 - 0 errors, 0 warnings, 294 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:16.371	Compiler	compiled ROC.mq5
-0	2026.08.24 20:25:16.685	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\RSI.mq5 - 0 errors, 0 warnings, 309 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:16.700	Compiler	compiled RSI.mq5
-0	2026.08.24 20:25:16.997	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\RVI.mq5 - 0 errors, 0 warnings, 307 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:17.013	Compiler	compiled RVI.mq5
-0	2026.08.24 20:25:17.325	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\StdDev.mq5 - 0 errors, 0 warnings, 312 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:17.325	Compiler	compiled StdDev.mq5
-0	2026.08.24 20:25:17.638	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Stochastic.mq5 - 0 errors, 0 warnings, 305 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:17.638	Compiler	compiled Stochastic.mq5
-0	2026.08.24 20:25:17.936	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\TEMA.mq5 - 0 errors, 0 warnings, 298 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:17.936	Compiler	compiled TEMA.mq5
-0	2026.08.24 20:25:18.249	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\TRIX.mq5 - 0 errors, 0 warnings, 299 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:18.249	Compiler	compiled TRIX.mq5
-0	2026.08.24 20:25:18.561	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Ultimate_Oscillator.mq5 - 0 errors, 0 warnings, 304 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:18.561	Compiler	compiled Ultimate_Oscillator.mq5
-0	2026.08.24 20:25:18.858	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\VIDYA.mq5 - 0 errors, 0 warnings, 291 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:18.858	Compiler	compiled VIDYA.mq5
-0	2026.08.24 20:25:19.140	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Volumes.mq5 - 0 errors, 0 warnings, 287 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:19.156	Compiler	compiled Volumes.mq5
-0	2026.08.24 20:25:19.453	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\VROC.mq5 - 0 errors, 0 warnings, 296 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:19.453	Compiler	compiled VROC.mq5
-0	2026.08.24 20:25:19.750	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\WPR.mq5 - 0 errors, 0 warnings, 298 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:19.765	Compiler	compiled WPR.mq5
-0	2026.08.24 20:25:20.047	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\W_AD.mq5 - 0 errors, 0 warnings, 288 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:20.047	Compiler	compiled W_AD.mq5
-0	2026.08.24 20:25:20.375	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ZigZag.mq5 - 0 errors, 0 warnings, 315 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:20.375	Compiler	compiled ZigZag.mq5
-0	2026.08.24 20:25:20.704	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ZigzagColor.mq5 - 0 errors, 0 warnings, 318 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:20.704	Compiler	compiled ZigzagColor.mq5
-0	2026.08.24 20:25:21.032	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\Camarilla Channel.mq5 - 0 errors, 0 warnings, 329 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:21.032	Compiler	compiled Camarilla Channel.mq5
-0	2026.08.24 20:25:21.361	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\DeMark Channel.mq5 - 0 errors, 0 warnings, 317 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:21.361	Compiler	compiled DeMark Channel.mq5
-0	2026.08.24 20:25:21.676	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\Donchian Channel.mq5 - 0 errors, 0 warnings, 310 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:21.676	Compiler	compiled Donchian Channel.mq5
-0	2026.08.24 20:25:22.002	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\Fibonacci Channel.mq5 - 0 errors, 0 warnings, 328 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:22.002	Compiler	compiled Fibonacci Channel.mq5
-0	2026.08.24 20:25:22.331	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\Keltner Channel.mq5 - 0 errors, 0 warnings, 317 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:22.331	Compiler	compiled Keltner Channel.mq5
-0	2026.08.24 20:25:22.753	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\MarketProfile Canvas.mq5 - 0 errors, 0 warnings, 421 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:22.769	Compiler	compiled MarketProfile Canvas.mq5
-0	2026.08.24 20:25:23.098	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\MarketProfile.mq5 - 0 errors, 0 warnings, 334 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:23.098	Compiler	compiled MarketProfile.mq5
-0	2026.08.24 20:25:23.473	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\MurreyMath Channel.mq5 - 0 errors, 0 warnings, 361 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:23.473	Compiler	compiled MurreyMath Channel.mq5
-0	2026.08.24 20:25:23.785	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\NRTR Channel.mq5 - 0 errors, 0 warnings, 319 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:23.801	Compiler	compiled NRTR Channel.mq5
-0	2026.08.24 20:25:24.114	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\Parabolic Channel.mq5 - 0 errors, 0 warnings, 312 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:24.114	Compiler	compiled Parabolic Channel.mq5
-0	2026.08.24 20:25:24.442	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\Pivot Channel.mq5 - 0 errors, 0 warnings, 326 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:24.442	Compiler	compiled Pivot Channel.mq5
-0	2026.08.24 20:25:24.771	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\Woodie Channel.mq5 - 0 errors, 0 warnings, 324 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:24.771	Compiler	compiled Woodie Channel.mq5
-0	2026.08.24 20:25:25.130	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\AccountInfo\AccountInfoSample.mq5 - 0 errors, 0 warnings, 342 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:25.130	Compiler	compiled AccountInfoSample.mq5
-0	2026.08.24 20:25:25.474	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\ArrayDouble\ArrayDoubleSample.mq5 - 0 errors, 0 warnings, 336 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:25.474	Compiler	compiled ArrayDoubleSample.mq5
-0	2026.08.24 20:25:25.896	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\Canvas\CanvasSample.mq5 - 0 errors, 0 warnings, 428 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:25.911	Compiler	compiled CanvasSample.mq5
-0	2026.08.24 20:25:26.427	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\Canvas\Charts\HistogramChartSample.mq5 - 0 errors, 0 warnings, 524 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:26.443	Compiler	compiled HistogramChartSample.mq5
-0	2026.08.24 20:25:26.975	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\Canvas\Charts\LineChartSample.mq5 - 0 errors, 0 warnings, 529 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:26.975	Compiler	compiled LineChartSample.mq5
-0	2026.08.24 20:25:27.600	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\Canvas\Charts\PieChartSample.mq5 - 0 errors, 0 warnings, 624 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:27.600	Compiler	compiled PieChartSample.mq5
-0	2026.08.24 20:25:28.132	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\ObjectChart\ObjChartSample.mq5 - 0 errors, 0 warnings, 529 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:28.148	Compiler	compiled ObjChartSample.mq5
-0	2026.08.24 20:25:28.507	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\ObjectSphere\SphereSample.mq5 - 0 errors, 0 warnings, 361 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:28.507	Compiler	compiled SphereSample.mq5
-0	2026.08.24 20:25:28.867	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OpenCL\Double\BitonicSort.mq5 - 0 errors, 0 warnings, 344 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:28.867	Compiler	compiled BitonicSort.mq5
-0	2026.08.24 20:25:29.258	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OpenCL\Double\FFT.mq5 - 0 errors, 0 warnings, 391 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:29.258	Compiler	compiled FFT.mq5
-0	2026.08.24 20:25:29.617	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OpenCL\Double\MatrixMult.mq5 - 0 errors, 0 warnings, 350 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:29.617	Compiler	compiled MatrixMult.mq5
-0	2026.08.24 20:25:30.430	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OpenCL\Double\Wavelet.mq5 - 0 errors, 0 warnings, 802 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:30.430	Compiler	compiled Wavelet.mq5
-0	2026.08.24 20:25:30.774	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OpenCL\Float\BitonicSort.mq5 - 0 errors, 0 warnings, 341 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:30.774	Compiler	compiled BitonicSort.mq5
-0	2026.08.24 20:25:31.165	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OpenCL\Float\FFT.mq5 - 0 errors, 0 warnings, 387 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:31.165	Compiler	compiled FFT.mq5
-0	2026.08.24 20:25:31.525	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OpenCL\Float\MatrixMult.mq5 - 0 errors, 0 warnings, 351 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:31.525	Compiler	compiled MatrixMult.mq5
-0	2026.08.24 20:25:32.340	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OpenCL\Float\Wavelet.mq5 - 0 errors, 0 warnings, 802 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:32.340	Compiler	compiled Wavelet.mq5
-0	2026.08.24 20:25:32.794	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OpenCL\Seascape\Seascape.mqproj - 0 errors, 0 warnings, 458 ms elapsed, cpu='X64 Regular'
-0	2026.08.24 20:25:32.809	Compiler	compiled Seascape.mqproj
-0	2026.08.24 20:25:33.185	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OrderInfo\OrderInfoSample.mq5 - 0 errors, 0 warnings, 381 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:33.185	Compiler	compiled OrderInfoSample.mq5
-0	2026.08.24 20:25:33.544	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\PositionInfo\PositionInfoSample.mq5 - 0 errors, 0 warnings, 350 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:33.544	Compiler	compiled PositionInfoSample.mq5
-0	2026.08.24 20:25:34.013	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\Remnant 3D\Remnant 3D.mqproj - 0 errors, 0 warnings, 460 ms elapsed, cpu='X64 Regular'
-0	2026.08.24 20:25:34.013	Compiler	compiled Remnant 3D.mqproj
-0	2026.08.24 20:25:34.404	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\SymbolInfo\SymbolInfoSample.mq5 - 0 errors, 0 warnings, 389 ms elapsed without optimizations, cpu='X64 Regular'
-0	2026.08.24 20:25:34.404	Compiler	compiled SymbolInfoSample.mq5
+0	2026.08.24 21:33:02.586	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Advisors\ExpertMACD.mq5 - 0 errors, 0 warnings, 1171 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:02.586	Compiler	compiled ExpertMACD.mq5
+0	2026.08.24 21:33:03.525	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Advisors\ExpertMAMA.mq5 - 0 errors, 0 warnings, 928 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:03.525	Compiler	compiled ExpertMAMA.mq5
+0	2026.08.24 21:33:04.447	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Advisors\ExpertMAPSAR.mq5 - 0 errors, 0 warnings, 913 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:04.447	Compiler	compiled ExpertMAPSAR.mq5
+0	2026.08.24 21:33:05.416	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Advisors\ExpertMAPSARSizeOptimized.mq5 - 0 errors, 0 warnings, 972 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:05.432	Compiler	compiled ExpertMAPSARSizeOptimized.mq5
+0	2026.08.24 21:33:05.776	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Examples\ChartInChart\ChartInChart.mq5 - 0 errors, 0 warnings, 338 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:05.776	Compiler	compiled ChartInChart.mq5
+0	2026.08.24 21:33:06.957	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Examples\Controls\Controls.mq5 - 0 errors, 0 warnings, 1177 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:06.967	Compiler	compiled Controls.mq5
+0	2026.08.24 21:33:08.661	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Examples\Correlation Matrix 3D\Correlation Matrix 3D.mqproj - 0 errors, 0 warnings, 1693 ms elapsed, cpu='X64 Regular'
+0	2026.08.24 21:33:08.661	Compiler	compiled Correlation Matrix 3D.mqproj
+0	2026.08.24 21:33:09.158	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Examples\MACD\MACD Sample.mq5 - 0 errors, 0 warnings, 488 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:09.158	Compiler	compiled MACD Sample.mq5
+0	2026.08.24 21:33:09.712	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Examples\Math 3D\Math 3D.mqproj - 0 errors, 0 warnings, 545 ms elapsed, cpu='X64 Regular'
+0	2026.08.24 21:33:09.712	Compiler	compiled Math 3D.mqproj
+0	2026.08.24 21:33:11.076	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Examples\Math 3D Morpher\Math 3D Morpher.mqproj - 0 errors, 0 warnings, 1360 ms elapsed, cpu='X64 Regular'
+0	2026.08.24 21:33:11.076	Compiler	compiled Math 3D Morpher.mqproj
+0	2026.08.24 21:33:11.482	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Examples\Moving Average\Moving Average.mq5 - 0 errors, 0 warnings, 405 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:11.498	Compiler	compiled Moving Average.mq5
+0	2026.08.24 21:33:12.044	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BlackCrows WhiteSoldiers CCI.mq5 - 0 errors, 0 warnings, 545 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:12.044	Compiler	compiled BlackCrows WhiteSoldiers CCI.mq5
+0	2026.08.24 21:33:12.545	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BlackCrows WhiteSoldiers MFI.mq5 - 0 errors, 0 warnings, 491 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:12.545	Compiler	compiled BlackCrows WhiteSoldiers MFI.mq5
+0	2026.08.24 21:33:13.107	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BlackCrows WhiteSoldiers RSI.mq5 - 0 errors, 0 warnings, 555 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:13.107	Compiler	compiled BlackCrows WhiteSoldiers RSI.mq5
+0	2026.08.24 21:33:13.701	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BlackCrows WhiteSoldiers Stoch.mq5 - 0 errors, 0 warnings, 594 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:13.701	Compiler	compiled BlackCrows WhiteSoldiers Stoch.mq5
+0	2026.08.24 21:33:14.280	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish Engulfing CCI.mq5 - 0 errors, 0 warnings, 571 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:14.280	Compiler	compiled BullishBearish Engulfing CCI.mq5
+0	2026.08.24 21:33:14.999	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish Engulfing MFI.mq5 - 0 errors, 0 warnings, 713 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:15.014	Compiler	compiled BullishBearish Engulfing MFI.mq5
+0	2026.08.24 21:33:15.655	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish Engulfing RSI.mq5 - 0 errors, 0 warnings, 646 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:15.655	Compiler	compiled BullishBearish Engulfing RSI.mq5
+0	2026.08.24 21:33:16.296	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish Engulfing Stoch.mq5 - 0 errors, 0 warnings, 630 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:16.296	Compiler	compiled BullishBearish Engulfing Stoch.mq5
+0	2026.08.24 21:33:16.891	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish Harami CCI.mq5 - 0 errors, 0 warnings, 588 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:16.891	Compiler	compiled BullishBearish Harami CCI.mq5
+0	2026.08.24 21:33:17.391	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish Harami MFI.mq5 - 0 errors, 0 warnings, 493 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:17.391	Compiler	compiled BullishBearish Harami MFI.mq5
+0	2026.08.24 21:33:17.845	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish Harami RSI.mq5 - 0 errors, 0 warnings, 450 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:17.845	Compiler	compiled BullishBearish Harami RSI.mq5
+0	2026.08.24 21:33:18.377	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish Harami Stoch.mq5 - 0 errors, 0 warnings, 513 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:18.377	Compiler	compiled BullishBearish Harami Stoch.mq5
+0	2026.08.24 21:33:18.955	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish MeetingLines CCI.mq5 - 0 errors, 0 warnings, 573 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:18.955	Compiler	compiled BullishBearish MeetingLines CCI.mq5
+0	2026.08.24 21:33:19.658	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish MeetingLines MFI.mq5 - 0 errors, 0 warnings, 700 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:19.658	Compiler	compiled BullishBearish MeetingLines MFI.mq5
+0	2026.08.24 21:33:20.184	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish MeetingLines RSI.mq5 - 0 errors, 0 warnings, 513 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:20.187	Compiler	compiled BullishBearish MeetingLines RSI.mq5
+0	2026.08.24 21:33:20.787	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\BullishBearish MeetingLines Stoch.mq5 - 0 errors, 0 warnings, 605 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:20.797	Compiler	compiled BullishBearish MeetingLines Stoch.mq5
+0	2026.08.24 21:33:21.387	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\DarkCloud PiercingLine CCI.mq5 - 0 errors, 0 warnings, 592 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:21.397	Compiler	compiled DarkCloud PiercingLine CCI.mq5
+0	2026.08.24 21:33:21.986	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\DarkCloud PiercingLine MFI.mq5 - 0 errors, 0 warnings, 587 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:21.986	Compiler	compiled DarkCloud PiercingLine MFI.mq5
+0	2026.08.24 21:33:22.587	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\DarkCloud PiercingLine RSI.mq5 - 0 errors, 0 warnings, 588 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:22.587	Compiler	compiled DarkCloud PiercingLine RSI.mq5
+0	2026.08.24 21:33:23.156	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\DarkCloud PiercingLine Stoch.mq5 - 0 errors, 0 warnings, 561 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:23.156	Compiler	compiled DarkCloud PiercingLine Stoch.mq5
+0	2026.08.24 21:33:23.747	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\HangingMan Hammer CCI.mq5 - 0 errors, 0 warnings, 586 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:23.753	Compiler	compiled HangingMan Hammer CCI.mq5
+0	2026.08.24 21:33:24.334	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\HangingMan Hammer MFI.mq5 - 0 errors, 0 warnings, 579 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:24.339	Compiler	compiled HangingMan Hammer MFI.mq5
+0	2026.08.24 21:33:24.917	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\HangingMan Hammer RSI.mq5 - 0 errors, 0 warnings, 586 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:24.933	Compiler	compiled HangingMan Hammer RSI.mq5
+0	2026.08.24 21:33:25.464	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\HangingMan Hammer Stoch.mq5 - 0 errors, 0 warnings, 534 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:25.464	Compiler	compiled HangingMan Hammer Stoch.mq5
+0	2026.08.24 21:33:25.996	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\MorningEvening StarDoji CCI.mq5 - 0 errors, 0 warnings, 519 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:25.996	Compiler	compiled MorningEvening StarDoji CCI.mq5
+0	2026.08.24 21:33:26.497	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\MorningEvening StarDoji MFI.mq5 - 0 errors, 0 warnings, 505 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:26.513	Compiler	compiled MorningEvening StarDoji MFI.mq5
+0	2026.08.24 21:33:27.044	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\MorningEvening StarDoji RSI.mq5 - 0 errors, 0 warnings, 532 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:27.044	Compiler	compiled MorningEvening StarDoji RSI.mq5
+0	2026.08.24 21:33:27.575	Compile	D:\a\_temp\mt5-portable\MQL5\Experts\Free Robots\MorningEvening StarDoji Stoch.mq5 - 0 errors, 0 warnings, 533 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:27.591	Compiler	compiled MorningEvening StarDoji Stoch.mq5
+0	2026.08.24 21:33:27.950	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Accelerator.mq5 - 0 errors, 0 warnings, 360 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:27.950	Compiler	compiled Accelerator.mq5
+0	2026.08.24 21:33:28.295	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\AD.mq5 - 0 errors, 0 warnings, 333 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:28.295	Compiler	compiled AD.mq5
+0	2026.08.24 21:33:28.671	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ADX.mq5 - 0 errors, 0 warnings, 379 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:28.687	Compiler	compiled ADX.mq5
+0	2026.08.24 21:33:29.078	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ADXW.mq5 - 0 errors, 0 warnings, 389 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:29.078	Compiler	compiled ADXW.mq5
+0	2026.08.24 21:33:29.453	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Alligator.mq5 - 0 errors, 0 warnings, 361 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:29.453	Compiler	compiled Alligator.mq5
+0	2026.08.24 21:33:29.796	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\AMA.mq5 - 0 errors, 0 warnings, 340 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:29.796	Compiler	compiled AMA.mq5
+0	2026.08.24 21:33:30.156	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ASI.mq5 - 0 errors, 0 warnings, 355 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:30.156	Compiler	compiled ASI.mq5
+0	2026.08.24 21:33:30.516	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ATR.mq5 - 0 errors, 0 warnings, 357 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:30.516	Compiler	compiled ATR.mq5
+0	2026.08.24 21:33:30.860	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Awesome_Oscillator.mq5 - 0 errors, 0 warnings, 334 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:30.860	Compiler	compiled Awesome_Oscillator.mq5
+0	2026.08.24 21:33:31.235	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\BB.mq5 - 0 errors, 0 warnings, 362 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:31.235	Compiler	compiled BB.mq5
+0	2026.08.24 21:33:31.579	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Bears.mq5 - 0 errors, 0 warnings, 345 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:31.579	Compiler	compiled Bears.mq5
+0	2026.08.24 21:33:31.922	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Bulls.mq5 - 0 errors, 0 warnings, 330 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:31.922	Compiler	compiled Bulls.mq5
+0	2026.08.24 21:33:32.266	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\BW-ZoneTrade.mq5 - 0 errors, 0 warnings, 345 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:32.266	Compiler	compiled BW-ZoneTrade.mq5
+0	2026.08.24 21:33:32.750	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Canvas\FlameChart.mq5 - 0 errors, 0 warnings, 473 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:32.750	Compiler	compiled FlameChart.mq5
+0	2026.08.24 21:33:33.079	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\CCI.mq5 - 0 errors, 0 warnings, 330 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:33.095	Compiler	compiled CCI.mq5
+0	2026.08.24 21:33:33.471	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\CHO.mq5 - 0 errors, 0 warnings, 377 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:33.471	Compiler	compiled CHO.mq5
+0	2026.08.24 21:33:33.846	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\CHV.mq5 - 0 errors, 0 warnings, 374 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:33.846	Compiler	compiled CHV.mq5
+0	2026.08.24 21:33:34.174	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ColorBars.mq5 - 0 errors, 0 warnings, 312 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:34.174	Compiler	compiled ColorBars.mq5
+0	2026.08.24 21:33:34.518	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ColorCandlesDaily.mq5 - 0 errors, 0 warnings, 334 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:34.518	Compiler	compiled ColorCandlesDaily.mq5
+0	2026.08.24 21:33:34.862	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ColorLine.mq5 - 0 errors, 0 warnings, 346 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:34.862	Compiler	compiled ColorLine.mq5
+0	2026.08.24 21:33:35.237	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Custom Moving Average.mq5 - 0 errors, 0 warnings, 371 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:35.237	Compiler	compiled Custom Moving Average.mq5
+0	2026.08.24 21:33:35.582	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\DEMA.mq5 - 0 errors, 0 warnings, 339 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:35.598	Compiler	compiled DEMA.mq5
+0	2026.08.24 21:33:35.958	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\DeMarker.mq5 - 0 errors, 0 warnings, 361 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:35.958	Compiler	compiled DeMarker.mq5
+0	2026.08.24 21:33:36.317	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\DPO.mq5 - 0 errors, 0 warnings, 356 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:36.317	Compiler	compiled DPO.mq5
+0	2026.08.24 21:33:36.661	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Envelopes.mq5 - 0 errors, 0 warnings, 340 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:36.661	Compiler	compiled Envelopes.mq5
+0	2026.08.24 21:33:37.006	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Force_Index.mq5 - 0 errors, 0 warnings, 339 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:37.022	Compiler	compiled Force_Index.mq5
+0	2026.08.24 21:33:37.360	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Fractals.mq5 - 0 errors, 0 warnings, 334 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:37.360	Compiler	compiled Fractals.mq5
+0	2026.08.24 21:33:37.678	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\FrAMA.mq5 - 0 errors, 0 warnings, 323 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:37.678	Compiler	compiled FrAMA.mq5
+0	2026.08.24 21:33:38.069	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Gator.mq5 - 0 errors, 0 warnings, 383 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:38.069	Compiler	compiled Gator.mq5
+0	2026.08.24 21:33:38.462	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Gator_2.mq5 - 0 errors, 0 warnings, 378 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:38.462	Compiler	compiled Gator_2.mq5
+0	2026.08.24 21:33:38.821	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Heiken_Ashi.mq5 - 0 errors, 0 warnings, 356 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:38.821	Compiler	compiled Heiken_Ashi.mq5
+0	2026.08.24 21:33:39.181	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Ichimoku.mq5 - 0 errors, 0 warnings, 348 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:39.181	Compiler	compiled Ichimoku.mq5
+0	2026.08.24 21:33:39.540	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\MACD.mq5 - 0 errors, 0 warnings, 351 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:39.540	Compiler	compiled MACD.mq5
+0	2026.08.24 21:33:39.899	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\MarketFacilitationIndex.mq5 - 0 errors, 0 warnings, 351 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:39.899	Compiler	compiled MarketFacilitationIndex.mq5
+0	2026.08.24 21:33:40.259	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\MFI.mq5 - 0 errors, 0 warnings, 353 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:40.259	Compiler	compiled MFI.mq5
+0	2026.08.24 21:33:40.634	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\MI.mq5 - 0 errors, 0 warnings, 372 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:40.634	Compiler	compiled MI.mq5
+0	2026.08.24 21:33:40.993	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Momentum.mq5 - 0 errors, 0 warnings, 347 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:40.993	Compiler	compiled Momentum.mq5
+0	2026.08.24 21:33:41.321	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\OBV.mq5 - 0 errors, 0 warnings, 320 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:41.321	Compiler	compiled OBV.mq5
+0	2026.08.24 21:33:41.681	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\OsMA.mq5 - 0 errors, 0 warnings, 364 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:41.681	Compiler	compiled OsMA.mq5
+0	2026.08.24 21:33:42.728	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Panels\ChartPanel\ChartPanel.mq5 - 0 errors, 0 warnings, 1031 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:42.728	Compiler	compiled ChartPanel.mq5
+0	2026.08.24 21:33:43.824	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Panels\SimplePanel\SimplePanel.mq5 - 0 errors, 0 warnings, 1093 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:43.824	Compiler	compiled SimplePanel.mq5
+0	2026.08.24 21:33:44.167	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ParabolicSAR.mq5 - 0 errors, 0 warnings, 335 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:44.167	Compiler	compiled ParabolicSAR.mq5
+0	2026.08.24 21:33:44.511	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Price_Channel.mq5 - 0 errors, 0 warnings, 342 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:44.527	Compiler	compiled Price_Channel.mq5
+0	2026.08.24 21:33:44.856	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\PVT.mq5 - 0 errors, 0 warnings, 331 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:44.856	Compiler	compiled PVT.mq5
+0	2026.08.24 21:33:45.184	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ROC.mq5 - 0 errors, 0 warnings, 327 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:45.199	Compiler	compiled ROC.mq5
+0	2026.08.24 21:33:45.559	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\RSI.mq5 - 0 errors, 0 warnings, 365 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:45.559	Compiler	compiled RSI.mq5
+0	2026.08.24 21:33:45.903	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\RVI.mq5 - 0 errors, 0 warnings, 339 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:45.918	Compiler	compiled RVI.mq5
+0	2026.08.24 21:33:46.278	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\StdDev.mq5 - 0 errors, 0 warnings, 365 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:46.278	Compiler	compiled StdDev.mq5
+0	2026.08.24 21:33:46.653	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Stochastic.mq5 - 0 errors, 0 warnings, 372 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:46.669	Compiler	compiled Stochastic.mq5
+0	2026.08.24 21:33:46.982	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\TEMA.mq5 - 0 errors, 0 warnings, 321 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:46.982	Compiler	compiled TEMA.mq5
+0	2026.08.24 21:33:47.343	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\TRIX.mq5 - 0 errors, 0 warnings, 350 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:47.343	Compiler	compiled TRIX.mq5
+0	2026.08.24 21:33:47.703	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Ultimate_Oscillator.mq5 - 0 errors, 0 warnings, 352 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:47.703	Compiler	compiled Ultimate_Oscillator.mq5
+0	2026.08.24 21:33:48.063	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\VIDYA.mq5 - 0 errors, 0 warnings, 353 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:48.063	Compiler	compiled VIDYA.mq5
+0	2026.08.24 21:33:48.440	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\Volumes.mq5 - 0 errors, 0 warnings, 367 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:48.440	Compiler	compiled Volumes.mq5
+0	2026.08.24 21:33:48.799	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\VROC.mq5 - 0 errors, 0 warnings, 353 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:48.799	Compiler	compiled VROC.mq5
+0	2026.08.24 21:33:49.143	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\WPR.mq5 - 0 errors, 0 warnings, 345 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:49.158	Compiler	compiled WPR.mq5
+0	2026.08.24 21:33:49.471	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\W_AD.mq5 - 0 errors, 0 warnings, 321 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:49.471	Compiler	compiled W_AD.mq5
+0	2026.08.24 21:33:49.846	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ZigZag.mq5 - 0 errors, 0 warnings, 360 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:49.846	Compiler	compiled ZigZag.mq5
+0	2026.08.24 21:33:50.237	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Examples\ZigzagColor.mq5 - 0 errors, 0 warnings, 385 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:50.237	Compiler	compiled ZigzagColor.mq5
+0	2026.08.24 21:33:50.643	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\Camarilla Channel.mq5 - 0 errors, 0 warnings, 396 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:50.643	Compiler	compiled Camarilla Channel.mq5
+0	2026.08.24 21:33:51.034	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\DeMark Channel.mq5 - 0 errors, 0 warnings, 388 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:51.034	Compiler	compiled DeMark Channel.mq5
+0	2026.08.24 21:33:51.409	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\Donchian Channel.mq5 - 0 errors, 0 warnings, 375 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:51.409	Compiler	compiled Donchian Channel.mq5
+0	2026.08.24 21:33:51.800	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\Fibonacci Channel.mq5 - 0 errors, 0 warnings, 385 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:51.815	Compiler	compiled Fibonacci Channel.mq5
+0	2026.08.24 21:33:52.190	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\Keltner Channel.mq5 - 0 errors, 0 warnings, 374 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:52.190	Compiler	compiled Keltner Channel.mq5
+0	2026.08.24 21:33:52.691	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\MarketProfile Canvas.mq5 - 0 errors, 0 warnings, 492 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:52.691	Compiler	compiled MarketProfile Canvas.mq5
+0	2026.08.24 21:33:53.114	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\MarketProfile.mq5 - 0 errors, 0 warnings, 413 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:53.114	Compiler	compiled MarketProfile.mq5
+0	2026.08.24 21:33:53.584	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\MurreyMath Channel.mq5 - 0 errors, 0 warnings, 466 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:53.584	Compiler	compiled MurreyMath Channel.mq5
+0	2026.08.24 21:33:54.021	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\NRTR Channel.mq5 - 0 errors, 0 warnings, 431 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:54.021	Compiler	compiled NRTR Channel.mq5
+0	2026.08.24 21:33:54.413	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\Parabolic Channel.mq5 - 0 errors, 0 warnings, 392 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:54.413	Compiler	compiled Parabolic Channel.mq5
+0	2026.08.24 21:33:54.882	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\Pivot Channel.mq5 - 0 errors, 0 warnings, 460 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:54.882	Compiler	compiled Pivot Channel.mq5
+0	2026.08.24 21:33:55.366	Compile	D:\a\_temp\mt5-portable\MQL5\Indicators\Free Indicators\Woodie Channel.mq5 - 0 errors, 0 warnings, 468 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:55.366	Compiler	compiled Woodie Channel.mq5
+0	2026.08.24 21:33:55.789	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\AccountInfo\AccountInfoSample.mq5 - 0 errors, 0 warnings, 427 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:55.789	Compiler	compiled AccountInfoSample.mq5
+0	2026.08.24 21:33:56.227	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\ArrayDouble\ArrayDoubleSample.mq5 - 0 errors, 0 warnings, 429 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:56.227	Compiler	compiled ArrayDoubleSample.mq5
+0	2026.08.24 21:33:56.806	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\Canvas\CanvasSample.mq5 - 0 errors, 0 warnings, 572 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:56.806	Compiler	compiled CanvasSample.mq5
+0	2026.08.24 21:33:57.541	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\Canvas\Charts\HistogramChartSample.mq5 - 0 errors, 0 warnings, 723 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:57.541	Compiler	compiled HistogramChartSample.mq5
+0	2026.08.24 21:33:58.260	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\Canvas\Charts\LineChartSample.mq5 - 0 errors, 0 warnings, 714 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:58.260	Compiler	compiled LineChartSample.mq5
+0	2026.08.24 21:33:59.090	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\Canvas\Charts\PieChartSample.mq5 - 0 errors, 0 warnings, 826 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:59.105	Compiler	compiled PieChartSample.mq5
+0	2026.08.24 21:33:59.809	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\ObjectChart\ObjChartSample.mq5 - 0 errors, 0 warnings, 707 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:33:59.809	Compiler	compiled ObjChartSample.mq5
+0	2026.08.24 21:34:00.309	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\ObjectSphere\SphereSample.mq5 - 0 errors, 0 warnings, 488 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:34:00.309	Compiler	compiled SphereSample.mq5
+0	2026.08.24 21:34:00.793	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OpenCL\Double\BitonicSort.mq5 - 0 errors, 0 warnings, 473 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:34:00.793	Compiler	compiled BitonicSort.mq5
+0	2026.08.24 21:34:01.309	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OpenCL\Double\FFT.mq5 - 0 errors, 0 warnings, 513 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:34:01.309	Compiler	compiled FFT.mq5
+0	2026.08.24 21:34:01.809	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OpenCL\Double\MatrixMult.mq5 - 0 errors, 0 warnings, 491 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:34:01.809	Compiler	compiled MatrixMult.mq5
+0	2026.08.24 21:34:02.888	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OpenCL\Double\Wavelet.mq5 - 0 errors, 0 warnings, 1074 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:34:02.888	Compiler	compiled Wavelet.mq5
+0	2026.08.24 21:34:03.374	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OpenCL\Float\BitonicSort.mq5 - 0 errors, 0 warnings, 485 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:34:03.389	Compiler	compiled BitonicSort.mq5
+0	2026.08.24 21:34:03.874	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OpenCL\Float\FFT.mq5 - 0 errors, 0 warnings, 483 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:34:03.874	Compiler	compiled FFT.mq5
+0	2026.08.24 21:34:04.280	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OpenCL\Float\MatrixMult.mq5 - 0 errors, 0 warnings, 403 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:34:04.280	Compiler	compiled MatrixMult.mq5
+0	2026.08.24 21:34:05.297	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OpenCL\Float\Wavelet.mq5 - 0 errors, 0 warnings, 1015 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:34:05.313	Compiler	compiled Wavelet.mq5
+0	2026.08.24 21:34:05.844	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OpenCL\Seascape\Seascape.mqproj - 0 errors, 0 warnings, 529 ms elapsed, cpu='X64 Regular'
+0	2026.08.24 21:34:05.844	Compiler	compiled Seascape.mqproj
+0	2026.08.24 21:34:06.328	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\OrderInfo\OrderInfoSample.mq5 - 0 errors, 0 warnings, 474 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:34:06.328	Compiler	compiled OrderInfoSample.mq5
+0	2026.08.24 21:34:06.844	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\PositionInfo\PositionInfoSample.mq5 - 0 errors, 0 warnings, 514 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:34:06.844	Compiler	compiled PositionInfoSample.mq5
+0	2026.08.24 21:34:07.630	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\Remnant 3D\Remnant 3D.mqproj - 0 errors, 0 warnings, 771 ms elapsed, cpu='X64 Regular'
+0	2026.08.24 21:34:07.633	Compiler	compiled Remnant 3D.mqproj
+0	2026.08.24 21:34:08.219	Compile	D:\a\_temp\mt5-portable\MQL5\Scripts\Examples\SymbolInfo\SymbolInfoSample.mq5 - 0 errors, 0 warnings, 581 ms elapsed without optimizations, cpu='X64 Regular'
+0	2026.08.24 21:34:08.223	Compiler	compiled SymbolInfoSample.mq5
 

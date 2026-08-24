@@ -1,5 +1,5 @@
 {
-  "stage": "TESTER",
-  "message": "Running native Strategy Tester Model 4 real ticks",
-  "utc": "2026-08-24T20:26:19.9316155Z"
+  "stage": "DONE",
+  "message": "Native MT5 parity exactly 100%",
+  "utc": "2026-08-24T21:42:34.9424494Z"
 }
