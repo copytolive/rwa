@@ -25,9 +25,11 @@ function openRootFundamentals(symbol){
   const layer=document.getElementById('rwaCommandLayer');if(layer)layer.hidden=true;
   window.RWAFundamentals?.open?.(String(symbol||commandSymbol()).toUpperCase());
 }
+function patchProductOS(){if(window.RWAProductOS)window.RWAProductOS.openAsset=s=>openRootFundamentals(s)}
 
 lockCanonicalRoot();
-addEventListener('rwa:product-os-ready',lockCanonicalRoot);
+patchProductOS();
+addEventListener('rwa:product-os-ready',()=>{lockCanonicalRoot();patchProductOS()});
 addEventListener('hashchange',lockCanonicalRoot);
 
 document.addEventListener('click',e=>{
@@ -50,8 +52,4 @@ document.addEventListener('click',e=>{
     openRootFundamentals(commandSymbol());
   }
 },true);
-
-addEventListener('rwa:product-os-ready',()=>{
-  if(window.RWAProductOS)window.RWAProductOS.openAsset=s=>openRootFundamentals(s);
-});
 })();
