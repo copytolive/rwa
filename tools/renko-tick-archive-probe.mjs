@@ -8,12 +8,16 @@ const dayPath=(symbol,y,m,d)=>`data/spot/daily/trades/${symbol}/${symbol}-trades
 const HOSTS=[
   'https://data.binance.vision',
   'https://s3-ap-northeast-1.amazonaws.com/data.binance.vision',
+  'https://s3.ap-northeast-1.amazonaws.com/data.binance.vision',
+  'https://s3.amazonaws.com/data.binance.vision',
   'https://data.binance.vision.s3.ap-northeast-1.amazonaws.com'
 ];
 
 async function probe(url,method='HEAD'){
-  const r=await fetch(url,{method,headers:{Origin:ORIGIN,...(method==='GET'?{Range:'bytes=0-4095'}:{})},signal:AbortSignal.timeout(20000)});
-  return {ok:r.ok,status:r.status,acao:r.headers.get('access-control-allow-origin')||'',len:Number(r.headers.get('content-length')||0),acceptRanges:r.headers.get('accept-ranges')||''};
+  try{
+    const r=await fetch(url,{method,headers:{Origin:ORIGIN,...(method==='GET'?{Range:'bytes=0-4095'}:{})},signal:AbortSignal.timeout(20000)});
+    return {ok:r.ok,status:r.status,acao:r.headers.get('access-control-allow-origin')||'',len:Number(r.headers.get('content-length')||0),acceptRanges:r.headers.get('accept-ranges')||'',error:null};
+  }catch(e){return {ok:false,status:0,acao:'',len:0,acceptRanges:'',error:e?.cause?.code||e.message}}
 }
 
 const candidatePath=pathFor('BTCUSDT',2017,8);
