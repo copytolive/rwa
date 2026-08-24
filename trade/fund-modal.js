@@ -10,6 +10,17 @@ const byId=id=>document.getElementById(id);
 const short=a=>a?`${a.slice(0,6)}…${a.slice(-4)}`:'—';
 const money=n=>`$${Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 
+function cleanPrimaryBrand(){
+  const subtitle=document.querySelector('.brand small');
+  if(subtitle)subtitle.textContent='RWA execution network';
+  const fund=document.getElementById('fundBtn');
+  if(fund)fund.textContent='Test collateral';
+  const micro=document.querySelector('.microcopy');
+  if(micro)micro.textContent='Entry + TP/SL are submitted as one atomic protected order group when protection is provided.';
+  const meta=document.querySelector('meta[name="description"]');
+  if(meta)meta.setAttribute('content','Secure non-custodial trading interface for RWA Markets.');
+}
+
 function sessionWallet(){
   try{
     const row=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
@@ -136,6 +147,7 @@ async function refreshFunding(manual=false){
 
 async function openFunding(){
   ensureModal();
+  cleanPrimaryBrand();
   const modal=byId('fundModal');
   modal.hidden=false;
   document.documentElement.classList.add('funding-open');
@@ -159,7 +171,6 @@ function closeFunding(){
   document.getElementById('preflightBtn')?.click();
 }
 
-// Capture before app.js legacy funding handler so RWA never opens another site/tab.
 document.addEventListener('click',event=>{
   const button=event.target?.closest?.('#fundBtn');
   if(!button)return;
@@ -178,5 +189,7 @@ document.addEventListener('keydown',event=>{
   if(event.key==='Escape'&&!byId('fundModal')?.hidden)closeFunding();
 });
 
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',cleanPrimaryBrand,{once:true});else cleanPrimaryBrand();
+setTimeout(cleanPrimaryBrand,1200);
 window.RWAFundingPanel={open:openFunding,close:closeFunding,refresh:refreshFunding};
 })();
