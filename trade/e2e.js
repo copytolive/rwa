@@ -149,7 +149,7 @@ async function run(){
     const notional=Math.max(12,Math.min(25,equity*0.02));
 
     setBusy(true,'Testing modify / cancel…');
-    const restingPrice=mid*0.70;
+    const restingPrice=mid*0.95;
     const restingSize=notional/restingPrice;
     const resting=await api.orders.limit({coin,side:'BUY',price:restingPrice,size:restingSize,reduceOnly:false,leverage:1,testnet:true,preferAgent:true});
     let oid=[...orderIds(resting)][0]||'';
@@ -162,7 +162,7 @@ async function run(){
     }
     if(!oid)throw Error('Resting TESTNET order was not observed');
 
-    const modified=await api.orders.modify({coin,oid:Number(oid),side:'BUY',price:mid*0.71,size:restingSize,reduceOnly:false,testnet:true,preferAgent:true});
+    const modified=await api.orders.modify({coin,oid:Number(oid),side:'BUY',price:mid*0.96,size:restingSize,reduceOnly:false,testnet:true,preferAgent:true});
     const modifiedIds=[...orderIds(modified)].map(String);
     const replacement=await waitFor(async()=>{
       const rows=await currentOpenBuy(api,coin);
@@ -272,6 +272,6 @@ function render(){
   const publishButton=document.getElementById('tradeE2EPublish');if(publishButton)publishButton.disabled=!ok;
 }
 
-window.RWATradeE2E={version:'1.0.2',run,publish,status:()=>({wallet:wallet(),passed:passed(),evidence:load()}),reset:clear};
+window.RWATradeE2E={version:'1.0.3',run,publish,status:()=>({wallet:wallet(),passed:passed(),evidence:load()}),reset:clear};
 let attempts=0;const timer=setInterval(()=>{attempts++;if(ensureUi()){clearInterval(timer);render()}if(attempts>100)clearInterval(timer)},100);
 })();
