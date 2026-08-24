@@ -186,7 +186,8 @@ async function run(){
 
     setBusy(true,'Testing protected entry…');
     const size=notional/mid;
-    const bracket=await api.orders.bracket({coin,side:'BUY',size,type:'MARKET',tp:mid*1.05,sl:mid*0.95,leverage:1,testnet:true,preferAgent:true});
+    const protectionPct=0.005;
+    const bracket=await api.orders.bracket({coin,side:'BUY',size,type:'MARKET',tp:mid*(1+protectionPct),sl:mid*(1-protectionPct),leverage:1,testnet:true,preferAgent:true});
     if(bracket?.mode&&bracket.mode!=='agent')throw Error('Risk-increasing entry did not use delegated trading approval');
     mark('entry',venueDetail(bracket,`MARKET ${coin}`));
     mark('tpsl',venueDetail(bracket,'atomic TP + SL'));
@@ -272,6 +273,6 @@ function render(){
   const publishButton=document.getElementById('tradeE2EPublish');if(publishButton)publishButton.disabled=!ok;
 }
 
-window.RWATradeE2E={version:'1.0.3',run,publish,status:()=>({wallet:wallet(),passed:passed(),evidence:load()}),reset:clear};
+window.RWATradeE2E={version:'1.0.4',run,publish,status:()=>({wallet:wallet(),passed:passed(),evidence:load()}),reset:clear};
 let attempts=0;const timer=setInterval(()=>{attempts++;if(ensureUi()){clearInterval(timer);render()}if(attempts>100)clearInterval(timer)},100);
 })();
