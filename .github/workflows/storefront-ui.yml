@@ -1,0 +1,69 @@
+name: RWA Physical Commerce UI
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "rwa-commerce-registry.json"
+      - "rwa-storefront.js"
+      - "rwa-ui-pro.css"
+      - "quick-actions.js"
+      - "trade/ui-polish.js"
+      - "trade/ui-polish.css"
+      - "trade/config.js"
+      - "tools/storefront-ui-contract.mjs"
+      - "tools/storefront-browser.mjs"
+      - ".github/workflows/storefront-ui.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  statuses: write
+concurrency:
+  group: rwa-storefront-ui
+  cancel-in-progress: true
+jobs:
+  storefront:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate storefront source contract
+        run: |
+          node --check rwa-storefront.js
+          node --check quick-actions.js
+          node --check trade/ui-polish.js
+          node --check tools/storefront-ui-contract.mjs
+          node --check tools/storefront-browser.mjs
+          python -m json.tool rwa-commerce-registry.json >/dev/null
+          node tools/storefront-ui-contract.mjs
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Wait for Pages and run desktop/mobile storefront smoke
+        shell: bash
+        run: |
+          ok=0
+          for i in {1..60}; do
+            q="${GITHUB_RUN_ID}-${i}"
+            quick="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/quick-actions.js?v=$q" || true)"
+            store="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-storefront.js?v=$q" || true)"
+            reg="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-commerce-registry.json?v=$q" || true)"
+            trade="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/ui-polish.js?v=$q" || true)"
+            if grep -Fq "premium-shell-storefront-v1" <<<"$quick" \
+              && grep -Fq "ONE_TOKEN_ONE_PHYSICAL_STORE_V1" <<<"$store" \
+              && grep -Fq '"one_token_one_physical_store": true' <<<"$reg" \
+              && grep -Fq "desktop-mobile-commerce-polish-v1" <<<"$trade"; then ok=1; break; fi
+            sleep 5
+          done
+          test "$ok" = "1"
+          node tools/storefront-browser.mjs
+      - name: Publish storefront UI status
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/storefront-ui' -f description='Desktop + mobile physical-store ecommerce UI and trade/store navigation PASS'
+      - name: Publish storefront UI failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/storefront-ui' -f description='Physical-store ecommerce UI validation failed'
