@@ -1,11 +1,9 @@
 (()=>{
 'use strict';
 
-const FAUCET_URL='https://app.hyperliquid-testnet.xyz/drip';
 const INFO_URL='https://api.hyperliquid-testnet.xyz/info';
 const SESSION_KEY='rwa_wallet_link_v1';
 let pollTimer=null;
-let baselineEquity=0;
 let modalReady=false;
 
 const byId=id=>document.getElementById(id);
@@ -36,7 +34,7 @@ async function testnetEquity(user){
     body:JSON.stringify({type:'clearinghouseState',user}),
     cache:'no-store'
   });
-  if(!r.ok)throw Error(`Hyperliquid TESTNET HTTP ${r.status}`);
+  if(!r.ok)throw Error(`TESTNET network HTTP ${r.status}`);
   const state=await r.json();
   return Number(state?.marginSummary?.accountValue||0)||0;
 }
@@ -54,24 +52,32 @@ function ensureModal(){
       <header class="fund-modal-head">
         <div>
           <small>RWA TRADE · TESTNET</small>
-          <h2 id="fundModalTitle">Get test collateral</h2>
+          <h2 id="fundModalTitle">Test collateral</h2>
         </div>
         <button class="fund-icon-btn" type="button" data-fund-close aria-label="Close funding panel">×</button>
       </header>
+
       <div class="fund-status-row">
         <div><small>Wallet</small><b id="fundWallet">—</b></div>
         <div><small>TESTNET equity</small><b id="fundEquity">Checking…</b></div>
-        <div><small>Status</small><b id="fundStatus">Official faucet</b></div>
+        <div><small>Status</small><b id="fundStatus">Checking</b></div>
       </div>
+
+      <div class="fund-native-card">
+        <div class="fund-native-mark">R</div>
+        <div>
+          <small>RWA TEST COLLATERAL</small>
+          <h3 id="fundNativeTitle">Checking your test balance…</h3>
+          <p id="fundNativeText">RWA checks your TESTNET collateral directly and keeps the complete user experience inside this application.</p>
+        </div>
+      </div>
+
       <div class="fund-note">
-        <b>Mock USDC only.</b> The official Hyperliquid TESTNET faucet is embedded below so you stay inside RWA Trade. Hyperliquid currently requires this same wallet address to have deposited on mainnet before a TESTNET faucet claim is eligible.
+        <b>TESTNET only.</b> Test collateral has no real monetary value. RWA does not embed, disguise, or visually proxy third-party trading pages inside the product.
       </div>
-      <div class="fund-frame-shell">
-        <div id="fundFrameLoading" class="fund-frame-loading">Loading official Hyperliquid TESTNET faucet…</div>
-        <iframe id="fundFrame" title="Official Hyperliquid TESTNET faucet" referrerpolicy="no-referrer" sandbox="allow-scripts allow-forms allow-same-origin allow-modals" allow="clipboard-read; clipboard-write"></iframe>
-      </div>
+
       <footer class="fund-modal-actions">
-        <span id="fundHint">Claim mock USDC in the embedded faucet, then RWA will detect the balance automatically.</span>
+        <span id="fundHint">Checking TESTNET balance…</span>
         <div>
           <button id="fundCheckBtn" class="button ghost" type="button">Check balance</button>
           <button id="fundContinueBtn" class="button primary" type="button" disabled>Continue trading</button>
@@ -84,10 +90,14 @@ function ensureModal(){
   root.querySelectorAll('[data-fund-close]').forEach(el=>el.addEventListener('click',closeFunding));
   byId('fundCheckBtn').addEventListener('click',()=>refreshFunding(true));
   byId('fundContinueBtn').addEventListener('click',closeFunding);
-  byId('fundFrame').addEventListener('load',()=>{
-    byId('fundFrameLoading').hidden=true;
-    byId('fundStatus').textContent='Faucet loaded';
-  });
+}
+
+function renderZeroBalance(){
+  byId('fundStatus').textContent='TEST BALANCE REQUIRED';
+  byId('fundNativeTitle').textContent='No test collateral detected';
+  byId('fundNativeText').textContent='Your RWA TESTNET account is connected, but its trading equity is still $0.00. Native RWA test-faucet distribution is not enabled in this build.';
+  byId('fundHint').textContent='RWA will automatically unlock trading as soon as TESTNET equity is detected.';
+  byId('fundContinueBtn').disabled=true;
 }
 
 async function refreshFunding(manual=false){
@@ -96,23 +106,30 @@ async function refreshFunding(manual=false){
     byId('fundWallet').textContent=short(user);
     if(!user){
       byId('fundEquity').textContent='—';
-      byId('fundStatus').textContent='Connect wallet first';
+      byId('fundStatus').textContent='CONNECT WALLET';
+      byId('fundNativeTitle').textContent='Connect your wallet first';
+      byId('fundNativeText').textContent='RWA needs the connected wallet address before it can read TESTNET collateral.';
+      byId('fundContinueBtn').disabled=true;
       return;
     }
     const equity=await testnetEquity(user);
     byId('fundEquity').textContent=money(equity);
     if(equity>0){
-      byId('fundStatus').textContent='FUNDED';
-      byId('fundHint').textContent='TESTNET collateral detected. You can continue without leaving RWA Trade.';
+      byId('fundStatus').textContent='READY';
+      byId('fundNativeTitle').textContent='Test collateral detected';
+      byId('fundNativeText').textContent=`Your TESTNET account has ${money(equity)} available. You can continue to the one-time trading approval.`;
+      byId('fundHint').textContent='TESTNET collateral detected. Continue trading without leaving RWA Trade.';
       byId('fundContinueBtn').disabled=false;
       document.getElementById('refreshBtn')?.click();
       document.getElementById('preflightBtn')?.click();
     }else{
-      byId('fundStatus').textContent=manual?'Still waiting':'Waiting for claim';
-      byId('fundContinueBtn').disabled=true;
+      renderZeroBalance();
+      if(manual)byId('fundHint').textContent='Balance is still $0.00. RWA is not opening any external funding page.';
     }
   }catch(error){
-    byId('fundStatus').textContent='Balance check unavailable';
+    byId('fundStatus').textContent='CHECK FAILED';
+    byId('fundNativeTitle').textContent='Balance check unavailable';
+    byId('fundNativeText').textContent='RWA could not read TESTNET collateral right now. Your wallet and trading controls remain unchanged.';
     if(manual)byId('fundHint').textContent=String(error?.message||error);
   }
 }
@@ -122,18 +139,13 @@ async function openFunding(){
   const modal=byId('fundModal');
   modal.hidden=false;
   document.documentElement.classList.add('funding-open');
-  byId('fundFrameLoading').hidden=false;
-  byId('fundStatus').textContent='Loading faucet…';
+  byId('fundStatus').textContent='CHECKING';
   byId('fundContinueBtn').disabled=true;
   const user=await currentWallet();
   byId('fundWallet').textContent=short(user);
-  baselineEquity=await testnetEquity(user).catch(()=>0);
-  byId('fundEquity').textContent=money(baselineEquity);
-  const frame=byId('fundFrame');
-  if(frame.src!==FAUCET_URL)frame.src=FAUCET_URL;
   clearInterval(pollTimer);
   pollTimer=setInterval(()=>refreshFunding(false),4000);
-  refreshFunding(false);
+  await refreshFunding(false);
 }
 
 function closeFunding(){
@@ -147,7 +159,7 @@ function closeFunding(){
   document.getElementById('preflightBtn')?.click();
 }
 
-// Capture before app.js' legacy fund-button handler so it can never open a new tab.
+// Capture before app.js legacy funding handler so RWA never opens another site/tab.
 document.addEventListener('click',event=>{
   const button=event.target?.closest?.('#fundBtn');
   if(!button)return;
@@ -157,7 +169,7 @@ document.addEventListener('click',event=>{
   openFunding().catch(error=>{
     ensureModal();
     byId('fundModal').hidden=false;
-    byId('fundStatus').textContent='Funding panel error';
+    byId('fundStatus').textContent='ERROR';
     byId('fundHint').textContent=String(error?.message||error);
   });
 },true);
