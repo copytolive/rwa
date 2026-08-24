@@ -4,13 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07090d">
-<title>RWA Renko — Live Tick Traditional Crypto Chart</title>
-<meta name="description" content="RWA live tick-based Traditional Renko terminal with top-500 crypto market discovery and raw public trade ticks.">
+<title>RWA Renko — Full History Tick Traditional Crypto Chart</title>
+<meta name="description" content="RWA raw-tick Traditional Renko terminal with top-500 crypto markets and all formed brick history from chart genesis.">
 <link rel="preconnect" href="https://data-api.binance.vision" crossorigin>
 <link rel="preconnect" href="https://data-stream.binance.vision" crossorigin>
 <link rel="preconnect" href="https://api.binance.com" crossorigin>
 <link rel="stylesheet" href="renko.css?v=1">
 <link rel="stylesheet" href="renko-v2.css?v=2">
+<link rel="stylesheet" href="renko-v3.css?v=3">
 </head>
 <body>
 <div class="app">
@@ -51,36 +52,46 @@
 
       <div class="controlbar">
         <div class="field brick-field"><label>FIXED BRICK SIZE</label><div class="brick-input"><input id="brickSize" inputmode="decimal" value="100"><button id="applyBrick">Apply</button></div></div>
-        <div class="field"><label>VISIBLE BRICKS</label><div class="stepper"><button id="zoomOut" aria-label="Show more bricks">−</button><b id="visibleValue">120</b><button id="zoomIn" aria-label="Show fewer bricks">+</button></div></div>
+        <div class="field"><label>VISIBLE BRICKS</label><div class="stepper"><button id="zoomOut" aria-label="Show more bricks">−</button><b id="visibleValue">ALL</b><button id="zoomIn" aria-label="Show fewer bricks">+</button></div></div>
         <label class="toggle"><input id="followLive" type="checkbox" checked><span></span><b>FOLLOW LIVE</b></label>
         <button id="resetChart" class="ghost">Rebuild ticks</button>
         <div class="thresholds"><span>UP <b id="nextUp">—</b></span><span>DOWN <b id="nextDown">—</b></span></div>
+      </div>
+
+      <div class="historybar" aria-label="Full Renko history navigation">
+        <div class="history-summary"><small>HISTORY</small><b id="historyCoverage">ALL · genesis → live</b><span id="historyCount">0 bricks</span></div>
+        <div class="history-actions"><button id="historyStart">START</button><button id="historyPrev" aria-label="Older history">←</button><button id="historyAll" class="active">ALL HISTORY</button><button id="historyNext" aria-label="Newer history">→</button><button id="historyLive">LIVE</button></div>
+        <input id="historyRange" class="history-range-input" type="range" min="0" max="0" value="0" disabled aria-label="History position">
+        <div class="history-dates"><span id="historyFrom">—</span><i>→</i><span id="historyTo">—</span></div>
+        <div id="historyIntegrity" class="history-integrity">Full brick history retained from chart genesis</div>
       </div>
 
       <div id="chartWrap" class="chart-wrap">
         <canvas id="renkoCanvas"></canvas>
         <div id="chartEmpty" class="chart-empty"><span class="spinner"></span><b>Loading raw ticks…</b><small>No candle/OHLC fallback is used.</small></div>
         <div id="tooltip" class="tooltip" hidden></div>
-        <div class="chart-badges"><span>RAW TICKS</span><span>FIXED BOX</span><span>2-BRICK REVERSAL</span></div>
+        <div class="chart-badges"><span>RAW TICKS</span><span>FIXED BOX</span><span>2-BRICK REVERSAL</span><span>FULL HISTORY</span></div>
       </div>
 
       <div class="footerbar">
-        <div><span id="historyState">Warmup pending</span><small>Warmup: up to 1,000 raw trades. Live: individual <code>@trade</code> ticks with raw-trade REST watchdog.</small></div>
+        <div><span id="historyState">Warmup pending</span><small>Chart genesis starts from the first raw trade loaded for this chart. Every brick formed after genesis remains visible in ALL HISTORY. This is chart history, not the exchange's lifetime trade archive.</small></div>
         <div class="legend"><span><i class="up"></i> Up brick</span><span><i class="down"></i> Down brick</span></div>
       </div>
 
       <details class="methodology">
-        <summary>Traditional Renko methodology & safety</summary>
+        <summary>Traditional Renko methodology & history integrity</summary>
         <div class="method-grid">
           <div><b>Tick source</b><p>Bricks are calculated only from individual public trade events. No candle, OHLC, kline, ATR or aggregate-trade source is used.</p></div>
           <div><b>Traditional box</b><p>The box is a fixed absolute value. Continuation requires one box; reversal requires two boxes. AUTO and percentage buttons only choose a fixed box, then the engine remains Traditional.</p></div>
-          <div><b>Market universe</b><p>Crypto spot markets are ranked by 24h USD-equivalent liquidity. The first 500 are shown and the full eligible universe remains searchable.</p></div>
+          <div><b>Full chart history</b><p>ALL HISTORY renders every brick formed since this chart's genesis. START and LIVE switch to a readable navigation window without deleting older bricks.</p></div>
+          <div><b>500-market universe</b><p>Crypto spot markets are ranked by 24h USD-equivalent liquidity. The first 500 are shown and the full eligible universe remains searchable.</p></div>
+          <div><b>Raw-tick buffer</b><p>Older bricks are never trimmed during the chart session. Raw ticks are buffered separately for rebuilds; if that raw buffer eventually compacts, changing box size starts a new chart genesis rather than silently inventing history.</p></div>
           <div><b>Synthetic chart</b><p>Renko brick prices are synthetic. Trading and fills must use the real venue price through the RWA execution path.</p></div>
         </div>
       </details>
     </section>
   </main>
 </div>
-<script src="renko-v2.js?v=2"></script>
+<script src="renko-v3.js?v=3"></script>
 </body>
 </html>
