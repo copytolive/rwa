@@ -1,7 +1,8 @@
 export const CONFIG = Object.freeze({
-  version: '1.2.0',
-  build: 'github-pages-rwa-public-testnet-beta-2026-08-24',
+  version: '1.3.0',
+  build: 'github-pages-rwa-trade-pro-rc-2026-08-24',
   releaseChannel: 'PUBLIC_TESTNET_BETA',
+  uiRelease: 'terminal-pro-v1',
   publicBetaEnabled: true,
   sdkUrl: 'https://esm.sh/@nktkas/hyperliquid@0.33.3?target=es2022',
   viemUrl: 'https://esm.sh/viem@2.37.3?target=es2022',
