@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "policy": {
+    "numeric_claim_rule": "A stock fundamental number must have metric-level provenance or be explicitly RWA_CALCULATED from sourced inputs.",
+    "stock_verified_rule": "Traditional stocks must never use the reviewer-backed RWA VERIFIED label merely because a regulator filing exists.",
+    "market_data_rule": "LIVE, DELAYED and EOD are different states. A 10-minute candle interval does not imply a 10-minute data delay.",
+    "rights_rule": "Publicly viewable does not automatically mean commercially redistributable. REVIEW_REQUIRED blocks raw-data redistribution until terms are cleared.",
+    "unknown_rule": "UNKNOWN or REVIEW_REQUIRED sources may populate identity/source links but cannot be represented as approved redistributable market data."
+  },
+  "allowed_market_labels": ["LIVE","DELAYED","EOD","SOURCE GATED","UNAVAILABLE"],
+  "allowed_source_labels": ["REGULATOR FILED","EXCHANGE SOURCE","ISSUER ANNOUNCED","RWA CALCULATED","SOURCE GATED"],
+  "sources": [
+    {"id":"SEC","country":"US","name":"U.S. Securities and Exchange Commission EDGAR","official_domain":"sec.gov","fundamentals":"XBRL/iXBRL/filings","access":"PUBLIC","redistribution":"FACT_EXTRACTION_WITH_PROVENANCE","market_data":false,"status":"APPROVED_FOR_FACT_INGESTION","notes":"Use SEC fair-access controls; keep filing accession, form, period and source URL."},
+    {"id":"NASDAQ_TRADER","country":"US","name":"Nasdaq Trader Symbol Directory","official_domain":"nasdaqtrader.com","fundamentals":false,"access":"PUBLIC","redistribution":"REVIEW_REQUIRED","market_data":false,"status":"IDENTITY_ONLY_UNTIL_TERMS_REVIEWED"},
+    {"id":"OJK_IDX","country":"ID","name":"OJK / Indonesia Stock Exchange issuer disclosures","official_domain":"ojk.go.id / idx.co.id","fundamentals":"XBRL/PDF/disclosures","access":"PUBLIC","redistribution":"REVIEW_REQUIRED","market_data":"REVIEW_REQUIRED","status":"ADAPTER_GATED"},
+    {"id":"EDINET","country":"JP","name":"Financial Services Agency EDINET","official_domain":"disclosure2.edinet-fsa.go.jp","fundamentals":"XBRL/filings","access":"PUBLIC","redistribution":"REVIEW_REQUIRED","market_data":false,"status":"ADAPTER_GATED"},
+    {"id":"DART","country":"KR","name":"Financial Supervisory Service DART/OpenDART","official_domain":"dart.fss.or.kr / opendart.fss.or.kr","fundamentals":"XBRL/API/disclosures","access":"PUBLIC/API","redistribution":"REVIEW_REQUIRED","market_data":false,"status":"ADAPTER_GATED"},
+    {"id":"NSE_BSE","country":"IN","name":"NSE/BSE corporate filings","official_domain":"nseindia.com / bseindia.com","fundamentals":"XBRL/disclosures","access":"PUBLIC","redistribution":"REVIEW_REQUIRED","market_data":"REVIEW_REQUIRED","status":"ADAPTER_GATED"},
+    {"id":"COMPANIES_HOUSE","country":"GB","name":"UK Companies House","official_domain":"gov.uk / companieshouse.gov.uk","fundamentals":"iXBRL/accounts/API","access":"PUBLIC/API","redistribution":"REVIEW_REQUIRED","market_data":false,"status":"ADAPTER_GATED"},
+    {"id":"ESEF","country":"EU","name":"European Single Electronic Format filings","official_domain":"esma.europa.eu + national OAMs","fundamentals":"XHTML/iXBRL","access":"PUBLIC","redistribution":"REVIEW_REQUIRED_PER_OAM","market_data":false,"status":"ADAPTER_GATED"},
+    {"id":"AMF_ESEF","country":"FR","name":"AMF / ESEF filings","official_domain":"amf-france.org","fundamentals":"ESEF/iXBRL","access":"PUBLIC","redistribution":"REVIEW_REQUIRED","market_data":false,"status":"ADAPTER_GATED"},
+    {"id":"BUNDESANZEIGER_ESEF","country":"DE","name":"German ESEF/OAM disclosures","official_domain":"bundesanzeiger.de / bafin.de","fundamentals":"ESEF/iXBRL","access":"PUBLIC","redistribution":"REVIEW_REQUIRED","market_data":false,"status":"ADAPTER_GATED"},
+    {"id":"CVM","country":"BR","name":"Comissao de Valores Mobiliarios Open Data","official_domain":"gov.br/cvm","fundamentals":"open data/DFP/ITR","access":"PUBLIC","redistribution":"REVIEW_REQUIRED","market_data":false,"status":"ADAPTER_GATED"},
+    {"id":"MOPS","country":"TW","name":"TWSE Market Observation Post System","official_domain":"mops.twse.com.tw","fundamentals":"financial statements/XBRL/disclosures","access":"PUBLIC","redistribution":"REVIEW_REQUIRED","market_data":false,"status":"ADAPTER_GATED"},
+    {"id":"SAUDI_EXCHANGE","country":"SA","name":"Saudi Exchange issuer financials","official_domain":"saudiexchange.sa","fundamentals":"financial statements/XBRL","access":"PUBLIC","redistribution":"REVIEW_REQUIRED","market_data":"REVIEW_REQUIRED","status":"ADAPTER_GATED"},
+    {"id":"HKEX","country":"HK","name":"HKEXnews","official_domain":"hkexnews.hk","fundamentals":"issuer filings/financial reports","access":"PUBLIC","redistribution":"REVIEW_REQUIRED","market_data":"REVIEW_REQUIRED","status":"ADAPTER_GATED"},
+    {"id":"SEDAR_PLUS","country":"CA","name":"SEDAR+","official_domain":"sedarplus.ca","fundamentals":"issuer filings","access":"PUBLIC","redistribution":"REVIEW_REQUIRED","market_data":false,"status":"ADAPTER_GATED"},
+    {"id":"ASX_ASIC","country":"AU","name":"ASX announcements / ASIC company reporting","official_domain":"asx.com.au / asic.gov.au","fundamentals":"issuer filings/announcements","access":"PUBLIC","redistribution":"REVIEW_REQUIRED","market_data":"REVIEW_REQUIRED","status":"ADAPTER_GATED"},
+    {"id":"SGX","country":"SG","name":"SGX issuer announcements","official_domain":"sgx.com","fundamentals":"issuer disclosures","access":"PUBLIC","redistribution":"REVIEW_REQUIRED","market_data":"REVIEW_REQUIRED","status":"ADAPTER_GATED"},
+    {"id":"SSE_SZSE_CNINFO","country":"CN","name":"SSE/SZSE/CNINFO issuer disclosures","official_domain":"sse.com.cn / szse.cn / cninfo.com.cn","fundamentals":"issuer filings","access":"PUBLIC_VIEW","redistribution":"REVIEW_REQUIRED","market_data":"REVIEW_REQUIRED","status":"ADAPTER_GATED"},
+    {"id":"BURSA_MY","country":"MY","name":"Bursa Malaysia issuer disclosures","official_domain":"bursamalaysia.com","fundamentals":"issuer filings","access":"PUBLIC","redistribution":"REVIEW_REQUIRED","market_data":"REVIEW_REQUIRED","status":"ADAPTER_GATED"},
+    {"id":"SET_TH","country":"TH","name":"Stock Exchange of Thailand issuer disclosures","official_domain":"set.or.th","fundamentals":"issuer filings","access":"PUBLIC","redistribution":"REVIEW_REQUIRED","market_data":"REVIEW_REQUIRED","status":"ADAPTER_GATED"},
+    {"id":"JSE_SENS","country":"ZA","name":"JSE SENS disclosures","official_domain":"jse.co.za","fundamentals":"issuer announcements/reports","access":"PUBLIC","redistribution":"REVIEW_REQUIRED","market_data":"REVIEW_REQUIRED","status":"ADAPTER_GATED"},
+    {"id":"DFM","country":"AE","name":"Dubai Financial Market issuer disclosures","official_domain":"dfm.ae","fundamentals":"issuer disclosures","access":"PUBLIC","redistribution":"REVIEW_REQUIRED","market_data":"REVIEW_REQUIRED","status":"ADAPTER_GATED"},
+    {"id":"BMV_CNBV","country":"MX","name":"BMV/CNBV issuer disclosures","official_domain":"bmv.com.mx / gob.mx/cnbv","fundamentals":"issuer filings","access":"PUBLIC","redistribution":"REVIEW_REQUIRED","market_data":"REVIEW_REQUIRED","status":"ADAPTER_GATED"}
+  ]
+}
