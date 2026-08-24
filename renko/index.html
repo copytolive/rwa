@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="renko.css?v=1">
 <link rel="stylesheet" href="renko-v2.css?v=2">
 <link rel="stylesheet" href="renko-v3.css?v=3">
-<link rel="stylesheet" href="renko-v5.css?v=5">
+<link rel="stylesheet" href="renko-v5.css?v=54">
 </head>
 <body>
 <div class="app">
@@ -66,10 +66,10 @@
       </div>
 
       <div class="historybar" aria-label="Full Renko history navigation">
-        <div class="history-summary"><small>RENKO HISTORY</small><b id="historyCoverage">LOADING OLDEST RAW TICK → LIVE</b><span id="historyCount">0 historical bricks</span></div>
+        <div class="history-summary"><small>RENKO HISTORY</small><b id="v5HistoryCoverage">LOADING OLDEST RAW TICK → LIVE</b><span id="v5HistoryCount">0 historical bricks</span><b id="historyCoverage" hidden></b><span id="historyCount" hidden>0 bricks</span></div>
         <div class="history-actions"><button id="historyStart">START</button><button id="historyPrev" aria-label="Older history">←</button><button id="historyAll" class="active">ALL HISTORY</button><button id="historyNext" aria-label="Newer history">→</button><button id="historyLive">LIVE</button></div>
         <input id="historyRange" class="history-range-input" type="range" min="0" max="0" value="0" disabled aria-label="History position">
-        <div class="history-dates"><span id="historyFrom">—</span><i>→</i><span id="historyTo">LIVE</span></div>
+        <div class="history-dates"><span id="v5HistoryFrom">—</span><i>→</i><span id="v5HistoryTo">LIVE</span><span id="historyFrom" hidden>—</span><span id="historyTo" hidden>LIVE</span></div>
         <div id="historyIntegrity" class="history-integrity">Traditional rule: continuation = 1 box, reversal = 2 boxes. Historical construction uses individual raw trades; candles/OHLC are never substituted.</div>
       </div>
 
@@ -77,11 +77,11 @@
         <canvas id="renkoCanvas"></canvas>
         <div id="chartEmpty" class="chart-empty"><span class="spinner"></span><b>Loading raw ticks…</b><small>Total historical bricks will appear progressively as archives are processed.</small></div>
         <div id="tooltip" class="tooltip" hidden></div>
-        <div class="chart-badges"><span>RAW TRADES</span><span>TRADITIONAL FIXED BOX</span><span>2-BRICK REVERSAL</span><span>V5.3 HISTORY</span></div>
+        <div class="chart-badges"><span>RAW TRADES</span><span>TRADITIONAL FIXED BOX</span><span>2-BRICK REVERSAL</span><span>V5.4 HISTORY</span></div>
       </div>
 
       <div class="footerbar">
-        <div><span id="historyState">Automatic raw-tick lifetime backfill pending</span><small>COMPLETE means every discovered individual-trade archive segment from the oldest available date through the latest archived day was processed, then live continues from Binance @trade. If an archive is missing, status remains PARTIAL.</small></div>
+        <div><span id="v5HistoryState">Automatic raw-tick lifetime backfill pending</span><span id="historyState" hidden></span><small>COMPLETE means every discovered individual-trade archive segment from the oldest available date through the latest archived day was processed, then live continues from Binance @trade. If an archive is missing, status remains PARTIAL.</small></div>
         <div class="legend"><span><i class="up"></i> Up brick</span><span><i class="down"></i> Down brick</span></div>
       </div>
 
@@ -100,7 +100,7 @@
   </main>
 </div>
 <script src="renko-v3.js?v=3"></script>
-<script src="renko-v5.js?v=53"></script>
-<script src="renko-v5-auto.js?v=53"></script>
+<script src="renko-v5.js?v=54"></script>
+<script src="renko-v5-auto.js?v=54"></script>
 </body>
 </html>
