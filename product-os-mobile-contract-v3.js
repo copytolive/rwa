@@ -26,13 +26,25 @@ function openRootFundamentals(symbol){
   window.RWAFundamentals?.open?.(String(symbol||commandSymbol()).toUpperCase());
 }
 function patchProductOS(){if(window.RWAProductOS)window.RWAProductOS.openAsset=s=>openRootFundamentals(s)}
+function installMobileFundamentals(){
+  const tabs=document.querySelector('.mobile-detail-tabs');
+  if(!tabs||tabs.querySelector('.rwa-fundamentals-mobile-trigger'))return;
+  const b=document.createElement('button');
+  b.type='button';b.className='rwa-fundamentals-mobile-trigger';b.textContent='Fundamentals';b.setAttribute('aria-label','Open RWA income and fundamentals');
+  tabs.appendChild(b);
+}
 
 lockCanonicalRoot();
 patchProductOS();
-addEventListener('rwa:product-os-ready',()=>{lockCanonicalRoot();patchProductOS()});
+installMobileFundamentals();
+addEventListener('rwa:product-os-ready',()=>{lockCanonicalRoot();patchProductOS();installMobileFundamentals()});
 addEventListener('hashchange',lockCanonicalRoot);
 
 document.addEventListener('click',e=>{
+  const fund=e.target.closest?.('.rwa-fundamentals-mobile-trigger');
+  if(fund&&innerWidth<=680){
+    e.preventDefault();e.stopImmediatePropagation();openRootFundamentals();return;
+  }
   const nav=e.target.closest?.('[data-mobile-nav="markets"]');
   if(nav&&innerWidth<=680){
     e.preventDefault();
