@@ -14,6 +14,7 @@ let mods=null;
 const metaCache=new Map();
 const agentVerifyCache=new Map();
 const writeTransportCache=new Map();
+let productionGateCache={ts:0,value:null};
 
 const audit=(type,details={})=>window.RWAAudit?.log?.(type,details);
 const provider=()=>window.RWAProvider||window.ethereum;
@@ -164,8 +165,43 @@ function assertWriteResult(result,label='Write action'){
   return result;
 }
 
+function launchUrl(name){
+  const prefix=location.pathname.includes('/trade/')?'../launch/':'launch/';
+  return new URL(prefix+name,location.href).href;
+}
+async function productionGate({force=false}={}){
+  const user=master();
+  if(!user)return{ready:false,reason:'wallet-not-connected',wallet:''};
+  if(!force&&productionGateCache.value&&Date.now()-productionGateCache.ts<30000)return productionGateCache.value;
+  let value;
+  try{
+    const [rr,er]=await Promise.all([
+      fetch(launchUrl('readiness.json')+`?t=${Date.now()}`,{cache:'no-store'}),
+      fetch(launchUrl('e2e-registry.json')+`?t=${Date.now()}`,{cache:'no-store'})
+    ]);
+    if(!rr.ok||!er.ok)throw Error(`launch gate HTTP ${rr.status}/${er.status}`);
+    const [readiness,e2e]=await Promise.all([rr.json(),er.json()]);
+    const generated=Date.parse(readiness?.generated_at||'');
+    const fresh=Number.isFinite(generated)&&Date.now()-generated<60*60*1000;
+    const walletE2E=(e2e?.wallets||[]).some(x=>String(x?.wallet||'').toLowerCase()===user&&x?.status==='E2E_VERIFIED'&&Number(x?.verified_at)>0);
+    const global=readiness?.status==='READY_FOR_MAINNET'&&readiness?.mainnet_ready===true;
+    value={ready:!!(fresh&&global&&walletE2E),fresh,global,walletE2E,wallet:user,status:readiness?.status||'UNKNOWN',generatedAt:readiness?.generated_at||'',reason:!fresh?'launch-gate-stale':!global?'global-mainnet-not-ready':!walletE2E?'wallet-e2e-not-verified':'ready'};
+  }catch(e){
+    value={ready:false,wallet:user,reason:'launch-gate-unavailable',error:String(e?.message||e)};
+  }
+  productionGateCache={ts:Date.now(),value};
+  audit('execution.production.gate',{ready:value.ready,reason:value.reason,status:value.status||'',wallet:user});
+  return value;
+}
+async function requireProductionGate(){
+  const g=await productionGate({force:true});
+  if(!g.ready)throw Error(`MAINNET locked by machine gate (${g.reason})`);
+  return g;
+}
+
 async function authorizeAgent(testnet=false){
   if(!master())throw Error('Login with wallet first');
+  if(!testnet)await requireProductionGate();
   const c=await config();
   const {generatePrivateKey,privateKeyToAccount}=await modules();
   const pk=generatePrivateKey();
@@ -252,6 +288,11 @@ function fmtSz(v,d){
   if(!Number(out))throw Error('Size rounds to zero');
   return out;
 }
+function fmtUsdAmount(v){
+  const n=Number(v);
+  if(!Number.isFinite(n)||n<=0)throw Error('Invalid USDC amount');
+  return n.toFixed(6).replace(/\.?0+$/,'');
+}
 
 async function verifyAgent(testnet=false,{force=false}={}){
   const row=readAgent(testnet),k=recordKey(testnet);
@@ -311,6 +352,7 @@ async function riskLive(testnet=false){
 async function mandatoryRiskCheck(order={},testnet=false){
   const r=riskCfg(),reduceOnly=!!order.reduceOnly,requested=Math.max(0,Number(order.leverage||0)),coin=String(order.coin||'').toUpperCase(),kind=String(order.kind||'write');
   const blocked=message=>{audit('execution.risk.blocked',{message,coin,kind,testnet,reduceOnly});throw Error(message)};
+  if(!testnet&&!reduceOnly)await requireProductionGate();
   if(!reduceOnly&&r.kill)blocked('KILL SWITCH is active');
   if(!reduceOnly&&r.maxLeverage>0&&requested>r.maxLeverage)blocked(`Max leverage ${r.maxLeverage}x exceeded`);
   if(reduceOnly)return{pass:true,config:r,reduceOnly:true};
@@ -335,6 +377,7 @@ async function approveBuilderFee(testnet=false){
   const c=await config();
   const b=c.builder||{};
   if(!b.enabled)throw Error('RWA builder fee is disabled');
+  if(!testnet)await requireProductionGate();
   if(!/^0x[a-fA-F0-9]{40}$/.test(b.address||''))throw Error('Builder address is not configured');
   const ex=await mainExchange(testnet);
   const result=assertWriteResult(await ex.approveBuilderFee({builder:b.address,maxFeeRate:String(b.maxFeeRate)}),'Builder fee approval');
@@ -350,6 +393,49 @@ async function builderStatus(testnet=false){
   }catch(e){
     return{enabled:true,builder:b.address,error:e.message};
   }
+}
+
+async function ensureArbitrum(){
+  const c=await config(),f=c.funding||{},p=provider();
+  if(!p?.request)throw Error('Wallet provider unavailable');
+  const target=String(f.arbitrumChainIdHex||'0xa4b1').toLowerCase();
+  const current=String(await p.request({method:'eth_chainId'})).toLowerCase();
+  if(current!==target)await p.request({method:'wallet_switchEthereumChain',params:[{chainId:target}]});
+  const after=String(await p.request({method:'eth_chainId'})).toLowerCase();
+  if(after!==target)throw Error('Switch wallet to Arbitrum before depositing');
+  return f;
+}
+async function depositMainnet({amount,confirmText=''}={}){
+  await requireProductionGate();
+  if(String(confirmText).trim()!=='DEPOSIT')throw Error('Deposit confirmation text must be DEPOSIT');
+  const c=await config(),f=c.funding||{},value=Number(amount),min=Math.max(5,Number(f.minimumDepositUsdc||5));
+  if(!Number.isFinite(value)||value<min)throw Error(`Minimum mainnet deposit is ${min} USDC`);
+  if(!/^0x[a-fA-F0-9]{40}$/.test(String(f.usdcAddress||''))||!/^0x[a-fA-F0-9]{40}$/.test(String(f.bridgeAddress||'')))throw Error('Mainnet funding route is not configured');
+  await ensureArbitrum();
+  const signer=await masterWallet();
+  const {Contract,parseUnits,formatUnits}=await import('https://esm.sh/ethers@6.15.0');
+  const usdc=new Contract(f.usdcAddress,['function balanceOf(address) view returns (uint256)','function transfer(address,uint256) returns (bool)'],signer);
+  const units=parseUnits(fmtUsdAmount(value),Number(f.usdcDecimals||6));
+  const balance=await usdc.balanceOf(master());
+  if(balance<units)throw Error(`Insufficient native Arbitrum USDC (${formatUnits(balance,Number(f.usdcDecimals||6))} available)`);
+  audit('execution.funds.deposit.request',{amount:fmtUsdAmount(value),route:f.route||'bridge',bridge:f.bridgeAddress});
+  const tx=await usdc.transfer(f.bridgeAddress,units);
+  const receipt=await tx.wait(1);
+  if(receipt?.status===0)throw Error('Deposit transaction reverted');
+  audit('execution.funds.deposit.submitted',{amount:fmtUsdAmount(value),hash:tx.hash,route:f.route||'bridge'});
+  return{status:'submitted',hash:tx.hash,amount:fmtUsdAmount(value),chainId:Number(f.arbitrumChainId||42161),route:f.route||'native-arbitrum-usdc-bridge2'};
+}
+async function withdrawMainnet({destination,amount,confirmText=''}={}){
+  await requireProductionGate();
+  if(String(confirmText).trim()!=='WITHDRAW')throw Error('Withdrawal confirmation text must be WITHDRAW');
+  const dest=String(destination||master()).toLowerCase();
+  if(!/^0x[a-f0-9]{40}$/.test(dest))throw Error('Invalid withdrawal destination');
+  const value=fmtUsdAmount(amount);
+  const ex=await mainExchange(false);
+  audit('execution.funds.withdraw.request',{destination:dest,amount:value});
+  const result=assertWriteResult(await ex.withdraw3({destination:dest,amount:value}),'Withdrawal');
+  audit('execution.funds.withdraw.submitted',{destination:dest,amount:value});
+  return{status:'submitted',destination:dest,amount:value,result};
 }
 
 async function setLeverage({coin,leverage,isCross=true,testnet=false,preferAgent=true}){
@@ -466,16 +552,17 @@ async function health(testnet=false){
   const c=await config();
   let verification={valid:false,reason:'not-configured'};if(readAgent(testnet))verification=await verifyAgent(testnet);
   const a=readAgent(testnet);
-  const out={venue:c.venue,master:master(),walletProvider:!!provider(),agent:!!a,agentAddress:a?.address||'',agentExpiresAt:a?.expiresAt||0,agentVerified:verification.valid===true,agentVerification:verification.reason,environment:env(testnet),builder:await builderStatus(testnet),risk:riskCfg(),writeTransport:'websocket'};
+  const out={venue:c.venue,master:master(),walletProvider:!!provider(),agent:!!a,agentAddress:a?.address||'',agentExpiresAt:a?.expiresAt||0,agentVerified:verification.valid===true,agentVerification:verification.reason,environment:env(testnet),builder:await builderStatus(testnet),risk:riskCfg(),writeTransport:'websocket',productionGate:testnet?{ready:false,reason:'testnet'}:await productionGate()};
   try{await info('allMids',{},testnet);out.api='ok'}catch(e){out.api='error';out.error=e.message}
   return out;
 }
 
 window.RWAExecutionAPI={
   version:'2.0.0',
-  revision:'2.1.0',
+  revision:'2.2.0',
   hardening:'single-write-path-v1',
   riskGate:'mandatory-internal-v1',
+  productionGate:'machine-wallet-gate-v1',
   bracket:'atomic-normal-tpsl-v1',
   transport:'websocket-write-v1',
   riskSigner:'agent-only-fail-closed-v1',
@@ -498,6 +585,8 @@ window.RWAExecutionAPI={
     state:(t=false)=>info('clearinghouseState',{user:master()},t),
     fills:(t=false)=>info('userFills',{user:master()},t)
   },
+  funds:{depositMainnet,withdrawMainnet},
+  production:{gate:productionGate,require:requireProductionGate},
   risk:{setLeverage,check:mandatoryRiskCheck,cfg:riskCfg,refresh:riskLive},
   info,
   health
