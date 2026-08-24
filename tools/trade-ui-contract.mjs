@@ -4,6 +4,9 @@ const html=await readFile('trade/index.html','utf8');
 const app=await readFile('trade/app.js','utf8');
 const pro=await readFile('trade/terminal-pro.js','utf8');
 const runtime=await readFile('trade/release-runtime.js','utf8');
+const provider=await readFile('trade/provider-runtime.js','utf8');
+const margin=await readFile('trade/margin-runtime.js','utf8');
+const overlay=await readFile('trade/chart-overlays.js','utf8');
 const exec=await readFile('execution-api.js','utf8');
 const cfg=await readFile('trade/config.js','utf8');
 const fail=[];
@@ -44,7 +47,7 @@ check(exec.includes("hardening:'single-write-path-v1'"),'single write path harde
 check(exec.includes("riskSigner:'agent-only-fail-closed-v1'"),'delegated fail-closed signer missing');
 check(exec.includes("grouping:'normalTpsl'"),'atomic bracket execution missing');
 
-check(cfg.includes("version:'1.4.1'"),'trade config must be v1.4.1 release runtime build');
+check(cfg.includes("version:'1.5.0'"),'trade config must be v1.5.0 parity build');
 check(cfg.includes('../launch/readiness.json'),'global readiness source missing');
 check(cfg.includes('../launch/e2e-registry.json'),'wallet E2E registry source missing');
 check(cfg.includes("status==='READY_FOR_MAINNET'"),'READY_FOR_MAINNET requirement missing');
@@ -52,8 +55,19 @@ check(cfg.includes("x?.status==='E2E_VERIFIED'"),'wallet E2E requirement missing
 check(cfg.includes("Object.defineProperty(BASE,'mainnetEnabled'"),'dynamic mainnet gate missing');
 check(cfg.includes("get:()=>canMainnet()"),'mainnetEnabled must derive from machine gate');
 check(cfg.includes("toggle.dispatchEvent(new Event('change'"),'gate revocation must force environment back to TESTNET');
+check(cfg.includes("import './provider-runtime.js?v=1'"),'EIP-6963 provider runtime must load before trade boot');
 check(cfg.includes("import('./release-runtime.js?v=1')"),'release runtime must load from config');
+check(cfg.includes("import('./margin-runtime.js?v=1')"),'margin runtime must load from config');
+check(cfg.includes("import('./chart-overlays.js?v=1')"),'chart overlay runtime must load from config');
 check(!/\bmainnetEnabled\s*:\s*true\b/.test(cfg),'mainnet must never be hardcoded enabled');
+
+check(provider.includes('RWAProviderRuntime')&&provider.includes('eip6963:requestProvider'),'multi-wallet provider discovery missing');
+check(margin.includes('RWAMarginRuntime')&&margin.includes('ISOLATED')&&margin.includes('CROSS'),'margin mode controls missing');
+check(margin.includes('api.risk.setLeverage')&&margin.includes('isCross'),'margin mode must execute through RWA risk API');
+check(!margin.includes('ExchangeClient'),'margin runtime must not own exchange write client');
+check(overlay.includes('RWAChartTradeOverlay')&&overlay.includes('chartTradeOverlay'),'chart trade overlay missing');
+check(overlay.includes('api.account.state')&&overlay.includes('api.orders.open'),'chart overlay must observe account/order reads');
+check(!overlay.includes('orders.market')&&!overlay.includes('orders.limit')&&!overlay.includes('orders.bracket'),'chart overlay must remain read-only');
 
 check(runtime.includes('EMERGENCY EXIT'),'emergency exit confirmation missing');
 check(runtime.includes('orders.cancelAll'),'emergency cancel-all missing');
@@ -71,4 +85,4 @@ check(html.includes('data-type-btn="MARKET"')&&html.includes('data-type-btn="LIM
 check(html.includes('data-close-fraction="0.25"')&&html.includes('data-close-fraction="0.5"')&&html.includes('data-close-fraction="1"'),'partial-close controls missing');
 
 if(fail.length){console.error(JSON.stringify({ok:false,fail},null,2));process.exit(1)}
-console.log(JSON.stringify({ok:true,ids:ids.length,controls:controls.length,js_refs:new Set(refs).size,contract:'rwa-trade-ui-operability-v3-release-runtime'},null,2));
+console.log(JSON.stringify({ok:true,ids:ids.length,controls:controls.length,js_refs:new Set(refs).size,contract:'rwa-trade-ui-operability-v4-parity'},null,2));
