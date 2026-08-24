@@ -1,0 +1,88 @@
+name: Global Asset Terminal Smoke
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'global-asset-terminal.js'
+      - 'global-asset-terminal.css'
+      - 'global-fundamental-shard-bridge.js'
+      - 'data/global/**'
+      - 'tools/global-*.mjs'
+      - '.github/workflows/global-asset-terminal-smoke.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'global-asset-terminal.js'
+      - 'global-asset-terminal.css'
+      - 'global-fundamental-shard-bridge.js'
+      - 'data/global/**'
+      - 'tools/global-*.mjs'
+      - '.github/workflows/global-asset-terminal-smoke.yml'
+permissions:
+  contents: read
+jobs:
+  source-and-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax contracts
+        run: |
+          node --check global-asset-terminal.js
+          node --check global-fundamental-shard-bridge.js
+          node --check tools/global-candle-10m.mjs
+          node --check tools/global-fundamental-normalizer.mjs
+          node --check tools/global-data-audit.mjs
+          node --check tools/sync-sec-us-catalog.mjs
+          node --check tools/sync-sec-us-fundamentals.mjs
+      - name: 10m candle self-test
+        run: node tools/global-candle-10m.mjs
+      - name: Fundamental normalizer self-test
+        run: node tools/global-fundamental-normalizer.mjs
+      - name: Fail-closed data audit
+        run: node tools/global-data-audit.mjs
+      - name: Canonical root source contract
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const h=fs.readFileSync('index.html','utf8');
+          const js=fs.readFileSync('global-asset-terminal.js','utf8');
+          const must=[
+            'global-asset-terminal.css?v=1',
+            'global-fundamental-shard-bridge.js?v=1',
+            'global-asset-terminal.js?v=1'
+          ];
+          for(const x of must)if(!h.includes(x))throw new Error('missing '+x);
+          if(!js.includes("const STOCK_TF='10'"))throw new Error('stock timeframe is not locked to 10m');
+          if(!js.includes('No unlicensed depth data'))throw new Error('stock depth fail-closed guard missing');
+          if(!js.includes('stock data is never labelled VERIFIED'))throw new Error('stock/RWA verification separation missing');
+          if(/location\.(href|assign|replace)\s*=/.test(js))throw new Error('global terminal must not navigate away from canonical root');
+          console.log('GLOBAL ROOT CONTRACT PASS');
+          NODE
+      - name: Install browser proof dependency
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start deterministic static server
+        run: |
+          python3 -m http.server 8000 --bind 127.0.0.1 >/tmp/rwa-global-server.log 2>&1 &
+          echo $! > /tmp/rwa-global-server.pid
+          for i in {1..30}; do curl -fsS http://127.0.0.1:8000/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/rwa-global-server.log
+          exit 1
+      - name: Desktop + mobile stock proof
+        env:
+          BASE_URL: http://127.0.0.1:8000/
+        run: node tools/global-asset-terminal-browser.mjs
+      - name: Preserve launch safety boundary
+        run: |
+          node - <<'NODE'
+          const r=require('./launch/readiness.json');
+          if(r.mainnet_ready===true && r.status!=='READY')throw new Error('inconsistent mainnet readiness');
+          if(!r.checks?.browser_global_mainnet_lock?.ok)throw new Error('global mainnet lock no longer proven');
+          console.log('LAUNCH SAFETY BOUNDARY PASS · current status='+r.status);
+          NODE
