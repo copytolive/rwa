@@ -17,7 +17,7 @@ function assertAddress(value, label = 'address') {
   if (!/^0x[0-9a-f]{40}$/.test(out)) throw new Error(`Invalid ${label}`);
   return out;
 }
-function formatUsd(n) { return `$${num(n).toLocaleString(undefined, { maximumFractionDigits: 2 })}`; }
+function formatUsd(n) { return `$${num(n).toLocaleString('en-US', { maximumFractionDigits: 2 })}`; }
 function errText(error) {
   return String(error?.cause?.message || error?.shortMessage || error?.details || error?.message || error || 'Unknown error');
 }
@@ -35,7 +35,7 @@ async function executionApi() {
         return;
       }
       const script = document.createElement('script');
-      script.src = '../execution-api.js?v=2';
+      script.src = '../execution-api.js?v=3';
       script.async = true;
       script.dataset.rwaTradeExecution = '1';
       script.onload = () => window.RWAExecutionAPI ? resolve(window.RWAExecutionAPI) : reject(new Error('RWA Execution API failed to initialize'));
@@ -145,7 +145,7 @@ export class RWAHyperliquid {
   async resolveAsset(coin) {
     const markets = await this.markets();
     const asset = markets.find(m => m.name === String(coin).toUpperCase());
-    if (!asset) throw new Error(`${coin} is not listed in Hyperliquid perps`);
+    if (!asset) throw new Error(`${coin} is not listed in this market`);
     return asset;
   }
 
@@ -205,12 +205,12 @@ export class RWAHyperliquid {
   async _requireAgent() {
     const api = await this._execution();
     const verified = await api.agent.verify(this.testnet, { force: true });
-    if (verified?.valid !== true) throw new Error('API Wallet required. Enable 1-click trading before placing an order.');
+    if (verified?.valid !== true) throw new Error('1-click trading is not enabled. Enable trading once before placing an order.');
     const account = await api.agent.account(this.testnet);
-    if (!account) throw new Error('API Wallet key is unavailable. Re-enable trading.');
+    if (!account) throw new Error('1-click trading key is unavailable. Re-enable trading.');
     const local = String(account.address || '').toLowerCase();
     const expected = String(verified?.row?.address || verified?.remote?.address || '').toLowerCase();
-    if (!local || !expected || local !== expected) throw new Error('API Wallet integrity check failed');
+    if (!local || !expected || local !== expected) throw new Error('Trading authorization integrity check failed');
     return { api, verified, account };
   }
 
@@ -230,7 +230,7 @@ export class RWAHyperliquid {
       equity: state.equity,
       agent: verified.valid === true,
       ready: state.equity > 0 && verified.valid === true,
-      reason: state.equity <= 0 ? 'Fund Hyperliquid first' : verified.valid !== true ? 'Enable trading once' : 'Ready',
+      reason: state.equity <= 0 ? 'Get test balance first' : verified.valid !== true ? 'Enable trading once' : 'Ready',
     };
   }
 
@@ -238,13 +238,13 @@ export class RWAHyperliquid {
     const user = this.master || await this.connectWallet();
     this._syncSession(user);
     const state = await this.accountState();
-    if (!(state.equity > 0)) throw new Error('DEPOSIT REQUIRED: Hyperliquid account equity is 0. Fund TESTNET before enabling trading.');
+    if (!(state.equity > 0)) throw new Error('TEST BALANCE REQUIRED: get TESTNET balance before enabling trading.');
     const existing = await this.verifyAgent().catch(() => ({ valid: false }));
     if (existing.valid) return existing;
     const api = await this._execution();
     await api.agent.authorize(this.testnet);
     const verified = await api.agent.verify(this.testnet, { force: true });
-    if (verified?.valid !== true) throw new Error('API wallet approval was not confirmed by Hyperliquid');
+    if (verified?.valid !== true) throw new Error('Trading approval was not confirmed by the TESTNET network');
     return verified;
   }
 
@@ -261,7 +261,7 @@ export class RWAHyperliquid {
     if (notional > CONFIG.maxOrderUsd) throw new Error(`Max order is ${formatUsd(CONFIG.maxOrderUsd)}`);
     if (!(num(leverage) >= 1 && num(leverage) <= CONFIG.maxLeverage)) throw new Error(`Leverage must be 1-${CONFIG.maxLeverage}x`);
     const state = await this.accountState();
-    if (!(state.equity > 0)) throw new Error('DEPOSIT REQUIRED: account equity is 0');
+    if (!(state.equity > 0)) throw new Error('TEST BALANCE REQUIRED: account equity is 0');
     if (state.dailyPnl < -CONFIG.dailyLossUsd) throw new Error(`Daily loss limit reached (${formatUsd(CONFIG.dailyLossUsd)})`);
     if (state.exposure + notional > CONFIG.maxExposureUsd) throw new Error(`Total exposure limit exceeded (${formatUsd(CONFIG.maxExposureUsd)})`);
     const assetExposure = state.positions
@@ -305,7 +305,7 @@ export class RWAHyperliquid {
     } else {
       out = await api.orders.market(args);
     }
-    if (out?.mode && out.mode !== 'agent') throw new Error('SECURITY BLOCK: risk-increasing order did not use delegated API wallet');
+    if (out?.mode && out.mode !== 'agent') throw new Error('SECURITY BLOCK: order authorization was not delegated');
     return { ...out, mid, signer: 'delegated-agent' };
   }
 
@@ -336,7 +336,7 @@ export class RWAHyperliquid {
   }
 
   async withdraw() {
-    throw new Error('Withdrawal is intentionally disabled in this TESTNET-only terminal. Mainnet withdrawal must remain master-wallet-only and will only be enabled with the global launch gate.');
+    throw new Error('Withdrawal is intentionally disabled in this TESTNET-only terminal. It will remain disabled until the global launch gate permits production withdrawals.');
   }
 
   async startRealtime({ coin, user, onMids, onBook, onTrades, onAccount, onOrders, onFills, onError }) {
