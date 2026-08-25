@@ -34,6 +34,13 @@ if(!findings.some(x=>x.gate==='single_write_path'))ok('single_write_path','Excha
 if(!findings.some(x=>x.gate==='direct_exchange_http'))ok('direct_exchange_http','No secondary direct Hyperliquid exchange HTTP write path found');
 
 const execution=await txt('execution-api.js'),core=await txt('exchange-core.js'),worker=await txt('agent-worker/worker.mjs'),workerExec=await txt('agent-worker/execution.mjs'),suiteNav=await txt('suite-nav.js'),rwaVerify=await txt('tools/rwa-verify.mjs'),rwaPolicy=await txt('tools/rwa-evidence-policy.mjs'),rwaClient=await txt('rwa-verify-client.js'),fund=await txt('trade/fund-modal.js'),tradeClient=await txt('trade/hyperliquid.js'),release=await txt('trade/release-runtime.js'),socialDefaults=await txt('social-notification-defaults.js'),socialPro=await txt('social-trading-pro.js'),rootHtml=await txt('index.html');
+const superappV5=files.includes('superapp-v5.js')?await txt('superapp-v5.js'):'';
+const socialStaticDefaults=rootHtml.indexOf('social-notification-defaults.js?v=1');
+const socialStaticPro=rootHtml.indexOf('social-trading-pro.js?v=1');
+const socialStaticOrder=socialStaticDefaults>=0&&socialStaticPro>=0&&socialStaticDefaults<socialStaticPro;
+const socialLazyDefaults=superappV5.indexOf("await loadScriptOnce('social-notification-defaults.js?v=1','social-defaults')");
+const socialLazyPro=superappV5.indexOf("await loadScriptOnce('social-trading-pro.js?v=1','social-pro')");
+const socialLazyOrder=superappV5.includes('async function ensureSocialLegacy()')&&socialLazyDefaults>=0&&socialLazyPro>=0&&socialLazyDefaults<socialLazyPro;
 const execChecks=[
   ['browser_risk',execution.includes("riskGate:'mandatory-internal-v1'")&&execution.includes('dailyLoss')&&execution.includes('maxLeverage')&&execution.includes('maxExposure')&&execution.includes('perAsset')&&execution.includes('kill')],
   ['atomic_tpsl',execution.includes("bracket:'atomic-normal-tpsl-v1'")&&execution.includes("grouping:'normalTpsl'")],
@@ -47,7 +54,7 @@ const execChecks=[
   ['worker_replay_auth',worker.includes('consumeNonce')&&worker.includes('RWA_PUBLIC_ORIGIN')&&worker.includes('RWA_ALLOWED_ORIGINS')],
   ['worker_agent_revoke',worker.includes('api.verifyAgent()')&&worker.includes("reason:'agent-not-authorized'")&&worker.includes('delete rec.agent.secret')],
   ['single_auth_owner',suiteNav.includes('wallet-core.js v3 is the only auth owner')&&!suiteNav.includes("load('wallet-auth.js")&&!suiteNav.includes("load('walletconnect-auth-patch.js")],
-  ['social_notification_opt_in',socialDefaults.includes("policy:'explicit-opt-in-v1'")&&socialDefaults.includes('friends:false')&&socialDefaults.includes('top:false')&&socialDefaults.includes('trending:false')&&socialDefaults.includes('newFollowers:false')&&rootHtml.indexOf('social-notification-defaults.js?v=1')<rootHtml.indexOf('social-trading-pro.js?v=1')],
+  ['social_notification_opt_in',socialDefaults.includes("policy:'explicit-opt-in-v1'")&&socialDefaults.includes('friends:false')&&socialDefaults.includes('top:false')&&socialDefaults.includes('trending:false')&&socialDefaults.includes('newFollowers:false')&&(socialStaticOrder||socialLazyOrder)],
   ['social_read_only',socialPro.includes("runtime:'venue-backed-social-feed-v1'")&&socialPro.includes('userFillsByTime')&&!socialPro.includes('ExchangeClient')&&!/api\.hyperliquid(?:-testnet)?\.xyz\/exchange|['"]\/exchange['"]/.test(socialPro)],
   ['rwa_evidence_policy',rwaVerify.includes('probeEvidencePayload')&&rwaVerify.includes('RWA_EVIDENCE_POLICY')&&rwaPolicy.includes("public-https-distinct-probed-v1")&&rwaClient.includes('schema:2')&&rwaClient.includes('kyb:v.kyb')&&rwaClient.includes('disclosure:v.disclosure')&&suiteNav.includes('rwa-verification-evidence.js?v=1')]
 ];
