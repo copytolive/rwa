@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://copytolive.github.io/rwa/gold-cert/request.schema.json",
+  "title": "GOLD MT5 Certification Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["request_id","action","strategy_id","dataset_sha256","expected_reference_trades","runner_labels","final_live_certified"],
+  "properties": {
+    "request_id": {"type":"string","pattern":"^[A-Za-z0-9._-]{8,80}$"},
+    "action": {"enum":["P45_SAME_DATASET_NATIVE_PARITY"]},
+    "strategy_id": {"const":"P45"},
+    "dataset_sha256": {"const":"54c445fb8a3c6689dc39e1eb4b635c680518c70758166b7a9717ea1477e8df6a"},
+    "expected_reference_trades": {"const":2120},
+    "runner_labels": {
+      "type":"array","prefixItems":[
+        {"const":"self-hosted"},{"const":"windows"},{"const":"x64"},{"const":"mt5"},{"const":"gold"}
+      ],"items":false
+    },
+    "parameters": {
+      "type":"object","additionalProperties":false,
+      "required":["riskATR","RR","lock_trigger_R","lock_profit_R","expiry_m15","max_hold_m15","entry_mode"],
+      "properties": {
+        "riskATR":{"const":4.0},"RR":{"const":2.0},"lock_trigger_R":{"const":0.30},"lock_profit_R":{"const":0.25},
+        "expiry_m15":{"const":32},"max_hold_m15":{"const":192},"entry_mode":{"const":"pending-only"}
+      }
+    },
+    "final_live_certified": {"const":false}
+  }
+}
