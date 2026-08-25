@@ -1,0 +1,10 @@
+{
+  "name":"RWA Super App",
+  "short_name":"RWA",
+  "start_url":"./#markets",
+  "scope":"./",
+  "display":"standalone",
+  "background_color":"#07080b",
+  "theme_color":"#07080b",
+  "description":"Single-page RWA market, research, portfolio, social and institutional terminal."
+}

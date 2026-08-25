@@ -94,17 +94,14 @@ jobs:
           grep -Fq "realtime-core.js?v=3" index.html
           grep -Fq "market-performance.js?v=2" index.html
           grep -Fq "stable-shell.css?v=3" index.html
-          grep -Fq "unified-design-v3.css?v=superapp2" index.html
-          grep -Fq "product-os-v3.js?v=superapp2" index.html
-          grep -Fq "RWA_SUPERAPP_PATCH_V1" product-os-v3.js
-          grep -Fq "RWA_SUPERAPP_GUARD_V2" product-os-v3.js
-          grep -Fq "product-os-mobile-contract-v3.js?v=1" index.html
-          grep -Fq 'data-mobile-nav="trade"' product-os-v3.js
-          grep -Fq 'Risk Engine' product-os-v3.js
-          grep -Fq 'market-drawer-open' product-os-mobile-contract-v3.js
-          grep -Fq 'tabular-nums' unified-design-v3.css
-          grep -Fq "walletconnect.js?v=4" index.html
-          grep -Fq "wallet-core.js?v=3" index.html
+          grep -Fq "superapp-v5.css?v=6" index.html
+          grep -Fq "superapp-v5.js?v=6" index.html
+          grep -Fq "manifest.webmanifest" index.html
+          ! grep -Fq "product-os-v3.js" index.html
+          ! grep -Fq "product-os-mobile-contract-v3.js" index.html
+          ! grep -Fq "walletconnect.js" index.html
+          ! grep -Fq "wallet-core.js" index.html
+          ! grep -Fq "unified-design-v3.css" index.html
           ! grep -Fq "wallet-seamless.js" index.html
           ! grep -Fq "browser-recovery.js" index.html
           ! grep -Fq "instantChartBoot();loadSuite()" mobile.js
@@ -218,6 +215,35 @@ jobs:
           test -s backtest/results/shards.json
           python -m json.tool backtest/data/assets.json >/dev/null
           python -m json.tool backtest/data/asset_status.json >/dev/null
+
+      - name: Validate RWA Super App V5 single-page contract
+        run: |
+          node --check superapp-v5.js
+          node --check legacy-canonical.js
+          node --check rwa-sw-v5.js
+          node --check tools/superapp-v5-audit.mjs
+          node --check tools/superapp-v5-browser.mjs
+          python -m py_compile tools/superapp-v5-browser-smoke.py tools/superapp-v5-live-browser-smoke.py
+          python -m json.tool rwa-discovery-catalog.json >/dev/null
+          python -m json.tool manifest.webmanifest >/dev/null
+          node tools/superapp-v5-audit.mjs
+
+      - name: Install RWA Super App browser runtime
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run RWA Super App browser regression
+        env:
+          RWA_TEST_URL: http://127.0.0.1:4173/rwa/
+        run: |
+          mkdir -p /tmp/rwa-superapp-site/rwa
+          cp -a . /tmp/rwa-superapp-site/rwa/
+          cd /tmp/rwa-superapp-site
+          python -m http.server 4173 >/tmp/rwa-superapp-http.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
+          cd "$GITHUB_WORKSPACE"
+          node tools/superapp-v5-browser.mjs
 
       - name: Run repository security gate
         run: node tools/security-gate.mjs
