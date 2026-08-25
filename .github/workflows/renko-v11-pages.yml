@@ -8,6 +8,7 @@ on:
       - "renko/renko-v3.js"
       - "renko/renko-v12.js"
       - "renko/renko-v12-worker.js"
+      - "renko/renko-v11.css"
       - ".github/workflows/renko-v11-pages.yml"
       - ".github/workflows/renko-v11.yml"
   workflow_dispatch:
@@ -34,9 +35,11 @@ jobs:
           node --check renko/renko-v12.js
           node --check renko/renko-v12-worker.js
           test -s renko/index.html
+          test -s renko/renko-v11.css
           grep -Fq 'RENKO V12' renko/index.html
           grep -Fq 'renko-v12.js?v=120' renko/index.html
           grep -Fq 'renko-v12-worker.js?v=120' renko/renko-v12.js
+          grep -Fq 'V12 desktop density pass' renko/renko-v11.css
           ! grep -Fq 'id="v11Interval"' renko/index.html
           grep -Fq 'if one trade crosses 5 boxes, all 5 bricks lock immediately' renko/index.html
           grep -Fq "formation:'tick-by-tick'" renko/renko-v12.js
