@@ -1,4 +1,5 @@
 name: Deploy RWA to GitHub Pages
+# SUPERAPP_V9_TRIGGER_CONTRACT: regression/security workflow changes intentionally redeploy Pages
 
 on:
   push:
