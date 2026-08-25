@@ -50,3 +50,162 @@ function init(){normalizeDesktopNav();normalizeMobileNav();installCommandLayer()
 window.RWAProductOS={version:'3.1.1',openHome,openMarkets,openTrade,openSocial,openSuite,openCommand,openTrader,openAsset,setDefaultLanding:v=>localStorage.setItem('rwa_default_landing_v3',v==='markets'?'markets':'home')};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
+
+/* RWA_SUPERAPP_PATCH_V1 — canonical single-page runtime */
+;(()=>{
+'use strict';
+if(window.__RWA_SUPERAPP_PATCH_V1)return;
+window.__RWA_SUPERAPP_PATCH_V1=true;
+const $=id=>document.getElementById(id),qa=(s,r=document)=>[...r.querySelectorAll(s)];
+const ROOT_PATH='/rwa/';
+const legacyOS=window.RWAProductOS?{...window.RWAProductOS}:{};
+const ROUTES=new Set(['markets','intelligence','assets','research','social','portfolio','institutional','profile']);
+const state={route:'markets',symbol:'BTC',timer:0};
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[m]));
+const toast=t=>typeof window.toast==='function'?window.toast(t):console.log(t);
+const selectedBase=()=>String($('selName')?.textContent||'BTC').split(/[\s\/-]/)[0].replace(/[^A-Za-z0-9]/g,'').toUpperCase()||'BTC';
+const pairs=()=>{try{return typeof S!=='undefined'&&Array.isArray(S.pairs)?S.pairs:[]}catch{return[]}};
+
+function routeHash(route){return'#'+String(route||'markets').replace(/^#+/,'')}
+function routeNow(){return decodeURIComponent((location.hash||'#markets').slice(1))||'markets'}
+function setUrl(route,replace=false){const h=routeHash(route);history[replace?'replaceState':'pushState']({rwa:true,route},'',location.pathname+location.search+h)}
+function setActive(name){qa('[data-super-route]').forEach(x=>x.classList.toggle('active',x.dataset.superRoute===name));qa('[data-mobile-super]').forEach(x=>x.classList.toggle('active',x.dataset.mobileSuper===name))}
+function hideInternal(){
+  document.body.classList.remove('rwa-super-suite','rwa-super-custom','rwa-super-trade','rwa-super-asset');
+  for(const id of ['rwaSuperResearch','rwaSuperInstitutional','rwaSuperLegacy']){const e=$(id);if(e)e.hidden=true}
+  const suite=$('suite');if(suite){suite.style.display='none';document.body.classList.remove('suite-open')}
+}
+function showMarketShell(){
+  hideInternal();
+  document.body.classList.remove('rwa-home-open','social-open','market-drawer-open');
+  const layout=document.querySelector('.layout');if(layout)layout.style.removeProperty('display');
+  try{legacyOS.openMarkets?.()}catch{}
+}
+async function loadSuite(tab){
+  hideInternal();
+  document.body.classList.add('rwa-super-suite');
+  try{
+    const s=window.RWASuite?.open?window.RWASuite:await window.RWAQuickActions?.loadSuite?.();
+    s?.open?.(tab);
+    const el=$('suite');if(el)el.style.display='block';
+  }catch(e){toast(e?.message||'Workspace unavailable')}
+}
+function chooseSymbol(sym){
+  sym=String(sym||selectedBase()).replace(/[^A-Za-z0-9]/g,'').toUpperCase()||'BTC';state.symbol=sym;
+  const row=pairs().find(x=>String(x.base||'').toUpperCase()===sym||String(x.symbol||'').toUpperCase()===sym||String(x.symbol||'').toUpperCase()===sym+'USDT');
+  if(row&&typeof selectPair==='function')try{selectPair(row.symbol,false)}catch{}
+  return sym;
+}
+function trade(sym){
+  sym=chooseSymbol(sym);showMarketShell();document.body.classList.add('rwa-super-trade');
+  setTimeout(()=>{const c=$('exCoin');if(c)c.value=sym;const ex=$('rwaExchange');if(ex)ex.scrollIntoView({behavior:'smooth',block:'start'})},80)
+}
+function asset(sym){
+  sym=chooseSymbol(sym);showMarketShell();document.body.classList.add('rwa-super-asset');
+  setTimeout(()=>window.RWAFundamentals?.openAsset?.(sym),100)
+}
+function researchData(){
+  const p=pairs().filter(x=>Number.isFinite(Number(x.change)));const rwa=p.filter(x=>x.rwa);const src=rwa.length?rwa:p;
+  const avg=src.length?src.reduce((s,x)=>s+Number(x.change||0),0)/src.length:0;
+  const gain=p.filter(x=>Number(x.change)>0).length,loss=p.filter(x=>Number(x.change)<0).length;
+  return{p,rwa,avg,gain,loss,top:[...src].sort((a,b)=>Math.abs(Number(b.change||0))-Math.abs(Number(a.change||0))).slice(0,12)}
+}
+function ensureResearch(){
+  if($('rwaSuperResearch'))return;
+  const s=document.createElement('section');s.id='rwaSuperResearch';s.className='rwa-super-workspace';s.hidden=true;
+  s.innerHTML=`<header class="rwa-super-head"><div><small>RWA RESEARCH</small><h1>Market Research Center</h1><p>Screener, comparison, thesis and live market signals without leaving the terminal.</p></div><div class="rwa-super-head-actions"><button data-super-action="search">⌘K Search</button><button data-super-action="markets">Live Markets</button></div></header><div class="rwa-super-kpis" id="rwaResearchKpis"></div><div class="rwa-super-grid"><article class="rwa-super-card span-8"><div class="rwa-super-card-head"><div><small>SCREENER</small><h2>RWA & market momentum</h2></div><button id="rwaResearchRefresh">Refresh</button></div><div id="rwaResearchRows" class="rwa-super-table"></div></article><article class="rwa-super-card span-4"><small>COMPARE</small><h2>Asset comparison</h2><p class="muted">Select up to three symbols from the screener.</p><div id="rwaCompareChips" class="rwa-chipbox"></div><div id="rwaCompareBody"></div></article><article class="rwa-super-card span-6"><small>THESIS</small><h2>Research notebook</h2><textarea id="rwaResearchNote" maxlength="1000" placeholder="Catalyst, thesis, invalidation, risk…"></textarea><div class="rwa-super-actions"><small id="rwaResearchSaved">Saved locally on this device</small><button id="rwaSaveResearch">Save note</button></div></article><article class="rwa-super-card span-6"><small>SIGNALS</small><h2>Live signal board</h2><div id="rwaSignalBoard"></div></article></div>`;
+  const marker=document.querySelector('.credibility-strip')||document.querySelector('.mobile-tabs');(marker?.parentNode||document.body).insertBefore(s,marker||null);
+  s.addEventListener('click',e=>{const r=e.target.closest('[data-research-symbol]');if(r){const sym=r.dataset.researchSymbol;const selected=JSON.parse(localStorage.getItem('rwa_super_compare_v1')||'[]').filter(Boolean);const next=selected.includes(sym)?selected.filter(x=>x!==sym):[...selected,sym].slice(-3);localStorage.setItem('rwa_super_compare_v1',JSON.stringify(next));renderResearch()}if(e.target.closest('#rwaResearchRefresh'))renderResearch();if(e.target.closest('#rwaSaveResearch')){localStorage.setItem('rwa_super_research_note_v1',$('rwaResearchNote')?.value||'');toast('Research note saved')}});
+}
+function renderResearch(){
+  ensureResearch();const d=researchData(),cmp=JSON.parse(localStorage.getItem('rwa_super_compare_v1')||'[]');
+  $('rwaResearchKpis').innerHTML=`<div><small>RWA INDEX</small><b class="${d.avg>=0?'up':'down'}">${d.avg>=0?'+':''}${d.avg.toFixed(2)}%</b><span>Average live RWA-linked move</span></div><div><small>MARKET BREADTH</small><b>${d.gain} / ${d.loss}</b><span>Gainers / losers</span></div><div><small>RWA UNIVERSE</small><b>${d.rwa.length||'—'}</b><span>Tracked RWA-linked pairs</span></div><div><small>LIVE MARKETS</small><b>${d.p.length||'—'}</b><span>Public exchange feed</span></div>`;
+  $('rwaResearchRows').innerHTML=d.top.length?d.top.map(x=>`<button class="rwa-super-row ${cmp.includes(x.base)?'selected':''}" data-research-symbol="${esc(x.base)}"><b>${esc(x.base)} / USDT</b><span>${Number(x.price||0).toLocaleString(undefined,{maximumFractionDigits:Number(x.price)>=1?4:7})}</span><span class="${Number(x.change)>=0?'up':'down'}">${Number(x.change)>=0?'+':''}${Number(x.change).toFixed(2)}%</span><small>${x.rwa?'RWA':'MARKET'}</small></button>`).join(''):'<div class="rwa-super-empty">Waiting for live markets…</div>';
+  $('rwaCompareChips').innerHTML=cmp.length?cmp.map(x=>`<button data-research-symbol="${esc(x)}">${esc(x)} ×</button>`).join(''):'<span class="muted">Select assets from screener</span>';
+  const rows=cmp.map(sym=>d.p.find(x=>x.base===sym)).filter(Boolean);$('rwaCompareBody').innerHTML=rows.map(x=>`<div class="rwa-compare-row"><b>${esc(x.base)}</b><span>${Number(x.price||0).toLocaleString(undefined,{maximumFractionDigits:6})}</span><strong class="${Number(x.change)>=0?'up':'down'}">${Number(x.change)>=0?'+':''}${Number(x.change).toFixed(2)}%</strong></div>`).join('');
+  if($('rwaResearchNote')&&document.activeElement!==$('rwaResearchNote'))$('rwaResearchNote').value=localStorage.getItem('rwa_super_research_note_v1')||'';
+  $('rwaSignalBoard').innerHTML=d.top.slice(0,6).map(x=>`<button class="rwa-signal" data-super-asset="${esc(x.base)}"><span>${Number(x.change)>=0?'▲':'▼'}</span><div><b>${esc(x.base)}</b><small>${Math.abs(Number(x.change)).toFixed(2)}% 24h move · ${x.rwa?'RWA-linked':'live market'}</small></div></button>`).join('')||'<div class="rwa-super-empty">Signals load from live market data.</div>';
+}
+function ensureInstitutional(){
+  if($('rwaSuperInstitutional'))return;
+  const s=document.createElement('section');s.id='rwaSuperInstitutional';s.className='rwa-super-workspace';s.hidden=true;
+  s.innerHTML=`<header class="rwa-super-head institutional-hero"><div><small>RWA INSTITUTIONAL</small><h1>Issue, verify and operate real-world assets</h1><p>One workspace for issuer onboarding, tokenization, liquidity, custody, compliance and API access.</p></div><div class="rwa-super-head-actions"><button data-super-action="assets">Asset Registry</button><button data-super-action="portfolio">Portfolio</button></div></header><div class="rwa-institution-grid"><article><span>01</span><small>ISSUER</small><h2>Onboarding & KYB</h2><p>Entity, SPV, ownership evidence, reviewer workflow and disclosures.</p></article><article><span>02</span><small>TOKENIZATION</small><h2>Asset structuring</h2><p>Supply, ownership rights, income rights, NAV and distribution schedule.</p></article><article><span>03</span><small>LIQUIDITY</small><h2>Market operations</h2><p>Discovery, order flow, venue connectivity and market-quality monitoring.</p></article><article><span>04</span><small>CUSTODY</small><h2>Non-custodial control</h2><p>Wallet identity, protected execution and explicit user approvals.</p></article><article><span>05</span><small>COMPLIANCE</small><h2>Evidence & audit</h2><p>Legal records, appraisal, KYB, disclosure and reviewer-backed status.</p></article><article><span>06</span><small>API</small><h2>Institutional integration</h2><p>Connect internal systems to market data, execution and asset registry.</p></article></div><article class="rwa-super-card institutional-request"><div><small>REQUEST ACCESS</small><h2>Institutional workspace request</h2><p class="muted">Saved locally for this public beta; no request is transmitted without a configured backend.</p></div><div class="rwa-institution-form"><input id="rwaInstOrg" placeholder="Organization"><input id="rwaInstEmail" type="email" placeholder="Work email"><input id="rwaInstAsset" placeholder="Asset / use case"><button id="rwaInstSave">Save request</button></div><small id="rwaInstStatus"></small></article>`;
+  const marker=document.querySelector('.credibility-strip')||document.querySelector('.mobile-tabs');(marker?.parentNode||document.body).insertBefore(s,marker||null);
+  s.addEventListener('click',e=>{if(e.target.closest('#rwaInstSave')){const row={org:$('rwaInstOrg')?.value.trim(),email:$('rwaInstEmail')?.value.trim(),asset:$('rwaInstAsset')?.value.trim(),ts:Date.now()};localStorage.setItem('rwa_institutional_request_v1',JSON.stringify(row));$('rwaInstStatus').textContent='Saved locally · backend submission remains disabled in public beta';toast('Institutional request saved locally')}})
+}
+function ensureLegacy(){
+  if($('rwaSuperLegacy'))return;const s=document.createElement('section');s.id='rwaSuperLegacy';s.className='rwa-super-workspace legacy';s.hidden=true;s.innerHTML=`<header class="rwa-super-head"><div><small>INTERNAL WORKSPACE</small><h1 id="rwaLegacyTitle">Workspace</h1><p>Embedded inside the RWA Super App. The browser remains on /rwa/.</p></div><button data-super-action="markets">× Close</button></header><iframe id="rwaLegacyFrame" title="RWA internal workspace" loading="eager"></iframe>`;const marker=document.querySelector('.credibility-strip')||document.querySelector('.mobile-tabs');(marker?.parentNode||document.body).insertBefore(s,marker||null)
+}
+function legacy(kind,query=''){
+  ensureLegacy();hideInternal();document.body.classList.add('rwa-super-custom');const s=$('rwaSuperLegacy');s.hidden=false;const safe=kind==='renko'?'renko/':'backtest/';$('rwaLegacyTitle').textContent=kind==='renko'?'Renko Research':'Backtest Research';$('rwaLegacyFrame').src=safe+(query||'')
+}
+function ensurePreview(){
+  if($('rwaExternalPreview'))return;const d=document.createElement('div');d.id='rwaExternalPreview';d.className='rwa-external-preview';d.hidden=true;d.innerHTML=`<div class="rwa-preview-card"><header><div><small>EXTERNAL EVIDENCE · IN-APP VIEW</small><b id="rwaPreviewTitle">Document preview</b></div><button id="rwaPreviewClose">×</button></header><div class="rwa-preview-url"><span id="rwaPreviewUrl"></span><button id="rwaPreviewCopy">Copy link</button></div><iframe id="rwaPreviewFrame" title="External evidence preview"></iframe><p>Some providers block iframe previews. The RWA app will still keep this URL available for copying without navigating away.</p></div>`;document.body.appendChild(d);d.addEventListener('click',e=>{if(e.target===d||e.target.closest('#rwaPreviewClose'))d.hidden=true;if(e.target.closest('#rwaPreviewCopy'))navigator.clipboard?.writeText($('rwaPreviewUrl')?.textContent||'').then(()=>toast('Link copied')).catch(()=>{})})
+}
+function preview(url,title='External evidence'){
+  try{const u=new URL(url,location.href);ensurePreview();$('rwaPreviewTitle').textContent=title;$('rwaPreviewUrl').textContent=u.href;$('rwaPreviewFrame').src=u.href;$('rwaExternalPreview').hidden=false}catch{toast('Invalid link')}
+}
+function ensureTicker(){
+  if($('rwaGlobalTicker'))return;const f=document.createElement('footer');f.id='rwaGlobalTicker';f.className='rwa-global-ticker';f.innerHTML='<b>RWA LIVE</b><div id="rwaTickerRows">Market network connecting…</div><span id="rwaTickerStatus">● LIVE</span>';document.body.appendChild(f);setInterval(renderTicker,4000);renderTicker()
+}
+function renderTicker(){const p=pairs().filter(x=>Number.isFinite(Number(x.change))).slice(0,8);const b=$('rwaTickerRows');if(b)b.innerHTML=p.length?p.map(x=>`<span><b>${esc(x.base)}</b> <i class="${Number(x.change)>=0?'up':'down'}">${Number(x.change)>=0?'+':''}${Number(x.change).toFixed(2)}%</i></span>`).join(''):'Market network connecting…'}
+function ensureContextInsight(){
+  const right=$('depth');if(!right||$('rwaContextInsight'))return;const s=document.createElement('section');s.id='rwaContextInsight';s.className='right-section rwa-context-insight';s.innerHTML=`<div class="right-title"><span>AI INSIGHT</span><small>Live heuristic</small></div><div id="rwaInsightBody" class="rwa-insight-body">Waiting for market context…</div>`;right.prepend(s);setInterval(renderInsight,3500);renderInsight()
+}
+function renderInsight(){const x=pairs().find(p=>p.base===selectedBase());const e=$('rwaInsightBody');if(!e||!x)return;const ch=Number(x.change||0),bias=ch>2?'Momentum positive':ch<-2?'Momentum negative':'Momentum balanced';const risk=Math.abs(ch)>8?'High volatility':Math.abs(ch)>4?'Elevated volatility':'Normal volatility';e.innerHTML=`<b class="${ch>=0?'up':'down'}">${esc(bias)}</b><p>${esc(x.base)} is ${ch>=0?'up':'down'} ${Math.abs(ch).toFixed(2)}% over 24h. ${risk}. This is a transparent market heuristic, not a prediction.</p><button data-super-action="research">Open Research</button>`}
+function normalizeNav(){
+  const top=document.querySelector('.topnav');if(top)top.innerHTML=`<a href="#markets" data-super-route="markets">Markets</a><a href="#intelligence" data-super-route="intelligence">Intelligence</a><a href="#assets" data-super-route="assets">Assets</a><a href="#research" data-super-route="research">Research</a><a href="#portfolio" data-super-route="portfolio">Portfolio</a><a href="#social" data-super-route="social">Social</a><a href="#institutional" data-super-route="institutional">Institutional</a>`;
+  const p=document.querySelector('.product-nav');if(p)p.innerHTML=`<a href="#markets" data-super-route="markets">Live Markets</a><a href="#assets" data-super-route="assets">Asset Marketplace</a><a href="#research" data-super-route="research">Research</a><a href="#trade/${selectedBase()}" data-super-trade="current">Trade</a><a href="#portfolio" data-super-action="watch">Watchlist</a>`;
+  const m=document.querySelector('.mobile-tabs');if(m)m.innerHTML=`<a href="#markets" data-mobile-super="markets"><span>⌕</span><small>Markets</small></a><a href="#search" data-mobile-super="search"><span>⌕</span><small>Search</small></a><a href="#trade/${selectedBase()}" data-mobile-super="trade"><span>↗</span><small>Trade</small></a><a href="#social" data-mobile-super="social"><span>◎</span><small>Social</small></a><a href="#portfolio" data-mobile-super="portfolio"><span>▣</span><small>Portfolio</small></a>`;
+  const inst=document.querySelector('.top-actions .institutional');if(inst){inst.classList.remove('institutional');inst.dataset.superRoute='institutional';inst.textContent='Institutional'}
+  const actions=document.querySelector('.top-actions');if(actions&&!actions.querySelector('[data-super-profile]')){const n=document.createElement('button');n.type='button';n.dataset.superNotifications='1';n.className='rwa-super-icon';n.textContent='◌';n.title='Notifications';const pbtn=document.createElement('button');pbtn.type='button';pbtn.dataset.superProfile='1';pbtn.className='rwa-super-icon';pbtn.textContent='◎';pbtn.title='Profile';actions.append(n,pbtn)}
+}
+async function apply(route,replace=false){
+  route=String(route||'markets').replace(/^#+/,'');const [head,...rest]=route.split('/');state.route=head;normalizeNav();ensureResearch();ensureInstitutional();ensureLegacy();ensurePreview();ensureTicker();ensureContextInsight();
+  if(head==='search'){window.RWAProductOS?.openCommand?.();setActive('search');return}
+  if(head==='markets'||head==='home'){showMarketShell();setActive('markets')}
+  else if(head==='intelligence'||head==='intel'){await loadSuite('intel');setActive('intelligence')}
+  else if(head==='assets'||head==='rwa'){await loadSuite('rwa');setActive('assets')}
+  else if(head==='asset'){asset(rest[0]||selectedBase());setActive('assets')}
+  else if(head==='research'){hideInternal();document.body.classList.add('rwa-super-custom');$('rwaSuperResearch').hidden=false;renderResearch();setActive('research')}
+  else if(head==='social'){await loadSuite('feed');setActive('social')}
+  else if(head==='portfolio'){await loadSuite('portfolio');setActive('portfolio')}
+  else if(head==='institutional'||head==='company'){hideInternal();document.body.classList.add('rwa-super-custom');$('rwaSuperInstitutional').hidden=false;setActive('institutional')}
+  else if(head==='profile'){await loadSuite('profile');setActive('profile')}
+  else if(head==='trade'){trade(rest[0]||selectedBase());setActive('trade')}
+  else if(head==='backtest'){legacy('backtest',location.search);setActive('research')}
+  else if(head==='renko'){legacy('renko',location.search);setActive('research')}
+  else if(head==='trader'){await loadSuite('leaderboard');setActive('social');const wallet=rest.join('/');setTimeout(()=>{const i=$('leaderWalletSearch');if(i&&wallet){i.value=wallet;$('inspectTrader')?.click()}},200)}
+  else{if(!replace)setUrl('markets',true);showMarketShell();setActive('markets')}
+  renderTicker();renderInsight()
+}
+function navigate(route,replace=false){setUrl(route,replace);return apply(route,replace)}
+function mapHref(href){
+  try{const u=new URL(href,location.href);if(u.origin!==location.origin)return{external:u.href};if(!u.pathname.startsWith(ROOT_PATH))return{external:u.href};const rel=u.pathname.slice(ROOT_PATH.length);const q=u.searchParams;if(!rel)return{route:(u.hash||'#markets').slice(1)||'markets'};if(rel.startsWith('trade'))return{route:'trade/'+(q.get('coin')||selectedBase())};if(rel.startsWith('asset'))return{route:'asset/'+(q.get('symbol')||selectedBase())};if(rel.startsWith('trader'))return{route:'trader/'+(q.get('wallet')||'')};if(rel.startsWith('backtest'))return{route:'backtest'};if(rel.startsWith('renko'))return{route:'renko'};return{route:(u.hash||'#markets').slice(1)||'markets'}
+  }catch{return null}
+}
+function commandRoute(el){const tag=el?.lastElementChild?.textContent?.trim?.().toUpperCase()||'',q=String($('rwaCommandInput')?.value||'').toUpperCase();const skip=new Set(['TRADE','BACKTEST','RENKO','ASSET','MARKET','OPEN','SHOW','COPY','PORTFOLIO','SOCIAL','HOME','INTELLIGENCE','RWA','LEADERBOARD','DEFAULT','TERMINAL','RESEARCH']);const sym=(q.match(/\b[A-Z0-9]{2,12}\b/g)||[]).find(x=>!skip.has(x))||selectedBase();if(tag==='TRADE')return'trade/'+sym;if(tag==='ASSET')return'asset/'+sym;if(tag==='BACKTEST')return'backtest';if(tag==='RENKO')return'renko';if(tag==='PORTFOLIO')return'portfolio';if(tag==='SOCIAL')return'social';if(tag==='INTEL')return'intelligence';if(tag==='RWA')return'assets';return''}
+function clickGuard(e){
+  const ev=e.target.closest?.('[data-rwa-evidence]');if(ev?.dataset?.rwaEvidence){e.preventDefault();e.stopImmediatePropagation();preview(ev.dataset.rwaEvidence,'RWA evidence');return}
+  const ext=e.target.closest?.('[data-rwa-external]');if(ext?.dataset?.rwaExternal){e.preventDefault();e.stopImmediatePropagation();preview(ext.dataset.rwaExternal);return}
+  const sr=e.target.closest?.('[data-super-route]');if(sr){e.preventDefault();e.stopImmediatePropagation();navigate(sr.dataset.superRoute);return}
+  const ma=e.target.closest?.('[data-mobile-super]');if(ma){e.preventDefault();e.stopImmediatePropagation();const r=ma.dataset.mobileSuper;if(r==='trade')navigate('trade/'+selectedBase());else if(r==='search')navigate('search');else navigate(r);return}
+  const act=e.target.closest?.('[data-super-action]');if(act){e.preventDefault();e.stopImmediatePropagation();const a=act.dataset.superAction;if(a==='search')navigate('search');else if(a==='watch'){loadSuite('watch');setUrl('portfolio')}else navigate(a);return}
+  if(e.target.closest?.('[data-super-trade]')){e.preventDefault();e.stopImmediatePropagation();navigate('trade/'+selectedBase());return}
+  if(e.target.closest?.('[data-super-profile]')){e.preventDefault();e.stopImmediatePropagation();navigate('profile');return}
+  if(e.target.closest?.('[data-super-notifications]')){e.preventDefault();e.stopImmediatePropagation();loadSuite('watch');setUrl('portfolio');return}
+  if(e.target.closest?.('[data-rwa-trade-now]')){e.preventDefault();e.stopImmediatePropagation();navigate('trade/'+selectedBase());return}
+  if(e.target.closest?.('.institutional,.institutional-card button')){e.preventDefault();e.stopImmediatePropagation();navigate('institutional');return}
+  const ha=e.target.closest?.('[data-home-action]');if(ha){const a=ha.dataset.homeAction;if(['trade','portfolio','social','rwa','backtest','renko'].includes(a)){e.preventDefault();e.stopImmediatePropagation();navigate(a==='rwa'?'assets':a==='trade'?'trade/'+selectedBase():a);return}}
+  const ci=e.target.closest?.('.rwa-command-item');if(ci){const r=commandRoute(ci);if(r){e.preventDefault();e.stopImmediatePropagation();const layer=$('rwaCommandLayer');if(layer)layer.hidden=true;navigate(r);return}}
+  const a=e.target.closest?.('a[href]');if(a){const href=a.getAttribute('href');if(!href||href.startsWith('javascript:'))return;if(href.startsWith('#')){const r=href.slice(1);if(r){e.preventDefault();e.stopImmediatePropagation();navigate(r==='terminal'?'markets':r==='suite'?'portfolio':r);return}}const m=mapHref(href);if(m?.route){e.preventDefault();e.stopImmediatePropagation();navigate(m.route);return}if(m?.external){e.preventDefault();e.stopImmediatePropagation();preview(m.external,a.textContent?.trim()||'External link');return}}
+}
+function marketClick(e){const row=e.target.closest?.('.pairrow[data-sym]');if(!row)return;const sym=String(row.dataset.sym||'').replace(/USDT$/,'');setTimeout(()=>{if(state.route==='markets'||state.route==='asset')navigate('asset/'+sym,true)},120)}
+function patchAPI(){
+  if(!window.RWAProductOS)return;window.RWAProductOS.openMarkets=()=>navigate('markets');window.RWAProductOS.openTrade=s=>navigate('trade/'+(s||selectedBase()));window.RWAProductOS.openAsset=s=>navigate('asset/'+(s||selectedBase()));window.RWAProductOS.openSocial=()=>navigate('social');window.RWAProductOS.openTrader=w=>navigate('trader/'+(w||''));window.RWAProductOS.navigate=navigate;
+  if(window.RWAQuickActions){window.RWAQuickActions.trade=()=>navigate('trade/'+selectedBase());window.RWAQuickActions.institutional=()=>navigate('institutional');window.RWAQuickActions.social=()=>navigate('social')}
+}
+function boot(){normalizeNav();ensureResearch();ensureInstitutional();ensureLegacy();ensurePreview();ensureTicker();ensureContextInsight();patchAPI();apply(routeNow(),true);setTimeout(patchAPI,800);setTimeout(()=>apply(routeNow(),true),1200);document.addEventListener('click',clickGuard,true);document.addEventListener('click',marketClick,false);addEventListener('popstate',()=>apply(routeNow(),true));addEventListener('keydown',e=>{const tag=(e.target?.tagName||'').toLowerCase();if(e.key==='/'&&!e.metaKey&&!e.ctrlKey&&!['input','textarea','select'].includes(tag)){e.preventDefault();navigate('search')}if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();navigate('search')}});window.addEventListener('rwa:product-os-ready',()=>{patchAPI();normalizeNav()});window.addEventListener('rwa:suite-extensions-ready',patchAPI);state.timer=setInterval(()=>{renderTicker();if(state.route==='research')renderResearch()},5000)}
+window.RWASuperApp={version:'1.0.0',canonical:'https://copytolive.github.io/rwa/',navigate,apply,preview,state:()=>({...state})};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+})();
