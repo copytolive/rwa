@@ -88,8 +88,16 @@ jobs:
             s=s.replace(old,"click('tvPanOlder',()=>{shiftRange(-.72);setTimeout(()=>{if(!S.loading&&!S.building&&!S.exhausted)void loadOlder(120,36)},0)});",1)
             s=s.replace("version:'12.0.0'","version:'12.1.0'")
             s=s.replace("setMethod:applyMethod,loadOlder,goLive:latestView","setMethod:applyMethod,loadOlder,goLive:latestView,historyContract:'continuous-contiguous-backfill-v2'")
-            p.write_text(s)
-          if "historyContract:'continuous-contiguous-backfill-v2'" not in p.read_text():raise SystemExit('deep history contract missing')
+
+          # A stale worker result must never overwrite a newer method/profile rebuild.
+          old_guard="if(generation!==S.generation){resolve(false);return}S.building=false;"
+          new_guard="if(generation!==S.generation||id!==S.buildSeq){resolve(false);return}S.building=false;"
+          if old_guard in s:s=s.replace(old_guard,new_guard,1)
+          if new_guard not in s:raise SystemExit('latest-build-wins guard missing')
+          s=s.replace("historyContract:'continuous-contiguous-backfill-v2'","historyContract:'continuous-contiguous-backfill-v2',buildContract:'latest-build-wins-v1'",1)
+          p.write_text(s)
+          if "historyContract:'continuous-contiguous-backfill-v2'" not in s:raise SystemExit('deep history contract missing')
+          if "buildContract:'latest-build-wins-v1'" not in s:raise SystemExit('build race contract missing')
 
           # Profile inputs: no rewrite loop + locale-safe numeric values.
           p=Path('renko/renko-v12-method-profiles.js');s=p.read_text()
@@ -111,11 +119,14 @@ jobs:
             if required not in s:raise SystemExit(f'cache-bust missing: {required}')
           p.write_text(s)
 
-          # Browser test must acquire the iframe after the shell has settled.
+          # Browser test must acquire the iframe after the shell has settled and verify race guard.
           p=Path('tools/renko-v12-functional.mjs');s=p.read_text()
           old="const frameHandle=await page.waitForSelector('iframe.rwa-research-legacy-frame',{timeout:30000});\n  const frame=await frameHandle.contentFrame();"
           new="await page.waitForTimeout(1800);\n  const frameHandle=await page.waitForSelector('iframe.rwa-research-legacy-frame',{timeout:30000});\n  const frame=await frameHandle.contentFrame();"
           if old in s:s=s.replace(old,new)
+          old_result="history:RWARenkoV12.historyContract,bricks:RWARenkoV12.state.data.length"
+          new_result="history:RWARenkoV12.historyContract,build:RWARenkoV12.buildContract,bricks:RWARenkoV12.state.data.length"
+          if old_result in s:s=s.replace(old_result,new_result)
           p.write_text(s)
           PY
 
@@ -135,6 +146,8 @@ jobs:
           ! grep -Fq 'setTimeout(routeFromHash,800)' superapp-v5.js
           grep -Fq "version:'12.1.0'" renko/renko-v12.js
           grep -Fq "historyContract:'continuous-contiguous-backfill-v2'" renko/renko-v12.js
+          grep -Fq "buildContract:'latest-build-wins-v1'" renko/renko-v12.js
+          grep -Fq 'id!==S.buildSeq' renko/renko-v12.js
           grep -Fq 'loadOlder(120,36)' renko/renko-v12.js
           grep -Fq "version:'2.1.0'" renko/renko-v12-method-profiles.js
           grep -Fq "inputContract:'draft-never-overwritten-v2'" renko/renko-v12-method-profiles.js
@@ -146,7 +159,7 @@ jobs:
           grep -Fq "lockRule:'every-trade-threshold'" renko/renko-v12.js
           git diff --check
 
-      - name: Core immediate-lock smoke
+      - name: Core immediate-lock and box-method smoke
         run: |
           node - <<'NODE'
           const fs=require('fs'),vm=require('vm');const code=fs.readFileSync('renko/renko-v12-worker.js','utf8');
@@ -154,7 +167,11 @@ jobs:
           const ticks=[100,110,120,170].map((price,i)=>({id:i+1,price,time:i+1}));
           const r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:true,ticks});
           if(r.bricks.length!==7||r.bricks.at(-1).close!==170)throw Error('tick immediate-lock smoke failed');
-          console.log('RENKO V12 immediate-lock PASS');
+          const t=E.buildTicks({method:'traditional',traditionalBox:37.5,tickSize:.01,wicks:true,ticks});
+          if(Math.abs(t.box-37.5)>1e-9)throw Error('traditional box mapping failed');
+          const a=E.buildTicks({method:'atr',atrBox:48.85,tickSize:.01,wicks:true,ticks});
+          if(Math.abs(a.box-48.85)>1e-9)throw Error('ATR box mapping failed');
+          console.log('RENKO V12 immediate-lock + box-method PASS');
           NODE
 
       - name: Install Playwright Chromium
@@ -162,7 +179,7 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Browser acceptance - stable inputs and deep history
+      - name: Browser acceptance - stable inputs, method boxes and deep history
         shell: bash
         run: |
           python3 -m http.server 8080 > /tmp/renko-http.log 2>&1 &
@@ -180,7 +197,7 @@ jobs:
             git config user.name 'copytolive-actions'
             git config user.email 'actions@users.noreply.github.com'
             git add index.html superapp-v5.js renko/renko-v12.js renko/renko-v12-method-profiles.js renko/index.html tools/renko-v12-functional.mjs
-            git commit -m 'Fix RENKO input stability and continuous deep history'
+            git commit -m 'Fix RENKO setup race and continuous deep history'
             git pull --rebase origin main
             git push origin HEAD:main
           fi
