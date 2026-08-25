@@ -22,7 +22,6 @@ jobs:
           python - <<'PY'
           from pathlib import Path
 
-          # --- Main RENKO runtime: deep contiguous history loading ---
           p=Path('renko/renko-v12.js')
           s=p.read_text()
           a=s.index('async function loadOlder(){')
@@ -38,18 +37,9 @@ jobs:
                 for(let i=1;i<=wave;i++){const from=Math.max(0,Math.floor(cursor-PAGE*i));if(!defs.includes(from))defs.push(from)}
                 const parts=await Promise.all(defs.map(from=>olderAgg(symbol,from).catch(e=>{console.warn('[V12 older page]',from,e);return null})));
                 if(generation!==S.generation||symbol!==S.symbol)return false;
-                const rows=[];
-                let contiguous=0;
-                for(const part of parts){
-                  if(!Array.isArray(part)||!part.length)break;
-                  const valid=part.filter(x=>Number(x.id)<cursor);
-                  if(!valid.length)break;
-                  rows.push(...valid);contiguous++;
-                }
-                if(!rows.length){
-                  if(parts[0]&&Array.isArray(parts[0])&&!parts[0].length)S.exhausted=true;
-                  break;
-                }
+                const rows=[];let contiguous=0;
+                for(const part of parts){if(!Array.isArray(part)||!part.length)break;const valid=part.filter(x=>Number(x.id)<cursor);if(!valid.length)break;rows.push(...valid);contiguous++}
+                if(!rows.length){if(parts[0]&&Array.isArray(parts[0])&&!parts[0].length)S.exhausted=true;break}
                 const next=Math.min(...rows.map(x=>Number(x.id)).filter(Number.isFinite));
                 if(!Number.isFinite(next)||next>=cursor)break;
                 cursor=next;S.oldestAggId=next;S.ticks=dedupeTicks([...rows,...S.ticks]);pages+=Math.max(1,contiguous);loadedAny=true;
@@ -59,16 +49,11 @@ jobs:
               }
               return loadedAny;
             }catch(e){console.warn('[V12 older deep]',e);setStatus('Trade history retry','bad');return false}
-            finally{
-              if(generation===S.generation){S.loading=false;meta();const r=chart?.timeScale?.().getVisibleLogicalRange?.();if(r&&r.from<24&&!S.exhausted&&!S.building)setTimeout(()=>void loadOlder(targetBricks,maxPages),120)}
-            }
+            finally{if(generation===S.generation){S.loading=false;meta();const r=chart?.timeScale?.().getVisibleLogicalRange?.();if(r&&r.from<24&&!S.exhausted&&!S.building)setTimeout(()=>void loadOlder(targetBricks,maxPages),120)}}
           }'''
           s=s[:a]+new_load+s[b:]
-
-          a=s.index('function scheduleOlder()')
-          b=s.index('\nasync function resetSymbol',a)
+          a=s.index('function scheduleOlder()');b=s.index('\nasync function resetSymbol',a)
           s=s[:a]+"function scheduleOlder(){clearTimeout(rangeTimer);rangeTimer=setTimeout(()=>{const r=chart?.timeScale?.().getVisibleLogicalRange?.();if(r&&r.from<36&&!S.loading&&!S.building&&!S.exhausted)void loadOlder(120,36)},90)}"+s[b:]
-
           old="click('tvPanOlder',()=>shiftRange(-.72));"
           if old not in s: raise SystemExit('tvPanOlder contract not found')
           s=s.replace(old,"click('tvPanOlder',()=>{shiftRange(-.72);setTimeout(()=>{if(!S.loading&&!S.building&&!S.exhausted)void loadOlder(120,36)},0)});",1)
@@ -76,9 +61,7 @@ jobs:
           s=s.replace("setMethod:applyMethod,loadOlder,goLive:latestView","setMethod:applyMethod,loadOlder,goLive:latestView,historyContract:'continuous-contiguous-backfill-v2'")
           p.write_text(s)
 
-          # --- Profile runtime: locale-safe parsing + no input rewrite ---
-          p=Path('renko/renko-v12-method-profiles.js')
-          s=p.read_text()
+          p=Path('renko/renko-v12-method-profiles.js');s=p.read_text()
           needle="const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));"
           if needle not in s: raise SystemExit('profile clamp contract not found')
           s=s.replace(needle,needle+"\nconst parseNum=(v,fallback)=>{const n=Number(String(v??'').trim().replace(/,/g,'.'));return Number.isFinite(n)?n:fallback};",1)
@@ -89,36 +72,24 @@ jobs:
           s=s.replace("storageKey:STORE,verify}","storageKey:STORE,verify,inputContract:'draft-never-overwritten-v2'}")
           p.write_text(s)
 
-          # --- Cache bust all changed runtime URLs ---
-          p=Path('renko/index.html')
-          s=p.read_text()
-          replacements={
-            'renko-v12.js?v=120':'renko-v12.js?v=121',
-            'renko-v12-method-profiles.js?v=121':'renko-v12-method-profiles.js?v=210',
-            'renko-v12-instant-history.js?v=2':'renko-v12-instant-history.js?v=3'
-          }
-          for old,new in replacements.items():
+          p=Path('renko/index.html');s=p.read_text()
+          for old,new in {'renko-v12.js?v=120':'renko-v12.js?v=121','renko-v12-method-profiles.js?v=121':'renko-v12-method-profiles.js?v=210','renko-v12-instant-history.js?v=2':'renko-v12-instant-history.js?v=3'}.items():
             if old not in s: raise SystemExit(f'index cache key missing: {old}')
             s=s.replace(old,new)
           p.write_text(s)
 
-          # --- Keep Pages gate aligned with production URLs/contracts ---
-          p=Path('.github/workflows/renko-v11-pages.yml')
-          s=p.read_text()
+          p=Path('.github/workflows/renko-v11-pages.yml');s=p.read_text()
           s=s.replace("grep -Fq 'renko-v12.js?v=120' renko/index.html","grep -Fq 'renko-v12.js?v=121' renko/index.html")
           s=s.replace("grep -Fq 'renko-v12-method-profiles.js?v=121' renko/index.html","grep -Fq 'renko-v12-method-profiles.js?v=210' renko/index.html")
           s=s.replace("grep -Fq 'renko-v12-instant-history.js?v=2' renko/index.html","grep -Fq 'renko-v12-instant-history.js?v=3' renko/index.html")
           marker="grep -Fq \"lockRule:'every-trade-threshold'\" renko/renko-v12.js"
           extra="""grep -Fq \"historyContract:'continuous-contiguous-backfill-v2'\" renko/renko-v12.js\n          grep -Fq \"version:'2.1.0'\" renko/renko-v12-method-profiles.js\n          grep -Fq \"inputContract:'draft-never-overwritten-v2'\" renko/renko-v12-method-profiles.js\n          grep -Fq 'loadOlder(120,36)' renko/renko-v12.js"""
-          if extra.splitlines()[0] not in s:
-            s=s.replace(marker,marker+'\n          '+extra)
+          if extra.splitlines()[0] not in s:s=s.replace(marker,marker+'\n          '+extra)
           p.write_text(s)
           PY
-
           node --check renko/renko-v12.js
           node --check renko/renko-v12-method-profiles.js
           git diff --check
-          git diff -- renko/renko-v12.js renko/renko-v12-method-profiles.js renko/index.html .github/workflows/renko-v11-pages.yml
       - name: Commit functional hotfix
         shell: bash
         run: |
@@ -127,3 +98,5 @@ jobs:
           git add renko/renko-v12.js renko/renko-v12-method-profiles.js renko/index.html .github/workflows/renko-v11-pages.yml
           git commit -m "Fix RENKO setup inputs and continuous deep history"
           git push origin HEAD:main
+
+# trigger: 2
