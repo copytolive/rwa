@@ -65,7 +65,8 @@ jobs:
         run: |
           $portable = Join-Path $env:RUNNER_TEMP "mt5-portable"
           New-Item -ItemType Directory -Force -Path $portable | Out-Null
-          $installDir = Split-Path $env:MT5_TERMINAL -Parent\n          Copy-Item -Path (Join-Path $installDir "*") -Destination $portable -Recurse -Force
+          $installDir = Split-Path $env:MT5_TERMINAL -Parent
+          Copy-Item -Path (Join-Path $installDir "*") -Destination $portable -Recurse -Force
           $terminal = Join-Path $portable "terminal64.exe"
           $config = Join-Path $portable "preflight.ini"
           @"
