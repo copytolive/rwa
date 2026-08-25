@@ -37,7 +37,7 @@ C.confirmBricks=Number(C.confirmBricks)===1?1:2;
 
 const S={
   version:'10.0.0',generation:0,symbol:'',mode:C.mode,box:Number(C.traditionalBox)||100,atr:NaN,
-  autoLockUntil:0,autoPending:false,bars:[],bricks:[],data:[],loading:false,building:false,booting:false,
+  autoLockUntil:0,autoPending:false,autoBoxReady:false,bars:[],bricks:[],data:[],loading:false,building:false,booting:false,
   exhausted:false,following:true,latestClosedTime:0,buildSeq:0,loadSeq:0,lastLiveId:null,lastRefreshAt:0,
   lastSignalKey:'',signal:null,historyAbort:null,projectionPrice:NaN
 };
@@ -105,10 +105,13 @@ function computeFixedBox(){
   S.atr=calcAtr(S.bars,C.atrLength);
   if(S.mode==='traditional')S.box=Math.max(Number.EPSILON,Number(C.traditionalBox)||p*.001);
   else if(S.mode==='auto'){
-    const base=(Number.isFinite(S.atr)&&S.atr>0?S.atr:p*.002)*C.autoFactor;
-    S.box=roundBox(Math.max(Number.EPSILON,base));
-    S.autoLockUntil=now()+C.autoLockMinutes*60000;
-    S.autoPending=false;
+    if(!S.autoBoxReady){
+      const base=(Number.isFinite(S.atr)&&S.atr>0?S.atr:p*.002)*C.autoFactor;
+      S.box=roundBox(Math.max(Number.EPSILON,base));
+      S.autoLockUntil=now()+C.autoLockMinutes*60000;
+      S.autoPending=false;
+      S.autoBoxReady=true;
+    }
   }else if(S.mode==='atr')S.box=roundBox(Math.max(Number.EPSILON,(Number.isFinite(S.atr)?S.atr:p*.002)*C.atrFactor));
   else S.box=roundBox(Math.max(Number.EPSILON,p*C.percentage));
   setMeta();
@@ -183,7 +186,7 @@ async function bootHistory(generation){
 }
 function resetForSymbol(symbol){
   S.historyAbort?.abort();S.historyAbort=new AbortController();clearTimeout(rangeTimer);
-  S.generation++;S.symbol=symbol;S.mode=C.mode;S.bars=[];S.bricks=[];S.data=[];S.loading=false;S.building=false;S.booting=false;S.exhausted=false;S.following=true;S.latestClosedTime=0;S.lastLiveId=null;S.lastSignalKey='';
+  S.generation++;S.symbol=symbol;S.mode=C.mode;S.bars=[];S.bricks=[];S.data=[];S.loading=false;S.building=false;S.booting=false;S.exhausted=false;S.following=true;S.latestClosedTime=0;S.lastLiveId=null;S.lastSignalKey='';S.autoBoxReady=false;S.autoLockUntil=0;S.autoPending=false;
   series?.setData([]);projectionSeries?.setData([]);if(liveLine){try{series.removePriceLine(liveLine)}catch{}liveLine=null}
   setModePill();setStatus('Chart ready · connecting data','ready');setMeta();void bootHistory(S.generation);
 }
@@ -281,7 +284,7 @@ function syncForm(){
   setModePill();setMeta();
 }
 async function applyMode(mode,{force=false}={}){
-  if(!MODES.has(mode))return;C.mode=mode;S.mode=mode;saveSettings();syncForm();if(!S.bars.length)return;
+  if(!MODES.has(mode))return;C.mode=mode;S.mode=mode;if(mode==='auto')S.autoBoxReady=false;saveSettings();syncForm();if(!S.bars.length)return;
   const anchor=rangeAnchor();await rebuild(anchor);if(force||S.following)latestView();evaluateSignal();
 }
 function readSettingsFromForm(){
@@ -295,8 +298,8 @@ function readSettingsFromForm(){
 }
 function wireSettings(){
   document.querySelectorAll('[data-renko-mode]').forEach(b=>b.addEventListener('click',()=>applyMode(b.dataset.renkoMode,{force:true})));
-  $('v10Apply')?.addEventListener('click',async()=>{readSettingsFromForm();S.mode=C.mode;await rebuild(rangeAnchor());latestView();refreshProjection();evaluateSignal();syncForm()});
-  $('v10Recalc')?.addEventListener('click',async()=>{readSettingsFromForm();S.autoLockUntil=0;S.autoPending=false;await rebuild(rangeAnchor());latestView();syncForm()});
+  $('v10Apply')?.addEventListener('click',async()=>{readSettingsFromForm();S.mode=C.mode;if(S.mode==='auto')S.autoBoxReady=false;await rebuild(rangeAnchor());latestView();refreshProjection();evaluateSignal();syncForm()});
+  $('v10Recalc')?.addEventListener('click',async()=>{readSettingsFromForm();S.autoLockUntil=0;S.autoPending=false;S.autoBoxReady=false;await rebuild(rangeAnchor());latestView();syncForm()});
   $('v10Projection')?.addEventListener('change',()=>{readSettingsFromForm();refreshProjection()});
   $('v10Confirm')?.addEventListener('change',()=>{readSettingsFromForm();evaluateSignal()});
 }
@@ -309,7 +312,7 @@ function autoLockTick(){
   if(C.mode!=='auto'||!S.bars.length)return;
   if(now()<S.autoLockUntil){setMeta();return}
   const sig=deriveSignal();if(sig.position!=='flat'){S.autoPending=true;setMeta();return}
-  void (async()=>{S.autoPending=false;await rebuild(rangeAnchor());if(S.following)latestView();syncForm()})();
+  void (async()=>{S.autoPending=false;S.autoBoxReady=false;await rebuild(rangeAnchor());if(S.following)latestView();syncForm()})();
 }
 
 async function boot(){
