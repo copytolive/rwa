@@ -35,7 +35,7 @@ jobs:
             -H 'Accept-Encoding: gzip, deflate' \
             --compressed \
             -o tmp/sec/company_tickers_exchange.json \
-            https://www.sec.gov/files/company_tickers_exchange.json
+            'https://www.sec.gov/files/company_tickers_exchange.json?output=1'
       - name: Normalize US issuer catalog
         run: node tools/sync-sec-us-catalog.mjs tmp/sec/company_tickers_exchange.json
       - name: Accuracy and provenance gate
