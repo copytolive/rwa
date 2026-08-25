@@ -3,7 +3,7 @@ import fs from 'node:fs';import path from 'node:path';
 const root=process.cwd();
 const src=process.argv[2]||'tmp/sec/company_tickers_exchange.json';
 if(!fs.existsSync(src))throw new Error(`missing ${src}`);
-const raw=JSON.parse(fs.readFileSync(src,'utf8'));
+const payload=fs.readFileSync(src,'utf8');const marker=payload.indexOf('Markdown Content:');const start=payload.indexOf('{',marker>=0?marker:0);const end=payload.lastIndexOf('}');if(start<0||end<start)throw new Error('SEC catalog JSON payload not found');const raw=JSON.parse(payload.slice(start,end+1));
 const fields=raw.fields||['cik','name','ticker','exchange'];
 const ex={Nasdaq:['XNAS','NASDAQ','NASDAQ'],NYSE:['XNYS','NYSE','NYSE'],'NYSE Arca':['ARCX','NYSE Arca','AMEX'],'NYSE American':['XASE','NYSE American','AMEX'],'Cboe BZX':['BATS','Cboe BZX','BATS']};
 const rows=Array.isArray(raw.data)?raw.data.map(row=>Object.fromEntries(fields.map((f,i)=>[f,row[i]]))):Object.values(raw).filter(x=>x&&typeof x==='object').map(x=>({cik:x.cik_str,name:x.title,ticker:x.ticker,exchange:null}));
