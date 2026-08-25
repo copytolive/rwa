@@ -25,6 +25,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      # Direct SEC is authoritative; the gateway is transport-only when SEC blocks GitHub runner IPs.
       - name: Refresh official SEC US issuer associations first
         env:
           SEC_USER_AGENT: RWA Global Asset Terminal 183281927+narzulalistiqlal@users.noreply.github.com
