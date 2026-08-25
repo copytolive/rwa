@@ -4,16 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#131722">
-<title>RWA Renko — Native TradingView-Style Traditional Renko</title>
-<meta name="description" content="Traditional Renko rendered with TradingView Lightweight Charts: native kinetic pan, wheel/pinch scale, 50-brick first view, lazy older history, all eligible Binance spot crypto searchable, and live individual trade ticks.">
+<title>RENKO V10 — TradingView-Style Multi-Mode Renko</title>
+<meta name="description" content="RENKO V10 with Auto Adaptive, Traditional, ATR and Percentage modes, history-first chart, Binance live trade ticks, projected-vs-confirmed bricks, and confirmed-brick entry/exit guidance.">
 <link rel="preconnect" href="https://data-api.binance.vision" crossorigin>
 <link rel="preconnect" href="https://data-stream.binance.vision" crossorigin>
-<link rel="preconnect" href="https://data.binance.vision" crossorigin>
 <link rel="stylesheet" href="renko.css?v=1">
 <link rel="stylesheet" href="renko-v2.css?v=2">
 <link rel="stylesheet" href="renko-v3.css?v=3">
-<link rel="stylesheet" href="renko-v5.css?v=61">
 <link rel="stylesheet" href="renko-v9-lwc.css?v=91">
+<link rel="stylesheet" href="renko-v10.css?v=100">
 <script src="https://unpkg.com/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
@@ -21,7 +20,7 @@
   <header class="topbar">
     <a class="brand" href="./" aria-label="Open Renko"><span class="brandmark">R</span><strong>RENKO</strong></a>
     <nav class="nav"><a class="active" href="./">Renko Chart</a></nav>
-    <div class="top-status"><span id="modePill" class="mode-pill">TRADITIONAL · NATIVE CHART</span><span id="feedPill" class="feed-pill"><i></i><b>CONNECTING</b></span></div>
+    <div class="top-status"><span id="modePill" class="mode-pill">AUTO ADAPTIVE · V10</span><span id="feedPill" class="feed-pill"><i></i><b>CONNECTING</b></span></div>
   </header>
 
   <main class="workspace">
@@ -36,12 +35,12 @@
       <div class="instrument-bar">
         <div class="instrument">
           <div id="pairIcon" class="pair-icon">BT</div>
-          <div><div class="pair-title"><b id="pairName">BTC / USDT</b><span>SPOT</span></div><small id="sourceText">Native TradingView Lightweight Charts interaction · History: completed Binance 1m CLOSE · Live: individual @trade</small></div>
+          <div><div class="pair-title"><b id="pairName">BTC / USDT</b><span>SPOT</span></div><small id="sourceText">History: completed Binance 1m OHLC · Live: individual @trade ticks.</small></div>
         </div>
         <div class="stats">
-          <div><small>LAST</small><b id="lastPrice">—</b></div>
-          <div><small>BRICK</small><b id="brickValue">—</b></div>
-          <div><small>LIVE BRICKS</small><b id="brickCount">0</b></div>
+          <div><small>REAL LAST</small><b id="lastPrice">—</b></div>
+          <div><small>CURRENT BOX</small><b id="brickValue">—</b></div>
+          <div><small>CONFIRMED</small><b id="brickCount">0</b></div>
           <div><small>LIVE TICKS</small><b id="tickCount">0</b></div>
         </div>
       </div>
@@ -49,52 +48,99 @@
       <div class="easybar" aria-label="Quick Renko controls">
         <button id="openPairs" class="open-pairs">☰ Pairs</button>
         <div id="quickPairs" class="easy-group quick"><span class="easy-label">QUICK</span><button data-quick="BTC">BTC</button><button data-quick="ETH">ETH</button><button data-quick="SOL">SOL</button><button data-quick="XRP">XRP</button><button data-quick="BNB">BNB</button><button data-quick="DOGE">DOGE</button></div>
-        <div class="easy-group box-presets"><span class="easy-label">BRICK</span><button id="autoBox">AUTO</button><button data-box-pct="0.0005">0.05%</button><button data-box-pct="0.001">0.10%</button><button data-box-pct="0.0025">0.25%</button></div>
         <div class="easy-health"><span id="tickHealth" class="tick-health wait">WAITING</span><span id="tickAge" class="tick-age">waiting</span></div>
       </div>
 
-      <div class="tv-toolbar" aria-label="Renko chart settings">
-        <div class="tv-tool"><label>BOX</label><div class="tv-box"><input id="brickSize" inputmode="decimal" value="100" aria-label="Traditional Renko box size"><button id="applyBrick">Set</button></div></div>
-        <span class="tv-pill"><strong>Traditional</strong> · reversal 2×</span>
-        <span class="tv-pill secondary"><strong id="tvBrickMeta">50 visible</strong></span>
+      <div class="v10-toolbar">
+        <div class="v10-card">
+          <div class="v10-card-head"><b>RENKO TYPE</b><small>TradingView-style modes · Auto Adaptive is execution default</small></div>
+          <div class="v10-modes">
+            <button class="v10-mode" data-renko-mode="auto">AUTO ADAPTIVE</button>
+            <button class="v10-mode" data-renko-mode="traditional">TRADITIONAL</button>
+            <button class="v10-mode" data-renko-mode="atr">ATR</button>
+            <button class="v10-mode" data-renko-mode="percentage">PERCENTAGE</button>
+          </div>
+          <div class="v10-params">
+            <div class="v10-field" data-mode-fields="traditional"><label>BOX SIZE</label><input id="brickSize" inputmode="decimal" value="100"><button id="applyBrick" hidden>Set</button></div>
+            <div class="v10-field" data-mode-fields="atr"><label>ATR LENGTH</label><input id="v10AtrLength" inputmode="numeric" value="14"></div>
+            <div class="v10-field" data-mode-fields="atr"><label>ATR FACTOR</label><input id="v10AtrFactor" inputmode="decimal" value="1"></div>
+            <div class="v10-field" data-mode-fields="auto"><label>ATR LENGTH</label><input id="v10AutoAtrLength" value="14" disabled></div>
+            <div class="v10-field" data-mode-fields="auto"><label>AUTO FACTOR</label><input id="v10AutoFactor" inputmode="decimal" value="0.5"></div>
+            <div class="v10-field" data-mode-fields="auto"><label>LOCK MIN</label><input id="v10AutoLock" inputmode="numeric" value="30"></div>
+            <div class="v10-field" data-mode-fields="percentage"><label>BOX %</label><input id="v10Percent" inputmode="decimal" value="0.1"></div>
+            <div class="v10-field"><label>ENTRY CONFIRM</label><select id="v10Confirm"><option value="2">Reversal + 1</option><option value="1">First reversal</option></select></div>
+            <label class="v10-inline-check"><input id="v10Projection" type="checkbox" checked> Projection</label>
+            <button id="v10Apply" class="v10-btn primary">APPLY</button>
+            <button id="v10Recalc" class="v10-btn recalc">RECALCULATE</button>
+          </div>
+          <div class="v10-mode-summary">
+            <div class="v10-metric"><small>MODE</small><b id="v10ModeLabel">AUTO ADAPTIVE</b></div>
+            <div class="v10-metric"><small>CURRENT BOX</small><b id="v10CurrentBox">—</b></div>
+            <div class="v10-metric"><small>ATR NOW</small><b id="v10AtrNow">—</b></div>
+            <div class="v10-metric"><small>AUTO LOCK</small><b id="v10LockState">—</b></div>
+            <div class="v10-metric"><small>REVERSAL</small><b>2× box</b></div>
+            <div class="v10-metric"><small>SIGNAL SOURCE</small><b>Confirmed only</b></div>
+          </div>
+        </div>
+
+        <div class="v10-card">
+          <div class="v10-card-head"><b>ENTRY / EXIT ENGINE</b><small>Real market execution price · synthetic brick only for structure</small></div>
+          <div class="v10-signal">
+            <div class="v10-signal-main"><small>ACTION</small><b id="signalAction" data-kind="wait">WAIT</b><small>POSITION</small><b id="signalPosition">FLAT</b></div>
+            <div class="v10-signal-stat"><small>ENTRY TRIGGER</small><b id="signalEntry">—</b></div>
+            <div class="v10-signal-stat"><small>REAL MARKET</small><b id="signalMarket">—</b></div>
+            <div class="v10-signal-stat"><small>HARD STOP</small><b id="signalHardStop">—</b></div>
+            <div class="v10-signal-stat"><small>RENKO TRAIL</small><b id="signalTrail">—</b></div>
+            <div class="v10-signal-foot"><span id="signalReason">Confirmed Renko only; projected brick never triggers an entry.</span><span id="signalFreshness" class="v10-live-state" data-kind="stale">WAITING</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tv-toolbar" aria-label="Renko chart navigation">
+        <span class="tv-pill"><strong>Confirmed bricks</strong> · reversal 2×</span>
+        <span class="tv-pill secondary"><strong id="tvBrickMeta">60 visible</strong></span>
         <div class="tv-status"><b id="tvLoadState" data-kind="loading">Loading chart…</b></div>
       </div>
 
       <div id="chartWrap" class="chart-wrap">
         <canvas id="renkoCanvas"></canvas>
-        <div id="chartEmpty" class="chart-empty"><span class="spinner"></span><b>Preparing Renko…</b><small>Cached 50-brick view paints first when available. Older history loads only near the left edge.</small></div>
+        <div id="chartEmpty" class="chart-empty"><span class="spinner"></span><b>Preparing RENKO V10…</b><small>Latest confirmed history paints first. Older history lazy-loads near the left edge.</small></div>
         <div id="tooltip" class="tooltip" hidden></div>
         <div id="tvLoading" class="tv-loading" hidden>Loading older history</div>
+        <div id="projectionState" class="v10-projection">PROJECTED · NO SIGNAL</div>
         <div class="tv-chart-status"><span id="tvCoverage">Preparing history</span></div>
         <div class="tv-chart-nav" aria-label="Chart navigation">
           <button id="tvPanOlder" title="Older history">←</button>
           <button id="tvZoomOut" title="Zoom out">−</button>
-          <span id="tvZoomValue" class="zoom-value">50</span>
+          <span id="tvZoomValue" class="zoom-value">60</span>
           <button id="tvZoomIn" title="Zoom in">+</button>
           <button id="tvPanNewer" title="Newer history">→</button>
-          <button id="tvReset" title="Reset to latest 50">⌂</button>
+          <button id="tvReset" title="Reset latest">⌂</button>
           <button id="tvLive" class="live" title="Return to live">LIVE</button>
         </div>
       </div>
-      <div class="lwc-attribution">Charts powered by&nbsp;<a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView Lightweight Charts™</a> · Basic controls above · advanced details below</div>
+      <div class="lwc-attribution">Charts powered by&nbsp;<a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView Lightweight Charts™</a> · RENKO V10 engine is custom and is not TradingView's proprietary Renko implementation.</div>
 
-      <details class="methodology">
-        <summary>Renko methodology & data sources</summary>
+      <details class="methodology" open>
+        <summary>RENKO V10 methodology, accuracy & operating rules</summary>
         <div class="method-grid">
-          <div><b>Native chart interaction</b><p>The plotting surface uses TradingView Lightweight Charts 5.1 with native kinetic scrolling, wheel zoom, pressed-mouse drag, touch drag, pinch scaling, price-axis scaling and double-click axis reset.</p></div>
-          <div><b>Traditional placement</b><p>Fixed absolute box. Continuation requires 1 box; reversal requires 2 boxes.</p></div>
-          <div><b>First paint & lazy history</b><p>The latest 50 Renko bricks are targeted first. Scrolling near the left edge fetches earlier completed history in the background while preserving the visible range.</p></div>
-          <div><b>Historical source</b><p>Completed Binance 1-minute CLOSE observations are reconstructed off the UI thread. This is the fast historical layer used for TradingView-like operation; it is not falsely labelled lifetime raw-tick history.</p></div>
-          <div><b>Live source</b><p>Realtime price and current Renko extension use Binance individual <code>@trade</code> ticks. The live price line is venue price, not a synthetic fill price.</p></div>
-          <div><b>Crypto universe</b><p>All eligible Binance spot crypto pairs returned by the live exchange universe are searchable; the highest-liquidity 500 are pre-rendered for fast browsing.</p></div>
-          <div><b>Raw tick audit</b><p>Binance Vision individual <code>trades</code> archives remain available in the underlying audit engine and stay separate from the fast historical plotting layer.</p></div>
+          <div><b>Auto Adaptive — recommended</b><p>ATR(14) estimates volatility, multiplied by the Auto Factor (default 0.50), then the absolute box is locked for 30 minutes. If a position signal is active, automatic recalculation is postponed until the engine returns flat.</p></div>
+          <div><b>Traditional</b><p>Fixed absolute box. Continuation requires one box. Direction reversal requires two boxes. This is the most stable and easiest mode to audit.</p></div>
+          <div><b>ATR</b><p>Brick size follows ATR calculated from completed 1-minute OHLC. Historical bricks use the ATR available at each source bar. Live bricks use the latest completed ATR snapshot until the next completed minute refresh.</p></div>
+          <div><b>Percentage</b><p>Brick size is a percentage of the current confirmed Renko level. This normalizes the chart across assets but can change with price and should be treated as more adaptive than Traditional.</p></div>
+          <div><b>Projected vs confirmed</b><p>The transparent projected candle follows the real market price but is labelled <code>NO SIGNAL</code>. Entry/exit logic only reacts after a full Renko threshold has been crossed and the brick is confirmed.</p></div>
+          <div><b>Entry default</b><p>The safer default is reversal confirmation plus one continuation brick. Set “First reversal” only for a more aggressive, earlier signal with higher false-reversal risk.</p></div>
+          <div><b>Exit stack</b><p>Layer 1: raw-market hard stop. Layer 2: one-box Renko trailing reference. Layer 3: confirmed opposite Renko reversal. Raw market stop can exit before a synthetic reversal brick completes.</p></div>
+          <div><b>Price integrity</b><p>The blue REAL line and execution guidance use Binance venue price. Renko close levels are synthetic structure levels and are not treated as guaranteed order-fill prices.</p></div>
+          <div class="v10-warn"><b>Historical accuracy boundary</b><p>Live formation uses individual Binance <code>@trade</code> ticks. Deep chart history uses completed 1-minute OHLC for fast loading, so historical brick sequencing can differ from a complete tick-by-tick reconstruction.</p></div>
         </div>
       </details>
 
       <div class="renko-compat-hidden" aria-hidden="true">
-        <div class="controlbar"><div class="field"><div class="stepper"><button id="zoomOut">−</button><b id="visibleValue">50</b><button id="zoomIn">+</button></div></div><label class="toggle"><input id="followLive" type="checkbox" checked><span></span><b>FOLLOW LIVE</b></label><button id="resetChart">Rebuild live ticks</button><div class="thresholds"><span>UP <b id="nextUp">—</b></span><span>DOWN <b id="nextDown">—</b></span></div></div>
+        <button id="autoBox"></button><button data-box-pct="0.0005"></button><button data-box-pct="0.001"></button><button data-box-pct="0.0025"></button>
+        <div class="controlbar"><div class="field"><div class="stepper"><button id="zoomOut">−</button><b id="visibleValue">60</b><button id="zoomIn">+</button></div></div><label class="toggle"><input id="followLive" type="checkbox" checked><span></span><b>FOLLOW LIVE</b></label><button id="resetChart">Rebuild live ticks</button><div class="thresholds"><span>UP <b id="nextUp">—</b></span><span>DOWN <b id="nextDown">—</b></span></div></div>
         <div class="archivebar"><b id="fastArchiveStatus"></b><span id="fastArchiveDetail"></span><i id="fastArchiveProgressFill"></i><small id="fastArchiveProgressText"></small><div id="fastArchiveCoverage"></div><button id="archiveLoad">RAW TICK AUDIT</button><button id="archiveCancel" disabled>CANCEL</button></div>
-        <div class="historybar"><b id="fastHistoryCoverage"></b><span id="fastHistoryCount"></span><span id="fastHistoryFrom"></span><span id="fastHistoryTo"></span><span id="fastHistoryState"></span><button id="historyStart">START</button><button id="historyPrev">OLDER</button><button id="historyAll">50</button><button id="historyNext">NEWER</button><button id="historyLive">LIVE</button></div>
+        <div class="historybar"><b id="fastHistoryCoverage"></b><span id="fastHistoryCount"></span><span id="fastHistoryFrom"></span><span id="fastHistoryTo"></span><span id="fastHistoryState"></span><button id="historyStart">START</button><button id="historyPrev">OLDER</button><button id="historyAll">60</button><button id="historyNext">NEWER</button><button id="historyLive">LIVE</button></div>
         <b id="archiveStatus"></b><span id="archiveDetail"></span><i id="archiveProgressFill"></i><small id="archiveProgressText"></small><div id="archiveCoverage"></div>
         <b id="historyCoverage"></b><span id="historyCount">0 bricks</span><span id="historyFrom">—</span><span id="historyTo">LIVE</span><span id="historyState"></span>
         <input id="historyRange" type="range" min="0" max="0" value="0" disabled><div id="historyIntegrity"></div>
@@ -103,7 +149,6 @@
   </main>
 </div>
 <script src="renko-v3.js?v=31"></script>
-<script src="renko-v5.js?v=54"></script>
-<script src="renko-v9-lwc.js?v=92"></script>
+<script src="renko-v10.js?v=100"></script>
 </body>
 </html>
