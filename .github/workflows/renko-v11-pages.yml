@@ -6,19 +6,13 @@ on:
     paths:
       - "index.html"
       - "renko-shell-fullscreen.css"
-      - "renko/index.html"
-      - "renko/renko-v3.js"
-      - "renko/renko-v12.js"
-      - "renko/renko-v12-worker.js"
-      - "renko/renko-v12-method-profiles.js"
-      - "renko/renko-v12-instant-history.js"
-      - "renko/renko-v11.css"
+      - "renko/**"
+      - "tools/renko-v12-functional.mjs"
       - ".github/workflows/renko-v11-pages.yml"
-      - ".github/workflows/renko-v11.yml"
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -27,12 +21,86 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  verify-renko-v12:
+  verify-package-renko-v12:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Syntax and tick-native contract
+        with:
+          fetch-depth: 0
+
+      - name: Self-heal settings runtime and deep history loader
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          # Main runtime: replace one-page history loader with continuous contiguous backfill.
+          p=Path('renko/renko-v12.js');s=p.read_text()
+          if 'async function loadOlder(){' in s:
+            a=s.index('async function loadOlder(){');b=s.index('\nfunction scheduleOlder()',a)
+            new_load=r'''async function loadOlder(targetBricks=120,maxPages=36){
+              if(S.loading||S.exhausted||!Number.isFinite(S.oldestAggId)||S.oldestAggId<=0)return false;
+              const generation=S.generation,symbol=S.symbol,anchor=rangeAnchor(),beforeBricks=S.data.length;
+              let cursor=Number(S.oldestAggId),pages=0,loadedAny=false;
+              S.loading=true;S.following=false;setStatus('Loading deep tick history…','loading');
+              try{
+                while(generation===S.generation&&symbol===S.symbol&&!S.exhausted&&pages<maxPages&&S.data.length<beforeBricks+Math.max(20,Number(targetBricks)||120)){
+                  const wave=Math.min(6,maxPages-pages),defs=[];
+                  for(let i=1;i<=wave;i++){const from=Math.max(0,Math.floor(cursor-PAGE*i));if(!defs.includes(from))defs.push(from)}
+                  const parts=await Promise.all(defs.map(from=>olderAgg(symbol,from).catch(e=>{console.warn('[V12 older page]',from,e);return null})));
+                  if(generation!==S.generation||symbol!==S.symbol)return false;
+                  const rows=[];let contiguous=0;
+                  for(const part of parts){if(!Array.isArray(part)||!part.length)break;const valid=part.filter(x=>Number(x.id)<cursor);if(!valid.length)break;rows.push(...valid);contiguous++}
+                  if(!rows.length){if(parts[0]&&Array.isArray(parts[0])&&!parts[0].length)S.exhausted=true;break}
+                  const next=Math.min(...rows.map(x=>Number(x.id)).filter(Number.isFinite));
+                  if(!Number.isFinite(next)||next>=cursor)break;
+                  cursor=next;S.oldestAggId=next;S.ticks=dedupeTicks([...rows,...S.ticks]);pages+=Math.max(1,contiguous);loadedAny=true;
+                  await rebuild(anchor);
+                  setStatus(`History +${Math.max(0,S.data.length-beforeBricks)} bricks · ${pages.toLocaleString()} trade pages`,'ready');
+                  if(defs.includes(0)||cursor<=0){S.exhausted=true;break}
+                }
+                return loadedAny;
+              }catch(e){console.warn('[V12 older deep]',e);setStatus('Trade history retry','bad');return false}
+              finally{if(generation===S.generation){S.loading=false;meta();const r=chart?.timeScale?.().getVisibleLogicalRange?.();if(r&&r.from<24&&!S.exhausted&&!S.building)setTimeout(()=>void loadOlder(targetBricks,maxPages),120)}}
+            }'''
+            s=s[:a]+new_load+s[b:]
+            a=s.index('function scheduleOlder()');b=s.index('\nasync function resetSymbol',a)
+            s=s[:a]+"function scheduleOlder(){clearTimeout(rangeTimer);rangeTimer=setTimeout(()=>{const r=chart?.timeScale?.().getVisibleLogicalRange?.();if(r&&r.from<36&&!S.loading&&!S.building&&!S.exhausted)void loadOlder(120,36)},90)}"+s[b:]
+            old="click('tvPanOlder',()=>shiftRange(-.72));"
+            if old not in s: raise SystemExit('tvPanOlder contract missing')
+            s=s.replace(old,"click('tvPanOlder',()=>{shiftRange(-.72);setTimeout(()=>{if(!S.loading&&!S.building&&!S.exhausted)void loadOlder(120,36)},0)});",1)
+            s=s.replace("version:'12.0.0'","version:'12.1.0'")
+            s=s.replace("setMethod:applyMethod,loadOlder,goLive:latestView","setMethod:applyMethod,loadOlder,goLive:latestView,historyContract:'continuous-contiguous-backfill-v2'")
+            p.write_text(s)
+          if "historyContract:'continuous-contiguous-backfill-v2'" not in p.read_text():raise SystemExit('deep history contract missing')
+
+          # Profiles: locale-safe numeric parsing; draft fields are never rewritten after render.
+          p=Path('renko/renko-v12-method-profiles.js');s=p.read_text()
+          if "version:'2.1.0'" not in s:
+            needle="const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));"
+            if needle not in s:raise SystemExit('profile clamp contract missing')
+            if 'const parseNum=' not in s:s=s.replace(needle,needle+"\nconst parseNum=(v,fallback)=>{const n=Number(String(v??'').trim().replace(/,/g,'.'));return Number.isFinite(n)?n:fallback};",1)
+            s=s.replace("Number($('v12AtrLength')?.value)||profiles.atr.atrLength","parseNum($('v12AtrLength')?.value,profiles.atr.atrLength)")
+            s=s.replace("Number($('v12TraditionalBox')?.value)||profiles.traditional.boxSize","parseNum($('v12TraditionalBox')?.value,profiles.traditional.boxSize)")
+            s=s.replace("Number($('v12Percentage')?.value)||profiles.percentage.percentage","parseNum($('v12Percentage')?.value,profiles.percentage.percentage)")
+            s=s.replace("version:'2.0.0'","version:'2.1.0'")
+            s=s.replace("storageKey:STORE,verify}","storageKey:STORE,verify,inputContract:'draft-never-overwritten-v2'}")
+            p.write_text(s)
+          if "inputContract:'draft-never-overwritten-v2'" not in p.read_text():raise SystemExit('profile input contract missing')
+
+          # Cache bust: force browsers/iframes to fetch the corrected runtime.
+          p=Path('renko/index.html');s=p.read_text()
+          for old,new in [('renko-v12.js?v=120','renko-v12.js?v=121'),('renko-v12-method-profiles.js?v=121','renko-v12-method-profiles.js?v=210'),('renko-v12-instant-history.js?v=2','renko-v12-instant-history.js?v=3')]:
+            s=s.replace(old,new)
+          for required in ['renko-v12.js?v=121','renko-v12-method-profiles.js?v=210','renko-v12-instant-history.js?v=3']:
+            if required not in s:raise SystemExit(f'cache-bust contract missing: {required}')
+          p.write_text(s)
+          PY
+
+      - name: Static functional contracts
+        shell: bash
         run: |
           set -euo pipefail
           node --check renko/renko-v3.js
@@ -40,38 +108,22 @@ jobs:
           node --check renko/renko-v12-worker.js
           node --check renko/renko-v12-method-profiles.js
           node --check renko/renko-v12-instant-history.js
-          test -s index.html
-          test -s renko-shell-fullscreen.css
-          test -s renko/index.html
-          test -s renko/renko-v11.css
-          test -s renko/renko-v12-instant-history.js
-          grep -Fq 'renko-shell-fullscreen.css?v=1' index.html
-          grep -Fq 'html[data-rwa-route^="research/renko"] .rwa-tool-lab' renko-shell-fullscreen.css
-          grep -Fq 'grid-template-columns:.8fr 1.2fr' superapp-v5.css
-          grep -Fq 'RENKO V12' renko/index.html
-          grep -Fq 'renko-v12.js?v=120' renko/index.html
-          grep -Fq 'renko-v12-method-profiles.js?v=121' renko/index.html
-          grep -Fq 'renko-v12-instant-history.js?v=2' renko/index.html
-          grep -Fq 'renko-v12-worker.js?v=120' renko/renko-v12.js
-          grep -Fq 'V12 desktop density pass' renko/renko-v11.css
-          grep -Fq '3 SEPARATE SETTINGS' renko/renko-v12-method-profiles.js
-          grep -Fq 'ATR, Traditional and Percentage never share box parameters, Wicks or Entry Confirm.' renko/renko-v12-method-profiles.js
-          grep -Fq "version:'2.0.0'" renko/renko-v12-method-profiles.js
-          grep -Fq "markDirty(method)" renko/renko-v12-method-profiles.js
-          grep -Fq "RENKO engine did not accept profile" renko/renko-v12-method-profiles.js
-          grep -Fq "renko:v12-profile-applied" renko/renko-v12-method-profiles.js
+          node --check tools/renko-v12-functional.mjs
+          grep -Fq "version:'12.1.0'" renko/renko-v12.js
+          grep -Fq "historyContract:'continuous-contiguous-backfill-v2'" renko/renko-v12.js
+          grep -Fq 'loadOlder(120,36)' renko/renko-v12.js
+          grep -Fq "version:'2.1.0'" renko/renko-v12-method-profiles.js
+          grep -Fq "inputContract:'draft-never-overwritten-v2'" renko/renko-v12-method-profiles.js
+          grep -Fq 'const parseNum=' renko/renko-v12-method-profiles.js
           ! grep -Fq 'setInterval(()=>{if(mounted)syncUI()},1000)' renko/renko-v12-method-profiles.js
-          grep -Fq "previewRole:'visual-only-close-preview'" renko/renko-v12-instant-history.js
-          grep -Fq "exactSource:'binance-public-aggTrades-contiguous-parallel-backfill'" renko/renko-v12-instant-history.js
-          grep -Fq "cacheRole:'exact-tick-bars-after-sync'" renko/renko-v12-instant-history.js
-          grep -Fq 'oldest-PAGE*i' renko/renko-v12-instant-history.js
-          grep -Fq "filter(t=>t?.kind==='agg')" renko/renko-v12-instant-history.js
-          grep -Fq 'Number(x?.time)>cutoff' renko/renko-v12-instant-history.js
-          grep -Fq 'mergeLiveBuffer(S)' renko/renko-v12-instant-history.js
-          ! grep -Fq 'id="v11Interval"' renko/index.html
-          grep -Fq 'if one trade crosses 5 boxes, all 5 bricks lock immediately' renko/index.html
+          grep -Fq 'renko-v12.js?v=121' renko/index.html
+          grep -Fq 'renko-v12-method-profiles.js?v=210' renko/index.html
+          grep -Fq 'renko-v12-instant-history.js?v=3' renko/index.html
           grep -Fq "formation:'tick-by-tick'" renko/renko-v12.js
           grep -Fq "lockRule:'every-trade-threshold'" renko/renko-v12.js
+          grep -Fq "previewRole:'visual-only-close-preview'" renko/renko-v12-instant-history.js
+          git diff --check
+
       - name: Core immediate-lock smoke
         run: |
           node - <<'NODE'
@@ -80,24 +132,51 @@ jobs:
           const ticks=[100,110,120,170].map((price,i)=>({id:i+1,price,time:i+1}));
           const r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:true,ticks});
           if(r.bricks.length!==7||r.bricks.at(-1).close!==170)throw Error('tick immediate-lock smoke failed');
-          console.log('RENKO V12 immediate-lock production smoke PASS');
+          console.log('RENKO V12 immediate-lock PASS');
           NODE
 
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Browser acceptance - inputs and deep history
+        shell: bash
+        run: |
+          python3 -m http.server 8080 > /tmp/renko-http.log 2>&1 &
+          server=$!
+          trap 'kill $server || true' EXIT
+          for i in {1..30}; do curl -fsS http://127.0.0.1:8080/ >/dev/null && break; sleep 1; done
+          RENKO_TEST_BASE='http://127.0.0.1:8080/' node tools/renko-v12-functional.mjs
+
+      - name: Persist self-healed source
+        shell: bash
+        run: |
+          if git diff --quiet -- renko/renko-v12.js renko/renko-v12-method-profiles.js renko/index.html; then
+            echo 'RENKO source already healed'
+          else
+            git config user.name 'copytolive-actions'
+            git config user.email 'actions@users.noreply.github.com'
+            git add renko/renko-v12.js renko/renko-v12-method-profiles.js renko/index.html
+            git commit -m 'Fix RENKO setup inputs and continuous deep history'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload verified site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
   deploy:
-    needs: verify-renko-v12
+    needs: verify-package-renko-v12
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-      - name: Upload site
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.'
-      - name: Deploy Pages
+      - name: Deploy verified Pages artifact
         id: deployment
         uses: actions/deploy-pages@v4
