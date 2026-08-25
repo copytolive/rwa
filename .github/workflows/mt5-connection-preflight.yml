@@ -63,12 +63,9 @@ jobs:
       - name: Read-only account connection test
         shell: pwsh
         run: |
-          $portable = Join-Path $env:RUNNER_TEMP "mt5-portable"
-          New-Item -ItemType Directory -Force -Path $portable | Out-Null
-          $installDir = Split-Path $env:MT5_TERMINAL -Parent
-          Copy-Item -Path (Join-Path $installDir "*") -Destination $portable -Recurse -Force
-          $terminal = Join-Path $portable "terminal64.exe"
-          $config = Join-Path $portable "preflight.ini"
+          Get-Process terminal64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          Start-Sleep -Seconds 3
+          $config = Join-Path $env:RUNNER_TEMP "preflight.ini"
           @"
           [Common]
           Login=$env:MT5_LOGIN
@@ -83,24 +80,27 @@ jobs:
           AllowDllImport=0
           "@ | Set-Content -Path $config -Encoding Ascii
 
-          $proc = Start-Process -FilePath $terminal -ArgumentList "/portable","/config:$config" -PassThru
-          Start-Sleep -Seconds 90
+          $proc = Start-Process -FilePath $env:MT5_TERMINAL -ArgumentList "/config:$config" -PassThru
+          Start-Sleep -Seconds 120
           if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
           Remove-Item $config -Force -ErrorAction SilentlyContinue
 
-          $logs = Get-ChildItem $portable -Filter "*.log" -Recurse -ErrorAction SilentlyContinue
+          $roots = @($env:APPDATA, $env:LOCALAPPDATA)
+          $logs = foreach ($root in $roots) {
+            Get-ChildItem $root -Filter "*.log" -Recurse -ErrorAction SilentlyContinue |
+              Where-Object { $_.FullName -match "MetaQuotes.*Terminal.*logs" -and $_.FullName -notmatch "MQL5|Tester" }
+          }
           if (-not $logs) { throw "MT5 started, but no terminal journal was produced" }
-          $text = ($logs | Get-Content -ErrorAction SilentlyContinue) -join "`n"
+          $text = ($logs | Sort-Object LastWriteTime | Get-Content -ErrorAction SilentlyContinue) -join "`n"
           $safe = $text.Replace($env:MT5_LOGIN, "***").Replace($env:MT5_PASSWORD, "***").Replace($env:MT5_SERVER, "***")
-          $relevant = $safe -split "`n" | Where-Object { $_ -match "(connect|authoriz|login|server|network|failed|error|terminal|account)" } | Select-Object -Last 40
-          "Sanitized MT5 diagnostic:"
+          $relevant = $safe -split "`n" | Where-Object { $_ -match "(connect|authoriz|login|server|network|failed|error|terminal|account)" } | Select-Object -Last 50
+          "Sanitized MT5 terminal diagnostic:"
           $relevant | ForEach-Object { $_ }
           $bad = $safe -match "(invalid account|authorization failed|failed to connect|no connection|server.*not found|network failed)"
           $good = $safe -match "(authorized|connected to)"
           if ($bad) { throw "MT5 terminal reported an authorization or connection failure" }
-          if (-not $good) { throw "MT5 terminal did not produce positive connection evidence within 90 seconds" }
+          if (-not $good) { throw "MT5 terminal did not produce positive connection evidence within 120 seconds" }
           "MT5 read-only connection preflight PASS. Automated trading remained disabled."
-
       - name: Cleanup credentials and terminal data
         if: always()
         shell: pwsh
