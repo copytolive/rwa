@@ -39,15 +39,16 @@ jobs:
           node --check renko/renko-v9-lwc.js
           node --check tools/renko-v9-browser-smoke.mjs
           node --check tools/renko-v9-live-smoke.mjs
-          grep -Fq "version:'9.0.0'" renko/renko-v9-lwc.js
+          grep -Fq "version:'9.1.0'" renko/renko-v9-lwc.js
           grep -Fq "mode:'native-lightweight-charts'" renko/renko-v9-lwc.js
           grep -Fq "renderer:'tradingview-lightweight-charts-5.1'" renko/renko-v9-lwc.js
           grep -Fq "traditional:{continuationBoxes:1,reversalBoxes:2}" renko/renko-v9-lwc.js
           grep -Fq "historicalSource:'binance-1m-close-background-worker'" renko/renko-v9-lwc.js
           grep -Fq "liveSource:'binance-individual-@trade'" renko/renko-v9-lwc.js
-          grep -Fq 'lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js' renko/index.html
-          grep -Fq 'renko-v9-lwc.js?v=90' renko/index.html
-          grep -Fq 'renko-v9-lwc.css?v=90' renko/index.html
+          grep -Fq 'vendor/lightweight-charts-5.1.0.production.js?v=510' renko/index.html
+          grep -Fq 'TradingView Lightweight Charts™ v5.1.0' renko/vendor/lightweight-charts-5.1.0.production.js
+          grep -Fq 'renko-v9-lwc.js?v=91' renko/index.html
+          grep -Fq 'renko-v9-lwc.css?v=91' renko/index.html
           grep -Fq 'TradingView Lightweight Charts' renko/index.html
           ! grep -Fq 'renko-v8-smooth.js' renko/index.html
           ! grep -Fq 'renko-v8-controls.js' renko/index.html
@@ -56,9 +57,9 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Verify pinned Lightweight Charts CDN
+      - name: Verify vendored Lightweight Charts
         run: |
-          curl -fsSL --retry 3 --max-time 30 https://unpkg.com/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js | grep -q 'LightweightCharts'
+          test "$(sha256sum renko/vendor/lightweight-charts-5.1.0.production.js | cut -d' ' -f1)" = '756b0ba9f58930226d6b8b9d47ad310448ab85d799ea1f7c2c02304777c10b52'
       - name: Serve repository
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/renko-v9.log 2>&1 &
@@ -93,7 +94,7 @@ jobs:
             q="${GITHUB_RUN_ID}-${i}"
             h="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/?v=$q" || true)"
             v="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/renko-v9-lwc.js?v=$q" || true)"
-            if grep -Fq 'renko-v9-lwc.js?v=90' <<<"$h" && grep -Fq "version:'9.0.0'" <<<"$v"; then
+            if grep -Fq 'renko-v9-lwc.js?v=91' <<<"$h" && grep -Fq "version:'9.1.0'" <<<"$v"; then
               exit 0
             fi
             sleep 5
