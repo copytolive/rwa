@@ -1,0 +1,13 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "title":"GOLD MT5 Certification Receipt",
+  "type":"object",
+  "required":["schema","request_id","dataset_sha256","expected_reference_trades","native_mt5_status","comparator_status","same_dataset_mt5_pass","broker_real_tick_status","forward_status","final_live_certified"],
+  "properties":{
+    "schema":{"const":"gold-mt5-receipt-v1"},
+    "dataset_sha256":{"const":"54c445fb8a3c6689dc39e1eb4b635c680518c70758166b7a9717ea1477e8df6a"},
+    "expected_reference_trades":{"const":2120},
+    "same_dataset_mt5_pass":{"type":"boolean"},
+    "final_live_certified":{"const":false}
+  }
+}
