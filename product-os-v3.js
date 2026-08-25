@@ -209,3 +209,55 @@ function boot(){normalizeNav();ensureResearch();ensureInstitutional();ensureLega
 window.RWASuperApp={version:'1.0.0',canonical:'https://copytolive.github.io/rwa/',navigate,apply,preview,state:()=>({...state})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
+
+/* RWA_SUPERAPP_GUARD_V2 — no-exit compatibility guard */
+;(()=>{
+'use strict';
+if(window.__RWA_SUPERAPP_GUARD_V2)return;
+window.__RWA_SUPERAPP_GUARD_V2=true;
+const ROOT='/rwa/';
+const nativeOpen=window.open?.bind(window);
+function app(){return window.RWASuperApp}
+function safe(u){try{return new URL(String(u||''),location.href)}catch{return null}}
+function routeOf(u){
+  if(!u||u.origin!==location.origin||!u.pathname.startsWith(ROOT))return'';
+  const rel=u.pathname.slice(ROOT.length),q=u.searchParams;
+  if(!rel)return (u.hash||'#markets').slice(1)||'markets';
+  if(rel.startsWith('trade'))return 'trade/'+(q.get('coin')||'BTC');
+  if(rel.startsWith('asset'))return 'asset/'+(q.get('symbol')||'BTC');
+  if(rel.startsWith('trader'))return 'trader/'+(q.get('wallet')||'');
+  if(rel.startsWith('backtest'))return 'backtest';
+  if(rel.startsWith('renko'))return 'renko';
+  return (u.hash||'#markets').slice(1)||'markets';
+}
+function keep(url,title='External resource'){
+  const u=safe(url);if(!u)return null;
+  const route=routeOf(u);
+  if(route){app()?.navigate?.(route);return null}
+  app()?.preview?.(u.href,title);return null;
+}
+window.open=function(url,target,features){
+  const u=safe(url);
+  if(u && /^https?:$/.test(u.protocol))return keep(u.href,'External resource');
+  return nativeOpen?nativeOpen(url,target,features):null;
+};
+function guardFrame(frame){
+  if(!frame||frame.dataset.rwaNoExitGuard==='1')return;
+  frame.dataset.rwaNoExitGuard='1';
+  frame.addEventListener('load',()=>{
+    try{
+      const w=frame.contentWindow,d=frame.contentDocument;if(!w||!d)return;
+      w.open=(url)=>{keep(url,'Workspace resource');return null};
+      d.addEventListener('click',e=>{
+        const a=e.target.closest?.('a[href]');if(!a)return;
+        const u=safe(a.href);if(!u)return;
+        if(u.origin!==location.origin){e.preventDefault();e.stopImmediatePropagation();keep(u.href,a.textContent?.trim()||'Workspace resource')}
+      },true);
+    }catch{}
+  });
+}
+function scan(){document.querySelectorAll('#rwaLegacyFrame').forEach(guardFrame)}
+scan();
+new MutationObserver(scan).observe(document.documentElement,{subtree:true,childList:true});
+addEventListener('rwa:product-os-ready',scan);
+})();
