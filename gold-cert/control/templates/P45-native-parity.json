@@ -1,0 +1,18 @@
+{
+  "request_id": "P45_NATIVE_20260826_001",
+  "action": "P45_SAME_DATASET_NATIVE_PARITY",
+  "strategy_id": "P45",
+  "dataset_sha256": "54c445fb8a3c6689dc39e1eb4b635c680518c70758166b7a9717ea1477e8df6a",
+  "expected_reference_trades": 2120,
+  "runner_labels": ["self-hosted","windows","x64","mt5","gold"],
+  "parameters": {
+    "riskATR": 4.0,
+    "RR": 2.0,
+    "lock_trigger_R": 0.30,
+    "lock_profit_R": 0.25,
+    "expiry_m15": 32,
+    "max_hold_m15": 192,
+    "entry_mode": "pending-only"
+  },
+  "final_live_certified": false
+}
