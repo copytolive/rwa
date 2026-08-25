@@ -1,14 +1,13 @@
-name: RENKO V11 Production Pages
+name: RENKO V12 Tick Native Production Pages
 
 on:
   push:
     branches: ["main"]
     paths:
       - "renko/index.html"
-      - "renko/renko-v11.js"
-      - "renko/renko-v11-worker.js"
-      - "renko/renko-v11.css"
-      - "renko/.v11"
+      - "renko/renko-v3.js"
+      - "renko/renko-v12.js"
+      - "renko/renko-v12-worker.js"
       - ".github/workflows/renko-v11-pages.yml"
       - ".github/workflows/renko-v11.yml"
   workflow_dispatch:
@@ -23,40 +22,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  verify-renko-v11:
+  verify-renko-v12:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Syntax and production contract
+      - name: Syntax and tick-native contract
         run: |
+          set -euo pipefail
           node --check renko/renko-v3.js
-          node --check renko/renko-v11.js
-          node --check renko/renko-v11-worker.js
+          node --check renko/renko-v12.js
+          node --check renko/renko-v12-worker.js
           test -s renko/index.html
-          test -s renko/renko-v11.css
-          grep -Fq 'RENKO V11' renko/index.html
-          grep -Fq 'renko-v11.js?v=111' renko/index.html
-          grep -Fq 'renko-v11-worker.js?v=111' renko/renko-v11.js
-          grep -Fq 'data-renko-method="atr"' renko/index.html
-          grep -Fq 'data-renko-method="traditional"' renko/index.html
-          grep -Fq 'data-renko-method="percentage"' renko/index.html
-          grep -Fq 'id="v11Wicks"' renko/index.html
-          grep -Fq 'id="v11Source"' renko/index.html
-          grep -Fq 'id="v11Interval"' renko/index.html
-      - name: Core Renko parity smoke
+          grep -Fq 'RENKO V12' renko/index.html
+          grep -Fq 'renko-v12.js?v=120' renko/index.html
+          grep -Fq 'renko-v12-worker.js?v=120' renko/renko-v12.js
+          ! grep -Fq 'id="v11Interval"' renko/index.html
+          grep -Fq 'if one trade crosses 5 boxes, all 5 bricks lock immediately' renko/index.html
+          grep -Fq "formation:'tick-by-tick'" renko/renko-v12.js
+          grep -Fq "lockRule:'every-trade-threshold'" renko/renko-v12.js
+      - name: Core immediate-lock smoke
         run: |
           node - <<'NODE'
-          const fs=require('fs'),vm=require('vm');const code=fs.readFileSync('renko/renko-v11-worker.js','utf8');
-          const s={console,postMessage(){}};s.self=s;s.globalThis=s;vm.createContext(s);vm.runInContext(code,s);
-          const E=s.RenkoV11Engine,bars=[100,110,120,111,100].map((c,i)=>[i*60000,c,c,c,c,0,i*60000+59999]);
-          const r=E.buildRenko({method:'traditional',source:'close',traditionalBox:10,tickSize:1,wicks:true,bars});
-          if(r.bricks.length!==3||!r.bricks[2].isReversal||r.bricks[2].open!==110||r.bricks[2].close!==100)throw Error('Renko 2-box reversal smoke failed');
-          console.log('RENKO V11 production smoke PASS');
+          const fs=require('fs'),vm=require('vm');const code=fs.readFileSync('renko/renko-v12-worker.js','utf8');
+          const s={console,postMessage(){}};s.self=s;s.globalThis=s;vm.createContext(s);vm.runInContext(code,s);const E=s.RenkoV12Engine;
+          const ticks=[100,110,120,170].map((price,i)=>({id:i+1,price,time:i+1}));
+          const r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:true,ticks});
+          if(r.bricks.length!==7||r.bricks.at(-1).close!==170)throw Error('tick immediate-lock smoke failed');
+          console.log('RENKO V12 immediate-lock production smoke PASS');
           NODE
 
   deploy:
-    needs: verify-renko-v11
+    needs: verify-renko-v12
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
