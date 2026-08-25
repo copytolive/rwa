@@ -1,0 +1,58 @@
+/* RENKO research workspace: full-width embedded terminal.
+   Keeps the canonical /rwa/#research/renko/:symbol route while removing the
+   nested dashboard/card layout that squeezed the trading terminal. */
+html[data-rwa-route^="research/renko"] .rwa-super-workspace{
+  min-height:calc(100vh - 92px);
+  padding:8px 10px 40px;
+  background:#07090d;
+}
+html[data-rwa-route^="research/renko"] .rwa-super-workspace-head{
+  display:none!important;
+}
+html[data-rwa-route^="research/renko"] .rwa-super-body{
+  width:100%;
+  max-width:none;
+  margin:0;
+}
+html[data-rwa-route^="research/renko"] .rwa-research-tabs{
+  margin:0 0 7px;
+  min-height:32px;
+}
+html[data-rwa-route^="research/renko"] .rwa-research-panel{
+  width:100%;
+  margin:0;
+}
+html[data-rwa-route^="research/renko"] .rwa-tool-lab-card{
+  width:100%;
+  box-sizing:border-box;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+html[data-rwa-route^="research/renko"] .rwa-tool-lab-card>.rwa-super-card-head{
+  display:none!important;
+}
+html[data-rwa-route^="research/renko"] .rwa-tool-lab{
+  display:block!important;
+  width:100%;
+}
+html[data-rwa-route^="research/renko"] .rwa-tool-lab>div:first-child{
+  display:none!important;
+}
+html[data-rwa-route^="research/renko"] .rwa-research-legacy-frame{
+  width:100%;
+  height:calc(100vh - 145px);
+  min-height:720px;
+  box-sizing:border-box;
+  border:1px solid #202936;
+  border-radius:8px;
+  background:#070b10;
+  display:block;
+}
+@media (max-width:900px){
+  html[data-rwa-route^="research/renko"] .rwa-super-workspace{padding:6px 6px 58px}
+  html[data-rwa-route^="research/renko"] .rwa-research-tabs{overflow-x:auto;white-space:nowrap}
+  html[data-rwa-route^="research/renko"] .rwa-research-legacy-frame{height:calc(100vh - 132px);min-height:620px;border-radius:6px}
+}
