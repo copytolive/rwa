@@ -1,0 +1,78 @@
+name: RENKO V10 Gate
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "renko/**"
+      - ".github/workflows/renko-v10.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: JavaScript syntax
+        run: |
+          node --check renko/renko-v3.js
+          node --check renko/renko-v10.js
+          node --check renko/renko-v10-worker.js
+
+      - name: V10 file and DOM contract
+        run: |
+          test -s renko/index.html
+          test -s renko/renko-v10.js
+          test -s renko/renko-v10-worker.js
+          test -s renko/renko-v10.css
+          grep -Fq 'data-renko-mode="auto"' renko/index.html
+          grep -Fq 'data-renko-mode="traditional"' renko/index.html
+          grep -Fq 'data-renko-mode="atr"' renko/index.html
+          grep -Fq 'data-renko-mode="percentage"' renko/index.html
+          grep -Fq 'renko-v10.js?v=100' renko/index.html
+          grep -Fq 'renko-v10-worker.js?v=100' renko/renko-v10.js
+          grep -Fq "signalRule:'confirmed-renko-only'" renko/renko-v10.js
+          grep -Fq "executionPrice:'real-market-price'" renko/renko-v10.js
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from collections import Counter
+          from pathlib import Path
+          class P(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.ids=[]
+              def handle_starttag(self, tag, attrs):
+                  d=dict(attrs)
+                  if d.get('id'): self.ids.append(d['id'])
+          p=P(); p.feed(Path('renko/index.html').read_text())
+          dup=[k for k,v in Counter(p.ids).items() if v>1]
+          assert not dup, f'duplicate DOM ids: {dup}'
+          required={'brickSize','v10AtrLength','v10AtrFactor','v10AutoFactor','v10AutoLock','v10Percent','v10Confirm','v10Projection','signalAction','signalMarket','projectionState','chartWrap'}
+          missing=sorted(required-set(p.ids))
+          assert not missing, f'missing V10 DOM ids: {missing}'
+          print('RENKO V10 DOM contract PASS')
+          PY
+
+      - name: Four-mode worker smoke
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),vm=require('vm');
+          const code=fs.readFileSync('renko/renko-v10-worker.js','utf8');
+          function run(mode){
+            let out; const sandbox={self:{postMessage:m=>out=m}};
+            vm.createContext(sandbox); vm.runInContext(code,sandbox);
+            const bars=[]; let p=100; const base=Date.now()-240*60000;
+            for(let i=0;i<220;i++){
+              const o=p; p+=(i%9<5?1.2:-1.0); const h=Math.max(o,p)+.4,l=Math.min(o,p)-.4;
+              bars.push([base+i*60000,o,h,l,p,0,base+(i+1)*60000-1]);
+            }
+            sandbox.self.onmessage({data:{type:'build',id:1,generation:1,mode,box:1,atrLength:14,atrFactor:1,percent:.01,bars}});
+            if(!out || !Array.isArray(out.bricks) || out.bricks.length<5) throw new Error(`${mode} produced insufficient bricks`);
+            console.log(mode, out.bricks.length, out.atr);
+          }
+          ['auto','traditional','atr','percentage'].forEach(run);
+          NODE
