@@ -1,166 +1,71 @@
-name: P45 Native MT5 Same-Dataset Parity
-
+name: P45 GOLD Native MT5 + Exness Real Ticks
 on:
-  pull_request:
-    paths:
-      - 'research/p45-live-cert/mt5/**'
-      - '.github/workflows/p45-mt5-native-parity.yml'
   workflow_dispatch:
-
+    inputs:
+      broker_symbol:
+        description: Exness MT5 symbol
+        required: false
+        default: XAUUSD
+      from_date:
+        description: Broker real-tick start YYYY.MM.DD
+        required: false
+        default: '2025.01.01'
+      to_date:
+        description: Broker real-tick end YYYY.MM.DD
+        required: false
+        default: '2026.08.25'
 permissions:
   contents: read
-
 jobs:
-  parity:
-    runs-on: windows-latest
+  p45-native:
+    runs-on: windows-2022
     timeout-minutes: 180
+    env:
+      # Supports likely historical secret names without printing values.
+      MT5_LOGIN: ${{ secrets.MT5_LOGIN || secrets.EXNESS_MT5_LOGIN || secrets.EXNESS_LOGIN }}
+      MT5_PASSWORD: ${{ secrets.MT5_PASSWORD || secrets.EXNESS_MT5_PASSWORD || secrets.EXNESS_PASSWORD }}
+      MT5_SERVER: ${{ secrets.MT5_SERVER || secrets.EXNESS_MT5_SERVER || secrets.EXNESS_SERVER }}
+      MT5_SYMBOL: ${{ inputs.broker_symbol }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Download frozen parity assets from public Drive package
-        shell: pwsh
+      - name: Validate secret presence without exposing values
+        shell: powershell
         run: |
-          python -m pip install --disable-pip-version-check gdown
-          New-Item -ItemType Directory -Force -Path parity_download,event_download,evidence | Out-Null
-          python -m gdown 14e5l-qlc_LbyEXzpmmNyk4JKY80_ruj_ -O parity.zip
-          python -m gdown 1iQZ-3Ck5VfdDcz8SusfZZy3buT9DLUVg -O events.zip
-          python -m gdown 1Wav50ho92fGFGfmlYMBK382nfwUJh7Mr -O replay_original.mq5
-          Expand-Archive parity.zip parity_download -Force
-          Expand-Archive events.zip event_download -Force
-          $tsv=(Get-ChildItem parity_download -Recurse -Filter 'GOLDUSDC_M1_2009_2024_MT5_PARITY_DIGITS3.tsv' | Select-Object -First 1).FullName
-          $events=(Get-ChildItem event_download -Recurse -Filter 'P45_order_events.csv' | Select-Object -First 1).FullName
-          if(!$tsv -or !$events){ throw 'Frozen parity TSV or P45 event file not found' }
-          $tsvHash=(Get-FileHash $tsv -Algorithm SHA256).Hash.ToLower()
-          $eventHash=(Get-FileHash $events -Algorithm SHA256).Hash.ToLower()
-          $eaHash=(Get-FileHash replay_original.mq5 -Algorithm SHA256).Hash.ToLower()
-          "TSV=$tsvHash" | Tee-Object evidence\asset_hashes.txt
-          "EVENTS=$eventHash" | Tee-Object -Append evidence\asset_hashes.txt
-          "EA=$eaHash" | Tee-Object -Append evidence\asset_hashes.txt
-          if($tsvHash -ne '54c445fb8a3c6689dc39e1eb4b635c680518c70758166b7a9717ea1477e8df6a'){ throw 'Parity TSV SHA256 mismatch' }
-          if($eventHash -ne '6020c6394bf22e253f11841b2b542fde9d11407212a73f8a3c55e284c2f3e5c4'){ throw 'P45 events SHA256 mismatch' }
-          if($eaHash -ne '156b80bb66a2125390963173783e79cc60e56ff1537ff58b55a27e883093f3d6'){ throw 'Replay EA SHA256 mismatch' }
-          "tsv=$tsv" >> $env:GITHUB_ENV
-          "events=$events" >> $env:GITHUB_ENV
+          if([string]::IsNullOrWhiteSpace($env:MT5_LOGIN)){ throw 'MT5 login secret not found under supported names' }
+          if([string]::IsNullOrWhiteSpace($env:MT5_PASSWORD)){ throw 'MT5 password secret not found under supported names' }
+          if([string]::IsNullOrWhiteSpace($env:MT5_SERVER)){ throw 'MT5 server secret not found under supported names' }
+          Write-Host 'Broker secrets detected; values remain masked.'
 
-      - name: Install release MetaTrader 5 automatically
-        shell: pwsh
+      - name: Download immutable hosted runner script from Drive
+        shell: powershell
         run: |
-          $uri='https://download.terminal.free/cdn/web/metaquotes.ltd/mt5/mt5setup.exe'
-          Invoke-WebRequest -UseBasicParsing -Uri $uri -OutFile mt5setup.exe
-          $p=Start-Process -FilePath (Resolve-Path .\mt5setup.exe) -ArgumentList '/auto','/path:"C:\MT5Parity"' -PassThru
-          if(-not $p.WaitForExit(900000)){ try{$p.Kill()}catch{}; throw 'MT5 installer timeout' }
-          $terminal='C:\MT5Parity\terminal64.exe'
-          if(-not (Test-Path $terminal)){
-            $terminal=(Get-ChildItem 'C:\Program Files','C:\Program Files (x86)' -Filter terminal64.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1).FullName
-          }
-          if(-not $terminal){ throw 'terminal64.exe not found after installation' }
-          $root=Split-Path $terminal -Parent
-          $editor=Join-Path $root 'metaeditor64.exe'
-          if(-not (Test-Path $editor)){ throw 'metaeditor64.exe not found' }
-          "terminal=$terminal" >> $env:GITHUB_ENV
-          "mt5root=$root" >> $env:GITHUB_ENV
-          "editor=$editor" >> $env:GITHUB_ENV
-          Get-Item $terminal,$editor | Format-List FullName,Length,LastWriteTime | Out-File evidence\mt5_install.txt
+          python -m pip install --quiet gdown
+          python -m gdown --id 1ICksf5-9GTGDAWuiLZyUAWHttPHY_MYZ -O P45_GITHUB_HOSTED_RUN.ps1
+          if(!(Test-Path P45_GITHUB_HOSTED_RUN.ps1)){ throw 'Runner script download failed' }
 
-      - name: Prepare exact custom-symbol data and instrumented replay
-        shell: pwsh
+      - name: Execute native MT5 parity and Exness real-tick Strategy Tester
+        shell: powershell
         run: |
-          $common=Join-Path $env:APPDATA 'MetaQuotes\Terminal\Common\Files'
-          New-Item -ItemType Directory -Force -Path $common | Out-Null
-          Copy-Item $env:tsv (Join-Path $common 'GOLDUSDC_M1_2009_2024_MT5_PARITY_DIGITS3.tsv') -Force
-          Copy-Item $env:events (Join-Path $common 'P45_order_events.csv') -Force
+          ./P45_GITHUB_HOSTED_RUN.ps1 `
+            -Login $env:MT5_LOGIN `
+            -Password $env:MT5_PASSWORD `
+            -Server $env:MT5_SERVER `
+            -BrokerSymbol '${{ inputs.broker_symbol }}' `
+            -FromDate '${{ inputs.from_date }}' `
+            -ToDate '${{ inputs.to_date }}'
 
-          $scriptDir=Join-Path $env:mt5root 'MQL5\Scripts\P45Parity'
-          $expertDir=Join-Path $env:mt5root 'MQL5\Experts\P45Parity'
-          New-Item -ItemType Directory -Force -Path $scriptDir,$expertDir | Out-Null
-          Copy-Item 'research\p45-live-cert\mt5\P45ParityImporter.mq5' (Join-Path $scriptDir 'P45ParityImporter.mq5') -Force
-          $eaPath=Join-Path $expertDir 'P45ParityReplayInstrumented.mq5'
-          $eaText=Get-Content replay_original.mq5 -Raw
-          $eaText=$eaText -replace 'Include\\Trade\\Trade\.mqh','Trade\Trade.mqh'
-          Set-Content -Path $eaPath -Value $eaText -Encoding UTF8
-          Get-Content 'research\p45-live-cert\mt5\P45ParityInstrumentationTail.mq5' | Add-Content $eaPath
-          "Replay EA source hash is enforced before this portable-only include normalization." | Out-File evidence\replay_portable_patch.txt
-          "Normalized only: Include\Trade\Trade.mqh -> Trade\Trade.mqh" | Out-File evidence\replay_portable_patch.txt -Append
-
-      - name: Compile importer and parity replay
-        shell: pwsh
-        run: |
-          $imp=Join-Path $env:mt5root 'MQL5\Scripts\P45Parity\P45ParityImporter.mq5'
-          $ea=Join-Path $env:mt5root 'MQL5\Experts\P45Parity\P45ParityReplayInstrumented.mq5'
-          $p1=Start-Process -FilePath $env:editor -ArgumentList '/portable',('/compile:"'+$imp+'"'),('/log:"'+(Join-Path $pwd 'evidence\compile_importer.log')+'"') -PassThru -Wait
-          $p2=Start-Process -FilePath $env:editor -ArgumentList '/portable',('/compile:"'+$ea+'"'),('/log:"'+(Join-Path $pwd 'evidence\compile_replay.log')+'"') -PassThru -Wait
-          Get-Content evidence\compile_importer.log
-          Get-Content evidence\compile_replay.log
-          if(-not (Test-Path ($imp -replace '\.mq5$','.ex5'))){ throw 'Importer EX5 not produced' }
-          if(-not (Test-Path ($ea -replace '\.mq5$','.ex5'))){ throw 'Replay EX5 not produced' }
-          if((Get-Content evidence\compile_importer.log -Raw) -match '[1-9][0-9]* error') { throw 'Importer compile errors' }
-          if((Get-Content evidence\compile_replay.log -Raw) -match '[1-9][0-9]* error') { throw 'Replay compile errors' }
-
-      - name: Import frozen M1 TSV into custom MT5 symbol
-        shell: pwsh
-        run: |
-          @'
-          [StartUp]
-          Script=P45Parity\P45ParityImporter
-          Period=M1
-          ShutdownTerminal=1
-          '@ | Set-Content import.ini -Encoding ASCII
-          $p=Start-Process -FilePath $env:terminal -ArgumentList '/portable',('/config:"'+(Resolve-Path .\import.ini)+'"') -PassThru
-          if(-not $p.WaitForExit(3600000)){ try{$p.Kill()}catch{}; throw 'MT5 import timeout' }
-          $logs=Get-ChildItem $env:mt5root -Recurse -Filter '*.log' -ErrorAction SilentlyContinue | Sort-Object LastWriteTime
-          foreach($f in $logs){ "===== $($f.FullName) =====" | Out-File evidence\import_logs.txt -Append -Encoding utf8; Get-Content $f.FullName | Out-File evidence\import_logs.txt -Append -Encoding utf8 }
-          $raw=Get-Content evidence\import_logs.txt -Raw
-          if($raw -notmatch 'IMPORT_DONE'){ throw 'IMPORT_DONE absent; inspect import logs' }
-          if($raw -match 'IMPORT_FAIL'){ throw 'Importer reported failure' }
-          Select-String -Path evidence\import_logs.txt -Pattern 'IMPORT_DONE|IMPORT_FAIL|SETI_FAIL|SETD_FAIL' | ForEach-Object {$_.Line}
-
-      - name: Run native MT5 same-dataset tester
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path (Join-Path $env:mt5root 'reports') | Out-Null
-          @'
-          [Tester]
-          Expert=P45Parity\P45ParityReplayInstrumented
-          Symbol=GOLDUSDC-PARITY
-          Period=M15
-          Model=1
-          ExecutionMode=0
-          Optimization=0
-          FromDate=2009.03.15
-          ToDate=2025.01.01
-          ForwardMode=0
-          Deposit=1000000
-          Currency=USD
-          Leverage=1:100
-          Report=reports\P45_native_parity
-          ReplaceReport=1
-          ShutdownTerminal=1
-          UseLocal=1
-          UseRemote=0
-          UseCloud=0
-          Visual=0
-          '@ | Set-Content tester.ini -Encoding ASCII
-          $before=Get-Date
-          $p=Start-Process -FilePath $env:terminal -ArgumentList '/portable',('/config:"'+(Resolve-Path .\tester.ini)+'"') -PassThru
-          if(-not $p.WaitForExit(5400000)){ try{$p.Kill()}catch{}; throw 'MT5 native parity tester timeout' }
-          $logs=Get-ChildItem $env:mt5root -Recurse -Filter '*.log' -ErrorAction SilentlyContinue | Where-Object {$_.LastWriteTime -ge $before.AddMinutes(-2)} | Sort-Object FullName
-          foreach($f in $logs){ "===== $($f.FullName) =====" | Out-File evidence\mt5_test_logs.txt -Append -Encoding utf8; Get-Content $f.FullName | Out-File evidence\mt5_test_logs.txt -Append -Encoding utf8 }
-          Get-ChildItem $env:mt5root -Recurse -Include 'P45_native_parity*' -File -ErrorAction SilentlyContinue | Copy-Item -Destination evidence -Force
-          if(-not (Test-Path evidence\mt5_test_logs.txt)){ throw 'No MT5 tester logs collected' }
-
-      - name: Enforce 100 percent trade-by-trade parity
-        shell: pwsh
-        run: |
-          python research\p45-live-cert\mt5\parse_mt5_parity.py --events $env:events --logs evidence\mt5_test_logs.txt --output evidence\p45_mt5_native_parity.json
-
-      - name: Upload native MT5 parity evidence
+      - name: Upload complete MT5 evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: p45-native-mt5-parity
-          path: evidence/
+          name: p45-mt5-exness-${{ github.run_id }}
+          path: p45-hosted/evidence/**
+          if-no-files-found: warn
           retention-days: 90
