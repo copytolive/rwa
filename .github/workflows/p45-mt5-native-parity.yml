@@ -1,5 +1,9 @@
 name: P45 GOLD Native MT5 + Exness Real Ticks
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/p45-mt5-native-parity.yml'
   workflow_dispatch:
     inputs:
       broker_symbol:
@@ -21,11 +25,10 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 180
     env:
-      # Supports likely historical secret names without printing values.
       MT5_LOGIN: ${{ secrets.MT5_LOGIN || secrets.EXNESS_MT5_LOGIN || secrets.EXNESS_LOGIN }}
       MT5_PASSWORD: ${{ secrets.MT5_PASSWORD || secrets.EXNESS_MT5_PASSWORD || secrets.EXNESS_PASSWORD }}
       MT5_SERVER: ${{ secrets.MT5_SERVER || secrets.EXNESS_MT5_SERVER || secrets.EXNESS_SERVER }}
-      MT5_SYMBOL: ${{ inputs.broker_symbol }}
+      MT5_SYMBOL: ${{ inputs.broker_symbol || 'XAUUSD' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -57,9 +60,9 @@ jobs:
             -Login $env:MT5_LOGIN `
             -Password $env:MT5_PASSWORD `
             -Server $env:MT5_SERVER `
-            -BrokerSymbol '${{ inputs.broker_symbol }}' `
-            -FromDate '${{ inputs.from_date }}' `
-            -ToDate '${{ inputs.to_date }}'
+            -BrokerSymbol '${{ inputs.broker_symbol || 'XAUUSD' }}' `
+            -FromDate '${{ inputs.from_date || '2025.01.01' }}' `
+            -ToDate '${{ inputs.to_date || '2026.08.25' }}'
 
       - name: Upload complete MT5 evidence
         if: always()
