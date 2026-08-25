@@ -49,3 +49,14 @@
 }
 
 @media(max-width:720px){.v11-methods{grid-template-columns:1fr}.v11-summary{grid-template-columns:1fr 1fr}.v11-core-field{min-width:92px}}
+
+/* V12 operator layout: remove the entire upper chrome shown in the operator screenshot.
+   Keep the DOM mounted because the tick engine still updates these status nodes internally. */
+.topbar,.instrument-bar,.easybar{display:none!important}
+.workspace{min-height:100vh!important}
+.markets{top:0!important;max-height:100vh!important}
+.terminal{padding-top:0!important}
+@media(max-width:760px){
+  .workspace{min-height:100dvh!important}
+  .markets{inset:0!important;max-height:none!important}
+}
