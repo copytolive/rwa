@@ -1,0 +1,29 @@
+#!/usr/bin/env node
+const CANONICAL={
+ revenue:['Revenue','Revenues','SalesRevenueNet','RevenueFromContractWithCustomerExcludingAssessedTax','ifrs-full:Revenue'],
+ gross_profit:['GrossProfit','ifrs-full:GrossProfit'],
+ operating_income:['OperatingIncomeLoss','OperatingProfitLoss','ifrs-full:ProfitLossFromOperatingActivities'],
+ pretax_income:['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest','IncomeBeforeTaxExpenseBenefit','ifrs-full:ProfitLossBeforeTax'],
+ net_income:['NetIncomeLoss','ProfitLoss','ifrs-full:ProfitLoss'],
+ eps_basic:['EarningsPerShareBasic','ifrs-full:BasicEarningsLossPerShare'],
+ eps_diluted:['EarningsPerShareDiluted','ifrs-full:DilutedEarningsLossPerShare'],
+ cash:['CashAndCashEquivalentsAtCarryingValue','CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents','ifrs-full:CashAndCashEquivalents'],
+ assets:['Assets','ifrs-full:Assets'],
+ liabilities:['Liabilities','ifrs-full:Liabilities'],
+ equity:['StockholdersEquity','StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest','ifrs-full:Equity'],
+ shares_outstanding:['EntityCommonStockSharesOutstanding','CommonStockSharesOutstanding','ifrs-full:NumberOfSharesOutstanding'],
+ operating_cash_flow:['NetCashProvidedByUsedInOperatingActivities','ifrs-full:CashFlowsFromUsedInOperatingActivities'],
+ capex:['PaymentsToAcquirePropertyPlantAndEquipment','PaymentsToAcquireProductiveAssets','ifrs-full:PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities'],
+ dividends_paid:['PaymentsOfDividends','PaymentsOfDividendsCommonStock','ifrs-full:DividendsPaidClassifiedAsFinancingActivities']
+};
+const DURATION_METRICS=new Set(['revenue','gross_profit','operating_income','pretax_income','net_income','eps_basic','eps_diluted','operating_cash_flow','capex','dividends_paid']);
+const INSTANT_METRICS=new Set(['cash','assets','liabilities','equity','shares_outstanding']);
+const num=v=>{const n=Number(v);return Number.isFinite(n)?n:null};
+function conceptName(raw){const s=String(raw||'');return s.includes(':')?s.split(':').pop():s}
+export function canonicalMetric(concept){const raw=String(concept||'');const plain=conceptName(raw);for(const [k,aliases] of Object.entries(CANONICAL))if(aliases.some(a=>a===raw||conceptName(a)===plain))return k;return null}
+export function normalizeFact(fact,meta={}){if(!fact||typeof fact!=='object')return null;const metric=canonicalMetric(fact.concept||fact.tag||fact.name);if(!metric)return null;const value=num(fact.value??fact.val);if(value==null)return null;const source_url=fact.source_url||meta.source_url||'';const source_label=fact.source_label||meta.source_label||'REGULATOR FILED';if(!source_url||!/^https:\/\//i.test(source_url))throw new Error(`metric ${metric}: source_url required`);return{metric,value,currency:fact.currency||fact.unit||meta.currency||null,unit:fact.unit||null,period_start:fact.start||fact.period_start||null,period_end:fact.end||fact.period_end||null,instant:INSTANT_METRICS.has(metric),duration:DURATION_METRICS.has(metric),form:fact.form||meta.form||null,filed:fact.filed||meta.filed||null,accession:fact.accession||fact.accn||meta.accession||null,concept:String(fact.concept||fact.tag||fact.name),taxonomy:fact.taxonomy||meta.taxonomy||null,source_label,source_url,audited:fact.audited??meta.audited??null};}
+export function latestFacts(facts){const out={};for(const f of facts||[]){const n=normalizeFact(f);if(!n)continue;const old=out[n.metric];const t=Date.parse(n.filed||n.period_end||0),ot=old?Date.parse(old.filed||old.period_end||0):-Infinity;if(!old||t>=ot)out[n.metric]=n}return out}
+export function historyByMetric(facts,{limit=48}={}){const h={};for(const f of facts||[]){const n=normalizeFact(f);if(!n)continue;(h[n.metric]??=[]).push(n)}for(const k of Object.keys(h)){const seen=new Set();h[k]=h[k].sort((a,b)=>Date.parse(a.period_end||a.filed||0)-Date.parse(b.period_end||b.filed||0)).filter(x=>{const key=[x.period_start,x.period_end,x.form,x.value].join('|');if(seen.has(key))return false;seen.add(key);return true}).slice(-limit)}return h}
+export function calculatedMetrics(metrics,market={}){const get=k=>num(metrics?.[k]?.value);const result={};const ni=get('net_income'),eq=get('equity'),assets=get('assets'),revenue=get('revenue'),eps=get('eps_diluted')??get('eps_basic'),price=num(market.price),shares=get('shares_outstanding');if(ni!=null&&eq)result.roe={value:ni/eq*100,kind:'percent',source_label:'RWA CALCULATED',formula:'net_income / equity',inputs:['net_income','equity']};if(ni!=null&&assets)result.roa={value:ni/assets*100,kind:'percent',source_label:'RWA CALCULATED',formula:'net_income / assets',inputs:['net_income','assets']};if(ni!=null&&revenue)result.net_margin={value:ni/revenue*100,kind:'percent',source_label:'RWA CALCULATED',formula:'net_income / revenue',inputs:['net_income','revenue']};if(price!=null&&eps)result.pe={value:price/eps,kind:'ratio',source_label:'RWA CALCULATED',formula:'market_price / EPS',inputs:['market.price',eps===get('eps_diluted')?'eps_diluted':'eps_basic']};if(price!=null&&shares)result.market_cap={value:price*shares,kind:'money',source_label:'RWA CALCULATED',formula:'market_price * shares_outstanding',inputs:['market.price','shares_outstanding']};return result}
+export const NORMALIZER_CONTRACT={version:1,canonical_metrics:Object.keys(CANONICAL),preserve_original_concept:true,provenance_required:true};
+if(import.meta.url===`file://${process.argv[1]}`){const f={concept:'us-gaap:Assets',value:100,unit:'USD',end:'2026-06-30',form:'10-Q',filed:'2026-08-01',source_url:'https://www.sec.gov/example',source_label:'REGULATOR FILED'};const n=normalizeFact(f);if(!n||n.metric!=='assets'||n.value!==100||n.concept!=='us-gaap:Assets')throw new Error('normalizer self-test failed');console.log('GLOBAL FUNDAMENTAL NORMALIZER PASS')}

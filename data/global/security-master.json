@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "generated_at": "2026-08-25T00:00:00Z",
+  "status": "SEED_ONLY_UNTIL_OFFICIAL_SYNC",
+  "stock_timeframe_minutes": 10,
+  "target_active_listed_companies": "40000-50000+",
+  "rule": "Identity records may be searchable before price/fundamental ingestion; no numeric market or fundamental value may be fabricated.",
+  "securities": [
+    {"id":"US-XNAS-AAPL","asset_class":"stock","ticker":"AAPL","name":"Apple Inc.","mic":"XNAS","exchange":"NASDAQ","country":"US","currency":"USD","tv_symbol":"NASDAQ:AAPL","market_data_status":"SOURCE GATED","fundamental_source":"SEC"},
+    {"id":"US-XNAS-MSFT","asset_class":"stock","ticker":"MSFT","name":"Microsoft Corporation","mic":"XNAS","exchange":"NASDAQ","country":"US","currency":"USD","tv_symbol":"NASDAQ:MSFT","market_data_status":"SOURCE GATED","fundamental_source":"SEC"},
+    {"id":"US-XNAS-NVDA","asset_class":"stock","ticker":"NVDA","name":"NVIDIA Corporation","mic":"XNAS","exchange":"NASDAQ","country":"US","currency":"USD","tv_symbol":"NASDAQ:NVDA","market_data_status":"SOURCE GATED","fundamental_source":"SEC"},
+    {"id":"US-XNAS-AMZN","asset_class":"stock","ticker":"AMZN","name":"Amazon.com, Inc.","mic":"XNAS","exchange":"NASDAQ","country":"US","currency":"USD","tv_symbol":"NASDAQ:AMZN","market_data_status":"SOURCE GATED","fundamental_source":"SEC"},
+    {"id":"US-XNAS-GOOGL","asset_class":"stock","ticker":"GOOGL","name":"Alphabet Inc.","mic":"XNAS","exchange":"NASDAQ","country":"US","currency":"USD","tv_symbol":"NASDAQ:GOOGL","market_data_status":"SOURCE GATED","fundamental_source":"SEC"},
+    {"id":"US-XNAS-META","asset_class":"stock","ticker":"META","name":"Meta Platforms, Inc.","mic":"XNAS","exchange":"NASDAQ","country":"US","currency":"USD","tv_symbol":"NASDAQ:META","market_data_status":"SOURCE GATED","fundamental_source":"SEC"},
+    {"id":"US-XNAS-TSLA","asset_class":"stock","ticker":"TSLA","name":"Tesla, Inc.","mic":"XNAS","exchange":"NASDAQ","country":"US","currency":"USD","tv_symbol":"NASDAQ:TSLA","market_data_status":"SOURCE GATED","fundamental_source":"SEC"},
+    {"id":"US-XNYS-JPM","asset_class":"stock","ticker":"JPM","name":"JPMorgan Chase & Co.","mic":"XNYS","exchange":"NYSE","country":"US","currency":"USD","tv_symbol":"NYSE:JPM","market_data_status":"SOURCE GATED","fundamental_source":"SEC"},
+    {"id":"US-XNYS-V","asset_class":"stock","ticker":"V","name":"Visa Inc.","mic":"XNYS","exchange":"NYSE","country":"US","currency":"USD","tv_symbol":"NYSE:V","market_data_status":"SOURCE GATED","fundamental_source":"SEC"},
+    {"id":"US-XNYS-XOM","asset_class":"stock","ticker":"XOM","name":"Exxon Mobil Corporation","mic":"XNYS","exchange":"NYSE","country":"US","currency":"USD","tv_symbol":"NYSE:XOM","market_data_status":"SOURCE GATED","fundamental_source":"SEC"},
+
+    {"id":"ID-XIDX-BBCA","asset_class":"stock","ticker":"BBCA","name":"PT Bank Central Asia Tbk","mic":"XIDX","exchange":"IDX","country":"ID","currency":"IDR","tv_symbol":"IDX:BBCA","market_data_status":"SOURCE GATED","fundamental_source":"OJK/IDX"},
+    {"id":"ID-XIDX-BBRI","asset_class":"stock","ticker":"BBRI","name":"PT Bank Rakyat Indonesia (Persero) Tbk","mic":"XIDX","exchange":"IDX","country":"ID","currency":"IDR","tv_symbol":"IDX:BBRI","market_data_status":"SOURCE GATED","fundamental_source":"OJK/IDX"},
+    {"id":"ID-XIDX-BMRI","asset_class":"stock","ticker":"BMRI","name":"PT Bank Mandiri (Persero) Tbk","mic":"XIDX","exchange":"IDX","country":"ID","currency":"IDR","tv_symbol":"IDX:BMRI","market_data_status":"SOURCE GATED","fundamental_source":"OJK/IDX"},
+    {"id":"ID-XIDX-TLKM","asset_class":"stock","ticker":"TLKM","name":"PT Telkom Indonesia (Persero) Tbk","mic":"XIDX","exchange":"IDX","country":"ID","currency":"IDR","tv_symbol":"IDX:TLKM","market_data_status":"SOURCE GATED","fundamental_source":"OJK/IDX"},
+
+    {"id":"JP-XTKS-7203","asset_class":"stock","ticker":"7203","name":"Toyota Motor Corporation","mic":"XTKS","exchange":"Tokyo Stock Exchange","country":"JP","currency":"JPY","tv_symbol":"TSE:7203","market_data_status":"SOURCE GATED","fundamental_source":"EDINET"},
+    {"id":"JP-XTKS-6758","asset_class":"stock","ticker":"6758","name":"Sony Group Corporation","mic":"XTKS","exchange":"Tokyo Stock Exchange","country":"JP","currency":"JPY","tv_symbol":"TSE:6758","market_data_status":"SOURCE GATED","fundamental_source":"EDINET"},
+    {"id":"JP-XTKS-9984","asset_class":"stock","ticker":"9984","name":"SoftBank Group Corp.","mic":"XTKS","exchange":"Tokyo Stock Exchange","country":"JP","currency":"JPY","tv_symbol":"TSE:9984","market_data_status":"SOURCE GATED","fundamental_source":"EDINET"},
+
+    {"id":"KR-XKRX-005930","asset_class":"stock","ticker":"005930","name":"Samsung Electronics Co., Ltd.","mic":"XKRX","exchange":"Korea Exchange","country":"KR","currency":"KRW","tv_symbol":"KRX:005930","market_data_status":"SOURCE GATED","fundamental_source":"DART"},
+    {"id":"KR-XKRX-000660","asset_class":"stock","ticker":"000660","name":"SK hynix Inc.","mic":"XKRX","exchange":"Korea Exchange","country":"KR","currency":"KRW","tv_symbol":"KRX:000660","market_data_status":"SOURCE GATED","fundamental_source":"DART"},
+
+    {"id":"IN-XNSE-RELIANCE","asset_class":"stock","ticker":"RELIANCE","name":"Reliance Industries Limited","mic":"XNSE","exchange":"NSE India","country":"IN","currency":"INR","tv_symbol":"NSE:RELIANCE","market_data_status":"SOURCE GATED","fundamental_source":"NSE/BSE"},
+    {"id":"IN-XNSE-TCS","asset_class":"stock","ticker":"TCS","name":"Tata Consultancy Services Limited","mic":"XNSE","exchange":"NSE India","country":"IN","currency":"INR","tv_symbol":"NSE:TCS","market_data_status":"SOURCE GATED","fundamental_source":"NSE/BSE"},
+    {"id":"IN-XNSE-HDFCBANK","asset_class":"stock","ticker":"HDFCBANK","name":"HDFC Bank Limited","mic":"XNSE","exchange":"NSE India","country":"IN","currency":"INR","tv_symbol":"NSE:HDFCBANK","market_data_status":"SOURCE GATED","fundamental_source":"NSE/BSE"},
+
+    {"id":"GB-XLON-HSBA","asset_class":"stock","ticker":"HSBA","name":"HSBC Holdings plc","mic":"XLON","exchange":"London Stock Exchange","country":"GB","currency":"GBP","tv_symbol":"LSE:HSBA","market_data_status":"SOURCE GATED","fundamental_source":"Companies House/FCA"},
+    {"id":"GB-XLON-SHEL","asset_class":"stock","ticker":"SHEL","name":"Shell plc","mic":"XLON","exchange":"London Stock Exchange","country":"GB","currency":"GBP","tv_symbol":"LSE:SHEL","market_data_status":"SOURCE GATED","fundamental_source":"Companies House/FCA"},
+    {"id":"GB-XLON-AZN","asset_class":"stock","ticker":"AZN","name":"AstraZeneca PLC","mic":"XLON","exchange":"London Stock Exchange","country":"GB","currency":"GBP","tv_symbol":"LSE:AZN","market_data_status":"SOURCE GATED","fundamental_source":"Companies House/FCA"},
+
+    {"id":"DE-XETR-SAP","asset_class":"stock","ticker":"SAP","name":"SAP SE","mic":"XETR","exchange":"Xetra","country":"DE","currency":"EUR","tv_symbol":"XETR:SAP","market_data_status":"SOURCE GATED","fundamental_source":"ESEF"},
+    {"id":"DE-XETR-SIE","asset_class":"stock","ticker":"SIE","name":"Siemens AG","mic":"XETR","exchange":"Xetra","country":"DE","currency":"EUR","tv_symbol":"XETR:SIE","market_data_status":"SOURCE GATED","fundamental_source":"ESEF"},
+
+    {"id":"FR-XPAR-MC","asset_class":"stock","ticker":"MC","name":"LVMH Moet Hennessy Louis Vuitton SE","mic":"XPAR","exchange":"Euronext Paris","country":"FR","currency":"EUR","tv_symbol":"EURONEXT:MC","market_data_status":"SOURCE GATED","fundamental_source":"ESEF/AMF"},
+    {"id":"FR-XPAR-OR","asset_class":"stock","ticker":"OR","name":"L'Oreal S.A.","mic":"XPAR","exchange":"Euronext Paris","country":"FR","currency":"EUR","tv_symbol":"EURONEXT:OR","market_data_status":"SOURCE GATED","fundamental_source":"ESEF/AMF"},
+
+    {"id":"BR-BVMF-PETR4","asset_class":"stock","ticker":"PETR4","name":"Petroleo Brasileiro S.A. - Petrobras","mic":"BVMF","exchange":"B3","country":"BR","currency":"BRL","tv_symbol":"BMFBOVESPA:PETR4","market_data_status":"SOURCE GATED","fundamental_source":"CVM"},
+    {"id":"BR-BVMF-VALE3","asset_class":"stock","ticker":"VALE3","name":"Vale S.A.","mic":"BVMF","exchange":"B3","country":"BR","currency":"BRL","tv_symbol":"BMFBOVESPA:VALE3","market_data_status":"SOURCE GATED","fundamental_source":"CVM"},
+
+    {"id":"SA-XSAU-2222","asset_class":"stock","ticker":"2222","name":"Saudi Arabian Oil Company","mic":"XSAU","exchange":"Saudi Exchange","country":"SA","currency":"SAR","tv_symbol":"TADAWUL:2222","market_data_status":"SOURCE GATED","fundamental_source":"Saudi Exchange"},
+    {"id":"SA-XSAU-1120","asset_class":"stock","ticker":"1120","name":"Al Rajhi Banking and Investment Corporation","mic":"XSAU","exchange":"Saudi Exchange","country":"SA","currency":"SAR","tv_symbol":"TADAWUL:1120","market_data_status":"SOURCE GATED","fundamental_source":"Saudi Exchange"},
+
+    {"id":"TW-XTAI-2330","asset_class":"stock","ticker":"2330","name":"Taiwan Semiconductor Manufacturing Company Limited","mic":"XTAI","exchange":"Taiwan Stock Exchange","country":"TW","currency":"TWD","tv_symbol":"TWSE:2330","market_data_status":"SOURCE GATED","fundamental_source":"MOPS"},
+    {"id":"TW-XTAI-2317","asset_class":"stock","ticker":"2317","name":"Hon Hai Precision Industry Co., Ltd.","mic":"XTAI","exchange":"Taiwan Stock Exchange","country":"TW","currency":"TWD","tv_symbol":"TWSE:2317","market_data_status":"SOURCE GATED","fundamental_source":"MOPS"},
+
+    {"id":"SG-XSES-D05","asset_class":"stock","ticker":"D05","name":"DBS Group Holdings Ltd","mic":"XSES","exchange":"Singapore Exchange","country":"SG","currency":"SGD","tv_symbol":"SGX:D05","market_data_status":"SOURCE GATED","fundamental_source":"SGX"},
+    {"id":"SG-XSES-O39","asset_class":"stock","ticker":"O39","name":"Oversea-Chinese Banking Corporation Limited","mic":"XSES","exchange":"Singapore Exchange","country":"SG","currency":"SGD","tv_symbol":"SGX:O39","market_data_status":"SOURCE GATED","fundamental_source":"SGX"},
+
+    {"id":"AU-XASX-BHP","asset_class":"stock","ticker":"BHP","name":"BHP Group Limited","mic":"XASX","exchange":"Australian Securities Exchange","country":"AU","currency":"AUD","tv_symbol":"ASX:BHP","market_data_status":"SOURCE GATED","fundamental_source":"ASX/ASIC"},
+    {"id":"AU-XASX-CBA","asset_class":"stock","ticker":"CBA","name":"Commonwealth Bank of Australia","mic":"XASX","exchange":"Australian Securities Exchange","country":"AU","currency":"AUD","tv_symbol":"ASX:CBA","market_data_status":"SOURCE GATED","fundamental_source":"ASX/ASIC"},
+
+    {"id":"CA-XTSE-RY","asset_class":"stock","ticker":"RY","name":"Royal Bank of Canada","mic":"XTSE","exchange":"Toronto Stock Exchange","country":"CA","currency":"CAD","tv_symbol":"TSX:RY","market_data_status":"SOURCE GATED","fundamental_source":"SEDAR+"},
+    {"id":"CA-XTSE-SHOP","asset_class":"stock","ticker":"SHOP","name":"Shopify Inc.","mic":"XTSE","exchange":"Toronto Stock Exchange","country":"CA","currency":"CAD","tv_symbol":"TSX:SHOP","market_data_status":"SOURCE GATED","fundamental_source":"SEDAR+"},
+
+    {"id":"HK-XHKG-0700","asset_class":"stock","ticker":"0700","name":"Tencent Holdings Limited","mic":"XHKG","exchange":"Hong Kong Stock Exchange","country":"HK","currency":"HKD","tv_symbol":"HKEX:700","market_data_status":"SOURCE GATED","fundamental_source":"HKEX"},
+    {"id":"HK-XHKG-9988","asset_class":"stock","ticker":"9988","name":"Alibaba Group Holding Limited","mic":"XHKG","exchange":"Hong Kong Stock Exchange","country":"HK","currency":"HKD","tv_symbol":"HKEX:9988","market_data_status":"SOURCE GATED","fundamental_source":"HKEX"},
+
+    {"id":"CN-XSHG-600519","asset_class":"stock","ticker":"600519","name":"Kweichow Moutai Co., Ltd.","mic":"XSHG","exchange":"Shanghai Stock Exchange","country":"CN","currency":"CNY","tv_symbol":"SSE:600519","market_data_status":"SOURCE GATED","fundamental_source":"SSE/CNINFO"},
+    {"id":"CN-XSHE-000001","asset_class":"stock","ticker":"000001","name":"Ping An Bank Co., Ltd.","mic":"XSHE","exchange":"Shenzhen Stock Exchange","country":"CN","currency":"CNY","tv_symbol":"SZSE:000001","market_data_status":"SOURCE GATED","fundamental_source":"SZSE/CNINFO"},
+
+    {"id":"MY-XKLS-1155","asset_class":"stock","ticker":"1155","name":"Malayan Banking Berhad","mic":"XKLS","exchange":"Bursa Malaysia","country":"MY","currency":"MYR","market_data_status":"SOURCE GATED","fundamental_source":"Bursa Malaysia"},
+    {"id":"TH-XBKK-PTT","asset_class":"stock","ticker":"PTT","name":"PTT Public Company Limited","mic":"XBKK","exchange":"Stock Exchange of Thailand","country":"TH","currency":"THB","tv_symbol":"SET:PTT","market_data_status":"SOURCE GATED","fundamental_source":"SET"},
+    {"id":"ZA-XJSE-NPN","asset_class":"stock","ticker":"NPN","name":"Naspers Limited","mic":"XJSE","exchange":"Johannesburg Stock Exchange","country":"ZA","currency":"ZAR","tv_symbol":"JSE:NPN","market_data_status":"SOURCE GATED","fundamental_source":"JSE/SENS"},
+    {"id":"AE-XDFM-EMAAR","asset_class":"stock","ticker":"EMAAR","name":"Emaar Properties PJSC","mic":"XDFM","exchange":"Dubai Financial Market","country":"AE","currency":"AED","tv_symbol":"DFM:EMAAR","market_data_status":"SOURCE GATED","fundamental_source":"DFM"},
+    {"id":"MX-XMEX-AMXL","asset_class":"stock","ticker":"AMXL","name":"America Movil, S.A.B. de C.V.","mic":"XMEX","exchange":"Bolsa Mexicana de Valores","country":"MX","currency":"MXN","market_data_status":"SOURCE GATED","fundamental_source":"BMV/CNBV"}
+  ]
+}
