@@ -47,7 +47,8 @@ jobs:
           grep -Fq "liveSource:'binance-individual-@trade'" renko/renko-v9-lwc.js
           grep -Fq 'vendor/lightweight-charts-5.1.0.production.js?v=510' renko/index.html
           grep -Fq 'TradingView Lightweight Charts™ v5.1.0' renko/vendor/lightweight-charts-5.1.0.production.js
-          grep -Fq 'renko-v9-lwc.js?v=91' renko/index.html
+          grep -Fq 'renko-v9-lwc.js?v=92' renko/index.html
+          grep -Fq 'renko-v3.js?v=31' renko/index.html
           grep -Fq 'renko-v9-lwc.css?v=91' renko/index.html
           grep -Fq 'TradingView Lightweight Charts' renko/index.html
           ! grep -Fq 'renko-v8-smooth.js' renko/index.html
@@ -94,7 +95,7 @@ jobs:
             q="${GITHUB_RUN_ID}-${i}"
             h="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/?v=$q" || true)"
             v="$(curl -fsSL --max-time 12 "https://narzulalistiqlal.github.io/rwa/renko/renko-v9-lwc.js?v=$q" || true)"
-            if grep -Fq 'renko-v9-lwc.js?v=91' <<<"$h" && grep -Fq "version:'9.1.0'" <<<"$v"; then
+            if grep -Fq 'renko-v9-lwc.js?v=92' <<<"$h" && grep -Fq "version:'9.1.0'" <<<"$v"; then
               exit 0
             fi
             sleep 5
