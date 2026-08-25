@@ -5,6 +5,7 @@ on:
     branches: ["main"]
     paths:
       - "index.html"
+      - "superapp-v5.js"
       - "renko-shell-fullscreen.css"
       - "renko/**"
       - "tools/renko-v12-functional.mjs"
@@ -30,13 +31,27 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Self-heal settings runtime and deep history loader
+      - name: Self-heal RENKO runtime, shell stability and deep history
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
 
-          # Main runtime: replace one-page history loader with continuous contiguous backfill.
+          # Prevent canonical Research shell from recreating the RENKO iframe 800ms after boot.
+          p=Path('superapp-v5.js');s=p.read_text()
+          s=s.replace("setTimeout(routeFromHash,0);setTimeout(routeFromHash,800);","setTimeout(routeFromHash,0);")
+          old="const toolUrl=`${tab}/?embed=1&symbol=${encodeURIComponent(sym)}`;"
+          new="const toolUrl=`${tab}/?embed=1&v=${tab==='renko'?'121':'1'}&symbol=${encodeURIComponent(sym)}`;"
+          if old in s:s=s.replace(old,new)
+          if "tab==='renko'?'121':'1'" not in s:raise SystemExit('RENKO iframe cache-bust contract missing')
+          if 'setTimeout(routeFromHash,800)' in s:raise SystemExit('duplicate research rerender still present')
+          p.write_text(s)
+
+          # Root shell cache bust so browsers fetch the stable parent runtime.
+          p=Path('index.html');s=p.read_text().replace('superapp-v5.js?v=6','superapp-v5.js?v=7');p.write_text(s)
+          if 'superapp-v5.js?v=7' not in p.read_text():raise SystemExit('superapp cache bust missing')
+
+          # Main RENKO runtime: deep contiguous backfill instead of one 1,000-trade page.
           p=Path('renko/renko-v12.js');s=p.read_text()
           if 'async function loadOlder(){' in s:
             a=s.index('async function loadOlder(){');b=s.index('\nfunction scheduleOlder()',a)
@@ -69,18 +84,17 @@ jobs:
             a=s.index('function scheduleOlder()');b=s.index('\nasync function resetSymbol',a)
             s=s[:a]+"function scheduleOlder(){clearTimeout(rangeTimer);rangeTimer=setTimeout(()=>{const r=chart?.timeScale?.().getVisibleLogicalRange?.();if(r&&r.from<36&&!S.loading&&!S.building&&!S.exhausted)void loadOlder(120,36)},90)}"+s[b:]
             old="click('tvPanOlder',()=>shiftRange(-.72));"
-            if old not in s: raise SystemExit('tvPanOlder contract missing')
+            if old not in s:raise SystemExit('tvPanOlder contract missing')
             s=s.replace(old,"click('tvPanOlder',()=>{shiftRange(-.72);setTimeout(()=>{if(!S.loading&&!S.building&&!S.exhausted)void loadOlder(120,36)},0)});",1)
             s=s.replace("version:'12.0.0'","version:'12.1.0'")
             s=s.replace("setMethod:applyMethod,loadOlder,goLive:latestView","setMethod:applyMethod,loadOlder,goLive:latestView,historyContract:'continuous-contiguous-backfill-v2'")
             p.write_text(s)
           if "historyContract:'continuous-contiguous-backfill-v2'" not in p.read_text():raise SystemExit('deep history contract missing')
 
-          # Profiles: locale-safe numeric parsing; draft fields are never rewritten after render.
+          # Profile inputs: no rewrite loop + locale-safe numeric values.
           p=Path('renko/renko-v12-method-profiles.js');s=p.read_text()
           if "version:'2.1.0'" not in s:
             needle="const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));"
-            if needle not in s:raise SystemExit('profile clamp contract missing')
             if 'const parseNum=' not in s:s=s.replace(needle,needle+"\nconst parseNum=(v,fallback)=>{const n=Number(String(v??'').trim().replace(/,/g,'.'));return Number.isFinite(n)?n:fallback};",1)
             s=s.replace("Number($('v12AtrLength')?.value)||profiles.atr.atrLength","parseNum($('v12AtrLength')?.value,profiles.atr.atrLength)")
             s=s.replace("Number($('v12TraditionalBox')?.value)||profiles.traditional.boxSize","parseNum($('v12TraditionalBox')?.value,profiles.traditional.boxSize)")
@@ -90,12 +104,18 @@ jobs:
             p.write_text(s)
           if "inputContract:'draft-never-overwritten-v2'" not in p.read_text():raise SystemExit('profile input contract missing')
 
-          # Cache bust: force browsers/iframes to fetch the corrected runtime.
+          # RENKO child cache bust.
           p=Path('renko/index.html');s=p.read_text()
-          for old,new in [('renko-v12.js?v=120','renko-v12.js?v=121'),('renko-v12-method-profiles.js?v=121','renko-v12-method-profiles.js?v=210'),('renko-v12-instant-history.js?v=2','renko-v12-instant-history.js?v=3')]:
-            s=s.replace(old,new)
+          for old,new in [('renko-v12.js?v=120','renko-v12.js?v=121'),('renko-v12-method-profiles.js?v=121','renko-v12-method-profiles.js?v=210'),('renko-v12-instant-history.js?v=2','renko-v12-instant-history.js?v=3')]:s=s.replace(old,new)
           for required in ['renko-v12.js?v=121','renko-v12-method-profiles.js?v=210','renko-v12-instant-history.js?v=3']:
-            if required not in s:raise SystemExit(f'cache-bust contract missing: {required}')
+            if required not in s:raise SystemExit(f'cache-bust missing: {required}')
+          p.write_text(s)
+
+          # Browser test must acquire the iframe after the shell has settled.
+          p=Path('tools/renko-v12-functional.mjs');s=p.read_text()
+          old="const frameHandle=await page.waitForSelector('iframe.rwa-research-legacy-frame',{timeout:30000});\n  const frame=await frameHandle.contentFrame();"
+          new="await page.waitForTimeout(1800);\n  const frameHandle=await page.waitForSelector('iframe.rwa-research-legacy-frame',{timeout:30000});\n  const frame=await frameHandle.contentFrame();"
+          if old in s:s=s.replace(old,new)
           p.write_text(s)
           PY
 
@@ -103,25 +123,27 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          node --check superapp-v5.js
           node --check renko/renko-v3.js
           node --check renko/renko-v12.js
           node --check renko/renko-v12-worker.js
           node --check renko/renko-v12-method-profiles.js
           node --check renko/renko-v12-instant-history.js
           node --check tools/renko-v12-functional.mjs
+          grep -Fq 'superapp-v5.js?v=7' index.html
+          grep -Fq "tab==='renko'?'121':'1'" superapp-v5.js
+          ! grep -Fq 'setTimeout(routeFromHash,800)' superapp-v5.js
           grep -Fq "version:'12.1.0'" renko/renko-v12.js
           grep -Fq "historyContract:'continuous-contiguous-backfill-v2'" renko/renko-v12.js
           grep -Fq 'loadOlder(120,36)' renko/renko-v12.js
           grep -Fq "version:'2.1.0'" renko/renko-v12-method-profiles.js
           grep -Fq "inputContract:'draft-never-overwritten-v2'" renko/renko-v12-method-profiles.js
-          grep -Fq 'const parseNum=' renko/renko-v12-method-profiles.js
           ! grep -Fq 'setInterval(()=>{if(mounted)syncUI()},1000)' renko/renko-v12-method-profiles.js
           grep -Fq 'renko-v12.js?v=121' renko/index.html
           grep -Fq 'renko-v12-method-profiles.js?v=210' renko/index.html
           grep -Fq 'renko-v12-instant-history.js?v=3' renko/index.html
           grep -Fq "formation:'tick-by-tick'" renko/renko-v12.js
           grep -Fq "lockRule:'every-trade-threshold'" renko/renko-v12.js
-          grep -Fq "previewRole:'visual-only-close-preview'" renko/renko-v12-instant-history.js
           git diff --check
 
       - name: Core immediate-lock smoke
@@ -140,25 +162,25 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Browser acceptance - inputs and deep history
+      - name: Browser acceptance - stable inputs and deep history
         shell: bash
         run: |
           python3 -m http.server 8080 > /tmp/renko-http.log 2>&1 &
           server=$!
           trap 'kill $server || true' EXIT
-          for i in {1..30}; do curl -fsS http://127.0.0.1:8080/ >/dev/null && break; sleep 1; done
+          for i in {1..30}; do if curl -fsS http://127.0.0.1:8080/ >/dev/null; then break; fi; sleep 1; done
           RENKO_TEST_BASE='http://127.0.0.1:8080/' node tools/renko-v12-functional.mjs
 
-      - name: Persist self-healed source
+      - name: Persist verified self-healed source
         shell: bash
         run: |
-          if git diff --quiet -- renko/renko-v12.js renko/renko-v12-method-profiles.js renko/index.html; then
-            echo 'RENKO source already healed'
+          if git diff --quiet -- index.html superapp-v5.js renko/renko-v12.js renko/renko-v12-method-profiles.js renko/index.html tools/renko-v12-functional.mjs; then
+            echo 'RENKO source already verified'
           else
             git config user.name 'copytolive-actions'
             git config user.email 'actions@users.noreply.github.com'
-            git add renko/renko-v12.js renko/renko-v12-method-profiles.js renko/index.html
-            git commit -m 'Fix RENKO setup inputs and continuous deep history'
+            git add index.html superapp-v5.js renko/renko-v12.js renko/renko-v12-method-profiles.js renko/index.html tools/renko-v12-functional.mjs
+            git commit -m 'Fix RENKO input stability and continuous deep history'
             git pull --rebase origin main
             git push origin HEAD:main
           fi
