@@ -18,6 +18,9 @@
 <link rel="stylesheet" href="stable-shell.css?v=3">
 <link rel="stylesheet" href="superapp-v5.css?v=6">
 <link rel="stylesheet" href="renko-shell-fullscreen.css?v=1">
+<script id="rwaLocaleFallback">/* RWA_LOCALE_FALLBACK_V1 */
+(()=>{'use strict';const F='en-US';let broken=false;try{new Intl.NumberFormat().format(1);new Intl.DateTimeFormat().format(new Date())}catch(e){broken=e instanceof RangeError}if(!broken)return;const wrap=(proto,name)=>{const native=proto&&proto[name];if(typeof native!=='function')return;Object.defineProperty(proto,name,{configurable:true,writable:true,value:function(locales,...rest){try{return native.call(this,locales,...rest)}catch(e){if(e instanceof RangeError&&(locales===undefined||locales===null))return native.call(this,F,...rest);throw e}}})};wrap(Number.prototype,'toLocaleString');if(typeof BigInt!=='undefined')wrap(BigInt.prototype,'toLocaleString');for(const n of ['toLocaleString','toLocaleDateString','toLocaleTimeString'])wrap(Date.prototype,n);for(const name of ['NumberFormat','DateTimeFormat']){const Native=Intl[name];if(typeof Native!=='function')continue;function Safe(locales,...rest){try{return new Native(locales,...rest)}catch(e){if(e instanceof RangeError&&(locales===undefined||locales===null))return new Native(F,...rest);throw e}}Object.setPrototypeOf(Safe,Native);Safe.prototype=Native.prototype;Object.defineProperty(Intl,name,{configurable:true,writable:true,value:Safe})}window.__RWA_LOCALE_FALLBACK__=F})();
+</script>
 </head>
 <body class="mview-overview">
 <div class="app">
