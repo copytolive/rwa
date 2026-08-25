@@ -1,0 +1,51 @@
+name: GOLD MT5 Control Plane
+on:
+  push:
+    branches:
+      - gold/p45-control-20260826
+    paths:
+      - 'gold-cert/requests/*.json'
+  workflow_dispatch:
+    inputs:
+      request_path:
+        description: Request JSON path
+        required: false
+        default: gold-cert/control/templates/P45-native-parity.json
+permissions:
+  contents: read
+jobs:
+  p45-native:
+    runs-on: [self-hosted, windows, x64, mt5, gold]
+    timeout-minutes: 240
+    steps:
+      - name: Checkout isolated GOLD control branch
+        uses: actions/checkout@v4
+
+      - name: Resolve request
+        id: req
+        shell: powershell
+        run: |
+          $path='${{ inputs.request_path }}'
+          if('${{ github.event_name }}' -eq 'push'){
+            $before='${{ github.event.before }}'; $after='${{ github.sha }}'
+            $files=git diff --name-only $before $after -- 'gold-cert/requests/*.json'
+            $path=($files | Select-Object -Last 1)
+          }
+          if([string]::IsNullOrWhiteSpace($path)){ throw 'No request JSON resolved' }
+          if(!(Test-Path $path)){ throw "Request file missing: $path" }
+          "request_path=$path" >> $env:GITHUB_OUTPUT
+          Write-Host "REQUEST_PATH=$path"
+
+      - name: Execute allowlisted P45 request
+        shell: powershell
+        run: |
+          ./gold-cert/windows/run_request.ps1 -RequestPath '${{ steps.req.outputs.request_path }}' -EvidenceDir "$PWD\gold-cert\evidence"
+
+      - name: Upload native MT5 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold-p45-native-${{ github.run_id }}
+          path: gold-cert/evidence/**
+          if-no-files-found: warn
+          retention-days: 90
