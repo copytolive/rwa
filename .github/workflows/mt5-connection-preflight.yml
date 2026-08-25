@@ -84,17 +84,21 @@ jobs:
           "@ | Set-Content -Path $config -Encoding Ascii
 
           $proc = Start-Process -FilePath $terminal -ArgumentList "/portable","/config:$config" -PassThru
-          Start-Sleep -Seconds 50
+          Start-Sleep -Seconds 90
           if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
           Remove-Item $config -Force -ErrorAction SilentlyContinue
 
           $logs = Get-ChildItem $portable -Filter "*.log" -Recurse -ErrorAction SilentlyContinue
           if (-not $logs) { throw "MT5 started, but no terminal journal was produced" }
           $text = ($logs | Get-Content -ErrorAction SilentlyContinue) -join "`n"
-          $bad = $text -match "(invalid account|authorization failed|failed to connect|no connection)"
-          $good = $text -match "(authorized|connected to|login)"
-          if ($bad) { throw "MT5 terminal reported an authorization or connection failure (details intentionally suppressed)" }
-          if (-not $good) { throw "MT5 terminal did not produce positive connection evidence within 50 seconds" }
+          $safe = $text.Replace($env:MT5_LOGIN, "***").Replace($env:MT5_PASSWORD, "***").Replace($env:MT5_SERVER, "***")
+          $relevant = $safe -split "`n" | Where-Object { $_ -match "(connect|authoriz|login|server|network|failed|error|terminal|account)" } | Select-Object -Last 40
+          "Sanitized MT5 diagnostic:"
+          $relevant | ForEach-Object { $_ }
+          $bad = $safe -match "(invalid account|authorization failed|failed to connect|no connection|server.*not found|network failed)"
+          $good = $safe -match "(authorized|connected to)"
+          if ($bad) { throw "MT5 terminal reported an authorization or connection failure" }
+          if (-not $good) { throw "MT5 terminal did not produce positive connection evidence within 90 seconds" }
           "MT5 read-only connection preflight PASS. Automated trading remained disabled."
 
       - name: Cleanup credentials and terminal data
