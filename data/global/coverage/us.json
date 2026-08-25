@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "generated_at": "2026-08-25T07:56:13.355Z",
+  "method": "SEC XBRL frames bootstrap",
+  "official_api": "https://data.sec.gov/api/xbrl/frames/",
+  "issuer_catalog": 10403,
+  "records_with_fundamentals": 5631,
+  "frame_calls": 231,
+  "metric_set": [
+    "revenue",
+    "net_income",
+    "eps_diluted",
+    "operating_cash_flow",
+    "capex",
+    "assets",
+    "liabilities",
+    "equity",
+    "cash"
+  ],
+  "history_years_target": 10,
+  "limitations": [
+    "SEC frame data aligns facts to calendar frames; fiscal calendars can differ.",
+    "Missing facts remain missing; no value is imputed.",
+    "Exact filing accession URLs are preserved when SEC supplies accn.",
+    "Companyfacts/exact filing parsing may supersede a frame value when available."
+  ]
+}
