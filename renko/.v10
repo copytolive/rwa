@@ -1,0 +1,6 @@
+RENKO V10 production marker
+Version: 10.0.0
+Default: Auto Adaptive ATR(14) x 0.50, 30-minute locked box
+Signal: confirmed reversal + 1 continuation
+Execution reference: real Binance market price
+Projection: visual only, never a signal
