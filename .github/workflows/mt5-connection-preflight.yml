@@ -85,10 +85,13 @@ jobs:
           if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
           Remove-Item $config -Force -ErrorAction SilentlyContinue
 
-          $roots = @($env:APPDATA, $env:LOCALAPPDATA)
-          $logs = foreach ($root in $roots) {
-            Get-ChildItem $root -Filter "*.log" -Recurse -ErrorAction SilentlyContinue |
-              Where-Object { $_.FullName -match "MetaQuotes.*Terminal.*logs" -and $_.FullName -notmatch "MQL5|Tester" }
+          $terminalRoot = Join-Path $env:APPDATA "MetaQuotes\Terminal"
+          $logs = @()
+          if (Test-Path $terminalRoot) {
+            $logs = Get-ChildItem $terminalRoot -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+              $journalDir = Join-Path $_.FullName "logs"
+              if (Test-Path $journalDir) { Get-ChildItem $journalDir -Filter "*.log" -File -ErrorAction SilentlyContinue }
+            }
           }
           if (-not $logs) { throw "MT5 started, but no terminal journal was produced" }
           $text = ($logs | Sort-Object LastWriteTime | Get-Content -ErrorAction SilentlyContinue) -join "`n"
