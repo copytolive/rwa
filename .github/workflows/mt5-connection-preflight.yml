@@ -2,6 +2,10 @@ name: MT5 Connection Preflight
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/mt5-connection-preflight.yml"
   push:
     paths:
       - ".github/workflows/mt5-connection-preflight.yml"
