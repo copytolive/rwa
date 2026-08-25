@@ -94,8 +94,10 @@ jobs:
           grep -Fq "realtime-core.js?v=3" index.html
           grep -Fq "market-performance.js?v=2" index.html
           grep -Fq "stable-shell.css?v=3" index.html
-          grep -Fq "unified-design-v3.css?v=1" index.html
-          grep -Fq "product-os-v3.js?v=1" index.html
+          grep -Fq "unified-design-v3.css?v=superapp2" index.html
+          grep -Fq "product-os-v3.js?v=superapp2" index.html
+          grep -Fq "RWA_SUPERAPP_PATCH_V1" product-os-v3.js
+          grep -Fq "RWA_SUPERAPP_GUARD_V2" product-os-v3.js
           grep -Fq "product-os-mobile-contract-v3.js?v=1" index.html
           grep -Fq 'data-mobile-nav="trade"' product-os-v3.js
           grep -Fq 'Risk Engine' product-os-v3.js
