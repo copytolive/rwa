@@ -1,3 +1,4 @@
+# live-smoke-trigger: 2
 name: RENKO V11 Public Live Smoke
 
 on:
@@ -47,8 +48,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl -fsSL --max-time 20 'https://data-api.binance.vision/api/v3/exchangeInfo?symbol=BTCUSDT' -o /tmp/exchange.json
-          curl -fsSL --max-time 20 'https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=2' -o /tmp/klines.json
+          fetch_market () {
+            local path="$1" out="$2"
+            for root in 'https://data-api.binance.vision' 'https://api.binance.com'; do
+              if curl -fsSL --max-time 20 "${root}${path}" -o "$out"; then return 0; fi
+            done
+            return 1
+          }
+          fetch_market '/api/v3/exchangeInfo?symbol=BTCUSDT' /tmp/exchange.json
+          fetch_market '/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=2' /tmp/klines.json
           python - <<'PY'
           import json
           ex=json.load(open('/tmp/exchange.json'))
