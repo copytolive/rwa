@@ -56,6 +56,11 @@ jobs:
           grep -Fq 'V12 desktop density pass' renko/renko-v11.css
           grep -Fq '3 SEPARATE SETTINGS' renko/renko-v12-method-profiles.js
           grep -Fq 'ATR, Traditional and Percentage never share box parameters, Wicks or Entry Confirm.' renko/renko-v12-method-profiles.js
+          grep -Fq "version:'2.0.0'" renko/renko-v12-method-profiles.js
+          grep -Fq "markDirty(method)" renko/renko-v12-method-profiles.js
+          grep -Fq "RENKO engine did not accept profile" renko/renko-v12-method-profiles.js
+          grep -Fq "renko:v12-profile-applied" renko/renko-v12-method-profiles.js
+          ! grep -Fq 'setInterval(()=>{if(mounted)syncUI()},1000)' renko/renko-v12-method-profiles.js
           grep -Fq "previewRole:'visual-only-close-preview'" renko/renko-v12-instant-history.js
           grep -Fq "exactSource:'binance-public-aggTrades-contiguous-parallel-backfill'" renko/renko-v12-instant-history.js
           grep -Fq "cacheRole:'exact-tick-bars-after-sync'" renko/renko-v12-instant-history.js
