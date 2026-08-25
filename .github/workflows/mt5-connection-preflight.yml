@@ -1,0 +1,101 @@
+name: MT5 Connection Preflight
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/mt5-connection-preflight.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: windows-latest
+    timeout-minutes: 12
+    env:
+      MT5_LOGIN: ${{ secrets.MT5_LOGIN }}
+      MT5_PASSWORD: ${{ secrets.MT5_PASSWORD }}
+      MT5_SERVER: ${{ secrets.MT5_SERVER }}
+    steps:
+      - name: Verify required secrets
+        shell: pwsh
+        run: |
+          $missing = @()
+          if ([string]::IsNullOrWhiteSpace($env:MT5_LOGIN)) { $missing += "MT5_LOGIN" }
+          if ([string]::IsNullOrWhiteSpace($env:MT5_PASSWORD)) { $missing += "MT5_PASSWORD" }
+          if ([string]::IsNullOrWhiteSpace($env:MT5_SERVER)) { $missing += "MT5_SERVER" }
+          if ($missing.Count -gt 0) { throw ("Missing secrets: " + ($missing -join ", ")) }
+          "All required MT5 secrets are present."
+
+      - name: Download official MetaTrader 5 installer
+        shell: pwsh
+        run: |
+          $url = "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
+          Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\mt5setup.exe"
+          $hash = (Get-FileHash "$env:RUNNER_TEMP\mt5setup.exe" -Algorithm SHA256).Hash
+          "MT5 installer downloaded. SHA256=$hash"
+
+      - name: Install MetaTrader 5
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "$env:RUNNER_TEMP\mt5setup.exe" -ArgumentList "/auto" -PassThru
+          if (-not $p.WaitForExit(240000)) {
+            $p.Kill()
+            throw "MT5 installer timed out"
+          }
+          $candidates = @(
+            "C:\Program Files\MetaTrader 5\terminal64.exe",
+            "C:\Program Files (x86)\MetaTrader 5\terminal64.exe"
+          )
+          $terminal = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $terminal) {
+            $terminal = Get-ChildItem "C:\Program Files","C:\Program Files (x86)",$env:LOCALAPPDATA -Filter terminal64.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+          }
+          if (-not $terminal) { throw "terminal64.exe was not found after installation" }
+          "MT5_TERMINAL=$terminal" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "Terminal installation found."
+
+      - name: Read-only account connection test
+        shell: pwsh
+        run: |
+          $portable = Join-Path $env:RUNNER_TEMP "mt5-portable"
+          New-Item -ItemType Directory -Force -Path $portable | Out-Null
+          Copy-Item (Split-Path $env:MT5_TERMINAL -Parent)\* $portable -Recurse -Force
+          $terminal = Join-Path $portable "terminal64.exe"
+          $config = Join-Path $portable "preflight.ini"
+          @"
+          [Common]
+          Login=$env:MT5_LOGIN
+          Password=$env:MT5_PASSWORD
+          Server=$env:MT5_SERVER
+          KeepPrivate=0
+          NewsEnable=0
+
+          [Experts]
+          Enabled=0
+          AllowLiveTrading=0
+          AllowDllImport=0
+          "@ | Set-Content -Path $config -Encoding Ascii
+
+          $proc = Start-Process -FilePath $terminal -ArgumentList "/portable","/config:$config" -PassThru
+          Start-Sleep -Seconds 50
+          if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
+          Remove-Item $config -Force -ErrorAction SilentlyContinue
+
+          $logs = Get-ChildItem $portable -Filter "*.log" -Recurse -ErrorAction SilentlyContinue
+          if (-not $logs) { throw "MT5 started, but no terminal journal was produced" }
+          $text = ($logs | Get-Content -ErrorAction SilentlyContinue) -join "`n"
+          $bad = $text -match "(invalid account|authorization failed|failed to connect|no connection)"
+          $good = $text -match "(authorized|connected to|login)"
+          if ($bad) { throw "MT5 terminal reported an authorization or connection failure (details intentionally suppressed)" }
+          if (-not $good) { throw "MT5 terminal did not produce positive connection evidence within 50 seconds" }
+          "MT5 read-only connection preflight PASS. Automated trading remained disabled."
+
+      - name: Cleanup credentials and terminal data
+        if: always()
+        shell: pwsh
+        run: |
+          Get-Process terminal64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          Remove-Item "$env:RUNNER_TEMP\mt5-portable" -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item "$env:RUNNER_TEMP\mt5setup.exe" -Force -ErrorAction SilentlyContinue
