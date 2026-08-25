@@ -4,6 +4,8 @@ on:
   push:
     branches: ["main"]
     paths:
+      - "index.html"
+      - "renko-shell-fullscreen.css"
       - "renko/index.html"
       - "renko/renko-v3.js"
       - "renko/renko-v12.js"
@@ -38,9 +40,14 @@ jobs:
           node --check renko/renko-v12-worker.js
           node --check renko/renko-v12-method-profiles.js
           node --check renko/renko-v12-instant-history.js
+          test -s index.html
+          test -s renko-shell-fullscreen.css
           test -s renko/index.html
           test -s renko/renko-v11.css
           test -s renko/renko-v12-instant-history.js
+          grep -Fq 'renko-shell-fullscreen.css?v=1' index.html
+          grep -Fq 'html[data-rwa-route^="research/renko"] .rwa-tool-lab' renko-shell-fullscreen.css
+          grep -Fq 'grid-template-columns:.8fr 1.2fr' superapp-v5.css
           grep -Fq 'RENKO V12' renko/index.html
           grep -Fq 'renko-v12.js?v=120' renko/index.html
           grep -Fq 'renko-v12-method-profiles.js?v=121' renko/index.html
