@@ -1,4 +1,4 @@
-name: RENKO V12 Tick Native Production Pages
+name: RENKO V13 Setup + Formation Production Gate
 
 on:
   push:
@@ -6,9 +6,8 @@ on:
     paths:
       - "index.html"
       - "superapp-v5.js"
-      - "renko-shell-fullscreen.css"
       - "renko/**"
-      - "tools/renko-v12-functional.mjs"
+      - "tools/renko-v13-functional.mjs"
       - ".github/workflows/renko-v11-pages.yml"
   workflow_dispatch:
 
@@ -18,11 +17,11 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "renko-v12-pages"
-  cancel-in-progress: true
+  group: "renko-v13-pages"
+  cancel-in-progress: false
 
 jobs:
-  verify-package-renko-v12:
+  verify-renko-v13:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -31,183 +30,85 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Self-heal RENKO inputs, atomic Apply and deep history
+      - name: Activate stable V13 shell and runtime
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
 
-          # 1) Parent shell must not destroy/recreate the RENKO iframe after the user starts typing.
+          # Parent Research shell: never destroy/recreate an iframe after the user starts editing setup.
           p=Path('superapp-v5.js');s=p.read_text()
           s=s.replace("setTimeout(routeFromHash,0);setTimeout(routeFromHash,800);","setTimeout(routeFromHash,0);")
           old="const toolUrl=`${tab}/?embed=1&symbol=${encodeURIComponent(sym)}`;"
-          new="const toolUrl=`${tab}/?embed=1&v=${tab==='renko'?'122':'1'}&symbol=${encodeURIComponent(sym)}`;"
+          new="const toolUrl=`${tab}/?embed=1&v=${tab==='renko'?'130':'1'}&symbol=${encodeURIComponent(sym)}`;"
           if old in s:s=s.replace(old,new)
-          s=s.replace("tab==='renko'?'121':'1'","tab==='renko'?'122':'1'")
-          if "tab==='renko'?'122':'1'" not in s:raise SystemExit('RENKO iframe version contract missing')
-          if 'setTimeout(routeFromHash,800)' in s:raise SystemExit('duplicate iframe rerender still present')
+          s=re.sub(r"const toolUrl=`\$\{tab\}/\?embed=1&v=\$\{tab==='renko'\?'\d+':'1'\}&symbol=\$\{encodeURIComponent\(sym\)\}`;",new,s,count=1)
+          if 'setTimeout(routeFromHash,800)' in s:raise SystemExit('duplicate Research iframe rerender still present')
+          if "tab==='renko'?'130':'1'" not in s:raise SystemExit('RENKO iframe cache version missing')
           p.write_text(s)
 
-          p=Path('index.html');s=p.read_text().replace('superapp-v5.js?v=6','superapp-v5.js?v=8').replace('superapp-v5.js?v=7','superapp-v5.js?v=8');p.write_text(s)
+          # Root shell cache-bust.
+          p=Path('index.html');s=p.read_text();s=re.sub(r'superapp-v5\.js\?v=\d+','superapp-v5.js?v=13',s);p.write_text(s)
 
-          # 2) Main runtime: continuous deep tick-history loading.
-          p=Path('renko/renko-v12.js');s=p.read_text()
-          if 'async function loadOlder(){' in s:
-            a=s.index('async function loadOlder(){');b=s.index('\nfunction scheduleOlder()',a)
-            s=s[:a]+r'''async function loadOlder(targetBricks=120,maxPages=36){
-              if(S.loading||S.exhausted||!Number.isFinite(S.oldestAggId)||S.oldestAggId<=0)return false;
-              const generation=S.generation,symbol=S.symbol,anchor=rangeAnchor(),beforeBricks=S.data.length;
-              let cursor=Number(S.oldestAggId),pages=0,loadedAny=false;
-              S.loading=true;S.following=false;setStatus('Loading deep tick history…','loading');
-              try{
-                while(generation===S.generation&&symbol===S.symbol&&!S.exhausted&&pages<maxPages&&S.data.length<beforeBricks+Math.max(20,Number(targetBricks)||120)){
-                  const wave=Math.min(6,maxPages-pages),defs=[];
-                  for(let i=1;i<=wave;i++){const from=Math.max(0,Math.floor(cursor-PAGE*i));if(!defs.includes(from))defs.push(from)}
-                  const parts=await Promise.all(defs.map(from=>olderAgg(symbol,from).catch(e=>{console.warn('[V12 older page]',from,e);return null})));
-                  if(generation!==S.generation||symbol!==S.symbol)return false;
-                  const rows=[];let contiguous=0;
-                  for(const part of parts){if(!Array.isArray(part)||!part.length)break;const valid=part.filter(x=>Number(x.id)<cursor);if(!valid.length)break;rows.push(...valid);contiguous++}
-                  if(!rows.length){if(parts[0]&&Array.isArray(parts[0])&&!parts[0].length)S.exhausted=true;break}
-                  const next=Math.min(...rows.map(x=>Number(x.id)).filter(Number.isFinite));
-                  if(!Number.isFinite(next)||next>=cursor)break;
-                  cursor=next;S.oldestAggId=next;S.ticks=dedupeTicks([...rows,...S.ticks]);pages+=Math.max(1,contiguous);loadedAny=true;
-                  await rebuild(anchor);
-                  setStatus(`History +${Math.max(0,S.data.length-beforeBricks)} bricks · ${pages.toLocaleString()} trade pages`,'ready');
-                  if(defs.includes(0)||cursor<=0){S.exhausted=true;break}
-                }
-                return loadedAny;
-              }catch(e){console.warn('[V12 older deep]',e);setStatus('Trade history retry','bad');return false}
-              finally{if(generation===S.generation){S.loading=false;meta();const r=chart?.timeScale?.().getVisibleLogicalRange?.();if(r&&r.from<24&&!S.exhausted&&!S.building)setTimeout(()=>void loadOlder(targetBricks,maxPages),120)}}
-            }'''+s[b:]
-            a=s.index('function scheduleOlder()');b=s.index('\nasync function resetSymbol',a)
-            s=s[:a]+"function scheduleOlder(){clearTimeout(rangeTimer);rangeTimer=setTimeout(()=>{const r=chart?.timeScale?.().getVisibleLogicalRange?.();if(r&&r.from<36&&!S.loading&&!S.building&&!S.exhausted)void loadOlder(120,36)},90)}"+s[b:]
-            s=s.replace("click('tvPanOlder',()=>shiftRange(-.72));","click('tvPanOlder',()=>{shiftRange(-.72);setTimeout(()=>{if(!S.loading&&!S.building&&!S.exhausted)void loadOlder(120,36)},0)});",1)
-
-          # 3) Rebuild contract: only the newest worker result may update box/bricks/chart.
-          old_guard="if(generation!==S.generation){resolve(false);return}S.building=false;"
-          new_guard="if(generation!==S.generation||id!==S.buildSeq){resolve(false);return}S.building=false;"
-          if old_guard in s:s=s.replace(old_guard,new_guard,1)
-          if new_guard not in s:raise SystemExit('latest-build-wins guard missing')
-
-          # 4) Method Apply is atomic: invalidate any old build, clear old active box, then await the new build.
-          a=s.index('async function applyMethod(method)')
-          b=s.index('\nfunction wireSettings()',a)
-          s=s[:a]+r'''async function applyMethod(method){
-            if(!METHODS.has(method))return false;
-            ++S.buildSeq;S.box=NaN;S.tailState=null;C.method=method;save();syncForm();meta();
-            if(!S.symbol)return true;
-            try{
-              if(method==='atr')S.atrBox=await fetchAtrBox(S.symbol);
-              if(method==='percentage')S.ltpSnapshot=await fetchLtp(S.symbol);
-              const ok=await rebuild(rangeAnchor());
-              if(ok){latestView();meta()}
-              return !!ok;
-            }catch(e){console.error('[V12 apply method]',e);return false}
-          }
-          function refreshCurrent(anchor=rangeAnchor()){return rebuild(anchor)}'''+s[b:]
-
-          # Export explicit contracts + refresh API; do not use setMethod for history-only rebuilds.
-          s=s.replace("version:'12.0.0'","version:'12.2.0'")
-          s=s.replace("version:'12.1.0'","version:'12.2.0'")
-          export_old="setMethod:applyMethod,loadOlder,goLive:latestView"
-          export_new="setMethod:applyMethod,refresh:refreshCurrent,loadOlder,goLive:latestView,historyContract:'continuous-contiguous-backfill-v2',buildContract:'latest-build-wins-v2',applyContract:'clear-old-box-await-new-build-v1'"
-          if export_old in s:s=s.replace(export_old,export_new,1)
-          else:
-            # Normalize an earlier self-heal export if present.
-            import re
-            s=re.sub(r"setMethod:applyMethod,loadOlder,goLive:latestView(?:,historyContract:[^,}]+)?(?:,buildContract:[^,}]+)?",export_new,s,count=1)
-          if "applyContract:'clear-old-box-await-new-build-v1'" not in s:raise SystemExit('atomic Apply export missing')
+          # Child RENKO route must load only the new formation core + stable profiles.
+          p=Path('renko/index.html');s=p.read_text()
+          s=s.replace('RENKO V12 — Tick Native','RENKO V13 — Lossless Tick Native')
+          s=s.replace('ATR · TICK · V12','ATR · TICK · V13')
+          s=s.replace('RENKO V12 tick-native chart','RENKO V13 lossless tick-native chart')
+          s=s.replace('PERCENTAGE (LTP)','PERCENTAGE')
+          s=s.replace('RENKO V12 — tick formation, immediate close & wick rules','RENKO V13 — setup, lossless tick formation & reversal rules')
+          s=s.replace('The percentage is applied to the symbol-load last traded price snapshot, rounded to Binance minimum tick size. Formation after sizing remains tick-by-tick.','The percentage is applied to each confirmed Renko level and recalculated after every confirmed brick, rounded to Binance minimum tick size.')
+          s=s.replace('ATR is used only to assign the box size. Because ATR mathematically requires bars, V12 calibrates it from recent completed 1-minute bars internally. That hidden calibration never delays brick confirmation: trades still lock bricks immediately.','ATR is used only to assign the box size: Wilder ATR from completed 1-minute bars × ATR Factor. The bar calibration never delays brick confirmation: every buffered trade still locks bricks immediately.')
+          s=re.sub(r'<script src="renko-v3\.js\?v=\d+"></script><script src="renko-v12\.js\?v=\d+"></script><script src="renko-v12-method-profiles\.js\?v=\d+"></script><script src="renko-v12-instant-history\.js\?v=\d+"></script>', '<script src="renko-v3.js?v=31"></script><script src="renko-v13.js?v=130"></script><script src="renko-v13-method-profiles.js?v=130"></script>', s)
+          if 'renko-v13.js?v=130' not in s or 'renko-v13-method-profiles.js?v=130' not in s:raise SystemExit('V13 runtime scripts missing')
+          if re.search(r'<script src="renko-v12(?:-|\.)',s):raise SystemExit('legacy V12 runtime still loaded')
           p.write_text(s)
-
-          # 5) History booster may rebuild current data but must NEVER call setMethod and change/invalidate user setup.
-          p=Path('renko/renko-v12-instant-history.js');h=p.read_text()
-          h=h.replace("await R.setMethod(R.settings.method)","await (R.refresh?R.refresh():R.setMethod(R.settings.method))")
-          h=h.replace("version:'1.2.0'","version:'1.3.0'")
-          if 'R.refresh?R.refresh()' not in h:raise SystemExit('history refresh isolation missing')
-          p.write_text(h)
-
-          # 6) Profiles: decimal comma support + verify ACTIVE BOX, not merely settings object.
-          p=Path('renko/renko-v12-method-profiles.js');q=p.read_text()
-          needle="const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));"
-          if 'const parseNum=' not in q:q=q.replace(needle,needle+"\nconst parseNum=(v,fallback)=>{const n=Number(String(v??'').trim().replace(/,/g,'.'));return Number.isFinite(n)?n:fallback};",1)
-          q=q.replace("Number($('v12AtrLength')?.value)||profiles.atr.atrLength","parseNum($('v12AtrLength')?.value,profiles.atr.atrLength)")
-          q=q.replace("Number($('v12TraditionalBox')?.value)||profiles.traditional.boxSize","parseNum($('v12TraditionalBox')?.value,profiles.traditional.boxSize)")
-          q=q.replace("Number($('v12Percentage')?.value)||profiles.percentage.percentage","parseNum($('v12Percentage')?.value,profiles.percentage.percentage)")
-          va=q.index('function verify(method){');vb=q.index('\nasync function applyProfile',va)
-          q=q[:va]+r'''function decimals(x){const z=String(x);if(z.includes('e-'))return Math.min(12,Number(z.split('e-')[1])||0);const i=z.indexOf('.');return i<0?0:Math.min(12,z.length-i-1)}
-          function expectedBox(method){
-            const c=engine?.settings||{},st=engine?.state||{},tick=Number(st.tickSize),p=profiles[method];let raw=NaN;
-            if(method==='traditional')raw=Number(p.boxSize);
-            else if(method==='atr')raw=Number(st.atrBox);
-            else if(method==='percentage')raw=Math.abs(Number(st.ltpSnapshot))*Number(p.percentage)/100;
-            if(!(raw>0))return NaN;if(!(tick>0))return raw;const n=Math.max(1,Math.round(raw/tick)),d=decimals(tick);return Number((n*tick).toFixed(d))
-          }
-          function verify(method){
-            const c=engine?.settings||{},p=profiles[method],box=Number(engine?.state?.box),exp=expectedBox(method),tick=Number(engine?.state?.tickSize)||0;
-            if(c.method!==method)return false;if(c.wicks!==p.wicks||Number(c.confirmBricks)!==Number(p.confirmBricks))return false;
-            if(method==='atr'&&Number(c.atrLength)!==Number(p.atrLength))return false;
-            if(method==='traditional'&&Math.abs(Number(c.traditionalBox)-Number(p.boxSize))>Math.max(1e-12,Math.abs(Number(p.boxSize))*1e-10))return false;
-            if(method==='percentage'&&Math.abs(Number(c.percentage)-Number(p.percentage)/100)>1e-12)return false;
-            return Number.isFinite(box)&&Number.isFinite(exp)&&Math.abs(box-exp)<=Math.max(tick*.51,Math.abs(exp)*1e-9,1e-10)
-          }'''+q[vb:]
-          q=q.replace("version:'2.0.0'","version:'2.2.0'").replace("version:'2.1.0'","version:'2.2.0'")
-          q=q.replace("storageKey:STORE,verify}","storageKey:STORE,verify,expectedBox,inputContract:'draft-never-overwritten-v2',applyContract:'verified-active-box-v1'}")
-          if "applyContract:'verified-active-box-v1'" not in q:raise SystemExit('profile active-box verification missing')
-          p.write_text(q)
-
-          # 7) Cache-bust every runtime that changed.
-          p=Path('renko/index.html');i=p.read_text()
-          import re
-          i=re.sub(r'renko-v12\.js\?v=\d+','renko-v12.js?v=122',i)
-          i=re.sub(r'renko-v12-method-profiles\.js\?v=\d+','renko-v12-method-profiles.js?v=220',i)
-          i=re.sub(r'renko-v12-instant-history\.js\?v=\d+','renko-v12-instant-history.js?v=130',i)
-          p.write_text(i)
-
-          # 8) Browser acceptance must wait for the actual applied box, not a stale positive box.
-          p=Path('tools/renko-v12-functional.mjs');t=p.read_text()
-          if "await page.waitForTimeout(1800);" not in t:
-            t=t.replace("const frameHandle=await page.waitForSelector('iframe.rwa-research-legacy-frame',{timeout:30000});","await page.waitForTimeout(1800);\n  const frameHandle=await page.waitForSelector('iframe.rwa-research-legacy-frame',{timeout:30000});",1)
-          old="await frame.waitForFunction(()=>window.RWARenkoV12.settings.method==='traditional'&&Math.abs(Number(window.RWARenkoV12.settings.traditionalBox)-37.5)<1e-9&&window.RWARenkoV12.settings.wicks===false&&Number(window.RWARenkoV12.settings.confirmBricks)===1&&Number(window.RWARenkoV12.state.box)>0,{timeout:60000});"
-          new="await frame.waitForFunction(()=>window.RWARenkoV12.settings.method==='traditional'&&Math.abs(Number(window.RWARenkoV12.settings.traditionalBox)-37.5)<1e-9&&window.RWARenkoV12.settings.wicks===false&&Number(window.RWARenkoV12.settings.confirmBricks)===1&&Math.abs(Number(window.RWARenkoV12.state.box)-37.5)<0.011,{timeout:60000});"
-          if old in t:t=t.replace(old,new)
-          t=t.replace("window.RWARenkoV12MethodProfiles?.version==='2.1.0'","['2.2.0'].includes(window.RWARenkoV12MethodProfiles?.version)")
-          t=t.replace("window.RWARenkoV12?.version==='12.1.0'","window.RWARenkoV12?.version==='12.2.0'")
-          p.write_text(t)
           PY
 
-      - name: Static + engine contracts
+      - name: Static setup and formation contracts
         shell: bash
         run: |
           set -euo pipefail
           node --check superapp-v5.js
-          node --check renko/renko-v12.js
-          node --check renko/renko-v12-worker.js
-          node --check renko/renko-v12-method-profiles.js
-          node --check renko/renko-v12-instant-history.js
-          node --check tools/renko-v12-functional.mjs
-          grep -Fq 'superapp-v5.js?v=8' index.html
-          grep -Fq "tab==='renko'?'122':'1'" superapp-v5.js
+          node --check renko/renko-v13.js
+          node --check renko/renko-v13-worker.js
+          node --check renko/renko-v13-method-profiles.js
+          node --check tools/renko-v13-functional.mjs
+          grep -Fq 'superapp-v5.js?v=13' index.html
           ! grep -Fq 'setTimeout(routeFromHash,800)' superapp-v5.js
-          grep -Fq "version:'12.2.0'" renko/renko-v12.js
-          grep -Fq "applyContract:'clear-old-box-await-new-build-v1'" renko/renko-v12.js
-          grep -Fq "buildContract:'latest-build-wins-v2'" renko/renko-v12.js
-          grep -Fq 'id!==S.buildSeq' renko/renko-v12.js
-          grep -Fq 'S.box=NaN' renko/renko-v12.js
-          grep -Fq 'loadOlder(120,36)' renko/renko-v12.js
-          grep -Fq 'R.refresh?R.refresh()' renko/renko-v12-instant-history.js
-          grep -Fq "version:'2.2.0'" renko/renko-v12-method-profiles.js
-          grep -Fq "applyContract:'verified-active-box-v1'" renko/renko-v12-method-profiles.js
-          grep -Fq 'renko-v12.js?v=122' renko/index.html
-          grep -Fq 'renko-v12-method-profiles.js?v=220' renko/index.html
-          grep -Fq 'renko-v12-instant-history.js?v=130' renko/index.html
+          grep -Fq "tab==='renko'?'130':'1'" superapp-v5.js
+          grep -Fq 'renko-v13.js?v=130' renko/index.html
+          grep -Fq 'renko-v13-method-profiles.js?v=130' renko/index.html
+          ! grep -Eq '<script src="renko-v12(-|\.)' renko/index.html
+          grep -Fq "liveDrain:'all-unseen-v3-trades-in-order'" renko/renko-v13.js
+          grep -Fq "rebuildRule:'latest-build-wins-and-replay-pending-live'" renko/renko-v13.js
+          grep -Fq "percentageRule:'confirmed-renko-level-times-percent'" renko/renko-v13.js
+          grep -Fq 'if(S.building){queuePending(t);return false}' renko/renko-v13.js
+          grep -Fq 'unseen.reverse();for(const t of unseen)' renko/renko-v13.js
+          grep -Fq "setupContract:'independent-method-profiles'" renko/renko-v13-method-profiles.js
+          grep -Fq "inputContract:'draft-never-overwritten'" renko/renko-v13-method-profiles.js
           git diff --check
+
+      - name: Formation engine unit matrix
+        shell: bash
+        run: |
           node - <<'NODE'
-          const fs=require('fs'),vm=require('vm'),code=fs.readFileSync('renko/renko-v12-worker.js','utf8');
-          const s={console,postMessage(){}};s.self=s;s.globalThis=s;vm.createContext(s);vm.runInContext(code,s);const E=s.RenkoV12Engine;
-          const ticks=[100,110,120,170].map((price,i)=>({id:i+1,price,time:i+1}));
-          const r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:true,ticks});if(r.bricks.length!==7||r.bricks.at(-1).close!==170)throw Error('immediate lock failed');
-          const t=E.buildTicks({method:'traditional',traditionalBox:37.5,tickSize:.01,wicks:true,ticks});if(Math.abs(t.box-37.5)>1e-9)throw Error('traditional box failed');
-          console.log('RENKO worker contracts PASS');
+          const fs=require('fs'),vm=require('vm');
+          const code=fs.readFileSync('renko/renko-v13-worker.js','utf8');
+          const s={console,postMessage(){}};s.self=s;s.globalThis=s;vm.createContext(s);vm.runInContext(code,s);const E=s.RenkoV13Engine;
+          const mk=prices=>prices.map((price,i)=>({id:i+1,price,time:i+1}));
+          let r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:false,ticks:mk([100,110,120,170])});
+          if(r.bricks.length!==7||r.bricks.at(-1).close!==170)throw Error('multi-brick continuation failed');
+          r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:false,ticks:mk([100,110,120,100,90])});
+          if(r.bricks.length!==4||r.bricks[2].isReversal!==true||r.bricks[2].open!==110||r.bricks[2].close!==100||r.bricks[3].close!==90)throw Error('2-box reversal failed');
+          r=E.buildTicks({method:'atr',atrValue:20,atrFactor:.5,tickSize:.01,wicks:false,ticks:mk([100,110,120])});
+          if(Math.abs(r.box-10)>.001)throw Error('ATR × Factor mapping failed');
+          r=E.buildTicks({method:'percentage',percentage:.10,tickSize:.01,wicks:false,ticks:mk([100,150])});
+          const closes=r.bricks.map(x=>Number(x.close.toFixed(2)));
+          if(JSON.stringify(closes)!==JSON.stringify([110,121,133.1,146.41]))throw Error('dynamic percentage confirmed-level sizing failed: '+JSON.stringify(closes));
+          if(r.bricks.some(b=>b.high!==Math.max(b.open,b.close)||b.low!==Math.min(b.open,b.close)))throw Error('wicks=false changed body geometry');
+          console.log('RENKO V13 FORMATION UNIT MATRIX PASS');
           NODE
 
       - name: Install Playwright Chromium
@@ -215,25 +116,25 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Browser acceptance - setup + deep history
+      - name: Browser acceptance - setup and formation
         shell: bash
         run: |
-          python3 -m http.server 8080 > /tmp/renko-http.log 2>&1 &
+          python3 -m http.server 8080 > /tmp/renko-v13-http.log 2>&1 &
           server=$!
           trap 'kill $server || true' EXIT
           for i in {1..30}; do curl -fsS http://127.0.0.1:8080/ >/dev/null && break || true; sleep 1; done
-          RENKO_TEST_BASE='http://127.0.0.1:8080/' node tools/renko-v12-functional.mjs
+          RENKO_TEST_BASE='http://127.0.0.1:8080/' node tools/renko-v13-functional.mjs
 
-      - name: Persist only browser-verified source
+      - name: Persist browser-verified production source
         shell: bash
         run: |
-          if git diff --quiet -- index.html superapp-v5.js renko/renko-v12.js renko/renko-v12-method-profiles.js renko/renko-v12-instant-history.js renko/index.html tools/renko-v12-functional.mjs; then
-            echo 'RENKO source already verified'
+          if git diff --quiet -- index.html superapp-v5.js renko/index.html; then
+            echo 'Production shell already on verified V13'
           else
             git config user.name 'copytolive-actions'
             git config user.email 'actions@users.noreply.github.com'
-            git add index.html superapp-v5.js renko/renko-v12.js renko/renko-v12-method-profiles.js renko/renko-v12-instant-history.js renko/index.html tools/renko-v12-functional.mjs
-            git commit -m 'Fix RENKO setup inputs and continuous deep history'
+            git add index.html superapp-v5.js renko/index.html
+            git commit -m 'Activate verified RENKO V13 setup and lossless formation'
             git pull --rebase origin main
             git push origin HEAD:main
           fi
@@ -246,12 +147,15 @@ jobs:
           path: '.'
 
   deploy:
-    needs: verify-package-renko-v12
+    needs: verify-renko-v13
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     steps:
-      - name: Deploy verified Pages artifact
+      - name: Deploy verified RENKO V13 Pages artifact
         id: deployment
         uses: actions/deploy-pages@v4
