@@ -1,4 +1,4 @@
-name: RENKO V13 Setup + Formation Production Gate
+name: RENKO V14 TradingView Parity Production Gate
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
       - "index.html"
       - "superapp-v5.js"
       - "renko/**"
-      - "tools/renko-v13-functional.mjs"
+      - "tools/renko-v14-functional.mjs"
       - ".github/workflows/renko-v11-pages.yml"
   workflow_dispatch:
 
@@ -17,98 +17,95 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "renko-v13-pages"
+  group: "renko-v14-pages"
   cancel-in-progress: false
 
 jobs:
-  verify-renko-v13:
+  verify-renko-v14:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Activate stable V13 shell and runtime
+      - name: Activate V14 TradingView documented parity
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
 
-          # Parent Research shell: never destroy/recreate an iframe after the user starts editing setup.
           p=Path('superapp-v5.js');s=p.read_text()
           s=s.replace("setTimeout(routeFromHash,0);setTimeout(routeFromHash,800);","setTimeout(routeFromHash,0);")
+          s=re.sub(r"tab==='renko'\?'\d+':'1'","tab==='renko'?'140':'1'",s)
           old="const toolUrl=`${tab}/?embed=1&symbol=${encodeURIComponent(sym)}`;"
-          new="const toolUrl=`${tab}/?embed=1&v=${tab==='renko'?'130':'1'}&symbol=${encodeURIComponent(sym)}`;"
-          if old in s:s=s.replace(old,new)
-          s=re.sub(r"const toolUrl=`\$\{tab\}/\?embed=1&v=\$\{tab==='renko'\?'\d+':'1'\}&symbol=\$\{encodeURIComponent\(sym\)\}`;",new,s,count=1)
-          if 'setTimeout(routeFromHash,800)' in s:raise SystemExit('duplicate Research iframe rerender still present')
-          if "tab==='renko'?'130':'1'" not in s:raise SystemExit('RENKO iframe cache version missing')
+          if old in s:s=s.replace(old,"const toolUrl=`${tab}/?embed=1&v=${tab==='renko'?'140':'1'}&symbol=${encodeURIComponent(sym)}`;")
+          if "tab==='renko'?'140':'1'" not in s:raise SystemExit('RENKO route version 140 missing')
+          if 'setTimeout(routeFromHash,800)' in s:raise SystemExit('Research iframe still rerenders')
           p.write_text(s)
 
-          # Root shell cache-bust.
-          p=Path('index.html');s=p.read_text();s=re.sub(r'superapp-v5\.js\?v=\d+','superapp-v5.js?v=13',s);p.write_text(s)
+          p=Path('index.html');s=p.read_text();s=re.sub(r'superapp-v5\.js\?v=\d+','superapp-v5.js?v=14',s);p.write_text(s)
 
-          # Child RENKO route must load only the new formation core + stable profiles.
           p=Path('renko/index.html');s=p.read_text()
-          s=s.replace('RENKO V12 — Tick Native','RENKO V13 — Lossless Tick Native')
-          s=s.replace('ATR · TICK · V12','ATR · TICK · V13')
-          s=s.replace('RENKO V12 tick-native chart','RENKO V13 lossless tick-native chart')
-          s=s.replace('PERCENTAGE (LTP)','PERCENTAGE')
-          s=s.replace('RENKO V12 — tick formation, immediate close & wick rules','RENKO V13 — setup, lossless tick formation & reversal rules')
-          s=s.replace('The percentage is applied to the symbol-load last traded price snapshot, rounded to Binance minimum tick size. Formation after sizing remains tick-by-tick.','The percentage is applied to each confirmed Renko level and recalculated after every confirmed brick, rounded to Binance minimum tick size.')
-          s=s.replace('ATR is used only to assign the box size. Because ATR mathematically requires bars, V12 calibrates it from recent completed 1-minute bars internally. That hidden calibration never delays brick confirmation: trades still lock bricks immediately.','ATR is used only to assign the box size: Wilder ATR from completed 1-minute bars × ATR Factor. The bar calibration never delays brick confirmation: every buffered trade still locks bricks immediately.')
-          s=re.sub(r'<script src="renko-v3\.js\?v=\d+"></script><script src="renko-v12\.js\?v=\d+"></script><script src="renko-v12-method-profiles\.js\?v=\d+"></script><script src="renko-v12-instant-history\.js\?v=\d+"></script>', '<script src="renko-v3.js?v=31"></script><script src="renko-v13.js?v=130"></script><script src="renko-v13-method-profiles.js?v=130"></script>', s)
-          if 'renko-v13.js?v=130' not in s or 'renko-v13-method-profiles.js?v=130' not in s:raise SystemExit('V13 runtime scripts missing')
-          if re.search(r'<script src="renko-v12(?:-|\.)',s):raise SystemExit('legacy V12 runtime still loaded')
+          s=s.replace('RENKO V13 — Lossless Tick Native','RENKO V14 — TradingView Parity')
+          s=s.replace('RENKO V13 lossless tick-native chart','RENKO V14 TradingView documented-parity Renko chart')
+          s=s.replace('ATR · TICK · V13','ATR · 1M · TV PARITY')
+          s=s.replace('RENKO V13 — setup, lossless tick formation & reversal rules','RENKO V14 — TradingView source, confirmation, projection & wick rules')
+          s=s.replace('RENKO V12 is an independent tick-native Renko implementation.','RENKO V14 is an independent implementation of TradingView documented Renko rules.')
+          s=s.replace('Preparing RENKO V12…','Preparing RENKO V14…')
+          s=s.replace('Loading recent trade history first, then switching to individual live @trade ticks. No 1-minute close is required.','Loading completed source-resolution bars for confirmed history; live prices create projection bricks until the source bar closes.')
+          s=s.replace('<strong>TICK MODE</strong> · if one trade crosses 5 boxes, all 5 bricks lock immediately','<strong>TV PARITY</strong> · realtime bricks are projections until the selected source-resolution bar closes')
+          s=s.replace('There is no 1m/3m/5m chart interval. Every incoming Binance trade is processed immediately against the current Renko thresholds.','Historical bricks are calculated from the selected chart-resolution source. Realtime prices build projection bricks; they become confirmed only after the source-resolution bar closes.')
+          s=s.replace('If one real trade jumps across five box thresholds, five bricks are confirmed in that same processing event. Nothing waits for a candle close.','A realtime move can project multiple bricks immediately, but projected bricks remain provisional until the selected source-resolution bar closes.')
+          s=s.replace('The percentage is applied to each confirmed Renko level and recalculated after every confirmed brick, rounded to Binance minimum tick size.','The percentage is applied to the last traded price snapshot when the symbol is loaded, rounded to Binance minimum tick size, and that box size is applied consistently across bars.')
+          s=s.replace('ATR is used only to assign the box size: Wilder ATR from completed 1-minute bars × ATR Factor. The bar calibration never delays brick confirmation: every buffered trade still locks bricks immediately.','ATR uses the Wilder ATR value from the regular source-resolution chart. ATR Length is the assignment input, matching TradingView documented settings.')
+          s=s.replace('Wicks use actual trade extremes accumulated before the next brick forms. Up bricks can carry the discarded low excursion; down bricks can carry the discarded high excursion.','Wicks represent discarded source movement: with Close source they use discarded close extremes; with OHLC source they use High/Low. High wicks occur on down bricks and Low wicks on up bricks.')
+          s=s.replace('Recent history is reconstructed from Binance public aggregate trades, then live operation uses individual @trade events. Older trades load when you pan left.','Confirmed history is reconstructed from completed Binance bars at the selected source resolution. Older source bars load when you pan left; realtime trades are projection input only.')
+          s=s.replace('V12 intentionally follows the requested tick-native behavior. It does not wait for TradingView-style source-interval confirmation. This removes the exact problem where price already crosses several boxes but bricks remain unconfirmed until a 1-minute candle closes.','V14 intentionally follows TradingView documented source-interval confirmation. This means realtime bricks can project immediately but cannot become historical confirmed bricks until the selected source bar closes.')
+          s=re.sub(r'<script src="renko-v3\.js\?v=\d+"></script><script src="renko-v13\.js\?v=\d+"></script><script src="renko-v13-method-profiles\.js\?v=\d+"></script>', '<script src="renko-v3.js?v=31"></script><script src="renko-v14.js?v=140"></script><script src="renko-v14-method-profiles.js?v=140"></script>', s)
+          if 'renko-v14.js?v=140' not in s or 'renko-v14-method-profiles.js?v=140' not in s:raise SystemExit('V14 runtime scripts missing')
+          if re.search(r'<script src="renko-v1[23](?:-|\.)',s):raise SystemExit('legacy V12/V13 runtime still loaded')
           p.write_text(s)
           PY
 
-      - name: Static setup and formation contracts
+      - name: Static parity contracts
         shell: bash
         run: |
           set -euo pipefail
           node --check superapp-v5.js
-          node --check renko/renko-v13.js
-          node --check renko/renko-v13-worker.js
-          node --check renko/renko-v13-method-profiles.js
-          node --check tools/renko-v13-functional.mjs
-          grep -Fq 'superapp-v5.js?v=13' index.html
+          node --check renko/renko-v14.js
+          node --check renko/renko-v14-worker.js
+          node --check renko/renko-v14-method-profiles.js
+          node --check tools/renko-v14-functional.mjs
+          grep -Fq 'superapp-v5.js?v=14' index.html
+          grep -Fq "tab==='renko'?'140':'1'" superapp-v5.js
           ! grep -Fq 'setTimeout(routeFromHash,800)' superapp-v5.js
-          grep -Fq "tab==='renko'?'130':'1'" superapp-v5.js
-          grep -Fq 'renko-v13.js?v=130' renko/index.html
-          grep -Fq 'renko-v13-method-profiles.js?v=130' renko/index.html
-          ! grep -Eq '<script src="renko-v12(-|\.)' renko/index.html
-          grep -Fq "liveDrain:'all-unseen-v3-trades-in-order'" renko/renko-v13.js
-          grep -Fq "rebuildRule:'latest-build-wins-and-replay-pending-live'" renko/renko-v13.js
-          grep -Fq "percentageRule:'confirmed-renko-level-times-percent'" renko/renko-v13.js
-          grep -Fq 'if(S.building){queuePending(t);return false}' renko/renko-v13.js
-          grep -Fq 'unseen.reverse();for(const t of unseen)' renko/renko-v13.js
-          grep -Fq "setupContract:'independent-method-profiles'" renko/renko-v13-method-profiles.js
-          grep -Fq "inputContract:'draft-never-overwritten'" renko/renko-v13-method-profiles.js
+          grep -Fq 'renko-v14.js?v=140' renko/index.html
+          grep -Fq 'renko-v14-method-profiles.js?v=140' renko/index.html
+          ! grep -Eq '<script src="renko-v1[23](-|\.)' renko/index.html
+          grep -Fq "percentageRule:'symbol-load-ltp-fixed-across-bars'" renko/renko-v14.js
+          grep -Fq "realtimeBehavior:'projection-until-source-bar-closes'" renko/renko-v14.js
+          grep -Fq "historicalConfirmation:'source-resolution-close'" renko/renko-v14.js
+          grep -Fq "sourceModes:['close','ohlc']" renko/renko-v14.js
+          grep -Fq 'applyRequestedSymbol' renko/renko-v14.js
+          grep -Fq "setupContract:'independent-method-profiles-plus-global-tv-source'" renko/renko-v14-method-profiles.js
           git diff --check
 
-      - name: Formation engine unit matrix
+      - name: TradingView documented formation unit matrix
         shell: bash
         run: |
           node - <<'NODE'
-          const fs=require('fs'),vm=require('vm');
-          const code=fs.readFileSync('renko/renko-v13-worker.js','utf8');
-          const s={console,postMessage(){}};s.self=s;s.globalThis=s;vm.createContext(s);vm.runInContext(code,s);const E=s.RenkoV13Engine;
-          const mk=prices=>prices.map((price,i)=>({id:i+1,price,time:i+1}));
-          let r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:false,ticks:mk([100,110,120,170])});
-          if(r.bricks.length!==7||r.bricks.at(-1).close!==170)throw Error('multi-brick continuation failed');
-          r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:false,ticks:mk([100,110,120,100,90])});
-          if(r.bricks.length!==4||r.bricks[2].isReversal!==true||r.bricks[2].open!==110||r.bricks[2].close!==100||r.bricks[3].close!==90)throw Error('2-box reversal failed');
-          r=E.buildTicks({method:'atr',atrValue:20,atrFactor:.5,tickSize:.01,wicks:false,ticks:mk([100,110,120])});
-          if(Math.abs(r.box-10)>.001)throw Error('ATR × Factor mapping failed');
-          r=E.buildTicks({method:'percentage',percentage:.10,tickSize:.01,wicks:false,ticks:mk([100,150])});
-          const closes=r.bricks.map(x=>Number(x.close.toFixed(2)));
-          if(JSON.stringify(closes)!==JSON.stringify([110,121,133.1,146.41]))throw Error('dynamic percentage confirmed-level sizing failed: '+JSON.stringify(closes));
-          if(r.bricks.some(b=>b.high!==Math.max(b.open,b.close)||b.low!==Math.min(b.open,b.close)))throw Error('wicks=false changed body geometry');
-          console.log('RENKO V13 FORMATION UNIT MATRIX PASS');
+          const fs=require('fs'),vm=require('vm');const code=fs.readFileSync('renko/renko-v14-worker.js','utf8');const s={console,postMessage(){}};s.self=s;s.globalThis=s;vm.createContext(s);vm.runInContext(code,s);const E=s.RenkoV14Engine;
+          const bar=(o,h,l,c,t)=>[t,o,h,l,c,0,t+59999];
+          let bars=[bar(100,100,100,100,0),bar(110,110,110,110,60000),bar(120,120,120,120,120000),bar(170,170,170,170,180000)];
+          let r=E.buildBars({method:'traditional',traditionalBox:10,tickSize:1,source:'close',wicks:false,bars});if(r.bricks.length!==7||r.bricks.at(-1).close!==170)throw Error('1-box continuation/multi-brick close failed');
+          bars=[bar(100,100,100,100,0),bar(110,110,110,110,60000),bar(120,120,120,120,120000),bar(100,100,100,100,180000),bar(90,90,90,90,240000)];r=E.buildBars({method:'traditional',traditionalBox:10,tickSize:1,source:'close',wicks:false,bars});if(r.bricks.length!==4||!r.bricks[2].isReversal||r.bricks[2].open!==110||r.bricks[2].close!==100)throw Error('2-box reversal failed');
+          bars=[bar(100,100,100,100,0),bar(150,150,150,150,60000)];r=E.buildBars({method:'percentage',percentage:.10,ltpSnapshot:100,tickSize:1,source:'close',wicks:false,bars});if(r.box!==10||JSON.stringify(r.bricks.map(x=>x.close))!==JSON.stringify([110,120,130,140,150]))throw Error('Percentage LTP must be fixed across bars');
+          bars=[bar(100,105,95,100,0),bar(100,105,95,100,60000),bar(100,105,95,100,120000),bar(100,105,95,100,180000)];r=E.buildBars({method:'atr',atrLength:3,tickSize:1,source:'close',wicks:false,bars});if(Math.abs(r.atrValue-10)>.0001||Math.abs(r.box-10)>.0001)throw Error('Wilder ATR sizing failed');
+          bars=[bar(100,100,100,100,0),bar(90,90,90,90,60000),bar(95,95,95,95,120000),bar(80,80,80,80,180000)];r=E.buildBars({method:'traditional',traditionalBox:10,tickSize:1,source:'close',wicks:true,bars});const last=r.bricks.at(-1);if(last.direction!==-1||last.high!==95)throw Error('Directional close-source wick failed');
+          console.log('RENKO V14 DOCUMENTED FORMATION MATRIX PASS');
           NODE
 
       - name: Install Playwright Chromium
@@ -116,25 +113,25 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Browser acceptance - setup and formation
+      - name: Browser acceptance - BTC ETH SOL XRP + setup
         shell: bash
         run: |
-          python3 -m http.server 8080 > /tmp/renko-v13-http.log 2>&1 &
+          python3 -m http.server 8080 > /tmp/renko-v14-http.log 2>&1 &
           server=$!
           trap 'kill $server || true' EXIT
           for i in {1..30}; do curl -fsS http://127.0.0.1:8080/ >/dev/null && break || true; sleep 1; done
-          RENKO_TEST_BASE='http://127.0.0.1:8080/' node tools/renko-v13-functional.mjs
+          RENKO_TEST_BASE='http://127.0.0.1:8080/' node tools/renko-v14-functional.mjs
 
-      - name: Persist browser-verified production source
+      - name: Persist browser-verified V14 production source
         shell: bash
         run: |
           if git diff --quiet -- index.html superapp-v5.js renko/index.html; then
-            echo 'Production shell already on verified V13'
+            echo 'Production shell already on verified V14'
           else
             git config user.name 'copytolive-actions'
             git config user.email 'actions@users.noreply.github.com'
             git add index.html superapp-v5.js renko/index.html
-            git commit -m 'Activate verified RENKO V13 setup and lossless formation'
+            git commit -m 'Activate verified RENKO V14 TradingView parity'
             git pull --rebase origin main
             git push origin HEAD:main
           fi
@@ -147,7 +144,7 @@ jobs:
           path: '.'
 
   deploy:
-    needs: verify-renko-v13
+    needs: verify-renko-v14
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -156,6 +153,6 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - name: Deploy verified RENKO V13 Pages artifact
+      - name: Deploy verified RENKO V14 Pages artifact
         id: deployment
         uses: actions/deploy-pages@v4
