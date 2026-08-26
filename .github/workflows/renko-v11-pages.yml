@@ -30,7 +30,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Activate V14 TradingView documented parity
+      - name: Activate and normalize V14 TradingView documented parity
         shell: bash
         run: |
           python - <<'PY'
@@ -39,34 +39,46 @@ jobs:
 
           p=Path('superapp-v5.js');s=p.read_text()
           s=s.replace("setTimeout(routeFromHash,0);setTimeout(routeFromHash,800);","setTimeout(routeFromHash,0);")
-          s=re.sub(r"tab==='renko'\?'\d+':'1'","tab==='renko'?'140':'1'",s)
+          s=re.sub(r"tab==='renko'\?'\d+':'1'","tab==='renko'?'141':'1'",s)
           old="const toolUrl=`${tab}/?embed=1&symbol=${encodeURIComponent(sym)}`;"
-          if old in s:s=s.replace(old,"const toolUrl=`${tab}/?embed=1&v=${tab==='renko'?'140':'1'}&symbol=${encodeURIComponent(sym)}`;")
-          if "tab==='renko'?'140':'1'" not in s:raise SystemExit('RENKO route version 140 missing')
+          if old in s:s=s.replace(old,"const toolUrl=`${tab}/?embed=1&v=${tab==='renko'?'141':'1'}&symbol=${encodeURIComponent(sym)}`;")
+          if "tab==='renko'?'141':'1'" not in s:raise SystemExit('RENKO route version 141 missing')
           if 'setTimeout(routeFromHash,800)' in s:raise SystemExit('Research iframe still rerenders')
           p.write_text(s)
 
-          p=Path('index.html');s=p.read_text();s=re.sub(r'superapp-v5\.js\?v=\d+','superapp-v5.js?v=14',s);p.write_text(s)
+          p=Path('index.html');s=p.read_text();s=re.sub(r'superapp-v5\.js\?v=\d+','superapp-v5.js?v=15',s);p.write_text(s)
+
+          # TradingView Percentage(LTP) additional rounding: their published example turns 2.16 into 2.
+          p=Path('renko/renko-v14-worker.js');s=p.read_text()
+          if 'function roundSig1(' not in s:
+            s=s.replace("function floorTick(v,t){", "function roundSig1(v){v=num(v);if(!(v>0))return v;const mag=10**Math.floor(Math.log10(v));return Math.round(v/mag)*mag}\nfunction floorTick(v,t){",1)
+          old="if(method==='percentage'){const ltp=Math.abs(num(o.ltpSnapshot)||num(lastPrice));return roundTick(ltp*Math.max(.000001,num(o.percentage)||.01),tick)}"
+          new="if(method==='percentage'){const ltp=Math.abs(num(o.ltpSnapshot)||num(lastPrice)),raw=ltp*Math.max(.000001,num(o.percentage)||.01);return roundTick(roundSig1(raw),tick)}"
+          if old in s:s=s.replace(old,new,1)
+          if 'roundTick(roundSig1(raw),tick)' not in s:raise SystemExit('Percentage LTP additional rounding missing')
+          p.write_text(s)
+
+          p=Path('renko/renko-v14.js');s=p.read_text().replace("new Worker('renko-v14-worker.js?v=140')","new Worker('renko-v14-worker.js?v=141')");p.write_text(s)
+
+          p=Path('renko/renko-v14-method-profiles.js');s=p.read_text()
+          if 'function roundSig1(' not in s:
+            s=s.replace("function roundTick(v,t){", "function roundSig1(v){v=Number(v);if(!(v>0))return v;const mag=10**Math.floor(Math.log10(v));return Math.round(v/mag)*mag}\nfunction roundTick(v,t){",1)
+          s=s.replace("if(method==='percentage')return roundTick(Math.abs(Number(st.ltpSnapshot))*Number(profiles.percentage.percentage)/100,tick);","if(method==='percentage')return roundTick(roundSig1(Math.abs(Number(st.ltpSnapshot))*Number(profiles.percentage.percentage)/100),tick);")
+          if 'roundTick(roundSig1(Math.abs(Number(st.ltpSnapshot))' not in s:raise SystemExit('Profile Percentage rounding parity missing')
+          p.write_text(s)
 
           p=Path('renko/index.html');s=p.read_text()
-          s=s.replace('RENKO V13 — Lossless Tick Native','RENKO V14 — TradingView Parity')
-          s=s.replace('RENKO V13 lossless tick-native chart','RENKO V14 TradingView documented-parity Renko chart')
-          s=s.replace('ATR · TICK · V13','ATR · 1M · TV PARITY')
-          s=s.replace('RENKO V13 — setup, lossless tick formation & reversal rules','RENKO V14 — TradingView source, confirmation, projection & wick rules')
-          s=s.replace('RENKO V12 is an independent tick-native Renko implementation.','RENKO V14 is an independent implementation of TradingView documented Renko rules.')
-          s=s.replace('Preparing RENKO V12…','Preparing RENKO V14…')
-          s=s.replace('Loading recent trade history first, then switching to individual live @trade ticks. No 1-minute close is required.','Loading completed source-resolution bars for confirmed history; live prices create projection bricks until the source bar closes.')
-          s=s.replace('<strong>TICK MODE</strong> · if one trade crosses 5 boxes, all 5 bricks lock immediately','<strong>TV PARITY</strong> · realtime bricks are projections until the selected source-resolution bar closes')
-          s=s.replace('There is no 1m/3m/5m chart interval. Every incoming Binance trade is processed immediately against the current Renko thresholds.','Historical bricks are calculated from the selected chart-resolution source. Realtime prices build projection bricks; they become confirmed only after the source-resolution bar closes.')
-          s=s.replace('If one real trade jumps across five box thresholds, five bricks are confirmed in that same processing event. Nothing waits for a candle close.','A realtime move can project multiple bricks immediately, but projected bricks remain provisional until the selected source-resolution bar closes.')
-          s=s.replace('The percentage is applied to each confirmed Renko level and recalculated after every confirmed brick, rounded to Binance minimum tick size.','The percentage is applied to the last traded price snapshot when the symbol is loaded, rounded to Binance minimum tick size, and that box size is applied consistently across bars.')
-          s=s.replace('ATR is used only to assign the box size: Wilder ATR from completed 1-minute bars × ATR Factor. The bar calibration never delays brick confirmation: every buffered trade still locks bricks immediately.','ATR uses the Wilder ATR value from the regular source-resolution chart. ATR Length is the assignment input, matching TradingView documented settings.')
-          s=s.replace('Wicks use actual trade extremes accumulated before the next brick forms. Up bricks can carry the discarded low excursion; down bricks can carry the discarded high excursion.','Wicks represent discarded source movement: with Close source they use discarded close extremes; with OHLC source they use High/Low. High wicks occur on down bricks and Low wicks on up bricks.')
-          s=s.replace('Recent history is reconstructed from Binance public aggregate trades, then live operation uses individual @trade events. Older trades load when you pan left.','Confirmed history is reconstructed from completed Binance bars at the selected source resolution. Older source bars load when you pan left; realtime trades are projection input only.')
-          s=s.replace('V12 intentionally follows the requested tick-native behavior. It does not wait for TradingView-style source-interval confirmation. This removes the exact problem where price already crosses several boxes but bricks remain unconfirmed until a 1-minute candle closes.','V14 intentionally follows TradingView documented source-interval confirmation. This means realtime bricks can project immediately but cannot become historical confirmed bricks until the selected source bar closes.')
-          s=re.sub(r'<script src="renko-v3\.js\?v=\d+"></script><script src="renko-v13\.js\?v=\d+"></script><script src="renko-v13-method-profiles\.js\?v=\d+"></script>', '<script src="renko-v3.js?v=31"></script><script src="renko-v14.js?v=140"></script><script src="renko-v14-method-profiles.js?v=140"></script>', s)
-          if 'renko-v14.js?v=140' not in s or 'renko-v14-method-profiles.js?v=140' not in s:raise SystemExit('V14 runtime scripts missing')
-          if re.search(r'<script src="renko-v1[23](?:-|\.)',s):raise SystemExit('legacy V12/V13 runtime still loaded')
+          s=s.replace('RENKO V14 TradingView documented-parity Renko chart: every trade can immediately confirm one or many Renko bricks. No candle-close interval lock.','RENKO V14 TradingView documented-parity Renko chart: historical bricks confirm from completed source-resolution bars and realtime movement is shown as projection until source-bar close.')
+          s=s.replace('<small id="sourceText">Tick-native Renko · every Binance trade can lock one or many bricks immediately · no candle-close interval.</small>','<small id="sourceText">TradingView documented parity · source-resolution history · realtime projection until source-bar close.</small>')
+          s=s.replace('<small>FORMATION</small><b>TRADE TICK</b>','<small>FORMATION</small><b>SOURCE BAR</b>')
+          s=s.replace('<small>LOCK RULE</small><b>Every trade</b>','<small>LOCK RULE</small><b>Bar close</b>')
+          s=s.replace('Signals use immediately confirmed tick bricks; execution reference uses real market price','Signals use confirmed Renko bricks only; projection bricks never trigger signals; execution reference uses real market price')
+          s=s.replace('Every threshold-crossing trade can confirm bricks immediately.','Projection can move intrabar; signals wait for confirmed source-bar Renko bricks.')
+          s=s.replace('<span>✓ actual-trade wicks</span><span>✓ every-trade lock</span>','<span>✓ source-based wicks</span><span>✓ projection → bar-close confirmation</span>')
+          s=s.replace('<div><b>Immediate multi-brick close</b>','<div><b>Realtime projection</b>')
+          s=re.sub(r'<script src="renko-v3\.js\?v=\d+"></script><script src="renko-v14\.js\?v=\d+"></script><script src="renko-v14-method-profiles\.js\?v=\d+"></script>', '<script src="renko-v3.js?v=31"></script><script src="renko-v14.js?v=141"></script><script src="renko-v14-method-profiles.js?v=141"></script>', s)
+          if 'renko-v14.js?v=141' not in s or 'renko-v14-method-profiles.js?v=141' not in s:raise SystemExit('V14.1 runtime scripts missing')
+          if 'TRADE TICK</b>' in s or '>Every trade</b>' in s:raise SystemExit('stale tick-lock labels remain')
           p.write_text(s)
           PY
 
@@ -79,18 +91,18 @@ jobs:
           node --check renko/renko-v14-worker.js
           node --check renko/renko-v14-method-profiles.js
           node --check tools/renko-v14-functional.mjs
-          grep -Fq 'superapp-v5.js?v=14' index.html
-          grep -Fq "tab==='renko'?'140':'1'" superapp-v5.js
+          grep -Fq 'superapp-v5.js?v=15' index.html
+          grep -Fq "tab==='renko'?'141':'1'" superapp-v5.js
           ! grep -Fq 'setTimeout(routeFromHash,800)' superapp-v5.js
-          grep -Fq 'renko-v14.js?v=140' renko/index.html
-          grep -Fq 'renko-v14-method-profiles.js?v=140' renko/index.html
-          ! grep -Eq '<script src="renko-v1[23](-|\.)' renko/index.html
+          grep -Fq 'renko-v14.js?v=141' renko/index.html
+          grep -Fq 'renko-v14-method-profiles.js?v=141' renko/index.html
           grep -Fq "percentageRule:'symbol-load-ltp-fixed-across-bars'" renko/renko-v14.js
           grep -Fq "realtimeBehavior:'projection-until-source-bar-closes'" renko/renko-v14.js
-          grep -Fq "historicalConfirmation:'source-resolution-close'" renko/renko-v14.js
           grep -Fq "sourceModes:['close','ohlc']" renko/renko-v14.js
           grep -Fq 'applyRequestedSymbol' renko/renko-v14.js
-          grep -Fq "setupContract:'independent-method-profiles-plus-global-tv-source'" renko/renko-v14-method-profiles.js
+          grep -Fq 'roundTick(roundSig1(raw),tick)' renko/renko-v14-worker.js
+          ! grep -Fq 'TRADE TICK</b>' renko/index.html
+          ! grep -Fq '>Every trade</b>' renko/index.html
           git diff --check
 
       - name: TradingView documented formation unit matrix
@@ -103,6 +115,8 @@ jobs:
           let r=E.buildBars({method:'traditional',traditionalBox:10,tickSize:1,source:'close',wicks:false,bars});if(r.bricks.length!==7||r.bricks.at(-1).close!==170)throw Error('1-box continuation/multi-brick close failed');
           bars=[bar(100,100,100,100,0),bar(110,110,110,110,60000),bar(120,120,120,120,120000),bar(100,100,100,100,180000),bar(90,90,90,90,240000)];r=E.buildBars({method:'traditional',traditionalBox:10,tickSize:1,source:'close',wicks:false,bars});if(r.bricks.length!==4||!r.bricks[2].isReversal||r.bricks[2].open!==110||r.bricks[2].close!==100)throw Error('2-box reversal failed');
           bars=[bar(100,100,100,100,0),bar(150,150,150,150,60000)];r=E.buildBars({method:'percentage',percentage:.10,ltpSnapshot:100,tickSize:1,source:'close',wicks:false,bars});if(r.box!==10||JSON.stringify(r.bricks.map(x=>x.close))!==JSON.stringify([110,120,130,140,150]))throw Error('Percentage LTP must be fixed across bars');
+          r=E.buildBars({method:'percentage',percentage:.01,ltpSnapshot:216,tickSize:.01,source:'close',wicks:false,bars:[bar(216,216,216,216,0),bar(220,220,220,220,60000)]});if(Math.abs(r.box-2)>.001)throw Error('TradingView Percentage LTP additional rounding example failed: '+r.box);
+          r=E.buildBars({method:'percentage',percentage:.01,ltpSnapshot:79130,tickSize:.01,source:'close',wicks:false,bars:[bar(79130,79130,79130,79130,0),bar(80000,80000,80000,80000,60000)]});if(Math.abs(r.box-800)>.001)throw Error('Percentage significant rounding failed: '+r.box);
           bars=[bar(100,105,95,100,0),bar(100,105,95,100,60000),bar(100,105,95,100,120000),bar(100,105,95,100,180000)];r=E.buildBars({method:'atr',atrLength:3,tickSize:1,source:'close',wicks:false,bars});if(Math.abs(r.atrValue-10)>.0001||Math.abs(r.box-10)>.0001)throw Error('Wilder ATR sizing failed');
           bars=[bar(100,100,100,100,0),bar(90,90,90,90,60000),bar(95,95,95,95,120000),bar(80,80,80,80,180000)];r=E.buildBars({method:'traditional',traditionalBox:10,tickSize:1,source:'close',wicks:true,bars});const last=r.bricks.at(-1);if(last.direction!==-1||last.high!==95)throw Error('Directional close-source wick failed');
           console.log('RENKO V14 DOCUMENTED FORMATION MATRIX PASS');
@@ -125,13 +139,13 @@ jobs:
       - name: Persist browser-verified V14 production source
         shell: bash
         run: |
-          if git diff --quiet -- index.html superapp-v5.js renko/index.html; then
-            echo 'Production shell already on verified V14'
+          if git diff --quiet -- index.html superapp-v5.js renko/index.html renko/renko-v14.js renko/renko-v14-worker.js renko/renko-v14-method-profiles.js; then
+            echo 'Production source already on verified V14.1'
           else
             git config user.name 'copytolive-actions'
             git config user.email 'actions@users.noreply.github.com'
-            git add index.html superapp-v5.js renko/index.html
-            git commit -m 'Activate verified RENKO V14 TradingView parity'
+            git add index.html superapp-v5.js renko/index.html renko/renko-v14.js renko/renko-v14-worker.js renko/renko-v14-method-profiles.js
+            git commit -m 'Finalize verified RENKO V14 TradingView parity'
             git pull --rebase origin main
             git push origin HEAD:main
           fi
