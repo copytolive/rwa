@@ -29,6 +29,7 @@ need(html.includes('superapp-v5.css?v=6')&&html.includes('superapp-v5.js?v=6')&&
 need(legacy.includes("searchParams.get('embed')==='1'")&&legacy.includes('location.replace('),'legacy canonical/embed contract broken');
 for(const p of ['trade/index.html','asset/index.html','trader/index.html','backtest/index.html','renko/index.html'])need(read(p).includes('legacy-canonical.js'),`legacy shim missing in ${p}`);
 need(js.includes("canonical:'https://copytolive.github.io/rwa/'"),'canonical live URL missing');
-need(html.includes('RWA_LOCALE_FALLBACK_V1')&&legacy.includes('RWA_LOCALE_FALLBACK_V1'),'locale default fallback contract missing');
+need(html.includes('RWA_LOCALE_FALLBACK_V2')&&legacy.includes('RWA_LOCALE_FALLBACK_V2'),'locale default fallback contract missing');
 console.log('LOCALE_DEFAULT_SAFETY=PASS');
+need(browser.includes("locale:'en-US'")&&browser.includes('RWA_LOCALE_CI_PROBE_V2'),'deterministic locale CI contract missing'); console.log('LOCALE_CI_CONTRACT=PASS');
 console.log(pass.join('\n')); console.log(`ROOT_SCRIPT_COUNT=${scripts}`); console.log('SUPERAPP_V5_STATIC_AUDIT=PASS');
