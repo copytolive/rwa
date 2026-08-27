@@ -21,11 +21,11 @@ function loadPersistentMarketLayer(){
   if(!document.querySelector('link[data-rwa-persistent-market]')){
     const l=document.createElement('link');l.rel='stylesheet';l.href='persistent-market-workspaces-v1.css?v=1';l.dataset.rwaPersistentMarket='1';document.head.appendChild(l);
   }
+  if(!document.querySelector('script[data-rwa-persistent-market-router-v2]')){
+    const s=document.createElement('script');s.src='persistent-market-router-v2.js?v=2';s.async=true;s.dataset.rwaPersistentMarketRouterV2='1';document.body.appendChild(s);
+  }
   if(!document.querySelector('link[data-rwa-persistent-market-operability]')){
     const l=document.createElement('link');l.rel='stylesheet';l.href='persistent-market-operability-patch-v1.css?v=1';l.dataset.rwaPersistentMarketOperability='1';document.head.appendChild(l);
-  }
-  if(!document.querySelector('script[data-rwa-persistent-market]')){
-    const s=document.createElement('script');s.src='persistent-market-workspaces-v1.js?v=1';s.async=true;s.dataset.rwaPersistentMarket='1';document.body.appendChild(s);
   }
 }
 
@@ -183,7 +183,6 @@ PERF.observer_policy='hot-dom-periodic-1200ms';
 PERF.market_dom_flush_ms=500;
 PERF.book_flush_ms=320;
 PERF.trade_flush_ms=250;
-PERF.persistent_market_workspaces='v1';
-PERF.human_operability='persistent-market-patch-v1';
+PERF.persistent_market_workspaces='router-v2';
 window.RWAMarketPerformanceGuard=PERF;
 })();
