@@ -29,9 +29,15 @@ try{
 }catch{}
 
 function tv(){return window.RWARenkoTV||null}
+function sourceRevision(T=tv()){
+  const b=T?.state?.closedBars?.at?.(-1);return Number(b?.closeTime||b?.openTime)||0;
+}
 function contextKey(T=tv()){
   if(!T)return'';const s=T.state,st=T.settings;
-  return [s.generation,s.symbol,st.interval,st.source,st.wicks!==false?'w1':'w0',Number(s.tickSize)||0].join('|');
+  // Latest closed source bar is part of the cache context. Deep-history staging
+  // changes only the OLD edge, so this revision remains stable. A newly closed
+  // realtime bar changes it and forces a rewarm instead of reusing stale output.
+  return [s.generation,s.symbol,st.interval,st.source,st.wicks!==false?'w1':'w0',Number(s.tickSize)||0,sourceRevision(T)].join('|');
 }
 function barsKey(bars){
   const a=Array.isArray(bars)?bars:[],f=a[0],l=a.at(-1);
@@ -127,11 +133,14 @@ function stageInstant(length){
   const T=tv();if(!T||T.settings.method!=='atr'&&document.querySelector('[data-apply-method="atr"]')==null)return false;
   const entry=bestEntry(T,length);if(!entry)return false;
   const s=T.state,current=s.closedBars?.length||0;if(entry.bars.length<current)return false;
-  if(entry.bars.length>current){s.closedBars=entry.bars;s.historyPages=Math.max(Number(s.historyPages)||1,Math.ceil(entry.bars.length/1000))}
-  const started=performance.now();pendingInstant={length,ctx:entry.ctx,key:entry.key,started,cacheHit:false,buildMs:NaN};
+  // Always attach the exact cached bar array, even when length is unchanged.
+  // This prevents a one-minute realtime bar rollover or a previous async merge
+  // from leaving a same-length-but-different signature that would miss the cache.
+  s.closedBars=entry.bars;s.historyPages=Math.max(Number(s.historyPages)||1,Math.ceil(entry.bars.length/1000));
+  const started=performance.now(),p={length,ctx:entry.ctx,key:entry.key,started,cacheHit:false,buildMs:NaN};pendingInstant=p;
   document.documentElement.dataset.atrInstantStaged='true';document.documentElement.dataset.atrInstantLength=String(length);document.documentElement.dataset.atrBlockingMs='pending';
   setMetric(`ATR ${length.toLocaleString()} · INSTANT staged`,'staged');
-  requestAnimationFrame(()=>requestAnimationFrame(()=>finalizeInstant(pendingInstant)));
+  requestAnimationFrame(()=>requestAnimationFrame(()=>finalizeInstant(p)));
   return true;
 }
 function finalizeInstant(p){
@@ -161,23 +170,29 @@ E.build=function(bars,settings={},tick=0){
   return ORIGINAL_BUILD(bars,settings,tick);
 };
 
-// Register BEFORE renko-tv-atr-parity.js. On a prepared click this synchronously
-// attaches the already-fetched history so the parity layer immediately takes its
-// no-network fast branch and rebuilds from the exact cached engine output.
+// Register BEFORE renko-tv-atr-parity.js. Browser focus/blur dispatches `change`
+// BEFORE `click`; deep ATR used to start a network fetch during that change and
+// miss the prewarmed fast path. Stage on change/Enter as well as click so the
+// parity layer sees enough history immediately and never starts that request.
+const input=document.getElementById('atrLength');
+if(input){
+  input.addEventListener('change',()=>stageInstant(parseLength(input.value)),true);
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')stageInstant(parseLength(input.value))},true);
+  input.addEventListener('focus',()=>scheduleWarm(0),{passive:true});
+}
 document.addEventListener('click',e=>{
   const btn=e.target?.closest?.('[data-apply-method="atr"]');if(!btn)return;
   const length=parseLength(document.getElementById('atrLength')?.value);stageInstant(length);
 },true);
-document.getElementById('atrLength')?.addEventListener('focus',()=>scheduleWarm(0),{passive:true});
 document.querySelector('.method[data-method="atr"]')?.addEventListener('pointerenter',()=>scheduleWarm(0),{passive:true});
 window.addEventListener('renko:tv-ready',()=>scheduleWarm(250),{once:true});
 
-// If the ready event happened unusually early, or the symbol/interval changes,
-// warm the new context without touching startup-critical rendering.
+// If the ready event happened unusually early, the symbol/interval changes, or a
+// new source candle closes, warm the new revision without touching startup-critical rendering.
 setInterval(()=>{
   const T=tv();if(!T||T.state.status!=='live')return;const ctx=contextKey(T);
-  if(ctx&&ctx!==warmContext)scheduleWarm(0);
-},1500);
+  if(ctx&&ctx!==warmContext){document.documentElement.dataset.atrInstantReady='false';scheduleWarm(0)}
+},1000);
 
-window.RWARenkoATRInstant={version:'1.0.0',rule:'exact-worker-prewarm-zero-ms-total-blocking-cache-hit',targets:[...TARGETS],warm,stageInstant,bestEntry,get cacheSize(){return cache.size},get warmContext(){return warmContext}};
+window.RWARenkoATRInstant={version:'1.1.0',rule:'exact-worker-prewarm-zero-ms-total-blocking-cache-hit-source-revision-safe',targets:[...TARGETS],warm,stageInstant,bestEntry,contextKey,get cacheSize(){return cache.size},get warmContext(){return warmContext}};
 })();
