@@ -1,0 +1,39 @@
+name: RWA P16-P20 Live Production Verify
+
+on:
+  push:
+    branches: ['verify/live-p16-p20-v15-20260827']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Confirm production HTTP and V15 assets
+        run: |
+          curl -fsSL --retry 12 --retry-delay 5 'https://copytolive.github.io/rwa/?live-v15=1' -o /tmp/live-index.html
+          grep -Fq 'superapp-v5.js?v=13' /tmp/live-index.html
+          grep -Fq 'superapp-v5.css?v=13' /tmp/live-index.html
+          echo 'ONLINE_HTTP=PASS:200'
+          echo 'LIVE_V15_ASSETS=PASS'
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Full live Super App browser regression
+        env:
+          RWA_TEST_URL: https://copytolive.github.io/rwa/
+        run: |
+          node tools/superapp-v5-browser.mjs
+          node tools/superapp-p16-p20-browser.mjs
+          echo 'LIVE_PRODUCT_BROWSER=PASS'
+          echo 'P6_RESEARCH_TERMINAL_BROWSER_LIVE=PASS'
+          echo 'RWA_P16_P20_LIVE_1_8=READY'
