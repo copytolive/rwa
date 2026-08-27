@@ -32,18 +32,20 @@ jobs:
           datecol=out.columns[0]
           out.rename(columns={datecol:'Date'}, inplace=True)
           out['Date']=pd.to_datetime(out['Date'], utc=True)
-          if out[['Open','High','Low','Close']].isna().any().any():
-              raise SystemExit('NaN OHLC found')
-          if not ((out['High'] >= out[['Open','Close','Low']].max(axis=1)) & (out['Low'] <= out[['Open','Close','High']].min(axis=1))).all():
-              raise SystemExit('OHLC consistency failure')
-          out.to_csv('GC_F_YFINANCE_D1_2002_2026.csv', index=False)
-          b=Path('GC_F_YFINANCE_D1_2002_2026.csv').read_bytes()
+          out.to_csv('GC_F_YFINANCE_D1_2002_2026_RAW.csv', index=False)
+          nan_mask=out[['Open','High','Low','Close']].isna().any(axis=1)
+          ohlc_ok=(out['High'] >= out[['Open','Close','Low']].max(axis=1)) & (out['Low'] <= out[['Open','Close','High']].min(axis=1))
+          bad=out[nan_mask | (~ohlc_ok)].copy()
+          bad.to_csv('GC_F_YFINANCE_D1_2002_2026_ANOMALIES.csv', index=False)
+          b=Path('GC_F_YFINANCE_D1_2002_2026_RAW.csv').read_bytes()
           receipt={
             'symbol':'GC=F','source':'yfinance','interval':'D1','rows':int(len(out)),
             'start_utc':str(out['Date'].min()),'end_utc':str(out['Date'].max()),
-            'nan_ohlc':False,'zero_volume_rows':int((out['Volume'].fillna(0)==0).sum()),
+            'nan_ohlc_rows':int(nan_mask.sum()),'ohlc_inconsistent_rows':int((~ohlc_ok).sum()),
+            'zero_volume_rows':int((out['Volume'].fillna(0)==0).sum()),
             'sha256':hashlib.sha256(b).hexdigest(),
-            'classification':'PRIMARY_DATA_ONLY_GATE_A_NOT_COMPLETE_WITHOUT_CROSSCHECK'
+            'classification':'PRIMARY_RAW_MATERIALIZED_GATE_A_BLOCKED_PENDING_INTEGRITY_AND_CROSSCHECK',
+            'gate_a_pass':False
           }
           Path('GC_F_YFINANCE_D1_2002_2026.receipt.json').write_text(json.dumps(receipt,indent=2))
           print(json.dumps(receipt,indent=2))
@@ -53,7 +55,8 @@ jobs:
         with:
           name: gold-v11-gcf-primary
           path: |
-            GC_F_YFINANCE_D1_2002_2026.csv
+            GC_F_YFINANCE_D1_2002_2026_RAW.csv
+            GC_F_YFINANCE_D1_2002_2026_ANOMALIES.csv
             GC_F_YFINANCE_D1_2002_2026.receipt.json
           if-no-files-found: error
           retention-days: 7
