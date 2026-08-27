@@ -1,0 +1,37 @@
+name: MULTI CHAIN V2 Mobile Stack Diagnostic
+
+on:
+  push:
+    branches: [lock/multichain-v2-final-20260828]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Serve exact branch source
+        run: |
+          mkdir -p /tmp/rwa-site/rwa
+          cp -a . /tmp/rwa-site/rwa/
+          cd /tmp/rwa-site
+          python -m http.server 4173 >/tmp/rwa-http.log 2>&1 &
+          echo $! >/tmp/rwa-http.pid
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
+      - name: Inspect mobile stacking while MULTI CHAIN is open
+        run: |
+          node <<'NODE'
+          const {chromium}=require('playwright');
+          (async()=>{const b=await chromium.launch({headless:true});const p=await b.newPage({viewport:{width:390,height:844}});await p.goto('http://127.0.0.1:4173/rwa/',{waitUntil:'domcontentloaded'});await p.locator('#rwaMultiChainLaunch').click();await p.locator('#rwaMultiChainPanel').waitFor({state:'visible'});await p.locator('.rwa-mc-chain').filter({hasText:'Solana'}).click();await p.waitForTimeout(250);const out=await p.evaluate(()=>{const pts=[[20,830],[100,830],[200,830],[370,830],[20,800],[200,800]];return pts.map(([x,y])=>({x,y,stack:document.elementsFromPoint(x,y).slice(0,8).map(e=>({tag:e.tagName,id:e.id,cls:e.className,position:getComputedStyle(e).position,z:getComputedStyle(e).zIndex,text:(e.textContent||'').trim().replace(/\s+/g,' ').slice(0,80)}))}))});console.log(JSON.stringify(out,null,2));await b.close()})().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+      - if: always()
+        run: kill "$(cat /tmp/rwa-http.pid)" 2>/dev/null || true
