@@ -18,11 +18,15 @@ jobs:
       - name: Static deep ATR and stable-chart checks
         run: |
           set -euo pipefail
+          node --check renko/renko-tv-engine.js
           node --check renko/renko-tv-stable-chart.js
           node --check renko/renko-tv-atr-1s-million-cache.js
           node --check tools/renko-atr-zero-blocking-report.mjs
-          grep -Fq "const DEEP_VERSION='2.1.0'" renko/renko-tv-atr-1s-million-cache.js
+          grep -Fq "const DEEP_VERSION='2.2.0'" renko/renko-tv-atr-1s-million-cache.js
+          grep -Fq "_exactBox" renko/renko-tv-engine.js
+          grep -Fq "rawPositive?raw:tick" renko/renko-tv-atr-1s-million-cache.js
           grep -Fq "rule:'render-only-on-renko-geometry-change-fixed-1s-close'" renko/renko-tv-stable-chart.js
+          grep -Fq 'rawBoxPass' tools/renko-atr-zero-blocking-report.mjs
           grep -Fq 'livePersistence' tools/renko-atr-zero-blocking-report.mjs
       - name: Wait for exact deployed Pages SHA
         run: |
@@ -34,11 +38,7 @@ jobs:
           done
           echo "Expected $GITHUB_SHA but production did not reach that exact SHA" >&2
           exit 1
-      - name: Install Playwright Chromium
-        run: |
-          npm install --no-save playwright@1.55.0
-          npx playwright install --with-deps chromium
-      - name: Capture seven ATR 0ms plus live 1s no-heartbeat persistence proof
+      - name: Capture seven raw-Wilder ATR 0ms plus live 1s no-heartbeat persistence proof
         run: RWA_TEST_URL=https://copytolive.github.io/rwa node tools/renko-atr-zero-blocking-report.mjs
       - uses: actions/upload-artifact@v4
         if: always()
