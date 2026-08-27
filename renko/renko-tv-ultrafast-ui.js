@@ -15,12 +15,13 @@ const guardFetch=window.fetch.bind(window);
 const DATA_ROOT='https://data-api.binance.vision';
 const ROW_H=47;
 const OVERSCAN=7;
+const MAX_LIST_VIEWPORT=820;
 const stats={
   universeRequested:false,universeLoaded:false,totalRows:0,filteredRows:0,renderedRows:0,
   workerParseMs:0,networkMs:0,renderMs:0,searchMs:0,longTasks:0,blockingMs:0,maxLongTaskMs:0,
-  manualViewLocks:0,zoomSnapPrevented:0,bootUniverseIntercepts:0
+  manualViewLocks:0,zoomSnapPrevented:0,bootUniverseIntercepts:0,scrollRenders:0,viewportHeight:0
 };
-let rows=[],filtered=[],worker=null,universePromise=null,renderRAF=0,manualViewLocked=false,followingValue=true,capturedChart=null;
+let rows=[],filtered=[],worker=null,universePromise=null,renderRAF=0,manualViewLocked=false,followingValue=true;
 
 function isUniverseUrl(raw){
   try{
@@ -37,10 +38,9 @@ function tinyResponse(kind){
   return Promise.resolve(new Response(body,{status:200,headers:{'content-type':'application/json'}}));
 }
 
-// Base app starts loadMarkets() during boot. Return a tiny result immediately so
-// that path never owns a multi-megabyte JSON parse or hundreds of DOM nodes.
-// Preserve the existing lazy-universe regression counter so the prior verified
-// contract still proves that the universe stayed off the startup critical path.
+// The legacy app calls its universe loader during startup. Short-circuit that
+// call so startup never parses a multi-megabyte payload or creates hundreds of
+// pair rows. The real universe is fetched only after explicit pair interaction.
 window.fetch=function(input,init){
   if(isUniverseUrl(input)){
     stats.bootUniverseIntercepts++;
@@ -62,6 +62,26 @@ function setText(id,text){const el=document.getElementById(id);if(el)el.textCont
 function host(){return document.getElementById('pairList')}
 function searchEl(){return document.getElementById('pairSearch')}
 
+// A spacer-based virtual list is only safe when its host is a bounded scroll
+// viewport. The previous layout could allow the desktop sidebar to grow to the
+// spacer's full height; on the next scroll that made the renderer believe every
+// row was visible. Clamp the viewport independently from CSS/layout changes.
+function ensureListViewport(){
+  const h=host();if(!h)return 600;
+  const top=Math.max(0,h.getBoundingClientRect().top||0);
+  const available=Math.max(260,window.innerHeight-top-12);
+  const height=Math.max(260,Math.min(MAX_LIST_VIEWPORT,available));
+  h.style.height=`${height}px`;
+  h.style.maxHeight=`${height}px`;
+  h.style.minHeight='0';
+  h.style.overflowY='auto';
+  h.style.overflowX='hidden';
+  h.style.overscrollBehavior='contain';
+  h.style.contain='layout paint style';
+  stats.viewportHeight=height;
+  return height;
+}
+
 function filterRows(){
   const t0=performance.now(),term=String(searchEl()?.value||'').trim().toUpperCase();
   filtered=term?rows.filter(x=>`${x.base}${x.quote}${x.symbol}`.includes(term)):rows;
@@ -76,7 +96,7 @@ function rowHTML(r,active){
 }
 function renderVirtual(){
   renderRAF=0;const h=host();if(!h)return;
-  const t0=performance.now(),height=Math.max(300,h.clientHeight||600),start=Math.max(0,Math.floor(h.scrollTop/ROW_H)-OVERSCAN),count=Math.min(filtered.length-start,Math.ceil(height/ROW_H)+OVERSCAN*2),end=start+Math.max(0,count),active=window.RWARenkoTV?.state?.symbol||'';
+  const t0=performance.now(),height=ensureListViewport(),start=Math.max(0,Math.floor(h.scrollTop/ROW_H)-OVERSCAN),count=Math.min(filtered.length-start,Math.ceil(height/ROW_H)+OVERSCAN*2),end=start+Math.max(0,count),active=window.RWARenkoTV?.state?.symbol||'';
   if(!filtered.length){h.innerHTML='<div class="empty">No matching pair.</div>';stats.renderedRows=0;return}
   let html=`<div aria-hidden="true" style="height:${start*ROW_H}px"></div>`;
   for(let i=start;i<end;i++)html+=rowHTML(filtered[i],filtered[i].symbol===active);
@@ -112,18 +132,17 @@ document.addEventListener('pointerenter',requestUniverseFromInteraction,true);
 
 const pairHost=host();
 if(pairHost){
-  pairHost.addEventListener('scroll',scheduleRender,{passive:true});
+  ensureListViewport();
+  pairHost.addEventListener('scroll',()=>{stats.scrollRenders++;scheduleRender()},{passive:true});
   pairHost.addEventListener('click',e=>{const b=e.target.closest?.('[data-ultra-symbol]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();unlockManualView();document.querySelector('.markets')?.classList.remove('open');void window.RWARenkoTV?.loadSymbol?.(b.dataset.ultraSymbol,{fit:true})},true);
 }
+window.addEventListener('resize',scheduleRender,{passive:true});
 const search=searchEl();
 if(search)search.addEventListener('input',e=>{e.stopImmediatePropagation();filterRows()},true);
 
-// Capture chart instance before the base app creates it. This is used for the
-// zoom regression lock and does not change Lightweight Charts behavior.
-if(window.LightweightCharts?.createChart){
-  const nativeCreate=window.LightweightCharts.createChart.bind(window.LightweightCharts);
-  window.LightweightCharts.createChart=function(...args){capturedChart=nativeCreate(...args);return capturedChart};
-}
+// The production LightweightCharts namespace is frozen/read-only. Do not patch
+// createChart. Zoom persistence is enforced at the app's own `state.following`
+// switch: any manual chart interaction turns auto-follow off until LIVE/reset.
 function installFollowingGuard(){
   const s=window.RWARenkoTV?.state;if(!s||s.__ultraFollowingGuard)return;
   followingValue=!!s.following;
@@ -143,15 +162,15 @@ document.addEventListener('change',e=>{if(e.target?.matches?.('#sourceSelect,#in
 window.addEventListener('renko:tv-ready',installFollowingGuard);
 queueMicrotask(()=>{if(window.RWARenkoTV)installFollowingGuard()});
 
-// Long Task observer: user-requested "0 ms" is enforced as 0 ms blocking above
-// the browser Long Task threshold. Normal network/CPU elapsed time cannot be 0.
+// Long Task observer: "0 ms" is measured as 0 ms of blocking time above the
+// browser Long Task threshold. Network and CPU elapsed time are necessarily >0.
 try{
   const po=new PerformanceObserver(list=>{for(const x of list.getEntries()){stats.longTasks++;stats.maxLongTaskMs=Math.max(stats.maxLongTaskMs,x.duration);stats.blockingMs+=Math.max(0,x.duration-50)}});po.observe({type:'longtask',buffered:true});
 }catch{}
 
 window.RWARenkoUltraUI={
-  version:'1.0.1',rule:'worker-parsed-virtual-market-list-plus-manual-zoom-lock',stats,
-  loadUniverse,filterRows,renderVirtual,lockManualView,unlockManualView,
-  get rows(){return rows},get filtered(){return filtered},get chart(){return capturedChart},get manualViewLocked(){return manualViewLocked}
+  version:'1.0.2',rule:'worker-parsed-scroll-safe-virtual-market-list-plus-manual-zoom-lock',stats,
+  loadUniverse,filterRows,renderVirtual,ensureListViewport,lockManualView,unlockManualView,
+  get rows(){return rows},get filtered(){return filtered},get manualViewLocked(){return manualViewLocked}
 };
 })();
