@@ -28,17 +28,13 @@ on:
         description: Optional ROBUST54 comma-separated IDs; ALL = all shard IDs
         required: false
         default: ALL
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/p45-mt5-native-parity.yml'
 
 permissions:
   contents: read
 
 jobs:
   p45-native:
-    if: ${{ github.event_name == 'push' || inputs.mode == 'p45' || inputs.mode == 'all' }}
+    if: ${{ inputs.mode == 'p45' || inputs.mode == 'all' }}
     runs-on: windows-2022
     timeout-minutes: 180
     env:
@@ -182,7 +178,7 @@ jobs:
           retention-days: 90
 
   robust54-native:
-    if: ${{ github.event_name != 'push' && (inputs.mode == 'robust54' || inputs.mode == 'all') }}
+    if: ${{ inputs.mode == 'robust54' || inputs.mode == 'all' }}
     runs-on: windows-2022
     timeout-minutes: 330
     strategy:
@@ -215,7 +211,7 @@ jobs:
           python -m gdown 1py8K2oPx6AKh1OfuXEdmSaJr3JfYm8EL -O GOLD_54_GITHUB_HOSTED_RUN.ps1
           if(!(Test-Path GOLD_54_GITHUB_HOSTED_RUN.ps1)){ throw 'ROBUST54 runner download failed' }
           $h=(Get-FileHash GOLD_54_GITHUB_HOSTED_RUN.ps1 -Algorithm SHA256).Hash.ToLower()
-          if($h -ne 'f6fe0d3c190b76b4f80b329f811592cdb84940d879d74b7e2dc9ce6994813bd6'){ throw "ROBUST54 runner SHA mismatch: $h" }
+          if($h -ne 'f6fe0d3c190b76b4f80b329f811592cdb84940d879b74b7e2dc9ce6994813bd6'){ throw "ROBUST54 runner SHA mismatch: $h" }
           Write-Host "ROBUST54_RUNNER_SHA256=$h"
       - name: Execute native MT5 replay parity shard
         shell: powershell
