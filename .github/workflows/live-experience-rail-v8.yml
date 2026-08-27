@@ -1,0 +1,45 @@
+name: Verify Live Experience Rail V8
+
+on:
+  push:
+    branches:
+      - verify/live-experience-rail-v8-20260827
+    paths:
+      - '.github/workflows/live-experience-rail-v8.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for exact Pages SHA
+        env:
+          EXPECTED_SHA: b07526a71b196a86dd83a2c49f88aeddc853a4f2
+        run: |
+          for i in $(seq 1 60); do
+            got=$(curl -fsS https://copytolive.github.io/rwa/deployment-sha.txt 2>/dev/null || true)
+            if [ "$got" = "$EXPECTED_SHA" ]; then echo "DEPLOYED_SHA=$got"; exit 0; fi
+            echo "waiting for exact deployed SHA; got=$got"
+            sleep 5
+          done
+          exit 1
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify live rail geometry and capture proof
+        env:
+          RWA_TEST_URL: https://copytolive.github.io/rwa/
+          RWA_PROOF_DIR: proof/live-experience-rail-v8
+        run: node tools/experience-rail-stability-v8.mjs
+      - name: Upload production visual proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-experience-rail-v8-proof
+          path: proof/live-experience-rail-v8
+          retention-days: 30
