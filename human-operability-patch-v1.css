@@ -21,6 +21,7 @@
   .rwa-health button{pointer-events:auto!important}
 
   .rwa-mobile-asset-actions{bottom:calc(84px + var(--rwa-safe-bottom))!important}
+  .rwa-mobile-asset-actions:not(.show) button{opacity:0!important;pointer-events:none!important}
   body.rwa-super-asset-workspace #rwaSuperWorkspace{padding-bottom:96px!important}
 }
 @media (max-width:360px){
