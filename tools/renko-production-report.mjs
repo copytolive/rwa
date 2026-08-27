@@ -18,7 +18,6 @@ async function runViewport(label,viewport){
   await page.waitForFunction(()=>window.RWARenkoV15&&window.RWARenkoV15MethodProfiles&&RWARenkoV15.state?.symbol==='SOLUSDT'&&RWARenkoV15.state.ticks?.length>0&&!RWARenkoV15.state.building,null,{timeout:90000});
 
   const snap=async(method,wallMs=null)=>page.evaluate(({method,wallMs,target})=>{
-    const range=window.RWARenkoV15?.chart?.timeScale?.().getVisibleLogicalRange?.()||null;
     const data=window.RWARenkoV15?.state?.data||[];
     const meta=document.querySelector('#tvBrickMeta')?.textContent||'';
     const visibleMatch=meta.match(/([\d,.]+)\s+visible/i);
@@ -37,7 +36,6 @@ async function runViewport(label,viewport){
       exactHistory:document.querySelector('#v15BoxCard')?.dataset.exactHistory||null,
       liveLabel:document.querySelector('#tvLoadState')?.textContent||null,
       meta,
-      logicalRange:range,
       passImmediateScreen:visible>=target&&data.length>=target,
     };
   },{method,wallMs,target:TARGET_VISIBLE});
@@ -93,3 +91,4 @@ const report={
 };
 await fs.writeFile(path.join(OUT,'report.json'),JSON.stringify(report,null,2));
 console.log('RENKO_PRODUCTION_SCREENSHOT_REPORT',JSON.stringify(report));
+if(report.status!=='PASS')process.exitCode=2;
