@@ -6,7 +6,10 @@
  *    are identical to the projection already on screen;
  * 2) deduplicate Lightweight Charts setData / visible-range writes;
  * 3) keep the chart price line tied to the last Renko brick, while REAL LAST
- *    continues to update in the stat area without forcing a chart repaint.
+ *    continues to update in the stat area without forcing a chart repaint;
+ * 4) distinguish app-authored range changes from actual user panning so a
+ *    latest-view/zoom write cannot accidentally trigger repeated old-history
+ *    paging and heavy main-thread Renko rebuilds.
  *
  * Closed 1s source bars are never dropped. A genuine confirmed/projection brick
  * change is still rendered immediately.
@@ -15,7 +18,7 @@
 'use strict';
 if(window.RWARenkoStableChart)return;
 const VERSION='1.0.0';
-const stats={partialEvents:0,partialForwarded:0,partialSuppressed:0,closedForwarded:0,dataWrites:0,dataWritesSkipped:0,rangeWrites:0,rangeWritesSkipped:0,priceWrites:0,priceWritesSkipped:0,lastSuppressedAt:0,lastGeometryWriteAt:0};
+const stats={partialEvents:0,partialForwarded:0,partialSuppressed:0,closedForwarded:0,dataWrites:0,dataWritesSkipped:0,rangeWrites:0,rangeWritesSkipped:0,programmaticRangeCallbacksSuppressed:0,priceWrites:0,priceWritesSkipped:0,lastSuppressedAt:0,lastGeometryWriteAt:0};
 const fmt=n=>{n=Number(n);if(!Number.isFinite(n))return'—';const a=Math.abs(n),d=a>=1000?2:a>=100?3:a>=1?4:a>=.01?6:8;try{return n.toLocaleString(undefined,{maximumFractionDigits:d})}catch{return String(n)}};
 const num=v=>Number(v);
 function brickSig(bricks){const a=Array.isArray(bricks)?bricks:[],n=a.length;if(!n)return'0';const picks=[0,Math.floor((n-1)/4),Math.floor((n-1)/2),Math.floor((n-1)*3/4),n-1];return `${n}|${picks.map(i=>{const b=a[i]||{};return [num(b.sourceTime)||0,num(b.open)||0,num(b.high)||0,num(b.low)||0,num(b.close)||0,num(b.direction)||0].join(',')}).join('|')}`}
@@ -31,7 +34,28 @@ function lastRenkoClose(){const T=window.RWARenkoTV;return Number(T?.state?.conf
   const originalCreate=L.createChart.bind(L);
   function wrapPriceLine(line){let last=NaN;return new Proxy(line,{get(t,p,r){if(p==='applyOptions')return opts=>{const renko=lastRenkoClose(),next=Number.isFinite(renko)?renko:Number(opts?.price);if(Number.isFinite(next)&&next===last){stats.priceWritesSkipped++;return}last=next;stats.priceWrites++;return t.applyOptions({...opts,price:next,title:'RENKO'})};const v=Reflect.get(t,p,r);return typeof v==='function'?v.bind(t):v}})}
   function wrapSeries(series){let sig='';return new Proxy(series,{get(t,p,r){if(p==='setData')return data=>{const next=dataSig(data);if(next===sig){stats.dataWritesSkipped++;return}sig=next;stats.dataWrites++;stats.lastGeometryWriteAt=performance.now();return t.setData(data)};if(p==='createPriceLine')return opts=>{const renko=lastRenkoClose(),line=t.createPriceLine({...opts,price:Number.isFinite(renko)?renko:opts?.price,title:'RENKO'});stats.priceWrites++;return wrapPriceLine(line)};const v=Reflect.get(t,p,r);return typeof v==='function'?v.bind(t):v}})}
-  function wrapTimeScale(ts){let sig='';return new Proxy(ts,{get(t,p,r){if(p==='setVisibleLogicalRange')return range=>{const next=rangeSig(range);if(next&&next===sig){stats.rangeWritesSkipped++;return}sig=next;stats.rangeWrites++;return t.setVisibleLogicalRange(range)};const v=Reflect.get(t,p,r);return typeof v==='function'?v.bind(t):v}})}
+  function wrapTimeScale(ts){
+    let sig='',programmaticSig='',programmaticUntil=0;
+    return new Proxy(ts,{get(t,p,r){
+      if(p==='setVisibleLogicalRange')return range=>{
+        const next=rangeSig(range);
+        if(next&&next===sig){stats.rangeWritesSkipped++;return}
+        sig=next;stats.rangeWrites++;
+        // Lightweight Charts may notify visible-range subscribers either
+        // synchronously or on the next frame. Mark this exact range briefly so
+        // the legacy subscriber cannot treat an app-authored latest/zoom range
+        // as a real user left-edge pan and start old-history pagination.
+        programmaticSig=next;programmaticUntil=performance.now()+120;
+        return t.setVisibleLogicalRange(range)
+      };
+      if(p==='subscribeVisibleLogicalRangeChange')return cb=>t.subscribeVisibleLogicalRangeChange(range=>{
+        const next=rangeSig(range);
+        if(next&&next===programmaticSig&&performance.now()<=programmaticUntil){stats.programmaticRangeCallbacksSuppressed++;return}
+        return cb(range)
+      });
+      const v=Reflect.get(t,p,r);return typeof v==='function'?v.bind(t):v
+    }})
+  }
   function wrapChart(chart){let tsProxy=null;return new Proxy(chart,{get(t,p,r){if(p==='addSeries'&&typeof t.addSeries==='function')return(...args)=>wrapSeries(t.addSeries(...args));if(p==='addCandlestickSeries'&&typeof t.addCandlestickSeries==='function')return(...args)=>wrapSeries(t.addCandlestickSeries(...args));if(p==='timeScale')return()=>tsProxy||(tsProxy=wrapTimeScale(t.timeScale()));const v=Reflect.get(t,p,r);return typeof v==='function'?v.bind(t):v}})}
   try{
     const replacement={...L,createChart:(...args)=>wrapChart(originalCreate(...args))};
