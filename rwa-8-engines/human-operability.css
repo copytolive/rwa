@@ -1,0 +1,75 @@
+/* P21 GLOBAL RWA FACTORY — HUMAN OPERABILITY */
+:root{--human-touch:44px;--human-body:15px;--human-small:12px;--human-gap:14px}
+html,body{min-height:100%;text-size-adjust:100%;-webkit-text-size-adjust:100%}
+body{font-size:var(--human-body)!important;line-height:1.55!important}
+button,input,select,textarea{font-size:14px!important}
+button{min-height:var(--human-touch)!important;padding:10px 14px!important}
+input,select,textarea{min-height:44px!important;padding:11px 12px!important}
+textarea{min-height:92px!important}
+.field span,.section-title small,.engine small,.ready-row small,.saved-row small,.northstar span,.passport dt{font-size:var(--human-small)!important;line-height:1.4!important}
+.shell{max-width:1540px!important;padding:20px!important}
+.layout{grid-template-columns:minmax(360px,470px) minmax(0,1fr)!important;gap:16px!important;align-items:start}
+.card{padding:18px!important;border-radius:16px!important}
+.form-grid{gap:14px!important}
+.section-title{margin:20px 0 10px!important}
+.actions{position:sticky;bottom:0;z-index:8;margin:18px -18px -18px!important;padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px))!important;background:linear-gradient(180deg,rgba(16,21,29,.35),#10151d 35%);border-top:1px solid var(--line)}
+.actions .primary{min-width:150px}
+.asset-row{padding:14px!important}
+.asset-row-head button{min-height:36px!important}
+.engine-grid{grid-template-columns:repeat(4,minmax(150px,1fr))!important;gap:10px!important}
+.engine{min-height:132px!important;padding:14px!important}
+.engine b{font-size:14px!important}.engine strong{font-size:12px!important}
+.hero-result{gap:14px!important}.passport{padding:18px!important}.passport strong{font-size:20px!important}
+.ready-row{padding:12px 13px!important;min-height:62px!important}.ready-row header{font-size:13px!important}
+.details{gap:14px!important}.json{font-size:12px!important;max-height:300px!important}
+.saved-row{min-height:58px!important}.saved-row>div:last-child{display:flex;gap:8px;flex-wrap:wrap}
+
+@media(max-width:1180px){
+  .layout{grid-template-columns:1fr!important}
+  .engine-grid{grid-template-columns:repeat(4,minmax(130px,1fr))!important}
+  .hero-result{grid-template-columns:1fr 1fr!important}
+}
+@media(max-width:900px){
+  .shell{padding:14px!important}
+  .top{gap:12px!important}.brand h1{font-size:26px!important}
+  .engine-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .hero-result,.details{grid-template-columns:1fr!important}
+}
+@media(max-width:620px){
+  :root{--human-body:15px;--human-small:12px}
+  body{background:#080b10!important}
+  .shell{padding:10px!important;max-width:none!important}
+  .top{display:none!important}
+  .northstar{padding:14px!important;gap:10px!important;align-items:center!important;margin-bottom:10px!important;border-radius:14px!important}
+  .northstar strong{font-size:28px!important}.northstar b{font-size:14px!important}
+  .layout{display:block!important}
+  .card{padding:14px!important;border-radius:14px!important;margin-bottom:10px!important}
+  .card h2{font-size:20px!important;line-height:1.2!important}
+  .notice{font-size:13px!important;line-height:1.5!important}
+  .form-grid{grid-template-columns:1fr!important;gap:12px!important}
+  .field.full{grid-column:auto!important}
+  .section-title{display:block!important;margin:18px 0 10px!important}.section-title h3{font-size:16px!important}.section-title small{display:block!important;margin-top:4px!important;max-width:none!important}
+  .asset-row{padding:12px!important}
+  .asset-row-head{margin-bottom:8px!important}.asset-row-head b{font-size:14px!important}
+  .actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;margin:16px -14px -14px!important;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px))!important}
+  .actions .primary{grid-column:1/-1!important;order:-1!important;min-width:0!important}
+  .engine-grid{grid-template-columns:1fr!important;gap:8px!important}
+  .engine{min-height:92px!important;display:grid!important;grid-template-columns:auto 1fr auto!important;grid-template-rows:auto auto!important;column-gap:10px!important;align-items:center!important;padding:12px!important}
+  .engine .dot{grid-row:1/3!important}.engine>b{margin:0!important}.engine>small:first-of-type{display:none!important}.engine>small:last-of-type{font-size:11px!important}.engine>div{grid-column:3!important;grid-row:1/3!important;text-align:right!important}
+  .hero-result,.details{grid-template-columns:1fr!important}
+  .passport{padding:14px!important}.passport strong{font-size:18px!important}.passport dl{grid-template-columns:1fr 1fr!important;gap:10px!important}
+  .readiness{gap:6px!important}.ready-row{min-height:58px!important}
+  .json{max-height:240px!important;font-size:11px!important}
+  .saved-row{display:block!important}.saved-row>div:last-child{margin-top:10px!important}.saved-row button{flex:1!important}
+  button,input,select,textarea{font-size:16px!important}
+}
+@media(max-width:390px){
+  .passport dl{grid-template-columns:1fr!important}
+  .actions{grid-template-columns:1fr!important}.actions .primary{grid-column:auto!important}
+  .northstar{display:block!important}.northstar strong{margin-top:4px!important}
+}
+@media(max-height:560px) and (orientation:landscape){
+  .shell{padding:8px!important}.northstar{display:none!important}.card{padding:12px!important}
+  .actions{position:relative!important;margin:12px 0 0!important;padding:0!important;border:0!important;background:none!important}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
