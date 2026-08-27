@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Create My RWA · Global RWA Factory</title>
+  <meta name="description" content="Create a Business RWA Passport, register assets, build proofs, valuation, legal/compliance readiness and marketplace listing.">
+  <link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+<main class="shell">
+  <header class="top">
+    <div class="brand"><small>GLOBAL RWA FACTORY · 8 ENGINES</small><h1>Create My RWA</h1><p>Every Business. An RWA. Register first; finance and trade only after evidence, legal and compliance gates.</p></div>
+    <div class="status"><span class="pill ok">REGISTER READY</span><span class="pill warn">FINANCE REVIEW-GATED</span><span class="pill warn">TRADE DISABLED BY DEFAULT</span></div>
+  </header>
+  <div class="notice"><b>Safety model:</b> this surface creates a verifiable RWA Passport and product-readiness package. It does not represent legal approval, investment advice, KYC clearance, or permission to offer/trade securities. Production issuance remains reviewer and jurisdiction gated.</div>
+  <section class="layout">
+    <form id="rwaFactoryForm" class="card" autocomplete="off">
+      <span class="eyebrow">01 · BUSINESS</span><h2>Business identity</h2>
+      <div class="form-grid">
+        <label class="field full"><span>Legal business name *</span><input name="legalName" required placeholder="PT Example Indonesia"></label>
+        <label class="field"><span>Registration ID *</span><input name="registrationId" required placeholder="NIB / company number"></label>
+        <label class="field"><span>Country *</span><select name="country"><option value="ID">Indonesia</option><option value="SG">Singapore</option><option value="AE">United Arab Emirates</option><option value="US">United States</option><option value="EU">European Union</option><option value="GB">United Kingdom</option><option value="JP">Japan</option><option value="HK">Hong Kong</option></select></label>
+        <label class="field"><span>Business type</span><select name="businessType"><option>Company</option><option>SME / MSME</option><option>Property Company</option><option>Hotel / Hospitality</option><option>Manufacturer</option><option>Agriculture</option><option>Healthcare</option><option>Infrastructure</option><option>Fund / SPV</option><option>Other</option></select></label>
+        <label class="field"><span>Website</span><input name="website" placeholder="https://example.com"></label>
+      </div>
+
+      <div class="section-title"><div><span class="eyebrow">02 · ASSET</span><h3>Add the first real-world asset</h3></div><small>More assets can be added later</small></div>
+      <div class="form-grid">
+        <label class="field"><span>Asset type</span><select name="assetType"><option>Business Revenue</option><option>Real Estate</option><option>Receivables / Invoice</option><option>Inventory</option><option>Equipment</option><option>Commodity</option><option>Infrastructure</option><option>Intellectual Property</option><option>Equity / Business Interest</option><option>Debt / Bond</option><option>Other</option></select></label>
+        <label class="field"><span>Asset country</span><select name="assetCountry"><option value="ID">Indonesia</option><option value="SG">Singapore</option><option value="AE">United Arab Emirates</option><option value="US">United States</option><option value="EU">European Union</option><option value="GB">United Kingdom</option><option value="JP">Japan</option><option value="HK">Hong Kong</option></select></label>
+        <label class="field full"><span>Asset name *</span><input name="assetName" required placeholder="Hotel building / invoices / factory equipment"></label>
+        <label class="field full"><span>Description</span><textarea name="assetDescription" placeholder="Describe ownership, cash flow, location, rights and the asset's business purpose."></textarea></label>
+        <label class="field"><span>Declared value</span><input name="declaredValue" type="number" min="0" step="any" placeholder="5000000"></label>
+        <label class="field"><span>Currency</span><select name="currency"><option>USD</option><option>IDR</option><option>SGD</option><option>AED</option><option>EUR</option><option>GBP</option><option>JPY</option></select></label>
+      </div>
+
+      <div class="section-title"><div><span class="eyebrow">03 · VALUATION INPUT</span><h3>Optional cash-flow model</h3></div><small>Indicative, not appraisal</small></div>
+      <div class="form-grid">
+        <label class="field"><span>Annual revenue</span><input name="annualRevenue" type="number" min="0" step="any" placeholder="2000000"></label>
+        <label class="field"><span>EBITDA margin %</span><input name="ebitdaMargin" type="number" step="any" value="15"></label>
+        <label class="field"><span>Growth %</span><input name="growthRate" type="number" step="any" value="5"></label>
+        <label class="field"><span>Discount rate %</span><input name="discountRate" type="number" step="any" value="15"></label>
+      </div>
+
+      <div class="section-title"><div><span class="eyebrow">04 · EVIDENCE</span><h3>Evidence package</h3></div><small>Hash + provenance only</small></div>
+      <div class="form-grid">
+        <label class="field"><span>Evidence type</span><select name="evidenceType"><option>Company Registration</option><option>Title / Ownership</option><option>Appraisal</option><option>Invoice / Receivable</option><option>Financial Statement</option><option>Audit Report</option><option>Contract</option><option>Other</option></select></label>
+        <label class="field"><span>Evidence name</span><input name="evidenceName" placeholder="Document / source name"></label>
+        <label class="field full"><span>Evidence source</span><input name="evidenceSource" placeholder="Registry URL, data room reference or source identifier"></label>
+      </div>
+
+      <div class="section-title"><div><span class="eyebrow">05 · MODE</span><h3>What do you want to do?</h3></div></div>
+      <label class="field"><select name="mode"><option value="REGISTER">REGISTER · Create RWA Passport</option><option value="FINANCE">FINANCE · Prepare funding readiness</option><option value="TRADE">TRADE · Prepare trading readiness</option></select></label>
+      <div class="actions"><button class="primary" type="submit">Create My RWA</button><button type="button" id="loadDemo">Load demo business</button><button type="reset">Clear</button></div>
+    </form>
+
+    <section>
+      <div class="engine-grid" id="engineGrid"></div>
+      <div id="resultEmpty" class="card"><span class="eyebrow">READY TO START</span><h2>One form → eight engines</h2><p>Submit a business and asset to create a deterministic RWA Business ID, registry graph, evidence hashes, valuation snapshot, legal/compliance readiness, tokenization draft and marketplace discovery listing.</p></div>
+      <div id="result" hidden>
+        <div class="hero-result">
+          <article class="passport"><small>GLOBAL RWA BUSINESS ID</small><strong id="passportId">—</strong><dl><div><dt>BUSINESS</dt><dd id="passportBusiness">—</dd></div><div><dt>COUNTRY</dt><dd id="passportCountry">—</dd></div><div><dt>ASSETS</dt><dd id="passportAssets">0</dd></div></dl></article>
+          <div class="readiness"><article class="ready-row" id="readyRegister"><header><span>REGISTER</span><b>—</b></header><small>RWA Passport + asset record</small></article><article class="ready-row" id="readyFinance"><header><span>FINANCE</span><b>—</b></header><small>Legal + compliance + evidence reviewer</small></article><article class="ready-row" id="readyTrade"><header><span>TRADE</span><b>—</b></header><small>Transfer + venue + mainnet gates</small></article></div>
+        </div>
+        <div class="details">
+          <article class="card"><span class="eyebrow">VALUATION</span><h3 id="valuationValue">—</h3><p id="valuationMethod">—</p></article>
+          <article class="card"><span class="eyebrow">PIPELINE HASH</span><h3 id="pipelineShort">—</h3><p>Every pipeline result is content-hashed for auditability.</p></article>
+        </div>
+        <div class="card saved"><div class="section-title"><div><span class="eyebrow">OUTPUT</span><h3>RWA Passport package</h3></div><small>Portable JSON</small></div><div class="actions"><button id="savePassport" type="button">Save locally</button><button id="exportPassport" type="button">Export JSON</button></div><pre class="json" id="resultJson"></pre></div>
+      </div>
+      <div class="card saved"><div class="section-title"><div><span class="eyebrow">LOCAL REGISTRY</span><h3>Saved RWA Passports</h3></div><small>Browser-local demo storage</small></div><div class="saved-list" id="savedList"></div></div>
+    </section>
+  </section>
+</main>
+<script src="engine.js?v=1"></script>
+<script src="app.js?v=1"></script>
+</body></html>
