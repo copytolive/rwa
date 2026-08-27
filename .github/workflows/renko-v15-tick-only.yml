@@ -28,7 +28,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Static tick-only and abortable-control contracts
+      - name: Static tick-only, abortable and fast-control contracts
         shell: bash
         run: |
           set -euo pipefail
@@ -47,18 +47,21 @@ jobs:
           grep -Fq "confirmationRule:'every-trade-immediate'" renko/renko-v15.js
           grep -Fq "timeframeControl:false" renko/renko-v15.js
           grep -Fq "historySource:'binance-aggregate-trade-events-no-candles'" renko/renko-v15.js
-          grep -Fq "version:'1.6.0'" renko/renko-v15-method-controller.js
+          grep -Fq "version:'1.6.1'" renko/renko-v15-method-controller.js
           grep -Fq "switchContract:'abortable-latest-interaction-wins'" renko/renko-v15-method-controller.js
           grep -Fq "interactionContract:'all-inputs-selects-checkboxes-and-apply-remain-interactive-during-history'" renko/renko-v15-method-controller.js
           grep -Fq "chartImpactContract:'recent-tick-fast-commit-deep-history-abortable'" renko/renko-v15-method-controller.js
           grep -Fq "renderContract:'keep-current-chart-while-target-history-loads'" renko/renko-v15-method-controller.js
+          grep -Fq "latencyContract:'apply-waits-for-renko-build-not-lazy-history-loading'" renko/renko-v15-method-controller.js
           grep -Fq "startupContract:'no-auto-apply'" renko/renko-v15-method-controller.js
+          grep -Fq "if(!engine?.state?.building)return true" renko/renko-v15-method-controller.js
+          ! grep -Fq "!engine?.state?.loading" renko/renko-v15-method-controller.js
           grep -Fq "controller.abort(reason)" renko/renko-v15-method-controller.js
           grep -Fq "signal});" renko/renko-v15-method-controller.js
-          grep -Fq "dataset.controller='v15.7-abortable-controls'" renko/renko-v15-controller-bootstrap.js
-          grep -Fq "renko-v15-method-controller.js?v=157" renko/renko-v15-controller-bootstrap.js
+          grep -Fq "dataset.controller='v15.8-fast-abortable-controls'" renko/renko-v15-controller-bootstrap.js
+          grep -Fq "renko-v15-method-controller.js?v=158" renko/renko-v15-controller-bootstrap.js
           grep -Fq "z-index:20!important" renko/renko-v15-controller-bootstrap.js
-          grep -Fq "renko-v15-controller-bootstrap.js?v=157" legacy-canonical.js
+          grep -Fq "renko-v15-controller-bootstrap.js?v=158" legacy-canonical.js
           grep -Fq "Never serve the cached V14 source/resolution UI" rwa-sw-v5.js
           git diff --check
 
@@ -83,7 +86,7 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Browser acceptance - edit and Apply while history is loading
+      - name: Browser acceptance - controls stay fast during slow history
         shell: bash
         run: |
           python3 -m http.server 8080 > /tmp/renko-http.log 2>&1 &
