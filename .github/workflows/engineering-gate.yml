@@ -1,20 +1,65 @@
 name: RWA Engineering Gate
 
+# Critical safety/engineering gate. Automatic only for files that can alter
+# execution, verification, launch readiness, worker behavior, or security policy.
 on:
   push:
     branches: ["main"]
     paths:
-      - "*.js"
-      - "*.json"
+      - "execution-api.js"
+      - "exchange-core.js"
+      - "testnet-e2e.js"
+      - "copy-24x7-client.js"
+      - "launch-status.js"
+      - "beta-proof-client.js"
+      - "rwa-verify-client.js"
+      - "rwa-verification-evidence.js"
+      - "rwa-execution-config.json"
+      - "rwa-assets.json"
+      - "rwa-reviewers.json"
+      - "moderation.json"
+      - "token/config.json"
       - "agent-worker/**"
       - "launch/**"
-      - "tools/**"
-      - ".github/workflows/**"
+      - "tools/security-gate.mjs"
+      - "tools/launch-gate.mjs"
+      - "tools/worker-watch.mjs"
+      - "tools/e2e-proof.mjs"
+      - "tools/rwa-evidence-policy.mjs"
+      - "tools/rwa-verify.mjs"
+      - "tools/beta-proof.mjs"
+      - "tools/product-parity-contract.mjs"
+      - "tools/test/**"
+  pull_request:
+    paths:
+      - "execution-api.js"
+      - "exchange-core.js"
+      - "testnet-e2e.js"
+      - "copy-24x7-client.js"
+      - "launch-status.js"
+      - "beta-proof-client.js"
+      - "rwa-verify-client.js"
+      - "rwa-verification-evidence.js"
+      - "rwa-execution-config.json"
+      - "rwa-assets.json"
+      - "rwa-reviewers.json"
+      - "moderation.json"
+      - "token/config.json"
+      - "agent-worker/**"
+      - "launch/**"
+      - "tools/security-gate.mjs"
+      - "tools/launch-gate.mjs"
+      - "tools/worker-watch.mjs"
+      - "tools/e2e-proof.mjs"
+      - "tools/rwa-evidence-policy.mjs"
+      - "tools/rwa-verify.mjs"
+      - "tools/beta-proof.mjs"
+      - "tools/product-parity-contract.mjs"
+      - "tools/test/**"
   workflow_dispatch:
 
 permissions:
   contents: read
-  statuses: write
 
 jobs:
   engineering:
@@ -88,13 +133,3 @@ jobs:
           node tools/storefront-ui-contract.mjs
           node tools/launch-gate.mjs --require-engineering >/tmp/engineering.json
           node -e "const x=require('/tmp/engineering.json');if(!x.engineering_ready||x.schema<4)process.exit(1);console.log('ENGINEERING COMPLETE schema='+x.schema)"
-      - name: Publish engineering success
-        if: success()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/engineering-gate' -f description='Engineering COMPLETE: trading social physical-store ecommerce checkout UI privacy security worker proofs beta monitoring PASS'
-      - name: Publish engineering failure
-        if: failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/engineering-gate' -f description='Engineering package incomplete'
