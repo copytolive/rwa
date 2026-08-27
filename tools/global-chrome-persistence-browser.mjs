@@ -18,7 +18,7 @@ async function mocks(context){
 
 async function ready(page){
   await page.waitForFunction(()=>window.RWASuperApp?.version==='5.0.0'&&document.getElementById('rwaExperienceRail'),{timeout:20000});
-  await page.waitForFunction(()=>window.RWAMarketPerformanceGuard?.runtime==='root-terminal-global-chrome-v5',{timeout:10000});
+  await page.waitForFunction(()=>window.RWAMarketPerformanceGuard?.version==='1.3.3'&&[...document.querySelectorAll('link[rel="stylesheet"]')].some(x=>(x.getAttribute('href')||'').includes('persistent-market-operability-patch-v1.css?v=5')),{timeout:10000});
   await page.waitForTimeout(450);
 }
 
