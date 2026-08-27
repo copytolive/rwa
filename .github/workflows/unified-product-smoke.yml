@@ -3,27 +3,27 @@ on:
   pull_request:
     paths:
       - 'index.html'
-      - 'product-os-v3.js'
-      - 'product-os-mobile-contract-v3.js'
-      - 'unified-design-v3.css'
+      - 'superapp-v5.js'
+      - 'superapp-v5.css'
+      - 'suite-nav.js'
+      - 'human-operability-v1.css'
+      - 'rwa-8-engines/**'
+      - 'tools/human-operability-browser.mjs'
       - 'trade/config.js'
-      - 'trader/**'
-      - 'asset/**'
       - '.github/workflows/pages.yml'
-      - '.github/workflows/live-browser-smoke.yml'
       - '.github/workflows/unified-product-smoke.yml'
   push:
     branches: [main]
     paths:
       - 'index.html'
-      - 'product-os-v3.js'
-      - 'product-os-mobile-contract-v3.js'
-      - 'unified-design-v3.css'
+      - 'superapp-v5.js'
+      - 'superapp-v5.css'
+      - 'suite-nav.js'
+      - 'human-operability-v1.css'
+      - 'rwa-8-engines/**'
+      - 'tools/human-operability-browser.mjs'
       - 'trade/config.js'
-      - 'trader/**'
-      - 'asset/**'
       - '.github/workflows/pages.yml'
-      - '.github/workflows/live-browser-smoke.yml'
       - '.github/workflows/unified-product-smoke.yml'
 jobs:
   smoke:
@@ -32,49 +32,64 @@ jobs:
       - uses: actions/checkout@v4
       - name: JavaScript syntax
         run: |
-          node --check product-os-v3.js
-          node --check product-os-mobile-contract-v3.js
+          set -euo pipefail
+          node --check superapp-v5.js
+          node --check suite-nav.js
+          node --check rwa-8-engines/app.js
+          node --check rwa-8-engines/engine.js
+          node --check tools/human-operability-browser.mjs
           node --input-type=module --check < trade/config.js
-      - name: Product shell is activated
+      - name: Current product shell is activated
         run: |
-          grep -q 'unified-design-v3.css' index.html
-          grep -q 'product-os-v3.js' index.html
-          grep -q 'product-os-mobile-contract-v3.js' index.html
-          grep -q "product-os-v3.js" trade/config.js
-          grep -q "unified-design-v3.css" trade/config.js
-      - name: 1-22 product surfaces exist
+          set -euo pipefail
+          grep -q 'superapp-v5.css' index.html
+          ! grep -q 'unified-design-v3.css' index.html
+          ! grep -q 'product-os-v3.js' index.html
+          ! grep -q 'product-os-mobile-contract-v3.js' index.html
+          grep -q 'human-operability-v1.css?v=1' suite-nav.js
+          grep -q 'human-operability.css?v=1' rwa-8-engines/app.js
+          grep -q 'RWA Factory' suite-nav.js
+          grep -q 'Create My RWA' suite-nav.js
+      - name: Global RWA Factory surfaces exist
         run: |
-          test -f trader/index.html
-          test -f asset/index.html
-          grep -q 'data-mobile-nav="trade"' product-os-v3.js
-          grep -q 'market-drawer-open' product-os-mobile-contract-v3.js
-          grep -q 'Canonical root contract' product-os-mobile-contract-v3.js
-          grep -q "localStorage.setItem('rwa_default_landing_v3','markets')" product-os-mobile-contract-v3.js
-          grep -q "hash&&hash!='markets'\|hash&&hash!=='markets'" product-os-mobile-contract-v3.js
-          grep -q 'rwa-home-dashboard' unified-design-v3.css
-          grep -q 'tabular-nums' unified-design-v3.css
-          grep -q 'Risk Engine' product-os-v3.js
-      - name: Typography floors and touch targets
+          set -euo pipefail
+          test -s rwa-8-engines/index.html
+          test -s rwa-8-engines/engine.js
+          test -s rwa-8-engines/config.json
+          test -s rwa-8-engines/jurisdictions.json
+          grep -q 'RWA Passport' rwa-8-engines/app.js
+          grep -q 'Asset Registry' rwa-8-engines/app.js
+          grep -q 'Proof Engine' rwa-8-engines/app.js
+          grep -q 'Valuation' rwa-8-engines/app.js
+          grep -q 'Compliance' rwa-8-engines/app.js
+          grep -q 'Marketplace' rwa-8-engines/app.js
+          grep -q 'REGISTERED' rwa-8-engines/app.js
+          grep -q 'TRADABLE' rwa-8-engines/app.js
+      - name: Human typography and touch contracts
         run: |
-          grep -q -- '--rwa-text-2xs:9px' unified-design-v3.css
-          grep -q -- '--rwa-control-lg:44px' unified-design-v3.css
-          grep -q 'mobile-tabs a>small{font-size:10px' unified-design-v3.css
-          grep -q 'suite-field input.*font-size:13px' unified-design-v3.css
-      - name: Pages and live deployment contracts
+          set -euo pipefail
+          grep -q -- '--rwa-human-small:11px' human-operability-v1.css
+          grep -q -- '--rwa-human-touch:44px' human-operability-v1.css
+          grep -q 'min-height:44px' human-operability-v1.css
+          grep -q 'max-width:1199px' human-operability-v1.css
+          grep -q 'min-width:681px' human-operability-v1.css
+          grep -q 'max-width:680px' human-operability-v1.css
+          grep -q '100dvh' human-operability-v1.css
+          grep -q -- '--human-touch:44px' rwa-8-engines/human-operability.css
+      - name: Pages deployment contracts
         run: |
+          set -euo pipefail
           grep -q 'realtime-core.js?v=3' .github/workflows/pages.yml
           grep -q 'market-performance.js?v=2' .github/workflows/pages.yml
-          grep -q 'stable-shell.css?v=3' .github/workflows/pages.yml
-          grep -q 'unified-design-v3.css?v=1' .github/workflows/pages.yml
-          grep -q 'product-os-v3.js?v=1' .github/workflows/pages.yml
-          grep -q 'product-os-mobile-contract-v3.js?v=1' .github/workflows/pages.yml
-          grep -q 'unified-design-v3.css?v=1' .github/workflows/live-browser-smoke.yml
-          grep -q 'product-os-v3.js?v=1' .github/workflows/live-browser-smoke.yml
-          grep -q '<title>RWA Trader</title>' .github/workflows/live-browser-smoke.yml
-          grep -q '<title>RWA Asset</title>' .github/workflows/live-browser-smoke.yml
+          grep -q 'human-operability-v1.css' .github/workflows/pages.yml
+          grep -q 'human-operability-browser.mjs' .github/workflows/pages.yml
+          grep -q 'Pin RENKO V171 history-fill runtime' .github/workflows/pages.yml
       - name: Safety invariants preserved
         run: |
+          set -euo pipefail
           grep -q "mainnetEnabled" trade/config.js
           grep -q "canMainnet" trade/config.js
           grep -q "defaultTestnet:true" trade/config.js
-          ! grep -R --line-number -E 'private[_ -]?key|seed phrase|withdraw.*automatic' product-os-v3.js trader/index.html asset/index.html unified-design-v3.css
+          grep -q '"mainnetDeploymentEnabled": false' token/config.json
+          grep -q '"tgeEnabled": false' token/config.json
+          node tools/security-gate.mjs
