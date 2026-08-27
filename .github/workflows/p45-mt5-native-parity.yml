@@ -28,16 +28,13 @@ on:
         description: Optional ROBUST54 comma-separated IDs; ALL = all shard IDs
         required: false
         default: ALL
-  push:
-    branches:
-      - main
 
 permissions:
   contents: read
 
 jobs:
   p45-native:
-    if: ${{ github.event_name == 'push' || inputs.mode == 'p45' || inputs.mode == 'all' }}
+    if: ${{ inputs.mode == 'p45' || inputs.mode == 'all' }}
     runs-on: windows-2022
     timeout-minutes: 180
     env:
