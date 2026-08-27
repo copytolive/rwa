@@ -1,153 +1,114 @@
 name: RWA Release Candidate Gate
+
 on:
   push:
     branches: ["main"]
   workflow_dispatch:
+
 permissions:
   contents: read
   statuses: write
+
 concurrency:
   group: rwa-release-candidate
   cancel-in-progress: true
+
 jobs:
   release-candidate:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Validate critical source
+
+      - name: Validate current launch source
+        shell: bash
         run: |
+          set -euo pipefail
+          for f in \
+            index.html superapp-v5.js superapp-v5.css suite-nav.js market-performance.js \
+            human-operability-v1.css human-operability-patch-v1.css \
+            rwa-8-engines/app.js rwa-8-engines/engine.js rwa-8-engines/human-operability.css \
+            execution-api.js execution-ops-bridge.js exchange-core.js trade/config.js \
+            tools/superapp-v5-audit.mjs tools/superapp-p16-p20-audit.mjs \
+            tools/rwa-8-engines-audit.mjs tools/security-gate.mjs tools/launch-gate.mjs; do test -s "$f"; done
+
+          node --check superapp-v5.js
+          node --check suite-nav.js
+          node --check market-performance.js
+          node --check rwa-8-engines/app.js
+          node --check rwa-8-engines/engine.js
           node --check execution-api.js
+          node --check execution-ops-bridge.js
           node --check exchange-core.js
-          node --check suite-v2.js
-          node --check social-trade-monitor.js
-          node --check social-notification-defaults.js
-          node --check social-trading-pro.js
-          node --check rwa-storefront.js
-          node --check rwa-storefront-safety-patch.js
-          node --check rwa-store-draft-ui.js
-          node --check rwa-home-commerce.js
-          node --check rwa-market-labels.js
-          node --check rwa-store-detail.js
-          node --check rwa-checkout-ui.js
-          node --check quick-actions.js
-          node --check trade/app.js
-          node --check trade/hyperliquid.js
-          node --check trade/terminal-pro.js
-          node --check trade/provider-runtime.js
-          node --check trade/margin-runtime.js
-          node --check trade/chart-overlays.js
-          node --check trade/release-runtime.js
-          node --check trade/ui-polish.js
-          node --check trade/e2e.js
-          node --check trade/e2e-resilience.js
           node --check trade/config.js
           node --check agent-worker/worker.mjs
           node --check agent-worker/execution.mjs
           node --check agent-worker/copy-engine.mjs
-          python -m json.tool rwa-commerce-registry.json >/dev/null
-          test -s rwa-store-detail.css
-          test -s rwa-checkout-ui.css
+
           node tools/trade-ui-contract.mjs
-          node tools/product-parity-contract.mjs
           node tools/storefront-ui-contract.mjs
+          node tools/superapp-v5-audit.mjs
+          node tools/superapp-p16-p20-audit.mjs
+          node tools/rwa-8-engines-audit.mjs
           node tools/security-gate.mjs
           node tools/launch-gate.mjs --require-engineering
-      - name: Validate immutable safety and commerce markers
+
+      - name: Validate immutable launch safety markers
+        shell: bash
         run: |
+          set -euo pipefail
           grep -Fq "hardening:'single-write-path-v1'" execution-api.js
           grep -Fq "riskSigner:'agent-only-fail-closed-v1'" execution-api.js
           grep -Fq "grouping:'normalTpsl'" execution-api.js
           grep -Fq "WORKER_SINGLE_WRITE_PATH='RWAWorkerExecutionAPI'" agent-worker/execution.mjs
           ! grep -Eq '(withdraw3|usdClassTransfer|spotSend|sendAsset)' agent-worker/execution.mjs agent-worker/worker.mjs
-          grep -Fq "version:'1.5.0'" trade/config.js
-          grep -Fq "status==='READY_FOR_MAINNET'" trade/config.js
-          grep -Fq "import './ui-polish.js?v=2'" trade/config.js
-          grep -Fq "runtime:'stable-no-observer-v2'" trade/ui-polish.js
-          ! grep -Fq 'MutationObserver' trade/ui-polish.js
-          grep -Fq 'quick-actions.js?v=1' index.html
-          grep -Fq 'social-notification-defaults.js?v=1' index.html
-          grep -Fq 'social-trading-pro.js?v=1' index.html
+          grep -Fq '"enabled": false' rwa-execution-config.json
+          grep -Fq '"tgeEnabled": false' token/config.json
+          grep -Fq '"mainnetDeploymentEnabled": false' token/config.json
           grep -Fq "policy:'explicit-opt-in-v1'" social-notification-defaults.js
-          grep -Fq "venue-backed-social-feed-v1" social-trading-pro.js
-          grep -Fq "ONE_TOKEN_ONE_PHYSICAL_STORE_V1" rwa-storefront.js
-          grep -Fq "preview-no-fake-price-trade-v1" rwa-storefront-safety-patch.js
-          grep -Fq "UNVERIFIED_LOCAL_DRAFT" rwa-store-draft-ui.js
-          grep -Fq "landing-commerce-surface-v1" rwa-home-commerce.js
-          grep -Fq "public-rwa-linked-vs-store-token-v1" rwa-market-labels.js
-          grep -Fq "physical-store-evidence-detail-v1" rwa-store-detail.js
-          grep -Fq "backend-gated-checkout-preview-v1" rwa-checkout-ui.js
-          grep -Fq "Place order after backend verification" rwa-checkout-ui.js
-          grep -Fq '"one_token_one_physical_store": true' rwa-commerce-registry.json
-          grep -Fq 'verifiedStore(s)&&verifiedAsset(s.token)' rwa-storefront.js
-          grep -Fq 'social-trade-monitor.js?v=1' suite.js
-          grep -Fq 'RWAMarginRuntime' trade/margin-runtime.js
-          grep -Fq 'RWAChartTradeOverlay' trade/chart-overlays.js
-          ! grep -Fq 'ExchangeClient' trade/margin-runtime.js trade/chart-overlays.js quick-actions.js social-trade-monitor.js social-trading-pro.js rwa-storefront.js rwa-storefront-safety-patch.js rwa-store-draft-ui.js rwa-home-commerce.js rwa-market-labels.js rwa-store-detail.js rwa-checkout-ui.js trade/ui-polish.js
-      - name: Verify public GitHub Pages release surfaces
+          ! grep -Fq 'product-os-v3.js' index.html
+          ! grep -Fq 'product-os-mobile-contract-v3.js' index.html
+          grep -Fq 'human-operability-v1.css?v=1' market-performance.js
+          grep -Fq 'human-operability-patch-v1.css?v=1' market-performance.js
+          grep -Fq 'human-operability.css?v=1' rwa-8-engines/app.js
+          grep -Fq "canonical:'https://copytolive.github.io/rwa/'" legacy-canonical.js
+
+      - name: Verify exact GitHub Pages release surfaces
         shell: bash
         run: |
+          set -euo pipefail
           ok=0
-          for i in {1..120}; do
+          for i in {1..180}; do
             q="${GITHUB_RUN_ID}-${i}"
-            root="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/?v=$q" || true)"
-            trade="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/?v=$q" || true)"
-            cfg="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/config.js?v=$q" || true)"
-            margin="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/margin-runtime.js?v=$q" || true)"
-            overlay="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/chart-overlays.js?v=$q" || true)"
-            tradeui="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/ui-polish.js?v=$q" || true)"
-            quick="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/quick-actions.js?v=$q" || true)"
-            storefront="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-storefront.js?v=$q" || true)"
-            safety="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-storefront-safety-patch.js?v=$q" || true)"
-            draft="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-store-draft-ui.js?v=$q" || true)"
-            home="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-home-commerce.js?v=$q" || true)"
-            labels="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-market-labels.js?v=$q" || true)"
-            detail="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-store-detail.js?v=$q" || true)"
-            detailcss="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-store-detail.css?v=$q" || true)"
-            checkout="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-checkout-ui.js?v=$q" || true)"
-            checkoutcss="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-checkout-ui.css?v=$q" || true)"
-            commerce="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-commerce-registry.json?v=$q" || true)"
-            defaults="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-notification-defaults.js?v=$q" || true)"
-            socialpro="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-trading-pro.js?v=$q" || true)"
-            suite="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/suite-v2.js?v=$q" || true)"
-            social="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-trade-monitor.js?v=$q" || true)"
-            if grep -Fq 'quick-actions.js?v=1' <<<"$root" \
-              && grep -Fq 'social-notification-defaults.js?v=1' <<<"$root" \
-              && grep -Fq 'social-trading-pro.js?v=1' <<<"$root" \
+            base="https://copytolive.github.io/rwa"
+            deployed="$(curl --connect-timeout 5 --max-time 12 -fsSL "$base/deployment-sha.txt?v=$q" 2>/dev/null | tr -d '\r\n' || true)"
+            root="$(curl --connect-timeout 5 --max-time 12 -fsSL "$base/?v=$q" 2>/dev/null || true)"
+            trade="$(curl --connect-timeout 5 --max-time 12 -fsSL "$base/trade/?v=$q" 2>/dev/null || true)"
+            factory="$(curl --connect-timeout 5 --max-time 12 -fsSL "$base/rwa-8-engines/?v=$q" 2>/dev/null || true)"
+            renko="$(curl --connect-timeout 5 --max-time 12 -fsSL "$base/renko/?v=$q" 2>/dev/null || true)"
+            human="$(curl --connect-timeout 5 --max-time 12 -fsSL "$base/human-operability-v1.css?v=$q" 2>/dev/null || true)"
+            patch="$(curl --connect-timeout 5 --max-time 12 -fsSL "$base/human-operability-patch-v1.css?v=$q" 2>/dev/null || true)"
+            if [ "$deployed" = "$GITHUB_SHA" ] \
+              && grep -Fq 'RWA Markets' <<<"$root" \
               && grep -Fq 'id="priceChart"' <<<"$trade" \
-              && grep -Fq "version:'1.5.0'" <<<"$cfg" \
-              && grep -Fq "import './ui-polish.js?v=2'" <<<"$cfg" \
-              && grep -Fq 'RWAMarginRuntime' <<<"$margin" \
-              && grep -Fq 'RWAChartTradeOverlay' <<<"$overlay" \
-              && grep -Fq 'stable-no-observer-v2' <<<"$tradeui" \
-              && ! grep -Fq 'MutationObserver' <<<"$tradeui" \
-              && grep -Fq 'premium-shell-storefront-v1' <<<"$quick" \
-              && grep -Fq 'rwa-storefront-safety-patch.js?v=1' <<<"$quick" \
-              && grep -Fq 'rwa-store-draft-ui.js?v=1' <<<"$quick" \
-              && grep -Fq 'rwa-home-commerce.js?v=1' <<<"$quick" \
-              && grep -Fq 'rwa-market-labels.js?v=1' <<<"$quick" \
-              && grep -Fq 'rwa-store-detail.js?v=1' <<<"$quick" \
-              && grep -Fq 'rwa-checkout-ui.js?v=1' <<<"$quick" \
-              && grep -Fq 'ONE_TOKEN_ONE_PHYSICAL_STORE_V1' <<<"$storefront" \
-              && grep -Fq 'preview-no-fake-price-trade-v1' <<<"$safety" \
-              && grep -Fq 'UNVERIFIED_LOCAL_DRAFT' <<<"$draft" \
-              && grep -Fq 'landing-commerce-surface-v1' <<<"$home" \
-              && grep -Fq 'public-rwa-linked-vs-store-token-v1' <<<"$labels" \
-              && grep -Fq 'physical-store-evidence-detail-v1' <<<"$detail" \
-              && grep -Fq '.rwa-store-detail-layer' <<<"$detailcss" \
-              && grep -Fq 'backend-gated-checkout-preview-v1' <<<"$checkout" \
-              && grep -Fq '.rwa-checkout-layer' <<<"$checkoutcss" \
-              && grep -Fq '"one_token_one_physical_store": true' <<<"$commerce" \
-              && grep -Fq "policy:'explicit-opt-in-v1'" <<<"$defaults" \
-              && grep -Fq "venue-backed-social-feed-v1" <<<"$socialpro" \
-              && grep -Fq "version:'2.0.0'" <<<"$suite" \
-              && grep -Fq 'RWAFollowedTradeMonitor' <<<"$social"; then ok=1; break; fi
+              && grep -Fq 'RWA Passport' <<<"$factory" \
+              && grep -Fq 'RENKO V15.1' <<<"$renko" \
+              && grep -Fq 'RWA HUMAN OPERABILITY V1' <<<"$human" \
+              && grep -Fq '.topnav{display:none!important}' <<<"$patch"; then
+              ok=1
+              echo "EXACT_DEPLOYED_SHA=$deployed"
+              break
+            fi
             sleep 5
           done
           test "$ok" = "1"
+
       - name: Publish release candidate status
+        if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/release-candidate' -f description='Trading social + physical-store ecommerce detail cart and checkout live surfaces verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/release-candidate' -f description='Exact-SHA Super App + RWA Factory + RENKO launch surfaces verified'
+
       - name: Publish release candidate failure
         if: failure()
         env:
