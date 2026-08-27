@@ -16,28 +16,45 @@ try{
   if(boot.controller!=='v15.7-abortable-controls'||boot.autoApply!=='0'||boot.interactive!=='1'||boot.bricks<=0)fail(`bad boot ${JSON.stringify(boot)}`);
   for(const m of ['atr','traditional','percentage'])await assertControls(m);
 
-  // Baseline quick switch.
   await page.locator('#v15TraditionalBox').fill('10');
   const t10=await applyFast('traditional',10,5000);if(t10.before===t10.after)fail('Traditional 10 no chart change');
 
-  // Reproduce the user's screenshot: Traditional BOX 100 on BTC usually needs deeper history.
-  // While it is LOADING, every control in the same panel must remain clickable/editable,
-  // and touching a control must abort that obsolete history request immediately.
+  // Make controller-owned aggregate-trade hydration deliberately slow. This does not affect
+  // the already-loaded chart; it only guarantees we exercise controls while fetch is pending.
+  await page.evaluate(()=>{
+    const native=window.fetch.bind(window);window.__RENKO_NATIVE_FETCH__=native;
+    window.fetch=(url,opts={})=>{
+      const u=String(url||'');
+      if(u.includes('/api/v3/aggTrades?')&&opts?.signal){
+        return new Promise((resolve,reject)=>{
+          let done=false;const finish=(fn,v)=>{if(done)return;done=true;fn(v)};
+          const tm=setTimeout(()=>native(url,opts).then(v=>finish(resolve,v),e=>finish(reject,e)),5000);
+          const abort=()=>{clearTimeout(tm);finish(reject,new DOMException('Aborted','AbortError'))};
+          if(opts.signal.aborted)return abort();opts.signal.addEventListener('abort',abort,{once:true});
+        });
+      }
+      return native(url,opts);
+    };
+  });
+
+  // Exact reproduction: Traditional BOX 100 enters history loading. While fetch is physically
+  // pending, BOX, WICKS, ENTRY CONFIRM and APPLY must all remain real hit targets.
   await page.locator('#v15TraditionalBox').fill('100');
   await page.locator('[data-v15-apply="traditional"]').click({timeout:1500});
   await page.waitForFunction(()=>{const r=document.querySelector('#v15BoxCard'),s=document.querySelector('[data-v15-profile="traditional"] .v15-state')?.textContent||'';return r?.dataset.pendingHistory==='1'&&/LOADING|APPLYING|QUEUED/.test(s)&&RWARenkoV15.state.data.length>0},null,{timeout:4000});
   const beforeAbort=await page.evaluate(()=>Number(document.querySelector('#v15BoxCard')?.dataset.historyAborts||0));
   await assertControls('traditional');
   const box=page.locator('#v15TraditionalBox');await box.click({timeout:1000});await box.fill('10');
+  await page.waitForFunction(n=>Number(document.querySelector('#v15BoxCard')?.dataset.historyAborts||0)>n,beforeAbort,{timeout:1000});
   const wicks=page.locator('#v15TraditionalWicks');await wicks.click({timeout:1000});
   const confirm=page.locator('#v15TraditionalConfirm');await confirm.selectOption('1',{timeout:1000});
-  const edited=await page.evaluate(()=>({box:document.querySelector('#v15TraditionalBox')?.value,wicks:document.querySelector('#v15TraditionalWicks')?.checked,confirm:document.querySelector('#v15TraditionalConfirm')?.value,aborts:Number(document.querySelector('#v15BoxCard')?.dataset.historyAborts||0),pending:document.querySelector('#v15BoxCard')?.dataset.pendingHistory,state:document.querySelector('[data-v15-profile="traditional"] .v15-state')?.textContent}));
+  const edited=await page.evaluate(()=>({box:document.querySelector('#v15TraditionalBox')?.value,wicks:document.querySelector('#v15TraditionalWicks')?.checked,confirm:document.querySelector('#v15TraditionalConfirm')?.value,aborts:Number(document.querySelector('#v15BoxCard')?.dataset.historyAborts||0),pending:document.querySelector('#v15BoxCard')?.dataset.pendingHistory,state:document.querySelector('[data-v15-profile="traditional"] .v15-state')?.textContent,lastAbort:document.querySelector('#v15BoxCard')?.dataset.lastAbortReason}));
   if(edited.box!=='10'||edited.wicks!==false||edited.confirm!=='1'||edited.aborts<=beforeAbort||edited.pending!=='0')fail(`controls did not abort/edit during hydration ${JSON.stringify(edited)}`);
   const switched=await applyFast('traditional',10,5000);
   const settings=await page.evaluate(()=>({wicks:RWARenkoV15.settings.wicks,confirm:RWARenkoV15.settings.confirmBricks}));
   if(settings.wicks!==false||settings.confirm!==1)fail(`Traditional edited settings not applied ${JSON.stringify(settings)}`);
 
-  // Start another deep job and immediately choose ATR. The old fetch wave must not block latest click.
+  // Another deliberately pending history job must be cancelled immediately by an ATR interaction.
   await page.locator('#v15Percentage').fill('10');
   await page.locator('[data-v15-apply="percentage"]').click({timeout:1500});
   await page.waitForFunction(()=>document.querySelector('#v15BoxCard')?.dataset.pendingHistory==='1',null,{timeout:4000});
@@ -46,6 +63,7 @@ try{
   await page.waitForFunction(n=>Number(document.querySelector('#v15BoxCard')?.dataset.historyAborts||0)>n,abort2,{timeout:1000});
   const atrStart=Date.now();await page.locator('[data-v15-apply="atr"]').click({timeout:1500});await page.waitForFunction(()=>RWARenkoV15.settings.method==='atr'&&document.querySelector('#v15BoxCard')?.dataset.lastApplied==='atr'&&document.querySelector('#v15BoxCard')?.dataset.applyVerified==='1',null,{timeout:7000});if(Date.now()-atrStart>5000)fail(`ATR latest click waited on aborted history: ${Date.now()-atrStart}ms`);
 
+  await page.evaluate(()=>{if(window.__RENKO_NATIVE_FETCH__)window.fetch=window.__RENKO_NATIVE_FETCH__});
   const result=await page.evaluate(()=>({controller:RWARenkoV15MethodProfiles.version,method:RWARenkoV15.settings.method,box:RWARenkoV15.state.box,bricks:RWARenkoV15.state.data.length,ticks:RWARenkoV15.state.ticks.length,active:document.querySelector('[data-v15-profile].active')?.dataset.v15Profile,applyMs:document.querySelector('#v15BoxCard')?.dataset.applyMs,historyAborts:document.querySelector('#v15BoxCard')?.dataset.historyAborts,controlsInteractive:document.querySelector('#v15BoxCard')?.dataset.controlsInteractive,audit:RWARenkoV15.uniformAudit()}));
   console.log('RENKO V15.7 ABORTABLE CONTROLS PASS',JSON.stringify(result));
 } finally {await browser.close()}
