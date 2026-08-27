@@ -19,36 +19,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Validate critical source
         run: |
-          node --check execution-api.js
-          node --check exchange-core.js
-          node --check suite-v2.js
-          node --check social-trade-monitor.js
-          node --check social-notification-defaults.js
-          node --check social-trading-pro.js
-          node --check rwa-storefront.js
-          node --check rwa-storefront-safety-patch.js
-          node --check rwa-store-draft-ui.js
-          node --check rwa-home-commerce.js
-          node --check rwa-market-labels.js
-          node --check rwa-store-detail.js
-          node --check rwa-checkout-ui.js
-          node --check quick-actions.js
-          node --check rwa-multichain.js
-          node --check tools/launch-gate-current.mjs
-          node --check trade/app.js
-          node --check trade/hyperliquid.js
-          node --check trade/terminal-pro.js
-          node --check trade/provider-runtime.js
-          node --check trade/margin-runtime.js
-          node --check trade/chart-overlays.js
-          node --check trade/release-runtime.js
-          node --check trade/ui-polish.js
-          node --check trade/e2e.js
-          node --check trade/e2e-resilience.js
-          node --check trade/config.js
-          node --check agent-worker/worker.mjs
-          node --check agent-worker/execution.mjs
-          node --check agent-worker/copy-engine.mjs
+          for f in execution-api.js exchange-core.js suite-v2.js social-trade-monitor.js social-notification-defaults.js social-trading-pro.js \
+            rwa-storefront.js rwa-storefront-safety-patch.js rwa-store-draft-ui.js rwa-home-commerce.js rwa-market-labels.js rwa-store-detail.js rwa-checkout-ui.js quick-actions.js \
+            rwa-multichain.js rwa-multichain-engine.js tools/launch-gate-current.mjs trade/app.js trade/hyperliquid.js trade/terminal-pro.js trade/provider-runtime.js \
+            trade/margin-runtime.js trade/chart-overlays.js trade/release-runtime.js trade/ui-polish.js trade/e2e.js trade/e2e-resilience.js trade/config.js \
+            agent-worker/worker.mjs agent-worker/execution.mjs agent-worker/copy-engine.mjs; do node --check "$f"; done
           python -m json.tool rwa-commerce-registry.json >/dev/null
           python -m json.tool rwa-multichain-registry.json >/dev/null
           test -s rwa-store-detail.css
@@ -59,7 +34,7 @@ jobs:
           node tools/storefront-ui-contract.mjs
           node tools/security-gate.mjs
           node tools/launch-gate-current.mjs --require-engineering
-      - name: Validate immutable safety, lazy runtime and commerce markers
+      - name: Validate immutable safety, lazy runtime, commerce and MULTI CHAIN V2 markers
         shell: bash
         run: |
           set -euo pipefail
@@ -73,16 +48,26 @@ jobs:
           grep -Fq "import './ui-polish.js?v=2'" trade/config.js
           grep -Fq "runtime:'stable-no-observer-v2'" trade/ui-polish.js
           ! grep -Fq 'MutationObserver' trade/ui-polish.js
+
           grep -Fq "loadScriptOnce('quick-actions.js?v=1','quick-actions')" superapp-v5.js
           grep -Fq "loadScriptOnce('social-notification-defaults.js?v=1','social-defaults')" superapp-v5.js
           grep -Fq "loadScriptOnce('social-trading-pro.js?v=1','social-pro')" superapp-v5.js
           ! grep -Fq 'quick-actions.js?v=1' index.html
           ! grep -Fq 'social-notification-defaults.js?v=1' index.html
           ! grep -Fq 'social-trading-pro.js?v=1' index.html
-          grep -Fq 'rwa-multichain.js?v=1' index.html
-          grep -Fq "POLICY='chain-abstraction-fail-closed-v1'" rwa-multichain.js
-          grep -Fq '"policy": "chain-abstraction-fail-closed-v1"' rwa-multichain-registry.json
+
+          grep -Fq 'rwaMultiChainLazyBootstrap' index.html
+          grep -Eq "SRC='rwa-multichain\.js\?v=[0-9]+'" index.html
+          grep -Fq "POLICY='chain-abstraction-fail-closed-v2'" rwa-multichain.js
+          grep -Fq "ENGINE_SRC='rwa-multichain-engine.js?v=2'" rwa-multichain.js
+          grep -Fq "const VERSION='2.0.0'" rwa-multichain-engine.js
+          grep -Fq "const LIFI='https://li.quest/v1'" rwa-multichain-engine.js
+          grep -Fq "r?.mainnet_ready===true&&r?.status==='READY_FOR_MAINNET'" rwa-multichain-engine.js
+          grep -Fq '"policy": "chain-abstraction-fail-closed-v2"' rwa-multichain-registry.json
           ! grep -Fq 'ExchangeClient' rwa-multichain.js
+          ! grep -Fq 'ExchangeClient' rwa-multichain-engine.js
+          ! grep -Fq 'x-lifi-api-key' rwa-multichain-engine.js
+
           grep -Fq "policy:'explicit-opt-in-v1'" social-notification-defaults.js
           grep -Fq "venue-backed-social-feed-v1" social-trading-pro.js
           grep -Fq "ONE_TOKEN_ONE_PHYSICAL_STORE_V1" rwa-storefront.js
@@ -113,33 +98,37 @@ jobs:
             sleep 5
           done
           test "$ok" = "1"
-          q="${GITHUB_RUN_ID}-release"
+          q="${GITHUB_RUN_ID}-release-v2"
           curl --connect-timeout 5 --max-time 20 -fsSL "$base/?v=$q" -o /tmp/rwa-root.html
           curl --connect-timeout 5 --max-time 20 -fsSL "$base/superapp-v5.js?v=$q" -o /tmp/rwa-superapp.js
           curl --connect-timeout 5 --max-time 20 -fsSL "$base/rwa-multichain.js?v=$q" -o /tmp/rwa-multichain.js
+          curl --connect-timeout 5 --max-time 20 -fsSL "$base/rwa-multichain-engine.js?v=$q" -o /tmp/rwa-multichain-engine.js
           curl --connect-timeout 5 --max-time 20 -fsSL "$base/rwa-multichain-registry.json?v=$q" -o /tmp/rwa-multichain.json
           curl --connect-timeout 5 --max-time 20 -fsSL "$base/trade/?v=$q" -o /tmp/rwa-trade.html
           curl --connect-timeout 5 --max-time 20 -fsSL "$base/trade/config.js?v=$q" -o /tmp/rwa-trade-config.js
           grep -Fq 'market-performance.js?v=12' /tmp/rwa-root.html
           grep -Fq 'superapp-v5.js?v=17' /tmp/rwa-root.html
-          grep -Fq 'rwa-multichain.js?v=1' /tmp/rwa-root.html
+          grep -Fq 'rwaMultiChainLazyBootstrap' /tmp/rwa-root.html
           grep -Fq "loadScriptOnce('social-notification-defaults.js?v=1','social-defaults')" /tmp/rwa-superapp.js
           grep -Fq "loadScriptOnce('social-trading-pro.js?v=1','social-pro')" /tmp/rwa-superapp.js
           grep -Fq "loadScriptOnce('quick-actions.js?v=1','quick-actions')" /tmp/rwa-superapp.js
-          grep -Fq "POLICY='chain-abstraction-fail-closed-v1'" /tmp/rwa-multichain.js
+          grep -Fq "POLICY='chain-abstraction-fail-closed-v2'" /tmp/rwa-multichain.js
           grep -Fq 'window.RWAMultiChain' /tmp/rwa-multichain.js
-          grep -Fq '"policy": "chain-abstraction-fail-closed-v1"' /tmp/rwa-multichain.json
+          grep -Fq "const VERSION='2.0.0'" /tmp/rwa-multichain-engine.js
+          grep -Fq "const LIFI='https://li.quest/v1'" /tmp/rwa-multichain-engine.js
+          grep -Fq '"policy": "chain-abstraction-fail-closed-v2"' /tmp/rwa-multichain.json
           grep -Fq '"id": "solana"' /tmp/rwa-multichain.json
           grep -Fq '"id": "base"' /tmp/rwa-multichain.json
+          grep -Fq '"id": "monad"' /tmp/rwa-multichain.json
           grep -Fq 'id="priceChart"' /tmp/rwa-trade.html
           grep -Fq "version:'1.5.0'" /tmp/rwa-trade-config.js
           grep -Fq "status==='READY_FOR_MAINNET'" /tmp/rwa-trade-config.js
-          echo "RELEASE_EXACT_SHA=PASS:$GITHUB_SHA"
+          echo "RELEASE_MULTICHAIN_V2_EXACT_SHA=PASS:$GITHUB_SHA"
       - name: Publish release candidate status
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/release-candidate' -f description='Lazy social + safety + commerce + MULTI CHAIN release contract verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/release-candidate' -f description='Safety + lazy runtime + commerce + MULTI CHAIN V2 engineering contract verified'
       - name: Publish release candidate failure
         if: failure()
         env:
