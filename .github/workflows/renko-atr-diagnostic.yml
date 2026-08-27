@@ -18,22 +18,19 @@ jobs:
           node - <<'NODE'
           const rows=require('/tmp/agg.json');
           const ticks=rows.map(x=>({price:Number(x.p),time:Number(x.T)}));
-          function oldAtr(ticks,len){len=Math.max(1,Math.floor(Number(len)||14));const src=ticks.slice(-Math.max(500,len*50)),moves=[];let prev=NaN;for(const t of src){const p=Number(t.price);if(!Number.isFinite(p))continue;if(Number.isFinite(prev)){const tr=Math.abs(p-prev);if(tr>0)moves.push(tr)}prev=p}if(!moves.length)return NaN;const recent=moves.slice(-Math.max(len,Math.min(moves.length,len*20)));if(recent.length<len)return recent.reduce((a,b)=>a+b,0)/recent.length;let a=recent.slice(0,len).reduce((x,y)=>x+y,0)/len;for(let i=len;i<recent.length;i++)a=((a*(len-1))+recent[i])/len;return a}
-          function rangeAtr(ticks,len,block){
-            len=Math.max(1,Math.min(200,Math.floor(Number(len)||14)));
+          function tickWindowAtr(ticks,len){
+            len=Math.max(2,Math.min(200,Math.floor(Number(len)||14)));
             const prices=[];let prev=NaN;
             for(const t of ticks){const p=Number(t.price);if(!Number.isFinite(p)||p===prev)continue;prices.push(p);prev=p}
             if(prices.length<2)return NaN;
-            const trs=[];let prevClose=prices[0];
-            for(let i=0;i<prices.length;i+=block){const a=prices.slice(i,i+block);if(a.length<2)continue;const hi=Math.max(...a),lo=Math.min(...a),cl=a.at(-1);trs.push(Math.max(hi-lo,Math.abs(hi-prevClose),Math.abs(lo-prevClose)));prevClose=cl}
-            if(!trs.length)return NaN;const use=trs.slice(-Math.max(len,Math.min(trs.length,len*4)));
-            if(use.length<len)return use.reduce((a,b)=>a+b,0)/use.length;
-            let x=use.slice(0,len).reduce((a,b)=>a+b,0)/len;for(let i=len;i<use.length;i++)x=((x*(len-1))+use[i])/len;return x;
+            const a=prices.slice(-Math.min(len,prices.length));
+            const prior=prices[Math.max(0,prices.length-a.length-1)] ?? a[0];
+            const hi=Math.max(...a),lo=Math.min(...a);
+            return Math.max(hi-lo,Math.abs(hi-prior),Math.abs(lo-prior));
           }
-          const out={old14:oldAtr(ticks,14),old140:oldAtr(ticks,140),ticks:ticks.length,blocks:{}};
-          for(const b of [4,8,16,24,32,48,64]){const a14=rangeAtr(ticks,14,b),a140=rangeAtr(ticks,140,b);out.blocks[b]={a14,a140,r14:Math.round(a14*100)/100,r140:Math.round(a140*100)/100,diff:Math.abs(a14-a140)}}
-          console.log('ATR_DIAGNOSTIC',JSON.stringify(out));
-          const good=Object.entries(out.blocks).filter(([b,v])=>v.r14!==v.r140);
-          console.log('ATR_BLOCKS_ROUND_DIFFERENT',JSON.stringify(good));
-          if(!good.length) throw Error('no block gives different 0.01-rounded ATR');
+          const a14=tickWindowAtr(ticks,14),a140=tickWindowAtr(ticks,140),tick=.01;
+          const r=v=>Math.max(tick,Math.round(v/tick)*tick);
+          const out={ticks:ticks.length,atr14:a14,atr140:a140,box14:r(a14),box140:r(a140)};
+          console.log('ATR_WINDOW_DIAGNOSTIC',JSON.stringify(out));
+          if(!(out.box14>0&&out.box140>0&&out.box14!==out.box140)) throw Error('ATR 14/140 must produce different market-tick boxes');
           NODE
