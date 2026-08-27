@@ -1,0 +1,51 @@
+name: RWA Multi Chain Bootstrap Self Heal
+
+on:
+  push:
+    branches:
+      - feat/multichain-release-hardening-20260827
+    paths:
+      - .github/workflows/multichain-bootstrap-self-heal.yml
+      - index.html
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/multichain-release-hardening-20260827
+          fetch-depth: 1
+      - name: Repair lazy launcher ownership without changing layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old="<script id=\"rwaMultiChainLazyBootstrap\">(()=>{'use strict';const ID='rwaMultiChainLaunch',SRC='rwa-multichain.js?v=1';"
+          style="<style id=\"rwaMultiChainLauncherBootstrapStyle\">.rwa-multichain-launch{display:inline-flex!important;align-items:center;gap:7px;height:32px;padding:0 11px;border:1px solid #282b34;border-radius:7px;background:#0d0f14;color:#e9ecf2;font:750 10.5px/1 Inter,system-ui;letter-spacing:.07em;white-space:nowrap;cursor:pointer}.rwa-multichain-launch:hover,.rwa-multichain-launch.active{border-color:#4b5364;background:#13161d}@media(max-width:900px){.rwa-multichain-launch{padding:0 9px}}@media(max-width:680px){.rwa-multichain-launch{position:fixed;right:12px;bottom:74px;z-index:9650;height:40px;border-radius:20px;padding:0 14px;background:#11141b;box-shadow:0 8px 26px rgba(0,0,0,.35)}}</style>\n"
+          new=style+"<script id=\"rwaMultiChainLazyBootstrap\">(()=>{'use strict';const ID='rwaMultiChainLaunch',SRC='rwa-multichain.js?v=2';"
+          changed=False
+          if old in s:
+              s=s.replace(old,new,1); changed=True
+          elif "SRC='rwa-multichain.js?v=1'" in s:
+              s=s.replace("SRC='rwa-multichain.js?v=1'","SRC='rwa-multichain.js?v=2'",1); changed=True
+          if "b.className='signin rwa-multichain-launch';" in s:
+              s=s.replace("b.className='signin rwa-multichain-launch';","b.className='rwa-multichain-launch';",1); changed=True
+          if changed:
+              p.write_text(s)
+          PY
+          if git diff --quiet -- index.html; then
+            echo 'MULTICHAIN_BOOTSTRAP_ALREADY_HEALED=PASS'
+            exit 0
+          fi
+          git config user.name 'copytolive-release-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index.html
+          git commit -m 'fix(multichain): isolate lazy launcher from wallet action'
+          git push origin HEAD:feat/multichain-release-hardening-20260827
