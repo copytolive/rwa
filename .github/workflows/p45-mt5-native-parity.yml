@@ -1,9 +1,6 @@
 name: GOLD Certification Native MT5 Factory
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       mode:
@@ -37,7 +34,7 @@ permissions:
 
 jobs:
   p45-native:
-    if: ${{ github.event_name == 'push' || inputs.mode == 'p45' || inputs.mode == 'all' }}
+    if: ${{ inputs.mode == 'p45' || inputs.mode == 'all' }}
     runs-on: windows-2022
     timeout-minutes: 180
     env:
@@ -85,9 +82,9 @@ jobs:
             -Login $env:MT5_LOGIN `
             -Password $env:MT5_PASSWORD `
             -Server $env:MT5_SERVER `
-            -BrokerSymbol '${{ inputs.broker_symbol || 'XAUUSD' }}' `
-            -FromDate '${{ inputs.from_date || '2025.01.01' }}' `
-            -ToDate '${{ inputs.to_date || '2026.08.25' }}'
+            -BrokerSymbol '${{ inputs.broker_symbol }}' `
+            -FromDate '${{ inputs.from_date }}' `
+            -ToDate '${{ inputs.to_date }}'
 
       - name: Upload P45 MT5 evidence
         if: always()
