@@ -3,8 +3,50 @@ body.rwa-persistent-market.rwa-super-market-open #rwaSuperWorkspace{display:bloc
 body.rwa-persistent-market.rwa-super-market-open.rwa-persistent-suite #rwaSuperWorkspace{display:none!important}
 body.rwa-persistent-market.rwa-super-market-open.rwa-persistent-suite #suite{display:block!important}
 
+/* GLOBAL CHROME PERSISTENCE V2
+   The premium header and Discovery / Analysis / Action rail are permanent shell chrome.
+   Context workspaces may dock under them, but must never cover, hide, or scroll them away. */
+@media (min-width:681px){
+  .topbar,
+  body.rwa-super-market-open .topbar,
+  body.rwa-super-workspace-open .topbar,
+  body.rwa-super-suite-open .topbar{
+    display:flex!important;
+    position:sticky!important;
+    top:0!important;
+    z-index:9500!important;
+    visibility:visible!important;
+    opacity:1!important;
+    transform:none!important;
+  }
+  #rwaExperienceRail,
+  body.rwa-super-market-open #rwaExperienceRail,
+  body.rwa-super-workspace-open #rwaExperienceRail,
+  body.rwa-super-suite-open #rwaExperienceRail{
+    display:grid!important;
+    position:sticky!important;
+    top:48px!important;
+    z-index:9400!important;
+    visibility:visible!important;
+    opacity:1!important;
+    transform:none!important;
+    isolation:isolate!important;
+    background:#070a0f!important;
+  }
+  /* Desktop context docks start below BOTH permanent chrome rows. */
+  @media (min-width:1200px){
+    html:is([data-rwa-route="intelligence"],[data-rwa-route="assets"],[data-rwa-route^="research"],[data-rwa-route="institutional"],[data-rwa-route="asset"],[data-rwa-route^="asset/"]) body.rwa-super-workspace-open #rwaSuperWorkspace,
+    html[data-rwa-route="portfolio"] body.rwa-super-suite-open #suite,
+    html[data-rwa-route="institutional"] body.rwa-super-suite-open #suite{
+      top:94px!important;
+      z-index:8900!important;
+    }
+  }
+  #terminal,#rwaExchange,#rwaSuperWorkspace,#suite{scroll-margin-top:98px!important}
+}
+
 @media (max-width:680px){
-  .topbar{height:56px!important;min-height:56px!important;overflow:hidden!important;padding:0 12px!important}
+  .topbar{height:56px!important;min-height:56px!important;overflow:hidden!important;padding:0 12px!important;position:sticky!important;top:0!important;z-index:9500!important;visibility:visible!important;opacity:1!important}
   .topnav{display:none!important}
   .top-actions{margin-left:auto!important;min-width:0!important;max-width:154px!important;flex:0 1 154px!important;justify-content:flex-end!important;gap:8px!important;overflow:hidden!important}
   .top-actions>.rwa-command-button,
