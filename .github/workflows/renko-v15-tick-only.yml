@@ -1,14 +1,11 @@
-# Final current-head production screenshot gate
-name: RENKO V15.19 All Methods Instant Apply Gate
+name: RENKO TradingView Official Contract Gate
 
 on:
   push:
     branches: ["main"]
     paths:
       - "renko/**"
-      - "legacy-canonical.js"
-      - "tools/build-renko-first-frame-preload.mjs"
-      - "tools/renko-production-report.mjs"
+      - "tools/renko-tradingview-official-report.mjs"
       - ".github/workflows/renko-v15-tick-only.yml"
   workflow_dispatch:
 
@@ -17,114 +14,58 @@ permissions:
   pages: write
   id-token: write
 
-env:
-  RENKO_SEED_CACHE_KEY: renko-sol-v185-seed-20260827
-
 concurrency:
-  group: "renko-tick-only-pages"
+  group: "renko-tradingview-official-pages"
   cancel-in-progress: true
 
 jobs:
-  verify-renko-first-frame:
+  verify-renko-official-contract:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Pin V186 instant Apply runtime
+      - name: Static TradingView documented-contract checks
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq 'renko-v15-controller-bootstrap.js?v=186' renko/index.html
-          grep -Fq 'renko-v15-mobile-first-frame.css?v=186' renko/index.html
-
-      - name: Static tick-only and all-method instant contracts
-        shell: bash
-        run: |
-          set -euo pipefail
-          node --check renko/renko-v15.js
-          node --check renko/renko-v15-worker.js
-          node --check renko/renko-v15-first-frame-preload.js
-          node --check renko/renko-v15-method-controller-v186.js
-          node --check renko/renko-v15-controller-bootstrap.js
-          node --check tools/build-renko-first-frame-preload.mjs
-          node --check tools/renko-production-report.mjs
-          node --check legacy-canonical.js
-          test -s renko/renko-v15-mobile-first-frame.css
-          ! grep -Eqi 'id="[^"]*(resolution|timeframe)|>RESOLUTION<|1 minute</option>|3 minutes</option>|5 minutes</option>|15 minutes</option>|30 minutes</option>|1 hour</option>|4 hours</option>|1 day</option>' renko/index.html
-          ! grep -Fq '/api/v3/klines?' renko/renko-v15.js
-          grep -Fq "formationSource:'trade-events-only'" renko/renko-v15.js
-          grep -Fq "confirmationRule:'every-trade-immediate'" renko/renko-v15.js
-          grep -Fq "dataset.renkoMethodBootstrap='186'" renko/renko-v15-controller-bootstrap.js
-          grep -Fq 'renko-v15-method-controller-v186.js?v=186' renko/renko-v15-controller-bootstrap.js
-          grep -Fq 'renko-v15-first-frame-preload.js?v=186' renko/renko-v15-controller-bootstrap.js
-          grep -Fq "renkoController:'186'" legacy-canonical.js
-          grep -Fq 'renko-v15-mobile-first-frame.css?v=186' legacy-canonical.js
-          grep -Fq "version:'1.9.0'" renko/renko-v15-method-controller-v186.js
-          grep -Fq "FIRST_SCREEN=46" renko/renko-v15-method-controller-v186.js
-          grep -Fq "APPLY_DEBOUNCE=0" renko/renko-v15-method-controller-v186.js
-          grep -Fq 'instant-first-frame-apply-no-blocking-history' renko/renko-v15-method-controller-v186.js
-          grep -Fq 'TARGET_VISIBLE=46' tools/renko-production-report.mjs
-          grep -Fq "requiredNoLoadingAfterApply:true" tools/renko-production-report.mjs
+          node --check renko/renko-tv-engine.js
+          node --check renko/renko-tv-app.js
+          node --check tools/renko-tradingview-official-report.mjs
+          grep -Fq 'id="sourceSelect"' renko/index.html
+          grep -Fq 'value="close"' renko/index.html
+          grep -Fq 'value="ohlc"' renko/index.html
+          grep -Fq 'id="intervalSelect"' renko/index.html
+          grep -Fq 'PROJECTION' renko/index.html
+          grep -Fq 'PERCENTAGE (LTP)' renko/index.html
+          grep -Fq '/api/v3/klines?' renko/renko-tv-app.js
+          grep -Fq "confirmationRule:'source-interval-close'" renko/renko-tv-app.js
+          grep -Fq "projectionRule:'realtime-provisional-until-source-interval-close'" renko/renko-tv-app.js
+          grep -Fq "contract:'tradingview-public-documentation-compatible'" renko/renko-tv-engine.js
+          ! grep -Eqi 'every trade locks|no timeframe|tick-native chart' renko/index.html
           git diff --check
 
-      - name: Tick formation and WICKS unit matrix
+      - name: Official Renko rule unit matrix
         shell: bash
         run: |
           node - <<'NODE'
-          const fs=require('fs'),vm=require('vm');
-          const code=fs.readFileSync('renko/renko-v15-worker.js','utf8');
-          const s={console,postMessage(){}};s.self=s;s.globalThis=s;vm.createContext(s);vm.runInContext(code,s);
-          const E=s.RenkoV15Engine,ticks=prices=>prices.map((price,i)=>({id:i+1,price,time:i+1}));
-          let r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:false,ticks:ticks([100,150])});
-          if(r.bricks.length!==5||r.bricks.at(-1).close!==150)throw Error('single trade multi-brick failed');
-          r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:false,ticks:ticks([100,110,120,100,90])});
-          if(r.bricks.length!==4||!r.bricks[2].isReversal)throw Error('2-box reversal failed');
-          const on=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:true,ticks:ticks([100,99,110])});
-          const off=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:false,ticks:ticks([100,99,110])});
-          if(!(on.bricks[0].low<Math.min(on.bricks[0].open,on.bricks[0].close)))throw Error('WICKS ON failed');
-          if(off.bricks[0].low!==Math.min(off.bricks[0].open,off.bricks[0].close))throw Error('WICKS OFF failed');
-          console.log('RENKO TICK + WICKS MATRIX PASS');
-          NODE
-
-      - name: Restore SOL first-frame seed cache
-        id: seed-cache
-        uses: actions/cache@v4
-        with:
-          path: renko/preload/SOLUSDT.json
-          key: ${{ env.RENKO_SEED_CACHE_KEY }}
-
-      - name: Restore previously verified SOL seed
-        if: steps.seed-cache.outputs.cache-hit != 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p /tmp/renko-seed-zip /tmp/renko-seed-site renko/preload
-          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/9638529318/zip" -o /tmp/renko-seed.zip || true
-          if [ -s /tmp/renko-seed.zip ]; then
-            unzip -q /tmp/renko-seed.zip -d /tmp/renko-seed-zip
-            tar -xf /tmp/renko-seed-zip/artifact.tar -C /tmp/renko-seed-site
-            cp /tmp/renko-seed-site/renko/preload/SOLUSDT.json renko/preload/SOLUSDT.json
-          fi
-
-      - name: Build or validate SOL deploy-time tick seed
-        env:
-          RENKO_PRELOAD_SYMBOL: SOLUSDT
-          RENKO_PRELOAD_DAYS: 30
-          RENKO_PRELOAD_KEEP: 140
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ ! -s renko/preload/SOLUSDT.json ]; then node tools/build-renko-first-frame-preload.mjs; fi
-          node - <<'NODE'
-          const p=require('./renko/preload/SOLUSDT.json');
-          const one=p.seeds.find(x=>Math.abs(x.box-1)<.02),ten=p.seeds.find(x=>Math.abs(x.box-10)<.2);
-          if(!one||one.bricks<46||!ten||ten.bricks<46)throw Error('SOL box 1/10 first-screen seed missing');
-          console.log('FIRST_FRAME_SEEDS',{one:[one.box,one.bricks,one.ticks.length],ten:[ten.box,ten.bricks,ten.ticks.length]});
+          require('./renko/renko-tv-engine.js');
+          const E=global.RWARenkoTVEngine;
+          const bars=closes=>closes.map((c,i)=>({open:c,high:c,low:c,close:c,openTime:i*60000,closeTime:(i+1)*60000-1}));
+          let r=E.build(bars([100,110,120,100,90]),{method:'traditional',boxSize:10,source:'close',wicks:false},1);
+          if(r.bricks.length!==4||r.bricks[2].open!==110||r.bricks[2].close!==100||!r.bricks[2].isReversal)throw Error('Traditional 1x/2x contract failed');
+          const pct=E.computeBox([{open:100,high:110,low:90,close:104.05}],{method:'percentage',percentage:.1},.01);
+          if(Math.abs(pct-10.41)>1e-12)throw Error('Percentage LTP min-tick contract failed');
+          const atr=E.latestAtr([{open:10,high:12,low:9,close:11},{open:11,high:13,low:10,close:12},{open:12,high:14,low:11,close:13}],3,.01);
+          if(Math.abs(atr-3)>1e-12)throw Error('Wilder ATR contract failed');
+          const base=E.build(bars([100,110]),{method:'traditional',boxSize:10,source:'close',wicks:false},1);
+          const far=E.project(base,{open:110,high:130,low:110,close:130,openTime:120000,closeTime:179999},{method:'traditional',boxSize:10,source:'close',wicks:false},1);
+          const back=E.project(base,{open:110,high:130,low:105,close:105,openTime:120000,closeTime:179999},{method:'traditional',boxSize:10,source:'close',wicks:false},1);
+          if(base.bricks.length!==1||far.length!==2||back.length!==0)throw Error('Projection rebuild contract failed');
+          const on=E.build(bars([100,99,110]),{method:'traditional',boxSize:10,source:'close',wicks:true},1),off=E.build(bars([100,99,110]),{method:'traditional',boxSize:10,source:'close',wicks:false},1);
+          if(on.bricks[0].low!==99||off.bricks[0].low!==100)throw Error('Close-source wick contract failed');
+          console.log('RENKO TRADINGVIEW PUBLIC-DOC UNIT MATRIX PASS');
           NODE
 
       - name: Install Playwright Chromium
@@ -132,47 +73,48 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Fresh local screenshots — ATR Traditional Percentage must all be instant
+      - name: Fresh local browser validation — desktop and mobile
         env:
           RWA_TEST_URL: http://127.0.0.1:8080/rwa/
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf /tmp/renko-first-frame
-          mkdir -p /tmp/renko-first-frame/rwa
-          cp -a . /tmp/renko-first-frame/rwa/
-          cd /tmp/renko-first-frame
-          python3 -m http.server 8080 >/tmp/renko-first-frame-http.log 2>&1 &
+          rm -rf /tmp/renko-tv-site
+          mkdir -p /tmp/renko-tv-site/rwa
+          cp -a . /tmp/renko-tv-site/rwa/
+          cd /tmp/renko-tv-site
+          python3 -m http.server 8080 >/tmp/renko-tv-http.log 2>&1 &
           server=$!
           trap 'kill $server || true' EXIT
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/rwa/renko/ >/dev/null && break; sleep 1; done
           cd "$GITHUB_WORKSPACE"
-          node tools/renko-production-report.mjs
+          node tools/renko-tradingview-official-report.mjs
 
       - name: Remove test-only dependencies
         run: rm -rf node_modules package-lock.json
 
-      - name: Stamp RENKO exact deployed SHA
+      - name: Stamp exact deployed SHA
         run: printf '%s\n' "$GITHUB_SHA" > renko-deployment-sha.txt
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
+
       - name: Upload verified site
         uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
 
-      - name: Upload local screenshot evidence
+      - name: Upload local parity screenshots and report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: renko-local-all-methods-${{ github.sha }}
-          path: artifacts/renko-production-report
+          name: renko-tv-local-${{ github.sha }}
+          path: artifacts/renko-tv-official-report
           if-no-files-found: warn
           retention-days: 7
 
   deploy:
-    needs: verify-renko-first-frame
+    needs: verify-renko-official-contract
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -181,7 +123,7 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - name: Deploy verified RENKO V15.19 Pages artifact
+      - name: Deploy verified TradingView-model Renko
         id: deployment
         uses: actions/deploy-pages@v4
 
@@ -193,7 +135,7 @@ jobs:
       - name: Checkout exact source
         uses: actions/checkout@v4
 
-      - name: Wait for exact RENKO Pages SHA
+      - name: Wait for exact Pages SHA
         shell: bash
         run: |
           set -euo pipefail
@@ -211,16 +153,16 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Open live production — gate all three methods desktop/mobile
+      - name: Open live production — official-contract desktop/mobile gate
         env:
           RWA_TEST_URL: https://copytolive.github.io/rwa/
-        run: node tools/renko-production-report.mjs
+        run: node tools/renko-tradingview-official-report.mjs
 
       - name: Upload production screenshots and JSON report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: renko-production-all-methods-${{ github.sha }}
-          path: artifacts/renko-production-report
+          name: renko-tv-production-${{ github.sha }}
+          path: artifacts/renko-tv-official-report
           if-no-files-found: warn
           retention-days: 7
