@@ -1,0 +1,165 @@
+/* RWA ENTERPRISE UI V12
+   Premium visual-system layer + pair-switch geometry lock.
+   This file intentionally loads after persistent-market V11. */
+:root{
+  --rwa-ui-bg:#07090d;
+  --rwa-ui-surface-1:#0b0f14;
+  --rwa-ui-surface-2:#10161e;
+  --rwa-ui-surface-3:#151c25;
+  --rwa-ui-border:#252e3a;
+  --rwa-ui-border-soft:#1d2530;
+  --rwa-ui-text:#f2f5f8;
+  --rwa-ui-text-2:#a8b2be;
+  --rwa-ui-muted:#8793a2;
+  --rwa-ui-accent:#8b7cff;
+  --rwa-ui-success:#39dca2;
+  --rwa-ui-danger:#ff697a;
+  --rwa-ui-warning:#f2c66d;
+  --rwa-ui-font:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --rwa-ui-mono:"SFMono-Regular",Consolas,"Liberation Mono",ui-monospace,monospace;
+  --rwa-context-panel:440px;
+}
+html,body,button,input,textarea,select{font-family:var(--rwa-ui-font)!important}
+body{background:var(--rwa-ui-bg)!important;color:var(--rwa-ui-text)}
+button,input,textarea,select{font-kerning:normal}
+button{transition:background-color .18s ease,border-color .18s ease,color .18s ease,opacity .18s ease}
+:where(#statPrice,#statChange,#statHigh,#statLow,#statVol,#midPrice,#bestBid,#bestAsk,#spread,#lastTick,#tradeCount,.pairprice,.bookrow,.trade,.rwa-super-metric strong,.rwa-asset-hero strong,.rwa-asset-stats b,.rwa-compare strong,.rwa-context-symbol strong){font-variant-numeric:tabular-nums lining-nums;font-feature-settings:"tnum" 1,"lnum" 1}
+:where(.pairprice,.bookrow,.trade,#midPrice,#bestBid,#bestAsk,#spread,#lastTick){font-family:var(--rwa-ui-mono)!important}
+
+/* Consumer production hides engineering overlays. ?debug=1 re-enables them. */
+html:not([data-rwa-debug="1"]) .rwa-quality-badge,
+html:not([data-rwa-debug="1"]) .rwa-quality-panel,
+html:not([data-rwa-debug="1"]) .rwa-health{display:none!important}
+
+/* Calm, intentional header controls. */
+.topbar{background:rgba(7,9,13,.97)!important;border-bottom-color:var(--rwa-ui-border-soft)!important}
+.brandcopy strong{color:var(--rwa-ui-text)!important;font-weight:800!important;letter-spacing:.06em!important}
+.brandcopy small{color:var(--rwa-ui-muted)!important;font-weight:600!important}
+.topnav [data-v5-route],.product-nav [data-v5-route]{font-family:var(--rwa-ui-font)!important;font-weight:700!important;color:var(--rwa-ui-muted)!important}
+.topnav [data-v5-route].active,.product-nav [data-v5-route].active{background:var(--rwa-ui-surface-2)!important;border-color:var(--rwa-ui-border)!important;color:var(--rwa-ui-text)!important}
+.rwa-command-button{
+  min-width:190px;height:34px;padding:0 10px!important;border:1px solid var(--rwa-ui-border)!important;border-radius:8px!important;
+  background:var(--rwa-ui-surface-1)!important;color:var(--rwa-ui-text-2)!important;box-shadow:none!important;
+  font-size:11px!important;font-weight:650!important;justify-content:flex-start!important
+}
+.rwa-command-button:hover{background:var(--rwa-ui-surface-2)!important;border-color:#344051!important;color:var(--rwa-ui-text)!important}
+.rwa-command-button:focus-visible{outline:2px solid var(--rwa-ui-accent)!important;outline-offset:2px!important}
+.rwa-command-button .label{overflow:hidden;text-overflow:ellipsis}
+.rwa-command-button kbd{margin-left:auto!important;border:1px solid #303a47!important;border-radius:5px!important;background:#0a0e13!important;color:#9aa6b3!important;padding:3px 5px!important;font-size:9px!important;opacity:1!important}
+.rwa-top-icon{width:34px!important;height:34px!important;border-radius:8px!important;border-color:var(--rwa-ui-border)!important;background:var(--rwa-ui-surface-1)!important;color:var(--rwa-ui-text-2)!important}
+.rwa-top-icon svg,.rwa-command-button svg,.instrument-actions svg,.mobile-tabs svg{width:16px;height:16px;display:block;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.rwa-institutional-link{display:none!important}
+.signin{border-color:var(--rwa-ui-border)!important;background:var(--rwa-ui-surface-1)!important;color:var(--rwa-ui-text)!important;font-weight:700!important}
+.status{color:var(--rwa-ui-muted)!important}
+
+/* Experience Rail: same geometry, better readability. */
+@media(min-width:681px){
+  #rwaExperienceRail>[data-rwa-level]{padding:5px 12px!important;gap:10px!important;min-height:37px!important}
+  #rwaExperienceRail>[data-rwa-level]>b{font-size:9px!important;font-weight:800!important;color:#647181!important}
+  #rwaExperienceRail>[data-rwa-level]>span{font-size:12px!important;font-weight:700!important;line-height:1!important;color:var(--rwa-ui-text-2)!important}
+  #rwaExperienceRail>[data-rwa-level] small{font-size:9px!important;font-weight:550!important;line-height:1!important;margin-top:3px!important;color:#788696!important}
+  #rwaExperienceRail>[data-rwa-level].active{background:linear-gradient(180deg,rgba(139,124,255,.075),rgba(139,124,255,0))!important;border-bottom-color:var(--rwa-ui-accent)!important;box-shadow:inset 0 -2px 0 var(--rwa-ui-accent)!important}
+  #rwaExperienceRail>[data-rwa-level].active>b{color:#a79cff!important}
+  #rwaExperienceRail>[data-rwa-level].active>span{color:var(--rwa-ui-text)!important}
+}
+
+/* Core market typography and controls. */
+.aside-label span,.panel-title,.right-title{font-size:10px!important;font-weight:750!important;letter-spacing:.08em!important;color:#c4ccd6!important}
+.aside-label small,.panel-title small,.right-title small,.paircount{font-size:9px!important;color:var(--rwa-ui-muted)!important}
+.search{border-color:var(--rwa-ui-border)!important;background:var(--rwa-ui-surface-1)!important;border-radius:8px!important}
+.search input{font-size:12px!important;color:var(--rwa-ui-text)!important}
+.filter{font-size:10px!important;font-weight:650!important}
+.pairmeta b{font-size:11px!important;font-weight:700!important}.pairmeta small{font-size:9px!important;color:var(--rwa-ui-muted)!important}.pairprice b{font-size:10.5px!important}.chg{font-size:9px!important}
+.instrument b{font-size:14px!important;font-weight:750!important}.instrument small{font-size:10px!important;color:var(--rwa-ui-muted)!important}
+.qstat small{font-size:9px!important;color:var(--rwa-ui-muted)!important}.qstat b{font-size:11px!important;font-weight:700!important}
+.instrument-actions button{height:34px!important;border-color:var(--rwa-ui-border)!important;background:var(--rwa-ui-surface-1)!important;color:var(--rwa-ui-text-2)!important;border-radius:8px!important;font-size:10px!important;font-weight:700!important;display:inline-flex;align-items:center;gap:6px}
+.instrument-actions button:hover{background:var(--rwa-ui-surface-2)!important;color:var(--rwa-ui-text)!important}
+.book-head,.bookrow{font-size:9px!important}.book-head{color:var(--rwa-ui-muted)!important}.midprice{font-size:13px!important}.trade{font-size:9px!important}
+
+/* Asset detail pair-switch transaction lock V12.
+   Route ownership is stable even when body classes race for a frame. The asset route
+   must therefore own exactly one 440px context dock at all times. */
+@media(min-width:1200px){
+  html:is([data-rwa-route="asset"],[data-rwa-route^="asset/"]) .layout{
+    display:grid!important;visibility:visible!important;opacity:1!important;
+    width:calc(100% - var(--rwa-context-panel,440px))!important;
+    margin-right:var(--rwa-context-panel,440px)!important;
+    padding-right:0!important;
+    grid-template-columns:minmax(220px,250px) minmax(0,1fr)!important;
+    box-sizing:border-box!important;
+  }
+  html:is([data-rwa-route="asset"],[data-rwa-route^="asset/"]) .right{display:none!important}
+  html:is([data-rwa-route="asset"],[data-rwa-route^="asset/"]) #rwaSuperWorkspace{
+    display:block!important;position:fixed!important;z-index:8900!important;right:0!important;left:auto!important;top:94px!important;bottom:34px!important;
+    width:var(--rwa-context-panel,440px)!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:auto!important;overscroll-behavior:contain!important;
+    margin:0!important;padding:14px 14px 48px!important;border:0!important;border-left:1px solid var(--rwa-ui-border)!important;border-radius:0!important;
+    background:var(--rwa-ui-bg)!important;box-shadow:-18px 0 48px rgba(0,0,0,.32)!important;box-sizing:border-box!important
+  }
+  html[data-rwa-pair-transition="1"] .layout{transition:none!important}
+  html[data-rwa-pair-transition="1"] #rwaSuperWorkspace{transition:none!important;animation:none!important}
+}
+
+/* Asset/context hierarchy: fewer nested-box cues, more section rhythm. */
+#rwaSuperWorkspace{color:var(--rwa-ui-text)!important}
+#rwaSuperWorkspace .rwa-super-workspace-head{background:rgba(7,9,13,.97)!important;border-bottom:1px solid var(--rwa-ui-border-soft)!important}
+#rwaSuperWorkspace .rwa-super-workspace-head small{font-size:10px!important;color:#9d93ff!important;font-weight:750!important}
+#rwaSuperWorkspace .rwa-super-workspace-head h1{font-weight:800!important;letter-spacing:-.035em!important}
+#rwaSuperWorkspace .rwa-super-head-actions button{min-height:36px!important;border-radius:8px!important;font-size:11px!important;font-weight:700!important}
+#rwaSuperWorkspace .rwa-super-card,
+#rwaSuperWorkspace .rwa-super-metric,
+#rwaSuperWorkspace .rwa-asset-hero,
+#rwaSuperWorkspace .rwa-asset-toolbar-card{
+  background:var(--rwa-ui-surface-1)!important;border-color:var(--rwa-ui-border)!important;box-shadow:none!important;border-radius:12px!important
+}
+#rwaSuperWorkspace .rwa-super-card-head h2{font-size:14px!important;font-weight:750!important}
+#rwaSuperWorkspace .rwa-super-card-head small,#rwaSuperWorkspace .rwa-super-card-head>span{font-size:10px!important;color:var(--rwa-ui-muted)!important}
+#rwaSuperWorkspace .rwa-super-metric small,#rwaSuperWorkspace .rwa-super-metric span,#rwaSuperWorkspace .rwa-super-row small,#rwaSuperWorkspace .rwa-super-note,#rwaSuperWorkspace .rwa-asset-card>p,#rwaSuperWorkspace .rwa-compare small{font-size:10px!important;color:var(--rwa-ui-muted)!important}
+#rwaSuperWorkspace .rwa-super-metric strong{font-size:17px!important;font-weight:750!important}
+#rwaSuperWorkspace .rwa-super-row b,#rwaSuperWorkspace .rwa-super-row strong,#rwaSuperWorkspace .rwa-super-row>span{font-size:11px!important;font-weight:700!important}
+.rwa-asset-detail-tabs,.rwa-research-tabs{position:relative!important;display:flex!important;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none!important;gap:4px!important;padding:5px!important;border-color:var(--rwa-ui-border)!important;background:var(--rwa-ui-surface-1)!important}
+.rwa-asset-detail-tabs::-webkit-scrollbar,.rwa-research-tabs::-webkit-scrollbar{display:none!important}
+.rwa-asset-detail-tabs button,.rwa-research-tabs button{flex:0 0 auto!important;min-height:36px!important;padding:0 11px!important;border-radius:8px!important;font-size:10px!important;font-weight:700!important;color:var(--rwa-ui-muted)!important}
+.rwa-asset-detail-tabs button.active,.rwa-research-tabs button.active{background:var(--rwa-ui-surface-3)!important;color:var(--rwa-ui-text)!important}
+.rwa-asset-detail-tabs:after,.rwa-research-tabs:after{content:"";position:sticky;right:-5px;flex:0 0 18px;pointer-events:none;background:linear-gradient(90deg,transparent,var(--rwa-ui-surface-1))}
+.rwa-context-brief{background:var(--rwa-ui-surface-1)!important}
+.rwa-context-brief p{font-size:10.5px!important;color:var(--rwa-ui-text-2)!important;line-height:1.55!important}
+.rwa-context-proof>span{border-color:var(--rwa-ui-border)!important;background:#090d12!important}
+.rwa-context-proof b,.rwa-context-proof small{font-size:9px!important;color:var(--rwa-ui-muted)!important}
+.rwa-context-actions button{min-height:36px!important;font-size:10px!important;border-radius:8px!important;font-weight:700!important}
+
+/* Professional environment language. */
+[data-rwa-v12-engineering="hidden"]{display:none!important}
+.rwa-env-badge{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:24px!important;padding:0 8px!important;border:1px solid #5a4824!important;border-radius:999px!important;background:#171307!important;color:var(--rwa-ui-warning)!important;font-size:9px!important;font-weight:750!important;letter-spacing:.05em!important}
+
+/* Mobile: five real nav destinations, readable type, one instrument context strip. */
+.rwa-mobile-instrument-strip{display:none}
+@media(max-width:680px){
+  body{padding-bottom:calc(64px + env(safe-area-inset-bottom))!important}
+  .topbar{height:56px!important;min-height:56px!important}
+  .mobile-social-head{display:none!important}
+  .top-actions{max-width:116px!important;flex-basis:116px!important}
+  .status{min-height:34px!important;font-size:10px!important}
+  .brandcopy strong{font-size:15px!important}.brandcopy small{font-size:9px!important}
+  .mobile-tabs{
+    display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;
+    height:calc(64px + env(safe-area-inset-bottom))!important;padding:0 2px env(safe-area-inset-bottom)!important;
+    background:rgba(7,10,14,.985)!important;border-top:1px solid var(--rwa-ui-border)!important
+  }
+  .mobile-tabs>[data-v5-mobile]{min-width:0!important;min-height:56px!important;gap:4px!important;color:#788493!important}
+  .mobile-tabs>[data-v5-mobile] span{font-size:18px!important;line-height:1!important}.mobile-tabs>[data-v5-mobile] small{font-size:10px!important;font-weight:650!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;max-width:100%}
+  .mobile-tabs>[data-v5-mobile].active{color:var(--rwa-ui-text)!important;position:relative}.mobile-tabs>[data-v5-mobile].active:before{content:"";position:absolute;top:0;left:28%;right:28%;height:2px;border-radius:0 0 2px 2px;background:var(--rwa-ui-accent)}
+  .mobile-tabs>[data-v5-mobile].active svg{color:#a99fff!important}
+  .rwa-mobile-instrument-strip{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;height:56px;padding:0 12px;border-bottom:1px solid var(--rwa-ui-border-soft);background:#090d12;color:var(--rwa-ui-text)}
+  .rwa-mobile-instrument-main{min-width:0;display:flex;align-items:center;gap:9px}.rwa-mobile-instrument-token{width:34px;height:34px;border:1px solid #303a48;border-radius:9px;background:var(--rwa-ui-surface-2);display:grid;place-items:center;font-size:9px;font-weight:800;color:#dce3ec;flex:none}.rwa-mobile-instrument-copy{min-width:0}.rwa-mobile-instrument-copy b{display:block;font-size:13px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rwa-mobile-instrument-copy small{display:block;margin-top:3px;font-size:10px;color:var(--rwa-ui-muted)}
+  .rwa-mobile-instrument-values{text-align:right;display:flex;align-items:center;gap:9px}.rwa-mobile-instrument-values b{font-size:13px;font-weight:750;font-variant-numeric:tabular-nums}.rwa-mobile-instrument-values span{font-size:10px;font-weight:700;font-variant-numeric:tabular-nums}.rwa-mobile-instrument-values button{width:44px;height:44px;border:1px solid var(--rwa-ui-border);border-radius:10px;background:var(--rwa-ui-surface-1);color:var(--rwa-ui-text-2);display:grid;place-items:center;padding:0}.rwa-mobile-instrument-values button svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8}
+  .filter,.mobile-detail-tabs button,.rwa-asset-detail-tabs button,.rwa-research-tabs button,.rwa-pm-controls button,.thesis-side button,.composer-foot button,.rwa-mobile-asset-actions button,.mobile-market-close{min-height:44px!important}
+  .filter{font-size:11px!important}.mobile-detail-tabs button,.rwa-asset-detail-tabs button,.rwa-research-tabs button{font-size:11px!important}.panel-title div span,.right-title{font-size:10px!important}.book-head,.bookrow,.trade{font-size:10px!important}
+  .social-head small,.social-section-head small,.composer-head small,.social-post-user small,.social-post-meta,.social-pulse-main small,.social-pulse-side small{font-size:10px!important}
+  .social-post p,.thesis-composer textarea{font-size:12px!important}.social-post-user b,.composer-head b{font-size:11px!important}
+  .toast{bottom:calc(72px + env(safe-area-inset-bottom))!important;font-size:11px!important}
+}
+@media(max-width:360px){
+  .rwa-mobile-instrument-strip{padding:0 9px!important;gap:6px!important}.rwa-mobile-instrument-values{gap:6px!important}.rwa-mobile-instrument-copy b,.rwa-mobile-instrument-values b{font-size:12px!important}.rwa-mobile-instrument-copy small,.rwa-mobile-instrument-values span{font-size:9px!important}.mobile-tabs>[data-v5-mobile] small{font-size:9.5px!important}
+}
+@media(max-height:500px) and (pointer:coarse){.rwa-mobile-instrument-strip{height:48px!important}.mobile-tabs{height:calc(56px + env(safe-area-inset-bottom))!important}.mobile-tabs>[data-v5-mobile]{min-height:48px!important}}
+@media(prefers-reduced-motion:reduce){button{transition:none!important}}
