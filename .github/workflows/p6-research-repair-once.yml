@@ -17,7 +17,7 @@ jobs:
         with:
           ref: fix/p6-research-embed-contract-20260827
           fetch-depth: 0
-      - name: Repair P6 and version-parity audit
+      - name: Repair P6 and version-parity audits
         shell: bash
         run: |
           set -euo pipefail
@@ -47,6 +47,12 @@ jobs:
               s=s.replace(old_assets,new_assets,1)
           elif new_assets not in s:
               raise SystemExit('Expected stale asset version assertion not found')
+          old_p15="check(15,browser.includes(\"contract:'rwa-superapp-v5-browser'\")&&workflow.includes('Browser regression')&&workflow.includes('RWA_TEST_URL: http://127.0.0.1:4173/rwa/')&&pages.includes('Validate RWA Super App V5 single-page contract'),'browser regression');"
+          new_p15="check(15,browser.includes(\"contract:'rwa-superapp-v5-browser'\")&&workflow.includes('RWA_TEST_URL: http://127.0.0.1:4173/rwa/')&&workflow.includes('node tools/superapp-v5-browser.mjs')&&pages.includes('node tools/superapp-v5-browser.mjs')&&pages.includes('node tools/superapp-p16-p20-browser.mjs'),'browser regression');"
+          if old_p15 in s:
+              s=s.replace(old_p15,new_p15,1)
+          elif new_p15 not in s:
+              raise SystemExit('Expected stale P15 workflow-label assertion not found')
           p.write_text(s)
           PY
           node --check superapp-v5.js
@@ -65,5 +71,5 @@ jobs:
           git config user.name copytolive
           git config user.email copytolive@gmail.com
           git add superapp-v5.js tools/superapp-v5-audit.mjs
-          git commit -m 'fix: restore P6 research and dynamic cache parity gates'
+          git commit -m 'fix: restore P6 and dynamic superapp regression gates'
           git push origin HEAD:fix/p6-research-embed-contract-20260827
