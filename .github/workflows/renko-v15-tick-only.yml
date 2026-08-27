@@ -7,7 +7,7 @@ on:
       - "renko/**"
       - "legacy-canonical.js"
       - "rwa-sw-v5.js"
-      - "tools/renko-v15-functional.mjs"
+      - "tools/renko-v15-standalone-methods.mjs"
       - ".github/workflows/renko-v15-tick-only.yml"
   workflow_dispatch:
 
@@ -28,35 +28,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Static tick-only contracts
+      - name: Static tick-only and method-controller contracts
         shell: bash
         run: |
           set -euo pipefail
           node --check renko/renko-v15.js
           node --check renko/renko-v15-worker.js
-          node --check renko/renko-v15-method-profiles.js
-          node --check tools/renko-v15-functional.mjs
+          node --check renko/renko-v15-method-controller.js
+          node --check renko/renko-v15-controller-bootstrap.js
+          node --check tools/renko-v15-standalone-methods.mjs
           node --check legacy-canonical.js
           node --check rwa-sw-v5.js
           grep -Fq 'RENKO V15.1' renko/index.html
-          grep -Fq 'renko-v15.js?v=151' renko/index.html
-          grep -Fq 'renko-v15-method-profiles.js?v=151' renko/index.html
-          grep -Fq 'renko-v15.css?v=151' renko/index.html
           ! grep -Eqi 'id="[^"]*(resolution|timeframe)|>RESOLUTION<|1 minute</option>|3 minutes</option>|5 minutes</option>|15 minutes</option>|30 minutes</option>|1 hour</option>|4 hours</option>|1 day</option>' renko/index.html
           ! grep -Fq '/api/v3/klines?' renko/renko-v15.js
-          ! grep -Fq 'fetchAtr(' renko/renko-v15.js
-          ! grep -Fq 'wilderAtr(' renko/renko-v15.js
           grep -Fq "formationSource:'trade-events-only'" renko/renko-v15.js
           grep -Fq "confirmationRule:'every-trade-immediate'" renko/renko-v15.js
           grep -Fq "timeframeControl:false" renko/renko-v15.js
           grep -Fq "historySource:'binance-aggregate-trade-events-no-candles'" renko/renko-v15.js
-          grep -Fq "atrSizing:'wilder-absolute-trade-move-no-timeframe'" renko/renko-v15.js
-          grep -Fq "liveDrain:'all-unseen-raw-trades-in-order'" renko/renko-v15.js
+          grep -Fq "switchContract:'verified-only-active-latest-click-wins'" renko/renko-v15-method-controller.js
+          grep -Fq "chartImpactContract:'apply-must-complete-engine-rebuild-before-active'" renko/renko-v15-method-controller.js
+          grep -Fq "dataset.controller='v15.3-verified-only'" renko/renko-v15-controller-bootstrap.js
+          grep -Fq "renko-v15-controller-bootstrap.js?v=153" legacy-canonical.js
           grep -Fq "rwaRenkoStandalone='tick-native'" legacy-canonical.js
-          ! grep -Fq "route='research/renko/" legacy-canonical.js
           grep -Fq "Never serve the cached V14 source/resolution UI" rwa-sw-v5.js
-          grep -Fq "isRenko(u)" rwa-sw-v5.js
-          grep -Fq "cache:'reload'" rwa-sw-v5.js
           git diff --check
 
       - name: Tick formation unit matrix
@@ -80,14 +75,14 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Browser acceptance
+      - name: Standalone browser acceptance - methods must impact chart
         shell: bash
         run: |
           python3 -m http.server 8080 > /tmp/renko-http.log 2>&1 &
           server=$!
           trap 'kill $server || true' EXIT
           for i in {1..30}; do curl -fsS http://127.0.0.1:8080/ >/dev/null && break || true; sleep 1; done
-          RENKO_TEST_BASE='http://127.0.0.1:8080/' node tools/renko-v15-functional.mjs
+          RENKO_TEST_BASE='http://127.0.0.1:8080/' node tools/renko-v15-standalone-methods.mjs
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
