@@ -5,6 +5,7 @@ on:
     paths:
       - 'renko/**'
       - 'tools/renko-atr-zero-blocking-report.mjs'
+      - 'tools/renko-deep-v3-runtime-proof.mjs'
       - '.github/workflows/renko-atr-zero-blocking.yml'
   workflow_dispatch:
 permissions:
@@ -12,7 +13,7 @@ permissions:
 jobs:
   production-zero-blocking:
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 22
     steps:
       - uses: actions/checkout@v4
       - name: Static deep ATR and stable-chart checks
@@ -20,11 +21,13 @@ jobs:
           set -euo pipefail
           node --check renko/renko-tv-engine.js
           node --check renko/renko-tv-stable-chart.js
+          node --check renko/renko-tv-atr-1s-million-cache-v3.js
           node --check renko/renko-tv-atr-1s-million-cache.js
+          node --check tools/renko-deep-v3-runtime-proof.mjs
           node --check tools/renko-atr-zero-blocking-report.mjs
-          grep -Fq "const DEEP_VERSION='2.2.0'" renko/renko-tv-atr-1s-million-cache.js
+          grep -Fq 'renko-tv-atr-1s-million-cache-v3.js?v=180' renko/index.html
+          grep -Fq 'unique-nonoverlap-1s-history' renko/renko-tv-atr-1s-million-cache-v3.js
           grep -Fq "_exactBox" renko/renko-tv-engine.js
-          grep -Fq "rawPositive?raw:tick" renko/renko-tv-atr-1s-million-cache.js
           grep -Fq "rule:'render-only-on-renko-geometry-change-fixed-1s-close'" renko/renko-tv-stable-chart.js
           grep -Fq 'rawBoxPass' tools/renko-atr-zero-blocking-report.mjs
           grep -Fq 'livePersistence' tools/renko-atr-zero-blocking-report.mjs
@@ -42,6 +45,8 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
+      - name: Prove unique-window v3 worker is the production runtime
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa node tools/renko-deep-v3-runtime-proof.mjs
       - name: Capture seven raw-Wilder ATR 0ms plus live 1s no-heartbeat persistence proof
         run: RWA_TEST_URL=https://copytolive.github.io/rwa node tools/renko-atr-zero-blocking-report.mjs
       - uses: actions/upload-artifact@v4
