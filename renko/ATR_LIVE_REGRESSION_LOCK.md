@@ -35,6 +35,12 @@ Validated production run `33080704306` on SHA `21b98448580f7ecbb7cbe56f8e96c27d9
 
 The measured frame-to-proof interval was ~25.8–29.4 ms and wall-clock test interaction ~61–63 ms, so these values must NOT be described as literal 0 ms elapsed time. The validated claim is 0 ms main-thread blocking / no Long Task burden during the switch.
 
+### Race-safe current-revision proof rule
+
+The final production proof must bind each measured APPLY to one exact source revision. Before a switch is timed, `preparedContext`, `warmContext`, and the live `currentContext` must be identical. If a source candle closes during the measurement window, that attempt is invalidated, discarded, re-warmed, and measured again. The retry is allowed only for source-revision invalidation; it must never relax the requirements for an exact-cache hit or measured `0 ms BLOCKING`.
+
+Every final screenshot for ATR 14 / 140 / 500 / 6000 / 10000 must therefore come from the same deployed Git SHA and show the real active ATR value together with `0 ms BLOCKING · EXACT CACHE`. The JSON proof must report `failure: null`, `errors: []`, and `pass: true`.
+
 ## Previously successful behavior that must not regress
 
 - Full spot-pair universe stays lazy/worker-parsed/virtualized; the sidebar must not materialize every pair in the DOM or freeze the laptop.
