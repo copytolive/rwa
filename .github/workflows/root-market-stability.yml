@@ -8,8 +8,9 @@ on:
       - "realtime-core.js"
       - "chart-core.js"
       - "market-performance.js"
-      - "persistent-market-workspaces-v1.js"
+      - "persistent-market-router-v2.js"
       - "persistent-market-workspaces-v1.css"
+      - "persistent-market-operability-patch-v1.css"
       - "styles.css"
       - "mobile.css"
       - "stable-shell.css"
@@ -27,8 +28,9 @@ on:
       - "realtime-core.js"
       - "chart-core.js"
       - "market-performance.js"
-      - "persistent-market-workspaces-v1.js"
+      - "persistent-market-router-v2.js"
       - "persistent-market-workspaces-v1.css"
+      - "persistent-market-operability-patch-v1.css"
       - "styles.css"
       - "mobile.css"
       - "stable-shell.css"
@@ -62,7 +64,7 @@ jobs:
           node --check realtime-core.js
           node --check chart-core.js
           node --check market-performance.js
-          node --check persistent-market-workspaces-v1.js
+          node --check persistent-market-router-v2.js
           node --check superapp-v5.js
           node --check quick-actions.js
           node --check mobile.js
@@ -75,7 +77,8 @@ jobs:
           ! grep -Fq 'product-os-v3.js' index.html
           grep -Fq "runtime:'root-terminal-low-jank-v1'" market-performance.js
           grep -Fq 'persistent-market-workspaces-v1.css?v=1' market-performance.js
-          grep -Fq 'persistent-market-workspaces-v1.js?v=1' market-performance.js
+          grep -Fq 'persistent-market-router-v2.js?v=2' market-performance.js
+          ! grep -Fq 'persistent-market-workspaces-v1.js?v=1' market-performance.js
           grep -Fq "header='single-row-global-shell-v1'" market-performance.js
           grep -Fq "observer_policy='hot-dom-periodic-1200ms'" market-performance.js
           grep -Fq 'STRICT SINGLE TOP ROW' stable-shell.css
