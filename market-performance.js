@@ -2,7 +2,7 @@
 'use strict';
 if(window.RWAMarketPerformanceGuard)return;
 
-const PERF={version:'1.3.3',runtime:'root-terminal-global-chrome-v5'};
+const PERF={version:'1.3.3',runtime:'root-terminal-low-jank-v1'};
 const hotIds=new Set(['pairList','pairCount','liveDot','statHigh','statLow','statVol','statChange','buyPct','tradeCount']);
 const NativeMutationObserver=window.MutationObserver;
 const periodic=new Map();
@@ -180,6 +180,6 @@ PERF.observer_policy='hot-dom-periodic-1200ms';
 PERF.market_dom_flush_ms=500;
 PERF.book_flush_ms=320;
 PERF.trade_flush_ms=250;
-PERF.persistent_market_workspaces='css-core-router-v5';
+PERF.persistent_market_workspaces='css-core-router-v3';
 window.RWAMarketPerformanceGuard=PERF;
 })();
