@@ -1,0 +1,51 @@
+name: P16-P20 V15 Recovery Sol
+
+on:
+  push:
+    branches:
+      - recovery/sol-v15-launch-20260827-0924
+
+permissions:
+  contents: write
+
+jobs:
+  recover:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reconstruct and validate V15
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat tools/.v15-recovery-part1.b64 tools/.v15-recovery-part2.b64 tools/.v15-recovery-part3.b64 > /tmp/v15-recovery.b64
+          base64 -d /tmp/v15-recovery.b64 | gzip -d > /tmp/reconstruct-p16-p20-v15-ci.sh
+          printf '%s  %s\n' '4e1680d96c8bb9655a8987ccae195fe36206ee9b64dd3ef47fd7be45d70749c9' '/tmp/reconstruct-p16-p20-v15-ci.sh' | sha256sum -c -
+          bash -n /tmp/reconstruct-p16-p20-v15-ci.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/reconstruct-p16-p20-v15-ci.sh')
+          s=p.read_text()
+          needle="echo 'STATIC_CHECK=START'"
+          patch="""python3 - <<'PYMOBILE'\nfrom pathlib import Path\np=Path('superapp-v5.css')\ncss=p.read_text()\nmarker='/* RWA P20 mobile health/action collision V15.1 */'\nif marker not in css:\n    css += '\\n'+marker+'\\n@media(max-width:680px){.rwa-health{bottom:116px}}\\n'\n    p.write_text(css)\nprint('MOBILE_HEALTH_ACTION_COLLISION_FIX=PASS')\nPYMOBILE\n"""
+          if needle not in s:
+              raise SystemExit('STATIC_CHECK anchor missing')
+          s=s.replace(needle,patch+'\n'+needle,1)
+          p.write_text(s)
+          PY
+          bash -n /tmp/reconstruct-p16-p20-v15-ci.sh
+          bash /tmp/reconstruct-p16-p20-v15-ci.sh
+      - name: Commit validated transaction
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f tools/.v15-recovery-part1.b64 tools/.v15-recovery-part2.b64 tools/.v15-recovery-part3.b64 .github/workflows/p16-p20-v15-bootstrap-sol.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git status --short
+          git commit -m 'feat: complete RWA Super App P16-P20 V15 recovery'
+          git push origin HEAD:recovery/sol-v15-launch-20260827-0924
