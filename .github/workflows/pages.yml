@@ -118,19 +118,19 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Pin RENKO V183 instant hot-replay runtime in Pages artifact
+      - name: Pin RENKO V184 zero-wait hot-replay runtime in Pages artifact
         shell: bash
         run: |
           set -euo pipefail
-          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170|171|180|181|182|183)/renko-v15-controller-bootstrap.js?v=183/g' renko/index.html
-          grep -Fq 'renko-v15-controller-bootstrap.js?v=183' renko/index.html
-          grep -Fq "renkoController:'183'" legacy-canonical.js
-          grep -Fq "version:'1.8.3'" renko/renko-v15-method-controller-v181.js
+          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170|171|180|181|182|183|184)/renko-v15-controller-bootstrap.js?v=184/g' renko/index.html
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=184' renko/index.html
+          grep -Fq "renkoController:'184'" legacy-canonical.js
+          grep -Fq "version:'1.8.4'" renko/renko-v15-method-controller-v181.js
           grep -Fq 'TARGET=60' renko/renko-v15-method-controller-v181.js
-          grep -Fq 'APPLY_DEBOUNCE=75' renko/renko-v15-method-controller-v181.js
-          grep -Fq 'renko-v15-deep-history-worker-v181.js?v=183' renko/renko-v15-method-controller-v181.js
+          grep -Fq 'APPLY_DEBOUNCE=0' renko/renko-v15-method-controller-v181.js
+          grep -Fq 'renko-v15-deep-history-worker-v181.js?v=184' renko/renko-v15-method-controller-v181.js
           grep -Fq "interactionContract:'active-number-edit-never-waits-for-network-before-local-render'" renko/renko-v15-method-controller-v181.js
-          grep -Fq "latencyContract:'local-hot-replay-first-then-exact-background'" renko/renko-v15-method-controller-v181.js
+          grep -Fq "latencyContract:'zero-artificial-input-wait-local-hot-replay-then-exact-background'" renko/renko-v15-method-controller-v181.js
 
       - name: Stamp exact deployed SHA
         run: printf '%s\n' "$GITHUB_SHA" > deployment-sha.txt
