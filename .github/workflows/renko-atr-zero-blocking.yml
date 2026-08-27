@@ -6,6 +6,7 @@ on:
       - 'renko/**'
       - 'tools/renko-atr-zero-blocking-report.mjs'
       - 'tools/renko-deep-v3-runtime-proof.mjs'
+      - 'tools/binance-1s-range-integrity.mjs'
       - '.github/workflows/renko-atr-zero-blocking.yml'
   workflow_dispatch:
 permissions:
@@ -23,6 +24,7 @@ jobs:
           node --check renko/renko-tv-stable-chart.js
           node --check renko/renko-tv-atr-1s-million-cache-v3.js
           node --check renko/renko-tv-atr-1s-million-cache.js
+          node --check tools/binance-1s-range-integrity.mjs
           node --check tools/renko-deep-v3-runtime-proof.mjs
           node --check tools/renko-atr-zero-blocking-report.mjs
           grep -Fq 'renko-tv-atr-1s-million-cache-v3.js?v=180' renko/index.html
@@ -31,6 +33,8 @@ jobs:
           grep -Fq "rule:'render-only-on-renko-geometry-change-fixed-1s-close'" renko/renko-tv-stable-chart.js
           grep -Fq 'rawBoxPass' tools/renko-atr-zero-blocking-report.mjs
           grep -Fq 'livePersistence' tools/renko-atr-zero-blocking-report.mjs
+      - name: Probe Binance fixed 1s historical window semantics
+        run: node tools/binance-1s-range-integrity.mjs
       - name: Wait for exact deployed Pages SHA
         run: |
           set -euo pipefail
