@@ -24,20 +24,26 @@ async function snapshot(){return page.evaluate(()=>{
   const tol=Math.max(1e-12,Math.abs(atrRaw)*1e-10);
   const rawPositive=Number.isFinite(atrRaw)&&atrRaw>0;
   const rawBoxPass=rawPositive?Math.abs(box-atrRaw)<=tol:box>0&&(tickSize<=0||Math.abs(box-tickSize)<=Math.max(1e-12,tickSize*1e-10));
+  const historyFrom=Number(RWARenkoTV.state.atrHistoryFrom)||0,historyTo=Number(RWARenkoTV.state.atrHistoryTo)||0;
+  const historySpanMs=historyFrom>0&&historyTo>=historyFrom?historyTo-historyFrom:0;
+  const historySourceCount=Number(RWARenkoTV.state.atrHistorySourceCount)||RWARenkoTV.state.closedBars.length;
+  const expectedMinSpanMs=Math.max(0,(Math.min(historySourceCount,Number(RWARenkoTV.settings.atrLength)||1)-1)*900);
+  const historySpanPass=(Number(RWARenkoTV.settings.atrLength)||0)<1000||historySpanMs>=expectedMinSpanMs;
   return {
     atrLength:RWARenkoTV.settings.atrLength,interval:RWARenkoTV.settings.interval,source:RWARenkoTV.settings.source,
     fixedSource:RWARenkoTV.state.fixedSourceProfile===true,noTimeframeControls:!document.querySelector('#intervalSelect')&&!document.querySelector('#sourceSelect'),
     tickSize,atr:RWARenkoTV.state.atr,atrRaw,box,rawPositive,rawBoxPass,rawBoxDelta:rawPositive?Math.abs(box-atrRaw):null,zeroAtrTickFallback:!rawPositive,
     confirmed:RWARenkoTV.state.confirmed.length,
-    sourceBars:RWARenkoTV.state.atrHistorySourceCount||RWARenkoTV.state.closedBars.length,displayBars:RWARenkoTV.state.closedBars.length,
+    sourceBars:historySourceCount,displayBars:RWARenkoTV.state.closedBars.length,
     latestClosed:RWARenkoTV.state.closedBars.at(-1)?.closeTime,historySatisfied:RWARenkoTV.state.atrHistorySatisfied,
+    historyFrom,historyTo,historySpanMs,expectedMinSpanMs,historySpanPass,
     blockingMs:Number(document.documentElement.dataset.atrBlockingMs),frameMs:Number(document.documentElement.dataset.atrInstantFrameMs),
     cacheHit:document.documentElement.dataset.atrInstantCacheHit==='true',metric:document.querySelector('#atrInstantMetric')?.textContent,
     coverage:document.querySelector('#tvCoverage')?.textContent,badge:document.querySelector('.method[data-method="atr"] .method-title span')?.textContent,
     loadState:document.querySelector('#tvLoadState')?.textContent,
     lastApply:RWARenkoTV.state.atrLastApply||null,instantMetric:RWARenkoTV.state.atrInstantMetric||null,
     warmContext:RWARenkoATRInstant.warmContext,currentContext:RWARenkoATRInstant.contextKey(),liveStats:{...RWARenkoATRInstant.liveStats},stableStats:{...RWARenkoStableChart.stats},
-    exactEntry:(()=>{const e=RWARenkoATRInstant.entryFor(RWARenkoTV.settings.atrLength);return e?{length:e.length,box:e.box,rawAtr:e.rawAtr,rawPositive:e.rawPositive,zeroFallback:e.zeroFallback,revision:e.revision,sourceCount:e.sourceCount}:null})()
+    exactEntry:(()=>{const e=RWARenkoATRInstant.entryFor(RWARenkoTV.settings.atrLength);return e?{length:e.length,box:e.box,rawAtr:e.rawAtr,rawPositive:e.rawPositive,zeroFallback:e.zeroFallback,revision:e.revision,sourceCount:e.sourceCount,fromTime:e.fromTime,toTime:e.toTime}:null})()
   };
 })}
 
@@ -53,13 +59,17 @@ for(const length of VALUES){
     const started=Date.now();await page.click('[data-apply-method="atr"]');
     try{
       await page.waitForFunction(({n,ctx})=>RWARenkoATRInstant.contextKey()===ctx&&RWARenkoATRInstant.warmContext===ctx&&RWARenkoTV.settings.interval==='1s'&&RWARenkoTV.settings.source==='close'&&RWARenkoTV.settings.atrLength===n&&RWARenkoTV.state.atrLastApply?.length===n&&RWARenkoTV.state.atrHistorySatisfied===true&&(RWARenkoTV.state.atrHistorySourceCount||0)>=n&&RWARenkoTV.state.atrInstantMetric?.length===n&&document.documentElement.dataset.atrInstantCacheHit==='true'&&document.documentElement.dataset.atrBlockingMs==='0'&&document.documentElement.dataset.atrRawBoxPass==='true',{n:length,ctx:preparedContext},{timeout:12000});
-      const snap=await snapshot();if(snap.currentContext!==preparedContext||snap.warmContext!==preparedContext||!snap.exactEntry||!snap.rawBoxPass)continue;
+      const snap=await snapshot();if(snap.currentContext!==preparedContext||snap.warmContext!==preparedContext||!snap.exactEntry||!snap.rawBoxPass||!snap.historySpanPass)continue;
       passed={...snap,wallMs:Date.now()-started,preparedContext,attempt};
     }catch(e){lastError=e;if(await page.evaluate(()=>RWARenkoATRInstant.contextKey())!==preparedContext)continue;break}
   }
-  if(!passed){failure={length,error:String(lastError?.message||lastError||'exact-current-revision raw-Wilder 0ms assertion failed'),state:await snapshot()};await page.screenshot({path:path.join(OUT,`FAILED-atr-${length}.png`),fullPage:true});break}
+  if(!passed){failure={length,error:String(lastError?.message||lastError||'exact-current-revision raw-Wilder/date-span 0ms assertion failed'),state:await snapshot()};await page.screenshot({path:path.join(OUT,`FAILED-atr-${length}.png`),fullPage:true});break}
   results.push(passed);await page.screenshot({path:path.join(OUT,`atr-${length}-0ms-blocking.png`),fullPage:true});
 }
+
+const pulled=results.filter(x=>x.atrLength>=1000);
+const datePullPass=pulled.length===4&&pulled.every(x=>x.historySpanPass)&&pulled.slice(1).every((x,i)=>Number(x.historyFrom)<Number(pulled[i].historyFrom));
+if(!failure&&results.length===VALUES.length&&!datePullPass)failure={length:'date-pull',error:'larger ATR values did not progressively pull the 1s source-history start backward',state:pulled.map(x=>({atrLength:x.atrLength,historyFrom:x.historyFrom,historyTo:x.historyTo,historySpanMs:x.historySpanMs,coverage:x.coverage}))};
 
 let livePersistence=null;
 if(!failure&&results.length===VALUES.length){
@@ -70,13 +80,13 @@ if(!failure&&results.length===VALUES.length){
   await page.waitForFunction(()=>RWARenkoATRInstant.contextKey()===RWARenkoATRInstant.warmContext&&!!RWARenkoATRInstant.entryFor(1000000),null,{timeout:12000});
   const after=await snapshot();
   const heartbeatPass=after.stableStats.dataWritesSkipped>before.stableStats.dataWritesSkipped&&after.stableStats.rangeWritesSkipped>=before.stableStats.rangeWritesSkipped&&(after.stableStats.partialEvents===before.stableStats.partialEvents||after.stableStats.partialSuppressed>before.stableStats.partialSuppressed);
-  const exactLivePass=after.atrLength===1000000&&after.interval==='1s'&&after.source==='close'&&after.historySatisfied&&after.sourceBars>=1000000&&after.exactEntry&&after.rawBoxPass&&Math.abs(Number(after.box)-Number(after.exactEntry.box))<Math.max(1e-12,Math.abs(Number(after.box))*1e-10)&&after.liveStats.fallbackPrevented>=before.liveStats.fallbackPrevented&&heartbeatPass;
+  const exactLivePass=after.atrLength===1000000&&after.interval==='1s'&&after.source==='close'&&after.historySatisfied&&after.sourceBars>=1000000&&after.exactEntry&&after.rawBoxPass&&after.historySpanPass&&Math.abs(Number(after.box)-Number(after.exactEntry.box))<Math.max(1e-12,Math.abs(Number(after.box))*1e-10)&&after.liveStats.fallbackPrevented>=before.liveStats.fallbackPrevented&&heartbeatPass;
   livePersistence={before,after,heartbeatPass,exactLivePass};
   await page.screenshot({path:path.join(OUT,'atr-1000000-live-stable-after-source-closes.png'),fullPage:true});
-  if(!exactLivePass)failure={length:1000000,error:'deep ATR did not remain raw-exact/stable across live 1s closes',state:after};
+  if(!exactLivePass)failure={length:1000000,error:'deep ATR did not remain raw-exact/date-span-stable across live 1s closes',state:after};
 }
 const sourcePass=sourceProfile.engine==='1.2.0'&&sourceProfile.interval==='1s'&&sourceProfile.source==='close'&&sourceProfile.fixed&&sourceProfile.noTimeframeControls&&sourceProfile.stableLayer==='1.0.0'&&sourceProfile.deepCache==='2.2.0';
-const pass=!failure&&errors.length===0&&sourcePass&&results.length===VALUES.length&&results.every((x,i)=>x.cacheHit&&x.blockingMs===0&&x.atrLength===VALUES[i]&&x.lastApply?.length===VALUES[i]&&x.interval==='1s'&&x.source==='close'&&x.fixedSource&&x.noTimeframeControls&&x.historySatisfied&&x.sourceBars>=VALUES[i]&&x.rawBoxPass&&x.exactEntry?.length===VALUES[i]&&Math.abs(Number(x.box)-Number(x.exactEntry.box))<Math.max(1e-12,Math.abs(Number(x.box))*1e-10)&&x.warmContext===x.currentContext&&x.currentContext===x.preparedContext)&&livePersistence?.exactLivePass===true;
-const report={url:page.url(),values:VALUES,sourceProfile,results,livePersistence,failure,errors,pass,note:'All seven ATR values use fixed Binance 1-second CLOSED-kline Close. Every positive Wilder ATR must be used directly as the Renko box with no minimum-tick rounding; only a non-positive ATR may use the market tick as a renderer-safe fallback. 0 ms is measured main-thread Total Blocking Time for an exact prepared-cache switch. Live persistence additionally proves a deep ATR does not fall back to short resident history on the next 1s close, and the stable-chart layer suppresses identical chart/range writes so the chart does not heartbeat unless Renko geometry changes.'};
+const pass=!failure&&errors.length===0&&sourcePass&&datePullPass&&results.length===VALUES.length&&results.every((x,i)=>x.cacheHit&&x.blockingMs===0&&x.atrLength===VALUES[i]&&x.lastApply?.length===VALUES[i]&&x.interval==='1s'&&x.source==='close'&&x.fixedSource&&x.noTimeframeControls&&x.historySatisfied&&x.sourceBars>=VALUES[i]&&x.rawBoxPass&&x.historySpanPass&&x.exactEntry?.length===VALUES[i]&&Math.abs(Number(x.box)-Number(x.exactEntry.box))<Math.max(1e-12,Math.abs(Number(x.box))*1e-10)&&x.warmContext===x.currentContext&&x.currentContext===x.preparedContext)&&livePersistence?.exactLivePass===true;
+const report={url:page.url(),values:VALUES,sourceProfile,results,datePullPass,livePersistence,failure,errors,pass,note:'All seven ATR values use fixed Binance 1-second CLOSED-kline Close. Every positive Wilder ATR must be used directly as the Renko box with no minimum-tick rounding; only a non-positive ATR may use the market tick as a renderer-safe fallback. Large ATR look-backs additionally must pull the actual source-history start timestamp backward in proportion to the 1-second look-back, not merely increase a source-count label. 0 ms is measured main-thread Total Blocking Time for an exact prepared-cache switch. Live persistence proves the deep ATR remains exact across subsequent 1s closes.'};
 await fs.writeFile(path.join(OUT,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
 await browser.close();if(!pass)process.exit(1);
