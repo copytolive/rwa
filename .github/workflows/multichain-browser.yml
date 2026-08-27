@@ -6,6 +6,7 @@ on:
     paths:
       - "index.html"
       - "rwa-multichain.js"
+      - "rwa-multichain-engine.js"
       - "rwa-multichain-registry.json"
       - "tools/multichain-contract.mjs"
       - "tools/multichain-browser.mjs"
@@ -34,8 +35,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate Multi Chain static contract
-        run: node tools/multichain-contract.mjs
+      - name: Validate Multi Chain V2 static contract
+        run: |
+          node --check rwa-multichain.js
+          node --check rwa-multichain-engine.js
+          node tools/multichain-contract.mjs
       - name: Install Playwright Chromium
         run: |
           npm install --no-save playwright@1.55.0
@@ -50,17 +54,17 @@ jobs:
           python -m http.server 4173 >/tmp/rwa-multichain-http.log 2>&1 &
           echo $! >/tmp/rwa-multichain-http.pid
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
-      - name: Run desktop and mobile Multi Chain acceptance
+      - name: Run V2 desktop and mobile acceptance
         env:
           RWA_TEST_URL: http://127.0.0.1:4173/rwa/
-          RWA_PROOF_DIR: proof/multichain-v1-local
+          RWA_PROOF_DIR: proof/multichain-v2-local
         run: node tools/multichain-browser.mjs
-      - name: Upload local Multi Chain proof
+      - name: Upload local Multi Chain V2 proof
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: multichain-v1-local
-          path: proof/multichain-v1-local
+          name: multichain-v2-local
+          path: proof/multichain-v2-local
           retention-days: 7
           if-no-files-found: warn
       - name: Stop local server
@@ -70,11 +74,11 @@ jobs:
   live-proof:
     if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 18
     env:
       EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
       RWA_TEST_URL: https://copytolive.github.io/rwa/
-      RWA_PROOF_DIR: proof/multichain-v1-live
+      RWA_PROOF_DIR: proof/multichain-v2-live
     steps:
       - name: Checkout exact deployed source
         uses: actions/checkout@v4
@@ -83,7 +87,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Wait for exact Pages SHA and Multi Chain payload
+      - name: Wait for exact Pages SHA and Multi Chain V2 payload
         shell: bash
         run: |
           set -euo pipefail
@@ -94,34 +98,54 @@ jobs:
             sleep 5
           done
           test "$ok" = "1"
-          curl --connect-timeout 5 --max-time 20 -fsSL "https://copytolive.github.io/rwa/?v=${GITHUB_RUN_ID}" -o /tmp/rwa-root.html
-          curl --connect-timeout 5 --max-time 20 -fsSL "https://copytolive.github.io/rwa/rwa-multichain.js?v=${GITHUB_RUN_ID}" -o /tmp/rwa-multichain.js
-          curl --connect-timeout 5 --max-time 20 -fsSL "https://copytolive.github.io/rwa/rwa-multichain-registry.json?v=${GITHUB_RUN_ID}" -o /tmp/rwa-multichain.json
-          grep -Fq 'rwa-multichain.js?v=1' /tmp/rwa-root.html
-          grep -Fq "POLICY='chain-abstraction-fail-closed-v1'" /tmp/rwa-multichain.js
-          grep -Fq '"policy": "chain-abstraction-fail-closed-v1"' /tmp/rwa-multichain.json
-          echo "MULTICHAIN_EXACT_SHA=PASS:$EXPECTED_SHA"
+          q="${GITHUB_RUN_ID}-v2"
+          curl --connect-timeout 5 --max-time 20 -fsSL "https://copytolive.github.io/rwa/?v=$q" -o /tmp/rwa-root.html
+          curl --connect-timeout 5 --max-time 20 -fsSL "https://copytolive.github.io/rwa/rwa-multichain.js?v=$q" -o /tmp/rwa-multichain.js
+          curl --connect-timeout 5 --max-time 20 -fsSL "https://copytolive.github.io/rwa/rwa-multichain-engine.js?v=$q" -o /tmp/rwa-multichain-engine.js
+          curl --connect-timeout 5 --max-time 20 -fsSL "https://copytolive.github.io/rwa/rwa-multichain-registry.json?v=$q" -o /tmp/rwa-multichain.json
+          grep -Fq 'rwaMultiChainLazyBootstrap' /tmp/rwa-root.html
+          grep -Fq "POLICY='chain-abstraction-fail-closed-v2'" /tmp/rwa-multichain.js
+          grep -Fq "const VERSION='2.0.0'" /tmp/rwa-multichain-engine.js
+          grep -Fq "const LIFI='https://li.quest/v1'" /tmp/rwa-multichain-engine.js
+          grep -Fq '"policy": "chain-abstraction-fail-closed-v2"' /tmp/rwa-multichain.json
+          grep -Fq '"status": "ROUTE_READY"' /tmp/rwa-multichain.json
+          echo "MULTICHAIN_V2_EXACT_SHA=PASS:$EXPECTED_SHA"
+      - name: Probe live route-provider chain coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --connect-timeout 5 --max-time 25 -fsSL 'https://li.quest/v1/chains' -o /tmp/lifi-chains.json
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/lifi-chains.json'))
+          chains=x.get('chains',x) if isinstance(x,dict) else x
+          ids={int(c['id']) for c in chains if isinstance(c,dict) and str(c.get('id','')).isdigit()}
+          required={1,42161,8453,56,137,43114,143,1151111081099710}
+          missing=sorted(required-ids)
+          assert not missing, f'LI.FI coverage missing {missing}'
+          print('MULTICHAIN_PROVIDER_COVERAGE=PASS:'+','.join(map(str,sorted(required))))
+          PY
       - name: Install Playwright Chromium
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Run production desktop and mobile Multi Chain acceptance
+      - name: Run production V2 desktop and mobile acceptance
         run: node tools/multichain-browser.mjs
-      - name: Upload live Multi Chain proof
+      - name: Upload live Multi Chain V2 proof
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: multichain-v1-live-${{ env.EXPECTED_SHA }}
-          path: proof/multichain-v1-live
+          name: multichain-v2-live-${{ env.EXPECTED_SHA }}
+          path: proof/multichain-v2-live
           retention-days: 7
           if-no-files-found: warn
-      - name: Publish Multi Chain success status
+      - name: Publish Multi Chain V2 success status
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=success -f context='rwa/multichain' -f description='MULTI CHAIN desktop/mobile proof passed with fail-closed adapters'
-      - name: Publish Multi Chain failure status
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=success -f context='rwa/multichain' -f description='MULTI CHAIN V2: 8 routed networks + protected Hyperliquid; desktop/mobile proof PASS'
+      - name: Publish Multi Chain V2 failure status
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=failure -f context='rwa/multichain' -f description='MULTI CHAIN production proof failed; inspect artifact and logs'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=failure -f context='rwa/multichain' -f description='MULTI CHAIN V2 production proof failed; inspect artifact and logs'
