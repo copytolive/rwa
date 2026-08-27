@@ -1,0 +1,49 @@
+name: Live Experience Rail V9 Proof 2
+
+on:
+  push:
+    branches:
+      - verify/live-experience-rail-v9-20260827-2
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify production V9 cache chain
+        run: |
+          for i in $(seq 1 20); do
+            HTML="$(curl -fsSL --retry 3 --retry-delay 2 'https://copytolive.github.io/rwa/?v9proof=2')" || true
+            echo "$HTML" | grep -Fq 'market-performance.js?v=9' && break
+            sleep 5
+          done
+          echo "$HTML" | grep -Fq 'market-performance.js?v=9'
+          curl -fsSL --retry 3 'https://copytolive.github.io/rwa/market-performance.js?v=9' | grep -Fq 'persistent-market-operability-patch-v1.css?v=9'
+          CSS="$(curl -fsSL --retry 3 'https://copytolive.github.io/rwa/persistent-market-operability-patch-v1.css?v=9')"
+          echo "$CSS" | grep -Fq 'grid-template-columns:repeat(3,minmax(0,1fr))!important'
+          echo "$CSS" | grep -Fq 'padding:0!important'
+          echo "$CSS" | grep -Fq 'gap:0!important'
+          echo "$CSS" | grep -Fq 'outline:0!important'
+          echo 'PRODUCTION_V9_CACHE_CHAIN=PASS'
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Validate live 2048px and 1600px visual parity
+        env:
+          RWA_TEST_URL: https://copytolive.github.io/rwa/?v9proof=2
+          RWA_PROOF_DIR: proof/live-experience-rail-v9
+        run: |
+          node tools/experience-rail-visual-parity-v9.mjs
+          echo 'LIVE_EXPERIENCE_RAIL_V9=PASS'
+      - name: Upload live visual proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-experience-rail-v9-proof-2
+          path: proof/live-experience-rail-v9
+          retention-days: 30
