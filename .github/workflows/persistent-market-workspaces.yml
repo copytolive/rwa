@@ -10,6 +10,7 @@ on:
       - 'superapp-v5.css'
       - 'suite-nav.js'
       - 'rwa-8-engines/**'
+      - 'tools/canonical-startup-diagnostic.mjs'
       - 'tools/persistent-market-router-v2-browser.mjs'
       - 'tools/superapp-v5-browser.mjs'
       - 'tools/superapp-p16-p20-browser.mjs'
@@ -25,6 +26,7 @@ on:
       - 'superapp-v5.css'
       - 'suite-nav.js'
       - 'rwa-8-engines/**'
+      - 'tools/canonical-startup-diagnostic.mjs'
       - 'tools/persistent-market-router-v2-browser.mjs'
       - 'tools/superapp-v5-browser.mjs'
       - 'tools/superapp-p16-p20-browser.mjs'
@@ -39,6 +41,7 @@ jobs:
           set -euo pipefail
           node --check market-performance.js
           node --check persistent-market-router-v2.js
+          node --check tools/canonical-startup-diagnostic.mjs
           node --check tools/persistent-market-router-v2-browser.mjs
           grep -Fq "persistent-market-workspaces-v1.css?v=1" market-performance.js
           grep -Fq "persistent-market-router-v2.js?v=2" market-performance.js
@@ -63,6 +66,10 @@ jobs:
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && exit 0; sleep 1; done
           cat /tmp/rwa-pm-http.log
           exit 1
+      - name: Canonical startup diagnostic
+        env:
+          RWA_TEST_URL: http://127.0.0.1:4173/rwa/
+        run: node tools/canonical-startup-diagnostic.mjs
       - name: Existing browser regression
         env:
           RWA_TEST_URL: http://127.0.0.1:4173/rwa/
