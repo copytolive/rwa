@@ -1,0 +1,190 @@
+name: RWA Multi Chain Browser
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - index.html
+      - rwa-multichain.js
+      - rwa-multichain-engine.js
+      - rwa-multichain-registry.json
+      - tools/multichain-contract.mjs
+      - tools/multichain-browser.mjs
+      - .github/workflows/multichain-browser.yml
+      - .github/workflows/pages.yml
+  workflow_run:
+    workflows: ["Deploy RWA to GitHub Pages"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: rwa-multichain-browser-${{ github.event.pull_request.number || github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  local-proof:
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate Multi Chain V2 static contract
+        run: |
+          node --check rwa-multichain.js
+          node --check rwa-multichain-engine.js
+          node tools/multichain-contract.mjs
+      - name: Create exact V2 source backup package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p proof/multichain-v2-source-backup/.github/workflows proof/multichain-v2-source-backup/tools
+          for f in \
+            .github/workflows/experience-action-zero-flicker-v11.yml \
+            .github/workflows/launch-gate.yml \
+            .github/workflows/multichain-browser.yml \
+            .github/workflows/pages.yml \
+            .github/workflows/release-candidate.yml \
+            index.html rwa-multichain-engine.js rwa-multichain-registry.json rwa-multichain.js \
+            tools/launch-gate-current.mjs tools/multichain-browser.mjs tools/multichain-contract.mjs tools/product-parity-contract.mjs; do
+            mkdir -p "proof/multichain-v2-source-backup/$(dirname "$f")"
+            cp "$f" "proof/multichain-v2-source-backup/$f"
+          done
+          {
+            echo "RWA MULTI CHAIN V2 SOURCE BACKUP"
+            echo "checkout_sha=$(git rev-parse HEAD)"
+            echo "pr_head=${{ github.event.pull_request.head.sha }}"
+            echo "pr_base=${{ github.event.pull_request.base.sha }}"
+            echo "workflow_run=${GITHUB_RUN_ID}"
+            echo "created_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "files=13"
+          } > proof/multichain-v2-source-backup/MANIFEST.txt
+          cd proof
+          zip -qr multichain-v2-source-backup.zip multichain-v2-source-backup
+      - name: Upload exact V2 source backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: multichain-v2-source-backup
+          path: proof/multichain-v2-source-backup.zip
+          retention-days: 30
+          if-no-files-found: error
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Serve exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/rwa-multichain-site/rwa
+          cp -a . /tmp/rwa-multichain-site/rwa/
+          cd /tmp/rwa-multichain-site
+          python -m http.server 4173 >/tmp/rwa-multichain-http.log 2>&1 &
+          echo $! >/tmp/rwa-multichain-http.pid
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null; then break; fi
+            sleep 1
+          done
+      - name: Run V2 desktop and mobile acceptance
+        env:
+          RWA_TEST_URL: http://127.0.0.1:4173/rwa/
+          RWA_PROOF_DIR: proof/multichain-v2-local
+        run: node tools/multichain-browser.mjs
+      - name: Upload local Multi Chain V2 proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: multichain-v2-local
+          path: proof/multichain-v2-local
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Stop local server
+        if: always()
+        run: kill "$(cat /tmp/rwa-multichain-http.pid)" 2>/dev/null || true
+
+  live-proof:
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+      RWA_TEST_URL: https://copytolive.github.io/rwa/
+      RWA_PROOF_DIR: proof/multichain-v2-live
+    steps:
+      - name: Checkout exact deployed source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.EXPECTED_SHA }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for exact Pages SHA and Multi Chain V2 payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          ok=0
+          for i in $(seq 1 60); do
+            live_sha="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/deployment-sha.txt?v=${GITHUB_RUN_ID}-${i}" 2>/dev/null | tr -d '\r\n' || true)"
+            if [ "$live_sha" = "$EXPECTED_SHA" ]; then ok=1; break; fi
+            sleep 5
+          done
+          test "$ok" = "1"
+          q="${GITHUB_RUN_ID}-v2"
+          curl --connect-timeout 5 --max-time 20 -fsSL "https://copytolive.github.io/rwa/?v=$q" -o /tmp/rwa-root.html
+          curl --connect-timeout 5 --max-time 20 -fsSL "https://copytolive.github.io/rwa/rwa-multichain.js?v=$q" -o /tmp/rwa-multichain.js
+          curl --connect-timeout 5 --max-time 20 -fsSL "https://copytolive.github.io/rwa/rwa-multichain-engine.js?v=$q" -o /tmp/rwa-multichain-engine.js
+          curl --connect-timeout 5 --max-time 20 -fsSL "https://copytolive.github.io/rwa/rwa-multichain-registry.json?v=$q" -o /tmp/rwa-multichain.json
+          grep -Fq 'rwaMultiChainLazyBootstrap' /tmp/rwa-root.html
+          grep -Fq "POLICY='chain-abstraction-fail-closed-v2'" /tmp/rwa-multichain.js
+          grep -Fq "const VERSION='2.0.0'" /tmp/rwa-multichain-engine.js
+          grep -Fq "const LIFI='https://li.quest/v1'" /tmp/rwa-multichain-engine.js
+          grep -Fq '"policy": "chain-abstraction-fail-closed-v2"' /tmp/rwa-multichain.json
+          grep -Fq '"status": "ROUTE_READY"' /tmp/rwa-multichain.json
+          echo "MULTICHAIN_V2_EXACT_SHA=PASS:$EXPECTED_SHA"
+      - name: Probe live route-provider chain coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --connect-timeout 5 --max-time 25 -fsSL 'https://li.quest/v1/chains' -o /tmp/lifi-chains.json
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/lifi-chains.json'))
+          chains=x.get('chains',x) if isinstance(x,dict) else x
+          ids={int(c['id']) for c in chains if isinstance(c,dict) and str(c.get('id','')).isdigit()}
+          required={1,42161,8453,56,137,43114,143,1151111081099710}
+          missing=sorted(required-ids)
+          assert not missing, f'LI.FI coverage missing {missing}'
+          print('MULTICHAIN_PROVIDER_COVERAGE=PASS:'+','.join(map(str,sorted(required))))
+          PY
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Run production V2 desktop and mobile acceptance
+        run: node tools/multichain-browser.mjs
+      - name: Upload live Multi Chain V2 proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: multichain-v2-live-${{ env.EXPECTED_SHA }}
+          path: proof/multichain-v2-live
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Publish Multi Chain V2 success status
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=success -f context='rwa/multichain' -f description='MULTI CHAIN V2 - 8 routed networks plus protected Hyperliquid - browser proof PASS'
+      - name: Publish Multi Chain V2 failure status
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=failure -f context='rwa/multichain' -f description='MULTI CHAIN V2 production proof failed - inspect artifact and logs'

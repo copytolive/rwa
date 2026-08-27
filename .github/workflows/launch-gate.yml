@@ -24,10 +24,12 @@ on:
       - "launch/external-gates.json"
       - "launch/status.js"
       - "tools/launch-gate.mjs"
+      - "tools/launch-gate-current.mjs"
       - "tools/beta-proof.mjs"
       - ".github/workflows/commerce-service.yml"
       - ".github/workflows/token-contracts.yml"
       - ".github/workflows/beta-proof-review.yml"
+      - ".github/workflows/release-candidate.yml"
       - ".github/workflows/launch-gate.yml"
   pull_request:
     paths:
@@ -36,8 +38,10 @@ on:
       - "token/**"
       - "launch/**"
       - "tools/launch-gate.mjs"
+      - "tools/launch-gate-current.mjs"
       - ".github/workflows/commerce-service.yml"
       - ".github/workflows/token-contracts.yml"
+      - ".github/workflows/release-candidate.yml"
       - ".github/workflows/launch-gate.yml"
   schedule:
     - cron: '*/15 * * * *'
@@ -65,17 +69,18 @@ jobs:
       - name: Evaluate full-platform launch gates
         run: |
           node --check tools/launch-gate.mjs
+          node --check tools/launch-gate-current.mjs
           python -m json.tool launch/product-rwa-testnet.json >/dev/null
           python -m json.tool launch/external-gates.json >/dev/null
           python -m json.tool rwa-commerce-config.json >/dev/null
-          node tools/launch-gate.mjs --write > /tmp/rwa-launch.json
+          node tools/launch-gate-current.mjs --write > /tmp/rwa-launch.json
           cat /tmp/rwa-launch.json
           python -m json.tool launch/readiness.json >/dev/null
           python -m json.tool launch/e2e-registry.json >/dev/null
           python -m json.tool launch/beta-registry.json >/dev/null
           node -e "const x=require('/tmp/rwa-launch.json');if(x.schema<5||!x.checks.product_rwa_pipeline||!x.checks.commerce_pipeline||!x.checks.legal_terms)process.exit(1)"
       - name: Require engineering completeness
-        run: node tools/launch-gate.mjs --require-engineering >/tmp/rwa-engineering-gate.json
+        run: node tools/launch-gate-current.mjs --require-engineering >/tmp/rwa-engineering-gate.json
       - name: Publish readiness file
         if: github.event_name != 'pull_request'
         run: |

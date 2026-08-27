@@ -90,8 +90,10 @@ jobs:
             sleep 5
           done
           test "$ok" = "1"
-          curl -fsSL "https://copytolive.github.io/rwa/market-performance.js?v=${GITHUB_RUN_ID}" | grep -Fq 'persistent-market-operability-patch-v1.css?v=11'
-          curl -fsSL "https://copytolive.github.io/rwa/persistent-market-operability-patch-v1.css?v=${GITHUB_RUN_ID}" | grep -Fq 'ACTION ZERO-FLICKER TRANSITION LOCK V11'
+          curl --connect-timeout 5 --max-time 20 -fsSL "https://copytolive.github.io/rwa/market-performance.js?v=${GITHUB_RUN_ID}" -o /tmp/rwa-market-performance.js
+          curl --connect-timeout 5 --max-time 20 -fsSL "https://copytolive.github.io/rwa/persistent-market-operability-patch-v1.css?v=${GITHUB_RUN_ID}" -o /tmp/rwa-operability.css
+          grep -Fq 'persistent-market-operability-patch-v1.css?v=11' /tmp/rwa-market-performance.js
+          grep -Fq 'ACTION ZERO-FLICKER TRANSITION LOCK V11' /tmp/rwa-operability.css
           echo "LIVE_EXACT_SHA=PASS:$EXPECTED_SHA"
       - name: Install Playwright Chromium
         run: |
@@ -116,4 +118,4 @@ jobs:
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=failure -f context='rwa/action-zero-flicker' -f description='Workflow viewport narrowed during a sampled transition frame'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=failure -f context='rwa/action-zero-flicker' -f description='Zero-flicker verification failed; inspect preflight/frame proof logs'
