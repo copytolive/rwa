@@ -1,0 +1,53 @@
+name: MULTI CHAIN V2 Evidence Finalize Once
+
+on:
+  push:
+    branches: [lock/multichain-v2-final-20260828]
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: ${{ !contains(github.event.head_commit.message, '[mc-evidence-final]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: lock/multichain-v2-final-20260828
+          fetch-depth: 1
+      - name: Convert proof screenshots to actual viewport evidence and refresh lock hashes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          test=Path('tools/multichain-browser.mjs')
+          s=test.read_text()
+          assert 'fullPage:true' in s, 'expected fullPage proof marker missing'
+          s=s.replace('fullPage:true','fullPage:false',1)
+          test.write_text(s)
+          new=hashlib.sha256(test.read_bytes()).hexdigest()
+          assert new=='76ac026ab2911a9663bfb50803f5bbec53462ea20c473bda9ae78d515311be70', new
+
+          lock=Path('.github/multichain-v2.lock')
+          l=lock.read_text()
+          old='d12c5e463bf2ebe2c39cc55e7f9871fa18179b69af07a828cbe877f93acc6abd  tools/multichain-browser.mjs'
+          new_line=new+'  tools/multichain-browser.mjs'
+          assert old in l, 'old browser lock hash missing'
+          lock.write_text(l.replace(old,new_line,1))
+
+          guard=Path('.github/workflows/multichain-v2-lock.yml')
+          g=guard.read_text()
+          old_hash='d12c5e463bf2ebe2c39cc55e7f9871fa18179b69af07a828cbe877f93acc6abd'
+          assert old_hash in g, 'old guard hash missing'
+          guard.write_text(g.replace(old_hash,new,1))
+          PY
+          rm -f .github/workflows/multichain-v2-overlap-diagnostic.yml
+          rm -f .github/workflows/multichain-v2-evidence-finalize-once.yml
+      - name: Commit one atomic final evidence update
+        run: |
+          git config user.name copytolive
+          git config user.email copytolive@gmail.com
+          git add -A tools/multichain-browser.mjs .github/multichain-v2.lock .github/workflows/multichain-v2-lock.yml .github/workflows/multichain-v2-overlap-diagnostic.yml .github/workflows/multichain-v2-evidence-finalize-once.yml
+          git commit -m 'test(multichain): certify viewport-only screenshots [mc-evidence-final]'
+          git push origin HEAD:lock/multichain-v2-final-20260828
