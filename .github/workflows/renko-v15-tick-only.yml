@@ -28,7 +28,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Static tick-only and instant-click contracts
+      - name: Static tick-only and nonblocking-click contracts
         shell: bash
         run: |
           set -euo pipefail
@@ -47,13 +47,13 @@ jobs:
           grep -Fq "confirmationRule:'every-trade-immediate'" renko/renko-v15.js
           grep -Fq "timeframeControl:false" renko/renko-v15.js
           grep -Fq "historySource:'binance-aggregate-trade-events-no-candles'" renko/renko-v15.js
-          grep -Fq "switchContract:'instant-click-latest-wins'" renko/renko-v15-method-controller.js
-          grep -Fq "chartImpactContract:'fast-recent-tick-rebuild-deep-history-lazy'" renko/renko-v15-method-controller.js
-          grep -Fq "renderContract:'never-blank-on-success'" renko/renko-v15-method-controller.js
+          grep -Fq "switchContract:'nonblocking-latest-click-wins'" renko/renko-v15-method-controller.js
+          grep -Fq "chartImpactContract:'recent-tick-fast-commit-deep-history-hydrates-cancellably'" renko/renko-v15-method-controller.js
+          grep -Fq "renderContract:'keep-current-chart-until-target-history-ready'" renko/renko-v15-method-controller.js
           grep -Fq "startupContract:'no-auto-apply'" renko/renko-v15-method-controller.js
-          grep -Fq "dataset.controller='v15.5-instant-click'" renko/renko-v15-controller-bootstrap.js
-          grep -Fq "renko-v15-method-controller.js?v=155" renko/renko-v15-controller-bootstrap.js
-          grep -Fq "renko-v15-controller-bootstrap.js?v=155" legacy-canonical.js
+          grep -Fq "dataset.controller='v15.6-nonblocking-click'" renko/renko-v15-controller-bootstrap.js
+          grep -Fq "renko-v15-method-controller.js?v=156" renko/renko-v15-controller-bootstrap.js
+          grep -Fq "renko-v15-controller-bootstrap.js?v=156" legacy-canonical.js
           grep -Fq "pointer-events:auto!important" renko/renko-v15.css
           grep -Fq "touch-action:manipulation" renko/renko-v15.css
           grep -Fq "Never serve the cached V14 source/resolution UI" rwa-sw-v5.js
@@ -80,7 +80,7 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Standalone browser acceptance - buttons clickable and Apply fast
+      - name: Standalone browser acceptance - clicks stay responsive during history hydration
         shell: bash
         run: |
           python3 -m http.server 8080 > /tmp/renko-http.log 2>&1 &
