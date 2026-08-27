@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark">
+<title>Create My RWA · Global RWA Factory</title>
+<meta name="description" content="Create an RWA Passport for a business, register assets, hash evidence, model valuation, route legal/compliance review and prepare financing/tokenization readiness.">
+<link rel="stylesheet" href="styles.css?v=21">
+</head>
+<body>
+<main class="shell">
+<header class="top"><div class="brand"><small>P21 · GLOBAL RWA FACTORY · 8 ENGINES</small><h1>Create My RWA</h1><p>Every Business. An RWA. Register first; verification, finance, tokenization and trade remain evidence and jurisdiction gated.</p></div><div class="status"><span class="pill ok">REGISTER OPEN</span><span class="pill warn">FINANCE REVIEW-GATED</span><span class="pill warn">MAINNET OFF</span></div></header>
+<div class="notice"><b>Operating rule:</b> every business can create an RWA Passport. A Passport is a registry record, not a security offering. Verified, financeable, tokenization-ready and tradable states require progressively stronger evidence and professional/legal/compliance approvals.</div>
+<section class="northstar card"><div><small>NORTH STAR</small><b>Businesses with an active RWA Passport</b></div><strong id="northStarCount">0</strong><span>local workspace</span></section>
+<section class="layout">
+<form id="rwaFactoryForm" class="card" autocomplete="off">
+<span class="eyebrow">01 · BUSINESS</span><h2>Business RWA Passport</h2>
+<div class="form-grid">
+<label class="field full"><span>Legal business name *</span><input name="legalName" required placeholder="PT Example Indonesia"></label>
+<label class="field"><span>Registration ID</span><input name="registrationId" placeholder="NIB / UEN / company number"></label>
+<label class="field"><span>Country *</span><select name="country" data-country><option value="ID">Indonesia</option><option value="SG">Singapore</option><option value="AE">United Arab Emirates</option><option value="US">United States</option><option value="EU">European Union</option><option value="GB">United Kingdom</option><option value="JP">Japan</option><option value="HK">Hong Kong</option><option value="AU">Australia</option><option value="CA">Canada</option><option value="BR">Brazil</option><option value="IN">India</option><option value="OTHER">Other / review route</option></select></label>
+<label class="field"><span>Business type</span><select name="businessType"><option>Company</option><option>SME / MSME</option><option>Property Company</option><option>Hotel / Hospitality</option><option>Manufacturer</option><option>Agriculture</option><option>Healthcare</option><option>Infrastructure</option><option>Fund / SPV</option><option>Other</option></select></label>
+<label class="field"><span>Website</span><input name="website" placeholder="https://example.com"></label>
+</div>
+<div class="section-title"><div><span class="eyebrow">02 · ASSETS</span><h3>What does the business own or control?</h3></div><button type="button" id="addAsset">+ Add asset</button></div>
+<div id="assetRows" class="asset-rows"></div>
+<div class="section-title"><div><span class="eyebrow">03 · EVIDENCE</span><h3>Evidence-first package</h3></div><small>Files are hashed locally; bytes are not uploaded by this static workspace.</small></div>
+<div class="form-grid"><label class="field full"><span>Evidence files</span><input id="evidenceFiles" type="file" multiple></label><label class="field"><span>Evidence source / data room</span><input name="evidenceSource" placeholder="Registry URL or data-room reference"></label><label class="field"><span>Evidence type</span><select name="evidenceType"><option>Company Registration</option><option>Title / Ownership</option><option>Financial Statement</option><option>Audit Report</option><option>Appraisal</option><option>Invoice / Receivable</option><option>Contract</option><option>Other</option></select></label></div>
+<div class="section-title"><div><span class="eyebrow">04 · TARGET</span><h3>How far should this RWA progress?</h3></div></div>
+<label class="field"><select name="mode"><option value="REGISTER">REGISTER · Create RWA Passport</option><option value="VERIFY">VERIFY · Evidence-reviewed RWA</option><option value="VALUE">VALUE · Independently valued RWA</option><option value="FINANCE">FINANCE · Funding-readiness</option><option value="TOKENIZE">TOKENIZE · Regulated issuance draft</option><option value="TRADE">TRADE · Trading-readiness review</option></select></label>
+<div class="actions"><button class="primary" type="submit">Create My RWA</button><button type="button" id="loadDemo">Load demo business</button><button type="reset" id="clearForm">Clear</button></div>
+</form>
+<section>
+<div class="engine-grid" id="engineGrid"></div>
+<div id="resultEmpty" class="card"><span class="eyebrow">ONE WORKSPACE → EIGHT ENGINES</span><h2>Business → Passport → Assets → Evidence → Value → Policy → Factory → Marketplace</h2><p>The public registration layer is intentionally easier than regulated financing or trading. The system fails closed as maturity increases.</p></div>
+<div id="result" hidden>
+<div class="hero-result"><article class="passport"><small>GLOBAL RWA BUSINESS ID</small><strong id="passportId">—</strong><dl><div><dt>BUSINESS</dt><dd id="passportBusiness">—</dd></div><div><dt>COUNTRY</dt><dd id="passportCountry">—</dd></div><div><dt>ASSETS</dt><dd id="passportAssets">0</dd></div><div><dt>MATURITY</dt><dd id="passportMaturity">—</dd></div></dl></article><div class="readiness" id="readiness"></div></div>
+<div class="details"><article class="card"><span class="eyebrow">MODEL VALUE</span><h3 id="valuationValue">—</h3><p id="valuationMethod">—</p></article><article class="card"><span class="eyebrow">MARKETPLACE</span><h3 id="listingLevel">—</h3><p id="listingExecution">—</p></article></div>
+<article class="card blockers"><span class="eyebrow">NEXT GATES</span><div id="blockerList"></div></article>
+<div class="card saved"><div class="section-title"><div><span class="eyebrow">PORTABLE OUTPUT</span><h3>RWA Passport package</h3></div><small>Content-hashed JSON</small></div><div class="actions"><button id="savePassport" type="button">Save Passport</button><button id="exportPassport" type="button">Export JSON</button></div><pre class="json" id="resultJson"></pre></div>
+</div>
+<div class="card saved"><div class="section-title"><div><span class="eyebrow">LOCAL BUSINESS REGISTRY</span><h3>Saved RWA Passports</h3></div><small>Production backend adapter is disabled until provisioned.</small></div><div class="saved-list" id="savedList"></div></div>
+</section>
+</section>
+</main>
+<template id="assetTemplate"><article class="asset-row"><div class="asset-row-head"><b>Asset</b><button type="button" data-remove-asset>Remove</button></div><div class="form-grid"><label class="field"><span>Asset type</span><select data-asset="assetType"><option>Business Revenue</option><option>Real Estate</option><option>Receivables / Invoice</option><option>Inventory</option><option>Equipment</option><option>Commodity</option><option>Infrastructure</option><option>Energy</option><option>Agriculture</option><option>Healthcare Asset</option><option>Intellectual Property</option><option>Equity / Business Interest</option><option>Debt / Bond</option><option>Other</option></select></label><label class="field"><span>Country</span><input data-asset="country" value="ID" maxlength="8"></label><label class="field full"><span>Asset name *</span><input data-asset="name" required placeholder="Hotel / invoices / factory / land / inventory"></label><label class="field full"><span>Description</span><textarea data-asset="description" placeholder="Ownership, location, rights, cash flow and purpose"></textarea></label><label class="field"><span>Declared value</span><input data-asset="declaredValue" type="number" min="0" step="any"></label><label class="field"><span>Currency</span><input data-asset="currency" value="USD" maxlength="8"></label><label class="field"><span>Annual revenue</span><input data-asset="annualRevenue" type="number" min="0" step="any"></label><label class="field"><span>EBITDA margin %</span><input data-asset="ebitdaMargin" type="number" step="any" value="15"></label><label class="field"><span>Growth %</span><input data-asset="growthRate" type="number" step="any" value="5"></label><label class="field"><span>Discount rate %</span><input data-asset="discountRate" type="number" step="any" value="15"></label></div></article></template>
+<script src="engine.js?v=21"></script><script src="app.js?v=21"></script>
+</body></html>
