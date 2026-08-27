@@ -1,6 +1,6 @@
 'use strict';
-const CACHE='rwa-superapp-v5-shell-18';
-const CORE=['./','./index.html','./styles.css?v=7','./mobile.css?v=6','./stable-shell.css?v=3','./superapp-v5.css?v=13','./app.js?v=10','./realtime-core.js?v=3&compat=realtime-core.js?v=2','./chart-core.js?v=1','./market-performance.js?v=2','./mobile.js?v=12','./superapp-v5.js?v=16','./rwa-discovery-catalog.json','./manifest.webmanifest'];
+const CACHE='rwa-superapp-v5-shell-19';
+const CORE=['./','./index.html','./styles.css?v=7','./mobile.css?v=6','./stable-shell.css?v=3','./superapp-v5.css?v=13','./app.js?v=10','./realtime-core.js?v=3&compat=realtime-core.js?v=2','./chart-core.js?v=1','./market-performance.js?v=2','./mobile.js?v=12','./superapp-v5.js?v=17','./rwa-discovery-catalog.json','./manifest.webmanifest'];
 const ROOT='/rwa/';
 const isRenko=u=>u.pathname.startsWith(ROOT+'renko/');
 const isFreshControlScript=u=>u.pathname===ROOT+'legacy-canonical.js'||u.pathname===ROOT+'superapp-v5.js'||u.pathname===ROOT+'market-performance.js';
