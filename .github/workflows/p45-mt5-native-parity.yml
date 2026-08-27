@@ -28,20 +28,24 @@ on:
         description: Optional ROBUST54 comma-separated IDs; ALL = all shard IDs
         required: false
         default: ALL
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/p45-mt5-native-parity.yml'
 
 permissions:
   contents: read
 
 jobs:
   p45-native:
-    if: ${{ inputs.mode == 'p45' || inputs.mode == 'all' }}
+    if: ${{ github.event_name == 'push' || inputs.mode == 'p45' || inputs.mode == 'all' }}
     runs-on: windows-2022
     timeout-minutes: 180
     env:
       MT5_LOGIN: ${{ secrets.MT5_LOGIN || secrets.EXNESS_MT5_LOGIN || secrets.EXNESS_LOGIN }}
       MT5_PASSWORD: ${{ secrets.MT5_PASSWORD || secrets.EXNESS_MT5_PASSWORD || secrets.EXNESS_PASSWORD }}
       MT5_SERVER: ${{ secrets.MT5_SERVER || secrets.EXNESS_MT5_SERVER || secrets.EXNESS_SERVER }}
-      MT5_SYMBOL: ${{ inputs.broker_symbol }}
+      MT5_SYMBOL: ${{ inputs.broker_symbol || 'XAUUSD' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -86,32 +90,42 @@ jobs:
           $newReportInit=@'
             $ini=Join-Path $Run ((Split-Path $Report -Leaf)+'.ini')
             $reportLeaf=[IO.Path]::GetFileNameWithoutExtension($Report)
-            $reportDir=Join-Path $Mt5Dir 'reports\GoldAutopilot'
-            New-Item -ItemType Directory -Force $reportDir | Out-Null
-            $reportRel="\reports\GoldAutopilot\$reportLeaf"
-            $reportActual=Join-Path $reportDir ($reportLeaf+'.htm')
-            Remove-Item $reportActual -Force -ErrorAction SilentlyContinue
+            Remove-Item $Report -Force -ErrorAction SilentlyContinue
           '@
           $patched=$patched.Replace($oldReportInit,$newReportInit.TrimEnd())
-          $patched=$patched.Replace('Report=$Report','Report=$reportRel')
+          $patched=$patched.Replace('Report=$Report','Report=$reportLeaf')
           $oldTesterLaunch='  & $Terminal "/config:$ini" | Out-Null'
           $newTesterLaunch=@'
             Get-Process terminal64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
             Start-Sleep -Seconds 2
-            $tp=Start-Process -FilePath $Terminal -ArgumentList "/config:$ini" -PassThru -Wait
+            Write-Host "MT5_TESTER_INI=$ini"
+            Get-Content $ini | ForEach-Object { if($_ -match '^Password='){ 'Password=***' } elseif($_ -match '^Login='){ 'Login=***' } elseif($_ -match '^Server='){ 'Server=***' } else { $_ } } | Write-Host
+            $tp=Start-Process -FilePath $Terminal -ArgumentList "/config:$ini" -WorkingDirectory $Mt5Dir -PassThru -Wait
             Write-Host "MT5_TESTER_EXIT_CODE=$($tp.ExitCode)"
           '@
           $patched=$patched.Replace($oldTesterLaunch,$newTesterLaunch.TrimEnd())
           $oldReportGate='  Ensure (Test-Path $Report) "Tester report missing: $Report"'
           $newReportGate=@'
-            if(Test-Path $reportActual){ Copy-Item $reportActual $Report -Force }
+            $reportFound=Get-ChildItem -Path @($Mt5Dir,$DataDir) -Filter ($reportLeaf+'*.htm*') -File -Recurse -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+            if($null -ne $reportFound){
+              Write-Host "MT5_REPORT_FOUND=$($reportFound.FullName)"
+              Copy-Item $reportFound.FullName $Report -Force
+            }
+            $diag=Join-Path $Evidence ('tester-diag-'+$reportLeaf)
+            New-Item -ItemType Directory -Force $diag | Out-Null
+            foreach($root in @((Join-Path $DataDir 'logs'),(Join-Path $DataDir 'Tester'),(Join-Path $Mt5Dir 'logs'))){
+              if(Test-Path $root){
+                Get-ChildItem $root -File -Recurse -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 20 | ForEach-Object { Copy-Item $_.FullName (Join-Path $diag ($_.Name+'-'+([Math]::Abs($_.FullName.GetHashCode())))) -Force -ErrorAction SilentlyContinue }
+              }
+            }
+            Copy-Item $ini (Join-Path $diag ((Split-Path $ini -Leaf)+'.txt')) -Force -ErrorAction SilentlyContinue
             Ensure (Test-Path $Report) "Tester report missing: $Report"
           '@
           $patched=$patched.Replace($oldReportGate,$newReportGate.TrimEnd())
           if($patched -eq $src){ throw 'Expected compatibility patch targets not found in verified P45 runner' }
           if($patched -notmatch 'MT5_IMPORT_BARSCAP_COMPAT=ACCEPTED'){ throw 'MT5 bar-cap compatibility patch was not applied' }
-          if($patched -notmatch 'reports\\GoldAutopilot'){ throw 'MT5 tester report-path compatibility patch was not applied' }
-          if($patched -notmatch 'MT5_TESTER_EXIT_CODE'){ throw 'MT5 tester process compatibility patch was not applied' }
+          if($patched -notmatch 'MT5_TESTER_INI'){ throw 'MT5 tester diagnostic patch was not applied' }
+          if($patched -notmatch 'MT5_REPORT_FOUND'){ throw 'MT5 tester report-discovery patch was not applied' }
           [IO.File]::WriteAllText('P45_GITHUB_HOSTED_RUN.ps1',$patched,(New-Object Text.UTF8Encoding($false)))
           $ph=(Get-FileHash P45_GITHUB_HOSTED_RUN.ps1 -Algorithm SHA256).Hash.ToLower()
           Write-Host "P45_RUNNER_COMPAT_PATCH_SHA256=$ph"
@@ -123,9 +137,9 @@ jobs:
             -Login $env:MT5_LOGIN `
             -Password $env:MT5_PASSWORD `
             -Server $env:MT5_SERVER `
-            -BrokerSymbol '${{ inputs.broker_symbol }}' `
-            -FromDate '${{ inputs.from_date }}' `
-            -ToDate '${{ inputs.to_date }}'
+            -BrokerSymbol '${{ inputs.broker_symbol || 'XAUUSD' }}' `
+            -FromDate '${{ inputs.from_date || '2025.01.01' }}' `
+            -ToDate '${{ inputs.to_date || '2026.08.25' }}'
 
       - name: Upload P45 MT5 evidence
         if: always()
@@ -137,7 +151,7 @@ jobs:
           retention-days: 90
 
   robust54-native:
-    if: ${{ inputs.mode == 'robust54' || inputs.mode == 'all' }}
+    if: ${{ github.event_name != 'push' && (inputs.mode == 'robust54' || inputs.mode == 'all') }}
     runs-on: windows-2022
     timeout-minutes: 330
     strategy:
@@ -159,12 +173,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
       - name: Download immutable ROBUST54 factory runner
         shell: powershell
         run: |
@@ -174,14 +186,12 @@ jobs:
           $h=(Get-FileHash GOLD_54_GITHUB_HOSTED_RUN.ps1 -Algorithm SHA256).Hash.ToLower()
           if($h -ne 'f6fe0d3c190b76b4f80b329f811592cdb84940d879d74b7e2dc9ce6994813bd6'){ throw "ROBUST54 runner SHA mismatch: $h" }
           Write-Host "ROBUST54_RUNNER_SHA256=$h"
-
       - name: Execute native MT5 replay parity shard
         shell: powershell
         run: |
           ./GOLD_54_GITHUB_HOSTED_RUN.ps1 `
             -ShardIds '${{ matrix.methods }}' `
             -MethodFilter '${{ inputs.method_filter }}'
-
       - name: Upload shard evidence
         if: always()
         uses: actions/upload-artifact@v4
