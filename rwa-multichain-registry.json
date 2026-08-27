@@ -1,15 +1,19 @@
 {
-  "schema": 1,
-  "version": "1.0.0",
+  "schema": 2,
+  "version": "2.0.0",
   "name": "RWA Multi Chain Registry",
   "display_name": "MULTI CHAIN",
-  "policy": "chain-abstraction-fail-closed-v1",
+  "policy": "chain-abstraction-fail-closed-v2",
+  "routing_provider": "LI.FI",
   "principles": {
     "single_workspace": true,
+    "unified_balance": true,
+    "unified_route_preview": true,
     "no_direct_exchange_writes": true,
-    "execution_requires_validated_adapter": true,
-    "gas_abstraction": "adapter-dependent",
-    "unsupported_routes": "fail-closed"
+    "execution_requires_machine_launch_readiness": true,
+    "gas_abstraction": "route-dependent",
+    "unsupported_routes": "fail-closed",
+    "quote_expiry_seconds": 55
   },
   "networks": [
     {
@@ -18,10 +22,14 @@
       "family": "Hyperliquid L1",
       "native": "HYPE",
       "status": "EXECUTION_GATED",
-      "description": "Protected trading rail already used by the RWA execution stack. Mainnet remains machine and wallet gated.",
+      "route_provider": "RWAExecutionAPI",
+      "description": "Protected trading rail owned by the existing RWA execution stack. It remains wallet, risk and machine-readiness gated.",
       "capabilities": {
         "network_context": true,
         "wallet_context": true,
+        "portfolio": true,
+        "route_quote": false,
+        "simulation": true,
         "funding": false,
         "execution": "machine-gated",
         "gas": "native"
@@ -32,15 +40,20 @@
       "name": "Arbitrum One",
       "family": "EVM",
       "chain_id": "0xa4b1",
+      "lifi_chain_id": 42161,
       "native": "ETH",
-      "status": "FUNDING_GATED",
-      "description": "Native USDC funding route exists behind the same production machine and wallet gate.",
+      "status": "ROUTE_READY",
+      "route_provider": "LI.FI",
+      "description": "Unified EVM route context with quote, simulation, portfolio and protected USDC funding support.",
       "capabilities": {
         "network_context": true,
         "wallet_context": true,
+        "portfolio": true,
+        "route_quote": true,
+        "simulation": true,
         "funding": "machine-gated-usdc",
-        "execution": false,
-        "gas": "wallet"
+        "execution": "machine-gated-router",
+        "gas": "route-abstracted"
       }
     },
     {
@@ -48,110 +61,87 @@
       "name": "Ethereum",
       "family": "EVM",
       "chain_id": "0x1",
+      "lifi_chain_id": 1,
       "native": "ETH",
-      "status": "ADAPTER_GATED",
-      "description": "Network context is available in the unified selector; transaction adapter is not enabled.",
-      "capabilities": {
-        "network_context": true,
-        "wallet_context": false,
-        "funding": false,
-        "execution": false,
-        "gas": "adapter-required"
-      }
+      "status": "ROUTE_READY",
+      "route_provider": "LI.FI",
+      "description": "Unified Ethereum wallet, balance, token discovery, quote and simulation context.",
+      "capabilities": {"network_context":true,"wallet_context":true,"portfolio":true,"route_quote":true,"simulation":true,"funding":"router","execution":"machine-gated-router","gas":"route-abstracted"}
     },
     {
       "id": "base",
       "name": "Base",
       "family": "EVM",
       "chain_id": "0x2105",
+      "lifi_chain_id": 8453,
       "native": "ETH",
-      "status": "ADAPTER_GATED",
-      "description": "Unified network context with fail-closed execution until a validated adapter is activated.",
-      "capabilities": {
-        "network_context": true,
-        "wallet_context": false,
-        "funding": false,
-        "execution": false,
-        "gas": "adapter-required"
-      }
+      "status": "ROUTE_READY",
+      "route_provider": "LI.FI",
+      "description": "Unified Base wallet, balance, token discovery, quote and simulation context.",
+      "capabilities": {"network_context":true,"wallet_context":true,"portfolio":true,"route_quote":true,"simulation":true,"funding":"router","execution":"machine-gated-router","gas":"route-abstracted"}
     },
     {
       "id": "solana",
       "name": "Solana",
       "family": "SVM",
+      "lifi_chain_id": 1151111081099710,
       "native": "SOL",
-      "status": "ADAPTER_GATED",
-      "description": "Unified network context with fail-closed execution until a validated Solana adapter is activated.",
-      "capabilities": {
-        "network_context": true,
-        "wallet_context": false,
-        "funding": false,
-        "execution": false,
-        "gas": "adapter-required"
-      }
+      "status": "ROUTE_READY",
+      "route_provider": "LI.FI",
+      "wallet_adapter": "phantom-request-v1",
+      "rpc_urls": ["https://api.mainnet-beta.solana.com"],
+      "description": "Unified Solana route context. Quotes use LI.FI; injected Phantom-compatible signing is implemented behind the global mainnet lock.",
+      "capabilities": {"network_context":true,"wallet_context":true,"portfolio":true,"route_quote":true,"simulation":true,"funding":"router","execution":"machine-gated-router","gas":"route-abstracted"}
     },
     {
       "id": "bnb",
       "name": "BNB Chain",
       "family": "EVM",
       "chain_id": "0x38",
+      "lifi_chain_id": 56,
       "native": "BNB",
-      "status": "ADAPTER_GATED",
-      "description": "Unified network context with fail-closed execution until a validated adapter is activated.",
-      "capabilities": {
-        "network_context": true,
-        "wallet_context": false,
-        "funding": false,
-        "execution": false,
-        "gas": "adapter-required"
-      }
+      "status": "ROUTE_READY",
+      "route_provider": "LI.FI",
+      "description": "Unified BNB Chain wallet, balance, token discovery, quote and simulation context.",
+      "capabilities": {"network_context":true,"wallet_context":true,"portfolio":true,"route_quote":true,"simulation":true,"funding":"router","execution":"machine-gated-router","gas":"route-abstracted"}
     },
     {
       "id": "polygon",
       "name": "Polygon",
       "family": "EVM",
       "chain_id": "0x89",
+      "lifi_chain_id": 137,
       "native": "POL",
-      "status": "ADAPTER_GATED",
-      "description": "Unified network context with fail-closed execution until a validated adapter is activated.",
-      "capabilities": {
-        "network_context": true,
-        "wallet_context": false,
-        "funding": false,
-        "execution": false,
-        "gas": "adapter-required"
-      }
+      "status": "ROUTE_READY",
+      "route_provider": "LI.FI",
+      "description": "Unified Polygon wallet, balance, token discovery, quote and simulation context.",
+      "capabilities": {"network_context":true,"wallet_context":true,"portfolio":true,"route_quote":true,"simulation":true,"funding":"router","execution":"machine-gated-router","gas":"route-abstracted"}
     },
     {
       "id": "avalanche",
       "name": "Avalanche C-Chain",
       "family": "EVM",
       "chain_id": "0xa86a",
+      "lifi_chain_id": 43114,
       "native": "AVAX",
-      "status": "ADAPTER_GATED",
-      "description": "Unified network context with fail-closed execution until a validated adapter is activated.",
-      "capabilities": {
-        "network_context": true,
-        "wallet_context": false,
-        "funding": false,
-        "execution": false,
-        "gas": "adapter-required"
-      }
+      "status": "ROUTE_READY",
+      "route_provider": "LI.FI",
+      "description": "Unified Avalanche C-Chain wallet, balance, token discovery, quote and simulation context.",
+      "capabilities": {"network_context":true,"wallet_context":true,"portfolio":true,"route_quote":true,"simulation":true,"funding":"router","execution":"machine-gated-router","gas":"route-abstracted"}
     },
     {
       "id": "monad",
       "name": "Monad",
       "family": "EVM",
+      "chain_id": "0x8f",
+      "lifi_chain_id": 143,
       "native": "MON",
-      "status": "ADAPTER_GATED",
-      "description": "Unified network context with fail-closed execution until a validated adapter is activated.",
-      "capabilities": {
-        "network_context": true,
-        "wallet_context": false,
-        "funding": false,
-        "execution": false,
-        "gas": "adapter-required"
-      }
+      "status": "ROUTE_READY",
+      "route_provider": "LI.FI",
+      "rpc_urls": ["https://rpc.monad.xyz"],
+      "explorer_urls": ["https://monadvision.com"],
+      "description": "Unified Monad mainnet wallet, balance, token discovery, quote and simulation context.",
+      "capabilities": {"network_context":true,"wallet_context":true,"portfolio":true,"route_quote":true,"simulation":true,"funding":"router","execution":"machine-gated-router","gas":"route-abstracted"}
     }
   ]
 }
