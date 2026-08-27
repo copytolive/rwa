@@ -3,14 +3,13 @@ name: V12 Branch Index Patch
 on:
   push:
     branches:
-      - fix/top-company-ui-pair-stability-v12-20260827
+      - 'fix/top-company-ui-pair-stability-v12-20260827'
 
 permissions:
   contents: write
 
 jobs:
   patch-index:
-    if: ${{ !contains(github.event.head_commit.message, 'chore(ui): apply V12 index cache key') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,20 +22,14 @@ jobs:
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text()
-          old_view='width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no'
-          new_view='width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5'
-          old_js='market-performance.js?v=10'
-          new_js='market-performance.js?v=12'
-          if old_view in s:
-              s=s.replace(old_view,new_view,1)
-          if old_js in s:
-              s=s.replace(old_js,new_js,1)
+          s=s.replace('width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no','width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5',1)
+          s=s.replace('market-performance.js?v=10','market-performance.js?v=12',1)
           p.write_text(s)
           assert 'user-scalable=no' not in s
-          assert new_js in s
+          assert 'market-performance.js?v=12' in s
           assert s.count('<script src=') == 6, s.count('<script src=')
           PY
-      - name: Commit branch-only patch
+      - name: Commit branch-only patch when needed
         run: |
           if git diff --quiet -- index.html; then
             echo 'Index already V12'
