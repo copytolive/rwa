@@ -49,16 +49,6 @@ jobs:
                       raise SystemExit(f'{path}: expected exactly one match for {old!r}, got {count}')
                   text = text.replace(old, new)
               path.write_text(text)
-
-          wf = Path('.github/workflows/renko-v15-tick-only.yml')
-          text = wf.read_text()
-          needle = "          if(r.bricks.length!==4||!r.bricks[2].isReversal)throw Error('2-box reversal failed');\n"
-          addition = needle + "          const pctBox=E.boxFor({method:'percentage',percentage:.01,ltpSnapshot:216,tickSize:.01},216);\n          if(Math.abs(pctBox-2.16)>1e-9)throw Error('TradingView Percentage LTP min-tick rounding failed');\n"
-          if 'TradingView Percentage LTP min-tick rounding failed' not in text:
-              if text.count(needle) != 1:
-                  raise SystemExit('RENKO workflow: insertion point missing')
-              text = text.replace(needle, addition)
-              wf.write_text(text)
           PY
 
           node --check renko/renko-v15-worker.js
@@ -74,14 +64,13 @@ jobs:
           NODE
           git diff --check
 
-      - name: Commit patch and remove one-shot workflow
+      - name: Commit parity patch
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "copytolive-renko-audit"
           git config user.email "copytolive@gmail.com"
-          git rm .github/workflows/renko-tv-percentage-parity-patch.yml
-          git add renko/renko-v15-worker.js renko/renko-v15.js renko/renko-v15-first-frame-preload.js renko/index.html .github/workflows/renko-v15-tick-only.yml
+          git add renko/renko-v15-worker.js renko/renko-v15.js renko/renko-v15-first-frame-preload.js renko/index.html
           git commit -m "fix(renko): match TradingView Percentage LTP rounding"
           git fetch origin main
           git rebase origin/main
