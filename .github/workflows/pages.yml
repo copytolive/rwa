@@ -54,8 +54,12 @@ jobs:
           python -m json.tool manifest.webmanifest >/dev/null
           python -m json.tool rwa-discovery-catalog.json >/dev/null
 
-          grep -Fq 'superapp-v5.css?v=13' index.html
-          grep -Fq 'superapp-v5.js?v=13' index.html
+          SUPER_CSS_REF="$(grep -oE 'superapp-v5\.css\?v=[0-9]+' index.html | head -1)"
+          SUPER_JS_REF="$(grep -oE 'superapp-v5\.js\?v=[0-9]+' index.html | head -1)"
+          test -n "$SUPER_CSS_REF"
+          test -n "$SUPER_JS_REF"
+          grep -Fq "./$SUPER_CSS_REF" rwa-sw-v5.js
+          grep -Fq "./$SUPER_JS_REF" rwa-sw-v5.js
           grep -Fq 'realtime-core.js?v=3' index.html
           grep -Fq 'market-performance.js?v=2' index.html
           ! grep -Fq 'product-os-v3.js' index.html
