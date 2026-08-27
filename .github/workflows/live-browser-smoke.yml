@@ -1,190 +1,80 @@
 name: RWA Live Browser Smoke
 
 on:
-  push:
-    branches: ["main"]
-    paths-ignore:
-      - "monitor/status.json"
+  workflow_run:
+    workflows: ["Deploy RWA to GitHub Pages"]
+    types: [completed]
+  workflow_dispatch:
 
 permissions:
   contents: read
   statuses: write
 
 concurrency:
-  group: rwa-live-browser-smoke
+  group: rwa-live-browser-${{ github.event.workflow_run.head_sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
   smoke:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      EXPECTED_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+      RWA_TEST_URL: https://copytolive.github.io/rwa/
     steps:
-      - uses: actions/checkout@v4
-      - name: Validate browser and execution source
+      - name: Checkout exact deployed source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.EXPECTED_SHA }}
+
+      - name: Validate current live-test source
         run: |
-          node --check app.js
-          node --check realtime-core.js
-          node --check chart-core.js
-          node --check market-performance.js
-          node --check wallet-core.js
-          node --check walletconnect.js
-          node --check mobile.js
-          node --check product-os-v3.js
-          node --check product-os-mobile-contract-v3.js
-          node --check suite-nav.js
-          node --check execution-api.js
-          node --check execution-ui.js
-          node --check execution-ops-bridge.js
-          node --check ops-suite.js
-          node --check risk-hardening.js
-          node --check exchange-core.js
-          node --check exchange-ui.js
-          node --check testnet-e2e.js
-          node --check copy-24x7-client.js
-          node --check launch-status.js
-          node --check beta-proof-client.js
-          node --check suite-execution-patch.js
-          python -m json.tool rwa-execution-config.json >/dev/null
-          python -m json.tool launch/readiness.json >/dev/null
-          test -s EXECUTION_API.md
-          test -s stable-shell.css
-          test -s unified-design-v3.css
-          test -s trader/index.html
-          test -s asset/index.html
-          grep -Fq 'realtime-core.js?v=3' index.html
-          grep -Fq 'chart-core.js?v=1' index.html
-          grep -Fq 'market-performance.js?v=2' index.html
-          grep -Fq 'stable-shell.css?v=3' index.html
-          grep -Fq 'unified-design-v3.css?v=1' index.html
-          grep -Fq 'product-os-v3.js?v=1' index.html
-          grep -Fq 'product-os-mobile-contract-v3.js?v=1' index.html
-          grep -Fq 'walletconnect.js?v=4' index.html
-          grep -Fq 'wallet-core.js?v=3' index.html
-          ! grep -Fq 'wallet-seamless.js' index.html
-          grep -Fq 'execution-api.js?v=2' index.html
-          grep -Fq 'execution-ops-bridge.js?v=3' index.html
-          grep -Fq 'exchange-core.js?v=1' index.html
-          grep -Fq 'exchange-ui.js?v=1' index.html
-          grep -Fq 'testnet-e2e.js?v=1' index.html
-          ! grep -Fq 'browser-recovery.js' index.html
-          ! grep -Fq 'instantChartBoot();loadSuite()' mobile.js
-          grep -Fq 'REST fallback' realtime-core.js
-          grep -Fq 'depth10@1000ms' realtime-core.js
-          grep -Fq "runtime:'root-terminal-low-jank-v1'" market-performance.js
-          grep -Fq "observer_policy='hot-dom-periodic-1200ms'" market-performance.js
-          grep -Fq 'data-mobile-nav="trade"' product-os-v3.js
-          grep -Fq 'Risk Engine' product-os-v3.js
-          grep -Fq 'market-drawer-open' product-os-mobile-contract-v3.js
-          grep -Fq 'tabular-nums' unified-design-v3.css
-          grep -Fq 'waitWalletAuth' execution-ops-bridge.js
-          grep -Fq 'wallet-core.js?v=3' execution-ops-bridge.js
-          grep -Fq 'window.loadTradingView=openTradingView' chart-core.js
-          grep -Fq 'liveCandle' chart-core.js
-          grep -Fq "version:'4.0.0'" walletconnect.js
-          grep -Fq 'eip6963:requestProvider' wallet-core.js
-          grep -Fq 'personal_sign' wallet-core.js
-          grep -Fq 'personal_ecRecover' wallet-core.js
-          grep -Fq "version:'3.0.0'" wallet-core.js
-          grep -Fq 'Wallet account switched' wallet-core.js
-          grep -Fq "version:'2.0.0'" execution-api.js
-          grep -Fq "hardening:'single-write-path-v1'" execution-api.js
-          grep -Fq "riskGate:'mandatory-internal-v1'" execution-api.js
-          grep -Fq "bracket:'atomic-normal-tpsl-v1'" execution-api.js
-          grep -Fq 'async function trigger' execution-api.js
-          ! grep -Fq 'ExchangeClient' execution-ops-bridge.js
-          ! grep -Fq 'ExchangeClient' ops-suite.js
-          ! grep -Fq 'ExchangeClient' risk-hardening.js
-          ! grep -Fq 'ExchangeClient' suite-execution-patch.js
-          grep -Fq "path:'RWAExecutionAPI'" ops-suite.js
-          grep -Fq "version:'1.1.0'" exchange-core.js
-          grep -Fq "safety:'wallet-and-global-launch-gate-v3'" exchange-core.js
-          grep -Fq 'localE2EVerified()&&globalMainnetReady()' exchange-core.js
-          grep -Fq 'RWA EXCHANGE CORE' exchange-ui.js
-          grep -Fq "version:'3.1.0'" testnet-e2e.js
-          grep -Fq 'REAL E2E RESULT' testnet-e2e.js
-          grep -Fq 'Save Wallet E2E Gate' testnet-e2e.js
-          grep -Fq "copy-24x7-client.js?v=2" suite-nav.js
-          grep -Fq "launch-status.js?v=2" suite-nav.js
-          grep -Fq "beta-proof-client.js?v=1" suite-nav.js
-      - name: Publish source success
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/execution-source' -f description='Dedicated execution API + global mainnet safety source verified'
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/chart-wallet-source' -f description='Realtime chart + wallet v3/v4 verified'
-      - name: Wait for GitHub Pages propagation
+          node --check tools/superapp-v5-browser.mjs
+          node --check tools/superapp-p16-p20-browser.mjs
+          node --check tools/superapp-v5-audit.mjs
+          node --check tools/superapp-p16-p20-audit.mjs
+          node tools/superapp-v5-audit.mjs
+          node tools/superapp-p16-p20-audit.mjs
+
+      - name: Wait for exact Pages SHA
         shell: bash
         run: |
+          set -euo pipefail
           ok=0
-          for i in {1..120}; do
-            q="${GITHUB_RUN_ID}-${i}"
-            html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/?v=$q" || true)"
-            core="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/realtime-core.js?v=$q" || true)"
-            chart="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/chart-core.js?v=$q" || true)"
-            perf="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/market-performance.js?v=$q" || true)"
-            shell="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/stable-shell.css?v=$q" || true)"
-            unified="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/unified-design-v3.css?v=$q" || true)"
-            product="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/product-os-v3.js?v=$q" || true)"
-            mobile_contract="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/product-os-mobile-contract-v3.js?v=$q" || true)"
-            trader="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trader/?v=$q" || true)"
-            asset="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/asset/?symbol=BTC&v=$q" || true)"
-            wallet="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/wallet-core.js?v=$q" || true)"
-            wc="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/walletconnect.js?v=$q" || true)"
-            execapi="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/execution-api.js?v=$q" || true)"
-            bridge="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/execution-ops-bridge.js?v=$q" || true)"
-            ops="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/ops-suite.js?v=$q" || true)"
-            excore="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/exchange-core.js?v=$q" || true)"
-            exui="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/exchange-ui.js?v=$q" || true)"
-            e2e="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/testnet-e2e.js?v=$q" || true)"
-            launch="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/launch/readiness.json?v=$q" || true)"
-            if grep -Fq 'realtime-core.js?v=3' <<<"$html" \
-              && grep -Fq 'market-performance.js?v=2' <<<"$html" \
-              && grep -Fq 'stable-shell.css?v=3' <<<"$html" \
-              && grep -Fq 'unified-design-v3.css?v=1' <<<"$html" \
-              && grep -Fq 'product-os-v3.js?v=1' <<<"$html" \
-              && grep -Fq 'product-os-mobile-contract-v3.js?v=1' <<<"$html" \
-              && grep -Fq 'walletconnect.js?v=4' <<<"$html" \
-              && grep -Fq 'wallet-core.js?v=3' <<<"$html" \
-              && ! grep -Fq 'wallet-seamless.js' <<<"$html" \
-              && grep -Fq 'REST fallback' <<<"$core" \
-              && grep -Fq 'depth10@1000ms' <<<"$core" \
-              && grep -Fq 'liveCandle' <<<"$chart" \
-              && grep -Fq "runtime:'root-terminal-low-jank-v1'" <<<"$perf" \
-              && grep -Fq 'rwa-exchange' <<<"$shell" \
-              && grep -Fq 'tabular-nums' <<<"$unified" \
-              && grep -Fq 'data-mobile-nav="trade"' <<<"$product" \
-              && grep -Fq 'Risk Engine' <<<"$product" \
-              && grep -Fq 'market-drawer-open' <<<"$mobile_contract" \
-              && grep -Fq '<title>RWA Trader</title>' <<<"$trader" \
-              && grep -Fq '<title>RWA Asset</title>' <<<"$asset" \
-              && grep -Fq "version:'4.0.0'" <<<"$wc" \
-              && grep -Fq "version:'3.0.0'" <<<"$wallet" \
-              && grep -Fq 'Wallet account switched' <<<"$wallet" \
-              && grep -Fq "hardening:'single-write-path-v1'" <<<"$execapi" \
-              && grep -Fq "riskGate:'mandatory-internal-v1'" <<<"$execapi" \
-              && ! grep -Fq 'ExchangeClient' <<<"$bridge" \
-              && ! grep -Fq 'ExchangeClient' <<<"$ops" \
-              && grep -Fq "version:'1.1.0'" <<<"$excore" \
-              && grep -Fq "safety:'wallet-and-global-launch-gate-v3'" <<<"$excore" \
-              && grep -Fq 'RWA EXCHANGE CORE' <<<"$exui" \
-              && grep -Fq "version:'3.1.0'" <<<"$e2e" \
-              && grep -Fq 'Save Wallet E2E Gate' <<<"$e2e" \
-              && grep -Eq '"status"[[:space:]]*:[[:space:]]*"(BLOCKED|READY_FOR_BETA|BETA_PASSED_AWAITING_MAINNET|READY_FOR_MAINNET)"' <<<"$launch"; then ok=1; break; fi
+          for i in $(seq 1 60); do
+            live_sha="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/deployment-sha.txt?v=${GITHUB_RUN_ID}-${i}" 2>/dev/null | tr -d '\r\n' || true)"
+            if [ "$live_sha" = "$EXPECTED_SHA" ]; then ok=1; break; fi
             sleep 5
           done
           test "$ok" = "1"
+          echo "LIVE_EXACT_SHA=PASS:$EXPECTED_SHA"
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run full browser regression against live production
+        run: |
+          node tools/superapp-v5-browser.mjs
+          node tools/superapp-p16-p20-browser.mjs
+          echo 'LIVE_PRODUCT_BROWSER=PASS'
+          echo 'P6_RESEARCH_TERMINAL_BROWSER_LIVE=PASS'
+          echo 'RWA_LIVE_BROWSER_CURRENT=PASS'
+
       - name: Publish live success statuses
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/live-browser-smoke' -f description='Unified product + chart + wallet + hardened exchange verified live'
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/chart-wallet-smoke' -f description='Chart and wallet login verified live'
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/execution-api-smoke' -f description='Execution API + global launch gate verified live'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=success -f context='rwa/live-browser-smoke' -f description='Exact-SHA P16-P20 live browser regression passed'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=success -f context='rwa/chart-wallet-smoke' -f description='Current Super App chart/workspace browser contract passed live'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=success -f context='rwa/execution-api-smoke' -f description='Current risk-gated execution navigation contract passed live'
+
       - name: Publish live failure statuses
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/live-browser-smoke' -f description='Live browser smoke failed'
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/chart-wallet-smoke' -f description='Chart or wallet live verification failed'
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/execution-api-smoke' -f description='Execution API live verification failed'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=failure -f context='rwa/live-browser-smoke' -f description='Exact-SHA live browser regression failed'
