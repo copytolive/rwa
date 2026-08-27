@@ -26,7 +26,7 @@ async function snapshot(){
     interval:RWARenkoTV?.settings?.interval,
     source:RWARenkoTV?.settings?.source,
     fixedSource:RWARenkoTV?.state?.fixedSourceProfile===true,
-    intervalControlHidden:!!document.querySelector('.source-grid')?.hidden,
+    noTimeframeControls:!document.querySelector('#intervalSelect')&&!document.querySelector('#sourceSelect')&&!document.querySelector('.source-grid'),
     atr:RWARenkoTV?.state?.atr,
     box:RWARenkoTV?.state?.box,
     confirmed:RWARenkoTV?.state?.confirmed?.length,
@@ -50,7 +50,7 @@ async function snapshot(){
 }
 
 await warmExactCurrentRevision();
-const sourceProfile=await page.evaluate(()=>({interval:RWARenkoTV.settings.interval,source:RWARenkoTV.settings.source,fixed:RWARenkoTV.state.fixedSourceProfile===true,gridHidden:!!document.querySelector('.source-grid')?.hidden,sourceText:document.querySelector('#sourceText')?.textContent}));
+const sourceProfile=await page.evaluate(()=>({interval:RWARenkoTV.settings.interval,source:RWARenkoTV.settings.source,fixed:RWARenkoTV.state.fixedSourceProfile===true,noTimeframeControls:!document.querySelector('#intervalSelect')&&!document.querySelector('#sourceSelect')&&!document.querySelector('.source-grid'),sourceText:document.querySelector('#sourceText')?.textContent,modePill:document.querySelector('#modePill')?.textContent}));
 const results=[];
 let failure=null;
 for(const length of VALUES){
@@ -82,9 +82,9 @@ for(const length of VALUES){
   results.push(passed);
   await page.screenshot({path:path.join(OUT,`atr-${length}-0ms-blocking.png`),fullPage:true});
 }
-const sourcePass=sourceProfile.interval==='1s'&&sourceProfile.source==='close'&&sourceProfile.fixed&&sourceProfile.gridHidden;
-const pass=!failure&&errors.length===0&&sourcePass&&results.length===VALUES.length&&results.every((x,i)=>x.cacheHit&&x.blockingMs===0&&x.atrLength===VALUES[i]&&x.lastApply?.length===VALUES[i]&&x.interval==='1s'&&x.source==='close'&&x.fixedSource&&x.intervalControlHidden&&x.historySatisfied&&x.sourceBars>=VALUES[i]&&x.warmContext===x.currentContext&&x.currentContext===x.preparedContext);
-const report={url:page.url(),values:VALUES,sourceProfile,results,failure,errors,pass,note:'All seven proofs use the fixed Binance 1-second CLOSED-kline Close source. 0 ms means measured main-thread Total Blocking Time for a prepared exact-current-revision cache switch, not literal wall-clock elapsed time. Deep Wilder ATR history is acquired/calculated in a Web Worker; the main thread does not materialize one million source objects.'};
+const sourcePass=sourceProfile.interval==='1s'&&sourceProfile.source==='close'&&sourceProfile.fixed&&sourceProfile.noTimeframeControls;
+const pass=!failure&&errors.length===0&&sourcePass&&results.length===VALUES.length&&results.every((x,i)=>x.cacheHit&&x.blockingMs===0&&x.atrLength===VALUES[i]&&x.lastApply?.length===VALUES[i]&&x.interval==='1s'&&x.source==='close'&&x.fixedSource&&x.noTimeframeControls&&x.historySatisfied&&x.sourceBars>=VALUES[i]&&x.warmContext===x.currentContext&&x.currentContext===x.preparedContext);
+const report={url:page.url(),values:VALUES,sourceProfile,results,failure,errors,pass,note:'All seven proofs use the fixed Binance 1-second CLOSED-kline Close source. There are no source/timeframe selector controls in production. 0 ms means measured main-thread Total Blocking Time for a prepared exact-current-revision cache switch, not literal wall-clock elapsed time. Deep Wilder ATR history is acquired/calculated in a Web Worker; the main thread does not materialize one million source objects.'};
 await fs.writeFile(path.join(OUT,'report.json'),JSON.stringify(report,null,2));
 console.log(JSON.stringify(report,null,2));
 await browser.close();
