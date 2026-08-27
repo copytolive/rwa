@@ -29,7 +29,7 @@ async function chromeState(page,label){
     const workspace=[document.getElementById('rwaSuperWorkspace'),document.getElementById('suite')].find(e=>visible(e));
     const tr=rect(top),rr=rect(rail),wr=rect(workspace),cr=rect(chart);
     const probe=rr?document.elementFromPoint(Math.min(innerWidth-12,rr.r-12),Math.max(1,Math.min(innerHeight-1,rr.y+rr.h/2))):null;
-    return{label,path:location.pathname,hash:location.hash,scrollY,topVisible:visible(top),railVisible:visible(rail),chartVisible:visible(chart),sameChart:chart===window.__chromeChartNode,top:tr,rail:rr,workspace:wr,workspacePosition:workspace?getComputedStyle(workspace).position:null,probeInsideRail:!!probe?.closest?.('#rwaExperienceRail')};
+    return{label,vw:innerWidth,path:location.pathname,hash:location.hash,scrollY,topVisible:visible(top),railVisible:visible(rail),chartVisible:visible(chart),sameChart:chart===window.__chromeChartNode,top:tr,rail:rr,workspace:wr,workspacePosition:workspace?getComputedStyle(workspace).position:null,probeInsideRail:!!probe?.closest?.('#rwaExperienceRail')};
   },label);
   assert.equal(s.path,'/rwa/',`${label}: escaped /rwa/`);
   assert.equal(s.topVisible,true,`${label}: topbar disappeared`);
@@ -39,7 +39,7 @@ async function chromeState(page,label){
   assert.ok(s.top&&s.top.y<=1.5&&s.top.h>=40,`${label}: topbar is not pinned ${JSON.stringify(s.top)}`);
   assert.ok(s.rail&&s.rail.y>=s.top.b-2&&s.rail.y<=s.top.b+8,`${label}: rail is not pinned under header ${JSON.stringify({top:s.top,rail:s.rail})}`);
   assert.equal(s.probeInsideRail,true,`${label}: another surface covers the workflow rail`);
-  if(s.workspace&&s.workspacePosition==='fixed'&&innerWidth>=1200)assert.ok(s.workspace.y>=s.rail.b-2,`${label}: workspace overlaps global rail ${JSON.stringify({rail:s.rail,workspace:s.workspace})}`);
+  if(s.workspace&&s.workspacePosition==='fixed'&&s.vw>=1200)assert.ok(s.workspace.y>=s.rail.b-2,`${label}: workspace overlaps global rail ${JSON.stringify({rail:s.rail,workspace:s.workspace})}`);
   return s;
 }
 
