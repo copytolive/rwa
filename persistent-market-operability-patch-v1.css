@@ -8,6 +8,7 @@ body.rwa-persistent-market.rwa-super-market-open.rwa-persistent-suite #suite{dis
    Route changes, trade auto-scroll and root scrolling may move content only. */
 @media (min-width:681px){
   html,body{scroll-padding-top:94px!important}
+  html{scrollbar-gutter:stable!important}
   .app{padding-top:48px!important}
   .topbar,
   body.rwa-super-market-open .topbar,
@@ -32,6 +33,8 @@ body.rwa-persistent-market.rwa-super-market-open.rwa-persistent-suite #suite{dis
   body.rwa-super-workspace-open #rwaExperienceRail,
   body.rwa-super-suite-open #rwaExperienceRail{
     display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    grid-auto-columns:minmax(0,1fr)!important;
     position:fixed!important;
     top:48px!important;
     left:0!important;
@@ -45,6 +48,20 @@ body.rwa-persistent-market.rwa-super-market-open.rwa-persistent-suite #suite{dis
     transform:none!important;
     isolation:isolate!important;
     background:#070a0f!important;
+  }
+  #rwaExperienceRail>[data-rwa-level]{
+    width:100%!important;
+    min-width:0!important;
+    max-width:none!important;
+    box-sizing:border-box!important;
+    margin:0!important;
+    transform:none!important;
+  }
+  #rwaExperienceRail>[data-rwa-level].active{
+    width:100%!important;
+    min-width:0!important;
+    max-width:none!important;
+    box-sizing:border-box!important;
   }
   /* Both fixed rows are removed from normal flow: reserve their exact space. */
   .app>#rwaExperienceRail~.layout{margin-top:37px!important}
