@@ -5,6 +5,8 @@ on:
     branches: ["main"]
     paths:
       - "renko/**"
+      - "legacy-canonical.js"
+      - "rwa-sw-v5.js"
       - "tools/renko-v15-functional.mjs"
       - ".github/workflows/renko-v15-tick-only.yml"
   workflow_dispatch:
@@ -34,6 +36,8 @@ jobs:
           node --check renko/renko-v15-worker.js
           node --check renko/renko-v15-method-profiles.js
           node --check tools/renko-v15-functional.mjs
+          node --check legacy-canonical.js
+          node --check rwa-sw-v5.js
           grep -Fq 'RENKO V15.1' renko/index.html
           grep -Fq 'renko-v15.js?v=151' renko/index.html
           grep -Fq 'renko-v15-method-profiles.js?v=151' renko/index.html
@@ -48,6 +52,11 @@ jobs:
           grep -Fq "historySource:'binance-aggregate-trade-events-no-candles'" renko/renko-v15.js
           grep -Fq "atrSizing:'wilder-absolute-trade-move-no-timeframe'" renko/renko-v15.js
           grep -Fq "liveDrain:'all-unseen-raw-trades-in-order'" renko/renko-v15.js
+          grep -Fq "rwaRenkoStandalone='tick-native'" legacy-canonical.js
+          ! grep -Fq "route='research/renko/" legacy-canonical.js
+          grep -Fq "Never serve the cached V14 source/resolution UI" rwa-sw-v5.js
+          grep -Fq "isRenko(u)" rwa-sw-v5.js
+          grep -Fq "cache:'reload'" rwa-sw-v5.js
           git diff --check
 
       - name: Tick formation unit matrix
