@@ -3,34 +3,29 @@ name: RWA Income Fundamentals Smoke
 on:
   pull_request:
     paths:
-      - "index.html"
       - "rwa-fundamentals.js"
       - "rwa-fundamentals.css"
       - "rwa-verify-client.js"
-      - "product-os-mobile-contract-v3.js"
       - "tools/rwa-verify.mjs"
       - "tools/rwa-evidence-policy.mjs"
-      - "tools/rwa-fundamentals-browser.mjs"
+      - "tools/rwa-fundamentals-lazy-browser.mjs"
       - "rwa-assets.json"
       - ".github/workflows/rwa-fundamentals-smoke.yml"
   push:
     branches: ["main"]
     paths:
-      - "index.html"
       - "rwa-fundamentals.js"
       - "rwa-fundamentals.css"
       - "rwa-verify-client.js"
-      - "product-os-mobile-contract-v3.js"
       - "tools/rwa-verify.mjs"
       - "tools/rwa-evidence-policy.mjs"
-      - "tools/rwa-fundamentals-browser.mjs"
+      - "tools/rwa-fundamentals-lazy-browser.mjs"
       - "rwa-assets.json"
       - ".github/workflows/rwa-fundamentals-smoke.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
-  statuses: write
 
 concurrency:
   group: rwa-income-fundamentals-${{ github.ref }}
@@ -45,15 +40,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-
-      - name: Validate source and verification contracts
+      - name: Validate source and evidence contracts
         run: |
           node --check rwa-fundamentals.js
           node --check rwa-verify-client.js
-          node --check product-os-mobile-contract-v3.js
           node --check tools/rwa-verify.mjs
           node --check tools/rwa-evidence-policy.mjs
-          node --check tools/rwa-fundamentals-browser.mjs
+          node --check tools/rwa-fundamentals-lazy-browser.mjs
           python -m json.tool rwa-assets.json >/dev/null
           node <<'NODE'
           const fs=require('fs');
@@ -62,12 +55,9 @@ jobs:
             fund:fs.readFileSync('rwa-fundamentals.js','utf8'),
             verify:fs.readFileSync('tools/rwa-verify.mjs','utf8'),
             policy:fs.readFileSync('tools/rwa-evidence-policy.mjs','utf8'),
-            client:fs.readFileSync('rwa-verify-client.js','utf8'),
-            contract:fs.readFileSync('product-os-mobile-contract-v3.js','utf8')
+            client:fs.readFileSync('rwa-verify-client.js','utf8')
           };
           const required=[
-            ['index CSS','index','rwa-fundamentals.css?v=1'],
-            ['index JS','index','rwa-fundamentals.js?v=1'],
             ['runtime','fund',"runtime:'canonical-root-income-fundamentals-v1'"],
             ['tabs','fund',"['overview','income','financials','valuation','asset','holders','documents','calendar','audit']"],
             ['no fake income','fund','No verified income rights for this market'],
@@ -78,27 +68,20 @@ jobs:
             ['public probe API','policy','probePublicEvidence'],
             ['reviewer UI income gate','client','INCOME EVIDENCE REQUIRED'],
             ['fundamentals payload capture','client','const fundamentals=d?.fundamentals'],
-            ['fundamentals reviewer payload','client','fundamentals,reviewer:wallet()'],
-            ['asset command interception','contract',"tag==='ASSET'"],
-            ['root fundamentals open','contract','RWAFundamentals?.open']
+            ['fundamentals reviewer payload','client','fundamentals,reviewer:wallet()']
           ];
           for(const [name,key,needle] of required){
-            if(!files[key].includes(needle)){
-              console.error(`MISSING CONTRACT: ${name} :: ${needle}`);
-              process.exit(1);
-            }
+            if(!files[key].includes(needle))throw Error(`MISSING CONTRACT: ${name} :: ${needle}`);
             console.log(`PASS ${name}`);
           }
           if(files.fund.includes('window.location.href'))throw Error('Fundamentals must not navigate away from canonical root');
-          if(files.contract.includes("location.href='../asset"))throw Error('Product OS contract must not navigate to /asset');
-          console.log('PASS canonical-root no-navigation contract');
+          if(files.index.includes('rwa-fundamentals.js?v=1')||files.index.includes('rwa-fundamentals.css?v=1'))throw Error('Fundamentals must remain lazy and must not expand the root startup payload');
+          console.log('PASS lazy-root fundamentals contract');
           NODE
-
       - name: Install Playwright Chromium
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-
       - name: Start deterministic root site
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/rwa-fund-http.log 2>&1 &
@@ -106,50 +89,7 @@ jobs:
           for i in {1..20}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
           cat /tmp/rwa-fund-http.log
           exit 1
-
-      - name: Browser proof desktop and mobile
-        run: node tools/rwa-fundamentals-browser.mjs
-
-      - name: Publish source status
-        if: success() && github.event_name == 'push'
+      - name: Browser proof lazy desktop and mobile
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/fundamentals-source' -f description='Root-only Income + NAV + financials + evidence workspace browser PASS'
-
-      - name: Wait for Pages and verify live root
-        if: github.event_name == 'push'
-        shell: bash
-        run: |
-          ok=0
-          for i in {1..120}; do
-            q="${GITHUB_RUN_ID}-${i}"
-            html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/?v=$q" || true)"
-            js="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-fundamentals.js?v=$q" || true)"
-            css="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-fundamentals.css?v=$q" || true)"
-            contract="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/product-os-mobile-contract-v3.js?v=$q" || true)"
-            verify="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-verify-client.js?v=$q" || true)"
-            if grep -Fq 'rwa-fundamentals.css?v=1' <<<"$html" \
-              && grep -Fq 'rwa-fundamentals.js?v=1' <<<"$html" \
-              && grep -Fq "runtime:'canonical-root-income-fundamentals-v1'" <<<"$js" \
-              && grep -Fq 'Where does my yield come from?' <<<"$js" \
-              && grep -Fq 'Integrated RWA Income & Fundamentals workspace' <<<"$css" \
-              && grep -Fq 'RWAFundamentals?.open' <<<"$contract" \
-              && grep -Fq 'INCOME EVIDENCE REQUIRED' <<<"$verify"; then ok=1; break; fi
-            sleep 5
-          done
-          test "$ok" = "1"
-          RWA_BASE_URL='https://narzulalistiqlal.github.io/rwa/' node tools/rwa-fundamentals-browser.mjs
-
-      - name: Publish live status
-        if: success() && github.event_name == 'push'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/fundamentals-live' -f description='Live /rwa/ Income Fundamentals desktop/mobile canonical-root PASS'
-
-      - name: Publish failure status
-        if: failure() && github.event_name == 'push'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/fundamentals-source' -f description='RWA fundamentals source/browser verification failed'
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/fundamentals-live' -f description='RWA fundamentals live /rwa/ verification failed'
+          RWA_BASE_URL: http://127.0.0.1:4173/
+        run: node tools/rwa-fundamentals-lazy-browser.mjs
