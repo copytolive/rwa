@@ -1,9 +1,6 @@
 name: GOLD Certification Native MT5 Factory
 
 on:
-  push:
-    paths:
-      - '.github/workflows/p45-mt5-native-parity.yml'
   workflow_dispatch:
     inputs:
       mode:
@@ -37,7 +34,7 @@ permissions:
 
 jobs:
   p45-native:
-    if: ${{ github.event_name == 'push' || inputs.mode == 'p45' || inputs.mode == 'all' }}
+    if: ${{ inputs.mode == 'p45' || inputs.mode == 'all' }}
     runs-on: windows-2022
     timeout-minutes: 180
     env:
