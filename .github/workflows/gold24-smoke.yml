@@ -1,0 +1,35 @@
+name: GOLD24 Smoke
+on:
+  push:
+    paths:
+      - 'backtest/gold24/**'
+      - 'deploy/gold24/**'
+      - '.github/workflows/gold24-*.yml'
+  pull_request:
+    paths:
+      - 'backtest/gold24/**'
+      - 'deploy/gold24/**'
+      - '.github/workflows/gold24-*.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r backtest/gold24/requirements.txt
+      - run: python backtest/gold24/worker.py --self-test
+      - name: Prove canonical fail-closed without evidence
+        shell: bash
+        run: |
+          set +e
+          GOLD24_STATE_DIR="$RUNNER_TEMP/gold24" \
+          GOLD24_DATASET="$RUNNER_TEMP/missing.csv" \
+          GOLD24_CROSSCHECK="$RUNNER_TEMP/missing.json" \
+          python backtest/gold24/worker.py --once
+          test -f "$RUNNER_TEMP/gold24/status.json"
+          grep -q 'RUNNING_FAIL_CLOSED' "$RUNNER_TEMP/gold24/status.json"
