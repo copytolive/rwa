@@ -27,13 +27,15 @@ jobs:
           node --check renko/renko-tv-ultrafast-ui.js
           node --check tools/renko-ultrafast-ui-report.mjs
           grep -q 'renko-tv-ultrafast-ui.js' renko/index.html
-          grep -q 'worker-parsed-virtual-market-list-plus-manual-zoom-lock' renko/renko-tv-ultrafast-ui.js
+          grep -q 'worker-parsed-scroll-safe-virtual-market-list-plus-manual-zoom-lock' renko/renko-tv-ultrafast-ui.js
+          grep -q 'ensureListViewport' renko/renko-tv-ultrafast-ui.js
           grep -q 'blockingMs' renko/renko-tv-ultrafast-ui.js
+          ! grep -q 'LightweightCharts.createChart=function' renko/renko-tv-ultrafast-ui.js
       - name: Install Playwright Chromium
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Run local 1600-pair no-freeze and zoom no-snap gate
+      - name: Run local 1600-pair no-freeze, full-scroll and zoom no-snap gate
         run: |
           python3 -m http.server 4173 >/tmp/renko-http.log 2>&1 &
           server=$!
@@ -68,7 +70,7 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Run production full-pair and zoom no-snap gate
+      - name: Run production full-pair, full-scroll and zoom no-snap gate
         run: RWA_TEST_URL=https://copytolive.github.io/rwa node tools/renko-ultrafast-ui-report.mjs
       - uses: actions/upload-artifact@v4
         if: always()
