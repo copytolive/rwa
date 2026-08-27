@@ -109,7 +109,8 @@ jobs:
               Write-Host 'MT5_TESTER_ACCOUNT_CONTEXT=MISSING'
             }
             Write-Host "MT5_TESTER_INI=$ini"
-            Get-Content $ini | ForEach-Object { if($_ -match '^Password='){ 'Password=***' } elseif($_ -match '^Login='){ 'Login=***' } elseif($_ -match '^Server='){ 'Server=***' } else { $_ } } | Write-Host
+            $safeIniPrelaunch=Get-Content $ini | ForEach-Object { if($_ -match '^Password='){ 'Password=***' } elseif($_ -match '^Login='){ 'Login=***' } elseif($_ -match '^Server='){ 'Server=***' } else { $_ } }
+            $safeIniPrelaunch | Write-Host
             $tp=Start-Process -FilePath $Terminal -ArgumentList "/config:$ini" -WorkingDirectory $Mt5Dir -PassThru -Wait
             Write-Host "MT5_TESTER_EXIT_CODE=$($tp.ExitCode)"
           '@
@@ -128,9 +129,8 @@ jobs:
                 Get-ChildItem $root -File -Recurse -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 20 | ForEach-Object { Copy-Item $_.FullName (Join-Path $diag ($_.Name+'-'+([Math]::Abs($_.FullName.GetHashCode())))) -Force -ErrorAction SilentlyContinue }
               }
             }
-            # Never persist broker credentials into artifacts: sanitize the INI before evidence capture.
-            $safeIni=Get-Content $ini | ForEach-Object { if($_ -match '^Password='){ 'Password=***' } elseif($_ -match '^Login='){ 'Login=***' } elseif($_ -match '^Server='){ 'Server=***' } else { $_ } }
-            [IO.File]::WriteAllLines((Join-Path $diag ((Split-Path $ini -Leaf)+'.txt')),$safeIni,(New-Object Text.UTF8Encoding($false)))
+            # MT5 may consume/delete the config INI after launch. Persist only the pre-launch sanitized copy.
+            [IO.File]::WriteAllLines((Join-Path $diag ((Split-Path $ini -Leaf)+'.txt')),$safeIniPrelaunch,(New-Object Text.UTF8Encoding($false)))
             Ensure (Test-Path $Report) "Tester report missing: $Report"
           '@
           $patched=$patched.Replace($oldReportGate,$newReportGate.TrimEnd())
@@ -139,6 +139,7 @@ jobs:
           if($patched -notmatch 'MT5_TESTER_INI'){ throw 'MT5 tester diagnostic patch was not applied' }
           if($patched -notmatch 'MT5_REPORT_FOUND'){ throw 'MT5 tester report-discovery patch was not applied' }
           if($patched -notmatch 'MT5_TESTER_ACCOUNT_CONTEXT=CONFIGURED'){ throw 'MT5 tester account-context patch was not applied' }
+          if($patched -notmatch 'safeIniPrelaunch'){ throw 'MT5 tester pre-launch INI sanitization patch was not applied' }
           [IO.File]::WriteAllText('P45_GITHUB_HOSTED_RUN.ps1',$patched,(New-Object Text.UTF8Encoding($false)))
           $ph=(Get-FileHash P45_GITHUB_HOSTED_RUN.ps1 -Algorithm SHA256).Hash.ToLower()
           Write-Host "P45_RUNNER_COMPAT_PATCH_SHA256=$ph"
