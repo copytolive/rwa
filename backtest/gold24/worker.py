@@ -314,7 +314,6 @@ def main():
                 snapshot = checkpoints / f"gold24_{batch:08d}.db"
                 db.snapshot(snapshot)
                 gs.upload_checkpoint(snapshot)
-                gs.upload_checkpoint(status_path, f"status_{batch:08d}.json") if status_path.exists() else None
             google_status = "PASS"
         except Exception as e:
             google_status = f"BLOCKED: {e}"
