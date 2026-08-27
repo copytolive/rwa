@@ -2,7 +2,7 @@
 'use strict';
 if(window.RWAMarketPerformanceGuard)return;
 
-const PERF={version:'1.3.2',runtime:'root-terminal-low-jank-v1'};
+const PERF={version:'1.3.3',runtime:'root-terminal-global-chrome-v5'};
 const hotIds=new Set(['pairList','pairCount','liveDot','statHigh','statLow','statVol','statChange','buyPct','tradeCount']);
 const NativeMutationObserver=window.MutationObserver;
 const periodic=new Map();
@@ -22,7 +22,7 @@ function loadPersistentMarketLayer(){
     const l=document.createElement('link');l.rel='stylesheet';l.href='persistent-market-shell-v3.css?v=3';l.dataset.rwaPersistentMarketV3='1';document.head.appendChild(l);
   }
   if(!document.querySelector('link[data-rwa-persistent-market-operability]')){
-    const l=document.createElement('link');l.rel='stylesheet';l.href='persistent-market-operability-patch-v1.css?v=1';l.dataset.rwaPersistentMarketOperability='1';document.head.appendChild(l);
+    const l=document.createElement('link');l.rel='stylesheet';l.href='persistent-market-operability-patch-v1.css?v=5';l.dataset.rwaPersistentMarketOperability='1';document.head.appendChild(l);
   }
 }
 
@@ -180,6 +180,6 @@ PERF.observer_policy='hot-dom-periodic-1200ms';
 PERF.market_dom_flush_ms=500;
 PERF.book_flush_ms=320;
 PERF.trade_flush_ms=250;
-PERF.persistent_market_workspaces='css-core-router-v3';
+PERF.persistent_market_workspaces='css-core-router-v5';
 window.RWAMarketPerformanceGuard=PERF;
 })();
