@@ -13,7 +13,8 @@ const results=[];
 function intervalMs(v){return({ '1s':1000,'1m':60000,'3m':180000,'5m':300000,'15m':900000,'30m':1800000,'1h':3600000,'4h':14400000,'1d':86400000 })[v]||60000}
 function mockKlines(url){
   const u=new URL(url),step=intervalMs(u.searchParams.get('interval')||'1m'),now=Date.now();
-  const requested=Number(u.searchParams.get('endTime'));
+  const requestedRaw=u.searchParams.get('endTime');
+  const requested=requestedRaw===null?NaN:Number(requestedRaw);
   const end=Number.isFinite(requested)?requested:now-step*2;
   const lastOpen=Math.floor((end-step+1)/step)*step;
   const rows=[];
