@@ -1,0 +1,51 @@
+name: RWA Multi Chain Provider Diagnostic
+
+on:
+  push:
+    branches:
+      - fix/multichain-live-provider-proof-20260828
+    paths:
+      - .github/workflows/multichain-provider-diagnostic.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe LI.FI Solana identifiers without transactions
+        shell: bash
+        run: |
+          set -uo pipefail
+          echo '=== /chains summary ==='
+          curl --connect-timeout 5 --max-time 25 -fsSL 'https://li.quest/v1/chains' -o /tmp/chains.json
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/chains.json'))
+          chains=x.get('chains',x) if isinstance(x,dict) else x
+          print('count=',len(chains))
+          for c in chains:
+            if not isinstance(c,dict): continue
+            text=' '.join(str(c.get(k,'')) for k in ('id','key','name','chainType')).lower()
+            if 'sol' in text or str(c.get('chainType','')).upper()=='SVM':
+              print('candidate=',{k:c.get(k) for k in ('id','key','name','chainType')})
+          PY
+          echo '=== /token probes ==='
+          mint='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+          for chain in 1151111081099710 SOL sol solana; do
+            code="$(curl --connect-timeout 5 --max-time 20 -sS -o "/tmp/token-${chain}.json" -w '%{http_code}' "https://li.quest/v1/token?chain=${chain}&token=${mint}" || true)"
+            echo "PROBE chain=${chain} http=${code}"
+            python - "$chain" "/tmp/token-${chain}.json" <<'PY' || true
+          import json,sys,os
+          chain,path=sys.argv[1:]
+          try:
+            x=json.load(open(path))
+            print('TOKEN',chain,{k:x.get(k) for k in ('address','chainId','symbol','name')},'message=',x.get('message') or x.get('error'))
+          except Exception as e:
+            print('TOKEN',chain,'parse_error',repr(e),'raw=',open(path).read()[:300] if os.path.exists(path) else '')
+          PY
+          done
+          echo 'MULTICHAIN_PROVIDER_DIAGNOSTIC_COMPLETE=PASS'
