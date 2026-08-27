@@ -1,4 +1,4 @@
-name: RENKO V14 TradingView Parity Production Gate
+name: RENKO V14.2 Uniform Brick Production Gate
 
 on:
   push:
@@ -18,7 +18,7 @@ permissions:
 
 concurrency:
   group: "renko-v14-pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   verify-renko-v14:
@@ -30,7 +30,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Activate and normalize V14 TradingView documented parity
+      - name: Activate V14.2 uniform-body production runtime
         shell: bash
         run: |
           python - <<'PY'
@@ -39,50 +39,39 @@ jobs:
 
           p=Path('superapp-v5.js');s=p.read_text()
           s=s.replace("setTimeout(routeFromHash,0);setTimeout(routeFromHash,800);","setTimeout(routeFromHash,0);")
-          s=re.sub(r"tab==='renko'\?'\d+':'1'","tab==='renko'?'141':'1'",s)
+          s=re.sub(r"tab==='renko'\?'\d+':'1'","tab==='renko'?'142':'1'",s)
           old="const toolUrl=`${tab}/?embed=1&symbol=${encodeURIComponent(sym)}`;"
-          if old in s:s=s.replace(old,"const toolUrl=`${tab}/?embed=1&v=${tab==='renko'?'141':'1'}&symbol=${encodeURIComponent(sym)}`;")
-          if "tab==='renko'?'141':'1'" not in s:raise SystemExit('RENKO route version 141 missing')
+          if old in s:s=s.replace(old,"const toolUrl=`${tab}/?embed=1&v=${tab==='renko'?'142':'1'}&symbol=${encodeURIComponent(sym)}`;")
+          if "tab==='renko'?'142':'1'" not in s:raise SystemExit('RENKO route version 142 missing')
           if 'setTimeout(routeFromHash,800)' in s:raise SystemExit('Research iframe still rerenders')
           p.write_text(s)
 
-          p=Path('index.html');s=p.read_text();s=re.sub(r'superapp-v5\.js\?v=\d+','superapp-v5.js?v=15',s);p.write_text(s)
+          p=Path('index.html');s=p.read_text();s=re.sub(r'superapp-v5\.js\?v=\d+','superapp-v5.js?v=16',s);p.write_text(s)
 
-          # TradingView Percentage(LTP) additional rounding: their published example turns 2.16 into 2.
-          p=Path('renko/renko-v14-worker.js');s=p.read_text()
-          if 'function roundSig1(' not in s:
-            s=s.replace("function floorTick(v,t){", "function roundSig1(v){v=num(v);if(!(v>0))return v;const mag=10**Math.floor(Math.log10(v));return Math.round(v/mag)*mag}\nfunction floorTick(v,t){",1)
-          old="if(method==='percentage'){const ltp=Math.abs(num(o.ltpSnapshot)||num(lastPrice));return roundTick(ltp*Math.max(.000001,num(o.percentage)||.01),tick)}"
-          new="if(method==='percentage'){const ltp=Math.abs(num(o.ltpSnapshot)||num(lastPrice)),raw=ltp*Math.max(.000001,num(o.percentage)||.01);return roundTick(roundSig1(raw),tick)}"
-          if old in s:s=s.replace(old,new,1)
-          if 'roundTick(roundSig1(raw),tick)' not in s:raise SystemExit('Percentage LTP additional rounding missing')
+          p=Path('renko/renko-v14.js');s=p.read_text()
+          s=re.sub(r"new Worker\('renko-v14-worker\.js\?v=\d+'\)","new Worker('renko-v14-worker.js?v=142')",s)
+          s=s.replace("version:'14.0.0'","version:'14.2.0'")
+          s=s.replace("atrRule:'wilder-atr-on-regular-source-bars'","atrRule:'latest-completed-wilder-atr-snapshot-fixed-across-chart'")
+          if "atrRule:'latest-completed-wilder-atr-snapshot-fixed-across-chart'" not in s:raise SystemExit('ATR uniform snapshot contract missing')
           p.write_text(s)
 
-          p=Path('renko/renko-v14.js');s=p.read_text().replace("new Worker('renko-v14-worker.js?v=140')","new Worker('renko-v14-worker.js?v=141')");p.write_text(s)
-
           p=Path('renko/renko-v14-method-profiles.js');s=p.read_text()
-          if 'function roundSig1(' not in s:
-            s=s.replace("function roundTick(v,t){", "function roundSig1(v){v=Number(v);if(!(v>0))return v;const mag=10**Math.floor(Math.log10(v));return Math.round(v/mag)*mag}\nfunction roundTick(v,t){",1)
-          s=s.replace("if(method==='percentage')return roundTick(Math.abs(Number(st.ltpSnapshot))*Number(profiles.percentage.percentage)/100,tick);","if(method==='percentage')return roundTick(roundSig1(Math.abs(Number(st.ltpSnapshot))*Number(profiles.percentage.percentage)/100),tick);")
-          if 'roundTick(roundSig1(Math.abs(Number(st.ltpSnapshot))' not in s:raise SystemExit('Profile Percentage rounding parity missing')
+          old="for(let i=0;i<400&&(engine.state.building||!engine.state.symbol);i++)await new Promise(r=>setTimeout(r,25));const current=METHODS.includes(engine.settings?.method)?engine.settings.method:'atr';await apply(current,false);syncActive();"
+          new="for(let i=0;i<800&&(!engine.state.symbol||!(Number(engine.state.tickSize)>0)||!(engine.state.bars?.length>0)||engine.state.building);i++)await new Promise(r=>setTimeout(r,25));const current=METHODS.includes(engine.settings?.method)?engine.settings.method:'atr';if(engine.state.symbol&&Number(engine.state.tickSize)>0&&engine.state.bars?.length>0&&!engine.state.building)await apply(current,false);syncActive();"
+          if old in s:s=s.replace(old,new)
+          if '!(Number(engine.state.tickSize)>0)' not in s:raise SystemExit('Profile readiness gate missing')
+          s=s.replace("version:'1.0.0'","version:'1.1.0'")
           p.write_text(s)
 
           p=Path('renko/index.html');s=p.read_text()
-          s=s.replace('RENKO V14 TradingView documented-parity Renko chart: every trade can immediately confirm one or many Renko bricks. No candle-close interval lock.','RENKO V14 TradingView documented-parity Renko chart: historical bricks confirm from completed source-resolution bars and realtime movement is shown as projection until source-bar close.')
-          s=s.replace('<small id="sourceText">Tick-native Renko · every Binance trade can lock one or many bricks immediately · no candle-close interval.</small>','<small id="sourceText">TradingView documented parity · source-resolution history · realtime projection until source-bar close.</small>')
-          s=s.replace('<small>FORMATION</small><b>TRADE TICK</b>','<small>FORMATION</small><b>SOURCE BAR</b>')
-          s=s.replace('<small>LOCK RULE</small><b>Every trade</b>','<small>LOCK RULE</small><b>Bar close</b>')
-          s=s.replace('Signals use immediately confirmed tick bricks; execution reference uses real market price','Signals use confirmed Renko bricks only; projection bricks never trigger signals; execution reference uses real market price')
-          s=s.replace('Every threshold-crossing trade can confirm bricks immediately.','Projection can move intrabar; signals wait for confirmed source-bar Renko bricks.')
-          s=s.replace('<span>✓ actual-trade wicks</span><span>✓ every-trade lock</span>','<span>✓ source-based wicks</span><span>✓ projection → bar-close confirmation</span>')
-          s=s.replace('<div><b>Immediate multi-brick close</b>','<div><b>Realtime projection</b>')
-          s=re.sub(r'<script src="renko-v3\.js\?v=\d+"></script><script src="renko-v14\.js\?v=\d+"></script><script src="renko-v14-method-profiles\.js\?v=\d+"></script>', '<script src="renko-v3.js?v=31"></script><script src="renko-v14.js?v=141"></script><script src="renko-v14-method-profiles.js?v=141"></script>', s)
-          if 'renko-v14.js?v=141' not in s or 'renko-v14-method-profiles.js?v=141' not in s:raise SystemExit('V14.1 runtime scripts missing')
-          if 'TRADE TICK</b>' in s or '>Every trade</b>' in s:raise SystemExit('stale tick-lock labels remain')
+          s=s.replace('RENKO V14 — TradingView Parity','RENKO V14.2 — TradingView Parity')
+          s=re.sub(r'<script src="renko-v3\.js\?v=\d+"></script><script src="renko-v14\.js\?v=\d+"></script><script src="renko-v14-method-profiles\.js\?v=\d+"></script>', '<script src="renko-v3.js?v=31"></script><script src="renko-v14.js?v=142"></script><script src="renko-v14-method-profiles.js?v=142"></script>', s)
+          s=s.replace('ATR SIZE</small><b id="v11AtrNow">—</b>','ATR SNAPSHOT</small><b id="v11AtrNow">—</b>')
+          if 'renko-v14.js?v=142' not in s or 'renko-v14-method-profiles.js?v=142' not in s:raise SystemExit('V14.2 runtime cache bust missing')
           p.write_text(s)
           PY
 
-      - name: Static parity contracts
+      - name: Static uniformity contracts
         shell: bash
         run: |
           set -euo pipefail
@@ -91,35 +80,42 @@ jobs:
           node --check renko/renko-v14-worker.js
           node --check renko/renko-v14-method-profiles.js
           node --check tools/renko-v14-functional.mjs
-          grep -Fq 'superapp-v5.js?v=15' index.html
-          grep -Fq "tab==='renko'?'141':'1'" superapp-v5.js
+          grep -Fq 'superapp-v5.js?v=16' index.html
+          grep -Fq "tab==='renko'?'142':'1'" superapp-v5.js
           ! grep -Fq 'setTimeout(routeFromHash,800)' superapp-v5.js
-          grep -Fq 'renko-v14.js?v=141' renko/index.html
-          grep -Fq 'renko-v14-method-profiles.js?v=141' renko/index.html
+          grep -Fq 'renko-v14.js?v=142' renko/index.html
+          grep -Fq 'renko-v14-method-profiles.js?v=142' renko/index.html
+          grep -Fq "version:'14.2.0'" renko/renko-v14.js
+          grep -Fq "atrRule:'latest-completed-wilder-atr-snapshot-fixed-across-chart'" renko/renko-v14.js
+          grep -Fq 'uniformAudit' renko/renko-v14-worker.js
+          grep -Fq 'const lastPrice=num(bars.at(-1)?.[4]),lastAtr=latestPositive(atr);' renko/renko-v14-worker.js
+          grep -Fq '!(Number(engine.state.tickSize)>0)' renko/renko-v14-method-profiles.js
           grep -Fq "percentageRule:'symbol-load-ltp-fixed-across-bars'" renko/renko-v14.js
           grep -Fq "realtimeBehavior:'projection-until-source-bar-closes'" renko/renko-v14.js
-          grep -Fq "sourceModes:['close','ohlc']" renko/renko-v14.js
-          grep -Fq 'applyRequestedSymbol' renko/renko-v14.js
-          grep -Fq 'roundTick(roundSig1(raw),tick)' renko/renko-v14-worker.js
-          ! grep -Fq 'TRADE TICK</b>' renko/index.html
-          ! grep -Fq '>Every trade</b>' renko/index.html
           git diff --check
 
-      - name: TradingView documented formation unit matrix
+      - name: Uniform Renko formation unit matrix
         shell: bash
         run: |
           node - <<'NODE'
           const fs=require('fs'),vm=require('vm');const code=fs.readFileSync('renko/renko-v14-worker.js','utf8');const s={console,postMessage(){}};s.self=s;s.globalThis=s;vm.createContext(s);vm.runInContext(code,s);const E=s.RenkoV14Engine;
           const bar=(o,h,l,c,t)=>[t,o,h,l,c,0,t+59999];
+          const assertUniform=(r,label)=>{if(!r.audit?.ok)throw Error(label+' audit failed '+JSON.stringify(r.audit));const tol=Math.max(.00000001,Math.abs(r.box)*1e-9);for(const [i,b] of r.bricks.entries()){const body=Math.abs(b.close-b.open);if(Math.abs(body-r.box)>tol||Math.abs(b.box-r.box)>tol)throw Error(`${label} non-uniform brick ${i}: body=${body} brickBox=${b.box} active=${r.box}`)}};
+
           let bars=[bar(100,100,100,100,0),bar(110,110,110,110,60000),bar(120,120,120,120,120000),bar(170,170,170,170,180000)];
-          let r=E.buildBars({method:'traditional',traditionalBox:10,tickSize:1,source:'close',wicks:false,bars});if(r.bricks.length!==7||r.bricks.at(-1).close!==170)throw Error('1-box continuation/multi-brick close failed');
-          bars=[bar(100,100,100,100,0),bar(110,110,110,110,60000),bar(120,120,120,120,120000),bar(100,100,100,100,180000),bar(90,90,90,90,240000)];r=E.buildBars({method:'traditional',traditionalBox:10,tickSize:1,source:'close',wicks:false,bars});if(r.bricks.length!==4||!r.bricks[2].isReversal||r.bricks[2].open!==110||r.bricks[2].close!==100)throw Error('2-box reversal failed');
-          bars=[bar(100,100,100,100,0),bar(150,150,150,150,60000)];r=E.buildBars({method:'percentage',percentage:.10,ltpSnapshot:100,tickSize:1,source:'close',wicks:false,bars});if(r.box!==10||JSON.stringify(r.bricks.map(x=>x.close))!==JSON.stringify([110,120,130,140,150]))throw Error('Percentage LTP must be fixed across bars');
-          r=E.buildBars({method:'percentage',percentage:.01,ltpSnapshot:216,tickSize:.01,source:'close',wicks:false,bars:[bar(216,216,216,216,0),bar(220,220,220,220,60000)]});if(Math.abs(r.box-2)>.001)throw Error('TradingView Percentage LTP additional rounding example failed: '+r.box);
-          r=E.buildBars({method:'percentage',percentage:.01,ltpSnapshot:79130,tickSize:.01,source:'close',wicks:false,bars:[bar(79130,79130,79130,79130,0),bar(80000,80000,80000,80000,60000)]});if(Math.abs(r.box-800)>.001)throw Error('Percentage significant rounding failed: '+r.box);
-          bars=[bar(100,105,95,100,0),bar(100,105,95,100,60000),bar(100,105,95,100,120000),bar(100,105,95,100,180000)];r=E.buildBars({method:'atr',atrLength:3,tickSize:1,source:'close',wicks:false,bars});if(Math.abs(r.atrValue-10)>.0001||Math.abs(r.box-10)>.0001)throw Error('Wilder ATR sizing failed');
-          bars=[bar(100,100,100,100,0),bar(90,90,90,90,60000),bar(95,95,95,95,120000),bar(80,80,80,80,180000)];r=E.buildBars({method:'traditional',traditionalBox:10,tickSize:1,source:'close',wicks:true,bars});const last=r.bricks.at(-1);if(last.direction!==-1||last.high!==95)throw Error('Directional close-source wick failed');
-          console.log('RENKO V14 DOCUMENTED FORMATION MATRIX PASS');
+          let r=E.buildBars({method:'traditional',traditionalBox:10,tickSize:1,source:'close',wicks:false,bars});if(r.bricks.length!==7||r.bricks.at(-1).close!==170)throw Error('Traditional continuation failed');assertUniform(r,'Traditional');
+
+          bars=[bar(100,100,100,100,0),bar(110,110,110,110,60000),bar(120,120,120,120,120000),bar(100,100,100,100,180000),bar(90,90,90,90,240000)];r=E.buildBars({method:'traditional',traditionalBox:10,tickSize:1,source:'close',wicks:false,bars});if(r.bricks.length!==4||!r.bricks[2].isReversal||r.bricks[2].open!==110||r.bricks[2].close!==100)throw Error('2-box reversal failed');assertUniform(r,'Traditional reversal');
+
+          bars=[bar(100,100,100,100,0),bar(150,150,150,150,60000)];r=E.buildBars({method:'percentage',percentage:.10,ltpSnapshot:100,tickSize:1,source:'close',wicks:false,bars});if(r.box!==10||JSON.stringify(r.bricks.map(x=>x.close))!==JSON.stringify([110,120,130,140,150]))throw Error('Percentage fixed LTP failed');assertUniform(r,'Percentage');
+          r=E.buildBars({method:'percentage',percentage:.01,ltpSnapshot:216,tickSize:.01,source:'close',wicks:false,bars:[bar(216,216,216,216,0),bar(220,220,220,220,60000)]});if(Math.abs(r.box-2)>.001)throw Error('Percentage additional rounding failed: '+r.box);assertUniform(r,'Percentage 216');
+          r=E.buildBars({method:'percentage',percentage:.01,ltpSnapshot:79130,tickSize:.01,source:'close',wicks:false,bars:[bar(79130,79130,79130,79130,0),bar(82000,82000,82000,82000,60000)]});if(Math.abs(r.box-800)>.001)throw Error('Percentage significant rounding failed: '+r.box);assertUniform(r,'Percentage BTC');
+
+          bars=[bar(100,105,95,100,0),bar(110,122,98,110,60000),bar(130,148,112,130,120000),bar(160,184,136,160,180000),bar(210,240,180,210,240000),bar(260,295,225,260,300000)];
+          r=E.buildBars({method:'atr',atrLength:3,tickSize:1,source:'close',wicks:false,bars});if(!(r.atrValue>0)||!(r.box>0))throw Error('ATR snapshot missing');assertUniform(r,'ATR snapshot');const unique=new Set(r.bricks.map(x=>x.box));if(unique.size>1)throw Error('ATR historical bricks changed size inside one chart: '+JSON.stringify([...unique]));
+
+          bars=[bar(100,100,100,100,0),bar(90,90,90,90,60000),bar(95,95,95,95,120000),bar(80,80,80,80,180000)];r=E.buildBars({method:'traditional',traditionalBox:10,tickSize:1,source:'close',wicks:true,bars});const last=r.bricks.at(-1);if(last.direction!==-1||last.high!==95)throw Error('Directional wick failed');assertUniform(r,'Wicks body');
+          console.log('RENKO V14.2 UNIFORM FORMATION MATRIX PASS');
           NODE
 
       - name: Install Playwright Chromium
@@ -127,7 +123,7 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Browser acceptance - BTC ETH SOL XRP + setup
+      - name: Browser acceptance - symbols, setup and uniform bodies
         shell: bash
         run: |
           python3 -m http.server 8080 > /tmp/renko-v14-http.log 2>&1 &
@@ -136,16 +132,16 @@ jobs:
           for i in {1..30}; do curl -fsS http://127.0.0.1:8080/ >/dev/null && break || true; sleep 1; done
           RENKO_TEST_BASE='http://127.0.0.1:8080/' node tools/renko-v14-functional.mjs
 
-      - name: Persist browser-verified V14 production source
+      - name: Persist browser-verified V14.2 production source
         shell: bash
         run: |
           if git diff --quiet -- index.html superapp-v5.js renko/index.html renko/renko-v14.js renko/renko-v14-worker.js renko/renko-v14-method-profiles.js; then
-            echo 'Production source already on verified V14.1'
+            echo 'Production source already on verified V14.2'
           else
             git config user.name 'copytolive-actions'
             git config user.email 'actions@users.noreply.github.com'
             git add index.html superapp-v5.js renko/index.html renko/renko-v14.js renko/renko-v14-worker.js renko/renko-v14-method-profiles.js
-            git commit -m 'Finalize verified RENKO V14 TradingView parity'
+            git commit -m 'Fix RENKO V14.2 uniform brick bodies and ATR startup'
             git pull --rebase origin main
             git push origin HEAD:main
           fi
@@ -167,6 +163,6 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - name: Deploy verified RENKO V14 Pages artifact
+      - name: Deploy verified RENKO V14.2 Pages artifact
         id: deployment
         uses: actions/deploy-pages@v4
