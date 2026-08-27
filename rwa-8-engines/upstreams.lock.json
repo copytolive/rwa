@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "policy": "Adapter-first. Do not vendor copyleft code into the proprietary runtime without explicit license review.",
+  "upstreams": [
+    {
+      "engine": "passport",
+      "repo": "decentralized-identity/veramo",
+      "license": "Apache-2.0",
+      "adoption": "DIF framework for DID/Verifiable Credentials; modular Node/browser/React Native agent",
+      "integration": "adapter"
+    },
+    {
+      "engine": "registry",
+      "repo": "hyperledger-firefly/firefly",
+      "license": "Apache-2.0",
+      "adoption": "Hyperledger Graduated; production use reported by SWIFT, Mastercard, ExxonMobil, Nationwide and others",
+      "integration": "service-adapter"
+    },
+    {
+      "engine": "proof",
+      "repo": "sigstore/rekor-tiles",
+      "license": "Apache-2.0",
+      "adoption": "Sigstore transparency-log architecture with production community instance and 99.5% SLO",
+      "integration": "service-adapter"
+    },
+    {
+      "engine": "valuation",
+      "repo": "lballabio/QuantLib",
+      "license": "QuantLib license",
+      "adoption": "Long-running open-source quantitative-finance library for modelling, trading and risk management",
+      "integration": "valuation-service"
+    },
+    {
+      "engine": "legal",
+      "repo": "open-policy-agent/opa",
+      "license": "Apache-2.0",
+      "adoption": "CNCF policy engine with public production adopters including Yelp, Cisco and others",
+      "integration": "policy-service"
+    },
+    {
+      "engine": "compliance",
+      "repo": "opensanctions/yente",
+      "license": "MIT (OpenSanctions data license separate)",
+      "adoption": "Open-source engine behind OpenSanctions hosted and self-hosted screening API",
+      "integration": "screening-service"
+    },
+    {
+      "engine": "factory",
+      "repo": "hashgraph/asset-tokenization-studio",
+      "license": "Apache-2.0",
+      "adoption": "Open-source regulated-asset toolkit with ERC-1400 and ERC-3643 support, SDK/UI/backend, custody integrations and deployed testnet contracts",
+      "integration": "factory-adapter",
+      "standards": ["ERC-1400", "ERC-3643"]
+    },
+    {
+      "engine": "marketplace",
+      "repo": "0xProject/protocol",
+      "license": "see upstream package licenses",
+      "adoption": "0x infrastructure is used by Coinbase and other large wallets/apps; protocol repo is the open exchange primitive",
+      "integration": "optional-execution-adapter",
+      "restriction": "Never bypass RWA eligibility/venue/transfer restrictions. Regulated secondary trading may require a licensed venue adapter instead of 0x."
+    }
+  ]
+}
