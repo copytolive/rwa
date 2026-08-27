@@ -39,7 +39,8 @@ jobs:
         run: |
           node --check tools/global-chrome-persistence-browser.mjs
           node --check tools/persistent-market-shell-v3-browser.mjs
-          grep -Fq 'GLOBAL CHROME PERSISTENCE V2' persistent-market-operability-patch-v1.css
+          grep -Fq 'GLOBAL CHROME PERSISTENCE V3' persistent-market-operability-patch-v1.css
+          grep -Fq 'position:fixed' persistent-market-operability-patch-v1.css
           grep -Fq 'z-index:9950' persistent-market-operability-patch-v1.css
           grep -Fq 'z-index:9900' persistent-market-operability-patch-v1.css
           grep -Fq 'top:94px' persistent-market-operability-patch-v1.css
