@@ -28,50 +28,45 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Pin one current controller bootstrap in deploy artifact
+      - name: Pin V170 all-method controller in deploy artifact
         shell: bash
         run: |
           set -euo pipefail
-          sed -i 's/renko-v15-controller-bootstrap\.js?v=154/renko-v15-controller-bootstrap.js?v=158/g' renko/index.html
-          grep -Fq 'renko-v15-controller-bootstrap.js?v=158' renko/index.html
-          ! grep -Fq 'renko-v15-controller-bootstrap.js?v=154' renko/index.html
+          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170)/renko-v15-controller-bootstrap.js?v=170/g' renko/index.html
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=170' renko/index.html
+          ! grep -Eq 'renko-v15-controller-bootstrap\.js\?v=(154|158)' renko/index.html
 
-      - name: Static tick-only, abortable and fast-control contracts
+      - name: Static tick-only and all-method operability contracts
         shell: bash
         run: |
           set -euo pipefail
           node --check renko/renko-v15.js
           node --check renko/renko-v15-worker.js
-          node --check renko/renko-v15-method-controller.js
+          node --check renko/renko-v15-method-controller-v170.js
           node --check renko/renko-v15-controller-bootstrap.js
           node --check tools/renko-v15-standalone-methods.mjs
           node --check legacy-canonical.js
           node --check rwa-sw-v5.js
           grep -Fq 'RENKO V15.1' renko/index.html
-          grep -Fq 'renko-v15-controller-bootstrap.js?v=158' renko/index.html
-          ! grep -Fq 'renko-v15-method-profiles.js?v=151' renko/index.html
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=170' renko/index.html
           ! grep -Eqi 'id="[^"]*(resolution|timeframe)|>RESOLUTION<|1 minute</option>|3 minutes</option>|5 minutes</option>|15 minutes</option>|30 minutes</option>|1 hour</option>|4 hours</option>|1 day</option>' renko/index.html
           ! grep -Fq '/api/v3/klines?' renko/renko-v15.js
           grep -Fq "formationSource:'trade-events-only'" renko/renko-v15.js
           grep -Fq "confirmationRule:'every-trade-immediate'" renko/renko-v15.js
           grep -Fq "timeframeControl:false" renko/renko-v15.js
           grep -Fq "historySource:'binance-aggregate-trade-events-no-candles'" renko/renko-v15.js
-          grep -Fq "version:'1.6.1'" renko/renko-v15-method-controller.js
-          grep -Fq "switchContract:'abortable-latest-interaction-wins'" renko/renko-v15-method-controller.js
-          grep -Fq "interactionContract:'all-inputs-selects-checkboxes-and-apply-remain-interactive-during-history'" renko/renko-v15-method-controller.js
-          grep -Fq "chartImpactContract:'recent-tick-fast-commit-deep-history-abortable'" renko/renko-v15-method-controller.js
-          grep -Fq "renderContract:'keep-current-chart-while-target-history-loads'" renko/renko-v15-method-controller.js
-          grep -Fq "latencyContract:'apply-waits-for-renko-build-not-lazy-history-loading'" renko/renko-v15-method-controller.js
-          grep -Fq "startupContract:'no-auto-apply'" renko/renko-v15-method-controller.js
-          grep -Fq "if(!engine?.state?.building)return true" renko/renko-v15-method-controller.js
-          ! grep -Fq "!engine?.state?.loading" renko/renko-v15-method-controller.js
-          grep -Fq "controller.abort(reason)" renko/renko-v15-method-controller.js
-          grep -Fq "signal});" renko/renko-v15-method-controller.js
-          grep -Fq "dataset.controller='v15.8-fast-abortable-controls'" renko/renko-v15-controller-bootstrap.js
-          grep -Fq "renko-v15-method-controller.js?v=158" renko/renko-v15-controller-bootstrap.js
-          grep -Fq "z-index:20!important" renko/renko-v15-controller-bootstrap.js
-          grep -Fq "renko-v15-controller-bootstrap.js?v=158" legacy-canonical.js
-          grep -Fq "Never serve the cached V14 source/resolution UI" rwa-sw-v5.js
+          grep -Fq "version:'1.7.0'" renko/renko-v15-method-controller-v170.js
+          grep -Fq "setupContract:'atr-traditional-percentage-all-operable'" renko/renko-v15-method-controller-v170.js
+          grep -Fq "switchContract:'activate-first-no-history-gate'" renko/renko-v15-method-controller-v170.js
+          grep -Fq "historyContract:'history-is-background-never-a-prerequisite-to-activate'" renko/renko-v15-method-controller-v170.js
+          grep -Fq "zeroBrickContract:'method-may-activate-and-wait-for-first-valid-brick'" renko/renko-v15-method-controller-v170.js
+          grep -Fq "interactionContract:'all-three-method-panels-inputs-wicks-entry-confirm-and-apply-are-interactive'" renko/renko-v15-method-controller-v170.js
+          ! grep -Fq 'NEED HISTORY' renko/renko-v15-method-controller-v170.js
+          grep -Fq "dataset.renkoMethodBootstrap='170'" renko/renko-v15-controller-bootstrap.js
+          grep -Fq 'renko-v15-method-controller-v170.js?v=170' renko/renko-v15-controller-bootstrap.js
+          grep -Fq 'v15.10-all-methods-operable' renko/renko-v15-controller-bootstrap.js
+          grep -Fq 'z-index:40!important' renko/renko-v15-controller-bootstrap.js
+          grep -Fq 'Never serve the cached V14 source/resolution UI' rwa-sw-v5.js
           git diff --check
 
       - name: Tick formation unit matrix
@@ -86,7 +81,8 @@ jobs:
           if(r.bricks.length!==5||r.bricks.at(-1).close!==150)throw Error('single trade must lock five bricks immediately');
           r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:false,ticks:ticks([100,110,120,100,90])});
           if(r.bricks.length!==4||!r.bricks[2].isReversal||r.bricks[2].open!==110||r.bricks[2].close!==100)throw Error('2-box reversal failed');
-          if(!r.audit?.ok)throw Error('uniform brick audit failed');
+          r=E.buildTicks({method:'percentage',percentage:.01,ltpSnapshot:100000,tickSize:1,wicks:true,ticks:ticks([100000,100100])});
+          if(r.box!==1000||r.audit?.ok!==true)throw Error('percentage box assignment failed');
           console.log('RENKO TICK-ONLY MATRIX PASS');
           NODE
 
@@ -95,7 +91,7 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Browser acceptance - exact controls during guaranteed slow history
+      - name: Browser acceptance - ATR Traditional Percentage all operable
         shell: bash
         run: |
           python3 -m http.server 8080 > /tmp/renko-http.log 2>&1 &
