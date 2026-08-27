@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "index.html"
+      - "superapp-v5.js"
       - "rwa-fundamentals.js"
       - "rwa-fundamentals.css"
       - "rwa-verify-client.js"
@@ -17,6 +18,7 @@ on:
     branches: ["main"]
     paths:
       - "index.html"
+      - "superapp-v5.js"
       - "rwa-fundamentals.js"
       - "rwa-fundamentals.css"
       - "rwa-verify-client.js"
@@ -46,8 +48,9 @@ jobs:
         with:
           node-version: 22
 
-      - name: Validate source and verification contracts
+      - name: Validate source, lazy-load and verification contracts
         run: |
+          node --check superapp-v5.js
           node --check rwa-fundamentals.js
           node --check rwa-verify-client.js
           node --check product-os-mobile-contract-v3.js
@@ -55,10 +58,13 @@ jobs:
           node --check tools/rwa-evidence-policy.mjs
           node --check tools/rwa-fundamentals-browser.mjs
           python -m json.tool rwa-assets.json >/dev/null
+          test "$(grep -o '<script src=' index.html | wc -l | tr -d ' ')" = "6"
+          ! grep -Fq 'rwa-fundamentals.css' index.html
+          ! grep -Fq 'rwa-fundamentals.js' index.html
           node <<'NODE'
           const fs=require('fs');
           const files={
-            index:fs.readFileSync('index.html','utf8'),
+            super:fs.readFileSync('superapp-v5.js','utf8'),
             fund:fs.readFileSync('rwa-fundamentals.js','utf8'),
             verify:fs.readFileSync('tools/rwa-verify.mjs','utf8'),
             policy:fs.readFileSync('tools/rwa-evidence-policy.mjs','utf8'),
@@ -66,8 +72,10 @@ jobs:
             contract:fs.readFileSync('product-os-mobile-contract-v3.js','utf8')
           };
           const required=[
-            ['index CSS','index','rwa-fundamentals.css?v=1'],
-            ['index JS','index','rwa-fundamentals.js?v=1'],
+            ['lazy loader function','super','ensureFundamentals()'],
+            ['lazy CSS','super',"loadStyleOnce('rwa-fundamentals.css?v=1'"],
+            ['lazy JS','super',"loadScriptOnce('rwa-fundamentals.js?v=1'"],
+            ['asset fundamentals action','super','legacy-fundamentals'],
             ['runtime','fund',"runtime:'canonical-root-income-fundamentals-v1'"],
             ['tabs','fund',"['overview','income','financials','valuation','asset','holders','documents','calendar','audit']"],
             ['no fake income','fund','No verified income rights for this market'],
@@ -79,8 +87,7 @@ jobs:
             ['reviewer UI income gate','client','INCOME EVIDENCE REQUIRED'],
             ['fundamentals payload capture','client','const fundamentals=d?.fundamentals'],
             ['fundamentals reviewer payload','client','fundamentals,reviewer:wallet()'],
-            ['asset command interception','contract',"tag==='ASSET'"],
-            ['root fundamentals open','contract','RWAFundamentals?.open']
+            ['legacy asset command compatibility','contract',"tag==='ASSET'"]
           ];
           for(const [name,key,needle] of required){
             if(!files[key].includes(needle)){
@@ -91,7 +98,7 @@ jobs:
           }
           if(files.fund.includes('window.location.href'))throw Error('Fundamentals must not navigate away from canonical root');
           if(files.contract.includes("location.href='../asset"))throw Error('Product OS contract must not navigate to /asset');
-          console.log('PASS canonical-root no-navigation contract');
+          console.log('PASS lazy canonical-root no-navigation contract');
           NODE
 
       - name: Install Playwright Chromium
@@ -99,52 +106,56 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Start deterministic root site
+      - name: Start deterministic canonical site
         run: |
+          mkdir -p /tmp/rwa-fund-site/rwa
+          cp -a . /tmp/rwa-fund-site/rwa/
+          cd /tmp/rwa-fund-site
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/rwa-fund-http.log 2>&1 &
           echo $! >/tmp/rwa-fund-http.pid
-          for i in {1..20}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          for i in {1..20}; do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && exit 0; sleep 1; done
           cat /tmp/rwa-fund-http.log
           exit 1
 
-      - name: Browser proof desktop and mobile
+      - name: Browser proof desktop and mobile lazy integration
+        env:
+          RWA_BASE_URL: http://127.0.0.1:4173/rwa/
         run: node tools/rwa-fundamentals-browser.mjs
 
       - name: Publish source status
         if: success() && github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/fundamentals-source' -f description='Root-only Income + NAV + financials + evidence workspace browser PASS'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/fundamentals-source' -f description='Lazy Income + NAV + evidence workspace browser PASS'
 
-      - name: Wait for Pages and verify live root
+      - name: Wait for Pages and verify live canonical root
         if: github.event_name == 'push'
         shell: bash
         run: |
           ok=0
           for i in {1..120}; do
             q="${GITHUB_RUN_ID}-${i}"
-            html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/?v=$q" || true)"
-            js="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-fundamentals.js?v=$q" || true)"
-            css="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-fundamentals.css?v=$q" || true)"
-            contract="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/product-os-mobile-contract-v3.js?v=$q" || true)"
-            verify="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-verify-client.js?v=$q" || true)"
-            if grep -Fq 'rwa-fundamentals.css?v=1' <<<"$html" \
-              && grep -Fq 'rwa-fundamentals.js?v=1' <<<"$html" \
+            html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/?v=$q" || true)"
+            super="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/superapp-v5.js?v=$q" || true)"
+            js="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/rwa-fundamentals.js?v=$q" || true)"
+            css="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/rwa-fundamentals.css?v=$q" || true)"
+            if ! grep -Fq 'rwa-fundamentals.js' <<<"$html" \
+              && ! grep -Fq 'rwa-fundamentals.css' <<<"$html" \
+              && grep -Fq 'ensureFundamentals()' <<<"$super" \
+              && grep -Fq "loadScriptOnce('rwa-fundamentals.js?v=1'" <<<"$super" \
               && grep -Fq "runtime:'canonical-root-income-fundamentals-v1'" <<<"$js" \
               && grep -Fq 'Where does my yield come from?' <<<"$js" \
-              && grep -Fq 'Integrated RWA Income & Fundamentals workspace' <<<"$css" \
-              && grep -Fq 'RWAFundamentals?.open' <<<"$contract" \
-              && grep -Fq 'INCOME EVIDENCE REQUIRED' <<<"$verify"; then ok=1; break; fi
+              && grep -Fq 'Integrated RWA Income & Fundamentals workspace' <<<"$css"; then ok=1; break; fi
             sleep 5
           done
           test "$ok" = "1"
-          RWA_BASE_URL='https://narzulalistiqlal.github.io/rwa/' node tools/rwa-fundamentals-browser.mjs
+          RWA_BASE_URL='https://copytolive.github.io/rwa/' node tools/rwa-fundamentals-browser.mjs
 
       - name: Publish live status
         if: success() && github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/fundamentals-live' -f description='Live /rwa/ Income Fundamentals desktop/mobile canonical-root PASS'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/fundamentals-live' -f description='Live /rwa/ lazy Income Fundamentals desktop/mobile PASS'
 
       - name: Publish failure status
         if: failure() && github.event_name == 'push'
