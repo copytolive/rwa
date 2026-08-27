@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "northStar": "Every Business. An RWA.",
+  "defaultMode": "REGISTER",
+  "modes": ["REGISTER", "FINANCE", "TRADE"],
+  "mainnet": {"enabled": false, "reason": "jurisdiction-and-reviewer-gated"},
+  "tokenDeployment": {"enabled": false, "reason": "explicit-legal-compliance-gate-required"},
+  "engines": [
+    {"id":"passport","name":"RWA Passport","upstream":"decentralized-identity/veramo"},
+    {"id":"registry","name":"Asset Registry","upstream":"hyperledger-firefly/firefly"},
+    {"id":"proof","name":"Proof Engine","upstream":"sigstore/rekor-tiles"},
+    {"id":"valuation","name":"Valuation Engine","upstream":"lballabio/QuantLib"},
+    {"id":"legal","name":"Legal / Jurisdiction Engine","upstream":"open-policy-agent/opa"},
+    {"id":"compliance","name":"Compliance Engine","upstream":"opensanctions/yente"},
+    {"id":"factory","name":"RWA Factory","upstream":"ERC-3643/ERC-3643 + OpenZeppelin/openzeppelin-contracts"},
+    {"id":"marketplace","name":"Global Marketplace","upstream":"0xProject/protocol"}
+  ]
+}
