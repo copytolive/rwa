@@ -10,6 +10,7 @@ on:
       - "market-performance.js"
       - "persistent-market-shell-v3.css"
       - "persistent-market-operability-patch-v1.css"
+      - "enterprise-ui-v12.css"
       - "styles.css"
       - "mobile.css"
       - "stable-shell.css"
@@ -29,6 +30,7 @@ on:
       - "market-performance.js"
       - "persistent-market-shell-v3.css"
       - "persistent-market-operability-patch-v1.css"
+      - "enterprise-ui-v12.css"
       - "styles.css"
       - "mobile.css"
       - "stable-shell.css"
@@ -63,7 +65,8 @@ jobs:
           node --check mobile.js
           node --check tools/root-market-browser-stability.mjs
           test -s persistent-market-shell-v3.css
-          grep -Fq 'market-performance.js?v=10' index.html
+          test -s enterprise-ui-v12.css
+          grep -Fq 'market-performance.js?v=12' index.html
           grep -Fq 'stable-shell.css?v=3' index.html
           grep -Fq 'realtime-core.js?v=3' index.html
           ! grep -Fq 'product-os-mobile-contract-v3.js' index.html
@@ -71,10 +74,12 @@ jobs:
           grep -Fq "runtime:'root-terminal-low-jank-v1'" market-performance.js
           grep -Fq 'persistent-market-shell-v3.css?v=3' market-performance.js
           grep -Fq 'persistent-market-operability-patch-v1.css?v=11' market-performance.js
+          grep -Fq 'enterprise-ui-v12.css?v=12' market-performance.js
           ! grep -Fq 'persistent-market-router-v2.js' market-performance.js
           grep -Fq "persistent_market_workspaces='css-core-router-v3'" market-performance.js
           grep -Fq "header='single-row-global-shell-v1'" market-performance.js
           grep -Fq "observer_policy='hot-dom-periodic-1200ms'" market-performance.js
+          grep -Fq "asset_pair_geometry='route-owned-440px-v12'" market-performance.js
           grep -Fq 'body.rwa-super-workspace-open .layout' persistent-market-shell-v3.css
           grep -Fq 'body.rwa-super-suite-open .layout' persistent-market-shell-v3.css
           grep -Fq 'WORKFLOW VIEWPORT PARITY V10' persistent-market-operability-patch-v1.css
