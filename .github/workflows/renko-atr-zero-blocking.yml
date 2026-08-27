@@ -38,6 +38,10 @@ jobs:
           done
           echo "Expected $GITHUB_SHA but production did not reach that exact SHA" >&2
           exit 1
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
       - name: Capture seven raw-Wilder ATR 0ms plus live 1s no-heartbeat persistence proof
         run: RWA_TEST_URL=https://copytolive.github.io/rwa node tools/renko-atr-zero-blocking-report.mjs
       - uses: actions/upload-artifact@v4
