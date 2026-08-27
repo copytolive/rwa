@@ -12,6 +12,10 @@ on:
       - 'trader/index.html'
       - 'backtest/index.html'
       - 'renko/index.html'
+      - 'suite-nav.js'
+      - 'human-operability-v1.css'
+      - 'rwa-8-engines/**'
+      - 'tools/human-operability-browser.mjs'
       - 'tools/superapp-v5-browser-smoke.py'
       - 'tools/superapp-v5-live-browser-smoke.py'
       - 'qa/superapp-v5-harness.html'
@@ -38,6 +42,10 @@ on:
       - 'trader/index.html'
       - 'backtest/index.html'
       - 'renko/index.html'
+      - 'suite-nav.js'
+      - 'human-operability-v1.css'
+      - 'rwa-8-engines/**'
+      - 'tools/human-operability-browser.mjs'
       - 'tools/superapp-v5-browser-smoke.py'
       - 'tools/superapp-v5-live-browser-smoke.py'
       - 'qa/superapp-v5-harness.html'
@@ -60,15 +68,25 @@ permissions:
 jobs:
   contract:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - name: Static single-page contract
         run: |
+          set -euo pipefail
+          test -s human-operability-v1.css
+          test -s rwa-8-engines/human-operability.css
+          test -s tools/human-operability-browser.mjs
           node --check superapp-v5.js
           node --check legacy-canonical.js
           node --check rwa-sw-v5.js
+          node --check suite-nav.js
+          node --check rwa-8-engines/app.js
           node --check tools/superapp-v5-audit.mjs
           node --check tools/superapp-v5-browser.mjs
+          node --check tools/human-operability-browser.mjs
+          grep -Fq 'human-operability-v1.css?v=1' suite-nav.js
+          grep -Fq 'human-operability.css?v=1' rwa-8-engines/app.js
           node tools/superapp-v5-audit.mjs
           python -m json.tool rwa-discovery-catalog.json >/dev/null
           python -m json.tool manifest.webmanifest >/dev/null
@@ -97,3 +115,7 @@ jobs:
         env:
           RWA_TEST_URL: http://127.0.0.1:4173/rwa/
         run: node tools/superapp-p16-p20-browser.mjs
+      - name: Human operability matrix
+        env:
+          RWA_TEST_URL: http://127.0.0.1:4173/rwa/
+        run: node tools/human-operability-browser.mjs

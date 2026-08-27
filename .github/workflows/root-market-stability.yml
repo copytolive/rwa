@@ -8,16 +8,17 @@ on:
       - "realtime-core.js"
       - "chart-core.js"
       - "market-performance.js"
-      - "product-os-v3.js"
-      - "product-os-mobile-contract-v3.js"
       - "styles.css"
       - "mobile.css"
       - "stable-shell.css"
+      - "superapp-v5.js"
+      - "superapp-v5.css"
+      - "human-operability-v1.css"
+      - "human-operability-patch-v1.css"
       - "quick-actions.js"
       - "mobile.js"
-      - "exchange-ui.js"
-      - "execution-ui.js"
       - "tools/root-market-browser-stability.mjs"
+      - "tools/human-operability-browser.mjs"
       - ".github/workflows/root-market-stability.yml"
   push:
     branches: ["main"]
@@ -27,16 +28,17 @@ on:
       - "realtime-core.js"
       - "chart-core.js"
       - "market-performance.js"
-      - "product-os-v3.js"
-      - "product-os-mobile-contract-v3.js"
       - "styles.css"
       - "mobile.css"
       - "stable-shell.css"
+      - "superapp-v5.js"
+      - "superapp-v5.css"
+      - "human-operability-v1.css"
+      - "human-operability-patch-v1.css"
       - "quick-actions.js"
       - "mobile.js"
-      - "exchange-ui.js"
-      - "execution-ui.js"
       - "tools/root-market-browser-stability.mjs"
+      - "tools/human-operability-browser.mjs"
       - ".github/workflows/root-market-stability.yml"
 
 permissions:
@@ -50,29 +52,31 @@ concurrency:
 jobs:
   stability:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate stable source contract
+      - name: Validate current stable source contract
         run: |
+          set -euo pipefail
           node --check realtime-core.js
           node --check chart-core.js
           node --check market-performance.js
-          node --check product-os-v3.js
-          node --check product-os-mobile-contract-v3.js
+          node --check superapp-v5.js
           node --check quick-actions.js
           node --check mobile.js
           node --check tools/root-market-browser-stability.mjs
+          node --check tools/human-operability-browser.mjs
+          test -s human-operability-v1.css
           grep -Fq 'market-performance.js?v=2' index.html
           grep -Fq 'stable-shell.css?v=3' index.html
           grep -Fq 'realtime-core.js?v=3' index.html
-          grep -Fq 'product-os-mobile-contract-v3.js?v=1' index.html
-          grep -Fq 'Canonical root contract' product-os-mobile-contract-v3.js
-          grep -Fq "localStorage.setItem('rwa_default_landing_v3','markets')" product-os-mobile-contract-v3.js
+          ! grep -Fq 'product-os-mobile-contract-v3.js' index.html
+          ! grep -Fq 'product-os-v3.js' index.html
           grep -Fq "runtime:'root-terminal-low-jank-v1'" market-performance.js
+          grep -Fq 'human-operability-v1.css?v=1' market-performance.js
           grep -Fq "header='single-row-global-shell-v1'" market-performance.js
           grep -Fq "observer_policy='hot-dom-periodic-1200ms'" market-performance.js
           grep -Fq 'STRICT SINGLE TOP ROW' stable-shell.css
@@ -82,6 +86,7 @@ jobs:
           grep -Fq 'setInterval(persistUniverse,30000)' realtime-core.js
           grep -Fq "performance:'lazy-storefront-no-global-observer-v1'" quick-actions.js
           ! grep -Fq 'new MutationObserver(injectTrade)' quick-actions.js
+          node tools/superapp-v5-audit.mjs
       - name: Install Playwright Chromium
         run: |
           npm install --no-save playwright@1.55.0

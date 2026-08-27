@@ -1,0 +1,36 @@
+/* Human-operability corrective layer: launch-safe phone geometry. */
+@media (max-width:680px){
+  .topnav{display:none!important}
+
+  /* The 56px phone header must contain only phone-level essentials. Desktop
+     command/profile/institutional controls remain reachable from app navigation. */
+  .topbar{overflow:hidden!important}
+  .top-actions{margin-left:auto!important;min-width:0!important;max-width:154px!important;flex:0 1 154px!important;justify-content:flex-end!important;overflow:hidden!important}
+  .top-actions>.rwa-command-button,
+  .top-actions>.rwa-top-icon,
+  .top-actions>.signin,
+  .top-actions>.institutional,
+  .top-actions>.rwa-institutional-link{display:none!important}
+  .top-actions>.status{min-width:0!important;max-width:104px!important;overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important}
+  .top-actions>.mobile-social-head{flex:0 0 40px!important}
+
+  body.rwa-super-workspace-open .rwa-health,
+  body.rwa-super-asset-workspace .rwa-health,
+  body.suite-open .rwa-health{display:none!important}
+  .rwa-health{pointer-events:none!important}
+  .rwa-health button{pointer-events:auto!important}
+
+  .rwa-mobile-asset-actions{bottom:calc(84px + var(--rwa-safe-bottom))!important}
+  .rwa-mobile-asset-actions:not(.show) button{opacity:0!important;pointer-events:none!important}
+  body.rwa-super-asset-workspace #rwaSuperWorkspace{padding-bottom:96px!important}
+}
+@media (max-width:360px){
+  .top-actions{max-width:118px!important;flex-basis:118px!important}
+  .top-actions>.status{max-width:72px!important}
+  .brandcopy small{display:none!important}
+}
+@media (min-width:681px) and (max-width:899px){
+  .filter{min-height:44px!important;height:44px!important}
+  body.rwa-super-workspace-open .rwa-health,
+  body.suite-open .rwa-health{display:none!important}
+}

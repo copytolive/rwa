@@ -1,6 +1,8 @@
 (()=>{
 'use strict';
 if(window.RWAMarketPerformanceGuard)return;
+if(!document.querySelector('link[data-rwa-human-operability]')){const l=document.createElement('link');l.rel='stylesheet';l.href='human-operability-v1.css?v=1';l.dataset.rwaHumanOperability='1';document.head.appendChild(l)}
+if(!document.querySelector('link[data-rwa-human-operability-patch]')){const l=document.createElement('link');l.rel='stylesheet';l.href='human-operability-patch-v1.css?v=1';l.dataset.rwaHumanOperabilityPatch='1';document.head.appendChild(l)}
 
 const PERF={version:'1.2.0',runtime:'root-terminal-low-jank-v1'};
 const hotIds=new Set(['pairList','pairCount','liveDot','statHigh','statLow','statVol','statChange','buyPct','tradeCount']);
