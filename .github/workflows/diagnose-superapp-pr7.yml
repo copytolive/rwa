@@ -1,0 +1,50 @@
+name: Diagnose SuperApp PR7 Once
+on:
+  push:
+    branches: ["fix/p6-research-embed-contract-20260827"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/superapp-baseline-current-20260827
+      - run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Boot diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/rwa-diag/rwa
+          cp -a . /tmp/rwa-diag/rwa/
+          cd /tmp/rwa-diag
+          python -m http.server 4173 >/tmp/rwa-diag-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
+          cd "$GITHUB_WORKSPACE"
+          cat >/tmp/diag.mjs <<'NODE'
+          import {chromium} from 'playwright';
+          const b=await chromium.launch({headless:true});
+          const c=await b.newContext({locale:'en-US',viewport:{width:1440,height:960},serviceWorkers:'block'});
+          const p=await c.newPage();
+          const errors=[],consoleRows=[],failed=[];
+          p.on('pageerror',e=>errors.push(String(e.stack||e)));
+          p.on('console',m=>consoleRows.push(`${m.type()}: ${m.text()}`));
+          p.on('requestfailed',r=>failed.push(`${r.url()} :: ${r.failure()?.errorText}`));
+          await p.goto('http://127.0.0.1:4173/rwa/',{waitUntil:'domcontentloaded',timeout:30000});
+          await p.waitForTimeout(6000);
+          const state=await p.evaluate(()=>({url:location.href,readyState:document.readyState,superApp:window.RWASuperApp||null,htmlFlag:document.documentElement.dataset.rwaSuperApp||null,scripts:[...document.scripts].map(s=>({src:s.src,loaded:s.readyState||null})),bodyClass:document.body.className,superWorkspace:!!document.getElementById('rwaSuperWorkspace')}));
+          console.log('DIAG_STATE='+JSON.stringify(state));
+          console.log('DIAG_PAGE_ERRORS='+JSON.stringify(errors));
+          console.log('DIAG_FAILED_REQUESTS='+JSON.stringify(failed));
+          console.log('DIAG_CONSOLE='+JSON.stringify(consoleRows.slice(-80)));
+          await b.close();
+          if(!state.superApp)process.exit(2);
+          NODE
+          node /tmp/diag.mjs
