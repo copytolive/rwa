@@ -28,18 +28,13 @@ on:
         description: Optional ROBUST54 comma-separated IDs; ALL = all shard IDs
         required: false
         default: ALL
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/p45-mt5-native-parity.yml'
 
 permissions:
   contents: read
 
 jobs:
   p45-native:
-    if: ${{ github.event_name == 'push' || inputs.mode == 'p45' || inputs.mode == 'all' }}
+    if: ${{ inputs.mode == 'p45' || inputs.mode == 'all' }}
     runs-on: windows-2022
     timeout-minutes: 180
     env:
@@ -96,19 +91,13 @@ jobs:
       - name: Execute P45 native MT5 parity + optional Exness real ticks
         shell: powershell
         run: |
-          $brokerSymbol='${{ inputs.broker_symbol }}'
-          if([string]::IsNullOrWhiteSpace($brokerSymbol)){ $brokerSymbol='XAUUSD' }
-          $fromDate='${{ inputs.from_date }}'
-          if([string]::IsNullOrWhiteSpace($fromDate)){ $fromDate='2025.01.01' }
-          $toDate='${{ inputs.to_date }}'
-          if([string]::IsNullOrWhiteSpace($toDate)){ $toDate='2026.08.25' }
           ./P45_GITHUB_HOSTED_RUN.ps1 `
             -Login $env:MT5_LOGIN `
             -Password $env:MT5_PASSWORD `
             -Server $env:MT5_SERVER `
-            -BrokerSymbol $brokerSymbol `
-            -FromDate $fromDate `
-            -ToDate $toDate
+            -BrokerSymbol '${{ inputs.broker_symbol }}' `
+            -FromDate '${{ inputs.from_date }}' `
+            -ToDate '${{ inputs.to_date }}'
 
       - name: Upload P45 MT5 evidence
         if: always()
@@ -120,7 +109,7 @@ jobs:
           retention-days: 90
 
   robust54-native:
-    if: ${{ github.event_name != 'push' && (inputs.mode == 'robust54' || inputs.mode == 'all') }}
+    if: ${{ inputs.mode == 'robust54' || inputs.mode == 'all' }}
     runs-on: windows-2022
     timeout-minutes: 330
     strategy:
