@@ -8,6 +8,7 @@ const DAYS=Math.max(7,Math.min(45,Number(process.env.RENKO_PRELOAD_DAYS||30)));
 const KEEP=Math.max(80,Number(process.env.RENKO_PRELOAD_KEEP||140));
 const OUT=path.resolve(process.env.RENKO_PRELOAD_OUT||`renko/preload/${SYMBOL}.json`);
 const BASE='https://data.binance.vision';
+const META_ROOTS=['https://data-api.binance.vision','https://api.binance.com'];
 const pad=n=>String(n).padStart(2,'0');
 const dayStart=ms=>{const d=new Date(ms);return Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())};
 const decimals=x=>{const s=String(x);if(s.includes('e-'))return Math.min(12,Number(s.split('e-')[1])||0);const i=s.indexOf('.');return i<0?0:Math.min(12,s.length-i-1)};
@@ -18,11 +19,11 @@ const sandbox={console,postMessage(){}};sandbox.self=sandbox;sandbox.globalThis=
 const E=sandbox.RenkoV15Engine;
 if(!E)throw new Error('RenkoV15Engine missing');
 
-async function json(url){const r=await fetch(url,{headers:{accept:'application/json'}});if(!r.ok)throw new Error(`${r.status} ${url}`);return r.json()}
-const info=await json(`https://api.binance.com/api/v3/exchangeInfo?symbol=${SYMBOL}`);
+async function jsonPath(p){let last=null;for(const root of META_ROOTS){try{const r=await fetch(root+p,{headers:{accept:'application/json'}});if(!r.ok)throw new Error(`${r.status} ${root+p}`);return r.json()}catch(e){last=e;console.log('META_FALLBACK',String(e?.message||e))}}throw last||new Error('metadata unavailable')}
+const info=await jsonPath(`/api/v3/exchangeInfo?symbol=${SYMBOL}`);
 const pf=info?.symbols?.[0]?.filters?.find(f=>f.filterType==='PRICE_FILTER');
 const tick=Number(pf?.tickSize);if(!(tick>0))throw new Error('tick size missing');
-const ticker=await json(`https://api.binance.com/api/v3/ticker/price?symbol=${SYMBOL}`);
+const ticker=await jsonPath(`/api/v3/ticker/price?symbol=${SYMBOL}`);
 const ltp=Number(ticker?.price);if(!(ltp>0))throw new Error('ltp missing');
 
 function niceSeeds(){
