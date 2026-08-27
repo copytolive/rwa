@@ -39,14 +39,19 @@ jobs:
           PY
           bash -n /tmp/reconstruct-p16-p20-v15-ci.sh
           bash /tmp/reconstruct-p16-p20-v15-ci.sh
-      - name: Commit validated transaction
+      - name: Publish validated non-workflow transaction
         shell: bash
         run: |
           set -euo pipefail
-          rm -f tools/.v15-recovery-part1.b64 tools/.v15-recovery-part2.b64 tools/.v15-recovery-part3.b64 .github/workflows/p16-p20-v15-bootstrap-sol.yml
+          cp .github/workflows/pages.yml /tmp/v15-pages.yml
+          cp .github/workflows/superapp-regression.yml /tmp/v15-regression.yml
+          git checkout -- .github/workflows/pages.yml .github/workflows/superapp-regression.yml .github/workflows/p16-p20-v15-bootstrap-sol.yml
+          rm -f tools/.v15-recovery-part1.b64 tools/.v15-recovery-part2.b64 tools/.v15-recovery-part3.b64
+          cp /tmp/v15-pages.yml tools/.v15-pages-final.yml
+          cp /tmp/v15-regression.yml tools/.v15-regression-final.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           git status --short
-          git commit -m 'feat: complete RWA Super App P16-P20 V15 recovery'
+          git commit -m 'feat: stage validated RWA Super App P16-P20 V15 transaction'
           git push origin HEAD:recovery/sol-v15-launch-20260827-0924
