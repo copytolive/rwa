@@ -53,13 +53,21 @@ try{
   await p.goto(BASE,{waitUntil:'domcontentloaded'});await ready(p);await p.evaluate(()=>window.__chromeChartNode=document.querySelector('.chart-wrap'));
   const report=[];report.push(await chromeState(p,'markets-initial'));
   for(const route of ['intelligence','assets','research','portfolio','institutional']){await p.locator(`[data-v5-route="${route}"]`).first().click();await p.waitForTimeout(route==='portfolio'?850:300);report.push(await chromeState(p,`topnav-${route}`))}
-  for(const level of ['discovery','analysis','action']){await p.locator(`#rwaExperienceRail [data-rwa-level="${level}"]`).click();await p.waitForTimeout(level==='action'?1200:450);report.push(await chromeState(p,`rail-${level}`))}
-  const action=report.find(x=>x.label==='rail-action');assert.ok(action.scrollY>0,'Action must reproduce the root auto-scroll regression path');
+  for(const level of ['discovery','analysis']){await p.locator(`#rwaExperienceRail [data-rwa-level="${level}"]`).click();await p.waitForTimeout(450);report.push(await chromeState(p,`rail-${level}`))}
+  await p.evaluate(()=>window.scrollTo(0,0));await p.waitForTimeout(120);
+  const actionBefore=await chromeState(p,'action-before-click');
+  const actionButtonBefore=await p.locator('#rwaExperienceRail [data-rwa-level="action"]').boundingBox();
+  await p.locator('#rwaExperienceRail [data-rwa-level="action"]').click();await p.waitForTimeout(1200);
+  const action=await chromeState(p,'rail-action');report.push(action);
+  const actionButtonAfter=await p.locator('#rwaExperienceRail [data-rwa-level="action"]').boundingBox();
+  assert.ok(Math.abs(action.scrollY-actionBefore.scrollY)<=1,`Action moved root viewport: before=${actionBefore.scrollY} after=${action.scrollY}`);
+  assert.equal(action.hash,'#trade/BTC','Action did not open the Trade route');
+  assert.ok(actionButtonBefore&&actionButtonAfter&&Math.abs(actionButtonAfter.y-actionButtonBefore.y)<=1,`Action control moved vertically: before=${JSON.stringify(actionButtonBefore)} after=${JSON.stringify(actionButtonAfter)}`);
   await p.evaluate(()=>window.scrollTo(0,Math.min(document.documentElement.scrollHeight-700,700)));await p.waitForTimeout(200);report.push(await chromeState(p,'root-scroll'));
   assert.equal(errors.length,0,`runtime errors: ${errors.join(' | ')}`);
   console.log('GLOBAL_TOPBAR_PERSISTENCE=PASS');
   console.log('EXPERIENCE_RAIL_PERSISTENCE=PASS');
-  console.log('ACTION_AUTOSCROLL_CHROME_PERSISTENCE=PASS');
+  console.log('ACTION_VIEWPORT_STABILITY=PASS');
   console.log('WORKSPACE_NEVER_COVERS_GLOBAL_CHROME=PASS');
   console.log('GLOBAL_CHROME_ALL_CLICK_TARGETS=PASS');
   console.log('GLOBAL_CHROME_REPORT',JSON.stringify(report));await ctx.close();
