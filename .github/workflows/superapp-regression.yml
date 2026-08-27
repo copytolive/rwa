@@ -23,6 +23,8 @@ on:
       - 'tools/superapp-v5-audit.mjs'
       - 'tools/security-gate.mjs'
       - 'tools/superapp-v5-browser.mjs'
+      - 'tools/superapp-p16-p20-audit.mjs'
+      - 'tools/superapp-p16-p20-browser.mjs'
       - '.github/workflows/superapp-regression.yml'
       - '.github/workflows/pages.yml'
   push:
@@ -47,6 +49,8 @@ on:
       - 'tools/superapp-v5-audit.mjs'
       - 'tools/security-gate.mjs'
       - 'tools/superapp-v5-browser.mjs'
+      - 'tools/superapp-p16-p20-audit.mjs'
+      - 'tools/superapp-p16-p20-browser.mjs'
       - '.github/workflows/superapp-regression.yml'
       - '.github/workflows/pages.yml'
 
@@ -68,6 +72,11 @@ jobs:
           node tools/superapp-v5-audit.mjs
           python -m json.tool rwa-discovery-catalog.json >/dev/null
           python -m json.tool manifest.webmanifest >/dev/null
+      - name: P16-P20 static product contract
+        run: |
+          node --check tools/superapp-p16-p20-audit.mjs
+          node --check tools/superapp-p16-p20-browser.mjs
+          node tools/superapp-p16-p20-audit.mjs
       - name: Install browser test runtime
         run: |
           npm install --no-save playwright@1.55.0
@@ -84,3 +93,7 @@ jobs:
         env:
           RWA_TEST_URL: http://127.0.0.1:4173/rwa/
         run: node tools/superapp-v5-browser.mjs
+      - name: P16-P20 product regression
+        env:
+          RWA_TEST_URL: http://127.0.0.1:4173/rwa/
+        run: node tools/superapp-p16-p20-browser.mjs
