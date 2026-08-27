@@ -102,6 +102,10 @@ jobs:
             # even for the offline custom-symbol same-dataset replay. Supply it only from Actions secrets.
             if((-not [string]::IsNullOrWhiteSpace($env:MT5_LOGIN)) -and (-not [string]::IsNullOrWhiteSpace($env:MT5_PASSWORD)) -and (-not [string]::IsNullOrWhiteSpace($env:MT5_SERVER))){
               $testerBody=[IO.File]::ReadAllText($ini)
+              # MT5 tester INI paths use one backslash. The immutable runner emits two, which causes
+              # build 6140 to fall back to Examples\Moving Average instead of the compiled P45 EA.
+              $testerBody=$testerBody.Replace('Expert=GoldAutopilot\\','Expert=GoldAutopilot\')
+              Write-Host 'MT5_TESTER_EXPERT_PATH_NORMALIZED=TRUE'
               $common="[Common]`r`nLogin=$env:MT5_LOGIN`r`nPassword=$env:MT5_PASSWORD`r`nServer=$env:MT5_SERVER`r`n`r`n"
               [IO.File]::WriteAllText($ini,$common+$testerBody,(New-Object Text.UTF8Encoding($false)))
               Write-Host 'MT5_TESTER_ACCOUNT_CONTEXT=CONFIGURED'
@@ -124,7 +128,8 @@ jobs:
             }
             $diag=Join-Path $Evidence ('tester-diag-'+$reportLeaf)
             New-Item -ItemType Directory -Force $diag | Out-Null
-            foreach($root in @((Join-Path $DataDir 'logs'),(Join-Path $DataDir 'Tester'),(Join-Path $Mt5Dir 'logs'))){
+            # Persist tester-agent logs only. Terminal/network logs may contain broker account identifiers.
+            foreach($root in @((Join-Path $DataDir 'Tester'))){
               if(Test-Path $root){
                 Get-ChildItem $root -File -Recurse -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 20 | ForEach-Object { Copy-Item $_.FullName (Join-Path $diag ($_.Name+'-'+([Math]::Abs($_.FullName.GetHashCode())))) -Force -ErrorAction SilentlyContinue }
               }
@@ -139,6 +144,7 @@ jobs:
           if($patched -notmatch 'MT5_TESTER_INI'){ throw 'MT5 tester diagnostic patch was not applied' }
           if($patched -notmatch 'MT5_REPORT_FOUND'){ throw 'MT5 tester report-discovery patch was not applied' }
           if($patched -notmatch 'MT5_TESTER_ACCOUNT_CONTEXT=CONFIGURED'){ throw 'MT5 tester account-context patch was not applied' }
+          if($patched -notmatch 'MT5_TESTER_EXPERT_PATH_NORMALIZED=TRUE'){ throw 'MT5 tester expert-path normalization patch was not applied' }
           if($patched -notmatch 'safeIniPrelaunch'){ throw 'MT5 tester pre-launch INI sanitization patch was not applied' }
           [IO.File]::WriteAllText('P45_GITHUB_HOSTED_RUN.ps1',$patched,(New-Object Text.UTF8Encoding($false)))
           $ph=(Get-FileHash P45_GITHUB_HOSTED_RUN.ps1 -Algorithm SHA256).Hash.ToLower()
