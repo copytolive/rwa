@@ -60,10 +60,13 @@ try{
     const overflow=await page.evaluate(()=>({w:innerWidth,sw:document.documentElement.scrollWidth}));assert.ok(overflow.sw<=overflow.w+3,`desktop overflow ${overflow.sw}/${overflow.w}`);
     // Network failures that are intentionally caught are allowed; uncaught runtime errors are not.
     assert.equal(errors.length,0,`desktop uncaught errors: ${errors.join(' | ')}`);
-    for(const [legacyPath,expected] of [['trade/?coin=ONDO','#trade/ONDO'],['asset/?symbol=PAXG','#asset/PAXG'],['backtest/?symbol=ONDO','#research/backtest/ONDO'],['renko/?symbol=ONDO','#research/renko/ONDO']]){
+    for(const [legacyPath,expected] of [['trade/?coin=ONDO','#trade/ONDO'],['asset/?symbol=PAXG','#asset/PAXG'],['backtest/?symbol=ONDO','#research/backtest/ONDO']]){
       await page.goto(BASE+legacyPath,{waitUntil:'domcontentloaded',timeout:30000});await waitV5(page);await page.waitForTimeout(250);await assertRoot(page,'legacy '+legacyPath);assert.equal(new URL(page.url()).hash,expected,`legacy ${legacyPath} not canonicalized`);
     }
-    result.desktop={routes:routes.length,pathname:'/rwa/',assetDrawer:true,history:true,search:true,preview:true,legacyRedirects:true,noOverflow:true};await context.close();
+    await page.goto(BASE+'renko/?symbol=ONDO',{waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(250);
+    const renkoStandalone=await page.evaluate(()=>({pathname:location.pathname,mode:document.documentElement.dataset.rwaRenkoStandalone||''}));
+    assert.equal(renkoStandalone.pathname,'/rwa/renko/','RENKO standalone pathname changed');assert.equal(renkoStandalone.mode,'tick-native','RENKO standalone tick-native marker missing');
+    result.desktop={routes:routes.length,pathname:'/rwa/',assetDrawer:true,history:true,search:true,preview:true,legacyRedirects:true,renkoStandalone:true,noOverflow:true};await context.close();
   }
   {
     const context=await browser.newContext({locale:'en-US',viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:'block'});await mocks(context);const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e.message||e)));
