@@ -25,6 +25,18 @@ jobs:
           base64 -d /tmp/v15-recovery.b64 | gzip -d > /tmp/reconstruct-p16-p20-v15-ci.sh
           printf '%s  %s\n' '4e1680d96c8bb9655a8987ccae195fe36206ee9b64dd3ef47fd7be45d70749c9' '/tmp/reconstruct-p16-p20-v15-ci.sh' | sha256sum -c -
           bash -n /tmp/reconstruct-p16-p20-v15-ci.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/reconstruct-p16-p20-v15-ci.sh')
+          s=p.read_text()
+          needle="echo 'STATIC_CHECK=START'"
+          patch="""python3 - <<'PYMOBILE'\nfrom pathlib import Path\np=Path('superapp-v5.css')\ncss=p.read_text()\nmarker='/* RWA P20 mobile health/action collision V15.1 */'\nif marker not in css:\n    css += '\\n'+marker+'\\n@media(max-width:680px){.rwa-health{bottom:116px}}\\n'\n    p.write_text(css)\nprint('MOBILE_HEALTH_ACTION_COLLISION_FIX=PASS')\nPYMOBILE\n"""
+          if needle not in s:
+              raise SystemExit('STATIC_CHECK anchor missing')
+          s=s.replace(needle,patch+'\n'+needle,1)
+          p.write_text(s)
+          PY
+          bash -n /tmp/reconstruct-p16-p20-v15-ci.sh
           bash /tmp/reconstruct-p16-p20-v15-ci.sh
       - name: Commit only validated product transaction
         shell: bash
