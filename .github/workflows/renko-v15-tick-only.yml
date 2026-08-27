@@ -1,4 +1,4 @@
-name: RENKO V15.14 Full History + Wicks Gate
+name: RENKO V15.15 Instant Hot Replay Gate
 
 on:
   push:
@@ -28,14 +28,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Pin V182 full-history and live-wicks controller
+      - name: Pin V183 instant hot-replay controller
         shell: bash
         run: |
           set -euo pipefail
-          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170|171|180|181|182)/renko-v15-controller-bootstrap.js?v=182/g' renko/index.html
-          grep -Fq 'renko-v15-controller-bootstrap.js?v=182' renko/index.html
+          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170|171|180|181|182|183)/renko-v15-controller-bootstrap.js?v=183/g' renko/index.html
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=183' renko/index.html
 
-      - name: Static tick-only full-history and wicks contracts
+      - name: Static tick-only instant-render contracts
         shell: bash
         run: |
           set -euo pipefail
@@ -48,26 +48,31 @@ jobs:
           node --check legacy-canonical.js
           node --check rwa-sw-v5.js
           grep -Fq 'RENKO V15.1' renko/index.html
-          grep -Fq 'renko-v15-controller-bootstrap.js?v=182' renko/index.html
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=183' renko/index.html
           ! grep -Eqi 'id="[^"]*(resolution|timeframe)|>RESOLUTION<|1 minute</option>|3 minutes</option>|5 minutes</option>|15 minutes</option>|30 minutes</option>|1 hour</option>|4 hours</option>|1 day</option>' renko/index.html
           ! grep -Fq '/api/v3/klines?' renko/renko-v15.js
           grep -Fq "formationSource:'trade-events-only'" renko/renko-v15.js
           grep -Fq "confirmationRule:'every-trade-immediate'" renko/renko-v15.js
           grep -Fq "historySource:'binance-aggregate-trade-events-no-candles'" renko/renko-v15.js
-          grep -Fq "version:'1.8.2'" renko/renko-v15-method-controller-v181.js
+          grep -Fq "version:'1.8.3'" renko/renko-v15-method-controller-v181.js
           grep -Fq 'TARGET=60' renko/renko-v15-method-controller-v181.js
+          grep -Fq 'APPLY_DEBOUNCE=75' renko/renko-v15-method-controller-v181.js
           grep -Fq 'DAY_WINDOWS=[3,7,14,30]' renko/renko-v15-method-controller-v181.js
           grep -Fq "historyContract:'daily-binance-vision-aggTrades-fill-at-least-60-confirmed-when-mathematically-available'" renko/renko-v15-method-controller-v181.js
-          grep -Fq "wicksContract:'active-method-checkbox-rebuilds-immediately-and-history-stream-retains-excursions'" renko/renko-v15-method-controller-v181.js
-          grep -Fq "new Worker('renko-v15-deep-history-worker-v181.js?v=182')" renko/renko-v15-method-controller-v181.js
+          grep -Fq "interactionContract:'active-number-edit-never-waits-for-network-before-local-render'" renko/renko-v15-method-controller-v181.js
+          grep -Fq "latencyContract:'local-hot-replay-first-then-exact-background'" renko/renko-v15-method-controller-v181.js
+          grep -Fq "new Worker('renko-v15-deep-history-worker-v181.js?v=183')" renko/renko-v15-method-controller-v181.js
+          grep -Fq 'hotReplayCache=new Map()' renko/renko-v15-method-controller-v181.js
+          grep -Fq 'r.dataset.noBlankFrame=' renko/renko-v15-method-controller-v181.js
           grep -Fq 'data/spot/daily/aggTrades' renko/renko-v15-deep-history-worker-v181.js
           grep -Fq 'CONCURRENCY=4' renko/renko-v15-deep-history-worker-v181.js
           grep -Fq 'Always retain excursions' renko/renko-v15-deep-history-worker-v181.js
           ! grep -Fq '/api/v3/klines?' renko/renko-v15-deep-history-worker-v181.js
-          grep -Fq "dataset.renkoMethodBootstrap='182'" renko/renko-v15-controller-bootstrap.js
-          grep -Fq 'renko-v15-method-controller-v181.js?v=182' renko/renko-v15-controller-bootstrap.js
-          grep -Fq 'v15.14-full-history-wicks' renko/renko-v15-controller-bootstrap.js
-          grep -Fq "renkoController:'182'" legacy-canonical.js
+          grep -Fq 'const isWorker=' renko/renko-v15-worker.js
+          grep -Fq "dataset.renkoMethodBootstrap='183'" renko/renko-v15-controller-bootstrap.js
+          grep -Fq 'renko-v15-method-controller-v181.js?v=183' renko/renko-v15-controller-bootstrap.js
+          grep -Fq 'v15.15-instant-hot-replay' renko/renko-v15-controller-bootstrap.js
+          grep -Fq "renkoController:'183'" legacy-canonical.js
           grep -Fq 'Never serve the cached V14 source/resolution UI' rwa-sw-v5.js
           git diff --check
 
@@ -97,7 +102,7 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Browser acceptance - SOL ATR Traditional Percentage and WICKS
+      - name: Browser acceptance - instant edits, SOL methods and WICKS
         shell: bash
         run: |
           python3 -m http.server 8080 > /tmp/renko-http.log 2>&1 &
@@ -126,6 +131,6 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - name: Deploy verified RENKO V15.14 Pages artifact
+      - name: Deploy verified RENKO V15.15 Pages artifact
         id: deployment
         uses: actions/deploy-pages@v4
