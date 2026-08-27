@@ -19,8 +19,20 @@ function usdc(chainId){
   return {address:chainId===1151111081099710?'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v':chainId===8453?'0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913':'0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',chainId,symbol:'USDC',decimals:6,name:'USD Coin',coinKey:'USDC',priceUSD:'1'};
 }
 
+async function diagnostics(page,label){
+  return page.evaluate(label=>({
+    label,
+    hash:location.hash,
+    runtime:window.RWAMultiChain?.version||null,
+    engine:window.RWAMultiChainEngine?.version||null,
+    status:window.RWAMultiChain?.status?.()||null,
+    lazy:[...document.querySelectorAll('script[data-rwa-lazy]')].map(x=>({kind:x.dataset.rwaLazy,src:x.src})),
+    panel:document.getElementById('rwaMultiChainPanel')?{hidden:document.getElementById('rwaMultiChainPanel').hidden,text:document.getElementById('rwaMultiChainPanel').innerText.slice(0,500)}:null
+  }),label);
+}
+
 async function runViewport(width,height,label){
-  const context=await browser.newContext({viewport:{width,height}});
+  const context=await browser.newContext({viewport:{width,height},serviceWorkers:'block'});
   await context.addInitScript(({evm,sol})=>{
     window.__rwaTestSent=[];
     let chain='0x2105';
@@ -42,31 +54,19 @@ async function runViewport(width,height,label){
 
   const page=await context.newPage();
   const pageErrors=[];
+  const consoleErrors=[];
   const directWrites=[];
   page.on('pageerror',e=>pageErrors.push(String(e?.message||e)));
+  page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text())});
   page.on('request',r=>{try{const u=new globalThis.URL(r.url());if(/\/exchange(?:$|[/?#])/.test(u.pathname))directWrites.push({method:r.method(),url:r.url()})}catch{}});
 
   await page.route('https://li.quest/v1/**',async route=>{
     const u=new globalThis.URL(route.request().url());
-    if(u.pathname==='/v1/chains'){
-      return route.fulfill({json:{chains:[...chainIds.map(chain),{id:1151111081099710,name:'Solana',key:'sol',chainType:'SVM',nativeToken:{symbol:'SOL',decimals:9,priceUSD:'150'},rpcUrls:['https://mock-rpc.local/solana']}]}});
-    }
-    if(u.pathname==='/v1/token'){
-      const id=Number(u.searchParams.get('chain'));
-      return route.fulfill({json:usdc(id)});
-    }
+    if(u.pathname==='/v1/chains')return route.fulfill({json:{chains:[...chainIds.map(chain),{id:1151111081099710,name:'Solana',key:'sol',chainType:'SVM',nativeToken:{symbol:'SOL',decimals:9,priceUSD:'150'},rpcUrls:['https://mock-rpc.local/solana']}]}});
+    if(u.pathname==='/v1/token')return route.fulfill({json:usdc(Number(u.searchParams.get('chain')))});
     if(u.pathname==='/v1/quote'){
-      const from=Number(u.searchParams.get('fromChain'));
-      const to=Number(u.searchParams.get('toChain'));
-      const fromAddress=u.searchParams.get('fromAddress');
-      const toAddress=u.searchParams.get('toAddress');
-      const amount=u.searchParams.get('fromAmount');
-      return route.fulfill({json:{
-        id:'test-route',type:'lifi',tool:'across',
-        action:{fromChainId:from,toChainId:to,fromToken:usdc(from),toToken:usdc(to),fromAmount:amount,fromAddress,toAddress,slippage:.005},
-        estimate:{fromAmount:amount,toAmount:'9990000',toAmountMin:'9950000',approvalAddress:'0x2222222222222222222222222222222222222222',executionDuration:42,feeCosts:[{amountUSD:'0.03'}],gasCosts:[{amountUSD:'0.12'}]},
-        transactionRequest:{to:'0x3333333333333333333333333333333333333333',data:'0xabcdef',value:'0x0',gasLimit:'0x5208',chainId:from}
-      }});
+      const from=Number(u.searchParams.get('fromChain')),to=Number(u.searchParams.get('toChain')),fromAddress=u.searchParams.get('fromAddress'),toAddress=u.searchParams.get('toAddress'),amount=u.searchParams.get('fromAmount');
+      return route.fulfill({json:{id:'test-route',type:'lifi',tool:'across',action:{fromChainId:from,toChainId:to,fromToken:usdc(from),toToken:usdc(to),fromAmount:amount,fromAddress,toAddress,slippage:.005},estimate:{fromAmount:amount,toAmount:'9990000',toAmountMin:'9950000',approvalAddress:'0x2222222222222222222222222222222222222222',executionDuration:42,feeCosts:[{amountUSD:'0.03'}],gasCosts:[{amountUSD:'0.12'}]},transactionRequest:{to:'0x3333333333333333333333333333333333333333',data:'0xabcdef',value:'0x0',gasLimit:'0x5208',chainId:from}}});
     }
     return route.abort();
   });
@@ -91,11 +91,17 @@ async function runViewport(width,height,label){
   const chartToken='mc-'+Date.now()+'-'+label;
   await page.evaluate(token=>{const c=document.querySelector('.chart-wrap');if(c)c.dataset.multichainProof=token},chartToken);
   await page.locator('#rwaMultiChainLaunch').click();
-  await page.waitForFunction(()=>window.RWAMultiChain?.version==='2.0.0'&&window.RWAMultiChainEngine?.version==='2.0.0',{timeout:20000});
-  await page.waitForSelector('#rwaMultiChainPanel',{state:'visible'});
+  await page.waitForSelector('script[data-rwa-lazy="multichain"]',{state:'attached',timeout:5000});
+  try{
+    await page.waitForFunction(()=>window.RWAMultiChain?.version==='2.0.0',null,{timeout:10000});
+    await page.waitForFunction(()=>window.RWAMultiChain?.status?.().open===true,null,{timeout:10000});
+    await page.waitForFunction(()=>window.RWAMultiChainEngine?.version==='2.0.0',null,{timeout:10000});
+  }catch(e){throw Error(`${label}: lazy runtime/engine did not become ready: ${JSON.stringify(await diagnostics(page,label))}`)}
+  await page.waitForSelector('#rwaMultiChainPanel',{state:'visible',timeout:5000});
 
   const status=await page.evaluate(()=>window.RWAMultiChain.status());
   if(status.policy!=='chain-abstraction-fail-closed-v2')throw Error(`${label}: policy mismatch`);
+  if(status.engine!=='2.0.0')throw Error(`${label}: engine mismatch ${status.engine}`);
   if(status.networks.length!==9)throw Error(`${label}: expected 9 networks, got ${status.networks.length}`);
   const cards=await page.locator('[data-rwa-chain]').count();
   if(cards!==9)throw Error(`${label}: expected 9 visible network cards, got ${cards}`);
@@ -111,7 +117,7 @@ async function runViewport(width,height,label){
   await page.locator('[data-rwa-mc-destination]').selectOption('solana');
   await page.locator('[data-rwa-mc-amount]').fill('10');
   await page.locator('[data-rwa-mc-preview]').click();
-  await page.waitForFunction(()=>window.RWAMultiChain.status().quote?.tool==='across',{timeout:15000});
+  await page.waitForFunction(()=>window.RWAMultiChain.status().quote?.tool==='across',null,{timeout:15000});
   const quoteText=(await page.locator('[data-rwa-mc-quote-output]').innerText()).replace(/\n/g,' ');
   if(!/9\.95 USDC minimum/i.test(quoteText))throw Error(`${label}: route minimum output missing: ${quoteText}`);
   if(!/simulation\s*PASS/i.test(quoteText))throw Error(`${label}: simulation PASS missing: ${quoteText}`);
@@ -128,11 +134,12 @@ async function runViewport(width,height,label){
 
   await page.screenshot({path:path.join(OUT,`${label}-multichain-v2.png`),fullPage:true});
   await page.locator('.rwa-mc-close').click();
-  await page.waitForFunction(()=>document.getElementById('rwaMultiChainPanel')?.hidden===true);
+  await page.waitForFunction(()=>document.getElementById('rwaMultiChainPanel')?.hidden===true,null,{timeout:5000});
   const closedChart=await page.evaluate(token=>document.querySelector('.chart-wrap')?.dataset.multichainProof===token,chartToken);
   if(!closedChart)throw Error(`${label}: chart changed after close`);
-  report.viewports.push({label,width,height,cards,panelWidth:panelBox.width,policy:status.policy,engine:status.engine,quote:'Base→Solana USDC',mainnetLocked:true,firstPaintStaticScripts:before.staticScripts,pageErrors,directWrites,chartSurvived:true});
+  report.viewports.push({label,width,height,cards,panelWidth:panelBox.width,policy:status.policy,engine:status.engine,quote:'Base→Solana USDC',mainnetLocked:true,firstPaintStaticScripts:before.staticScripts,pageErrors,consoleErrors,directWrites,chartSurvived:true});
   if(pageErrors.length)report.errors.push(...pageErrors.map(x=>`${label}: ${x}`));
+  if(consoleErrors.length)report.errors.push(...consoleErrors.filter(x=>!/Failed to load resource/.test(x)).map(x=>`${label} console: ${x}`));
   await context.close();
 }
 
