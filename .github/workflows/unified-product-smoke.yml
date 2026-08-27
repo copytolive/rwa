@@ -7,6 +7,8 @@ on:
       - 'superapp-v5.css'
       - 'suite-nav.js'
       - 'human-operability-v1.css'
+      - 'human-operability-patch-v1.css'
+      - 'market-performance.js'
       - 'rwa-8-engines/**'
       - 'tools/human-operability-browser.mjs'
       - 'trade/config.js'
@@ -20,6 +22,8 @@ on:
       - 'superapp-v5.css'
       - 'suite-nav.js'
       - 'human-operability-v1.css'
+      - 'human-operability-patch-v1.css'
+      - 'market-performance.js'
       - 'rwa-8-engines/**'
       - 'tools/human-operability-browser.mjs'
       - 'trade/config.js'
@@ -35,6 +39,7 @@ jobs:
           set -euo pipefail
           node --check superapp-v5.js
           node --check suite-nav.js
+          node --check market-performance.js
           node --check rwa-8-engines/app.js
           node --check rwa-8-engines/engine.js
           node --check tools/human-operability-browser.mjs
@@ -46,7 +51,8 @@ jobs:
           ! grep -Fq 'unified-design-v3.css' index.html
           ! grep -Fq 'product-os-v3.js' index.html
           ! grep -Fq 'product-os-mobile-contract-v3.js' index.html
-          grep -Fq 'human-operability-v1.css?v=1' suite-nav.js
+          grep -Fq 'human-operability-v1.css?v=1' market-performance.js
+          grep -Fq 'human-operability-patch-v1.css?v=1' market-performance.js
           grep -Fq 'human-operability.css?v=1' rwa-8-engines/app.js
           grep -Fq 'RWA Factory' suite-nav.js
           grep -Fq 'Create My RWA' suite-nav.js
@@ -75,6 +81,8 @@ jobs:
           grep -Fq 'min-width:681px' human-operability-v1.css
           grep -Fq 'max-width:680px' human-operability-v1.css
           grep -Fq '100dvh' human-operability-v1.css
+          grep -Fq '.topnav{display:none!important}' human-operability-patch-v1.css
+          grep -Fq 'bottom:calc(84px + var(--rwa-safe-bottom))' human-operability-patch-v1.css
           grep -Fq -- '--human-touch:44px' rwa-8-engines/human-operability.css
       - name: Pages deployment contracts
         run: |
@@ -86,11 +94,13 @@ jobs:
             'realtime-core.js?v=3',
             'market-performance.js?v=2',
             'human-operability-v1.css',
+            'human-operability-patch-v1.css',
             'human-operability-browser.mjs',
-            'renko-v15-controller-bootstrap.js?v=180',
-            "renkoController:'180'",
-            "version:'1.8.0'",
-            'renko-v15-deep-history-worker.js?v=180',
+            'renko-v15-controller-bootstrap.js?v=182',
+            "renkoController:'182'",
+            "version:'1.8.2'",
+            'TARGET=60',
+            'renko-v15-deep-history-worker-v181.js?v=182',
           ]
           missing=[x for x in required if x not in p]
           if missing:
