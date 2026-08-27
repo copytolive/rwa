@@ -24,7 +24,7 @@ async function installMocks(page){
 }
 async function run(label,viewport){
   const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport});const page=await context.newPage();await installMocks(page);const errors=[];page.on('pageerror',e=>errors.push(String(e?.message||e)));page.on('console',m=>{if(m.type()==='error'&&!/Failed to load resource|WebSocket connection/i.test(m.text()))errors.push(m.text())});
-  const url=`${BASE}/renko/?symbol=SOL&ultrafastReport=1&ts=${Date.now()}`,started=Date.now();await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});await page.waitForFunction(()=>RWARenkoTV?.version==='1.0.0'&&RWARenkoUltraUI?.version==='1.0.0'&&RWARenkoTV.state.closedBars.length>=100&&RWARenkoTV.state.box>0,null,{timeout:60000});const readyMs=Date.now()-started;
+  const url=`${BASE}/renko/?symbol=SOL&ultrafastReport=1&ts=${Date.now()}`,started=Date.now();await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});await page.waitForFunction(()=>RWARenkoTV?.version==='1.0.0'&&/^1\.0\./.test(RWARenkoUltraUI?.version||'')&&RWARenkoTV.state.closedBars.length>=100&&RWARenkoTV.state.box>0,null,{timeout:60000});const readyMs=Date.now()-started;
   const before=await page.evaluate(()=>({...RWARenkoUltraUI.stats}));
   const open=page.locator('#openPairs'),search=page.locator('#pairSearch');if(await open.isVisible())await open.click();else await search.focus();
   const marketStarted=Date.now();await page.waitForFunction(()=>RWARenkoUltraUI.stats.universeLoaded&&RWARenkoUltraUI.stats.totalRows>1000&&document.querySelectorAll('#pairList .pair-row').length>0,null,{timeout:30000});const marketReadyMs=Date.now()-marketStarted;
