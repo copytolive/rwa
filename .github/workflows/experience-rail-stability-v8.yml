@@ -1,0 +1,49 @@
+name: RWA Experience Rail Stability V8
+
+on:
+  push:
+    branches:
+      - fix/experience-rail-equal-width-v8-20260827
+    paths:
+      - 'persistent-market-operability-patch-v1.css'
+      - 'tools/experience-rail-stability-v8.mjs'
+      - '.github/workflows/experience-rail-stability-v8.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static contract
+        run: |
+          node --check tools/experience-rail-stability-v8.mjs
+          grep -Fq 'grid-template-columns:repeat(3,minmax(0,1fr))!important' persistent-market-operability-patch-v1.css
+          grep -Fq 'scrollbar-gutter:stable!important' persistent-market-operability-patch-v1.css
+          grep -Fq '#rwaExperienceRail>[data-rwa-level]' persistent-market-operability-patch-v1.css
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Serve canonical app
+        run: |
+          mkdir -p /tmp/rwa-rail-v8/rwa
+          cp -a . /tmp/rwa-rail-v8/rwa/
+          cd /tmp/rwa-rail-v8
+          python -m http.server 4173 >/tmp/rwa-rail-v8-http.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
+      - name: Validate workflow rail geometry
+        env:
+          RWA_TEST_URL: http://127.0.0.1:4173/rwa/
+          RWA_PROOF_DIR: proof/experience-rail-v8
+        run: node tools/experience-rail-stability-v8.mjs
+      - name: Upload visual proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: experience-rail-v8-proof
+          path: proof/experience-rail-v8
+          retention-days: 30
