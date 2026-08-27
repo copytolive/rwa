@@ -58,7 +58,6 @@ try{
     await page.evaluate(()=>window.RWASuperApp.navigate('assets'));await page.evaluate(()=>window.RWASuperApp.navigate('research'));await page.goBack();await page.waitForTimeout(200);await assertRoot(page,'history back');assert.equal(new URL(page.url()).hash,'#assets','Back did not restore assets route');await page.goForward();await page.waitForTimeout(200);assert.equal(new URL(page.url()).hash,'#research','Forward did not restore research route');
 
     const overflow=await page.evaluate(()=>({w:innerWidth,sw:document.documentElement.scrollWidth}));assert.ok(overflow.sw<=overflow.w+3,`desktop overflow ${overflow.sw}/${overflow.w}`);
-    // Network failures that are intentionally caught are allowed; uncaught runtime errors are not.
     assert.equal(errors.length,0,`desktop uncaught errors: ${errors.join(' | ')}`);
     for(const [legacyPath,expected] of [['trade/?coin=ONDO','#trade/ONDO'],['asset/?symbol=PAXG','#asset/PAXG'],['backtest/?symbol=ONDO','#research/backtest/ONDO']]){
       await page.goto(BASE+legacyPath,{waitUntil:'domcontentloaded',timeout:30000});await waitV5(page);await page.waitForTimeout(250);await assertRoot(page,'legacy '+legacyPath);assert.equal(new URL(page.url()).hash,expected,`legacy ${legacyPath} not canonicalized`);

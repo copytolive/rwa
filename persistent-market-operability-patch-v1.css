@@ -1,0 +1,30 @@
+/* Persistent-market launch operability patch. */
+body.rwa-persistent-market.rwa-super-market-open #rwaSuperWorkspace{display:block!important}
+body.rwa-persistent-market.rwa-super-market-open.rwa-persistent-suite #rwaSuperWorkspace{display:none!important}
+body.rwa-persistent-market.rwa-super-market-open.rwa-persistent-suite #suite{display:block!important}
+
+@media (max-width:680px){
+  .topbar{height:56px!important;min-height:56px!important;overflow:hidden!important;padding:0 12px!important}
+  .topnav{display:none!important}
+  .top-actions{margin-left:auto!important;min-width:0!important;max-width:154px!important;flex:0 1 154px!important;justify-content:flex-end!important;gap:8px!important;overflow:hidden!important}
+  .top-actions>.rwa-command-button,
+  .top-actions>.rwa-top-icon,
+  .top-actions>.signin,
+  .top-actions>.institutional,
+  .top-actions>.rwa-institutional-link{display:none!important}
+  .top-actions>.status{min-width:0!important;max-width:104px!important;overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important}
+  .top-actions>.mobile-social-head{flex:0 0 40px!important;width:40px!important;height:40px!important}
+  .brandcopy strong{font-size:15px!important}.brandcopy small{font-size:10px!important}
+  .filter,.mobile-detail-tabs button,.rwa-asset-detail-tabs button,.rwa-research-tabs button,.rwa-pm-controls button{min-height:44px!important}
+  .rwa-mobile-asset-actions:not(.show) button{opacity:0!important;pointer-events:none!important}
+}
+@media (max-width:360px){
+  .top-actions{max-width:118px!important;flex-basis:118px!important}
+  .top-actions>.status{max-width:72px!important}
+  .brandcopy small{display:none!important}
+}
+@media (max-height:500px) and (pointer:coarse){
+  .filter,.mobile-detail-tabs button,.rwa-asset-detail-tabs button,.rwa-research-tabs button,.rwa-pm-controls button{min-height:44px!important;height:44px!important;font-size:12px!important}
+  body.rwa-persistent-market #rwaSuperWorkspace,
+  body.rwa-persistent-market.rwa-persistent-suite #suite{top:46%!important}
+}
