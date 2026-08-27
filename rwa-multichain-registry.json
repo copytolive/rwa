@@ -1,0 +1,157 @@
+{
+  "schema": 1,
+  "version": "1.0.0",
+  "name": "RWA Multi Chain Registry",
+  "display_name": "MULTI CHAIN",
+  "policy": "chain-abstraction-fail-closed-v1",
+  "principles": {
+    "single_workspace": true,
+    "no_direct_exchange_writes": true,
+    "execution_requires_validated_adapter": true,
+    "gas_abstraction": "adapter-dependent",
+    "unsupported_routes": "fail-closed"
+  },
+  "networks": [
+    {
+      "id": "hyperliquid",
+      "name": "Hyperliquid",
+      "family": "Hyperliquid L1",
+      "native": "HYPE",
+      "status": "EXECUTION_GATED",
+      "description": "Protected trading rail already used by the RWA execution stack. Mainnet remains machine and wallet gated.",
+      "capabilities": {
+        "network_context": true,
+        "wallet_context": true,
+        "funding": false,
+        "execution": "machine-gated",
+        "gas": "native"
+      }
+    },
+    {
+      "id": "arbitrum",
+      "name": "Arbitrum One",
+      "family": "EVM",
+      "chain_id": "0xa4b1",
+      "native": "ETH",
+      "status": "FUNDING_GATED",
+      "description": "Native USDC funding route exists behind the same production machine and wallet gate.",
+      "capabilities": {
+        "network_context": true,
+        "wallet_context": true,
+        "funding": "machine-gated-usdc",
+        "execution": false,
+        "gas": "wallet"
+      }
+    },
+    {
+      "id": "ethereum",
+      "name": "Ethereum",
+      "family": "EVM",
+      "chain_id": "0x1",
+      "native": "ETH",
+      "status": "ADAPTER_GATED",
+      "description": "Network context is available in the unified selector; transaction adapter is not enabled.",
+      "capabilities": {
+        "network_context": true,
+        "wallet_context": false,
+        "funding": false,
+        "execution": false,
+        "gas": "adapter-required"
+      }
+    },
+    {
+      "id": "base",
+      "name": "Base",
+      "family": "EVM",
+      "chain_id": "0x2105",
+      "native": "ETH",
+      "status": "ADAPTER_GATED",
+      "description": "Unified network context with fail-closed execution until a validated adapter is activated.",
+      "capabilities": {
+        "network_context": true,
+        "wallet_context": false,
+        "funding": false,
+        "execution": false,
+        "gas": "adapter-required"
+      }
+    },
+    {
+      "id": "solana",
+      "name": "Solana",
+      "family": "SVM",
+      "native": "SOL",
+      "status": "ADAPTER_GATED",
+      "description": "Unified network context with fail-closed execution until a validated Solana adapter is activated.",
+      "capabilities": {
+        "network_context": true,
+        "wallet_context": false,
+        "funding": false,
+        "execution": false,
+        "gas": "adapter-required"
+      }
+    },
+    {
+      "id": "bnb",
+      "name": "BNB Chain",
+      "family": "EVM",
+      "chain_id": "0x38",
+      "native": "BNB",
+      "status": "ADAPTER_GATED",
+      "description": "Unified network context with fail-closed execution until a validated adapter is activated.",
+      "capabilities": {
+        "network_context": true,
+        "wallet_context": false,
+        "funding": false,
+        "execution": false,
+        "gas": "adapter-required"
+      }
+    },
+    {
+      "id": "polygon",
+      "name": "Polygon",
+      "family": "EVM",
+      "chain_id": "0x89",
+      "native": "POL",
+      "status": "ADAPTER_GATED",
+      "description": "Unified network context with fail-closed execution until a validated adapter is activated.",
+      "capabilities": {
+        "network_context": true,
+        "wallet_context": false,
+        "funding": false,
+        "execution": false,
+        "gas": "adapter-required"
+      }
+    },
+    {
+      "id": "avalanche",
+      "name": "Avalanche C-Chain",
+      "family": "EVM",
+      "chain_id": "0xa86a",
+      "native": "AVAX",
+      "status": "ADAPTER_GATED",
+      "description": "Unified network context with fail-closed execution until a validated adapter is activated.",
+      "capabilities": {
+        "network_context": true,
+        "wallet_context": false,
+        "funding": false,
+        "execution": false,
+        "gas": "adapter-required"
+      }
+    },
+    {
+      "id": "monad",
+      "name": "Monad",
+      "family": "EVM",
+      "native": "MON",
+      "status": "ADAPTER_GATED",
+      "description": "Unified network context with fail-closed execution until a validated adapter is activated.",
+      "capabilities": {
+        "network_context": true,
+        "wallet_context": false,
+        "funding": false,
+        "execution": false,
+        "gas": "adapter-required"
+      }
+    }
+  ]
+}
