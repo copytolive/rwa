@@ -34,6 +34,7 @@ jobs:
           node --check renko/renko-tv-app.js
           node --check renko/renko-tv-atr-parity.js
           node --check renko/renko-tv-1s-close-lock.js
+          node --check renko/renko-tv-stable-chart.js
           node --check renko/renko-tv-atr-1s-million-cache.js
           node --check tools/renko-tradingview-official-report.mjs
           grep -Fq 'FIXED RENKO SOURCE' renko/index.html
@@ -41,12 +42,15 @@ jobs:
           grep -Fq 'no selectable timeframe' renko/index.html
           grep -Fq 'PROJECTION' renko/index.html
           grep -Fq 'PERCENTAGE (LTP)' renko/index.html
+          grep -Fq 'renko-tv-stable-chart.js' renko/index.html
           grep -Fq 'renko-tv-1s-close-lock.js' renko/index.html
           grep -Fq 'renko-tv-atr-1s-million-cache.js' renko/index.html
           grep -Fq 'renko-tv-atr-parity.js' renko/index.html
           grep -Fq "raw.source='close';raw.interval='1s'" renko/renko-tv-1s-close-lock.js
+          grep -Fq "rule:'render-only-on-renko-geometry-change-fixed-1s-close'" renko/renko-tv-stable-chart.js
           grep -Fq 'TARGETS=[1,10,100,1000,10000,100000,1000000]' renko/renko-tv-atr-1s-million-cache.js
-          grep -Fq 'interval=1s' renko/renko-tv-atr-1s-million-cache.js
+          grep -Fq "const DEEP_VERSION='2.1.0'" renko/renko-tv-atr-1s-million-cache.js
+          grep -Fq 'fallbackPrevented' renko/renko-tv-atr-1s-million-cache.js
           grep -Fq "contract:'tradingview-public-documentation-compatible'" renko/renko-tv-engine.js
           grep -Fq 'data-apply-method="atr"' renko/renko-tv-atr-parity.js
           ! grep -Eqi 'every trade locks|tick-native chart' renko/index.html
@@ -129,7 +133,7 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - name: Deploy verified fixed-1s-Close TradingView-model Renko
+      - name: Deploy verified fixed-1s-Close stable Renko
         id: deployment
         uses: actions/deploy-pages@v4
 
@@ -159,7 +163,7 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Open live production — fixed 1s Close official-contract desktop/mobile gate
+      - name: Open live production — stable fixed 1s Close desktop/mobile gate
         env:
           RWA_TEST_URL: https://copytolive.github.io/rwa/
         run: node tools/renko-tradingview-official-report.mjs
