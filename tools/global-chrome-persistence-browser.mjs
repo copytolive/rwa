@@ -18,7 +18,7 @@ async function mocks(context){
 
 async function ready(page){
   await page.waitForFunction(()=>window.RWASuperApp?.version==='5.0.0'&&document.getElementById('rwaExperienceRail'),{timeout:20000});
-  await page.waitForFunction(()=>window.RWAMarketPerformanceGuard?.version==='1.3.3'&&[...document.querySelectorAll('link[rel="stylesheet"]')].some(x=>(x.getAttribute('href')||'').includes('persistent-market-operability-patch-v1.css?v=5')),{timeout:10000});
+  await page.waitForFunction(()=>window.RWAMarketPerformanceGuard?.version==='1.3.3'&&[...document.querySelectorAll('link[rel="stylesheet"]')].some(x=>(x.getAttribute('href')||'').includes('persistent-market-operability-patch-v1.css?v=9')),{timeout:10000});
   await page.waitForTimeout(450);
 }
 
@@ -32,14 +32,14 @@ async function chromeState(page,label){
     const px=rr?Math.min(innerWidth-12,rr.r-12):0,py=rr?Math.max(1,Math.min(innerHeight-1,rr.y+rr.h/2)):0;
     const probe=rr?document.elementFromPoint(px,py):null;
     const css=[...document.querySelectorAll('link[rel="stylesheet"]')].map(x=>x.getAttribute('href')||'');
-    return{label,vw:innerWidth,path:location.pathname,hash:location.hash,scrollY,topVisible:visible(top),railVisible:visible(rail),chartVisible:visible(chart),sameChart:chart===window.__chromeChartNode,top:tr,rail:rr,workspace:wr,workspacePosition:workspace?getComputedStyle(workspace).position:null,probeInsideRail:!!probe?.closest?.('#rwaExperienceRail'),cssV5:css.some(x=>x.includes('persistent-market-operability-patch-v1.css?v=5'))};
+    return{label,vw:innerWidth,path:location.pathname,hash:location.hash,scrollY,topVisible:visible(top),railVisible:visible(rail),chartVisible:visible(chart),sameChart:chart===window.__chromeChartNode,top:tr,rail:rr,workspace:wr,workspacePosition:workspace?getComputedStyle(workspace).position:null,probeInsideRail:!!probe?.closest?.('#rwaExperienceRail'),cssV9:css.some(x=>x.includes('persistent-market-operability-patch-v1.css?v=9'))};
   },label);
   assert.equal(s.path,'/rwa/',`${label}: escaped /rwa/`);
   assert.equal(s.topVisible,true,`${label}: topbar disappeared`);
   assert.equal(s.railVisible,true,`${label}: workflow rail disappeared`);
   assert.equal(s.chartVisible,true,`${label}: chart disappeared`);
   assert.equal(s.sameChart,true,`${label}: chart DOM was replaced`);
-  assert.equal(s.cssV5,true,`${label}: V5 operability CSS not loaded`);
+  assert.equal(s.cssV9,true,`${label}: V9 operability CSS not loaded`);
   assert.ok(s.top&&Math.abs(s.top.y)<=1.5&&s.top.h>=47,`${label}: topbar not fixed at viewport top ${JSON.stringify(s.top)}`);
   assert.ok(s.rail&&Math.abs(s.rail.y-48)<=2&&s.rail.h>=35,`${label}: workflow rail not fixed below header ${JSON.stringify({top:s.top,rail:s.rail,scrollY:s.scrollY})}`);
   assert.equal(s.probeInsideRail,true,`${label}: workflow rail is covered`);
