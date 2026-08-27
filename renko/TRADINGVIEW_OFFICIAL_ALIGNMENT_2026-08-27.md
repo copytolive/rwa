@@ -14,6 +14,13 @@ Official references checked:
 - Renko body open/close levels are synthetic box levels.
 - Wicks retain excursions beyond body levels that were insufficient to form the opposite brick; high wicks belong to down bricks and low wicks to up bricks.
 - Percentage (LTP) now calculates `LTP × percentage`, rounds only to the nearest exchange minimum tick, and uses that box consistently across the rebuild. No extra significant-digit rounding is applied.
+- Fresh-load controller reapplies the active method locally so the first visible screen is measured by the same >=46-brick gate as manual APPLY.
+- Browser proof now verifies WICKS ON -> OFF -> ON and verifies Percentage box math against current LTP/min-tick.
+
+## First-frame history policy
+- Traditional BOX 1 uses an exact deploy seed.
+- Percentage uses the current LTP-derived box. Because LTP changes continuously, an exact prebuilt box cannot be guaranteed to equal every future load's requested box. The first frame therefore uses the nearest trade-derived deploy seed locally and rebuilds at the current official LTP box without blocking on network; the report records this as preview rather than falsely marking it exact.
+- This preserves the handoff rule that nearest seed is allowed for the first frame while exact reconstruction can remain background work.
 
 ## Deliberate product-contract differences from TradingView
 This application remains the V15 tick-native product defined by the RENKO handoff. Therefore it intentionally does **not** claim exact TradingView historical-output identity:
