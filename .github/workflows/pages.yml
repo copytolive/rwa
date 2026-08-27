@@ -70,7 +70,7 @@ jobs:
           grep -Fq "./$SUPER_CSS_REF" rwa-sw-v5.js
           grep -Fq "./$SUPER_JS_REF" rwa-sw-v5.js
           grep -Fq 'realtime-core.js?v=3' index.html
-          grep -Fq 'market-performance.js?v=2' index.html
+          grep -Fq 'market-performance.js?v=9' index.html
           ! grep -Fq 'product-os-v3.js' index.html
           ! grep -Fq 'product-os-mobile-contract-v3.js' index.html
           ! grep -Fq 'walletconnect.js' index.html
