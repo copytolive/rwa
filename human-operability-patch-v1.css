@@ -1,0 +1,12 @@
+/* Human-operability corrective layer: status indicators may never intercept primary mobile actions. */
+@media (max-width:680px){
+  body.rwa-super-workspace-open .rwa-health,
+  body.rwa-super-asset-workspace .rwa-health,
+  body.suite-open .rwa-health{display:none!important}
+  .rwa-health{pointer-events:none!important}
+  .rwa-health button{pointer-events:auto!important}
+}
+@media (min-width:681px) and (max-width:899px){
+  body.rwa-super-workspace-open .rwa-health,
+  body.suite-open .rwa-health{display:none!important}
+}
