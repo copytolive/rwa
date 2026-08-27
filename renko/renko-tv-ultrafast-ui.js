@@ -18,7 +18,7 @@ const OVERSCAN=7;
 const stats={
   universeRequested:false,universeLoaded:false,totalRows:0,filteredRows:0,renderedRows:0,
   workerParseMs:0,networkMs:0,renderMs:0,searchMs:0,longTasks:0,blockingMs:0,maxLongTaskMs:0,
-  manualViewLocks:0,zoomSnapPrevented:0
+  manualViewLocks:0,zoomSnapPrevented:0,bootUniverseIntercepts:0
 };
 let rows=[],filtered=[],worker=null,universePromise=null,renderRAF=0,manualViewLocked=false,followingValue=true,capturedChart=null;
 
@@ -39,8 +39,15 @@ function tinyResponse(kind){
 
 // Base app starts loadMarkets() during boot. Return a tiny result immediately so
 // that path never owns a multi-megabyte JSON parse or hundreds of DOM nodes.
+// Preserve the existing lazy-universe regression counter so the prior verified
+// contract still proves that the universe stayed off the startup critical path.
 window.fetch=function(input,init){
-  if(isUniverseUrl(input))return tinyResponse(universeKind(input));
+  if(isUniverseUrl(input)){
+    stats.bootUniverseIntercepts++;
+    const G=window.RWARenkoFetchGuard;
+    if(G?.stats&&!G.marketsWanted)G.stats.lazyUniverseWaits=(Number(G.stats.lazyUniverseWaits)||0)+1;
+    return tinyResponse(universeKind(input));
+  }
   return guardFetch(input,init);
 };
 
@@ -127,8 +134,10 @@ function lockManualView(){manualViewLocked=true;followingValue=false;stats.manua
 function unlockManualView(){manualViewLocked=false;document.documentElement.dataset.renkoManualView='false'}
 function manualTarget(e){return e.target?.closest?.('#tvZoomIn,#tvZoomOut,#tvPanOlder,#tvPanNewer,#chartHost,#chartWrap')}
 function resetTarget(e){return e.target?.closest?.('#tvLive,#tvReset,[data-quick],[data-apply-method]')}
+function handleManualPointer(e){if(resetTarget(e))unlockManualView();else if(manualTarget(e))lockManualView()}
 document.addEventListener('wheel',e=>{if(manualTarget(e))lockManualView()},{capture:true,passive:true});
-document.addEventListener('pointerdown',e=>{if(manualTarget(e))lockManualView();else if(resetTarget(e))unlockManualView()},true);
+document.addEventListener('pointerdown',handleManualPointer,true);
+document.addEventListener('click',handleManualPointer,true);
 document.addEventListener('touchstart',e=>{if(manualTarget(e))lockManualView()},{capture:true,passive:true});
 document.addEventListener('change',e=>{if(e.target?.matches?.('#sourceSelect,#intervalSelect'))unlockManualView()},true);
 window.addEventListener('renko:tv-ready',installFollowingGuard);
@@ -141,7 +150,7 @@ try{
 }catch{}
 
 window.RWARenkoUltraUI={
-  version:'1.0.0',rule:'worker-parsed-virtual-market-list-plus-manual-zoom-lock',stats,
+  version:'1.0.1',rule:'worker-parsed-virtual-market-list-plus-manual-zoom-lock',stats,
   loadUniverse,filterRows,renderVirtual,lockManualView,unlockManualView,
   get rows(){return rows},get filtered(){return filtered},get chart(){return capturedChart},get manualViewLocked(){return manualViewLocked}
 };
