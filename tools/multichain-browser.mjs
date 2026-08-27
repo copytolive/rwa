@@ -5,7 +5,7 @@ import path from 'node:path';
 const URL=process.env.RWA_TEST_URL||'http://127.0.0.1:4173/rwa/';
 const OUT=process.env.RWA_PROOF_DIR||'proof/multichain-v2';
 const EVM='0x1111111111111111111111111111111111111111';
-const SOL='7YWHMfk9JZe0LMV4kMYV3hJXmbE54VdWckx3Qw7oM3en';
+const SOL='11111111111111111111111111111111';
 const chainIds=[1,42161,8453,56,137,43114,143];
 await mkdir(OUT,{recursive:true});
 const browser=await chromium.launch({headless:true});
