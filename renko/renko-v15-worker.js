@@ -3,6 +3,8 @@
  * One trade may immediately lock one or many bricks.
  * Brick body is always exactly 1x active box; reversal threshold is 2x box.
  * ATR is a box-sizing snapshot supplied by the runtime; it never controls formation timing.
+ * V15.15: the exact same engine is safe to load on the browser main thread for
+ * instant cached parameter rebuilds; Worker message handling is enabled only in workers.
  */
 (function(root){
 'use strict';
@@ -20,5 +22,8 @@ function emit(s,out,open,close,dir,time,box,wicks,rev,sourceId){let high=Math.ma
 function processTick(s,tick,out,o,box){const p=num(tick?.price),tm=num(tick?.time)||0;if(!Number.isFinite(p)||!(box>0))return 0;touch(s,p);const before=out.length;let guard=0;while(guard++<20000){const lc=s.lastClose,d=s.direction;if(d===0){if(p>=lc+box){emit(s,out,lc,lc+box,1,tm,box,o.wicks!==false,false,tick?.id);continue}if(p<=lc-box){emit(s,out,lc,lc-box,-1,tm,box,o.wicks!==false,false,tick?.id);continue}break}if(d>0){if(p>=lc+box){emit(s,out,lc,lc+box,1,tm,box,o.wicks!==false,false,tick?.id);continue}if(p<=lc-2*box){emit(s,out,lc-box,lc-2*box,-1,tm,box,o.wicks!==false,true,tick?.id);continue}break}if(p<=lc-box){emit(s,out,lc,lc-box,-1,tm,box,o.wicks!==false,false,tick?.id);continue}if(p>=lc+2*box){emit(s,out,lc+box,lc+2*box,1,tm,box,o.wicks!==false,true,tick?.id);continue}break}touch(s,p);return out.length-before}
 function uniformAudit(bricks,box){const tol=Math.max(1e-10,Math.abs(box)*1e-9);let maxError=0;for(const b of bricks||[]){const e=Math.abs(Math.abs(num(b.close)-num(b.open))-box);maxError=Math.max(maxError,e);if(e>tol||Math.abs(num(b.box)-box)>tol)return{ok:false,maxError,count:bricks.length,box}}return{ok:true,maxError,count:(bricks||[]).length,box}}
 function buildTicks(o){const ticks=(Array.isArray(o?.ticks)?o.ticks:[]).filter(x=>Number.isFinite(num(x?.price))).sort((a,b)=>(num(a.time)-num(b.time))||((num(a.id)||0)-(num(b.id)||0)));if(!ticks.length)return{bricks:[],box:NaN,tailState:null,anchor:null,audit:{ok:true,maxError:0,count:0,box:NaN}};const tickSize=num(o?.tickSize)>0?num(o.tickSize):EPS,lastPrice=num(ticks.at(-1)?.price),box=boxFor(o,lastPrice);if(!(box>0))throw Error('Active box is invalid');const first=num(ticks[0]?.price),anchor=floorTick(Math.floor(first/box)*box,tickSize),state=init(anchor),bricks=[];for(const t of ticks)processTick(state,t,bricks,o||{},box);return{bricks,box,tailState:clone(state),anchor,audit:uniformAudit(bricks,box)}}
-const API={buildTicks,processTick,boxFor,roundTick,roundSig1,cloneState:clone,initState:init,uniformAudit};root.RenkoV15Engine=API;root.onmessage=e=>{const m=e.data||{};if(m.type!=='build')return;try{const r=buildTicks(m);root.postMessage({type:'built',id:m.id,generation:m.generation,bricks:r.bricks,box:r.box,tailState:r.tailState,anchor:r.anchor,audit:r.audit,tickCount:Array.isArray(m.ticks)?m.ticks.length:0})}catch(err){root.postMessage({type:'error',id:m.id,generation:m.generation,message:String(err?.message||err)})}};
+const API={buildTicks,processTick,boxFor,roundTick,roundSig1,cloneState:clone,initState:init,uniformAudit};
+root.RenkoV15Engine=API;
+const isWorker=typeof WorkerGlobalScope!=='undefined'&&typeof self!=='undefined'&&self instanceof WorkerGlobalScope;
+if(isWorker){root.onmessage=e=>{const m=e.data||{};if(m.type!=='build')return;try{const r=buildTicks(m);root.postMessage({type:'built',id:m.id,generation:m.generation,bricks:r.bricks,box:r.box,tailState:r.tailState,anchor:r.anchor,audit:r.audit,tickCount:Array.isArray(m.ticks)?m.ticks.length:0})}catch(err){root.postMessage({type:'error',id:m.id,generation:m.generation,message:String(err?.message||err)})}}}
 })(typeof self!=='undefined'?self:globalThis);
