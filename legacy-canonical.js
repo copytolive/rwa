@@ -8,6 +8,9 @@ try{
   const renkoPath=p.startsWith(base+'renko/')||p.startsWith('/renko/');
   if(renkoPath){
     document.documentElement.dataset.rwaRenkoStandalone='tick-native';
+    if(!document.querySelector('link[data-renko-mobile-first-frame="185"]')){
+      const css=document.createElement('link');css.rel='stylesheet';css.href='renko-v15-mobile-first-frame.css?v=185';css.dataset.renkoMobileFirstFrame='185';document.head.appendChild(css);
+    }
     const boot=()=>{
       if(document.querySelector('script[data-renko-bootstrap="185"]')||document.documentElement.dataset.renkoMethodBootstrap==='185')return;
       const s=document.createElement('script');s.src='renko-v15-controller-bootstrap.js?v=185';s.async=false;s.dataset.renkoBootstrap='185';document.body.appendChild(s);
