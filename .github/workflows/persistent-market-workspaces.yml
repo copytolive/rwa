@@ -1,0 +1,68 @@
+name: Persistent Market Workspaces
+on:
+  pull_request:
+    paths:
+      - 'market-performance.js'
+      - 'persistent-market-workspaces-v1.js'
+      - 'persistent-market-workspaces-v1.css'
+      - 'superapp-v5.js'
+      - 'superapp-v5.css'
+      - 'suite-nav.js'
+      - 'rwa-8-engines/**'
+      - 'tools/persistent-market-workspaces-browser.mjs'
+      - '.github/workflows/persistent-market-workspaces.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'market-performance.js'
+      - 'persistent-market-workspaces-v1.js'
+      - 'persistent-market-workspaces-v1.css'
+      - 'superapp-v5.js'
+      - 'superapp-v5.css'
+      - 'suite-nav.js'
+      - 'rwa-8-engines/**'
+      - 'tools/persistent-market-workspaces-browser.mjs'
+      - '.github/workflows/persistent-market-workspaces.yml'
+jobs:
+  persistent-market:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static contracts
+        run: |
+          set -euo pipefail
+          node --check market-performance.js
+          node --check persistent-market-workspaces-v1.js
+          node --check tools/persistent-market-workspaces-browser.mjs
+          grep -Fq "persistent-market-workspaces-v1.css?v=1" market-performance.js
+          grep -Fq "persistent-market-workspaces-v1.js?v=1" market-performance.js
+          grep -Fq "MARKET CONTEXT" persistent-market-workspaces-v1.js
+          grep -Fq "markets/" persistent-market-workspaces-v1.js
+          grep -Fq "rwa-persistent-market" persistent-market-workspaces-v1.css
+          grep -Fq "--rwa-pm-touch:44px" persistent-market-workspaces-v1.css
+          node tools/superapp-v5-audit.mjs
+          node tools/superapp-p16-p20-audit.mjs
+          node tools/security-gate.mjs
+      - name: Browser runtime
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Serve canonical path
+        run: |
+          mkdir -p /tmp/rwa-pm-site/rwa
+          cp -a . /tmp/rwa-pm-site/rwa/
+          cd /tmp/rwa-pm-site
+          python -m http.server 4173 >/tmp/rwa-pm-http.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/rwa-pm-http.log
+          exit 1
+      - name: Existing browser regression
+        env:
+          RWA_TEST_URL: http://127.0.0.1:4173/rwa/
+        run: |
+          node tools/superapp-v5-browser.mjs
+          node tools/superapp-p16-p20-browser.mjs
+      - name: Persistent market browser acceptance
+        env:
+          RWA_TEST_URL: http://127.0.0.1:4173/rwa/
+        run: node tools/persistent-market-workspaces-browser.mjs
