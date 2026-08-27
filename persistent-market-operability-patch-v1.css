@@ -138,6 +138,41 @@ body.rwa-persistent-market.rwa-super-market-open.rwa-persistent-suite #suite{dis
     margin:0!important;
     box-sizing:border-box!important;
   }
+
+  /* WORKSPACE ROUTE GEOMETRY LOCK V12
+     Body lifecycle classes are implementation state, not a geometry contract. Route
+     ownership keeps every Analysis workspace on the same 440px dock from the first
+     routable frame, including pair switches and async workspace/suite loading. */
+  html:is([data-rwa-route="intelligence"],[data-rwa-route="assets"],[data-rwa-route^="research"],[data-rwa-route="institutional"],[data-rwa-route="asset"],[data-rwa-route^="asset/"]) .layout,
+  html[data-rwa-route="portfolio"] .layout{
+    display:grid!important;
+    visibility:visible!important;
+    opacity:1!important;
+    width:calc(100% - var(--rwa-context-panel,440px))!important;
+    margin-right:var(--rwa-context-panel,440px)!important;
+    padding-right:0!important;
+    grid-template-columns:minmax(220px,250px) minmax(0,1fr)!important;
+    box-sizing:border-box!important;
+  }
+  html:is([data-rwa-route="intelligence"],[data-rwa-route="assets"],[data-rwa-route^="research"],[data-rwa-route="institutional"],[data-rwa-route="asset"],[data-rwa-route^="asset/"]) .right,
+  html[data-rwa-route="portfolio"] .right{display:none!important}
+  html:is([data-rwa-route="intelligence"],[data-rwa-route="assets"],[data-rwa-route^="research"],[data-rwa-route="institutional"],[data-rwa-route="asset"],[data-rwa-route^="asset/"]) #rwaSuperWorkspace,
+  html[data-rwa-route="portfolio"] #suite{
+    position:fixed!important;
+    z-index:8900!important;
+    right:0!important;
+    left:auto!important;
+    top:94px!important;
+    bottom:34px!important;
+    width:var(--rwa-context-panel,440px)!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:auto!important;
+    overscroll-behavior:contain!important;
+    margin:0!important;
+    box-sizing:border-box!important;
+  }
 }
 
 @media (max-width:680px){

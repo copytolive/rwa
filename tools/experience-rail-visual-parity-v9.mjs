@@ -23,90 +23,46 @@ async function ready(page){
   await page.waitForFunction(()=>[...document.querySelectorAll('link[rel="stylesheet"]')].some(x=>(x.getAttribute('href')||'').includes('persistent-market-operability-patch-v1.css')),{timeout:10000});
   await page.waitForTimeout(550);
 }
+async function go(page,route,wait=500){
+  await page.evaluate(r=>window.RWASuperApp.navigate(r),route);
+  await page.waitForFunction(r=>(document.documentElement.dataset.rwaRoute||'')===r,route,{timeout:10000});
+  await page.waitForTimeout(wait);
+}
 
 async function state(page,label){
   const s=await page.evaluate(label=>{
     const rect=el=>{if(!el)return null;const r=el.getBoundingClientRect(),c=getComputedStyle(el);return{x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,bottom:r.bottom,display:c.display,position:c.position}};
-    const rail=document.getElementById('rwaExperienceRail');
-    const rr=rail.getBoundingClientRect();
+    const rail=document.getElementById('rwaExperienceRail');const rr=rail.getBoundingClientRect();
     const buttons=[...rail.querySelectorAll('[data-rwa-level]')].map(b=>{const r=b.getBoundingClientRect(),c=getComputedStyle(b);return{level:b.dataset.rwaLevel,x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,active:b.classList.contains('active'),outlineWidth:c.outlineWidth,outlineStyle:c.outlineStyle,boxShadow:c.boxShadow,borderRadius:c.borderRadius}});
-    const c=getComputedStyle(rail);
-    const layout=rect(document.querySelector('.layout'));
-    const left=rect(document.querySelector('.left'));
-    const main=rect(document.querySelector('.main'));
-    const right=rect(document.querySelector('.right'));
-    const workspace=rect(document.getElementById('rwaSuperWorkspace'));
-    const suite=rect(document.getElementById('suite'));
-    const visible=x=>x&&x.display!=='none'&&x.w>0&&x.h>0;
-    const context=visible(workspace)?workspace:visible(suite)?suite:visible(right)?right:null;
-    return{label,hash:location.hash,level:document.documentElement.dataset.rwaLevel||'',route:document.documentElement.dataset.rwaRoute||'',scrollY,innerWidth,clientWidth:document.documentElement.clientWidth,rail:{x:rr.x,y:rr.y,w:rr.width,h:rr.height,right:rr.right,paddingLeft:c.paddingLeft,paddingRight:c.paddingRight,columnGap:c.columnGap,rowGap:c.rowGap},buttons,layout,left,main,right,workspace,suite,context};
+    const c=getComputedStyle(rail),layout=rect(document.querySelector('.layout')),left=rect(document.querySelector('.left')),main=rect(document.querySelector('.main')),right=rect(document.querySelector('.right')),workspace=rect(document.getElementById('rwaSuperWorkspace')),suite=rect(document.getElementById('suite'));
+    const visible=x=>x&&x.display!=='none'&&x.w>0&&x.h>0;const contexts=[['right',right],['workspace',workspace],['suite',suite]].filter(([,x])=>visible(x));const context=contexts[0]?.[1]||null;
+    return{label,hash:location.hash,level:document.documentElement.dataset.rwaLevel||'',route:document.documentElement.dataset.rwaRoute||'',bodyClass:document.body.className,scrollY,innerWidth,clientWidth:document.documentElement.clientWidth,rail:{x:rr.x,y:rr.y,w:rr.width,h:rr.height,right:rr.right,paddingLeft:c.paddingLeft,paddingRight:c.paddingRight,columnGap:c.columnGap,rowGap:c.rowGap},buttons,layout,left,main,right,workspace,suite,context,visibleContexts:contexts.map(([name,x])=>({name,w:x.w,x:x.x,position:x.position}))};
   },label);
   assert.equal(s.buttons.length,3,`${label}: expected three workflow items`);
-  const widths=s.buttons.map(x=>x.w),max=Math.max(...widths),min=Math.min(...widths);
-  assert.ok(max-min<1.01,`${label}: unequal rail widths ${JSON.stringify(widths)}`);
-  assert.ok(Math.abs(s.buttons[0].x-s.rail.x)<1.01,`${label}: Discovery does not touch left rail edge ${JSON.stringify(s)}`);
-  assert.ok(Math.abs(s.buttons[2].right-s.rail.right)<1.01,`${label}: Action does not touch right rail edge ${JSON.stringify(s)}`);
-  assert.ok(Math.abs(s.buttons[0].w-s.rail.w/3)<1.01,`${label}: Discovery rail is not exact one-third`);
-  assert.ok(Math.abs(s.buttons[1].w-s.rail.w/3)<1.01,`${label}: Analysis rail is not exact one-third`);
-  assert.ok(Math.abs(s.buttons[2].w-s.rail.w/3)<1.01,`${label}: Action rail is not exact one-third`);
-  assert.equal(parseFloat(s.rail.paddingLeft)||0,0,`${label}: rail left padding is not zero`);
-  assert.equal(parseFloat(s.rail.paddingRight)||0,0,`${label}: rail right padding is not zero`);
-  assert.equal(parseFloat(s.rail.columnGap)||0,0,`${label}: rail column gap is not zero`);
+  const widths=s.buttons.map(x=>x.w),max=Math.max(...widths),min=Math.min(...widths);assert.ok(max-min<1.01,`${label}: unequal rail widths ${JSON.stringify(widths)}`);
+  assert.ok(Math.abs(s.buttons[0].x-s.rail.x)<1.01,`${label}: Discovery does not touch left rail edge`);assert.ok(Math.abs(s.buttons[2].right-s.rail.right)<1.01,`${label}: Action does not touch right rail edge`);
+  assert.ok(Math.abs(s.buttons[0].w-s.rail.w/3)<1.01&&Math.abs(s.buttons[1].w-s.rail.w/3)<1.01&&Math.abs(s.buttons[2].w-s.rail.w/3)<1.01,`${label}: rail is not exact thirds`);
+  assert.equal(parseFloat(s.rail.paddingLeft)||0,0,`${label}: rail left padding is not zero`);assert.equal(parseFloat(s.rail.paddingRight)||0,0,`${label}: rail right padding is not zero`);assert.equal(parseFloat(s.rail.columnGap)||0,0,`${label}: rail column gap is not zero`);
   for(const b of s.buttons){assert.equal(parseFloat(b.outlineWidth)||0,0,`${label}: ${b.level} focus outline changes visual width`);assert.equal(parseFloat(b.borderRadius)||0,0,`${label}: ${b.level} rounded box changes edge perception`)}
-  if(s.innerWidth>=1200){
-    assert.ok(s.layout&&s.left&&s.main&&s.context,`${label}: missing desktop workflow geometry ${JSON.stringify(s)}`);
-    assert.ok(s.context.w>=359,`${label}: context panel is still narrow ${s.context.w}`);
-  }
+  if(s.innerWidth>=1200){assert.ok(s.layout&&s.left&&s.main&&s.context,`${label}: missing desktop workflow geometry ${JSON.stringify(s)}`);assert.equal(s.visibleContexts.length,1,`${label}: expected exactly one visible right dock ${JSON.stringify(s.visibleContexts)}`);assert.ok(Math.abs(s.context.w-440)<1.01,`${label}: context width ${s.context.w} != 440`);assert.equal(s.context.position,'fixed',`${label}: context not fixed`)}
   return s;
 }
 
-function stableRail(base,next){
-  assert.ok(Math.abs(next.rail.x-base.rail.x)<1.01,`${next.label}: rail x shifted`);
-  assert.ok(Math.abs(next.rail.w-base.rail.w)<1.01,`${next.label}: rail width shifted`);
-  for(let i=0;i<3;i++)for(const k of ['x','y','w','h','right'])assert.ok(Math.abs(next.buttons[i][k]-base.buttons[i][k])<1.01,`${next.label}: ${next.buttons[i].level} ${k} shifted ${base.buttons[i][k]} -> ${next.buttons[i][k]}`);
-}
-
-function stableWorkflowGeometry(base,next){
-  if(base.innerWidth<1200||next.innerWidth<1200)return;
-  for(const [name,a,b,tol] of [
-    ['left width',base.left?.w,next.left?.w,1.01],
-    ['context width',base.context?.w,next.context?.w,1.01],
-    ['layout width',base.layout?.w,next.layout?.w,1.01],
-    ['main width',base.main?.w,next.main?.w,1.01],
-    ['layout right',base.layout?.right,next.layout?.right,1.01],
-    ['context x',base.context?.x,next.context?.x,1.01]
-  ])assert.ok(Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<tol,`${next.label}: ${name} shifted ${a} -> ${b}`);
-}
+function stableRail(base,next){assert.ok(Math.abs(next.rail.x-base.rail.x)<1.01,`${next.label}: rail x shifted`);assert.ok(Math.abs(next.rail.w-base.rail.w)<1.01,`${next.label}: rail width shifted`);for(let i=0;i<3;i++)for(const k of ['x','y','w','h','right'])assert.ok(Math.abs(next.buttons[i][k]-base.buttons[i][k])<1.01,`${next.label}: ${next.buttons[i].level} ${k} shifted ${base.buttons[i][k]} -> ${next.buttons[i][k]}`)}
+function stableWorkflowGeometry(base,next){if(base.innerWidth<1200||next.innerWidth<1200)return;for(const [name,a,b,tol] of [['left width',base.left?.w,next.left?.w,1.01],['context width',base.context?.w,next.context?.w,1.01],['layout width',base.layout?.w,next.layout?.w,1.01],['main width',base.main?.w,next.main?.w,1.01],['layout right',base.layout?.right,next.layout?.right,1.01],['context x',base.context?.x,next.context?.x,1.01]])assert.ok(Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<tol,`${next.label}: ${name} shifted ${a} -> ${b}`)}
 
 async function run(viewport,name){
   const browser=await chromium.launch({headless:true});
   try{
-    const ctx=await browser.newContext({viewport,serviceWorkers:'block'});await mocks(ctx);
-    const p=await ctx.newPage();const errors=[];p.on('pageerror',e=>errors.push(String(e.message||e)));
-    await p.goto(BASE,{waitUntil:'domcontentloaded'});await ready(p);
-    const report=[];const base=await state(p,`${name}-00-discovery`);report.push(base);await p.screenshot({path:`${OUT}/${name}-00-discovery.png`});
-    const steps=[
-      ['01-analysis',()=>p.locator('#rwaExperienceRail [data-rwa-level="analysis"]').click()],
-      ['02-action',()=>p.locator('#rwaExperienceRail [data-rwa-level="action"]').click()],
-      ['03-intelligence',()=>p.locator('[data-v5-route="intelligence"]').first().click()],
-      ['04-assets',()=>p.locator('[data-v5-route="assets"]').first().click()],
-      ['05-research',()=>p.locator('[data-v5-route="research"]').first().click()],
-      ['06-portfolio',()=>p.locator('[data-v5-route="portfolio"]').first().click()],
-      ['07-institutional',()=>p.locator('[data-v5-route="institutional"]').first().click()],
-      ['08-discovery',()=>p.locator('#rwaExperienceRail [data-rwa-level="discovery"]').click()]
-    ];
-    for(const [suffix,click] of steps){await click();await p.waitForTimeout(suffix.includes('portfolio')?900:500);const s=await state(p,`${name}-${suffix}`);stableRail(base,s);stableWorkflowGeometry(base,s);report.push(s);await p.screenshot({path:`${OUT}/${name}-${suffix}.png`});}
-    assert.equal(errors.length,0,`runtime errors: ${errors.join(' | ')}`);
-    await ctx.close();return report;
+    const ctx=await browser.newContext({viewport,serviceWorkers:'block'});await mocks(ctx);const p=await ctx.newPage();const errors=[];p.on('pageerror',e=>errors.push(String(e.message||e)));await p.goto(BASE,{waitUntil:'domcontentloaded'});await ready(p);
+    const report=[];await go(p,'markets',300);const base=await state(p,`${name}-00-markets`);console.log('WORKFLOW_STATE',JSON.stringify(base));report.push(base);await p.screenshot({path:`${OUT}/${name}-00-markets.png`});
+    const steps=[['01-analysis','asset/BTC',500],['02-action','trade/BTC',500],['03-intelligence','intelligence',500],['04-assets','assets',500],['05-research','research',500],['06-portfolio','portfolio',900],['07-institutional','institutional',500],['08-discovery','markets',500]];
+    for(const [suffix,route,wait] of steps){await go(p,route,wait);const s=await state(p,`${name}-${suffix}`);console.log('WORKFLOW_STATE',JSON.stringify(s));assert.equal(s.route,route,`${suffix}: route mismatch`);stableRail(base,s);stableWorkflowGeometry(base,s);report.push(s);await p.screenshot({path:`${OUT}/${name}-${suffix}.png`});}
+    assert.equal(errors.length,0,`runtime errors: ${errors.join(' | ')}`);await ctx.close();return report;
   }finally{await browser.close()}
 }
 
 await fs.mkdir(OUT,{recursive:true});
 const report={wide2048:await run({width:2048,height:1129},'2048'),desktop1600:await run({width:1600,height:1000},'1600')};
 await fs.writeFile(`${OUT}/report.json`,JSON.stringify(report,null,2));
-console.log('EXPERIENCE_RAIL_EDGE_TO_EDGE=PASS');
-console.log('EXPERIENCE_RAIL_VISUAL_EQUAL_THIRDS=PASS');
-console.log('EXPERIENCE_WORKFLOW_VIEWPORT_PARITY_V10=PASS');
-console.log('EXPERIENCE_DISCOVERY_ANALYSIS_ACTION_GEOMETRY=PASS');
-console.log('EXPERIENCE_RAIL_2048_PARITY=PASS');
-console.log('EXPERIENCE_RAIL_V10_REPORT',JSON.stringify(report));
+console.log('EXPERIENCE_RAIL_EDGE_TO_EDGE=PASS');console.log('EXPERIENCE_RAIL_VISUAL_EQUAL_THIRDS=PASS');console.log('EXPERIENCE_WORKFLOW_VIEWPORT_PARITY_V12=PASS');console.log('EXPERIENCE_SINGLE_RIGHT_DOCK_440=PASS');console.log('EXPERIENCE_DISCOVERY_ANALYSIS_ACTION_GEOMETRY=PASS');console.log('EXPERIENCE_RAIL_2048_PARITY=PASS');

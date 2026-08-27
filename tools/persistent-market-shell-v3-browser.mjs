@@ -16,28 +16,48 @@ async function mocks(context){
   await context.route('https://api.hyperliquid-testnet.xyz/**',r=>r.fulfill({status:200,contentType:'application/json',body:'[]'}));
 }
 async function ready(page){await page.waitForFunction(()=>window.RWASuperApp?.version==='5.0.0'&&window.RWAMarketPerformanceGuard?.persistent_market_workspaces==='css-core-router-v3',{timeout:20000});await page.waitForTimeout(500)}
-async function geometry(page,route){
-  return page.evaluate((route)=>{const layout=document.querySelector('.layout'),chart=document.querySelector('.chart-wrap'),workspace=document.getElementById('rwaSuperWorkspace'),suite=document.getElementById('suite');const active=route==='portfolio'?(suite&&getComputedStyle(suite).display!=='none'?suite:null):(workspace&&getComputedStyle(workspace).display!=='none'?workspace:(suite&&getComputedStyle(suite).display!=='none'?suite:null));const lr=layout?.getBoundingClientRect(),cr=chart?.getBoundingClientRect(),ar=active?.getBoundingClientRect();return{same:chart===window.__persistentChartNode,layoutDisplay:layout&&getComputedStyle(layout).display,chart:cr&&{x:cr.x,y:cr.y,w:cr.width,h:cr.height},layout:lr&&{x:lr.x,y:lr.y,w:lr.width,h:lr.height},active:ar&&{x:ar.x,y:ar.y,w:ar.width,h:ar.height},activePosition:active&&getComputedStyle(active).position,hash:location.hash,path:location.pathname}},route)
+async function go(page,route,wait=350){
+  await page.evaluate(r=>window.RWASuperApp.navigate(r),route);
+  await page.waitForFunction(r=>(document.documentElement.dataset.rwaRoute||'')===r,route,{timeout:10000});
+  await page.waitForTimeout(wait);
 }
-async function assertPersistent(page,route,{mobile=false}={}){const g=await geometry(page,route);assert.equal(g.path,'/rwa/',`${route}: escaped canonical path`);assert.equal(g.same,true,`${route}: chart DOM was replaced`);assert.notEqual(g.layoutDisplay,'none',`${route}: market layout disappeared`);assert.ok(g.chart?.w>(mobile?240:420)&&g.chart?.h>180,`${route}: candlestick not human-usable ${JSON.stringify(g.chart)}`);assert.equal(g.activePosition,'fixed',`${route}: context is not a dock/sheet`);assert.ok(g.active?.w>250&&g.active?.h>180,`${route}: context surface missing ${JSON.stringify(g.active)}`);return g}
+async function geometry(page,route){
+  return page.evaluate((route)=>{
+    const layout=document.querySelector('.layout'),chart=document.querySelector('.chart-wrap'),right=document.querySelector('.right'),workspace=document.getElementById('rwaSuperWorkspace'),suite=document.getElementById('suite');
+    const visible=e=>e&&getComputedStyle(e).display!=='none'&&e.getBoundingClientRect().width>0&&e.getBoundingClientRect().height>0;
+    const active=visible(workspace)?workspace:visible(suite)?suite:visible(right)?right:null;
+    const box=e=>{if(!e)return null;const r=e.getBoundingClientRect(),s=getComputedStyle(e);return{x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,position:s.position,display:s.display}};
+    return{route:document.documentElement.dataset.rwaRoute||'',same:chart===window.__persistentChartNode,layoutDisplay:layout&&getComputedStyle(layout).display,chart:box(chart),layout:box(layout),right:box(right),workspace:box(workspace),suite:box(suite),active:box(active),activePosition:active&&getComputedStyle(active).position,hash:location.hash,path:location.pathname}
+  },route)
+}
+async function assertPersistent(page,route,{mobile=false}={}){
+  const g=await geometry(page,route);
+  assert.equal(g.path,'/rwa/',`${route}: escaped canonical path`);
+  assert.equal(g.route,route,`${route}: route state mismatch ${g.route}`);
+  assert.equal(g.same,true,`${route}: chart DOM was replaced`);
+  assert.notEqual(g.layoutDisplay,'none',`${route}: market layout disappeared`);
+  assert.ok(g.chart?.w>(mobile?240:420)&&g.chart?.h>180,`${route}: candlestick not human-usable ${JSON.stringify(g.chart)}`);
+  assert.equal(g.activePosition,'fixed',`${route}: context is not a dock/sheet ${JSON.stringify(g)}`);
+  assert.ok(g.active?.w>250&&g.active?.h>180,`${route}: context surface missing ${JSON.stringify(g.active)}`);
+  if(!mobile)assert.ok(Math.abs(g.active.w-440)<1.1,`${route}: desktop context width ${g.active.w} != 440`);
+  return g
+}
 
 const browser=await chromium.launch({headless:true});
 try{
   const desktop=await browser.newContext({viewport:{width:1440,height:900},serviceWorkers:'block'});await mocks(desktop);const p=await desktop.newPage();const errors=[];p.on('pageerror',e=>errors.push(String(e.message||e)));await p.goto(BASE,{waitUntil:'domcontentloaded'});await ready(p);await p.evaluate(()=>window.__persistentChartNode=document.querySelector('.chart-wrap'));
-  for(const route of ['intelligence','assets','research','portfolio','institutional']){
-    const nav=p.locator(`[data-v5-route="${route}"]`).first();await nav.click();await p.waitForTimeout(route==='portfolio'?900:300);const g=await assertPersistent(p,route);assert.equal(g.hash,`#${route}`,`${route}: unexpected hash ${g.hash}`)
-  }
-  await p.evaluate(()=>window.RWASuperApp.navigate('asset/ONDO'));await p.waitForTimeout(350);await assertPersistent(p,'asset/ONDO');
-  await p.evaluate(()=>window.RWASuperApp.navigate('institutional'));await p.waitForTimeout(300);const issuer=p.getByRole('button',{name:/Start issuer workspace/i});if(await issuer.count()){await issuer.click();await p.waitForTimeout(900);const g=await geometry(p,'institutional');assert.equal(g.same,true,'issuer: chart DOM replaced');assert.notEqual(g.layoutDisplay,'none','issuer: market layout disappeared');assert.equal(g.activePosition,'fixed','issuer: suite not docked')}
+  for(const route of ['intelligence','assets','research','portfolio','institutional']){await go(p,route,route==='portfolio'?900:350);const g=await assertPersistent(p,route);assert.equal(g.hash,`#${route}`,`${route}: unexpected hash ${g.hash}`)}
+  await go(p,'asset/ONDO',400);await assertPersistent(p,'asset/ONDO');
+  await go(p,'institutional',350);const issuer=p.getByRole('button',{name:/Start issuer workspace/i});if(await issuer.count()){await issuer.click();await p.waitForTimeout(900);const g=await geometry(p,'institutional');assert.equal(g.same,true,'issuer: chart DOM replaced');assert.notEqual(g.layoutDisplay,'none','issuer: market layout disappeared');assert.equal(g.activePosition,'fixed','issuer: suite not docked')}
   assert.equal(errors.length,0,`desktop runtime errors: ${errors.join(' | ')}`);await desktop.close();
 
   const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:'block'});await mocks(mobile);const m=await mobile.newPage();const merr=[];m.on('pageerror',e=>merr.push(String(e.message||e)));await m.goto(BASE,{waitUntil:'domcontentloaded'});await ready(m);await m.evaluate(()=>window.__persistentChartNode=document.querySelector('.chart-wrap'));
-  for(const route of ['intelligence','assets','research','portfolio','institutional']){await m.evaluate(r=>window.RWASuperApp.navigate(r),route);await m.waitForTimeout(route==='portfolio'?900:300);const g=await assertPersistent(m,route,{mobile:true});assert.ok(g.active.y>40,`${route}: sheet replaced full market instead of preserving chart ${JSON.stringify(g.active)}`);assert.ok(g.active.y<700,`${route}: sheet inaccessible ${JSON.stringify(g.active)}`)}
+  for(const route of ['intelligence','assets','research','portfolio','institutional']){await go(m,route,route==='portfolio'?900:350);const g=await assertPersistent(m,route,{mobile:true});assert.ok(g.active.y>40,`${route}: sheet replaced full market instead of preserving chart ${JSON.stringify(g.active)}`);assert.ok(g.active.y<700,`${route}: sheet inaccessible ${JSON.stringify(g.active)}`)}
   assert.equal(merr.length,0,`mobile runtime errors: ${merr.join(' | ')}`);await mobile.close();
 
   console.log('MARKET_SHELL_NEVER_LEAVES=PASS');
   console.log('CANDLESTICK_CONTEXT_PERSISTENT=PASS');
-  console.log('DESKTOP_CONTEXT_DOCK=PASS');
+  console.log('DESKTOP_CONTEXT_DOCK_440=PASS');
   console.log('MOBILE_CONTEXT_SHEET=PASS');
   console.log('PERSISTENT_MARKET_SHELL_V3_BROWSER=PASS');
 }finally{await browser.close()}
