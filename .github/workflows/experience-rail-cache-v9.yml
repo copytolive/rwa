@@ -1,9 +1,9 @@
-name: RWA Experience Rail Cache V9
+name: RWA Experience Viewport Cache V10
 
 on:
   push:
     branches:
-      - fix/experience-rail-cache-bust-v9-20260827
+      - fix/experience-rail-viewport-parity-v10-20260827
     paths:
       - 'index.html'
       - 'market-performance.js'
@@ -16,6 +16,7 @@ on:
       - 'market-performance.js'
       - 'persistent-market-operability-patch-v1.css'
       - 'tools/experience-rail-visual-parity-v9.mjs'
+      - '.github/workflows/experience-rail-cache-v9.yml'
   workflow_dispatch:
 
 permissions:
@@ -27,14 +28,16 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Cache contract
+      - name: Cache and viewport contract
         run: |
-          grep -Fq 'market-performance.js?v=9' index.html
-          grep -Fq 'persistent-market-operability-patch-v1.css?v=9' market-performance.js
+          grep -Fq 'market-performance.js?v=10' index.html
+          grep -Fq 'persistent-market-operability-patch-v1.css?v=10' market-performance.js
           test "$(grep -o '<script src=' index.html | wc -l | tr -d ' ')" = "6"
           grep -Fq 'padding:0!important' persistent-market-operability-patch-v1.css
           grep -Fq 'gap:0!important' persistent-market-operability-patch-v1.css
           grep -Fq 'outline:0!important' persistent-market-operability-patch-v1.css
+          grep -Fq 'WORKFLOW VIEWPORT PARITY V10' persistent-market-operability-patch-v1.css
+          grep -Fq 'grid-template-columns:minmax(220px,250px) minmax(0,1fr)!important' persistent-market-operability-patch-v1.css
           node --check market-performance.js
           node --check tools/experience-rail-visual-parity-v9.mjs
       - name: Install Chromium
@@ -43,19 +46,19 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Serve canonical app
         run: |
-          mkdir -p /tmp/rwa-rail-cache-v9/rwa
-          cp -a . /tmp/rwa-rail-cache-v9/rwa/
-          cd /tmp/rwa-rail-cache-v9
-          python -m http.server 4173 >/tmp/rwa-rail-cache-v9-http.log 2>&1 &
+          mkdir -p /tmp/rwa-rail-cache-v10/rwa
+          cp -a . /tmp/rwa-rail-cache-v10/rwa/
+          cd /tmp/rwa-rail-cache-v10
+          python -m http.server 4173 >/tmp/rwa-rail-cache-v10-http.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
-      - name: Validate 2048px and 1600px V9 parity
+      - name: Validate 2048px and 1600px V10 parity
         env:
           RWA_TEST_URL: http://127.0.0.1:4173/rwa/
-          RWA_PROOF_DIR: proof/experience-rail-cache-v9
+          RWA_PROOF_DIR: proof/experience-viewport-cache-v10
         run: node tools/experience-rail-visual-parity-v9.mjs
       - name: Upload visual proof
         uses: actions/upload-artifact@v4
         with:
-          name: experience-rail-cache-v9-proof
-          path: proof/experience-rail-cache-v9
+          name: experience-viewport-cache-v10-proof
+          path: proof/experience-viewport-cache-v10
           retention-days: 30
