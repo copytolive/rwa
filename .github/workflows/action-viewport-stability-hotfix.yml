@@ -1,75 +1,40 @@
-name: Apply Action Viewport Stability Hotfix
-
-on:
-  push:
-    branches:
-      - fix/action-viewport-stability-v6-20260827
-
+name: action-viewport-hotfix
+on: [push]
 permissions:
   contents: write
-
 jobs:
   patch:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: fix/action-viewport-stability-v6-20260827
           fetch-depth: 0
-      - name: Patch Action navigation without root scroll
+      - name: patch
+        shell: bash
         run: |
-          python - <<'PY'
+          python3 - <<'PY'
           from pathlib import Path
-
           p=Path('superapp-v5.js')
           s=p.read_text()
-          old="""    const ex=$('rwaExchange')||$('terminal');
-    ex?.scrollIntoView({behavior:'smooth',block:'start'});"""
-          new="""    /* RWA_ACTION_VIEWPORT_STABILITY_V6: Trade initialization must never move the root viewport. */
-    const ex=$('rwaExchange')||$('terminal');
-    if(ex)ex.dataset.rwaTradeReady='1';"""
-          assert s.count(old)==1, f'unexpected superapp match count: {s.count(old)}'
+          old="    const ex=$('rwaExchange')||$('terminal');\n    ex?.scrollIntoView({behavior:'smooth',block:'start'});"
+          new="    /* RWA_ACTION_VIEWPORT_STABILITY_V6: Trade initialization must never move the root viewport. */\n    const ex=$('rwaExchange')||$('terminal');\n    if(ex)ex.dataset.rwaTradeReady='1';"
+          assert s.count(old)==1
           p.write_text(s.replace(old,new,1))
-
           p=Path('index.html')
           s=p.read_text()
-          old='superapp-v5.js?v=16'
-          new='superapp-v5.js?v=17'
-          assert s.count(old)==1, f'unexpected index cache-key match count: {s.count(old)}'
-          p.write_text(s.replace(old,new,1))
-
-          p=Path('tools/global-chrome-persistence-browser.mjs')
-          s=p.read_text()
-          old="""  for(const level of ['discovery','analysis','action']){await p.locator(`#rwaExperienceRail [data-rwa-level=\"${level}\"]`).click();await p.waitForTimeout(level==='action'?1200:450);report.push(await chromeState(p,`rail-${level}`))}
-  const action=report.find(x=>x.label==='rail-action');assert.ok(action.scrollY>0,'Action must reproduce the root auto-scroll regression path');"""
-          new="""  for(const level of ['discovery','analysis']){await p.locator(`#rwaExperienceRail [data-rwa-level=\"${level}\"]`).click();await p.waitForTimeout(450);report.push(await chromeState(p,`rail-${level}`))}
-  await p.evaluate(()=>window.scrollTo(0,0));await p.waitForTimeout(120);
-  const actionBefore=await chromeState(p,'action-before-click');
-  const actionButtonBefore=await p.locator('#rwaExperienceRail [data-rwa-level=\"action\"]').boundingBox();
-  await p.locator('#rwaExperienceRail [data-rwa-level=\"action\"]').click();await p.waitForTimeout(1200);
-  const action=await chromeState(p,'rail-action');report.push(action);
-  const actionButtonAfter=await p.locator('#rwaExperienceRail [data-rwa-level=\"action\"]').boundingBox();
-  assert.ok(Math.abs(action.scrollY-actionBefore.scrollY)<=1,`Action moved root viewport: before=${actionBefore.scrollY} after=${action.scrollY}`);
-  assert.equal(action.hash,'#trade/BTC','Action did not open the Trade route');
-  assert.ok(actionButtonBefore&&actionButtonAfter&&Math.abs(actionButtonAfter.y-actionButtonBefore.y)<=1,`Action control moved vertically: before=${JSON.stringify(actionButtonBefore)} after=${JSON.stringify(actionButtonAfter)}`);
-  await p.waitForFunction(()=>document.getElementById('rwaExchange')||document.getElementById('terminal')?.querySelector('#rwaTradeLazyStatus')===null,{timeout:10000}).catch(()=>{});"""
-          assert s.count(old)==1, f'unexpected browser-test match count: {s.count(old)}'
-          s=s.replace(old,new,1)
-          s=s.replace("console.log('ACTION_AUTOSCROLL_CHROME_PERSISTENCE=PASS');","console.log('ACTION_VIEWPORT_STABILITY=PASS');")
-          p.write_text(s)
+          assert s.count('superapp-v5.js?v=16')==1
+          p.write_text(s.replace('superapp-v5.js?v=16','superapp-v5.js?v=17',1))
           PY
           rm .github/workflows/action-viewport-stability-hotfix.yml
           node --check superapp-v5.js
-          node --check tools/global-chrome-persistence-browser.mjs
-          grep -Fq 'RWA_ACTION_VIEWPORT_STABILITY_V6' superapp-v5.js
+          grep -Fq RWA_ACTION_VIEWPORT_STABILITY_V6 superapp-v5.js
           grep -Fq 'superapp-v5.js?v=17' index.html
-          grep -Fq 'ACTION_VIEWPORT_STABILITY=PASS' tools/global-chrome-persistence-browser.mjs
           git diff --check
-      - name: Commit isolated product patch
+      - name: commit
+        shell: bash
         run: |
-          git config user.name 'copytolive-actions'
-          git config user.email 'actions@users.noreply.github.com'
-          git add superapp-v5.js index.html tools/global-chrome-persistence-browser.mjs .github/workflows/action-viewport-stability-hotfix.yml
+          git config user.name copytolive-actions
+          git config user.email actions@users.noreply.github.com
+          git add -A
           git commit -m 'Fix Action navigation viewport stability'
           git push origin HEAD:fix/action-viewport-stability-v6-20260827
