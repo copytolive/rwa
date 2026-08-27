@@ -1,9 +1,9 @@
 'use strict';
-const CACHE='rwa-superapp-v5-shell-17';
+const CACHE='rwa-superapp-v5-shell-18';
 const CORE=['./','./index.html','./styles.css?v=7','./mobile.css?v=6','./stable-shell.css?v=3','./superapp-v5.css?v=13','./app.js?v=10','./realtime-core.js?v=3&compat=realtime-core.js?v=2','./chart-core.js?v=1','./market-performance.js?v=2','./mobile.js?v=12','./superapp-v5.js?v=16','./rwa-discovery-catalog.json','./manifest.webmanifest'];
 const ROOT='/rwa/';
 const isRenko=u=>u.pathname.startsWith(ROOT+'renko/');
-const isFreshControlScript=u=>u.pathname===ROOT+'legacy-canonical.js'||u.pathname===ROOT+'superapp-v5.js';
+const isFreshControlScript=u=>u.pathname===ROOT+'legacy-canonical.js'||u.pathname===ROOT+'superapp-v5.js'||u.pathname===ROOT+'market-performance.js';
 const networkFresh=async r=>{
   const req=new Request(r,{cache:'reload'});
   const res=await fetch(req);
@@ -19,8 +19,8 @@ self.addEventListener('fetch',e=>{
     e.respondWith(networkFresh(r).catch(()=>new Response('RENKO tick-native runtime requires a fresh network response. Stale timeframe builds are intentionally blocked.',{status:503,headers:{'content-type':'text/plain; charset=utf-8','cache-control':'no-store'}})));
     return;
   }
-  // These two scripts decide whether RENKO is standalone and which embedded runtime is used.
-  // Prefer network on every request so an old service-worker cache cannot resurrect V14 behavior.
+  // Control scripts choose the active product shell. Always prefer the latest network bytes so an old
+  // service-worker cache cannot resurrect a previous router or hide the persistent market/candlestick shell.
   if(isFreshControlScript(u)){
     e.respondWith(networkFresh(r).then(x=>{const c=x.clone();caches.open(CACHE).then(k=>k.put(r,c));return x}).catch(()=>caches.match(r)));
     return;
