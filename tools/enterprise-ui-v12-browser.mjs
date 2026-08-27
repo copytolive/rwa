@@ -36,7 +36,7 @@ async function geometry(page){return page.evaluate(()=>{
   const b=e=>{if(!e)return null;const r=e.getBoundingClientRect(),s=getComputedStyle(e);return{x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,display:s.display,position:s.position}};
   const right=b(document.querySelector('.right')),workspace=b(document.getElementById('rwaSuperWorkspace')),suite=b(document.getElementById('suite')),layout=b(document.querySelector('.layout')),left=b(document.querySelector('.left')),main=b(document.querySelector('.main'));
   const v=x=>x&&x.display!=='none'&&x.w>1&&x.h>1,docks=[['right',right],['workspace',workspace],['suite',suite]].filter(([,x])=>v(x)).map(([name,x])=>({name,...x}));
-  return{route:document.documentElement.dataset.rwaRoute||'',innerWidth,layout,left,main,right,workspace,suite,docks};
+  return{route:document.documentElement.dataset.rwaRoute||'',clientWidth:document.documentElement.clientWidth,layout,left,main,right,workspace,suite,docks};
 })}
 const near=(a,b,t=.8)=>Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<=t;
 
@@ -66,7 +66,7 @@ async function desktopProof(browser,width,height){
     if(g.docks.length!==1)violations.push(`${route}: visible dock count ${g.docks.length}`);
     const d=g.docks[0];if(!d||!near(d.w,440))violations.push(`${route}: ${d?.name||'none'} width ${d?.w} != 440`);
     if(d&&d.position!=='fixed')violations.push(`${route}: ${d.name} position ${d.position}`);
-    if(d&&!near(d.right,g.innerWidth,1.2))violations.push(`${route}: dock right edge ${d.right} != viewport ${g.innerWidth}`);
+    if(d&&!near(d.right,g.clientWidth,1.2))violations.push(`${route}: dock right edge ${d.right} != layout viewport ${g.clientWidth}`);
     if(!near(g.layout?.w,before.layout?.w))violations.push(`${route}: layout width ${g.layout?.w} != ${before.layout?.w}`);
     if(!near(g.left?.w,before.left?.w))violations.push(`${route}: left width ${g.left?.w} != ${before.left?.w}`);
     if(!near(g.main?.w,before.main?.w))violations.push(`${route}: main width ${g.main?.w} != ${before.main?.w}`);
@@ -74,7 +74,7 @@ async function desktopProof(browser,width,height){
 
   const visual=await page.evaluate(()=>{
     const fs=s=>{const e=document.querySelector(s);return e?parseFloat(getComputedStyle(e).fontSize):null};
-    const rail=[...document.querySelectorAll('#rwaExperienceRail [data-rwa-level]')].map(e=>({w:e.getBoundingClientRect().width,title:fs.call(null,'#rwaExperienceRail [data-rwa-level] span'),sub:parseFloat(getComputedStyle(e.querySelector('small')).fontSize)}));
+    const rail=[...document.querySelectorAll('#rwaExperienceRail [data-rwa-level]')].map(e=>({w:e.getBoundingClientRect().width,sub:parseFloat(getComputedStyle(e.querySelector('small')).fontSize)}));
     const cmd=document.querySelector('.rwa-command-button'),quality=document.querySelector('.rwa-quality-badge'),health=document.querySelector('.rwa-health');
     return{rail,cmdBg:cmd?getComputedStyle(cmd).backgroundColor:null,debug:[quality,health].filter(Boolean).map(e=>getComputedStyle(e).display),viewport:document.querySelector('meta[name="viewport"]')?.content||'',type:{pair:fs('.pairmeta b'),pairMeta:fs('.pairmeta small'),pairPrice:fs('.pairprice b'),change:fs('.chg'),book:fs('.bookrow'),trade:fs('.trade'),instrument:fs('.instrument b'),instrumentMeta:fs('.instrument small')}};
   });
