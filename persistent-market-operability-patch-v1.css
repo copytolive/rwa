@@ -14,7 +14,7 @@ body.rwa-persistent-market.rwa-super-market-open.rwa-persistent-suite #suite{dis
     display:flex!important;
     position:sticky!important;
     top:0!important;
-    z-index:9500!important;
+    z-index:9950!important;
     visibility:visible!important;
     opacity:1!important;
     transform:none!important;
@@ -26,7 +26,7 @@ body.rwa-persistent-market.rwa-super-market-open.rwa-persistent-suite #suite{dis
     display:grid!important;
     position:sticky!important;
     top:48px!important;
-    z-index:9400!important;
+    z-index:9900!important;
     visibility:visible!important;
     opacity:1!important;
     transform:none!important;
@@ -46,7 +46,7 @@ body.rwa-persistent-market.rwa-super-market-open.rwa-persistent-suite #suite{dis
 }
 
 @media (max-width:680px){
-  .topbar{height:56px!important;min-height:56px!important;overflow:hidden!important;padding:0 12px!important;position:sticky!important;top:0!important;z-index:9500!important;visibility:visible!important;opacity:1!important}
+  .topbar{height:56px!important;min-height:56px!important;overflow:hidden!important;padding:0 12px!important;position:sticky!important;top:0!important;z-index:9950!important;visibility:visible!important;opacity:1!important}
   .topnav{display:none!important}
   .top-actions{margin-left:auto!important;min-width:0!important;max-width:154px!important;flex:0 1 154px!important;justify-content:flex-end!important;gap:8px!important;overflow:hidden!important}
   .top-actions>.rwa-command-button,
