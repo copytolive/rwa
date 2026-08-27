@@ -28,6 +28,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Pin one current controller bootstrap in deploy artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          sed -i 's/renko-v15-controller-bootstrap\.js?v=154/renko-v15-controller-bootstrap.js?v=158/g' renko/index.html
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=158' renko/index.html
+          ! grep -Fq 'renko-v15-controller-bootstrap.js?v=154' renko/index.html
+
       - name: Static tick-only, abortable and fast-control contracts
         shell: bash
         run: |
@@ -40,6 +48,7 @@ jobs:
           node --check legacy-canonical.js
           node --check rwa-sw-v5.js
           grep -Fq 'RENKO V15.1' renko/index.html
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=158' renko/index.html
           ! grep -Fq 'renko-v15-method-profiles.js?v=151' renko/index.html
           ! grep -Eqi 'id="[^"]*(resolution|timeframe)|>RESOLUTION<|1 minute</option>|3 minutes</option>|5 minutes</option>|15 minutes</option>|30 minutes</option>|1 hour</option>|4 hours</option>|1 day</option>' renko/index.html
           ! grep -Fq '/api/v3/klines?' renko/renko-v15.js
@@ -86,7 +95,7 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Browser acceptance - controls stay fast during slow history
+      - name: Browser acceptance - exact controls during guaranteed slow history
         shell: bash
         run: |
           python3 -m http.server 8080 > /tmp/renko-http.log 2>&1 &
