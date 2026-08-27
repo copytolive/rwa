@@ -63,8 +63,11 @@ try{
       await page.goto(BASE+legacyPath,{waitUntil:'domcontentloaded',timeout:30000});await waitV5(page);await page.waitForTimeout(250);await assertRoot(page,'legacy '+legacyPath);assert.equal(new URL(page.url()).hash,expected,`legacy ${legacyPath} not canonicalized`);
     }
     await page.goto(BASE+'renko/?symbol=ONDO',{waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(250);
-    const renkoStandalone=await page.evaluate(()=>({pathname:location.pathname,mode:document.documentElement.dataset.rwaRenkoStandalone||''}));
-    assert.equal(renkoStandalone.pathname,'/rwa/renko/','RENKO standalone pathname changed');assert.equal(renkoStandalone.mode,'tick-native','RENKO standalone tick-native marker missing');
+    const renkoStandalone=await page.evaluate(()=>({pathname:location.pathname,title:document.title,scripts:[...document.scripts].map(s=>s.getAttribute('src')||'')}));
+    assert.equal(renkoStandalone.pathname,'/rwa/renko/','RENKO standalone pathname changed');
+    assert.match(renkoStandalone.title,/RENKO/i,'RENKO standalone title missing');
+    assert.ok(renkoStandalone.scripts.some(x=>x.includes('renko-tv-engine.js')),'RENKO standalone engine missing');
+    assert.ok(renkoStandalone.scripts.some(x=>x.includes('renko-tv-app.js')),'RENKO standalone app missing');
     result.desktop={routes:routes.length,pathname:'/rwa/',assetDrawer:true,history:true,search:true,preview:true,legacyRedirects:true,renkoStandalone:true,noOverflow:true};await context.close();
   }
   {
