@@ -1,11 +1,6 @@
 name: GOLD24 Deploy Oracle
 on:
   workflow_dispatch:
-    inputs:
-      ref:
-        description: Git ref to deploy
-        required: true
-        default: main
 permissions:
   contents: read
 concurrency:
@@ -22,20 +17,22 @@ jobs:
           USER: ${{ secrets.GOLD24_USER }}
           KEY: ${{ secrets.GOLD24_SSH_KEY }}
         run: |
+          set -euo pipefail
           test -n "$HOST" && test -n "$USER" && test -n "$KEY"
       - name: Configure SSH
         env:
           KEY: ${{ secrets.GOLD24_SSH_KEY }}
           HOST: ${{ secrets.GOLD24_HOST }}
         run: |
+          set -euo pipefail
           install -d -m 700 ~/.ssh
           printf '%s\n' "$KEY" > ~/.ssh/gold24
           chmod 600 ~/.ssh/gold24
           ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts
-      - name: Deploy and restart service
+      - name: Deploy main and restart service
         env:
           HOST: ${{ secrets.GOLD24_HOST }}
           USER: ${{ secrets.GOLD24_USER }}
-          REF: ${{ inputs.ref }}
         run: |
-          ssh -i ~/.ssh/gold24 "$USER@$HOST" "set -e; cd /opt/rwa; sudo git fetch origin '$REF'; sudo git checkout -f FETCH_HEAD; sudo /opt/rwa/deploy/gold24/install.sh; sudo /opt/rwa/deploy/gold24/healthcheck.sh"
+          set -euo pipefail
+          ssh -i ~/.ssh/gold24 "$USER@$HOST" 'set -euo pipefail; cd /opt/rwa; sudo git fetch origin main; sudo git checkout -B main origin/main; sudo /opt/rwa/deploy/gold24/install.sh; sudo /opt/rwa/deploy/gold24/healthcheck.sh'
