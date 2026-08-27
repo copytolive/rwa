@@ -28,7 +28,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Static tick-only and nonblocking-click contracts
+      - name: Static tick-only and abortable-control contracts
         shell: bash
         run: |
           set -euo pipefail
@@ -47,15 +47,18 @@ jobs:
           grep -Fq "confirmationRule:'every-trade-immediate'" renko/renko-v15.js
           grep -Fq "timeframeControl:false" renko/renko-v15.js
           grep -Fq "historySource:'binance-aggregate-trade-events-no-candles'" renko/renko-v15.js
-          grep -Fq "switchContract:'nonblocking-latest-click-wins'" renko/renko-v15-method-controller.js
-          grep -Fq "chartImpactContract:'recent-tick-fast-commit-deep-history-hydrates-cancellably'" renko/renko-v15-method-controller.js
-          grep -Fq "renderContract:'keep-current-chart-until-target-history-ready'" renko/renko-v15-method-controller.js
+          grep -Fq "version:'1.6.0'" renko/renko-v15-method-controller.js
+          grep -Fq "switchContract:'abortable-latest-interaction-wins'" renko/renko-v15-method-controller.js
+          grep -Fq "interactionContract:'all-inputs-selects-checkboxes-and-apply-remain-interactive-during-history'" renko/renko-v15-method-controller.js
+          grep -Fq "chartImpactContract:'recent-tick-fast-commit-deep-history-abortable'" renko/renko-v15-method-controller.js
+          grep -Fq "renderContract:'keep-current-chart-while-target-history-loads'" renko/renko-v15-method-controller.js
           grep -Fq "startupContract:'no-auto-apply'" renko/renko-v15-method-controller.js
-          grep -Fq "dataset.controller='v15.6-nonblocking-click'" renko/renko-v15-controller-bootstrap.js
-          grep -Fq "renko-v15-method-controller.js?v=156" renko/renko-v15-controller-bootstrap.js
-          grep -Fq "renko-v15-controller-bootstrap.js?v=156" legacy-canonical.js
-          grep -Fq "pointer-events:auto!important" renko/renko-v15.css
-          grep -Fq "touch-action:manipulation" renko/renko-v15.css
+          grep -Fq "controller.abort(reason)" renko/renko-v15-method-controller.js
+          grep -Fq "signal});" renko/renko-v15-method-controller.js
+          grep -Fq "dataset.controller='v15.7-abortable-controls'" renko/renko-v15-controller-bootstrap.js
+          grep -Fq "renko-v15-method-controller.js?v=157" renko/renko-v15-controller-bootstrap.js
+          grep -Fq "z-index:20!important" renko/renko-v15-controller-bootstrap.js
+          grep -Fq "renko-v15-controller-bootstrap.js?v=157" legacy-canonical.js
           grep -Fq "Never serve the cached V14 source/resolution UI" rwa-sw-v5.js
           git diff --check
 
@@ -80,7 +83,7 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Standalone browser acceptance - clicks stay responsive during history hydration
+      - name: Browser acceptance - edit and Apply while history is loading
         shell: bash
         run: |
           python3 -m http.server 8080 > /tmp/renko-http.log 2>&1 &
