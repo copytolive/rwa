@@ -1,0 +1,48 @@
+name: RWA Live Market Visual Proof
+
+on:
+  push:
+    branches:
+      - verify/live-market-browser-20260827
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-market-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      RWA_TEST_URL: https://copytolive.github.io/rwa/
+    steps:
+      - name: Checkout verifier branch
+        uses: actions/checkout@v4
+
+      - name: Confirm production exact SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          live_sha="$(curl --connect-timeout 5 --max-time 15 -fsSL "https://copytolive.github.io/rwa/deployment-sha.txt?v=${GITHUB_RUN_ID}" | tr -d '\r\n')"
+          echo "LIVE_DEPLOYMENT_SHA=$live_sha"
+          test "$live_sha" = "70657ba78342d2d1f1f263da3f5dd03b6278d559"
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run dedicated persistent-market live test
+        run: node tools/persistent-market-shell-v3-browser.mjs
+
+      - name: Capture every production menu state
+        run: node tools/live-market-visual-proof.mjs
+
+      - name: Upload all browser screenshots and geometry report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-market-visual-proof-${{ github.run_id }}
+          path: artifacts/live-market-visual-proof
+          if-no-files-found: error
+          retention-days: 7
