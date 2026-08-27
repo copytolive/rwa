@@ -20,8 +20,8 @@ async function apply(method,expectBox){
 }
 try{
   await page.goto(`${BASE}renko/?symbol=BTC&qa=153`,{waitUntil:'domcontentloaded',timeout:45000});
-  await page.waitForFunction(()=>window.RWARenkoV15?.version==='15.1.0'&&document.documentElement.dataset.renkoMethodBootstrap==='153'&&window.RWARenkoV15MethodProfiles?.version==='1.3.0',{timeout:90000});
-  await page.waitForFunction(()=>RWARenkoV15.state.symbol==='BTCUSDT'&&RWARenkoV15.state.ticks.length>0&&!RWARenkoV15.state.building,{timeout:90000});
+  await page.waitForFunction(()=>window.RWARenkoV15?.version==='15.1.0'&&document.documentElement.dataset.renkoMethodBootstrap==='153'&&window.RWARenkoV15MethodProfiles?.version==='1.3.0',null,{timeout:90000});
+  await page.waitForFunction(()=>RWARenkoV15.state.symbol==='BTCUSDT'&&RWARenkoV15.state.ticks.length>0&&!RWARenkoV15.state.building,null,{timeout:90000});
   if(await page.locator('iframe').count())fail('Standalone page unexpectedly contains iframe');
   const legacy=await page.evaluate(()=>({controller:document.querySelector('#v15BoxCard')?.dataset.controller,hasResolution:!!document.querySelector('[id*=Resolution],select[name*=resolution]'),text:document.body.innerText}));
   if(legacy.controller!=='v15.3-verified-only')fail(`clean controller DOM missing ${JSON.stringify(legacy)}`);
