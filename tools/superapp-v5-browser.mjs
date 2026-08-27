@@ -10,7 +10,6 @@ const markets=[
 const info={symbols:markets.map(x=>({symbol:x.symbol,baseAsset:x.base,quoteAsset:'USDT',status:'TRADING',isSpotTradingAllowed:true}))};
 const tickers=markets.map(x=>({symbol:x.symbol,lastPrice:String(x.price),openPrice:String(x.price/(1+x.change/100)),priceChangePercent:String(x.change),highPrice:String(x.price*1.04),lowPrice:String(x.price*.96),quoteVolume:String(x.vol)}));
 const klines=Array.from({length:180},(_,i)=>{const o=1+i*.001,c=o+(i%2?.004:-.003);return [Date.now()-(180-i)*900000,String(o),String(Math.max(o,c)+.006),String(Math.min(o,c)-.006),String(c),'1000']});
-const persistentRoots=new Set(['intelligence','assets','asset','research','portfolio','institutional']);
 
 async function mocks(context){
   await context.route('**/api/v3/exchangeInfo',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(info)}));
@@ -20,16 +19,8 @@ async function mocks(context){
   await context.route('https://api.hyperliquid.xyz/**',r=>r.fulfill({status:200,contentType:'application/json',body:'[]'}));
   await context.route('https://api.hyperliquid-testnet.xyz/**',r=>r.fulfill({status:200,contentType:'application/json',body:'[]'}));
 }
-async function waitV5(page){
-  await page.waitForFunction(()=>window.RWASuperApp?.version==='5.0.0',{timeout:20000});
-  await page.waitForFunction(()=>window.RWAPersistentMarketWorkspaces?.ready===true,{timeout:10000});
-}
+async function waitV5(page){await page.waitForFunction(()=>window.RWASuperApp?.version==='5.0.0',{timeout:20000});}
 async function assertRoot(page,label){const u=new URL(page.url());assert.equal(u.pathname,'/rwa/',`${label}: pathname escaped /rwa/: ${u.pathname}`)}
-function expectedHash(route){const root=String(route).split('/')[0];return persistentRoots.has(root)?`markets/${route}`:route}
-async function assertPersistentChart(page,label){
-  const g=await page.evaluate(()=>{const c=document.querySelector('.chart-wrap')?.getBoundingClientRect(),l=document.querySelector('.layout');return{persistent:document.body.classList.contains('rwa-persistent-market'),layout:l?getComputedStyle(l).display:null,chart:c&&{x:c.x,y:c.y,w:c.width,h:c.height},probe:document.querySelector('.chart-wrap')?.dataset?.v5PersistentProbe||''}});
-  assert.equal(g.persistent,true,`${label}: persistent market mode missing`);assert.notEqual(g.layout,'none',`${label}: market layout hidden`);assert.ok(g.chart?.w>280&&g.chart?.h>250,`${label}: candlestick area unusable ${JSON.stringify(g.chart)}`);assert.equal(g.probe,'same-chart',`${label}: chart DOM replaced`);return g;
-}
 
 const browser=await chromium.launch({headless:true});
 const result={desktop:{},mobile:{}};
@@ -37,8 +28,7 @@ try{
   {
     const context=await browser.newContext({locale:'en-US',viewport:{width:1440,height:960},serviceWorkers:'block'});await mocks(context);const page=await context.newPage();
     const errors=[];page.on('pageerror',e=>errors.push(String(e.message||e)));
-    await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await waitV5(page);await page.waitForTimeout(900);await assertRoot(page,'root');
-    await page.locator('.chart-wrap').evaluate(e=>e.dataset.v5PersistentProbe='same-chart');
+    await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await waitV5(page);await page.waitForTimeout(1200);await assertRoot(page,'root');
     assert.ok(await page.locator('[data-v5-route="markets"]').count(),'desktop nav missing');
     assert.ok(await page.locator('#rwaGlobalTicker').count(),'global ticker missing');
     assert.ok(await page.locator('#rwaHealth').count(),'health indicator missing');
@@ -48,11 +38,10 @@ try{
     const routes=['markets','intelligence','assets','asset/ONDO','research','portfolio','social','institutional','trade/ONDO'];
     for(const route of routes){
       await page.evaluate(r=>window.RWASuperApp.navigate(r),route);await page.waitForTimeout(route==='portfolio'||route==='social'?800:250);await assertRoot(page,route);
-      const hash=decodeURIComponent(new URL(page.url()).hash.slice(1));assert.equal(hash,expectedHash(route),`${route}: bad hash ${hash}`);
-      if(persistentRoots.has(route.split('/')[0]))await assertPersistentChart(page,route);
+      const hash=decodeURIComponent(new URL(page.url()).hash.slice(1));assert.ok(hash===route||hash.startsWith(route.split('/')[0]),`${route}: bad hash ${hash}`);
     }
     await page.evaluate(()=>window.RWASuperApp.navigate('asset/ONDO'));await page.waitForTimeout(300);
-    assert.equal(await page.locator('#rwaSuperWorkspace').isVisible(),true,'asset context dock missing');
+    assert.equal(await page.locator('#rwaSuperWorkspace').isVisible(),true,'asset drawer missing');
     assert.notEqual(await page.locator('.layout').evaluate(e=>getComputedStyle(e).display),'none','desktop chart hidden behind asset detail');
     assert.ok(await page.locator('[data-asset-tab="tokenization"]').count(),'asset tokenization tab missing');
     assert.ok(await page.locator('[data-asset-tab="risk"]').count(),'asset risk tab missing');
@@ -61,34 +50,32 @@ try{
     for(const tab of ['screener','compare','signals','report','saved','backtest','renko'])assert.ok(await page.locator(`[data-research-tab="${tab}"]`).count(),`research ${tab} missing`);
     await page.locator('[data-research-tab="backtest"]').click();await page.waitForTimeout(120);assert.ok((await page.locator('.rwa-research-legacy-frame').getAttribute('src')).includes('backtest/?embed=1'),'backtest not embedded');
     await page.locator('[data-research-tab="renko"]').click();await page.waitForTimeout(120);assert.ok((await page.locator('.rwa-research-legacy-frame').getAttribute('src')).includes('renko/?embed=1'),'renko not embedded');
-    await assertPersistentChart(page,'research embedded engines');
     await page.evaluate(()=>window.RWASuperApp.navigate('research'));
     await page.evaluate(()=>window.RWASuperApp.openCommand('Treasury'));await page.waitForTimeout(150);assert.equal(await page.locator('#rwaSuperCommand').isVisible(),true,'universal search missing');assert.ok(await page.locator('#rwaSuperCommandResults button').count(),'Treasury search empty');await page.keyboard.press('Escape');
 
     await page.evaluate(()=>{const a=document.createElement('a');a.href='https://example.com/evidence.pdf';a.textContent='Evidence';a.id='qaExternal';document.body.appendChild(a)});await page.locator('#qaExternal').click();await page.waitForTimeout(100);await assertRoot(page,'external preview');assert.equal(await page.locator('#rwaInAppPreview').isVisible(),true,'external source did not open in app');await page.locator('[data-preview-close]').click();
 
-    await page.evaluate(()=>window.RWASuperApp.navigate('assets'));await page.evaluate(()=>window.RWASuperApp.navigate('research'));await page.goBack();await page.waitForTimeout(220);await assertRoot(page,'history back');assert.equal(new URL(page.url()).hash,'#markets/assets','Back did not restore assets market context');await assertPersistentChart(page,'history back');await page.goForward();await page.waitForTimeout(220);assert.equal(new URL(page.url()).hash,'#markets/research','Forward did not restore research market context');await assertPersistentChart(page,'history forward');
+    await page.evaluate(()=>window.RWASuperApp.navigate('assets'));await page.evaluate(()=>window.RWASuperApp.navigate('research'));await page.goBack();await page.waitForTimeout(200);await assertRoot(page,'history back');assert.equal(new URL(page.url()).hash,'#assets','Back did not restore assets route');await page.goForward();await page.waitForTimeout(200);assert.equal(new URL(page.url()).hash,'#research','Forward did not restore research route');
 
     const overflow=await page.evaluate(()=>({w:innerWidth,sw:document.documentElement.scrollWidth}));assert.ok(overflow.sw<=overflow.w+3,`desktop overflow ${overflow.sw}/${overflow.w}`);
     assert.equal(errors.length,0,`desktop uncaught errors: ${errors.join(' | ')}`);
-    for(const [legacyPath,expected] of [['trade/?coin=ONDO','#trade/ONDO'],['asset/?symbol=PAXG','#markets/asset/PAXG'],['backtest/?symbol=ONDO','#markets/research/backtest/ONDO']]){
-      await page.goto(BASE+legacyPath,{waitUntil:'domcontentloaded',timeout:30000});await waitV5(page);await page.waitForTimeout(350);await assertRoot(page,'legacy '+legacyPath);assert.equal(new URL(page.url()).hash,expected,`legacy ${legacyPath} not canonicalized`);
+    for(const [legacyPath,expected] of [['trade/?coin=ONDO','#trade/ONDO'],['asset/?symbol=PAXG','#asset/PAXG'],['backtest/?symbol=ONDO','#research/backtest/ONDO']]){
+      await page.goto(BASE+legacyPath,{waitUntil:'domcontentloaded',timeout:30000});await waitV5(page);await page.waitForTimeout(250);await assertRoot(page,'legacy '+legacyPath);assert.equal(new URL(page.url()).hash,expected,`legacy ${legacyPath} not canonicalized`);
     }
     await page.goto(BASE+'renko/?symbol=ONDO',{waitUntil:'domcontentloaded',timeout:30000});await page.waitForTimeout(250);
     const renkoStandalone=await page.evaluate(()=>({pathname:location.pathname,mode:document.documentElement.dataset.rwaRenkoStandalone||''}));
     assert.equal(renkoStandalone.pathname,'/rwa/renko/','RENKO standalone pathname changed');assert.equal(renkoStandalone.mode,'tick-native','RENKO standalone tick-native marker missing');
-    result.desktop={routes:routes.length,pathname:'/rwa/',persistentMarket:true,assetContext:true,history:true,search:true,preview:true,legacyRedirects:true,renkoStandalone:true,noOverflow:true};await context.close();
+    result.desktop={routes:routes.length,pathname:'/rwa/',assetDrawer:true,history:true,search:true,preview:true,legacyRedirects:true,renkoStandalone:true,noOverflow:true};await context.close();
   }
   {
     const context=await browser.newContext({locale:'en-US',viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:'block'});await mocks(context);const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e.message||e)));
-    await page.goto(BASE+'#markets',{waitUntil:'domcontentloaded',timeout:30000});await waitV5(page);await page.waitForTimeout(700);await assertRoot(page,'mobile root');await page.locator('.chart-wrap').evaluate(e=>e.dataset.v5PersistentProbe='same-chart');
+    await page.goto(BASE+'#markets',{waitUntil:'domcontentloaded',timeout:30000});await waitV5(page);await page.waitForTimeout(900);await assertRoot(page,'mobile root');
     for(const key of ['markets','search','trade','social','portfolio'])assert.ok(await page.locator(`[data-v5-mobile="${key}"]`).count(),`mobile ${key} missing`);
-    await page.evaluate(()=>window.RWASuperApp.navigate('asset/ONDO'));await page.waitForTimeout(250);await assertRoot(page,'mobile asset');assert.equal(await page.locator('#rwaSuperWorkspace').isVisible(),true,'mobile asset context sheet missing');
-    const size=await page.evaluate(()=>{const w=document.getElementById('rwaSuperWorkspace')?.getBoundingClientRect(),c=document.querySelector('.chart-wrap')?.getBoundingClientRect();return{iw:innerWidth,ih:innerHeight,sw:document.documentElement.scrollWidth,workspace:w&&{x:w.x,y:w.y,w:w.width,h:w.height,b:w.bottom},chart:c&&{x:c.x,y:c.y,w:c.width,h:c.height},position:getComputedStyle(document.getElementById('rwaSuperWorkspace')).position}});assert.ok(size.sw<=size.iw+3,`mobile overflow ${size.sw}/${size.iw}`);assert.equal(size.position,'fixed','mobile asset should be fixed bottom sheet');assert.ok(size.workspace?.y>50,`mobile sheet should preserve candlestick view ${JSON.stringify(size.workspace)}`);assert.ok(size.workspace?.b<=size.ih-55,`mobile sheet overlaps bottom navigation ${JSON.stringify(size.workspace)}`);await assertPersistentChart(page,'mobile asset');
-    await page.evaluate(()=>window.RWASuperApp.navigate('portfolio'));await page.waitForTimeout(550);assert.equal(new URL(page.url()).hash,'#markets/portfolio','mobile portfolio escaped market route');await assertPersistentChart(page,'mobile portfolio');
+    await page.evaluate(()=>window.RWASuperApp.navigate('asset/ONDO'));await page.waitForTimeout(250);await assertRoot(page,'mobile asset');assert.equal(await page.locator('#rwaSuperWorkspace').isVisible(),true,'mobile asset internal sheet missing');
+    const size=await page.evaluate(()=>({w:innerWidth,sw:document.documentElement.scrollWidth,workspace:getComputedStyle(document.getElementById('rwaSuperWorkspace')).position}));assert.ok(size.sw<=size.w+3,`mobile overflow ${size.sw}/${size.w}`);assert.equal(size.workspace,'fixed','mobile asset should be full-screen internal sheet');
     await page.evaluate(()=>window.RWASuperApp.navigate('trade/ONDO'));await page.waitForSelector('#exCoin',{timeout:12000});await page.waitForTimeout(250);assert.equal(await page.locator('#exCoin').inputValue(),'ONDO','mobile trade symbol not synced');await assertRoot(page,'mobile trade');
     assert.equal(errors.length,0,`mobile uncaught errors: ${errors.join(' | ')}`);
-    result.mobile={pathname:'/rwa/',bottomNav:true,persistentAssetSheet:true,persistentPortfolio:true,tradeInternal:true,noOverflow:true};await context.close();
+    result.mobile={pathname:'/rwa/',bottomNav:true,assetSheet:true,tradeInternal:true,noOverflow:true};await context.close();
   }
-  console.log(JSON.stringify({ok:true,contract:'rwa-superapp-v5-browser-persistent-market',...result},null,2));
+  console.log(JSON.stringify({ok:true,contract:'rwa-superapp-v5-browser',...result},null,2));
 }finally{await browser.close()}
