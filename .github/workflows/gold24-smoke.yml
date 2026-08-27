@@ -33,3 +33,27 @@ jobs:
           python backtest/gold24/worker.py --once
           test -f "$RUNNER_TEMP/gold24/status.json"
           grep -q 'RUNNING_FAIL_CLOSED' "$RUNNER_TEMP/gold24/status.json"
+      - name: Build tested immutable source package
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/gold24-source
+          cp -a backtest/gold24 dist/gold24-source/backtest-gold24
+          cp -a deploy/gold24 dist/gold24-source/deploy-gold24
+          cp .github/workflows/gold24-smoke.yml .github/workflows/gold24-deploy.yml .github/workflows/gold24-health.yml dist/gold24-source/
+          printf '%s\n' "$GITHUB_SHA" > dist/gold24-source/GIT_COMMIT_SHA.txt
+          printf '%s\n' '6b7fc2920b48a5db18a3fd63e9c4afd4f0281c84003a4e6ebe141b275110b07e' > dist/gold24-source/RULES_SHA256.txt
+          tar -C dist -czf "dist/GOLD24_24X7_SOURCE_${GITHUB_SHA}.tar.gz" gold24-source
+          (cd dist && sha256sum "GOLD24_24X7_SOURCE_${GITHUB_SHA}.tar.gz" > SHA256SUMS.txt)
+          cat dist/SHA256SUMS.txt
+      - name: Upload tested source package
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold24-tested-source-${{ github.sha }}
+          path: |
+            dist/GOLD24_24X7_SOURCE_${{ github.sha }}.tar.gz
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 90
