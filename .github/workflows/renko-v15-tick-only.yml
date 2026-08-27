@@ -8,6 +8,7 @@ on:
       - "legacy-canonical.js"
       - "rwa-sw-v5.js"
       - "tools/renko-v15-methods-v181.mjs"
+      - "tools/renko-production-report.mjs"
       - ".github/workflows/renko-v15-tick-only.yml"
   workflow_dispatch:
 
@@ -45,6 +46,7 @@ jobs:
           node --check renko/renko-v15-method-controller-v181.js
           node --check renko/renko-v15-controller-bootstrap.js
           node --check tools/renko-v15-methods-v181.mjs
+          node --check tools/renko-production-report.mjs
           node --check legacy-canonical.js
           node --check rwa-sw-v5.js
           grep -Fq 'RENKO V15.1' renko/index.html
@@ -75,6 +77,7 @@ jobs:
           grep -Fq 'v15.16-zero-wait-hot-replay' renko/renko-v15-controller-bootstrap.js
           grep -Fq "renkoController:'184'" legacy-canonical.js
           grep -Fq 'Never serve the cached V14 source/resolution UI' rwa-sw-v5.js
+          grep -Fq 'TARGET_VISIBLE=46' tools/renko-production-report.mjs
           git diff --check
 
       - name: Tick formation and WICKS unit matrix
@@ -115,6 +118,9 @@ jobs:
       - name: Remove test-only dependencies
         run: rm -rf node_modules package-lock.json
 
+      - name: Stamp RENKO exact deployed SHA
+        run: printf '%s\n' "$GITHUB_SHA" > renko-deployment-sha.txt
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload verified site
@@ -135,3 +141,43 @@ jobs:
       - name: Deploy verified RENKO V15.16 Pages artifact
         id: deployment
         uses: actions/deploy-pages@v4
+
+  production-browser-report:
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+
+      - name: Wait for exact RENKO Pages SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          ok=0
+          for i in $(seq 1 60); do
+            live_sha="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/renko-deployment-sha.txt?v=${GITHUB_RUN_ID}-${i}" 2>/dev/null | tr -d '\r\n' || true)"
+            if [ "$live_sha" = "$GITHUB_SHA" ]; then ok=1; break; fi
+            sleep 5
+          done
+          test "$ok" = "1"
+          echo "RENKO_LIVE_EXACT_SHA=PASS:$GITHUB_SHA"
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Open live production, screenshot desktop/mobile, and gate immediate first screen
+        env:
+          RWA_TEST_URL: https://copytolive.github.io/rwa/
+        run: node tools/renko-production-report.mjs
+
+      - name: Upload production screenshots and JSON report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: renko-production-report-${{ github.sha }}
+          path: artifacts/renko-production-report
+          if-no-files-found: warn
+          retention-days: 7
