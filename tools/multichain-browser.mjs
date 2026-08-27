@@ -111,6 +111,7 @@ async function runViewport(width,height,label){
   if(!panelBox)throw Error(`${label}: missing panel geometry`);
   if(width>900&&Math.abs(panelBox.width-440)>2)throw Error(`${label}: desktop panel ${panelBox.width}`);
   if(width<=680&&Math.abs(panelBox.width-width)>2)throw Error(`${label}: mobile panel ${panelBox.width}`);
+  if(width<=680&&await page.locator('#rwaMultiChainLaunch').isVisible())throw Error(`${label}: mobile launcher must be hidden while panel is open`);
 
   await page.locator('[data-rwa-chain="base"]').click();
   if((await page.locator('.rwa-mc-badge').innerText()).trim()!=='ROUTE READY')throw Error(`${label}: Base not route-ready`);
@@ -137,6 +138,7 @@ async function runViewport(width,height,label){
   await page.waitForFunction(()=>document.getElementById('rwaMultiChainPanel')?.hidden===true,null,{timeout:5000});
   const closedChart=await page.evaluate(token=>document.querySelector('.chart-wrap')?.dataset.multichainProof===token,chartToken);
   if(!closedChart)throw Error(`${label}: chart changed after close`);
+  if(width<=680&&!(await page.locator('#rwaMultiChainLaunch').isVisible()))throw Error(`${label}: mobile launcher must return after close`);
   report.viewports.push({label,width,height,cards,panelWidth:panelBox.width,policy:status.policy,engine:status.engine,quote:'Base→Solana USDC',mainnetLocked:true,firstPaintStaticScripts:before.staticScripts,pageErrors,consoleErrors,directWrites,chartSurvived:true});
   if(pageErrors.length)report.errors.push(...pageErrors.map(x=>`${label}: ${x}`));
   const benignConsole=/Failed to load resource|Cannot listen to the event from the provided iframe, contentWindow is not available/;
