@@ -71,7 +71,7 @@
     <div><b>Percentage (LTP)</b><p>Latest closed price × user percent, rounded to the nearest exchange minimum tick and applied consistently across the rebuild.</p></div>
     <div><b>ATR</b><p>Wilder ATR is calculated from ordinary 1-second OHLC source candles while Renko formation uses their Close values. A positive raw Wilder ATR is used directly as box size without minimum-tick rounding; large look-backs are prepared in a Web Worker so the visible chart remains responsive.</p></div>
     <div><b>Wicks</b><p>Close source uses discarded Close extrema. Up bricks carry low wicks; down bricks carry high wicks.</p></div>
-    <div><b>Deep history</b><p>Deep ATR history is lazy-started only after explicit ATR interaction. Once activated, history and Wilder state are maintained in a background Web Worker. The displayed coverage dates are locked to the exact deep-worker timestamps and must expand backward with larger 1-second ATR look-backs.</p></div>
+    <div><b>Deep history</b><p>Deep ATR history is lazy-started only after explicit ATR interaction. Once activated, history and Wilder state are maintained in a background Web Worker. The displayed coverage dates are locked to unique non-overlapping 1-second worker timestamps and must expand backward with larger ATR look-backs.</p></div>
     <div><b>Stable chart rendering</b><p>The 1-second source continues to close every second, but redundant open-kline and identical chart writes are suppressed. App-authored latest/zoom range changes are not treated as user left-edge pans, preventing accidental repeated old-history rebuilds.</p></div>
     <div><b>Exact-output limit</b><p>TradingView does not publicly specify every proprietary historical traversal/anchoring detail. This page matches the published Renko rules within the fixed 1s Close source profile rather than claiming proprietary byte-for-byte identity.</p></div>
   </div></details>
@@ -86,6 +86,7 @@
 <script src="renko-tv-1s-close-lock.js?v=173"></script>
 <script src="renko-tv-app.js?v=160"></script>
 <script src="renko-tv-deep-lazy-guard-begin.js?v=178"></script>
+<script src="renko-tv-atr-1s-million-cache-v3.js?v=180"></script>
 <script src="renko-tv-atr-1s-million-cache.js?v=176"></script>
 <script src="renko-tv-deep-lazy-guard-end.js?v=178"></script>
 <script src="renko-tv-deep-coverage-lock.js?v=179"></script>
