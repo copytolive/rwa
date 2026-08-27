@@ -1,0 +1,43 @@
+name: Verify Live Experience Rail Visual Parity V9
+
+on:
+  push:
+    branches:
+      - verify/live-experience-rail-v9-20260827
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for exact deployed SHA
+        env:
+          EXPECTED_SHA: 389c4c2cbe529d17b41fa4c7a034f1acf8281063
+        run: |
+          for i in $(seq 1 60); do
+            got=$(curl -fsS https://copytolive.github.io/rwa/deployment-sha.txt 2>/dev/null || true)
+            if [ "$got" = "$EXPECTED_SHA" ]; then echo "DEPLOYED_SHA=$got"; exit 0; fi
+            echo "waiting for exact deployed SHA; got=$got"
+            sleep 5
+          done
+          exit 1
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify production at 2048px and 1600px
+        env:
+          RWA_TEST_URL: https://copytolive.github.io/rwa/
+          RWA_PROOF_DIR: proof/live-experience-rail-v9
+        run: node tools/experience-rail-visual-parity-v9.mjs
+      - name: Upload production screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-experience-rail-v9-proof
+          path: proof/live-experience-rail-v9
+          retention-days: 30
