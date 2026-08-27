@@ -68,7 +68,7 @@ After ATR 1,000,000 is applied, the same production browser must additionally wa
 
 ## Same-SHA raw ATR validation checkpoint
 
-Engine `1.2.0`, deep cache `2.2.0`, cache-busted production scripts, raw-Wilder browser assertions, and the anti-heartbeat layer are now in the same source tree. This checkpoint intentionally triggers all current Renko production gates together; it is not accepted as complete until the resulting exact-SHA production artifacts are downloaded and visually inspected.
+Engine `1.2.0`, deep cache `2.2.0`, cache-busted production scripts, raw-Wilder browser assertions, and the anti-heartbeat layer are now in the same source tree. The ATR production workflow explicitly installs the same Playwright Chromium dependency used by the other real-browser gates before it executes the seven-value matrix. This checkpoint intentionally triggers all current Renko production gates together; it is not accepted as complete until the resulting exact-SHA production artifacts are downloaded and visually inspected.
 
 ## Release rule
 
