@@ -23,20 +23,20 @@ concurrency:
 jobs:
   verify-renko-tick-only:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Pin V170 all-method controller in deploy artifact
+      - name: Pin V171 history-fill controller in deploy artifact
         shell: bash
         run: |
           set -euo pipefail
-          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170)/renko-v15-controller-bootstrap.js?v=170/g' renko/index.html
-          grep -Fq 'renko-v15-controller-bootstrap.js?v=170' renko/index.html
-          ! grep -Eq 'renko-v15-controller-bootstrap\.js\?v=(154|158)' renko/index.html
+          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170|171)/renko-v15-controller-bootstrap.js?v=171/g' renko/index.html
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=171' renko/index.html
+          ! grep -Eq 'renko-v15-controller-bootstrap\.js\?v=(154|158|170)' renko/index.html
 
-      - name: Static tick-only and all-method operability contracts
+      - name: Static tick-only and full-history method contracts
         shell: bash
         run: |
           set -euo pipefail
@@ -48,23 +48,25 @@ jobs:
           node --check legacy-canonical.js
           node --check rwa-sw-v5.js
           grep -Fq 'RENKO V15.1' renko/index.html
-          grep -Fq 'renko-v15-controller-bootstrap.js?v=170' renko/index.html
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=171' renko/index.html
           ! grep -Eqi 'id="[^"]*(resolution|timeframe)|>RESOLUTION<|1 minute</option>|3 minutes</option>|5 minutes</option>|15 minutes</option>|30 minutes</option>|1 hour</option>|4 hours</option>|1 day</option>' renko/index.html
           ! grep -Fq '/api/v3/klines?' renko/renko-v15.js
           grep -Fq "formationSource:'trade-events-only'" renko/renko-v15.js
           grep -Fq "confirmationRule:'every-trade-immediate'" renko/renko-v15.js
           grep -Fq "timeframeControl:false" renko/renko-v15.js
           grep -Fq "historySource:'binance-aggregate-trade-events-no-candles'" renko/renko-v15.js
-          grep -Fq "version:'1.7.0'" renko/renko-v15-method-controller-v170.js
+          grep -Fq "version:'1.7.1'" renko/renko-v15-method-controller-v170.js
+          grep -Fq 'const TARGET_BRICKS=60' renko/renko-v15-method-controller-v170.js
+          grep -Fq 'BACKFILL_PAGES=96' renko/renko-v15-method-controller-v170.js
+          grep -Fq 'BACKFILL_ROUNDS=24' renko/renko-v15-method-controller-v170.js
           grep -Fq "setupContract:'atr-traditional-percentage-all-operable'" renko/renko-v15-method-controller-v170.js
-          grep -Fq "switchContract:'activate-first-no-history-gate'" renko/renko-v15-method-controller-v170.js
-          grep -Fq "historyContract:'history-is-background-never-a-prerequisite-to-activate'" renko/renko-v15-method-controller-v170.js
-          grep -Fq "zeroBrickContract:'method-may-activate-and-wait-for-first-valid-brick'" renko/renko-v15-method-controller-v170.js
-          grep -Fq "interactionContract:'all-three-method-panels-inputs-wicks-entry-confirm-and-apply-are-interactive'" renko/renko-v15-method-controller-v170.js
-          ! grep -Fq 'NEED HISTORY' renko/renko-v15-method-controller-v170.js
-          grep -Fq "dataset.renkoMethodBootstrap='170'" renko/renko-v15-controller-bootstrap.js
-          grep -Fq 'renko-v15-method-controller-v170.js?v=170' renko/renko-v15-controller-bootstrap.js
-          grep -Fq 'v15.10-all-methods-operable' renko/renko-v15-controller-bootstrap.js
+          grep -Fq "historyContract:'active-method-retries-backfill-until-one-screen-or-source-exhausted'" renko/renko-v15-method-controller-v170.js
+          grep -Fq "zeroBrickContract:'method-activates-immediately-then-backfills'" renko/renko-v15-method-controller-v170.js
+          grep -Fq "interactionContract:'all-three-method-panels-remain-interactive-during-deep-history'" renko/renko-v15-method-controller-v170.js
+          grep -Fq 'engine.loadOlder(Math.max(20,TARGET_BRICKS-bricks),BACKFILL_PAGES)' renko/renko-v15-method-controller-v170.js
+          grep -Fq "dataset.renkoMethodBootstrap='171'" renko/renko-v15-controller-bootstrap.js
+          grep -Fq 'renko-v15-method-controller-v170.js?v=171' renko/renko-v15-controller-bootstrap.js
+          grep -Fq 'v15.11-fill-active-history' renko/renko-v15-controller-bootstrap.js
           grep -Fq 'z-index:40!important' renko/renko-v15-controller-bootstrap.js
           grep -Fq 'Never serve the cached V14 source/resolution UI' rwa-sw-v5.js
           git diff --check
@@ -91,7 +93,7 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Browser acceptance - ATR Traditional Percentage all operable
+      - name: Browser acceptance - SOL Traditional and Percentage fill one screen
         shell: bash
         run: |
           python3 -m http.server 8080 > /tmp/renko-http.log 2>&1 &
