@@ -118,15 +118,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Pin RENKO V181 fast daily-history runtime in Pages artifact
+      - name: Pin RENKO V182 full-history + live-wicks runtime in Pages artifact
         shell: bash
         run: |
           set -euo pipefail
-          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170|171|180|181)/renko-v15-controller-bootstrap.js?v=181/g' renko/index.html
-          grep -Fq 'renko-v15-controller-bootstrap.js?v=181' renko/index.html
-          grep -Fq "renkoController:'181'" legacy-canonical.js
-          grep -Fq "version:'1.8.1'" renko/renko-v15-method-controller-v181.js
-          grep -Fq 'renko-v15-deep-history-worker-v181.js?v=181' renko/renko-v15-method-controller-v181.js
+          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170|171|180|181|182)/renko-v15-controller-bootstrap.js?v=182/g' renko/index.html
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=182' renko/index.html
+          grep -Fq "renkoController:'182'" legacy-canonical.js
+          grep -Fq "version:'1.8.2'" renko/renko-v15-method-controller-v181.js
+          grep -Fq 'TARGET=60' renko/renko-v15-method-controller-v181.js
+          grep -Fq 'renko-v15-deep-history-worker-v181.js?v=182' renko/renko-v15-method-controller-v181.js
+          grep -Fq "wicksContract:'active-method-checkbox-rebuilds-immediately-and-history-stream-retains-excursions'" renko/renko-v15-method-controller-v181.js
 
       - name: Stamp exact deployed SHA
         run: printf '%s\n' "$GITHUB_SHA" > deployment-sha.txt

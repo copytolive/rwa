@@ -1,4 +1,4 @@
-name: RENKO Tick-Only Production Gate
+name: RENKO V15.14 Full History + Wicks Gate
 
 on:
   push:
@@ -28,14 +28,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Pin V181 fast daily-history controller in deploy artifact
+      - name: Pin V182 full-history and live-wicks controller
         shell: bash
         run: |
           set -euo pipefail
-          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170|171|180|181)/renko-v15-controller-bootstrap.js?v=181/g' renko/index.html
-          grep -Fq 'renko-v15-controller-bootstrap.js?v=181' renko/index.html
+          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170|171|180|181|182)/renko-v15-controller-bootstrap.js?v=182/g' renko/index.html
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=182' renko/index.html
 
-      - name: Static tick-only and fast daily-history contracts
+      - name: Static tick-only full-history and wicks contracts
         shell: bash
         run: |
           set -euo pipefail
@@ -48,29 +48,30 @@ jobs:
           node --check legacy-canonical.js
           node --check rwa-sw-v5.js
           grep -Fq 'RENKO V15.1' renko/index.html
-          grep -Fq 'renko-v15-controller-bootstrap.js?v=181' renko/index.html
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=182' renko/index.html
           ! grep -Eqi 'id="[^"]*(resolution|timeframe)|>RESOLUTION<|1 minute</option>|3 minutes</option>|5 minutes</option>|15 minutes</option>|30 minutes</option>|1 hour</option>|4 hours</option>|1 day</option>' renko/index.html
           ! grep -Fq '/api/v3/klines?' renko/renko-v15.js
           grep -Fq "formationSource:'trade-events-only'" renko/renko-v15.js
           grep -Fq "confirmationRule:'every-trade-immediate'" renko/renko-v15.js
           grep -Fq "historySource:'binance-aggregate-trade-events-no-candles'" renko/renko-v15.js
-          grep -Fq "version:'1.8.1'" renko/renko-v15-method-controller-v181.js
-          grep -Fq 'const METHODS=' renko/renko-v15-method-controller-v181.js
-          grep -Fq 'DAY_WINDOWS=[1,3,7,14]' renko/renko-v15-method-controller-v181.js
-          grep -Fq "traditionalDefaultContract:'symbol-scaled-one-percent-until-user-edits-box'" renko/renko-v15-method-controller-v181.js
-          grep -Fq "historyContract:'recent-daily-binance-vision-aggTrades-progressive-1-3-7-14-days'" renko/renko-v15-method-controller-v181.js
-          grep -Fq "formationContract:'trade-events-only-no-candles'" renko/renko-v15-method-controller-v181.js
-          grep -Fq "new Worker('renko-v15-deep-history-worker-v181.js?v=181')" renko/renko-v15-method-controller-v181.js
+          grep -Fq "version:'1.8.2'" renko/renko-v15-method-controller-v181.js
+          grep -Fq 'TARGET=60' renko/renko-v15-method-controller-v181.js
+          grep -Fq 'DAY_WINDOWS=[3,7,14,30]' renko/renko-v15-method-controller-v181.js
+          grep -Fq "historyContract:'daily-binance-vision-aggTrades-fill-at-least-60-confirmed-when-mathematically-available'" renko/renko-v15-method-controller-v181.js
+          grep -Fq "wicksContract:'active-method-checkbox-rebuilds-immediately-and-history-stream-retains-excursions'" renko/renko-v15-method-controller-v181.js
+          grep -Fq "new Worker('renko-v15-deep-history-worker-v181.js?v=182')" renko/renko-v15-method-controller-v181.js
           grep -Fq 'data/spot/daily/aggTrades' renko/renko-v15-deep-history-worker-v181.js
+          grep -Fq 'CONCURRENCY=4' renko/renko-v15-deep-history-worker-v181.js
+          grep -Fq 'Always retain excursions' renko/renko-v15-deep-history-worker-v181.js
           ! grep -Fq '/api/v3/klines?' renko/renko-v15-deep-history-worker-v181.js
-          grep -Fq "dataset.renkoMethodBootstrap='181'" renko/renko-v15-controller-bootstrap.js
-          grep -Fq 'renko-v15-method-controller-v181.js?v=181' renko/renko-v15-controller-bootstrap.js
-          grep -Fq 'v15.13-fast-daily-history' renko/renko-v15-controller-bootstrap.js
-          grep -Fq "renkoController:'181'" legacy-canonical.js
+          grep -Fq "dataset.renkoMethodBootstrap='182'" renko/renko-v15-controller-bootstrap.js
+          grep -Fq 'renko-v15-method-controller-v181.js?v=182' renko/renko-v15-controller-bootstrap.js
+          grep -Fq 'v15.14-full-history-wicks' renko/renko-v15-controller-bootstrap.js
+          grep -Fq "renkoController:'182'" legacy-canonical.js
           grep -Fq 'Never serve the cached V14 source/resolution UI' rwa-sw-v5.js
           git diff --check
 
-      - name: Tick formation unit matrix
+      - name: Tick formation and WICKS unit matrix
         shell: bash
         run: |
           node - <<'NODE'
@@ -84,7 +85,11 @@ jobs:
           if(r.bricks.length!==4||!r.bricks[2].isReversal||r.bricks[2].open!==110||r.bricks[2].close!==100)throw Error('2-box reversal failed');
           r=E.buildTicks({method:'percentage',percentage:.01,ltpSnapshot:100,tickSize:.01,wicks:true,ticks:ticks([100,101,102,99,98])});
           if(Math.abs(r.box-1)>.001||r.audit?.ok!==true)throw Error('SOL-like percentage box assignment failed');
-          console.log('RENKO TICK-ONLY MATRIX PASS');
+          const on=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:true,ticks:ticks([100,99,110])});
+          const off=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:false,ticks:ticks([100,99,110])});
+          if(!(on.bricks[0].low<Math.min(on.bricks[0].open,on.bricks[0].close)))throw Error('WICKS ON failed to retain excursion');
+          if(off.bricks[0].low!==Math.min(off.bricks[0].open,off.bricks[0].close))throw Error('WICKS OFF failed to remove excursion');
+          console.log('RENKO TICK + WICKS MATRIX PASS');
           NODE
 
       - name: Install Playwright Chromium
@@ -92,7 +97,7 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Browser acceptance - SOL all three methods visibly render
+      - name: Browser acceptance - SOL ATR Traditional Percentage and WICKS
         shell: bash
         run: |
           python3 -m http.server 8080 > /tmp/renko-http.log 2>&1 &
@@ -121,6 +126,6 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - name: Deploy verified RENKO V15.13 Pages artifact
+      - name: Deploy verified RENKO V15.14 Pages artifact
         id: deployment
         uses: actions/deploy-pages@v4
