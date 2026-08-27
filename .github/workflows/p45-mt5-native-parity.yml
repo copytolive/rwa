@@ -28,13 +28,16 @@ on:
         description: Optional ROBUST54 comma-separated IDs; ALL = all shard IDs
         required: false
         default: ALL
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
 
 jobs:
   p45-native:
-    if: ${{ inputs.mode == 'p45' || inputs.mode == 'all' }}
+    if: ${{ github.event_name == 'push' || inputs.mode == 'p45' || inputs.mode == 'all' }}
     runs-on: windows-2022
     timeout-minutes: 180
     env:
@@ -94,6 +97,14 @@ jobs:
           '@
           $patched=$patched.Replace($oldReportInit,$newReportInit.TrimEnd())
           $patched=$patched.Replace('Report=$Report','Report=$reportRel')
+          $oldTesterLaunch='  & $Terminal "/config:$ini" | Out-Null'
+          $newTesterLaunch=@'
+            Get-Process terminal64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
+            $tp=Start-Process -FilePath $Terminal -ArgumentList "/config:$ini" -PassThru -Wait
+            Write-Host "MT5_TESTER_EXIT_CODE=$($tp.ExitCode)"
+          '@
+          $patched=$patched.Replace($oldTesterLaunch,$newTesterLaunch.TrimEnd())
           $oldReportGate='  Ensure (Test-Path $Report) "Tester report missing: $Report"'
           $newReportGate=@'
             if(Test-Path $reportActual){ Copy-Item $reportActual $Report -Force }
@@ -103,6 +114,7 @@ jobs:
           if($patched -eq $src){ throw 'Expected compatibility patch targets not found in verified P45 runner' }
           if($patched -notmatch 'MT5_IMPORT_BARSCAP_COMPAT=ACCEPTED'){ throw 'MT5 bar-cap compatibility patch was not applied' }
           if($patched -notmatch 'reports\\GoldAutopilot'){ throw 'MT5 tester report-path compatibility patch was not applied' }
+          if($patched -notmatch 'MT5_TESTER_EXIT_CODE'){ throw 'MT5 tester process compatibility patch was not applied' }
           [IO.File]::WriteAllText('P45_GITHUB_HOSTED_RUN.ps1',$patched,(New-Object Text.UTF8Encoding($false)))
           $ph=(Get-FileHash P45_GITHUB_HOSTED_RUN.ps1 -Algorithm SHA256).Hash.ToLower()
           Write-Host "P45_RUNNER_COMPAT_PATCH_SHA256=$ph"
