@@ -26,7 +26,7 @@ async function snapshot(){
     interval:RWARenkoTV?.settings?.interval,
     source:RWARenkoTV?.settings?.source,
     fixedSource:RWARenkoTV?.state?.fixedSourceProfile===true,
-    noTimeframeControls:!document.querySelector('#intervalSelect')&&!document.querySelector('#sourceSelect')&&!document.querySelector('.source-grid'),
+    noTimeframeControls:!document.querySelector('#intervalSelect')&&!document.querySelector('#sourceSelect'),
     atr:RWARenkoTV?.state?.atr,
     box:RWARenkoTV?.state?.box,
     confirmed:RWARenkoTV?.state?.confirmed?.length,
@@ -50,7 +50,7 @@ async function snapshot(){
 }
 
 await warmExactCurrentRevision();
-const sourceProfile=await page.evaluate(()=>({interval:RWARenkoTV.settings.interval,source:RWARenkoTV.settings.source,fixed:RWARenkoTV.state.fixedSourceProfile===true,noTimeframeControls:!document.querySelector('#intervalSelect')&&!document.querySelector('#sourceSelect')&&!document.querySelector('.source-grid'),sourceText:document.querySelector('#sourceText')?.textContent,modePill:document.querySelector('#modePill')?.textContent}));
+const sourceProfile=await page.evaluate(()=>({interval:RWARenkoTV.settings.interval,source:RWARenkoTV.settings.source,fixed:RWARenkoTV.state.fixedSourceProfile===true,noTimeframeControls:!document.querySelector('#intervalSelect')&&!document.querySelector('#sourceSelect'),sourceText:document.querySelector('#sourceText')?.textContent,modePill:document.querySelector('#modePill')?.textContent}));
 const results=[];
 let failure=null;
 for(const length of VALUES){
