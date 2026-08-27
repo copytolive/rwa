@@ -1,8 +1,5 @@
 name: GOLD v11 GC=F Primary Data
 on:
-  push:
-    paths:
-      - '.github/workflows/gold-v11-gcf-data.yml'
   workflow_dispatch:
 permissions:
   contents: read
