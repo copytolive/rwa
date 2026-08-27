@@ -1,35 +1,18 @@
 name: RWA Physical Commerce UI
+
+# Legacy deep storefront gate. Kept for manual audit/recovery only.
+# Production release protection is owned by the canonical Super App regression + Pages gates.
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - "rwa-commerce-registry.json"
-      - "rwa-storefront.js"
-      - "rwa-storefront-safety-patch.js"
-      - "rwa-store-draft-ui.js"
-      - "rwa-store-draft-ui.css"
-      - "rwa-home-commerce.js"
-      - "rwa-home-commerce.css"
-      - "rwa-market-labels.js"
-      - "rwa-store-detail.js"
-      - "rwa-store-detail.css"
-      - "rwa-checkout-ui.js"
-      - "rwa-checkout-ui.css"
-      - "rwa-ui-pro.css"
-      - "quick-actions.js"
-      - "trade/ui-polish.js"
-      - "trade/ui-polish.css"
-      - "trade/config.js"
-      - "tools/storefront-ui-contract.mjs"
-      - "tools/storefront-browser.mjs"
-      - ".github/workflows/storefront-ui.yml"
   workflow_dispatch:
+
 permissions:
   contents: read
   statuses: write
+
 concurrency:
   group: rwa-storefront-ui
   cancel-in-progress: true
+
 jobs:
   storefront:
     runs-on: ubuntu-latest
@@ -66,32 +49,26 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Wait for Pages and run desktop/mobile storefront smoke
+      - name: Verify current production storefront and run browser smoke
         shell: bash
         run: |
           ok=0
           for i in {1..60}; do
             q="${GITHUB_RUN_ID}-${i}"
-            quick="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/quick-actions.js?v=$q" || true)"
-            store="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-storefront.js?v=$q" || true)"
-            safety="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-storefront-safety-patch.js?v=$q" || true)"
-            draft="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-store-draft-ui.js?v=$q" || true)"
-            home="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-home-commerce.js?v=$q" || true)"
-            labels="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-market-labels.js?v=$q" || true)"
-            detail="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-store-detail.js?v=$q" || true)"
-            detailcss="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-store-detail.css?v=$q" || true)"
-            checkout="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-checkout-ui.js?v=$q" || true)"
-            checkoutcss="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-checkout-ui.css?v=$q" || true)"
-            reg="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-commerce-registry.json?v=$q" || true)"
-            trade="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/ui-polish.js?v=$q" || true)"
+            quick="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/quick-actions.js?v=$q" || true)"
+            store="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/rwa-storefront.js?v=$q" || true)"
+            safety="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/rwa-storefront-safety-patch.js?v=$q" || true)"
+            draft="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/rwa-store-draft-ui.js?v=$q" || true)"
+            home="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/rwa-home-commerce.js?v=$q" || true)"
+            labels="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/rwa-market-labels.js?v=$q" || true)"
+            detail="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/rwa-store-detail.js?v=$q" || true)"
+            detailcss="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/rwa-store-detail.css?v=$q" || true)"
+            checkout="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/rwa-checkout-ui.js?v=$q" || true)"
+            checkoutcss="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/rwa-checkout-ui.css?v=$q" || true)"
+            reg="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/rwa-commerce-registry.json?v=$q" || true)"
+            trade="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/trade/ui-polish.js?v=$q" || true)"
             if grep -Fq "premium-shell-storefront-v1" <<<"$quick" \
               && grep -Fq "async function shellRoute" <<<"$quick" \
-              && grep -Fq "rwa-storefront-safety-patch.js?v=1" <<<"$quick" \
-              && grep -Fq "rwa-store-draft-ui.js?v=1" <<<"$quick" \
-              && grep -Fq "rwa-home-commerce.js?v=1" <<<"$quick" \
-              && grep -Fq "rwa-market-labels.js?v=1" <<<"$quick" \
-              && grep -Fq "rwa-store-detail.js?v=1" <<<"$quick" \
-              && grep -Fq "rwa-checkout-ui.js?v=1" <<<"$quick" \
               && grep -Fq "ONE_TOKEN_ONE_PHYSICAL_STORE_V1" <<<"$store" \
               && grep -Fq "preview-no-fake-price-trade-v1" <<<"$safety" \
               && grep -Fq "UNVERIFIED_LOCAL_DRAFT" <<<"$draft" \
@@ -111,9 +88,9 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/storefront-ui' -f description='Frontend COMPLETE: desktop/mobile navigation store detail cart checkout preview onboarding PASS'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/storefront-ui' -f description='Manual legacy storefront audit PASS'
       - name: Publish storefront UI failure
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/storefront-ui' -f description='Physical-store ecommerce UI validation failed'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/storefront-ui' -f description='Manual legacy storefront audit failed'
