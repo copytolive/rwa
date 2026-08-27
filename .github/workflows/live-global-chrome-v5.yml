@@ -1,0 +1,25 @@
+name: Verify Live Global Chrome V5
+
+on:
+  push:
+    branches:
+      - verify/live-global-chrome-v5-20260827
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify production physical clicks
+        env:
+          RWA_TEST_URL: https://copytolive.github.io/rwa/
+        run: node tools/global-chrome-persistence-browser.mjs
