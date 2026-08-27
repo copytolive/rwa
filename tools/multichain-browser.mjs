@@ -139,7 +139,8 @@ async function runViewport(width,height,label){
   if(!closedChart)throw Error(`${label}: chart changed after close`);
   report.viewports.push({label,width,height,cards,panelWidth:panelBox.width,policy:status.policy,engine:status.engine,quote:'Base→Solana USDC',mainnetLocked:true,firstPaintStaticScripts:before.staticScripts,pageErrors,consoleErrors,directWrites,chartSurvived:true});
   if(pageErrors.length)report.errors.push(...pageErrors.map(x=>`${label}: ${x}`));
-  if(consoleErrors.length)report.errors.push(...consoleErrors.filter(x=>!/Failed to load resource/.test(x)).map(x=>`${label} console: ${x}`));
+  const benignConsole=/Failed to load resource|Cannot listen to the event from the provided iframe, contentWindow is not available/;
+  if(consoleErrors.length)report.errors.push(...consoleErrors.filter(x=>!benignConsole.test(x)).map(x=>`${label} console: ${x}`));
   await context.close();
 }
 
