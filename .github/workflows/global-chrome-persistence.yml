@@ -40,7 +40,9 @@ jobs:
           node --check tools/global-chrome-persistence-browser.mjs
           node --check tools/persistent-market-shell-v3-browser.mjs
           grep -Fq 'GLOBAL CHROME PERSISTENCE V5' persistent-market-operability-patch-v1.css
-          grep -Fq 'root-terminal-global-chrome-v5' market-performance.js
+          grep -Fq "version:'1.3.3'" market-performance.js
+          grep -Fq "runtime:'root-terminal-low-jank-v1'" market-performance.js
+          grep -Fq "persistent_market_workspaces='css-core-router-v3'" market-performance.js
           grep -Fq 'persistent-market-operability-patch-v1.css?v=5' market-performance.js
           grep -Fq 'position:fixed' persistent-market-operability-patch-v1.css
           grep -Fq 'z-index:9950' persistent-market-operability-patch-v1.css
