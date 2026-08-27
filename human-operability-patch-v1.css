@@ -30,6 +30,7 @@
   .brandcopy small{display:none!important}
 }
 @media (min-width:681px) and (max-width:899px){
+  .filter{min-height:44px!important;height:44px!important}
   body.rwa-super-workspace-open .rwa-health,
   body.suite-open .rwa-health{display:none!important}
 }
