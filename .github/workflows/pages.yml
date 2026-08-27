@@ -20,7 +20,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,17 +31,15 @@ jobs:
           set -euo pipefail
           for f in \
             index.html superapp-v5.js superapp-v5.css rwa-sw-v5.js suite-nav.js \
-            human-operability-v1.css rwa-8-engines/human-operability.css rwa-8-engines/app.js \
             execution-api.js execution-ops-bridge.js exchange-core.js \
             rwa-execution-config.json token/config.json manifest.webmanifest rwa-discovery-catalog.json \
             tools/superapp-v5-audit.mjs tools/superapp-v5-browser.mjs \
             tools/superapp-p16-p20-audit.mjs tools/superapp-p16-p20-browser.mjs \
-            tools/human-operability-browser.mjs tools/security-gate.mjs; do test -s "$f"; done
+            tools/security-gate.mjs; do test -s "$f"; done
 
           node --check superapp-v5.js
           node --check rwa-sw-v5.js
           node --check suite-nav.js
-          node --check rwa-8-engines/app.js
           node --check execution-api.js
           node --check execution-ops-bridge.js
           node --check exchange-core.js
@@ -49,7 +47,6 @@ jobs:
           node --check tools/superapp-v5-browser.mjs
           node --check tools/superapp-p16-p20-audit.mjs
           node --check tools/superapp-p16-p20-browser.mjs
-          node --check tools/human-operability-browser.mjs
           node --check tools/security-gate.mjs
 
           python -m json.tool rwa-execution-config.json >/dev/null
@@ -76,9 +73,6 @@ jobs:
           grep -Fq 'execution-api.js?v=4' suite-nav.js
           grep -Fq 'execution-ops-bridge.js?v=4' suite-nav.js
           grep -Fq 'suite-execution-patch.js?v=6' suite-nav.js
-          grep -Fq 'human-operability-v1.css?v=1' suite-nav.js
-          grep -Fq 'human-operability.css?v=1' rwa-8-engines/app.js
-          grep -Fq 'human-operability-v1.css?v=1' market-performance.js
 
           grep -Fq '"enabled": false' rwa-execution-config.json
           grep -Fq '"tgeEnabled": false' token/config.json
@@ -110,7 +104,6 @@ jobs:
           cd "$GITHUB_WORKSPACE"
           node tools/superapp-v5-browser.mjs
           node tools/superapp-p16-p20-browser.mjs
-          node tools/human-operability-browser.mjs
 
   deploy:
     needs: verify
@@ -125,15 +118,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Pin RENKO V180 Vision deep-history runtime in Pages artifact
+      - name: Pin RENKO V181 fast daily-history runtime in Pages artifact
         shell: bash
         run: |
           set -euo pipefail
-          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170|171|180)/renko-v15-controller-bootstrap.js?v=180/g' renko/index.html
-          grep -Fq 'renko-v15-controller-bootstrap.js?v=180' renko/index.html
-          grep -Fq "renkoController:'180'" legacy-canonical.js
-          grep -Fq "version:'1.8.0'" renko/renko-v15-method-controller-v170.js
-          grep -Fq 'renko-v15-deep-history-worker.js?v=180' renko/renko-v15-method-controller-v170.js
+          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170|171|180|181)/renko-v15-controller-bootstrap.js?v=181/g' renko/index.html
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=181' renko/index.html
+          grep -Fq "renkoController:'181'" legacy-canonical.js
+          grep -Fq "version:'1.8.1'" renko/renko-v15-method-controller-v181.js
+          grep -Fq 'renko-v15-deep-history-worker-v181.js?v=181' renko/renko-v15-method-controller-v181.js
 
       - name: Stamp exact deployed SHA
         run: printf '%s\n' "$GITHUB_SHA" > deployment-sha.txt
