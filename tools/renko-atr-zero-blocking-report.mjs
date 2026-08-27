@@ -13,8 +13,12 @@ page.on('pageerror',e=>errors.push(String(e?.message||e)));
 page.on('console',m=>{if(m.type()==='error'&&!/Failed to load resource|WebSocket connection/i.test(m.text()))errors.push(m.text())});
 await page.goto(`${BASE}/renko/?symbol=SOL&atrZeroBlocking=1&ts=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:60000});
 await page.waitForFunction(()=>window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoATRParity?.version==='3.0.0'&&window.RWARenkoATRInstant?.version==='1.1.0',null,{timeout:60000});
-await page.evaluate(()=>RWARenkoATRInstant.warm());
-await page.waitForFunction(()=>document.documentElement.dataset.atrInstantReady==='true'&&RWARenkoATRInstant.warmContext===RWARenkoATRInstant.contextKey(),null,{timeout:90000});
+
+async function warmExactCurrentRevision(){
+  await page.evaluate(()=>RWARenkoATRInstant.warm());
+  await page.waitForFunction(()=>document.documentElement.dataset.atrInstantReady==='true'&&RWARenkoATRInstant.warmContext===RWARenkoATRInstant.contextKey(),null,{timeout:90000});
+  return page.evaluate(()=>RWARenkoATRInstant.contextKey());
+}
 
 async function snapshot(){
   return page.evaluate(()=>({
@@ -41,32 +45,43 @@ async function snapshot(){
   }));
 }
 
+await warmExactCurrentRevision();
 const results=[];
 let failure=null;
-for(let i=0;i<VALUES.length;i++){
-  const length=VALUES[i];
-  // A source candle can close at any instant. Before timing the interaction,
-  // explicitly bring the worker cache to the exact current source revision and
-  // then require warmContext === currentContext. This measures a prepared switch,
-  // not background cache maintenance or network/history warmup.
-  await page.evaluate(()=>RWARenkoATRInstant.warm());
-  await page.waitForFunction(()=>document.documentElement.dataset.atrInstantReady==='true'&&RWARenkoATRInstant.warmContext===RWARenkoATRInstant.contextKey(),null,{timeout:90000});
-  await page.fill('#atrLength',String(length));
-  const started=Date.now();
-  await page.click('[data-apply-method="atr"]');
-  try{
-    await page.waitForFunction(n=>RWARenkoTV.settings.atrLength===n&&RWARenkoTV.state.atrLastApply?.length===n&&RWARenkoTV.state.atrInstantMetric?.length===n&&document.documentElement.dataset.atrInstantCacheHit==='true'&&document.documentElement.dataset.atrBlockingMs==='0',length,{timeout:10000});
-  }catch(e){
-    failure={length,error:String(e?.message||e),state:await snapshot()};
+for(const length of VALUES){
+  let passed=null,lastError=null;
+  // A 1m candle can close in the few milliseconds between warming, filling and
+  // clicking. That is cache invalidation, not user-switch blocking. If revision
+  // changes during the measured window, rewarm and repeat the exact assertion.
+  for(let attempt=1;attempt<=4&&!passed;attempt++){
+    const preparedContext=await warmExactCurrentRevision();
+    await page.fill('#atrLength',String(length));
+    const contextBeforeClick=await page.evaluate(()=>RWARenkoATRInstant.contextKey());
+    if(contextBeforeClick!==preparedContext)continue;
+    const started=Date.now();
+    await page.click('[data-apply-method="atr"]');
+    try{
+      await page.waitForFunction(({n,ctx})=>RWARenkoATRInstant.contextKey()===ctx&&RWARenkoATRInstant.warmContext===ctx&&RWARenkoTV.settings.atrLength===n&&RWARenkoTV.state.atrLastApply?.length===n&&RWARenkoTV.state.atrInstantMetric?.length===n&&document.documentElement.dataset.atrInstantCacheHit==='true'&&document.documentElement.dataset.atrBlockingMs==='0',{n:length,ctx:preparedContext},{timeout:10000});
+      const snap=await snapshot();
+      if(snap.currentContext!==preparedContext||snap.warmContext!==preparedContext)continue;
+      passed={...snap,wallMs:Date.now()-started,preparedContext,attempt};
+    }catch(e){
+      lastError=e;
+      const nowContext=await page.evaluate(()=>RWARenkoATRInstant.contextKey());
+      if(nowContext!==preparedContext)continue;
+      break;
+    }
+  }
+  if(!passed){
+    failure={length,error:String(lastError?.message||lastError||'prepared current-revision 0ms assertion failed'),state:await snapshot()};
     await page.screenshot({path:path.join(OUT,`FAILED-atr-${length}.png`),fullPage:true});
     break;
   }
-  const wallMs=Date.now()-started,snap=await snapshot();
-  results.push({...snap,wallMs});
+  results.push(passed);
   await page.screenshot({path:path.join(OUT,`atr-${length}-0ms-blocking.png`),fullPage:true});
 }
-const pass=!failure&&errors.length===0&&results.length===VALUES.length&&results.every((x,i)=>x.cacheHit&&x.blockingMs===0&&x.atrLength===VALUES[i]&&x.lastApply?.length===VALUES[i]&&x.warmContext===x.currentContext);
-const report={url:page.url(),values:VALUES,results,failure,errors,pass,note:'0 ms refers to measured main-thread Total Blocking Time for a prepared current-revision switch, not literal wall-clock elapsed time or background prewarm.'};
+const pass=!failure&&errors.length===0&&results.length===VALUES.length&&results.every((x,i)=>x.cacheHit&&x.blockingMs===0&&x.atrLength===VALUES[i]&&x.lastApply?.length===VALUES[i]&&x.warmContext===x.currentContext&&x.currentContext===x.preparedContext);
+const report={url:page.url(),values:VALUES,results,failure,errors,pass,note:'0 ms refers to measured main-thread Total Blocking Time for a prepared exact-current-revision switch. If a source candle closes during the measurement window, the proof discards that invalidated attempt, rewarms, and measures again; it never relaxes the 0 ms/cache-hit assertion.'};
 await fs.writeFile(path.join(OUT,'report.json'),JSON.stringify(report,null,2));
 console.log(JSON.stringify(report,null,2));
 await browser.close();
