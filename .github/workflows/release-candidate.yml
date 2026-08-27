@@ -34,6 +34,7 @@ jobs:
           node --check rwa-checkout-ui.js
           node --check quick-actions.js
           node --check rwa-multichain.js
+          node --check tools/launch-gate-current.mjs
           node --check trade/app.js
           node --check trade/hyperliquid.js
           node --check trade/terminal-pro.js
@@ -57,7 +58,7 @@ jobs:
           node tools/multichain-contract.mjs
           node tools/storefront-ui-contract.mjs
           node tools/security-gate.mjs
-          node tools/launch-gate.mjs --require-engineering
+          node tools/launch-gate-current.mjs --require-engineering
       - name: Validate immutable safety, lazy runtime and commerce markers
         shell: bash
         run: |
