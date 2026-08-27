@@ -2,6 +2,7 @@
 const nav=document.querySelector('.mobile-tabs');
 if(nav){nav.innerHTML='<a href="#markets" data-mobile-nav="markets"><span>⌕</span><small>Markets</small></a><a class="active" href="#terminal" data-mobile-nav="chart"><span>⌁</span><small>Chart</small></a><a href="#social" data-mobile-nav="social"><span>◎</span><small>Social</small></a><a href="#suite" data-mobile-nav="hub"><span>◇</span><small>Hub</small></a><a href="#suite" data-mobile-nav="portfolio"><span>▣</span><small>Portfolio</small></a>';nav.style.setProperty('grid-template-columns','repeat(5,1fr)','important')}
 const ptab=document.querySelector('[data-suite-tab="profile"]');if(ptab)ptab.textContent='Account + P&L';
+const rwaTab=document.querySelector('[data-suite-tab="rwa"]');if(rwaTab)rwaTab.textContent='RWA Factory';
 const autoWalletLogin=!!document.activeElement?.matches?.('.signin');
 function hideSuite(){document.body.classList.remove('suite-open');const s=document.getElementById('suite');if(s)s.style.display='none'}
 function suite(tab){if(!window.RWASuite)return;window.RWASuite.open(tab);const s=document.getElementById('suite');if(innerWidth>680&&s)setTimeout(()=>s.scrollIntoView({behavior:'smooth',block:'start'}),20)}
@@ -11,6 +12,14 @@ for(const b of document.querySelectorAll('.product-nav button')){const t=b.textC
 const sign=document.querySelector('.signin');if(sign){sign.textContent='Connect Wallet';sign.onclick=()=>suite('profile')}const inst=document.querySelector('.institutional');if(inst)inst.onclick=()=>suite('rwa');
 if(!document.querySelector('link[data-rwa-ops-css]')){const l=document.createElement('link');l.rel='stylesheet';l.href='ops.css?v=1';l.dataset.rwaOpsCss='1';document.head.appendChild(l)}
 function load(src,key){if(document.querySelector(`script[data-rwa-${key}]`))return;const base=src.split('?')[0];if([...document.scripts].some(s=>(s.getAttribute('src')||'').split('?')[0]===base))return;const s=document.createElement('script');s.src=src;s.async=false;s.dataset[`rwa${key.replace(/(^|-)(\w)/g,(_,a,b)=>b.toUpperCase())}`]='1';document.body.appendChild(s)}
+function installGlobalRwaFactory(){
+  const panel=document.querySelector('[data-suite-panel="rwa"]');if(!panel||panel.querySelector('[data-global-rwa-factory]'))return;
+  const legacy=panel.querySelector('.suite-grid');
+  const wrap=document.createElement('section');wrap.className='suite-card span-12';wrap.dataset.globalRwaFactory='1';wrap.style.cssText='margin:0 0 14px;min-height:760px;padding:0;overflow:hidden;border-color:#33445d;background:#090d13';
+  wrap.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #263142"><div><small style="letter-spacing:.12em;color:#8ab4ff;font-weight:800">GLOBAL RWA FACTORY · 8 ENGINES</small><h3 style="margin:3px 0 0">Create My RWA</h3></div><span style="font-size:11px;color:#60d394">REGISTER → FINANCE → TRADE GATED</span></div><iframe title="Global RWA Factory" src="rwa-8-engines/?embed=1" loading="lazy" style="display:block;width:100%;height:820px;border:0;background:#080b10"></iframe>';
+  if(legacy)panel.insertBefore(wrap,legacy);else panel.appendChild(wrap);
+}
+installGlobalRwaFactory();
 load('walletconnect.js?v=4','walletconnect');
 /* wallet-core.js v3 is the only auth owner and is loaded by index.html. */
 /* Single write-path: API and capture bridge register before secondary UI handlers. */
