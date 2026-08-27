@@ -2,7 +2,7 @@
 'use strict';
 if(window.RWAMarketPerformanceGuard)return;
 
-const PERF={version:'1.3.0',runtime:'root-terminal-low-jank-v1'};
+const PERF={version:'1.3.1',runtime:'root-terminal-low-jank-v1'};
 const hotIds=new Set(['pairList','pairCount','liveDot','statHigh','statLow','statVol','statChange','buyPct','tradeCount']);
 const NativeMutationObserver=window.MutationObserver;
 const periodic=new Map();
@@ -20,6 +20,9 @@ function installSingleRowHeader(){
 function loadPersistentMarketLayer(){
   if(!document.querySelector('link[data-rwa-persistent-market]')){
     const l=document.createElement('link');l.rel='stylesheet';l.href='persistent-market-workspaces-v1.css?v=1';l.dataset.rwaPersistentMarket='1';document.head.appendChild(l);
+  }
+  if(!document.querySelector('link[data-rwa-persistent-market-operability]')){
+    const l=document.createElement('link');l.rel='stylesheet';l.href='persistent-market-operability-patch-v1.css?v=1';l.dataset.rwaPersistentMarketOperability='1';document.head.appendChild(l);
   }
   if(!document.querySelector('script[data-rwa-persistent-market]')){
     const s=document.createElement('script');s.src='persistent-market-workspaces-v1.js?v=1';s.async=true;s.dataset.rwaPersistentMarket='1';document.body.appendChild(s);
@@ -181,5 +184,6 @@ PERF.market_dom_flush_ms=500;
 PERF.book_flush_ms=320;
 PERF.trade_flush_ms=250;
 PERF.persistent_market_workspaces='v1';
+PERF.human_operability='persistent-market-patch-v1';
 window.RWAMarketPerformanceGuard=PERF;
 })();
