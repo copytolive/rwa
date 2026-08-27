@@ -1,0 +1,55 @@
+name: P6 Research Repair Once
+on:
+  push:
+    branches: ["fix/p6-research-embed-contract-20260827"]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: p6-research-repair-once
+  cancel-in-progress: true
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/p6-research-embed-contract-20260827
+          fetch-depth: 0
+      - name: Repair and validate P6
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('superapp-v5.js')
+          s=p.read_text()
+          old="const toolUrl=`${tab}/?embed=1&v=${tab==='renko'?'142':'1'}&symbol=${encodeURIComponent(sym)}`;"
+          new="const toolUrl=`${tab}/?embed=1&symbol=${encodeURIComponent(sym)}&v=${tab==='renko'?'142':'1'}`;"
+          if old not in s:
+              if new in s:
+                  print('P6 already repaired')
+              else:
+                  raise SystemExit('Expected P6 toolUrl contract not found')
+          else:
+              s=s.replace(old,new,1)
+              p.write_text(s)
+          PY
+          node --check superapp-v5.js
+          node tools/superapp-v5-audit.mjs
+          node tools/superapp-p16-p20-audit.mjs
+          node tools/security-gate.mjs
+          grep -Fq '?embed=1&symbol=' superapp-v5.js
+          grep -Fq "&v=${tab==='renko'?'142':'1'}" superapp-v5.js
+          git diff --check
+      - name: Commit repaired source to maintenance branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- superapp-v5.js; then exit 0; fi
+          git config user.name copytolive
+          git config user.email copytolive@gmail.com
+          git add superapp-v5.js
+          git commit -m 'fix: restore P6 research embed contract'
+          git push origin HEAD:fix/p6-research-embed-contract-20260827
