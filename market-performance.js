@@ -22,7 +22,7 @@ function loadPersistentMarketLayer(){
     const l=document.createElement('link');l.rel='stylesheet';l.href='persistent-market-shell-v3.css?v=3';l.dataset.rwaPersistentMarketV3='1';document.head.appendChild(l);
   }
   if(!document.querySelector('link[data-rwa-persistent-market-operability]')){
-    const l=document.createElement('link');l.rel='stylesheet';l.href='persistent-market-operability-patch-v1.css?v=5';l.dataset.rwaPersistentMarketOperability='1';document.head.appendChild(l);
+    const l=document.createElement('link');l.rel='stylesheet';l.href='persistent-market-operability-patch-v1.css?v=9';l.dataset.rwaPersistentMarketOperability='1';document.head.appendChild(l);
   }
 }
 
