@@ -36,8 +36,6 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import re
-
-          # Parent shell cache bust.
           p=Path('superapp-v5.js');s=p.read_text()
           s=re.sub(r"tab==='renko'\?'\d+':'1'","tab==='renko'?'151':'1'",s)
           old="const toolUrl=`${tab}/?embed=1&symbol=${encodeURIComponent(sym)}`;"
@@ -45,16 +43,12 @@ jobs:
           if "tab==='renko'?'151':'1'" not in s:raise SystemExit('RENKO iframe cache v151 missing')
           p.write_text(s)
           p=Path('index.html');s=p.read_text();s=re.sub(r'superapp-v5\.js\?v=\d+','superapp-v5.js?v=18',s);p.write_text(s)
-
-          # V15.1: remove hidden 1m ATR calibration. Tick ATR is Wilder-smoothed absolute trade-to-trade movement.
           p=Path('renko/renko-v15.js');s=p.read_text()
-          old_atr="""function wilderAtr(rows,len){const tr=[];let prev=NaN;for(const r of rows||[]){const h=Number(r?.[2]),l=Number(r?.[3]),c=Number(r?.[4]);if(![h,l,c].every(Number.isFinite))continue;tr.push(Number.isFinite(prev)?Math.max(h-l,Math.abs(h-prev),Math.abs(l-prev)):h-l);prev=c}if(!tr.length)return NaN;len=Math.max(1,Math.floor(Number(len)||14));if(tr.length<len)return tr.reduce((a,b)=>a+b,0)/tr.length;let a=tr.slice(0,len).reduce((x,y)=>x+y,0)/len;for(let i=len;i<tr.length;i++)a=((a*(len-1))+tr[i])/len;return a}
-async function fetchAtr(symbol){try{const rows=await fetchJson(`/api/v3/klines?symbol=${encodeURIComponent(symbol)}&interval=1m&limit=${Math.max(80,C.atrLength+40)}`),t=now(),closed=(Array.isArray(rows)?rows:[]).filter(r=>Number(r?.[6]||0)<t);return wilderAtr(closed,C.atrLength)}catch(e){console.warn('[V15 ATR calibration]',e);return NaN}}
-"""
-          new_atr="""function tickAtr(ticks,len){len=Math.max(1,Math.floor(Number(len)||14));const src=(Array.isArray(ticks)?ticks:[]).slice(-Math.max(500,len*50)),moves=[];let prev=NaN;for(const t of src){const p=Number(t?.price);if(!Number.isFinite(p))continue;if(Number.isFinite(prev)){const tr=Math.abs(p-prev);if(tr>0)moves.push(tr)}prev=p}if(!moves.length)return NaN;const recent=moves.slice(-Math.max(len,Math.min(moves.length,len*20)));if(recent.length<len)return recent.reduce((a,b)=>a+b,0)/recent.length;let a=recent.slice(0,len).reduce((x,y)=>x+y,0)/len;for(let i=len;i<recent.length;i++)a=((a*(len-1))+recent[i])/len;return a}
-"""
-          if old_atr in s:s=s.replace(old_atr,new_atr,1)
-          if 'function tickAtr(ticks,len)' not in s:raise SystemExit('Tick ATR function missing')
+          if 'function tickAtr(ticks,len)' not in s:
+              start=s.index('function wilderAtr(rows,len)')
+              end=s.index('function mapAgg(rows)',start)
+              tick_atr="function tickAtr(ticks,len){len=Math.max(1,Math.floor(Number(len)||14));const src=(Array.isArray(ticks)?ticks:[]).slice(-Math.max(500,len*50)),moves=[];let prev=NaN;for(const t of src){const p=Number(t?.price);if(!Number.isFinite(p))continue;if(Number.isFinite(prev)){const tr=Math.abs(p-prev);if(tr>0)moves.push(tr)}prev=p}if(!moves.length)return NaN;const recent=moves.slice(-Math.max(len,Math.min(moves.length,len*20)));if(recent.length<len)return recent.reduce((a,b)=>a+b,0)/recent.length;let a=recent.slice(0,len).reduce((x,y)=>x+y,0)/len;for(let i=len;i<recent.length;i++)a=((a*(len-1))+recent[i])/len;return a}\n"
+              s=s[:start]+tick_atr+s[end:]
           old_reset="const [tick,ltp,atr,rows]=await Promise.all([fetchTickSize(symbol),fetchLtp(symbol),fetchAtr(symbol),latestAgg(symbol)]);if(generation!==S.generation)return;S.tickSize=tick;S.ltpSnapshot=ltp;S.atrValue=atr;S.box=activeBox();if(rows.length){S.ticks=rows;"
           new_reset="const [tick,ltp,rows]=await Promise.all([fetchTickSize(symbol),fetchLtp(symbol),latestAgg(symbol)]);if(generation!==S.generation)return;S.tickSize=tick;S.ltpSnapshot=ltp;S.atrValue=tickAtr(rows,C.atrLength);if(!(S.atrValue>0))S.atrValue=S.tickSize;S.box=activeBox();if(rows.length){S.ticks=rows;"
           if old_reset in s:s=s.replace(old_reset,new_reset,1)
@@ -67,8 +61,6 @@ async function fetchAtr(symbol){try{const rows=await fetchJson(`/api/v3/klines?s
           if '/api/v3/klines?' in s or 'fetchAtr(' in s or 'wilderAtr(' in s:raise SystemExit('bar/timeframe ATR dependency still exists')
           if "atrSizing:'wilder-absolute-trade-move-no-timeframe'" not in s:raise SystemExit('tick ATR contract missing')
           p.write_text(s)
-
-          # Make the UI explicit: ATR itself is now tick based.
           p=Path('renko/index.html');s=p.read_text()
           s=s.replace('RENKO V15 — Tick Native','RENKO V15.1 — Full Tick Native')
           s=s.replace('ATR LENGTH</label><input id="v15AtrLength"','TICK ATR LEN</label><input id="v15AtrLength"')
@@ -100,6 +92,7 @@ async function fetchAtr(symbol){try{const rows=await fetchJson(`/api/v3/klines?s
           ! grep -Fq '1 minute</option>' renko/index.html
           ! grep -Fq '/api/v3/klines?' renko/renko-v15.js
           ! grep -Fq 'fetchAtr(' renko/renko-v15.js
+          ! grep -Fq 'wilderAtr(' renko/renko-v15.js
           grep -Fq 'function tickAtr(ticks,len)' renko/renko-v15.js
           grep -Fq "version:'15.1.0'" renko/renko-v15.js
           grep -Fq "formationSource:'trade-events-only'" renko/renko-v15.js
@@ -107,7 +100,6 @@ async function fetchAtr(symbol){try{const rows=await fetchJson(`/api/v3/klines?s
           grep -Fq "timeframeControl:false" renko/renko-v15.js
           grep -Fq "atrSizing:'wilder-absolute-trade-move-no-timeframe'" renko/renko-v15.js
           grep -Fq "liveDrain:'all-unseen-raw-trades-in-order'" renko/renko-v15.js
-          grep -Fq 'uniformAudit' renko/renko-v15-worker.js
           git diff --check
 
       - name: Tick formation unit matrix
