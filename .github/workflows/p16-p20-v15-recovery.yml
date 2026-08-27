@@ -1,0 +1,68 @@
+name: RWA P16-P20 V15 Recovery Gate
+
+on:
+  push:
+    branches: ['recovery/p16-p20-v15-launch-20260827']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rwa-p16-p20-v15-recovery
+  cancel-in-progress: true
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: recovery/p16-p20-v15-launch-20260827
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Reconstruct V13 + V14 + V15 and run static/security gates
+        run: |
+          cat .recovery/p16-p20-v15/recover.part* | base64 -d | gzip -d > /tmp/recover.py
+          python3 /tmp/recover.py
+
+      - name: Install browser test runtime
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run P1-P20 browser gates
+        env:
+          RWA_TEST_URL: http://127.0.0.1:4173/rwa/
+        run: |
+          mkdir -p /tmp/rwa-v15-site/rwa
+          cp -a . /tmp/rwa-v15-site/rwa/
+          cd /tmp/rwa-v15-site
+          python3 -m http.server 4173 >/tmp/rwa-v15-http.log 2>&1 &
+          echo $! >/tmp/rwa-v15-http.pid
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
+          cd "$GITHUB_WORKSPACE"
+          node tools/superapp-v5-browser.mjs
+          node tools/superapp-p16-p20-browser.mjs
+
+      - name: Commit gated product recovery
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html superapp-v5.js superapp-v5.css rwa-sw-v5.js \
+            tools/superapp-v5-audit.mjs tools/superapp-p16-p20-audit.mjs tools/superapp-p16-p20-browser.mjs \
+            .github/workflows/superapp-regression.yml .github/workflows/pages.yml
+          if git diff --cached --quiet; then
+            echo 'RECOVERY_PATCH=ALREADY_PRESENT'
+            exit 0
+          fi
+          git commit -m 'feat: complete RWA Super App P16-P20 V15 release'
+          git push origin HEAD:recovery/p16-p20-v15-launch-20260827
+          echo 'RECOVERY_PRODUCT_COMMIT=PASS'
