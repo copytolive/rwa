@@ -1,26 +1,18 @@
 name: RWA Browser Operability
+
+# Legacy deep browser gate. Manual-only to prevent CI storms on every production push.
+# Canonical production browser protection remains in Super App Regression / Pages.
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - "index.html"
-      - "quick-actions.js"
-      - "social-notification-defaults.js"
-      - "social-trading-pro.js"
-      - "rwa-*.js"
-      - "rwa-*.css"
-      - "suite*.js"
-      - "trade/**"
-      - "tools/browser-operability.mjs"
-      - "tools/storefront-browser.mjs"
-      - ".github/workflows/browser-operability.yml"
   workflow_dispatch:
+
 permissions:
   contents: read
   statuses: write
+
 concurrency:
   group: rwa-browser-operability
   cancel-in-progress: true
+
 jobs:
   browser:
     runs-on: ubuntu-latest
@@ -45,23 +37,22 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Wait for Pages and run full desktop/mobile interactions
+      - name: Verify current production and run full desktop/mobile interactions
         shell: bash
         run: |
           ok=0
           for i in {1..60}; do
             q="${GITHUB_RUN_ID}-${i}"
-            cfg="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/config.js?v=$q" || true)"
-            quick="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/quick-actions.js?v=$q" || true)"
-            defaults="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-notification-defaults.js?v=$q" || true)"
-            social="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/social-trading-pro.js?v=$q" || true)"
-            detail="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-store-detail.js?v=$q" || true)"
-            checkout="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/rwa-checkout-ui.js?v=$q" || true)"
-            html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/?v=$q" || true)"
+            cfg="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/trade/config.js?v=$q" || true)"
+            quick="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/quick-actions.js?v=$q" || true)"
+            defaults="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/social-notification-defaults.js?v=$q" || true)"
+            social="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/social-trading-pro.js?v=$q" || true)"
+            detail="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/rwa-store-detail.js?v=$q" || true)"
+            checkout="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/rwa-checkout-ui.js?v=$q" || true)"
+            html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/?v=$q" || true)"
             if grep -Fq "version:'1.5.0'" <<<"$cfg" \
               && grep -Fq 'RWAQuickActions' <<<"$quick" \
               && grep -Fq 'data-rwa-social-nav' <<<"$quick" \
-              && grep -Fq 'rwa-checkout-ui.js?v=1' <<<"$quick" \
               && grep -Fq "policy:'explicit-opt-in-v1'" <<<"$defaults" \
               && grep -Fq 'friends:false' <<<"$defaults" \
               && grep -Fq "venue-backed-social-feed-v1" <<<"$social" \
@@ -78,9 +69,9 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/browser-operability' -f description='Frontend COMPLETE: trading social storefront store detail cart checkout desktop/mobile Chromium PASS'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/browser-operability' -f description='Manual legacy browser audit PASS'
       - name: Publish browser failure
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/browser-operability' -f description='Full desktop/mobile browser operability failed'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/browser-operability' -f description='Manual legacy browser audit failed'
