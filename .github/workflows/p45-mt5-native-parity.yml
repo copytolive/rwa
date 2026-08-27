@@ -82,8 +82,27 @@ jobs:
           }
           '@
           $patched=$patched.Replace($old,$new.TrimEnd())
+          $oldReportInit='  $ini=Join-Path $Run ((Split-Path $Report -Leaf)+''.ini'')'
+          $newReportInit=@'
+            $ini=Join-Path $Run ((Split-Path $Report -Leaf)+'.ini')
+            $reportLeaf=[IO.Path]::GetFileNameWithoutExtension($Report)
+            $reportDir=Join-Path $Mt5Dir 'reports\GoldAutopilot'
+            New-Item -ItemType Directory -Force $reportDir | Out-Null
+            $reportRel="\reports\GoldAutopilot\$reportLeaf"
+            $reportActual=Join-Path $reportDir ($reportLeaf+'.htm')
+            Remove-Item $reportActual -Force -ErrorAction SilentlyContinue
+          '@
+          $patched=$patched.Replace($oldReportInit,$newReportInit.TrimEnd())
+          $patched=$patched.Replace('Report=$Report','Report=$reportRel')
+          $oldReportGate='  Ensure (Test-Path $Report) "Tester report missing: $Report"'
+          $newReportGate=@'
+            if(Test-Path $reportActual){ Copy-Item $reportActual $Report -Force }
+            Ensure (Test-Path $Report) "Tester report missing: $Report"
+          '@
+          $patched=$patched.Replace($oldReportGate,$newReportGate.TrimEnd())
           if($patched -eq $src){ throw 'Expected compatibility patch targets not found in verified P45 runner' }
           if($patched -notmatch 'MT5_IMPORT_BARSCAP_COMPAT=ACCEPTED'){ throw 'MT5 bar-cap compatibility patch was not applied' }
+          if($patched -notmatch 'reports\\GoldAutopilot'){ throw 'MT5 tester report-path compatibility patch was not applied' }
           [IO.File]::WriteAllText('P45_GITHUB_HOSTED_RUN.ps1',$patched,(New-Object Text.UTF8Encoding($false)))
           $ph=(Get-FileHash P45_GITHUB_HOSTED_RUN.ps1 -Algorithm SHA256).Hash.ToLower()
           Write-Host "P45_RUNNER_COMPAT_PATCH_SHA256=$ph"
