@@ -12,13 +12,13 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
 concurrency:
   group: "renko-v15-pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   verify-renko-v15:
@@ -27,15 +27,35 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Activate V15 parent-shell cache version
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('superapp-v5.js');s=p.read_text()
+          s=re.sub(r"tab==='renko'\?'\d+':'1'","tab==='renko'?'150':'1'",s)
+          old="const toolUrl=`${tab}/?embed=1&symbol=${encodeURIComponent(sym)}`;"
+          if old in s:s=s.replace(old,"const toolUrl=`${tab}/?embed=1&v=${tab==='renko'?'150':'1'}&symbol=${encodeURIComponent(sym)}`;")
+          if "tab==='renko'?'150':'1'" not in s:raise SystemExit('RENKO iframe cache v150 missing')
+          p.write_text(s)
+          p=Path('index.html');s=p.read_text();s=re.sub(r'superapp-v5\.js\?v=\d+','superapp-v5.js?v=17',s);p.write_text(s)
+          PY
 
       - name: Static tick-native contracts
         shell: bash
         run: |
           set -euo pipefail
+          node --check superapp-v5.js
           node --check renko/renko-v15.js
           node --check renko/renko-v15-worker.js
           node --check renko/renko-v15-method-profiles.js
           node --check tools/renko-v15-functional.mjs
+          grep -Fq 'superapp-v5.js?v=17' index.html
+          grep -Fq "tab==='renko'?'150':'1'" superapp-v5.js
           grep -Fq 'RENKO V15' renko/index.html
           grep -Fq 'renko-v15.js?v=150' renko/index.html
           grep -Fq 'renko-v15-method-profiles.js?v=150' renko/index.html
@@ -86,6 +106,20 @@ jobs:
           trap 'kill $server || true' EXIT
           for i in {1..30}; do curl -fsS http://127.0.0.1:8080/ >/dev/null && break || true; sleep 1; done
           RENKO_TEST_BASE='http://127.0.0.1:8080/' node tools/renko-v15-functional.mjs
+
+      - name: Persist browser-verified V15 shell
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html superapp-v5.js; then
+            echo 'Parent shell already on RENKO V15 cache version'
+          else
+            git config user.name 'copytolive-actions'
+            git config user.email 'actions@users.noreply.github.com'
+            git add index.html superapp-v5.js
+            git commit -m 'Activate RENKO V15 tick-native shell cache'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
