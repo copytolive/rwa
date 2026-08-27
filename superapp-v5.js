@@ -157,8 +157,9 @@ function openTrade(base=selectedBase(),push=true,side=''){
     const coin=$('exCoin');if(coin)coin.value=b;
     if(side==='BUY')$('exLong')?.click();
     if(side==='SELL')$('exShort')?.click();
+    /* RWA_ACTION_VIEWPORT_STABILITY_V7: trade routing must not move the root viewport. */
     const ex=$('rwaExchange')||$('terminal');
-    ex?.scrollIntoView({behavior:'smooth',block:'start'});
+    if(ex)ex.dataset.rwaTradeReady='1';
   };
   const terminal=$('terminal');
   if(!$('rwaExchange')&&terminal&&!$('rwaTradeLazyStatus')){const n=document.createElement('div');n.id='rwaTradeLazyStatus';n.className='rwa-lazy-status';n.textContent='Loading protected execution…';terminal.appendChild(n)}
