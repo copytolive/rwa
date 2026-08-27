@@ -28,9 +28,12 @@ const browserContract=browser.includes("contract:'rwa-superapp-v5-browser-persis
 check(15,browserContract&&browser.includes('window.RWASuperApp.navigate')&&workflow.includes('RWA_TEST_URL: http://127.0.0.1:4173/rwa/')&&workflow.includes('node tools/superapp-v5-browser.mjs')&&pages.includes('node tools/superapp-v5-browser.mjs')&&pages.includes('node tools/superapp-p16-p20-browser.mjs'),'browser regression');
 const superCssRef=html.match(/superapp-v5\.css\?v=\d+/)?.[0],superJsRef=html.match(/superapp-v5\.js\?v=\d+/)?.[0]; need(superCssRef&&superJsRef&&html.includes('manifest.webmanifest')&&sw.includes(`./${superCssRef}`)&&sw.includes(`./${superJsRef}`),'index V6 assets missing');
 need(legacy.includes("searchParams.get('embed')==='1'")&&legacy.includes('location.replace('),'legacy canonical/embed contract broken');
-for(const p of ['trade/index.html','asset/index.html','trader/index.html','backtest/index.html','renko/index.html'])need(read(p).includes('legacy-canonical.js'),`legacy shim missing in ${p}`);
+for(const p of ['trade/index.html','asset/index.html','trader/index.html','backtest/index.html'])need(read(p).includes('legacy-canonical.js'),`legacy shim missing in ${p}`);
+const renko=read('renko/index.html');
+need(renko.includes('RENKO — TradingView Documented Model')&&renko.includes('renko-tv-engine.js')&&renko.includes('renko-tv-app.js'),'renko standalone canonical contract broken');
 need(js.includes("canonical:'https://copytolive.github.io/rwa/'"),'canonical live URL missing');
 need(html.includes('RWA_LOCALE_FALLBACK_V2')&&legacy.includes('RWA_LOCALE_FALLBACK_V2'),'locale default fallback contract missing');
 console.log('LOCALE_DEFAULT_SAFETY=PASS');
 need(browser.includes("locale:'en-US'")&&browser.includes('RWA_LOCALE_CI_PROBE_V2'),'deterministic locale CI contract missing'); console.log('LOCALE_CI_CONTRACT=PASS');
+console.log('RENKO_STANDALONE_CANONICAL=PASS');
 console.log(pass.join('\n')); console.log(`ROOT_SCRIPT_COUNT=${scripts}`); console.log('SUPERAPP_V5_STATIC_AUDIT=PASS');
