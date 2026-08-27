@@ -1,0 +1,1 @@
+Unavoidable external activation steps: create Oracle VM, set private GitHub environment secrets, provision Google service-account credential on VM, and provide approved 2026 OANDA/TradingView cross-check. Do not expose secret values in repository content.
