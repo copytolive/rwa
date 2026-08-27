@@ -88,8 +88,6 @@ async function runViewport(label,viewport){
     return {traditionalPass,percentage,percentagePass,atr,atrPass,projectionPass,wicksPass,controlsPass,labelsPass,runtimeContractPass,atrParityScriptPass,fetchGuardPass,layoutNoOverlap};
   });
 
-  // ATR regression runs first so Traditional cannot pre-pull deep history and
-  // hide the exact date/coverage behavior being tested.
   await page.fill('#atrLength','14');await page.click('[data-apply-method="atr"]');
   await page.waitForFunction(()=>RWARenkoTV.settings.method==='atr'&&RWARenkoTV.settings.atrLength===14&&RWARenkoTV.state.box>0,null,{timeout:15000});
   await page.waitForTimeout(120);const atrLive=await atrSnapshot(page);
@@ -101,8 +99,6 @@ async function runViewport(label,viewport){
   const atr2000Changed=Math.abs(atrLarge.box-atrLive.box)>Math.max(1e-9,Number(atrLive.tick||0)*.5)||atrLarge.count!==atrLive.count;
   const atr2000DateMovement=atrLive.sourceBars<2000?atrLarge.coverageStart<atrLive.coverageStart:true;
 
-  // A second dynamic look-back guarantees the history requirement exceeds what
-  // is already resident, proving that large ATR values pull the date range back.
   const deepLength=Math.max(3000,atrLarge.sourceBars+1001),deepStarted=Date.now();
   await page.fill('#atrLength',String(deepLength));await page.click('[data-apply-method="atr"]');
   await page.waitForFunction(n=>RWARenkoTV.settings.method==='atr'&&RWARenkoTV.settings.atrLength===n&&RWARenkoTV.state.atrHistorySatisfied===true&&RWARenkoTV.state.closedBars.length>=n,deepLength,{timeout:45000});
@@ -117,10 +113,11 @@ async function runViewport(label,viewport){
   await page.fill('#percentageValue','1');await page.click('[data-apply-method="percentage"]');await page.waitForTimeout(80);const percentageLive=await page.evaluate(()=>({method:RWARenkoTV.settings.method,box:RWARenkoTV.state.box,lastClosed:RWARenkoTV.state.closedBars.at(-1)?.close,tick:RWARenkoTV.state.tickSize,count:RWARenkoTV.state.confirmed.length}));
   const liveMutationPass=ohlcLive.source==='ohlc'&&traditionalLive.method==='traditional'&&traditionalLive.box===1&&percentageLive.method==='percentage'&&Math.abs(percentageLive.box-(Math.round((percentageLive.lastClosed*.01)/percentageLive.tick)*percentageLive.tick))<Math.max(1e-9,percentageLive.tick*1e-6);
 
-  // Full market universe must be absent from the first-load critical path but
-  // still work when explicitly opened.
   const lazyUniversePass=firstLoad.marketsWanted===false&&firstLoad.guardStats.lazyUniverseWaits>=1;
-  await page.click('#openPairs');
+  const search=page.locator('#pairSearch'),open=page.locator('#openPairs');
+  let marketInteraction='';
+  if(await search.isVisible()){await search.focus();marketInteraction='focus-visible-pair-search'}
+  else{await open.click();marketInteraction='click-visible-pairs-button'}
   await page.waitForFunction(()=>document.querySelector('#pairTotal')?.textContent!=='—'&&document.querySelectorAll('#pairList .pair-row').length>0,null,{timeout:20000});
   const marketOnDemand=await page.evaluate(()=>({pairTotal:document.querySelector('#pairTotal')?.textContent,rows:document.querySelectorAll('#pairList .pair-row').length,marketsWanted:RWARenkoFetchGuard.marketsWanted,guardStats:{...RWARenkoFetchGuard.stats}}));
   const marketOnDemandPass=marketOnDemand.marketsWanted===true&&marketOnDemand.rows>0;
@@ -128,7 +125,7 @@ async function runViewport(label,viewport){
   const performancePass=readyMs<=READY_LIMIT_MS&&firstFrame.maxGap<700&&deepFrame.maxGap<700&&largeAtrMs<15000&&deepAtrMs<25000&&lazyUniversePass&&marketOnDemandPass;
   await page.screenshot({path:path.join(OUT,`${label}-official-parity.png`),fullPage:true});
   const pass=errors.length===0&&Object.entries(contract).filter(([k])=>k.endsWith('Pass')||k==='layoutNoOverlap').every(([,v])=>v===true)&&liveMutationPass&&largeAtrPass&&performancePass;
-  results.push({label,viewport,url,readyMs,readyLimitMs:READY_LIMIT_MS,errors,firstLoad,firstFrame,contract,atrLive,atrLarge,atrDeep,largeAtrMs,deepAtrMs,atr2000Changed,atr2000DateMovement,datePullPass,largeAtrPass,ohlcLive,traditionalLive,percentageLive,liveMutationPass,lazyUniversePass,marketOnDemand,marketOnDemandPass,deepFrame,performancePass,pass});
+  results.push({label,viewport,url,readyMs,readyLimitMs:READY_LIMIT_MS,errors,firstLoad,firstFrame,contract,atrLive,atrLarge,atrDeep,largeAtrMs,deepAtrMs,atr2000Changed,atr2000DateMovement,datePullPass,largeAtrPass,ohlcLive,traditionalLive,percentageLive,liveMutationPass,lazyUniversePass,marketInteraction,marketOnDemand,marketOnDemandPass,deepFrame,performancePass,pass});
   await context.close();
 }
 
