@@ -17,7 +17,7 @@ jobs:
         with:
           ref: fix/p6-research-embed-contract-20260827
           fetch-depth: 0
-      - name: Repair P6 and version-parity audits
+      - name: Repair P6 and dynamic regression audits
         shell: bash
         run: |
           set -euo pipefail
@@ -37,26 +37,33 @@ jobs:
           s=p.read_text()
           old_cache='sw.includes("CACHE=\'rwa-superapp-v5-shell-13\'")'
           new_cache="/const CACHE='rwa-superapp-v5-shell-\\d+'/.test(sw)"
-          if old_cache in s:
-              s=s.replace(old_cache,new_cache,1)
-          elif new_cache not in s:
-              raise SystemExit('Expected stale SW cache assertion not found')
+          if old_cache in s:s=s.replace(old_cache,new_cache,1)
+          elif new_cache not in s:raise SystemExit('Expected stale SW cache assertion not found')
           old_assets="need(html.includes('superapp-v5.css?v=13')&&html.includes('superapp-v5.js?v=13')&&html.includes('manifest.webmanifest'),'index V6 assets missing');"
           new_assets="const superCssRef=html.match(/superapp-v5\\.css\\?v=\\d+/)?.[0],superJsRef=html.match(/superapp-v5\\.js\\?v=\\d+/)?.[0]; need(superCssRef&&superJsRef&&html.includes('manifest.webmanifest')&&sw.includes(`./${superCssRef}`)&&sw.includes(`./${superJsRef}`),'index V6 assets missing');"
-          if old_assets in s:
-              s=s.replace(old_assets,new_assets,1)
-          elif new_assets not in s:
-              raise SystemExit('Expected stale asset version assertion not found')
+          if old_assets in s:s=s.replace(old_assets,new_assets,1)
+          elif new_assets not in s:raise SystemExit('Expected stale asset version assertion not found')
           old_p15="check(15,browser.includes(\"contract:'rwa-superapp-v5-browser'\")&&workflow.includes('Browser regression')&&workflow.includes('RWA_TEST_URL: http://127.0.0.1:4173/rwa/')&&pages.includes('Validate RWA Super App V5 single-page contract'),'browser regression');"
           new_p15="check(15,browser.includes(\"contract:'rwa-superapp-v5-browser'\")&&workflow.includes('RWA_TEST_URL: http://127.0.0.1:4173/rwa/')&&workflow.includes('node tools/superapp-v5-browser.mjs')&&pages.includes('node tools/superapp-v5-browser.mjs')&&pages.includes('node tools/superapp-p16-p20-browser.mjs'),'browser regression');"
-          if old_p15 in s:
-              s=s.replace(old_p15,new_p15,1)
-          elif new_p15 not in s:
-              raise SystemExit('Expected stale P15 workflow-label assertion not found')
+          if old_p15 in s:s=s.replace(old_p15,new_p15,1)
+          elif new_p15 not in s:raise SystemExit('Expected stale P15 assertion not found')
+          p.write_text(s)
+
+          p=Path('tools/superapp-p16-p20-audit.mjs')
+          s=p.read_text()
+          old_p18="ok(18,'SPEED_RELIABILITY',html.includes('Historical bars first')===false&&html.includes('data-api.binance.vision/api/v3/klines')&&js.includes('rwa:p20-ready')&&js.includes('softRetry')&&sw.includes(\"CACHE='rwa-superapp-v5-shell-13'\")&&scripts<=6);"
+          new_p18="ok(18,'SPEED_RELIABILITY',html.includes('Historical bars first')===false&&html.includes('data-api.binance.vision/api/v3/klines')&&js.includes('rwa:p20-ready')&&js.includes('softRetry')&&/const CACHE='rwa-superapp-v5-shell-\\d+'/.test(sw)&&scripts<=6);"
+          if old_p18 in s:s=s.replace(old_p18,new_p18,1)
+          elif new_p18 not in s:raise SystemExit('Expected stale P18 cache assertion not found')
+          old_tail="need(html.includes('superapp-v5.css?v=13')&&html.includes('superapp-v5.js?v=13'),'root assets are not cache-busted to v12');\nneed(js.includes(\"serviceWorker.register('rwa-sw-v5.js?v=13'\"),'service worker registration is not v12');\nneed(sw.includes(\"'./superapp-v5.css?v=13'\")&&sw.includes(\"'./superapp-v5.js?v=13'\"),'service worker core does not cache v12 assets');"
+          new_tail="const superCssRef=html.match(/superapp-v5\\.css\\?v=\\d+/)?.[0],superJsRef=html.match(/superapp-v5\\.js\\?v=\\d+/)?.[0];\nneed(superCssRef&&superJsRef,'root superapp assets are not cache-busted');\nneed(/serviceWorker\\.register\\('rwa-sw-v5\\.js\\?v=\\d+'/.test(js),'service worker registration is not cache-busted');\nneed(sw.includes(`'./${superCssRef}'`)&&sw.includes(`'./${superJsRef}'`),'service worker core is not version-aligned with root assets');"
+          if old_tail in s:s=s.replace(old_tail,new_tail,1)
+          elif new_tail not in s:raise SystemExit('Expected stale P16-P20 asset assertions not found')
           p.write_text(s)
           PY
           node --check superapp-v5.js
           node --check tools/superapp-v5-audit.mjs
+          node --check tools/superapp-p16-p20-audit.mjs
           node tools/superapp-v5-audit.mjs
           node tools/superapp-p16-p20-audit.mjs
           node tools/security-gate.mjs
@@ -67,9 +74,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- superapp-v5.js tools/superapp-v5-audit.mjs; then exit 0; fi
+          if git diff --quiet -- superapp-v5.js tools/superapp-v5-audit.mjs tools/superapp-p16-p20-audit.mjs; then exit 0; fi
           git config user.name copytolive
           git config user.email copytolive@gmail.com
-          git add superapp-v5.js tools/superapp-v5-audit.mjs
+          git add superapp-v5.js tools/superapp-v5-audit.mjs tools/superapp-p16-p20-audit.mjs
           git commit -m 'fix: restore P6 and dynamic superapp regression gates'
           git push origin HEAD:fix/p6-research-embed-contract-20260827
