@@ -133,7 +133,7 @@ async function runViewport(width,height,label){
   if((await page.evaluate(()=>location.hash))!==baseHash)throw Error(`${label}: network selection changed route unexpectedly`);
   if(directWrites.length)throw Error(`${label}: direct /exchange write observed`);
 
-  await page.screenshot({path:path.join(OUT,`${label}-multichain-v2.png`),fullPage:true});
+  await page.screenshot({path:path.join(OUT,`${label}-multichain-v2.png`),fullPage:false});
   await page.locator('.rwa-mc-close').click();
   await page.waitForFunction(()=>document.getElementById('rwaMultiChainPanel')?.hidden===true,null,{timeout:5000});
   const closedChart=await page.evaluate(token=>document.querySelector('.chart-wrap')?.dataset.multichainProof===token,chartToken);
