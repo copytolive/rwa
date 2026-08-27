@@ -16,36 +16,64 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Probe LI.FI Solana identifiers without transactions
+      - name: Probe LI.FI Solana identity and Base to Solana quote without transactions
         shell: bash
         run: |
-          set -uo pipefail
-          echo '=== /chains summary ==='
+          set -euo pipefail
+          echo '=== EVM /chains coverage ==='
           curl --connect-timeout 5 --max-time 25 -fsSL 'https://li.quest/v1/chains' -o /tmp/chains.json
           python - <<'PY'
           import json
           x=json.load(open('/tmp/chains.json'))
           chains=x.get('chains',x) if isinstance(x,dict) else x
-          print('count=',len(chains))
-          for c in chains:
-            if not isinstance(c,dict): continue
-            text=' '.join(str(c.get(k,'')) for k in ('id','key','name','chainType')).lower()
-            if 'sol' in text or str(c.get('chainType','')).upper()=='SVM':
-              print('candidate=',{k:c.get(k) for k in ('id','key','name','chainType')})
+          ids={int(c['id']) for c in chains if isinstance(c,dict) and str(c.get('id','')).isdigit()}
+          required={1,42161,8453,56,137,43114,143}
+          missing=sorted(required-ids)
+          assert not missing, f'LI.FI EVM coverage missing {missing}'
+          print('MULTICHAIN_EVM_PROVIDER_COVERAGE=PASS:'+','.join(map(str,sorted(required))))
           PY
-          echo '=== /token probes ==='
-          mint='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
-          for chain in 1151111081099710 SOL sol solana; do
-            code="$(curl --connect-timeout 5 --max-time 20 -sS -o "/tmp/token-${chain}.json" -w '%{http_code}' "https://li.quest/v1/token?chain=${chain}&token=${mint}" || true)"
-            echo "PROBE chain=${chain} http=${code}"
-            python - "$chain" "/tmp/token-${chain}.json" <<'PY' || true
-          import json,sys,os
-          chain,path=sys.argv[1:]
-          try:
-            x=json.load(open(path))
-            print('TOKEN',chain,{k:x.get(k) for k in ('address','chainId','symbol','name')},'message=',x.get('message') or x.get('error'))
-          except Exception as e:
-            print('TOKEN',chain,'parse_error',repr(e),'raw=',open(path).read()[:300] if os.path.exists(path) else '')
+
+          echo '=== Solana token identity ==='
+          sol_chain='1151111081099710'
+          sol_usdc='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+          curl --connect-timeout 5 --max-time 20 -fsSL "https://li.quest/v1/token?chain=${sol_chain}&token=${sol_usdc}" -o /tmp/sol-token.json
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/sol-token.json'))
+          assert int(x.get('chainId',0))==1151111081099710, x
+          assert x.get('symbol')=='USDC', x
+          assert x.get('address')=='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', x
+          print('MULTICHAIN_SOLANA_TOKEN_IDENTITY=PASS:1151111081099710:USDC')
           PY
-          done
+
+          echo '=== Real read-only Base -> Solana quote ==='
+          from_chain='8453'
+          to_chain='1151111081099710'
+          from_token='0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+          to_token='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+          from_amount='10000000'
+          from_address='0x1111111111111111111111111111111111111111'
+          to_address='7YWHMfk9JZe0LMV4kMYV3hJXmbE54VdWckx3Qw7oM3en'
+          curl --connect-timeout 5 --max-time 30 --get -fsSL 'https://li.quest/v1/quote' \
+            --data-urlencode "fromChain=${from_chain}" \
+            --data-urlencode "toChain=${to_chain}" \
+            --data-urlencode "fromToken=${from_token}" \
+            --data-urlencode "toToken=${to_token}" \
+            --data-urlencode "fromAmount=${from_amount}" \
+            --data-urlencode "fromAddress=${from_address}" \
+            --data-urlencode "toAddress=${to_address}" \
+            --data-urlencode 'slippage=0.005' \
+            --data-urlencode 'integrator=copytolive-rwa' \
+            -o /tmp/base-sol-quote.json
+          python - <<'PY'
+          import json
+          q=json.load(open('/tmp/base-sol-quote.json'))
+          a=q.get('action') or {}; e=q.get('estimate') or {}; tx=q.get('transactionRequest') or {}
+          assert int(a.get('fromChainId',0))==8453, q
+          assert int(a.get('toChainId',0))==1151111081099710, q
+          assert int(e.get('toAmountMin') or 0)>0, q
+          assert q.get('tool'), q
+          assert tx, q
+          print('MULTICHAIN_REAL_BASE_TO_SOLANA_QUOTE=PASS:tool='+str(q.get('tool'))+':min='+str(e.get('toAmountMin')))
+          PY
           echo 'MULTICHAIN_PROVIDER_DIAGNOSTIC_COMPLETE=PASS'
