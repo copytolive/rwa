@@ -87,9 +87,10 @@ jobs:
             'market-performance.js?v=2',
             'human-operability-v1.css',
             'human-operability-browser.mjs',
-            'renko-v15-controller-bootstrap.js?v=171',
-            "renkoController:'171'",
-            "version:'1.7.1'",
+            'renko-v15-controller-bootstrap.js?v=180',
+            "renkoController:'180'",
+            "version:'1.8.0'",
+            'renko-v15-deep-history-worker.js?v=180',
           ]
           missing=[x for x in required if x not in p]
           if missing:
