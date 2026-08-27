@@ -28,46 +28,47 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Pin V171 history-fill controller in deploy artifact
+      - name: Pin V180 Vision deep-history controller in deploy artifact
         shell: bash
         run: |
           set -euo pipefail
-          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170|171)/renko-v15-controller-bootstrap.js?v=171/g' renko/index.html
-          grep -Fq 'renko-v15-controller-bootstrap.js?v=171' renko/index.html
-          ! grep -Eq 'renko-v15-controller-bootstrap\.js\?v=(154|158|170)' renko/index.html
+          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170|171|180)/renko-v15-controller-bootstrap.js?v=180/g' renko/index.html
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=180' renko/index.html
+          ! grep -Eq 'renko-v15-controller-bootstrap\.js\?v=(154|158|170|171)' renko/index.html
 
-      - name: Static tick-only and full-history method contracts
+      - name: Static tick-only and Vision archive contracts
         shell: bash
         run: |
           set -euo pipefail
           node --check renko/renko-v15.js
           node --check renko/renko-v15-worker.js
+          node --check renko/renko-v15-deep-history-worker.js
           node --check renko/renko-v15-method-controller-v170.js
           node --check renko/renko-v15-controller-bootstrap.js
           node --check tools/renko-v15-standalone-methods.mjs
           node --check legacy-canonical.js
           node --check rwa-sw-v5.js
           grep -Fq 'RENKO V15.1' renko/index.html
-          grep -Fq 'renko-v15-controller-bootstrap.js?v=171' renko/index.html
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=180' renko/index.html
           ! grep -Eqi 'id="[^"]*(resolution|timeframe)|>RESOLUTION<|1 minute</option>|3 minutes</option>|5 minutes</option>|15 minutes</option>|30 minutes</option>|1 hour</option>|4 hours</option>|1 day</option>' renko/index.html
           ! grep -Fq '/api/v3/klines?' renko/renko-v15.js
           grep -Fq "formationSource:'trade-events-only'" renko/renko-v15.js
           grep -Fq "confirmationRule:'every-trade-immediate'" renko/renko-v15.js
-          grep -Fq "timeframeControl:false" renko/renko-v15.js
           grep -Fq "historySource:'binance-aggregate-trade-events-no-candles'" renko/renko-v15.js
-          grep -Fq "version:'1.7.1'" renko/renko-v15-method-controller-v170.js
-          grep -Fq 'const TARGET_BRICKS=60' renko/renko-v15-method-controller-v170.js
-          grep -Fq 'BACKFILL_PAGES=96' renko/renko-v15-method-controller-v170.js
-          grep -Fq 'BACKFILL_ROUNDS=24' renko/renko-v15-method-controller-v170.js
-          grep -Fq "setupContract:'atr-traditional-percentage-all-operable'" renko/renko-v15-method-controller-v170.js
-          grep -Fq "historyContract:'active-method-retries-backfill-until-one-screen-or-source-exhausted'" renko/renko-v15-method-controller-v170.js
-          grep -Fq "zeroBrickContract:'method-activates-immediately-then-backfills'" renko/renko-v15-method-controller-v170.js
-          grep -Fq "interactionContract:'all-three-method-panels-remain-interactive-during-deep-history'" renko/renko-v15-method-controller-v170.js
-          grep -Fq 'engine.loadOlder(Math.max(20,TARGET_BRICKS-bricks),BACKFILL_PAGES)' renko/renko-v15-method-controller-v170.js
-          grep -Fq "dataset.renkoMethodBootstrap='171'" renko/renko-v15-controller-bootstrap.js
-          grep -Fq 'renko-v15-method-controller-v170.js?v=171' renko/renko-v15-controller-bootstrap.js
-          grep -Fq 'v15.11-fill-active-history' renko/renko-v15-controller-bootstrap.js
-          grep -Fq 'z-index:40!important' renko/renko-v15-controller-bootstrap.js
+          grep -Fq "version:'1.8.0'" renko/renko-v15-method-controller-v170.js
+          grep -Fq 'const TARGET=60' renko/renko-v15-method-controller-v170.js
+          grep -Fq "historyContract:'binance-vision-spot-aggTrades-worker-compressed-threshold-stream'" renko/renko-v15-method-controller-v170.js
+          grep -Fq "formationContract:'archive-formation-uses-aggTrade-events-not-candles'" renko/renko-v15-method-controller-v170.js
+          grep -Fq "discoveryContract:'daily-klines-lookback-estimation-only-never-formation'" renko/renko-v15-method-controller-v170.js
+          grep -Fq "switchContract:'method-specific-deep-stream-never-cross-contaminates'" renko/renko-v15-method-controller-v170.js
+          grep -Fq "new Worker('renko-v15-deep-history-worker.js?v=180')" renko/renko-v15-method-controller-v170.js
+          grep -Fq 'data/spot/monthly/aggTrades' renko/renko-v15-deep-history-worker.js
+          grep -Fq 'data/spot/daily/aggTrades' renko/renko-v15-deep-history-worker.js
+          grep -Fq 'daily-klines-lookback-estimation-only-never-formation' renko/renko-v15-method-controller-v170.js
+          grep -Fq 'Compressed replay mismatch' renko/renko-v15-deep-history-worker.js
+          grep -Fq "dataset.renkoMethodBootstrap='180'" renko/renko-v15-controller-bootstrap.js
+          grep -Fq 'renko-v15-method-controller-v170.js?v=180' renko/renko-v15-controller-bootstrap.js
+          grep -Fq 'v15.12-vision-deep-history' renko/renko-v15-controller-bootstrap.js
           grep -Fq 'Never serve the cached V14 source/resolution UI' rwa-sw-v5.js
           git diff --check
 
@@ -93,7 +94,7 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Browser acceptance - SOL Traditional and Percentage fill one screen
+      - name: Browser acceptance - SOL Traditional and Percentage Vision deep history
         shell: bash
         run: |
           python3 -m http.server 8080 > /tmp/renko-http.log 2>&1 &
