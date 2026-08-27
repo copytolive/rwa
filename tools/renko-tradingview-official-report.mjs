@@ -62,7 +62,7 @@ async function runViewport(label,viewport){
   page.on('console',m=>{if(m.type()==='error'&&!/Failed to load resource|WebSocket connection/i.test(m.text()))errors.push(m.text())});
   const started=Date.now(),url=`${BASE}/renko/?symbol=SOL&tvOfficialReport=1&ts=${Date.now()}`;
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
-  await page.waitForFunction(()=>window.RWARenkoTV?.version==='1.0.0'&&window.RWARenkoATRParity?.version==='1.0.0'&&window.RWARenkoTV?.state?.confirmed?.length>10&&window.RWARenkoTV?.state?.box>0&&document.querySelector('#tvLoadState')?.textContent?.includes('LIVE'),null,{timeout:60000});
+  await page.waitForFunction(()=>window.RWARenkoTV?.version==='1.0.0'&&window.RWARenkoATRParity?.version==='1.0.0'&&window.RWARenkoFetchGuard?.version==='1.0.0'&&window.RWARenkoTV?.state?.closedBars?.length>=900&&window.RWARenkoTV?.state?.box>0&&document.querySelector('#tvLoadState')?.textContent?.includes('LIVE'),null,{timeout:60000});
   const readyMs=Date.now()-started;
 
   const contract=await page.evaluate(()=>{
@@ -88,9 +88,10 @@ async function runViewport(label,viewport){
     const s=TV.state;
     const runtimeContractPass=s.formationSource==='source-interval-close-or-ohlc'&&s.confirmationRule==='source-interval-close'&&s.projectionRule==='realtime-provisional-until-source-interval-close'&&s.publicDocsParity===true&&s.exactProprietaryOutputParity===false;
     const atrParityScriptPass=window.RWARenkoATRParity?.version==='1.0.0';
+    const fetchGuardPass=window.RWARenkoFetchGuard?.version==='1.0.0'&&window.RWARenkoFetchGuard?.rule==='omit-null-kline-endTime-instead-of-zero';
     const a=document.querySelector('.instrument')?.getBoundingClientRect(),b=document.querySelector('.stats')?.getBoundingClientRect();
     const layoutNoOverlap=!!a&&!!b&&(a.bottom<=b.top+.5||b.bottom<=a.top+.5||a.right<=b.left+.5||b.right<=a.left+.5);
-    return {traditionalPass,percentage,percentagePass,atr,atrPass,projectionPass,projFar:projFar.length,projBack:projBack.length,wicksPass,ohlcPath,ohlcPass,controlsPass,labelsPass,runtimeContractPass,atrParityScriptPass,layoutNoOverlap,live:{symbol:s.symbol,interval:TV.settings.interval,source:TV.settings.source,method:TV.settings.method,box:s.box,atr:s.atr,confirmed:s.confirmed.length,projection:s.projection.length,sourceBars:s.closedBars.length,status:s.status},bodyText:text.slice(0,3000)};
+    return {traditionalPass,percentage,percentagePass,atr,atrPass,projectionPass,projFar:projFar.length,projBack:projBack.length,wicksPass,ohlcPath,ohlcPass,controlsPass,labelsPass,runtimeContractPass,atrParityScriptPass,fetchGuardPass,layoutNoOverlap,live:{symbol:s.symbol,interval:TV.settings.interval,source:TV.settings.source,method:TV.settings.method,box:s.box,atr:s.atr,confirmed:s.confirmed.length,projection:s.projection.length,sourceBars:s.closedBars.length,status:s.status},bodyText:text.slice(0,3000)};
   });
 
   await page.selectOption('#sourceSelect','ohlc');
