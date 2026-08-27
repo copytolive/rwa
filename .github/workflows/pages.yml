@@ -35,7 +35,8 @@ jobs:
             rwa-execution-config.json token/config.json manifest.webmanifest rwa-discovery-catalog.json \
             tools/superapp-v5-audit.mjs tools/superapp-v5-browser.mjs \
             tools/superapp-p16-p20-audit.mjs tools/superapp-p16-p20-browser.mjs \
-            tools/security-gate.mjs; do test -s "$f"; done
+            tools/security-gate.mjs tools/build-renko-first-frame-preload.mjs \
+            renko/renko-v15-first-frame-preload.js; do test -s "$f"; done
 
           node --check superapp-v5.js
           node --check rwa-sw-v5.js
@@ -48,6 +49,8 @@ jobs:
           node --check tools/superapp-p16-p20-audit.mjs
           node --check tools/superapp-p16-p20-browser.mjs
           node --check tools/security-gate.mjs
+          node --check tools/build-renko-first-frame-preload.mjs
+          node --check renko/renko-v15-first-frame-preload.js
 
           python -m json.tool rwa-execution-config.json >/dev/null
           python -m json.tool token/config.json >/dev/null
@@ -111,26 +114,37 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - name: Checkout exact release SHA
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Pin RENKO V184 zero-wait hot-replay runtime in Pages artifact
+      - name: Build SOL tick-derived first-frame preload
+        env:
+          RENKO_PRELOAD_SYMBOL: SOLUSDT
+          RENKO_PRELOAD_DAYS: 30
+          RENKO_PRELOAD_KEEP: 140
+        run: |
+          node tools/build-renko-first-frame-preload.mjs
+          test -s renko/preload/SOLUSDT.json
+          node -e "const p=require('./renko/preload/SOLUSDT.json'); if(!p.seeds?.length) process.exit(1); console.log('RENKO_PRELOAD_SEEDS',p.seeds.map(x=>[x.box,x.bricks,x.ticks.length]))"
+
+      - name: Pin RENKO V185 first-frame preload runtime in Pages artifact
         shell: bash
         run: |
           set -euo pipefail
-          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170|171|180|181|182|183|184)/renko-v15-controller-bootstrap.js?v=184/g' renko/index.html
-          grep -Fq 'renko-v15-controller-bootstrap.js?v=184' renko/index.html
-          grep -Fq "renkoController:'184'" legacy-canonical.js
+          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170|171|180|181|182|183|184|185)/renko-v15-controller-bootstrap.js?v=185/g' renko/index.html
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=185' renko/index.html
+          grep -Fq "renkoController:'185'" legacy-canonical.js
+          grep -Fq "dataset.renkoMethodBootstrap='185'" renko/renko-v15-controller-bootstrap.js
+          grep -Fq 'renko-v15-first-frame-preload.js?v=185' renko/renko-v15-controller-bootstrap.js
           grep -Fq "version:'1.8.4'" renko/renko-v15-method-controller-v181.js
           grep -Fq 'TARGET=60' renko/renko-v15-method-controller-v181.js
           grep -Fq 'APPLY_DEBOUNCE=0' renko/renko-v15-method-controller-v181.js
-          grep -Fq 'renko-v15-deep-history-worker-v181.js?v=184' renko/renko-v15-method-controller-v181.js
-          grep -Fq "interactionContract:'active-number-edit-never-waits-for-network-before-local-render'" renko/renko-v15-method-controller-v181.js
-          grep -Fq "latencyContract:'zero-artificial-input-wait-local-hot-replay-then-exact-background'" renko/renko-v15-method-controller-v181.js
+          grep -Fq "deploy-tick-seed-first-frame-then-exact-background" renko/renko-v15-first-frame-preload.js
+          grep -Fq "inputWaitMs='0'" renko/renko-v15-first-frame-preload.js
 
       - name: Stamp exact deployed SHA
         run: printf '%s\n' "$GITHUB_SHA" > deployment-sha.txt
