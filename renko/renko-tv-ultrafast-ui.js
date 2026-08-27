@@ -152,7 +152,10 @@ function installFollowingGuard(){
 function lockManualView(){manualViewLocked=true;followingValue=false;stats.manualViewLocks++;document.documentElement.dataset.renkoManualView='true'}
 function unlockManualView(){manualViewLocked=false;document.documentElement.dataset.renkoManualView='false'}
 function manualTarget(e){return e.target?.closest?.('#tvZoomIn,#tvZoomOut,#tvPanOlder,#tvPanNewer,#chartHost,#chartWrap')}
-function resetTarget(e){return e.target?.closest?.('#tvLive,#tvReset,[data-quick],[data-apply-method]')}
+// Applying ATR/Traditional/Percentage changes chart geometry but must not cancel
+// a user's manual viewport lock. Only explicit LIVE/reset or a symbol shortcut
+// intentionally returns control to auto-follow.
+function resetTarget(e){return e.target?.closest?.('#tvLive,#tvReset,[data-quick]')}
 function handleManualPointer(e){if(resetTarget(e))unlockManualView();else if(manualTarget(e))lockManualView()}
 document.addEventListener('wheel',e=>{if(manualTarget(e))lockManualView()},{capture:true,passive:true});
 document.addEventListener('pointerdown',handleManualPointer,true);
@@ -169,7 +172,7 @@ try{
 }catch{}
 
 window.RWARenkoUltraUI={
-  version:'1.0.2',rule:'worker-parsed-scroll-safe-virtual-market-list-plus-manual-zoom-lock',stats,
+  version:'1.0.3',rule:'worker-parsed-scroll-safe-virtual-market-list-plus-manual-zoom-lock-settings-safe',stats,
   loadUniverse,filterRows,renderVirtual,ensureListViewport,lockManualView,unlockManualView,
   get rows(){return rows},get filtered(){return filtered},get manualViewLocked(){return manualViewLocked}
 };
