@@ -42,14 +42,14 @@ jobs:
       - name: Current product shell is activated
         run: |
           set -euo pipefail
-          grep -q 'superapp-v5.css' index.html
-          ! grep -q 'unified-design-v3.css' index.html
-          ! grep -q 'product-os-v3.js' index.html
-          ! grep -q 'product-os-mobile-contract-v3.js' index.html
-          grep -q 'human-operability-v1.css?v=1' suite-nav.js
-          grep -q 'human-operability.css?v=1' rwa-8-engines/app.js
-          grep -q 'RWA Factory' suite-nav.js
-          grep -q 'Create My RWA' suite-nav.js
+          grep -Fq 'superapp-v5.css' index.html
+          ! grep -Fq 'unified-design-v3.css' index.html
+          ! grep -Fq 'product-os-v3.js' index.html
+          ! grep -Fq 'product-os-mobile-contract-v3.js' index.html
+          grep -Fq 'human-operability-v1.css?v=1' suite-nav.js
+          grep -Fq 'human-operability.css?v=1' rwa-8-engines/app.js
+          grep -Fq 'RWA Factory' suite-nav.js
+          grep -Fq 'Create My RWA' suite-nav.js
       - name: Global RWA Factory surfaces exist
         run: |
           set -euo pipefail
@@ -57,39 +57,51 @@ jobs:
           test -s rwa-8-engines/engine.js
           test -s rwa-8-engines/config.json
           test -s rwa-8-engines/jurisdictions.json
-          grep -q 'RWA Passport' rwa-8-engines/app.js
-          grep -q 'Asset Registry' rwa-8-engines/app.js
-          grep -q 'Proof Engine' rwa-8-engines/app.js
-          grep -q 'Valuation' rwa-8-engines/app.js
-          grep -q 'Compliance' rwa-8-engines/app.js
-          grep -q 'Marketplace' rwa-8-engines/app.js
-          grep -q 'REGISTERED' rwa-8-engines/app.js
-          grep -q 'TRADABLE' rwa-8-engines/app.js
+          grep -Fq 'RWA Passport' rwa-8-engines/app.js
+          grep -Fq 'Asset Registry' rwa-8-engines/app.js
+          grep -Fq 'Proof Engine' rwa-8-engines/app.js
+          grep -Fq 'Valuation' rwa-8-engines/app.js
+          grep -Fq 'Compliance' rwa-8-engines/app.js
+          grep -Fq 'Marketplace' rwa-8-engines/app.js
+          grep -Fq 'REGISTERED' rwa-8-engines/app.js
+          grep -Fq 'TRADABLE' rwa-8-engines/app.js
       - name: Human typography and touch contracts
         run: |
           set -euo pipefail
-          grep -q -- '--rwa-human-small:11px' human-operability-v1.css
-          grep -q -- '--rwa-human-touch:44px' human-operability-v1.css
-          grep -q 'min-height:44px' human-operability-v1.css
-          grep -q 'max-width:1199px' human-operability-v1.css
-          grep -q 'min-width:681px' human-operability-v1.css
-          grep -q 'max-width:680px' human-operability-v1.css
-          grep -q '100dvh' human-operability-v1.css
-          grep -q -- '--human-touch:44px' rwa-8-engines/human-operability.css
+          grep -Fq -- '--rwa-human-small:11px' human-operability-v1.css
+          grep -Fq -- '--rwa-human-touch:44px' human-operability-v1.css
+          grep -Fq 'min-height:44px' human-operability-v1.css
+          grep -Fq 'max-width:1199px' human-operability-v1.css
+          grep -Fq 'min-width:681px' human-operability-v1.css
+          grep -Fq 'max-width:680px' human-operability-v1.css
+          grep -Fq '100dvh' human-operability-v1.css
+          grep -Fq -- '--human-touch:44px' rwa-8-engines/human-operability.css
       - name: Pages deployment contracts
         run: |
           set -euo pipefail
-          grep -q 'realtime-core.js?v=3' .github/workflows/pages.yml
-          grep -q 'market-performance.js?v=2' .github/workflows/pages.yml
-          grep -q 'human-operability-v1.css' .github/workflows/pages.yml
-          grep -q 'human-operability-browser.mjs' .github/workflows/pages.yml
-          grep -q 'Pin RENKO V171 history-fill runtime' .github/workflows/pages.yml
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/pages.yml').read_text()
+          required=[
+            'realtime-core.js?v=3',
+            'market-performance.js?v=2',
+            'human-operability-v1.css',
+            'human-operability-browser.mjs',
+            'renko-v15-controller-bootstrap.js?v=171',
+            "renkoController:'171'",
+            "version:'1.7.1'",
+          ]
+          missing=[x for x in required if x not in p]
+          if missing:
+            raise SystemExit('Pages contract missing: '+', '.join(missing))
+          print('PAGES_RUNTIME_MARKERS=PASS')
+          PY
       - name: Safety invariants preserved
         run: |
           set -euo pipefail
-          grep -q "mainnetEnabled" trade/config.js
-          grep -q "canMainnet" trade/config.js
-          grep -q "defaultTestnet:true" trade/config.js
-          grep -q '"mainnetDeploymentEnabled": false' token/config.json
-          grep -q '"tgeEnabled": false' token/config.json
+          grep -Fq "mainnetEnabled" trade/config.js
+          grep -Fq "canMainnet" trade/config.js
+          grep -Fq "defaultTestnet:true" trade/config.js
+          grep -Fq '"mainnetDeploymentEnabled": false' token/config.json
+          grep -Fq '"tgeEnabled": false' token/config.json
           node tools/security-gate.mjs
