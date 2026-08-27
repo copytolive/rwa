@@ -106,7 +106,13 @@ body.rwa-persistent-market.rwa-super-market-open.rwa-persistent-suite #suite{dis
    context-dock geometry used by Analysis. */
 @media (min-width:1200px){
   html[data-rwa-level="discovery"] body.rwa-super-market-open .layout,
-  html[data-rwa-level="action"] body.rwa-super-market-open .layout{
+  html[data-rwa-level="action"] body.rwa-super-market-open .layout,
+  /* ACTION ZERO-FLICKER TRANSITION LOCK V11:
+     When Analysis -> Action runs, showMarketShell() closes the workspace before the
+     route lifecycle updates data-rwa-level. During that one-frame handoff the root may
+     still say analysis while the market shell is already open. Keep the same 440px
+     geometry in that transient state so the viewport can never collapse to legacy width. */
+  html[data-rwa-level="analysis"] body.rwa-super-market-open:not(.rwa-super-workspace-open):not(.rwa-super-suite-open) .layout{
     width:calc(100% - var(--rwa-context-panel,440px))!important;
     margin-right:var(--rwa-context-panel,440px)!important;
     padding-right:0!important;
@@ -114,7 +120,8 @@ body.rwa-persistent-market.rwa-super-market-open.rwa-persistent-suite #suite{dis
     box-sizing:border-box!important;
   }
   html[data-rwa-level="discovery"] body.rwa-super-market-open .right,
-  html[data-rwa-level="action"] body.rwa-super-market-open .right{
+  html[data-rwa-level="action"] body.rwa-super-market-open .right,
+  html[data-rwa-level="analysis"] body.rwa-super-market-open:not(.rwa-super-workspace-open):not(.rwa-super-suite-open) .right{
     display:block!important;
     position:fixed!important;
     z-index:8890!important;
