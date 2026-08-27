@@ -16,7 +16,7 @@
 <header class="topbar">
   <a class="brand" href="./"><span class="brandmark">R</span><strong>RENKO</strong></a>
   <nav class="nav"><a class="active" href="./">TradingView Model</a></nav>
-  <div class="top-status"><span id="modePill" class="mode-pill">ATR · 1m · CLOSE</span><span id="feedPill" class="feed-pill"><i></i><b>CONNECTING</b></span></div>
+  <div class="top-status"><span id="modePill" class="mode-pill">ATR · 1s · CLOSE</span><span id="feedPill" class="feed-pill"><i></i><b>CONNECTING</b></span></div>
 </header>
 <main class="workspace">
 <aside class="markets" aria-label="Crypto pair selector">
@@ -27,24 +27,24 @@
 </aside>
 <section class="terminal">
   <div class="instrument-bar">
-    <div class="instrument"><div id="pairIcon" class="pair-icon">SO</div><div><div class="pair-title"><b id="pairName">SOL / USDT</b><span>SPOT</span></div><small id="sourceText">TradingView documented model · source interval Close/OHLC · confirmed only when source interval closes.</small></div></div>
+    <div class="instrument"><div id="pairIcon" class="pair-icon">SO</div><div><div class="pair-title"><b id="pairName">SOL / USDT</b><span>SPOT</span></div><small id="sourceText">Fixed 1-second Close source · confirmed only when each 1-second Binance kline closes.</small></div></div>
     <div class="stats">
       <div class="stat"><small>REAL LAST</small><b id="lastPrice">—</b></div>
       <div class="stat"><small>BOX SIZE</small><b id="brickValue">—</b></div>
       <div class="stat"><small>CONFIRMED</small><b id="brickCount">0</b></div>
       <div class="stat"><small>PROJECTION</small><b id="projectionCount">0</b></div>
-      <div class="stat"><small>SOURCE BARS</small><b id="sourceBarCount">0</b></div>
+      <div class="stat"><small>ATR SOURCE</small><b id="sourceBarCount">0</b></div>
     </div>
   </div>
   <div class="easybar"><button id="openPairs" class="open-pairs">☰ Pairs</button><span class="easy-label">QUICK</span><div class="quick"><button data-quick="BTC">BTC</button><button data-quick="ETH">ETH</button><button data-quick="SOL">SOL</button><button data-quick="XRP">XRP</button><button data-quick="BNB">BNB</button><button data-quick="DOGE">DOGE</button></div><div class="easy-health"><span id="tickHealth" class="health">WAITING</span><span id="tickAge">waiting</span></div></div>
   <div class="control-deck">
     <section class="card source-card">
-      <div class="source-head"><div><small>TRADINGVIEW SOURCE MODEL</small><b>Resolution + Source</b></div><small>Historical locks at interval close</small></div>
-      <div class="source-grid">
+      <div class="source-head"><div><small>FIXED RENKO SOURCE</small><b>1s CLOSE</b></div><small>Every confirmed sample is a closed 1-second Binance kline · no selectable timeframe</small></div>
+      <div class="source-grid" hidden aria-hidden="true">
         <label class="field"><span>SOURCE</span><select id="sourceSelect"><option value="close">Close</option><option value="ohlc">OHLC</option></select></label>
         <label class="field"><span>SOURCE INTERVAL</span><select id="intervalSelect"><option value="1s">1 second</option><option value="1m">1 minute</option><option value="3m">3 minutes</option><option value="5m">5 minutes</option><option value="15m">15 minutes</option><option value="30m">30 minutes</option><option value="1h">1 hour</option><option value="4h">4 hours</option><option value="1d">1 day</option></select></label>
       </div>
-      <label class="toggleline"><input id="wicksToggle" type="checkbox" checked><b>WICKS</b><span>Close extrema when Source=Close; High/Low when Source=OHLC.</span></label>
+      <label class="toggleline"><input id="wicksToggle" type="checkbox" checked><b>WICKS</b><span>Close extrema from the fixed 1-second Close source.</span></label>
     </section>
     <section class="card method-card">
       <div class="source-head"><div><small>BOX SIZE ASSIGNMENT METHOD</small><b>ATR · Traditional · Percentage (LTP)</b></div><small>TradingView public rules</small></div>
@@ -54,28 +54,28 @@
         <div class="method" data-method="percentage"><div class="method-title"><b>PERCENTAGE (LTP)</b><span>READY</span></div><label class="field"><span>PERCENT %</span><input id="percentageValue" inputmode="decimal" value="1"></label><button data-apply-method="percentage">APPLY</button></div>
       </div>
       <div class="summary">
-        <div><small>METHOD</small><b id="currentMethod">ATR</b></div><div><small>SOURCE</small><b id="currentSource">CLOSE</b></div><div><small>INTERVAL</small><b id="currentInterval">1m</b></div><div><small>REGULAR-CANDLE ATR</small><b id="currentAtr">—</b></div><div><small>LATEST CLOSED PRICE</small><b id="ltpSnapshot">—</b></div><div><small>MIN TICK</small><b id="minTick">—</b></div>
+        <div><small>METHOD</small><b id="currentMethod">ATR</b></div><div><small>SOURCE</small><b id="currentSource">CLOSE</b></div><div><small>RESOLUTION</small><b id="currentInterval">1s FIXED</b></div><div><small>REGULAR-CANDLE ATR</small><b id="currentAtr">—</b></div><div><small>LATEST CLOSED PRICE</small><b id="ltpSnapshot">—</b></div><div><small>MIN TICK</small><b id="minTick">—</b></div>
       </div>
     </section>
   </div>
-  <div class="chart-toolbar"><span class="pill"><strong>CONFIRMED</strong> source interval closed</span><span class="pill legend-proj"><i class="swatch up"></i><i class="swatch down"></i><strong>PROJECTION</strong> realtime provisional</span><span class="pill"><strong id="tvBrickMeta">0 confirmed</strong></span><b id="tvLoadState" class="load-state">Loading source history…</b></div>
+  <div class="chart-toolbar"><span class="pill"><strong>CONFIRMED</strong> each 1s Close is closed</span><span class="pill legend-proj"><i class="swatch up"></i><i class="swatch down"></i><strong>PROJECTION</strong> realtime provisional</span><span class="pill"><strong id="tvBrickMeta">0 confirmed</strong></span><b id="tvLoadState" class="load-state">Loading 1s Close source history…</b></div>
   <div id="chartWrap" class="chart-wrap">
     <div id="chartHost" class="chart-host"></div>
-    <div id="chartEmpty" class="chart-empty"><span class="spinner"></span><b>Preparing source-interval Renko…</b><small>Historical bars first; realtime bricks remain projection until the interval closes.</small></div>
-    <div class="coverage" id="tvCoverage">Preparing source history</div>
+    <div id="chartEmpty" class="chart-empty"><span class="spinner"></span><b>Preparing 1s Close Renko…</b><small>Confirmed source is fixed at closed 1-second Binance klines.</small></div>
+    <div class="coverage" id="tvCoverage">Preparing 1s Close source history</div>
     <div class="chart-nav"><button id="tvPanOlder" title="Older history">←</button><button id="tvZoomOut" title="Zoom out">−</button><button id="tvZoomIn" title="Zoom in">+</button><button id="tvPanNewer" title="Newer history">→</button><button id="tvReset" title="Reset latest">⌂</button><button id="tvLive" class="live" title="Return to live">LIVE</button></div>
   </div>
-  <div class="auditbar"><span id="auditSource">Source contract</span><span id="auditContinuation">1× continuation</span><span id="auditReversal">2× reversal</span><span id="auditProjection">projection ≠ confirmed</span><span id="auditWicks">wicks</span></div>
+  <div class="auditbar"><span id="auditSource">1s Close source</span><span id="auditContinuation">1× continuation</span><span id="auditReversal">2× reversal</span><span id="auditProjection">projection ≠ confirmed</span><span id="auditWicks">wicks</span></div>
   <div class="attribution">Rendered with <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener">TradingView Lightweight Charts™</a>. Renko calculations are an independent implementation of TradingView's public documentation, not proprietary TradingView code.</div>
   <details class="methodology"><summary>Official TradingView parity contract and limits</summary><div class="method-grid-info">
-    <div><b>Historical source</b><p>The selected chart interval supplies Close or OHLC values. Confirmed history changes only after that source interval closes.</p></div>
-    <div><b>Realtime projection</b><p>Current-interval bricks are provisional projections. They can change or disappear and are rebuilt from the current source bar until it closes.</p></div>
+    <div><b>Fixed historical source</b><p>Production is intentionally locked to Binance 1-second closed klines and Close values. There is no user-selectable chart timeframe.</p></div>
+    <div><b>Realtime projection</b><p>Current 1-second bricks are provisional projections and become confirmed only when that 1-second source kline closes.</p></div>
     <div><b>Traditional</b><p>Fixed absolute box. Continuation requires 1× box; reversal requires 2× box.</p></div>
     <div><b>Percentage (LTP)</b><p>Latest closed price × user percent, rounded to the nearest exchange minimum tick and applied consistently across the rebuild.</p></div>
-    <div><b>ATR</b><p>Wilder ATR is calculated from ordinary source-interval OHLC candles and used as the Renko box size. ATR Length is a real look-back period; large values load enough available source history instead of being silently clamped.</p></div>
-    <div><b>Wicks</b><p>Close source uses discarded close extrema. OHLC source uses actual High/Low excursions. Up bricks carry low wicks; down bricks carry high wicks.</p></div>
-    <div><b>Deep history</b><p>Older Binance source bars load progressively. TradingView itself may substitute higher intervals when its own lower-timeframe history ends; Binance history depth differs.</p></div>
-    <div><b>Exact-output limit</b><p>TradingView does not publicly specify every proprietary historical OHLC traversal/anchoring detail. This page matches the published contract and exposes the remaining undocumented boundary instead of claiming false 100% byte-for-byte output parity.</p></div>
+    <div><b>ATR</b><p>Wilder ATR is calculated from ordinary 1-second OHLC source candles while Renko formation uses their Close values. Large ATR look-backs are prepared in a Web Worker so the visible chart remains responsive.</p></div>
+    <div><b>Wicks</b><p>Close source uses discarded Close extrema. Up bricks carry low wicks; down bricks carry high wicks.</p></div>
+    <div><b>Deep history</b><p>Deep ATR history is acquired in the background and does not materialize one million DOM/chart-source objects on the main thread.</p></div>
+    <div><b>Exact-output limit</b><p>TradingView does not publicly specify every proprietary historical traversal/anchoring detail. This page matches the published Renko rules within the fixed 1s Close source profile rather than claiming proprietary byte-for-byte identity.</p></div>
   </div></details>
 </section>
 </main>
@@ -84,7 +84,9 @@
 <script src="renko-tv-locale-guard.js?v=165"></script>
 <script src="renko-tv-fetch-guard.js?v=164"></script>
 <script src="renko-tv-ultrafast-ui.js?v=169"></script>
+<script src="renko-tv-1s-close-lock.js?v=173"></script>
 <script src="renko-tv-app.js?v=160"></script>
+<script src="renko-tv-atr-1s-million-cache.js?v=173"></script>
 <script src="renko-tv-atr-instant-cache.js?v=172"></script>
 <script src="renko-tv-atr-parity.js?v=170"></script>
 </body>
