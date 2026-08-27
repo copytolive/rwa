@@ -1,0 +1,61 @@
+name: P21 Global RWA Factory
+on:
+  push:
+    branches: ["feat/p21-global-rwa-factory-20260827"]
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "rwa-8-engines/**"
+      - "suite-nav.js"
+      - "tools/rwa-8-engines-*.mjs"
+      - ".github/workflows/p21-global-rwa-factory.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: p21-global-rwa-factory-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  p21:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static, safety and regression contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check rwa-8-engines/engine.js
+          node --check rwa-8-engines/app.js
+          node --check suite-nav.js
+          node --check tools/rwa-8-engines-audit.mjs
+          node --check tools/rwa-8-engines-browser.mjs
+          python -m json.tool rwa-8-engines/config.json >/dev/null
+          python -m json.tool rwa-8-engines/jurisdictions.json >/dev/null
+          python -m json.tool rwa-8-engines/upstreams.lock.json >/dev/null
+          node tools/rwa-8-engines-audit.mjs
+          node tools/superapp-v5-audit.mjs
+          node tools/superapp-p16-p20-audit.mjs
+          node tools/security-gate.mjs
+          git diff --check HEAD~1..HEAD || git diff --check
+      - name: Install browser runtime
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Run browser acceptance
+        env:
+          RWA_TEST_URL: http://127.0.0.1:4173/rwa/
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/rwa-p21-site/rwa
+          cp -a . /tmp/rwa-p21-site/rwa/
+          cd /tmp/rwa-p21-site
+          python -m http.server 4173 >/tmp/rwa-p21-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
+          cd "$GITHUB_WORKSPACE"
+          node tools/superapp-v5-browser.mjs
+          node tools/superapp-p16-p20-browser.mjs
+          node tools/rwa-8-engines-browser.mjs
