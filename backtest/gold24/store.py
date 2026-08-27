@@ -148,3 +148,26 @@ class Store:
             (k, json.dumps(v)),
         )
         self.db.commit()
+
+    def get_state(self, k: str, default=None):
+        row = self.db.execute("SELECT v FROM state WHERE k=?", (k,)).fetchone()
+        if row is None:
+            return default
+        try:
+            return json.loads(row[0])
+        except Exception:
+            return default
+
+    def snapshot(self, dest: str | Path):
+        """Create a transaction-consistent SQLite backup even while WAL mode is active."""
+        dest = Path(dest)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if dest.exists():
+            dest.unlink()
+        target = sqlite3.connect(str(dest))
+        try:
+            self.db.backup(target)
+            target.commit()
+        finally:
+            target.close()
+        return dest
