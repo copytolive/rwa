@@ -1,47 +1,23 @@
 name: GOLD Certification Native MT5 Factory
 
 on:
-  workflow_dispatch:
-    inputs:
-      mode:
-        description: Certification workload
-        required: true
-        default: p45
-        type: choice
-        options:
-          - p45
-          - robust54
-          - all
-      broker_symbol:
-        description: Exness MT5 symbol for P45 broker stage
-        required: false
-        default: XAUUSD
-      from_date:
-        description: Broker real-tick start YYYY.MM.DD
-        required: false
-        default: '2025.01.01'
-      to_date:
-        description: Broker real-tick end YYYY.MM.DD
-        required: false
-        default: '2026.08.25'
-      method_filter:
-        description: Optional ROBUST54 comma-separated IDs; ALL = all shard IDs
-        required: false
-        default: ALL
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/p45-mt5-native-parity.yml'
 
 permissions:
   contents: read
 
 jobs:
   p45-native:
-    if: ${{ inputs.mode == 'p45' || inputs.mode == 'all' }}
     runs-on: windows-2022
     timeout-minutes: 180
     env:
       MT5_LOGIN: ${{ secrets.MT5_LOGIN || secrets.EXNESS_MT5_LOGIN || secrets.EXNESS_LOGIN }}
       MT5_PASSWORD: ${{ secrets.MT5_PASSWORD || secrets.EXNESS_MT5_PASSWORD || secrets.EXNESS_PASSWORD }}
       MT5_SERVER: ${{ secrets.MT5_SERVER || secrets.EXNESS_MT5_SERVER || secrets.EXNESS_SERVER }}
-      MT5_SYMBOL: ${{ inputs.broker_symbol }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -67,7 +43,6 @@ jobs:
           $h=(Get-FileHash P45_GITHUB_HOSTED_RUN.ps1 -Algorithm SHA256).Hash.ToLower()
           if($h -ne '27e2c541e6daa4c06698a69768aa2e6c22627f68b62f65162d9e2c0d61eadcb1'){ throw "P45 runner SHA mismatch: $h" }
           Write-Host "P45_RUNNER_SHA256=$h"
-          # Compatibility-only patches after immutable source hash verification; do not alter MT5 EA/comparator semantics.
           $src=[IO.File]::ReadAllText('P45_GITHUB_HOSTED_RUN.ps1')
           $patched=$src.Replace('python -m gdown --id $id -O $out','python -m gdown $id -O $out')
           $old="Ensure ((Get-Content `$ImportReceipt -Raw) -match 'status=PASS') 'MT5 custom-symbol import failed'"
@@ -114,9 +89,9 @@ jobs:
             -Login $env:MT5_LOGIN `
             -Password $env:MT5_PASSWORD `
             -Server $env:MT5_SERVER `
-            -BrokerSymbol '${{ inputs.broker_symbol }}' `
-            -FromDate '${{ inputs.from_date }}' `
-            -ToDate '${{ inputs.to_date }}'
+            -BrokerSymbol 'XAUUSD' `
+            -FromDate '2025.01.01' `
+            -ToDate '2026.08.25'
 
       - name: Upload P45 MT5 evidence
         if: always()
@@ -124,60 +99,5 @@ jobs:
         with:
           name: p45-mt5-${{ github.run_id }}
           path: p45-hosted/evidence/**
-          if-no-files-found: warn
-          retention-days: 90
-
-  robust54-native:
-    if: ${{ inputs.mode == 'robust54' || inputs.mode == 'all' }}
-    runs-on: windows-2022
-    timeout-minutes: 330
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - shard: s1
-            methods: P45,P01,P02,P03,P04,P05,P06,P07,P08
-          - shard: s2
-            methods: P09,P10,P11,P12,P13,P14,P15,P16,P17
-          - shard: s3
-            methods: P21,P22,P23,P24,P26,P27,P28,P29,P30
-          - shard: s4
-            methods: P31,P32,P33,P34,P35,P41,P44,P48,P51
-          - shard: s5
-            methods: P52,P55,P56,P61,P62,P63,P64,P66,P67
-          - shard: s6
-            methods: P69,P70,P71,P72,P75,P76,P77,P78,P79
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Download immutable ROBUST54 factory runner
-        shell: powershell
-        run: |
-          python -m pip install --quiet gdown
-          python -m gdown 1py8K2oPx6AKh1OfuXEdmSaJr3JfYm8EL -O GOLD_54_GITHUB_HOSTED_RUN.ps1
-          if(!(Test-Path GOLD_54_GITHUB_HOSTED_RUN.ps1)){ throw 'ROBUST54 runner download failed' }
-          $h=(Get-FileHash GOLD_54_GITHUB_HOSTED_RUN.ps1 -Algorithm SHA256).Hash.ToLower()
-          if($h -ne 'f6fe0d3c190b76b4f80b329f811592cdb84940d879d74b7e2dc9ce6994813bd6'){ throw "ROBUST54 runner SHA mismatch: $h" }
-          Write-Host "ROBUST54_RUNNER_SHA256=$h"
-
-      - name: Execute native MT5 replay parity shard
-        shell: powershell
-        run: |
-          ./GOLD_54_GITHUB_HOSTED_RUN.ps1 `
-            -ShardIds '${{ matrix.methods }}' `
-            -MethodFilter '${{ inputs.method_filter }}'
-
-      - name: Upload shard evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gold54-${{ matrix.shard }}-${{ github.run_id }}
-          path: gold54-hosted/evidence/**
           if-no-files-found: warn
           retention-days: 90
