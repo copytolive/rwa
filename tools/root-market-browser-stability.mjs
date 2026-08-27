@@ -48,7 +48,7 @@ async function compactDesktop(browser){
 }
 
 async function mobile(browser){
-  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});await installMocks(context);const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:20000});await page.waitForFunction(()=>window.RWAMarketPerformanceGuard,{timeout:10000});await page.waitForTimeout(800);
+  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});await installMocks(context);const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:20000});await page.waitForFunction(()=>window.RWAMarketPerformanceGuard,{timeout:10000});await page.waitForFunction(()=>window.RWASuperApp?.version==='5.0.0',{timeout:10000});await page.waitForTimeout(800);
   const m=await page.evaluate(()=>{
     const de=document.documentElement,chart=document.querySelector('.chart-wrap')?.getBoundingClientRect(),exchange=document.querySelector('#rwaExchange')?.getBoundingClientRect(),app=document.querySelector('.app')?.getBoundingClientRect(),h=document.querySelector('.topbar'),hr=h.getBoundingClientRect();
     const visible=e=>{const s=getComputedStyle(e),r=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity)!==0&&r.width>1&&r.height>1};
@@ -57,9 +57,11 @@ async function mobile(browser){
   });
   assert.ok(m.scrollWidth<=m.innerWidth+2,`mobile html overflow ${m.scrollWidth}/${m.innerWidth}`);assert.ok(m.bodyWidth<=m.innerWidth+2,`mobile body overflow ${m.bodyWidth}/${m.innerWidth}`);assert.ok(m.app.w<=m.innerWidth+1&&m.app.x>=-1,`mobile app width invalid ${JSON.stringify(m.app)}`);assert.ok(m.chart.w<=m.innerWidth+1&&m.chart.h>=280&&m.chart.h<=505,`mobile chart invalid ${JSON.stringify(m.chart)}`);if(m.exchange)assert.ok(m.exchange.w<=m.innerWidth+1&&m.exchange.x>=-1,`mobile exchange overflow ${JSON.stringify(m.exchange)}`);assert.ok(m.rows<=70,`mobile pair DOM cap invalid ${m.rows}`);assert.equal(m.header.single,'1');assert.ok(m.header.h<=58&&m.header.scrollH<=58,`mobile header vertical wrap: ${JSON.stringify(m.header)}`);
   for(const c of m.header.visibleChildren)assert.ok(c.x>=-1&&c.right<=m.innerWidth+1,`mobile visible header child clipped: ${JSON.stringify(c)} / ${m.innerWidth}`);
-  await page.evaluate(()=>document.querySelector('[data-mobile-nav="markets"]')?.click());await page.waitForTimeout(80);const drawer=await page.evaluate(()=>({open:document.body.classList.contains('market-drawer-open'),left:getComputedStyle(document.querySelector('.left')).display,scrollWidth:document.documentElement.scrollWidth}));assert.equal(drawer.open,true);assert.notEqual(drawer.left,'none');assert.ok(drawer.scrollWidth<=390+2);
-  assert.equal(errors.length,0,`mobile page errors: ${errors.join(' | ')}`);await context.close();return {m,drawer};
+  const markets=page.locator('[data-v5-mobile="markets"]');await markets.waitFor({state:'visible',timeout:5000});await markets.click();await page.waitForTimeout(100);
+  const nav=await page.evaluate(()=>({hash:location.hash,route:document.documentElement.dataset.rwaRoute,marketShell:document.body.classList.contains('rwa-super-market-open'),scrollWidth:document.documentElement.scrollWidth}));
+  assert.ok(nav.hash==='#markets'||nav.route==='markets',`mobile Markets navigation lost route: ${JSON.stringify(nav)}`);assert.equal(nav.marketShell,true);assert.ok(nav.scrollWidth<=390+2);
+  assert.equal(errors.length,0,`mobile page errors: ${errors.join(' | ')}`);await context.close();return {m,nav};
 }
 
 const browser=await chromium.launch({headless:true});
-try{const d=await desktop(browser),c=await compactDesktop(browser),m=await mobile(browser);console.log(JSON.stringify({ok:true,contract:'rwa-root-market-browser-stability-v3-human-header',desktop:d,compact:c,mobile:m},null,2));}finally{await browser.close()}
+try{const d=await desktop(browser),c=await compactDesktop(browser),m=await mobile(browser);console.log(JSON.stringify({ok:true,contract:'rwa-root-market-browser-stability-v4-current-router',desktop:d,compact:c,mobile:m},null,2));}finally{await browser.close()}
