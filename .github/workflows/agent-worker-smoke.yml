@@ -5,12 +5,13 @@ on:
     branches: ["main"]
     paths:
       - "agent-worker/**"
-      - ".github/workflows/agent-worker-smoke.yml"
+  pull_request:
+    paths:
+      - "agent-worker/**"
   workflow_dispatch:
 
 permissions:
   contents: read
-  statuses: write
 
 jobs:
   worker:
@@ -48,13 +49,3 @@ jobs:
           grep -Fq '"enabled": false' control.json
           grep -Fq '"kill_switch": true' control.json
           grep -Fq '"mainnet_enabled": false' control.json
-      - name: Publish worker source success
-        if: success()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/agent-worker-source' -f description='24x7 delegated worker: single-write + deterministic CLOID + replay protection verified'
-      - name: Publish worker source failure
-        if: failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/agent-worker-source' -f description='Delegated agent worker safety verification failed'
