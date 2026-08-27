@@ -2,16 +2,16 @@ name: RWA Multi Chain Browser
 
 on:
   pull_request:
-    branches: ["main"]
+    branches: [main]
     paths:
-      - "index.html"
-      - "rwa-multichain.js"
-      - "rwa-multichain-engine.js"
-      - "rwa-multichain-registry.json"
-      - "tools/multichain-contract.mjs"
-      - "tools/multichain-browser.mjs"
-      - ".github/workflows/multichain-browser.yml"
-      - ".github/workflows/pages.yml"
+      - index.html
+      - rwa-multichain.js
+      - rwa-multichain-engine.js
+      - rwa-multichain-registry.json
+      - tools/multichain-contract.mjs
+      - tools/multichain-browser.mjs
+      - .github/workflows/multichain-browser.yml
+      - .github/workflows/pages.yml
   workflow_run:
     workflows: ["Deploy RWA to GitHub Pages"]
     types: [completed]
@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   local-proof:
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -53,7 +53,10 @@ jobs:
           cd /tmp/rwa-multichain-site
           python -m http.server 4173 >/tmp/rwa-multichain-http.log 2>&1 &
           echo $! >/tmp/rwa-multichain-http.pid
-          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null; then break; fi
+            sleep 1
+          done
       - name: Run V2 desktop and mobile acceptance
         env:
           RWA_TEST_URL: http://127.0.0.1:4173/rwa/
@@ -72,7 +75,7 @@ jobs:
         run: kill "$(cat /tmp/rwa-multichain-http.pid)" 2>/dev/null || true
 
   live-proof:
-    if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 18
     env:
@@ -143,9 +146,11 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=success -f context='rwa/multichain' -f description='MULTI CHAIN V2: 8 routed networks + protected Hyperliquid; desktop/mobile proof PASS'
+        run: |
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=success -f context='rwa/multichain' -f description='MULTI CHAIN V2 - 8 routed networks plus protected Hyperliquid - browser proof PASS'
       - name: Publish Multi Chain V2 failure status
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=failure -f context='rwa/multichain' -f description='MULTI CHAIN V2 production proof failed; inspect artifact and logs'
+        run: |
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=failure -f context='rwa/multichain' -f description='MULTI CHAIN V2 production proof failed - inspect artifact and logs'
