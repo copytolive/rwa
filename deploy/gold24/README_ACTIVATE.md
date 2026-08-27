@@ -1,1 +1,0 @@
-See `PRODUCTION_ACTIVATION_CHECKLIST.md` for the exact one-time Oracle, GitHub environment-secret, Google credential, and Gate A activation steps. Production remains fail-closed until those external prerequisites are evidenced.
