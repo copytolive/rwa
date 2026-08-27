@@ -32,6 +32,7 @@ jobs:
           set -euo pipefail
           node --check renko/renko-tv-engine.js
           node --check renko/renko-tv-app.js
+          node --check renko/renko-tv-atr-parity.js
           node --check tools/renko-tradingview-official-report.mjs
           grep -Fq 'id="sourceSelect"' renko/index.html
           grep -Fq 'value="close"' renko/index.html
@@ -39,10 +40,15 @@ jobs:
           grep -Fq 'id="intervalSelect"' renko/index.html
           grep -Fq 'PROJECTION' renko/index.html
           grep -Fq 'PERCENTAGE (LTP)' renko/index.html
+          grep -Fq 'renko-tv-atr-parity.js' renko/index.html
+          grep -Fq 'large values load enough available source history' renko/index.html
           grep -Fq '/api/v3/klines?' renko/renko-tv-app.js
           grep -Fq "confirmationRule:'source-interval-close'" renko/renko-tv-app.js
           grep -Fq "projectionRule:'realtime-provisional-until-source-interval-close'" renko/renko-tv-app.js
           grep -Fq "contract:'tradingview-public-documentation-compatible'" renko/renko-tv-engine.js
+          grep -Fq 'data-apply-method="atr"' renko/renko-tv-atr-parity.js
+          grep -Fq 'atrLength===2000' tools/renko-tradingview-official-report.mjs
+          grep -Fq 'coverageStart<atrLive.coverageStart' tools/renko-tradingview-official-report.mjs
           ! grep -Eqi 'every trade locks|no timeframe|tick-native chart' renko/index.html
           git diff --check
 
