@@ -1,0 +1,44 @@
+name: Live Experience Viewport V10 Proof
+
+on:
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-viewport-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify exact live release SHA
+        shell: bash
+        env:
+          EXPECTED_SHA: 7d66aaedbcdfb89945b271b8e27fabdbaeb42d3e
+        run: |
+          set -euo pipefail
+          live_sha="$(curl -fsSL "https://copytolive.github.io/rwa/deployment-sha.txt?v=${GITHUB_RUN_ID}" | tr -d '\r\n')"
+          test "$live_sha" = "$EXPECTED_SHA"
+          echo "LIVE_EXACT_SHA=PASS:$live_sha"
+      - name: Measure Discovery Analysis Action on production
+        env:
+          RWA_TEST_URL: https://copytolive.github.io/rwa/
+          RWA_PROOF_DIR: proof/live-experience-viewport-v10
+        run: node tools/experience-rail-visual-parity-v9.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-experience-viewport-v10-proof
+          path: proof/live-experience-viewport-v10
+          retention-days: 7
+          if-no-files-found: warn
