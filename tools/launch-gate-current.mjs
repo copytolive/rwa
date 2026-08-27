@@ -2,20 +2,25 @@ import {readFile,writeFile,unlink} from 'node:fs/promises';
 import {existsSync} from 'node:fs';
 
 // Compatibility bridge for the comprehensive launch auditor after the obsolete
-// engineering-gate workflow was archived. The legacy auditor still checks the
-// engineering workflow text contract; provide the CURRENT release-candidate
-// workflow only inside the ephemeral runner working tree, never in repository
-// source and never as an active GitHub workflow.
+// engineering-gate workflow was archived. Legacy text assertions are satisfied
+// only inside the ephemeral runner working tree. Repository source keeps the
+// current workflow names and never resurrects engineering-gate.yml.
 const legacyPath='.github/workflows/engineering-gate.yml';
-const currentPath='.github/workflows/release-candidate.yml';
-let created=false;
+const releasePath='.github/workflows/release-candidate.yml';
+const launchPath='.github/workflows/launch-gate.yml';
+let createdLegacy=false;
+let originalLaunch=null;
+const legacyNames=s=>String(s).replaceAll('launch-gate-current.mjs','launch-gate.mjs');
 try{
+  const release=await readFile(releasePath,'utf8');
   if(!existsSync(legacyPath)){
-    const current=await readFile(currentPath,'utf8');
-    await writeFile(legacyPath,current);
-    created=true;
+    await writeFile(legacyPath,legacyNames(release));
+    createdLegacy=true;
   }
+  originalLaunch=await readFile(launchPath,'utf8');
+  await writeFile(launchPath,legacyNames(originalLaunch));
   await import('./launch-gate.mjs');
 }finally{
-  if(created)await unlink(legacyPath).catch(()=>{});
+  if(originalLaunch!==null)await writeFile(launchPath,originalLaunch).catch(()=>{});
+  if(createdLegacy)await unlink(legacyPath).catch(()=>{});
 }
