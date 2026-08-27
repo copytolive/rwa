@@ -33,7 +33,7 @@ jobs:
             index.html superapp-v5.js superapp-v5.css rwa-sw-v5.js suite-nav.js \
             execution-api.js execution-ops-bridge.js exchange-core.js \
             rwa-execution-config.json token/config.json manifest.webmanifest rwa-discovery-catalog.json \
-            persistent-market-shell-v3.css persistent-market-operability-patch-v1.css market-performance.js \
+            persistent-market-shell-v3.css persistent-market-operability-patch-v1.css enterprise-ui-v12.css market-performance.js \
             tools/superapp-v5-audit.mjs tools/superapp-v5-browser.mjs \
             tools/superapp-p16-p20-audit.mjs tools/superapp-p16-p20-browser.mjs \
             tools/security-gate.mjs \
@@ -72,8 +72,11 @@ jobs:
           grep -Fq "./$SUPER_CSS_REF" rwa-sw-v5.js
           grep -Fq "./$SUPER_JS_REF" rwa-sw-v5.js
           grep -Fq 'realtime-core.js?v=3' index.html
-          grep -Fq 'market-performance.js?v=10' index.html
+          grep -Fq 'market-performance.js?v=12' index.html
           grep -Fq 'persistent-market-operability-patch-v1.css?v=11' market-performance.js
+          grep -Fq 'enterprise-ui-v12.css?v=12' market-performance.js
+          grep -Fq 'SINGLE RIGHT DOCK CONTRACT V12.2' enterprise-ui-v12.css
+          grep -Fq -- '--rwa-context-panel:440px' enterprise-ui-v12.css
           ! grep -Fq 'product-os-v3.js' index.html
           ! grep -Fq 'product-os-mobile-contract-v3.js' index.html
           ! grep -Fq 'walletconnect.js' index.html
@@ -136,15 +139,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify V11 zero-flicker viewport/cache release payload
+      - name: Verify V12.2 single-dock and V11 zero-flicker release payload
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq 'market-performance.js?v=10' index.html
+          grep -Fq 'market-performance.js?v=12' index.html
           grep -Fq 'persistent-market-operability-patch-v1.css?v=11' market-performance.js
+          grep -Fq 'enterprise-ui-v12.css?v=12' market-performance.js
           grep -Fq 'WORKFLOW VIEWPORT PARITY V10' persistent-market-operability-patch-v1.css
           grep -Fq 'ACTION ZERO-FLICKER TRANSITION LOCK V11' persistent-market-operability-patch-v1.css
-          grep -Fq 'width:var(--rwa-context-panel,440px)!important' persistent-market-operability-patch-v1.css
+          grep -Fq 'SINGLE RIGHT DOCK CONTRACT V12.2' enterprise-ui-v12.css
+          grep -Fq -- '--rwa-context-panel:440px' enterprise-ui-v12.css
           grep -Fq 'renko-tv-engine.js?v=160' renko/index.html
           grep -Fq 'renko-tv-app.js?v=160' renko/index.html
 
@@ -173,7 +178,7 @@ jobs:
           git show-ref | sort > backup/refs.txt
           python - <<'PY'
           import json, os, datetime
-          receipt={"name":"RWA-LIVE-SYNC","version":"11.0","timestamp":datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d-%H%M%S'),"sha":os.environ['GITHUB_SHA'],"remote":"https://github.com/copytolive/rwa.git","pages":"https://copytolive.github.io/rwa/","gate":"pages-deploy-success"}
+          receipt={"name":"RWA-LIVE-SYNC","version":"12.2","timestamp":datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d-%H%M%S'),"sha":os.environ['GITHUB_SHA'],"remote":"https://github.com/copytolive/rwa.git","pages":"https://copytolive.github.io/rwa/","gate":"pages-deploy-success"}
           open('backup/receipt.json','w').write(json.dumps(receipt,separators=(',',':'))+'\n')
           PY
           (cd backup && sha256sum repo.zip repo.bundle refs.txt receipt.json > SHA256SUMS.txt)
