@@ -1,0 +1,66 @@
+name: RWA Proven Production Backup c6f856
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/production-backup-c6f856.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PRODUCTION_SHA: c6f856a6f2b6b0d48409f89ac5bc83fdab885785
+    steps:
+      - name: Checkout full repository history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Build verified failover set
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --prune --tags --force origin '+refs/heads/*:refs/remotes/origin/*'
+          git cat-file -e "$PRODUCTION_SHA^{commit}"
+          mkdir -p backup
+          git bundle create backup/rwa-full-latest.bundle --all
+          git bundle verify backup/rwa-full-latest.bundle
+          git archive --format=tar.gz --output=backup/rwa-tracked-latest.tar.gz "$PRODUCTION_SHA"
+          git show-ref | sort > backup/refs.txt
+          printf '%s\n' "$PRODUCTION_SHA" > backup/deployed-sha.txt
+          python - <<'PY'
+          import json, os, datetime
+          receipt={
+            'name':'RWA-FAILOVER-SYSTEM',
+            'version':'9.0',
+            'created_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            'production_sha':os.environ['PRODUCTION_SHA'],
+            'production_url':'https://copytolive.github.io/rwa/',
+            'proven_pages_run_id':33033665701,
+            'proven_live_browser_run_id':33033856966,
+            'captured_repository_head':os.environ['GITHUB_SHA'],
+            'bundle_scope':'all refs visible to GitHub Actions checkout/fetch',
+            'tracked_snapshot_sha':os.environ['PRODUCTION_SHA'],
+            'status':'RECOVERY_SET_VERIFIED'
+          }
+          open('backup/receipt.json','w').write(json.dumps(receipt,indent=2)+'\n')
+          PY
+          (cd backup && sha256sum rwa-full-latest.bundle rwa-tracked-latest.tar.gz refs.txt deployed-sha.txt receipt.json > SHA256SUMS.txt)
+          cp backup/receipt.json backup/RESTORE-README.json
+          printf 'git clone rwa-full-latest.bundle recovered-rwa\ncd recovered-rwa\ngit checkout %s\n' "$PRODUCTION_SHA" > backup/RESTORE.txt
+          tar -czf RWA-PRODUCTION-RECOVERY-c6f856-20260827.tar.gz -C backup .
+      - name: Upload verified recovery artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RWA-PRODUCTION-RECOVERY-c6f856-20260827
+          path: |
+            backup/
+            RWA-PRODUCTION-RECOVERY-c6f856-20260827.tar.gz
+          retention-days: 90
+          if-no-files-found: error
