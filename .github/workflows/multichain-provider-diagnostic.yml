@@ -49,7 +49,7 @@ jobs:
           to_token='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
           from_amount='10000000'
           from_address='0x1111111111111111111111111111111111111111'
-          to_address='7YWHMfk9JZe0LMV4kMYV3hJXmbE54VdWckx3Qw7oM3en'
+          to_address='11111111111111111111111111111111'
 
           probe_quote() {
             name="$1"; shift
