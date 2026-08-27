@@ -1,10 +1,13 @@
 /* Human-operability corrective layer: status indicators may never intercept primary mobile actions. */
 @media (max-width:680px){
+  .topnav{display:none!important}
   body.rwa-super-workspace-open .rwa-health,
   body.rwa-super-asset-workspace .rwa-health,
   body.suite-open .rwa-health{display:none!important}
   .rwa-health{pointer-events:none!important}
   .rwa-health button{pointer-events:auto!important}
+  .rwa-mobile-asset-actions{bottom:calc(84px + var(--rwa-safe-bottom))!important}
+  body.rwa-super-asset-workspace #rwaSuperWorkspace{padding-bottom:96px!important}
 }
 @media (min-width:681px) and (max-width:899px){
   body.rwa-super-workspace-open .rwa-health,
