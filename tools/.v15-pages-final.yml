@@ -1,0 +1,309 @@
+name: Deploy RWA to GitHub Pages
+# SUPERAPP_V9_TRIGGER_CONTRACT: regression/security workflow changes intentionally redeploy Pages
+
+on:
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - "monitor/status.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate application syntax
+        run: |
+          node --check app.js
+          node --check realtime-core.js
+          node --check chart-core.js
+          node --check wallet-core.js
+          node --check mobile.js
+          node --check product-os-v3.js
+          node --check product-os-mobile-contract-v3.js
+          node --input-type=module --check < trade/config.js
+          node --check suite-ui.js
+          node --check suite.js
+          node --check suite-nav.js
+          node --check execution-api.js
+          node --check execution-ui.js
+          node --check execution-ops-bridge.js
+          node --check exchange-core.js
+          node --check exchange-ui.js
+          node --check exchange-actions.js
+          node --check testnet-e2e.js
+          node --check suite-execution-patch.js
+          node --check walletconnect.js
+          node --check ops-suite.js
+          node --check risk-hardening.js
+          node --check provider-failover.js
+          node --check monitor-client.js
+          node --check monitor-config-client.js
+          node --check social-safety-patch.js
+          node --check audit-hooks.js
+          node --check rwa-verify-client.js
+          node --check copy-24x7-client.js
+          node --check launch-status.js
+          node --check beta-proof-client.js
+          node --check tools/rwa-verify.mjs
+          node --check tools/e2e-proof.mjs
+          node --check tools/beta-proof.mjs
+          node --check tools/launch-gate.mjs
+          node --check tools/security-gate.mjs
+          node --check tools/monitor-config.mjs
+          node --check agent-worker/execution.mjs
+          node --check agent-worker/copy-engine.mjs
+          node --check agent-worker/worker.mjs
+          node --check backtest/app.js
+          node --check backtest/worker.js
+          node --check backtest/public-request.js
+          node --check backtest/data/validate_assets.cjs
+          python -m py_compile backtest/chat/run_chat_job.py backtest/chat/public_issue_request.py
+          python -m py_compile monitor/monitor.py
+
+      - name: Verify production files and contracts
+        run: |
+          for f in \
+            index.html app.js realtime-core.js chart-core.js wallet-core.js mobile.js styles.css mobile.css stable-shell.css \
+            unified-design-v3.css product-os-v3.js product-os-mobile-contract-v3.js trader/index.html asset/index.html trade/config.js \
+            suite-ui.js suite.js suite-nav.js suite.css execution-api.js execution-ui.js execution-ops-bridge.js \
+            exchange-core.js exchange-ui.js exchange-actions.js testnet-e2e.js suite-execution-patch.js walletconnect.js \
+            ops-suite.js ops.css risk-hardening.js provider-failover.js monitor-client.js monitor-config-client.js \
+            social-safety-patch.js audit-hooks.js rwa-verify-client.js copy-24x7-client.js launch-status.js beta-proof-client.js \
+            rwa-execution-config.json rwa-assets.json rwa-reviewers.json moderation.json EXECUTION_API.md LAUNCH_RUNBOOK.md \
+            launch/readiness.json launch/e2e-registry.json launch/beta-registry.json \
+            tools/rwa-verify.mjs tools/e2e-proof.mjs tools/beta-proof.mjs tools/launch-gate.mjs tools/security-gate.mjs \
+            agent-worker/execution.mjs agent-worker/copy-engine.mjs agent-worker/worker.mjs agent-worker/control.json agent-worker/public-config.json agent-worker/Dockerfile \
+            monitor/config.json monitor/status.json monitor/monitor.py monitor/admin-wallets.json tools/monitor-config.mjs \
+            .github/workflows/rwa-registry-review.yml .github/workflows/e2e-proof-review.yml .github/workflows/beta-proof-review.yml \
+            .github/workflows/launch-gate.yml .github/workflows/security-gate.yml .github/workflows/agent-worker-smoke.yml .github/workflows/copy-production-sim.yml; do test -s "$f"; done
+
+          for j in rwa-execution-config.json rwa-assets.json rwa-reviewers.json moderation.json launch/readiness.json launch/e2e-registry.json launch/beta-registry.json agent-worker/control.json agent-worker/public-config.json monitor/config.json monitor/status.json monitor/admin-wallets.json token/config.json; do python -m json.tool "$j" >/dev/null; done
+
+          grep -Fq "realtime-core.js?v=3" index.html
+          grep -Fq "market-performance.js?v=2" index.html
+          grep -Fq "stable-shell.css?v=3" index.html
+          grep -Fq "superapp-v5.css?v=13" index.html
+          grep -Fq "superapp-v5.js?v=13" index.html
+          grep -Fq "manifest.webmanifest" index.html
+          ! grep -Fq "product-os-v3.js" index.html
+          ! grep -Fq "product-os-mobile-contract-v3.js" index.html
+          ! grep -Fq "walletconnect.js" index.html
+          ! grep -Fq "wallet-core.js" index.html
+          ! grep -Fq "unified-design-v3.css" index.html
+          ! grep -Fq "wallet-seamless.js" index.html
+          ! grep -Fq "browser-recovery.js" index.html
+          ! grep -Fq "instantChartBoot();loadSuite()" mobile.js
+          grep -Fq "data-stream.binance.vision" realtime-core.js
+          grep -Fq "stream.binance.com:9443" realtime-core.js
+          grep -Fq "stream.binance.com:443" realtime-core.js
+          grep -Fq "REST fallback" realtime-core.js
+
+          grep -Fq "suite-nav.js" mobile.js
+          grep -Fq "walletconnect.js?v=4" suite-nav.js
+          grep -Fq "execution-api.js?v=4" suite-nav.js
+          grep -Fq "execution-ops-bridge.js?v=4" suite-nav.js
+          grep -Fq "ops-suite.js?v=2" suite-nav.js
+          grep -Fq "execution-ui.js?v=3" suite-nav.js
+          grep -Fq "suite-execution-patch.js?v=6" suite-nav.js
+          grep -Fq "copy-24x7-client.js?v=2" suite-nav.js
+          grep -Fq "launch-status.js?v=2" suite-nav.js
+          grep -Fq "beta-proof-client.js?v=1" suite-nav.js
+          ! grep -Fq "load('wallet-auth.js" suite-nav.js
+          ! grep -Fq "load('walletconnect-auth-patch.js" suite-nav.js
+
+          grep -Fq "version:'3.0.0'" wallet-core.js
+          grep -Fq "eip6963:requestProvider" wallet-core.js
+          grep -Fq "personal_sign" wallet-core.js
+          grep -Fq "personal_ecRecover" wallet-core.js
+          grep -Fq "Wallet account switched" wallet-core.js
+
+          grep -Fq "version:'2.0.0'" execution-api.js
+          grep -Fq "hardening:'single-write-path-v1'" execution-api.js
+          grep -Fq "riskGate:'mandatory-internal-v1'" execution-api.js
+          grep -Fq "bracket:'atomic-normal-tpsl-v1'" execution-api.js
+          grep -Fq "grouping:'normalTpsl'" execution-api.js
+          grep -Fq "approveAgent" execution-api.js
+          grep -Fq "approveBuilderFee" execution-api.js
+          grep -Fq "AES-GCM" execution-api.js
+          grep -Fq "info('extraAgents'" execution-api.js
+          ! grep -Fq "ExchangeClient" execution-ops-bridge.js
+          ! grep -Fq "ExchangeClient" ops-suite.js
+          ! grep -Fq "ExchangeClient" risk-hardening.js
+          ! grep -Fq "ExchangeClient" suite-execution-patch.js
+
+          grep -Fq "version:'1.1.0'" exchange-core.js
+          grep -Fq "safety:'wallet-and-global-launch-gate-v3'" exchange-core.js
+          grep -Fq "localE2EVerified()&&globalMainnetReady()" exchange-core.js
+          grep -Fq "status==='READY_FOR_MAINNET'" exchange-core.js
+          grep -Fq "protection:'atomic-normal-tpsl-v1'" exchange-core.js
+          grep -Fq "const state={env:'testnet'" exchange-core.js
+
+          grep -Fq "version:'3.1.0'" testnet-e2e.js
+          grep -Fq "status:'E2E_VERIFIED'" testnet-e2e.js
+          grep -Fq "REAL E2E RESULT" testnet-e2e.js
+          grep -Fq "Save Wallet E2E Gate" testnet-e2e.js
+          grep -Fq "GLOBAL LAUNCH GATE" testnet-e2e.js
+          ! grep -Fq "RWATestnetE2E?.mark" exchange-actions.js
+
+          grep -Fq "version:'2.0.0'" copy-24x7-client.js
+          grep -Fq "RWA 24/7 COPY AUTHORIZE V2" copy-24x7-client.js
+          grep -Fq "sourceTestnet:false" copy-24x7-client.js
+          grep -Fq "RWA_PUBLIC_ORIGIN" agent-worker/worker.mjs
+          grep -Fq "consumeNonce" agent-worker/worker.mjs
+          grep -Fq "copy.retry_pending" agent-worker/worker.mjs
+          grep -Fq "copy.replay_confirmed" agent-worker/worker.mjs
+          grep -Fq "WORKER_IDEMPOTENCY='deterministic-cloid-v1'" agent-worker/execution.mjs
+          ! grep -Fq "ExchangeClient" agent-worker/worker.mjs
+          ! grep -Eq "withdraw3|usdClassTransfer|spotSend|sendAsset" agent-worker/execution.mjs agent-worker/worker.mjs
+
+          grep -Fq "version:'2.0.0'" launch-status.js
+          grep -Fq "Public beta" launch-status.js
+          grep -Fq "RWA BETA TESTNET PROOF" beta-proof-client.js
+          grep -Fq "BETA_PROOF_JSON_START" tools/beta-proof.mjs
+          grep -Fq "READY_FOR_MAINNET" tools/launch-gate.mjs
+          grep -Fq "beta_public" tools/launch-gate.mjs
+          grep -Fq "node tools/launch-gate.mjs --write" .github/workflows/launch-gate.yml
+          grep -Fq "[BETA-PROOF]" .github/workflows/beta-proof-review.yml
+
+          grep -Fq "RWARisk" ops-suite.js
+          grep -Fq "RWAOps" ops-suite.js
+          grep -Fq "RWARiskHardening" risk-hardening.js
+          grep -Fq "RWAWalletConnect" walletconnect.js
+          grep -Fq "RWAFailoverV2" provider-failover.js
+          grep -Fq "api.exchange.coinbase.com" provider-failover.js
+          grep -Fq "api.kraken.com" provider-failover.js
+          grep -Fq "RWASocialSafetyV2" social-safety-patch.js
+          grep -Fq "moderation.json" social-safety-patch.js
+          grep -Fq "RWAAuditHooks" audit-hooks.js
+          grep -Fq "RWAVerifyClient" rwa-verify-client.js
+          grep -Fq "rwa-reviewers.json" rwa-verify-client.js
+          grep -Fq "RWA 24X7 CONFIG" monitor-config-client.js
+          grep -Fq "wallet-signature-required" monitor/config.json
+          grep -Fq "cron: '*/5" .github/workflows/monitor.yml
+          grep -Fq "[RWA-VERIFY]" .github/workflows/rwa-registry-review.yml
+          grep -Fq "[MONITOR-CONFIG]" .github/workflows/monitor-config.yml
+
+          grep -Fq '"enabled": false' rwa-execution-config.json
+          grep -Fq '"tgeEnabled": false' token/config.json
+          grep -Fq '"mainnetDeploymentEnabled": false' token/config.json
+
+          test -s backtest/index.html
+          test -s backtest/app.js
+          test -s backtest/worker.js
+          test -s backtest/public-request.js
+          test -s backtest/styles.css
+          test -s backtest/assets.css
+          test -s backtest/data/assets.json
+          test -s backtest/data/asset_status.json
+          test -s backtest/data/manifest.json
+          test -s backtest/results/campaign.json
+          test -s backtest/results/evaluation_ids.json
+          test -s backtest/results/latest_batch.json
+          test -s backtest/results/batches.json
+          test -s backtest/results/shards.json
+          python -m json.tool backtest/data/assets.json >/dev/null
+          python -m json.tool backtest/data/asset_status.json >/dev/null
+
+      - name: Validate RWA Super App V5 single-page contract
+        run: |
+          node --check superapp-v5.js
+          node --check legacy-canonical.js
+          node --check rwa-sw-v5.js
+          node --check tools/superapp-v5-audit.mjs
+          node --check tools/superapp-v5-browser.mjs
+          python -m py_compile tools/superapp-v5-browser-smoke.py tools/superapp-v5-live-browser-smoke.py
+          python -m json.tool rwa-discovery-catalog.json >/dev/null
+          python -m json.tool manifest.webmanifest >/dev/null
+          node tools/superapp-v5-audit.mjs
+
+      - name: Install RWA Super App browser runtime
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run RWA Super App browser regression
+        env:
+          RWA_TEST_URL: http://127.0.0.1:4173/rwa/
+        run: |
+          mkdir -p /tmp/rwa-superapp-site/rwa
+          cp -a . /tmp/rwa-superapp-site/rwa/
+          cd /tmp/rwa-superapp-site
+          python -m http.server 4173 >/tmp/rwa-superapp-http.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
+          cd "$GITHUB_WORKSPACE"
+          node tools/superapp-v5-browser.mjs
+
+      - name: Validate P16-P20 product contract
+        run: |
+          node --check tools/superapp-p16-p20-audit.mjs
+          node --check tools/superapp-p16-p20-browser.mjs
+          node tools/superapp-p16-p20-audit.mjs
+
+      - name: Run repository security gate
+        run: node tools/security-gate.mjs
+
+      - name: Validate VectorForge ledger, DOM contract and source catalog
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+          manifest = json.loads(Path('backtest/data/manifest.json').read_text())
+          campaign = json.loads(Path('backtest/results/campaign.json').read_text())
+          ids = json.loads(Path('backtest/results/evaluation_ids.json').read_text()).get('ids', [])
+          batches = json.loads(Path('backtest/results/batches.json').read_text()).get('batches', [])
+          shards = json.loads(Path('backtest/results/shards.json').read_text()).get('shards', [])
+          assets = json.loads(Path('backtest/data/assets.json').read_text()).get('assets', [])
+          asset_status = json.loads(Path('backtest/data/asset_status.json').read_text()).get('assets', [])
+          html = Path('backtest/index.html').read_text(); app = Path('backtest/app.js').read_text()
+          files = manifest.get('files', []); months = [x.get('month') for x in files]
+          assert len(files) == 111, f'expected 111 source files, got {len(files)}'
+          assert len(set(months)) == len(months), 'duplicate source months in manifest'
+          assert months[0] == '2009-05' and months[-1] == '2018-07', 'coverage mismatch'
+          assert campaign['target_evaluations'] == 1_000_000_000_000
+          assert len(ids) == len(set(ids)), 'duplicate evaluation IDs persisted'
+          assert campaign['verified_completed'] == len(set(ids)), 'ledger count != unique evaluation IDs'
+          assert campaign['verified_completed'] <= campaign['target_evaluations']
+          assert all(len(x.get('dataset_sha256', '')) == 64 for x in batches), 'invalid batch dataset hash'
+          assert len({x.get('shard_id') for x in shards}) == len(shards), 'duplicate shard IDs'
+          assert all(len(x.get('merkle_root', '')) == 64 for x in shards), 'invalid Merkle root'
+          assert sum(int(x.get('evaluation_count', 0)) for x in shards) == len(ids), 'shard evaluation total mismatch'
+          symbols=[x.get('symbol') for x in assets]
+          assert len(symbols)==len(set(symbols)) and len(symbols)>=30, 'invalid or undersized public asset universe'
+          assert all(x.get('provider')=='dukascopy' and x.get('mode')=='bid_ask_tick' for x in assets), 'public universe must use Dukascopy bid/ask tick'
+          status_symbols={x.get('symbol') for x in asset_status}
+          assert status_symbols, 'asset verification status is empty'
+          html_ids = set(re.findall(r'id=["\']([^"\']+)', html)); app_ids = set(re.findall(r"\$\('([^']+)'\)", app))
+          missing = sorted(app_ids - html_ids); assert not missing, f'app.js references missing DOM ids: {missing}'
+          assert 'public-request.js' in html and 'assets.css' in html, 'multi-asset public UI assets not loaded'
+          print(f"VectorForge QA PASS: {len(files)} EURUSD files, {len(assets)} public assets, {len(set(ids))} verified evaluations, {len(shards)} shards")
+          PY
+
+  deploy:
+    needs: verify
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,99 @@
+name: RWA Super App Regression
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'product-os-v3.js'
+      - 'legacy-canonical.js'
+      - 'trade/index.html'
+      - 'asset/index.html'
+      - 'trader/index.html'
+      - 'backtest/index.html'
+      - 'renko/index.html'
+      - 'tools/superapp-v5-browser-smoke.py'
+      - 'tools/superapp-v5-live-browser-smoke.py'
+      - 'qa/superapp-v5-harness.html'
+      - 'superapp-v5.js'
+      - 'superapp-v5.css'
+      - 'rwa-discovery-catalog.json'
+      - 'rwa-sw-v5.js'
+      - 'manifest.webmanifest'
+      - 'tools/superapp-v5-audit.mjs'
+      - 'tools/security-gate.mjs'
+      - 'tools/superapp-v5-browser.mjs'
+      - 'tools/superapp-p16-p20-audit.mjs'
+      - 'tools/superapp-p16-p20-browser.mjs'
+      - '.github/workflows/superapp-regression.yml'
+      - '.github/workflows/pages.yml'
+  push:
+    branches: ['main']
+    paths:
+      - 'index.html'
+      - 'product-os-v3.js'
+      - 'legacy-canonical.js'
+      - 'trade/index.html'
+      - 'asset/index.html'
+      - 'trader/index.html'
+      - 'backtest/index.html'
+      - 'renko/index.html'
+      - 'tools/superapp-v5-browser-smoke.py'
+      - 'tools/superapp-v5-live-browser-smoke.py'
+      - 'qa/superapp-v5-harness.html'
+      - 'superapp-v5.js'
+      - 'superapp-v5.css'
+      - 'rwa-discovery-catalog.json'
+      - 'rwa-sw-v5.js'
+      - 'manifest.webmanifest'
+      - 'tools/superapp-v5-audit.mjs'
+      - 'tools/security-gate.mjs'
+      - 'tools/superapp-v5-browser.mjs'
+      - 'tools/superapp-p16-p20-audit.mjs'
+      - 'tools/superapp-p16-p20-browser.mjs'
+      - '.github/workflows/superapp-regression.yml'
+      - '.github/workflows/pages.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static single-page contract
+        run: |
+          node --check superapp-v5.js
+          node --check legacy-canonical.js
+          node --check rwa-sw-v5.js
+          node --check tools/superapp-v5-audit.mjs
+          node --check tools/superapp-v5-browser.mjs
+          node tools/superapp-v5-audit.mjs
+          python -m json.tool rwa-discovery-catalog.json >/dev/null
+          python -m json.tool manifest.webmanifest >/dev/null
+      - name: P16-P20 static product contract
+        run: |
+          node --check tools/superapp-p16-p20-audit.mjs
+          node --check tools/superapp-p16-p20-browser.mjs
+          node tools/superapp-p16-p20-audit.mjs
+      - name: Install browser test runtime
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Serve canonical /rwa/ path
+        run: |
+          mkdir -p /tmp/rwa-superapp-site/rwa
+          cp -a . /tmp/rwa-superapp-site/rwa/
+          cd /tmp/rwa-superapp-site
+          python -m http.server 4173 >/tmp/rwa-superapp-http.log 2>&1 &
+          echo $! >/tmp/rwa-superapp-http.pid
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
+      - name: Browser regression
+        env:
+          RWA_TEST_URL: http://127.0.0.1:4173/rwa/
+        run: node tools/superapp-v5-browser.mjs
+      - name: P16-P20 product regression
+        env:
+          RWA_TEST_URL: http://127.0.0.1:4173/rwa/
+        run: node tools/superapp-p16-p20-browser.mjs

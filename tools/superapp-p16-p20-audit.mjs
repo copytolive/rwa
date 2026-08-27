@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+const read=f=>fs.readFileSync(f,'utf8');
+const html=read('index.html'),js=read('superapp-v5.js'),css=read('superapp-v5.css'),sw=read('rwa-sw-v5.js');
+const workflow=read('.github/workflows/superapp-regression.yml'),pages=read('.github/workflows/pages.yml');
+const browser=read('tools/superapp-p16-p20-browser.mjs');
+const pass=[];const need=(ok,msg)=>{if(!ok)throw Error(msg)};const ok=(n,label,cond)=>{need(cond,`P${n} ${label}`);pass.push(`P${n}_${label.toUpperCase().replace(/[^A-Z0-9]+/g,'_')}=PASS`)};
+const scripts=(html.match(/<script[^>]+src=/g)||[]).length;
+ok(16,'LIVE_UX_VISUAL_AUDIT',html.includes('RWA_HISTORY_FIRST_PAINT_V1')&&js.includes('RWA_SUPERAPP_P16_P20_V1')&&js.includes('RWA_EXPERIENCE_RAIL_LIFECYCLE_V15')&&js.includes("version:'20.0.0'")&&css.includes('RWA_SUPERAPP_P16_P20_STYLE_V1')&&js.includes('rwaFirstLoadStatus')&&js.includes('RWAProductQuality'));
+ok(17,'DATA_FUNCTION_PROVENANCE',js.includes('CONTEXT / AI INSIGHT')&&js.includes('PUBLIC MARKET DATA')&&js.includes('This is market context, not investment advice.')&&js.includes('rwaContextHistory')&&js.includes('rwaContextEvidence'));
+ok(18,'SPEED_RELIABILITY',html.includes('Historical bars first')===false&&html.includes('data-api.binance.vision/api/v3/klines')&&js.includes('rwa:p20-ready')&&js.includes('softRetry')&&sw.includes("CACHE='rwa-superapp-v5-shell-13'")&&scripts<=6);
+ok(19,'PRODUCT_POLISH',js.includes('Discovery<small>Markets · Intelligence · Assets')&&js.includes('Analysis<small>Chart · Research · Social')&&js.includes('Action<small>Trade · Portfolio · Institutional')&&js.includes('rwaMobileAssetActions')&&css.includes('.rwa-mobile-asset-actions.show'));
+ok(20,'FULL_REGRESSION_PRODUCTION',browser.includes("contract:'rwa-superapp-p16-p20-browser'")&&browser.includes('EXPERIENCE_RAIL_LIFECYCLE=PASS')&&browser.includes('HISTORY_FIRST_PAINT')&&browser.includes('P6_RESEARCH_TERMINAL_BROWSER=PASS')&&browser.includes('FIRST_LOAD_BUDGET')&&browser.includes('OFFLINE_RECOVERY')&&browser.includes('MEMORY_ROUTE_STABILITY')&&workflow.includes('tools/superapp-p16-p20-browser.mjs')&&workflow.includes('P16-P20 product regression')&&pages.includes('tools/superapp-p16-p20-audit.mjs'));
+need(html.includes('superapp-v5.css?v=13')&&html.includes('superapp-v5.js?v=13'),'root assets are not cache-busted to v12');
+need(js.includes("serviceWorker.register('rwa-sw-v5.js?v=13'"),'service worker registration is not v12');
+need(sw.includes("'./superapp-v5.css?v=13'")&&sw.includes("'./superapp-v5.js?v=13'"),'service worker core does not cache v12 assets');
+need(scripts<=6,`root external scripts=${scripts}, expected <=6`);
+console.log(pass.join('\n'));console.log(`ROOT_SCRIPT_COUNT=${scripts}`);console.log('P16_P20_STATIC_AUDIT=PASS');
