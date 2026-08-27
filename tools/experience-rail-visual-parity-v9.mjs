@@ -39,7 +39,7 @@ async function state(page,label){
     const suite=rect(document.getElementById('suite'));
     const visible=x=>x&&x.display!=='none'&&x.w>0&&x.h>0;
     const context=visible(workspace)?workspace:visible(suite)?suite:visible(right)?right:null;
-    return{label,hash:location.hash,level:document.documentElement.dataset.rwaLevel||'',route:document.documentElement.dataset.rwaRoute||'',scrollY,innerWidth,clientWidth:document.documentElement.clientWidth,rail:{x:rr.x,y:rr.y,w:rr.width,h:rr.height,right:rr.right,paddingLeft:c.paddingLeft,paddingRight:c.paddingRight,columnGap:c.columnGap,rowGap:c.rowGap},buttons,layout,left,main,right,workspace,suite,context};
+    return{label,hash:location.hash,level:document.documentElement.dataset.rwaLevel||'',route:document.documentElement.dataset.rwaRoute||'',bodyClass:document.body.className,scrollY,innerWidth,clientWidth:document.documentElement.clientWidth,rail:{x:rr.x,y:rr.y,w:rr.width,h:rr.height,right:rr.right,paddingLeft:c.paddingLeft,paddingRight:c.paddingRight,columnGap:c.columnGap,rowGap:c.rowGap},buttons,layout,left,main,right,workspace,suite,context};
   },label);
   assert.equal(s.buttons.length,3,`${label}: expected three workflow items`);
   const widths=s.buttons.map(x=>x.w),max=Math.max(...widths),min=Math.min(...widths);
@@ -84,7 +84,7 @@ async function run(viewport,name){
     const ctx=await browser.newContext({viewport,serviceWorkers:'block'});await mocks(ctx);
     const p=await ctx.newPage();const errors=[];p.on('pageerror',e=>errors.push(String(e.message||e)));
     await p.goto(BASE,{waitUntil:'domcontentloaded'});await ready(p);
-    const report=[];const base=await state(p,`${name}-00-discovery`);report.push(base);await p.screenshot({path:`${OUT}/${name}-00-discovery.png`});
+    const report=[];const base=await state(p,`${name}-00-discovery`);console.log('WORKFLOW_STATE',JSON.stringify(base));report.push(base);await p.screenshot({path:`${OUT}/${name}-00-discovery.png`});
     const steps=[
       ['01-analysis',()=>p.locator('#rwaExperienceRail [data-rwa-level="analysis"]').click()],
       ['02-action',()=>p.locator('#rwaExperienceRail [data-rwa-level="action"]').click()],
@@ -95,7 +95,7 @@ async function run(viewport,name){
       ['07-institutional',()=>p.locator('[data-v5-route="institutional"]').first().click()],
       ['08-discovery',()=>p.locator('#rwaExperienceRail [data-rwa-level="discovery"]').click()]
     ];
-    for(const [suffix,click] of steps){await click();await p.waitForTimeout(suffix.includes('portfolio')?900:500);const s=await state(p,`${name}-${suffix}`);stableRail(base,s);stableWorkflowGeometry(base,s);report.push(s);await p.screenshot({path:`${OUT}/${name}-${suffix}.png`});}
+    for(const [suffix,click] of steps){await click();await p.waitForTimeout(suffix.includes('portfolio')?900:500);const s=await state(p,`${name}-${suffix}`);console.log('WORKFLOW_STATE',JSON.stringify(s));stableRail(base,s);stableWorkflowGeometry(base,s);report.push(s);await p.screenshot({path:`${OUT}/${name}-${suffix}.png`});}
     assert.equal(errors.length,0,`runtime errors: ${errors.join(' | ')}`);
     await ctx.close();return report;
   }finally{await browser.close()}
