@@ -460,7 +460,7 @@ function renderResearch(opts={}){
   if(tab==='signals')panel=`<section class="rwa-super-card span-2"><div class="rwa-super-card-head"><div><small>SIGNALS</small><h2>Transparent market signals</h2></div><span>Rule-based</span></div><p class="rwa-super-note">Signals are deterministic momentum/volume proxies from live public market data; they are not predictions.</p><div class="rwa-super-list">${signalRows}</div></section>`;
   if(tab==='report')panel=`<section class="rwa-super-card span-2"><div class="rwa-super-card-head"><div><small>REPORT</small><h2>${esc(snap.base)} market brief</h2></div><span>Generated from live metrics</span></div><p class="rwa-report">${esc(report)}</p><div class="rwa-super-metrics">${metric('PRICE',money(snap.price),'')}${metric('24H',pct(snap.change),'',Number(snap.change||0)>=0?'up':'down')}${metric('VOLUME',compact(snap.vol),'')}${metric('BUY PRESSURE',snap.buy==null?'—':snap.buy.toFixed(0)+'%','Proxy')}${metric('SPREAD',snap.bid!=null&&snap.ask!=null?money(snap.ask-snap.bid):'—','')}${metric('DATA',$('liveText')?.textContent||'LIVE','Network')}</div></section>`;
   if(tab==='saved')panel=`<div class="rwa-super-grid two"><section class="rwa-super-card"><small>NEW THESIS</small><h2>Research notebook</h2><textarea id="rwaResearchText" maxlength="1200" placeholder="Catalyst, invalidation, level, risk, evidence…"></textarea><div class="rwa-thesis-actions"><select id="rwaResearchBias"><option>NEUTRAL</option><option>LONG</option><option>SHORT</option><option>WATCH</option></select><button data-v5-action="save-thesis">Save thesis</button></div></section><section class="rwa-super-card"><small>SAVED</small><h2>Recent theses</h2><div class="rwa-notes">${state.researchNotes.length?state.researchNotes.slice(0,20).map(n=>`<article><header><b>${esc(n.symbol)}</b><span>${esc(n.bias)}</span></header><p>${esc(n.text)}</p><small>${new Date(n.ts).toLocaleString()}</small></article>`).join(''):'<div class="rwa-super-empty">No saved research yet.</div>'}</div></section></div>`;
-  if(tab==='backtest'||tab==='renko'){const toolUrl=`${tab}/?embed=1&v=${tab==='renko'?'142':'1'}&symbol=${encodeURIComponent(sym)}`;panel=`<section class="rwa-super-card span-2 rwa-tool-lab-card"><div class="rwa-super-card-head"><div><small>${tab.toUpperCase()} RESEARCH</small><h2>${tab==='backtest'?'Historical strategy laboratory':'Renko structure laboratory'}</h2></div><span>Embedded · no top-level navigation</span></div><div class="rwa-tool-lab"><div><p class="rwa-prose">The complete repository research engine is embedded inside the canonical /rwa/ shell. Browser pathname remains /rwa/ while the tool keeps its historical controls and evidence.</p><div class="rwa-super-metrics compact">${metric('SYMBOL',sym,'')}${metric('24H',pct(snap.change),'Live context',Number(snap.change||0)>=0?'up':'down')}${metric('VOLUME',compact(snap.vol),'')}</div><button data-open-market="${esc(sym)}">Open live chart</button></div><iframe class="rwa-research-legacy-frame" title="${tab} research" loading="lazy" src="${toolUrl}"></iframe></div></section>`}
+  if(tab==='backtest'||tab==='renko'){const toolUrl=`${tab}/?embed=1&symbol=${encodeURIComponent(sym)}`;panel=`<section class="rwa-super-card span-2 rwa-tool-lab-card"><div class="rwa-super-card-head"><div><small>${tab.toUpperCase()} RESEARCH</small><h2>${tab==='backtest'?'Historical strategy laboratory':'Renko structure laboratory'}</h2></div><span>Embedded · no top-level navigation</span></div><div class="rwa-tool-lab"><div><p class="rwa-prose">The complete repository research engine is embedded inside the canonical /rwa/ shell. Browser pathname remains /rwa/ while the tool keeps its historical controls and evidence.</p><div class="rwa-super-metrics compact">${metric('SYMBOL',sym,'')}${metric('24H',pct(snap.change),'Live context',Number(snap.change||0)>=0?'up':'down')}${metric('VOLUME',compact(snap.vol),'')}</div><button data-open-market="${esc(sym)}">Open live chart</button></div><iframe class="rwa-research-legacy-frame" title="${tab} research" loading="lazy" src="${toolUrl}"></iframe></div></section>`}
   const body=$('rwaSuperBody');if(!body)return;
   body.innerHTML=`<nav class="rwa-research-tabs">${tabs}</nav><div class="rwa-research-panel">${panel}</div>`;
   qa('[data-research-tab]',body).forEach(b=>b.onclick=()=>{state.researchTab=b.dataset.researchTab;renderResearch({symbol:sym})});bindWorkspaceRows();
@@ -515,7 +515,7 @@ function installHealth(){
   const ids=['statPrice','pairCount','lastTick'];ids.forEach(id=>{const e=$(id);if(e)new MutationObserver(()=>{state.lastDataAt=Date.now();state.health.market='live';renderHealth()}).observe(e,{childList:true,subtree:true,characterData:true})});renderHealth();
 }
 function renderHealth(){const h=$('rwaHealth');if(!h)return;const age=Math.max(0,Math.floor((Date.now()-state.lastDataAt)/1000)),online=navigator.onLine&&state.health.online;h.classList.toggle('bad',!online||age>25);$('rwaHealthText').textContent=!online?'Offline · cached UI active':age>25?'Market feed delayed':'Market network live';$('rwaHealthAge').textContent=`${age}s since update`;}
-function registerSW(){if('serviceWorker'in navigator)navigator.serviceWorker.register('rwa-sw-v5.js?v=6',{scope:'./'}).catch(()=>{})}
+function registerSW(){if('serviceWorker'in navigator)navigator.serviceWorker.register('rwa-sw-v5.js?v=13',{scope:'./'}).catch(()=>{})}
 async function shareCurrent(){const snap=currentSnapshot(),u=new URL(location.href);u.hash=`asset/${snap.base||selectedBase()}`;const title=`RWA · ${snap.base||selectedBase()} market`;try{if(navigator.share){await navigator.share({title,text:title,url:u.href});return}await navigator.clipboard.writeText(u.href);toastSafe('RWA link copied')}catch(e){if(e?.name!=='AbortError')toastSafe('Share unavailable')}}
 function handleAction(action,el){
   if(!action)return false;
@@ -663,4 +663,153 @@ function init(){
   setTimeout(routeFromHash,0);
 }
 init();
+})();
+
+/* RWA_SUPERAPP_P16_P20_V1 */
+(()=>{
+'use strict';
+if(window.RWAExperience?.version==='20.0.0')return;
+const ROOT='/rwa/';
+const $=id=>document.getElementById(id);
+const qa=(s,r=document)=>[...r.querySelectorAll(s)];
+const now=()=>performance.now();
+const started=now();
+const quality={firstHistoryAt:0,firstMarketAt:0,readyAt:0,lastAudit:null,routeChanges:0};
+const route=()=>String(location.hash||'#markets').replace(/^#/,'')||'markets';
+const rootRoute=()=>route().split('/')[0];
+const text=(id,fallback='—')=>($(id)?.textContent||fallback).trim();
+const numberFrom=id=>{const n=Number(text(id,'').replace(/[^0-9+.,-]/g,'').replace(/,/g,''));return Number.isFinite(n)?n:null};
+const selected=()=>String(text('selName','BTC / USDT')).split(/[\/\s-]/)[0].replace(/[^A-Za-z0-9]/g,'').toUpperCase()||'BTC';
+const delay=ms=>new Promise(r=>setTimeout(r,ms));
+
+function modeFor(r=rootRoute()){
+  if(['markets','intelligence','assets'].includes(r))return'discovery';
+  if(['asset','research','social','trader'].includes(r))return'analysis';
+  return'action';
+}
+/* RWA_EXPERIENCE_RAIL_LIFECYCLE_V15 */
+function installExperienceRail(){
+  let rail=$('rwaExperienceRail');
+  if(!rail){
+    rail=document.createElement('div');rail.id='rwaExperienceRail';rail.className='rwa-experience-rail';rail.setAttribute('aria-label','RWA workflow level');
+    rail.innerHTML=`<button type="button" data-rwa-level="discovery"><b>01</b><span>Discovery<small>Markets · Intelligence · Assets</small></span></button><button type="button" data-rwa-level="analysis"><b>02</b><span>Analysis<small>Chart · Research · Social</small></span></button><button type="button" data-rwa-level="action"><b>03</b><span>Action<small>Trade · Portfolio · Institutional</small></span></button>`;
+  }
+  if(!rail.dataset.rwaBound){
+    rail.dataset.rwaBound='1';
+    rail.addEventListener('click',e=>{const b=e.target.closest('[data-rwa-level]');if(!b)return;const m=b.dataset.rwaLevel;const target=m==='discovery'?'markets':m==='analysis'?`asset/${selected()}`:'trade/'+selected();window.RWASuperApp?.navigate?.(target)});
+  }
+  if(!rail.isConnected){
+    const anchor=document.querySelector('.trustbar')||document.querySelector('.productbar');
+    const host=document.querySelector('.app')||document.body;
+    if(anchor?.parentNode)anchor.parentNode.insertBefore(rail,anchor.nextSibling);
+    else{
+      const mountMarker=host.querySelector?.('.mobile-home,.layout,#rwaSuperWorkspace,.credibility-strip');
+      if(mountMarker)host.insertBefore(rail,mountMarker);else host.appendChild(rail);
+    }
+  }
+  updateExperienceRail();
+  return rail;
+}
+function updateExperienceRail(){
+  const m=modeFor();qa('#rwaExperienceRail [data-rwa-level]').forEach(b=>b.classList.toggle('active',b.dataset.rwaLevel===m));
+  document.documentElement.dataset.rwaLevel=m;
+}
+function installFirstLoadStatus(){
+  const wrap=document.querySelector('.chart-wrap');if(!wrap||$('rwaFirstLoadStatus'))return;
+  const el=document.createElement('div');el.id='rwaFirstLoadStatus';el.className='rwa-firstload';el.innerHTML=`<div class="rwa-firstload-grid"><i></i><i></i><i></i><i></i><i></i></div><div><b id="rwaFirstLoadTitle">Preparing market history</b><small id="rwaFirstLoadSub">Historical bars first · realtime follows</small></div><button type="button" data-p20-action="retry">Retry</button>`;wrap.appendChild(el);
+}
+function historyReady(){
+  if(document.documentElement.dataset.rwaHistory==='ready')return true;
+  const c=$('fallbackChart');if(c?.dataset?.rwaHistoryReady==='1')return true;
+  const tv=$('tvHost');if(tv&&tv.children.length>0&&tv.getBoundingClientRect().height>120)return true;
+  return false;
+}
+function marketsReady(){
+  const rows=qa('#pairList .pairrow');
+  const p=text('statPrice','—');
+  return rows.length>2&&p!=='—'&&p!=='';
+}
+function updateFirstLoad(){
+  const hist=historyReady(),mkt=marketsReady(),el=$('rwaFirstLoadStatus');
+  if(hist&&!quality.firstHistoryAt)quality.firstHistoryAt=now();
+  if(mkt&&!quality.firstMarketAt)quality.firstMarketAt=now();
+  if(hist&&mkt){
+    if(!quality.readyAt){quality.readyAt=now();performance.mark('rwa:p20-ready');document.documentElement.dataset.rwaFirstPaint='ready';window.dispatchEvent(new CustomEvent('rwa:first-ready',{detail:{ms:Math.round(quality.readyAt-started)}}))}
+    if(el){$('rwaFirstLoadTitle').textContent='Market ready';$('rwaFirstLoadSub').textContent='Historical bars + live market connected';el.classList.add('ready');setTimeout(()=>{if(el)el.hidden=true},420)}
+    return;
+  }
+  if(!el)return;
+  el.hidden=false;const elapsed=now()-started;
+  if(hist){$('rwaFirstLoadTitle').textContent='Historical bars ready';$('rwaFirstLoadSub').textContent='Connecting realtime market…'}
+  else if(document.documentElement.dataset.rwaHistory==='delayed'){$('rwaFirstLoadTitle').textContent='Historical feed delayed';$('rwaFirstLoadSub').textContent='Terminal remains usable · retry without leaving this page';el.classList.add('warn')}
+  else{$('rwaFirstLoadTitle').textContent='Preparing market history';$('rwaFirstLoadSub').textContent='Loading real historical bars before realtime'}
+  if(elapsed>9000&&!hist){el.classList.add('warn');$('rwaFirstLoadTitle').textContent='Market history is taking longer than expected';$('rwaFirstLoadSub').textContent='Cached UI remains available · retry safely'}
+}
+function installContextBrief(){
+  const right=$('depth')||document.querySelector('.right');if(!right||$('rwaContextBrief'))return;
+  const s=document.createElement('section');s.id='rwaContextBrief';s.className='right-section rwa-context-brief';s.innerHTML=`<div class="right-title"><span>CONTEXT / AI INSIGHT</span><small id="rwaContextFreshness">LIVE</small></div><div class="rwa-context-symbol"><div><small id="rwaContextSource">PUBLIC MARKET DATA</small><b id="rwaContextSymbol">BTC / USDT</b></div><strong id="rwaContextPrice">—</strong></div><p id="rwaContextInsight">Waiting for live market context…</p><div class="rwa-context-proof"><span><i></i><b>History</b><small id="rwaContextHistory">loading</small></span><span><i></i><b>Realtime</b><small id="rwaContextRealtime">connecting</small></span><span><i></i><b>Evidence</b><small id="rwaContextEvidence">market data</small></span></div><div class="rwa-context-actions"><button type="button" data-p20-action="research">Research</button><button type="button" data-p20-action="trade">Trade</button></div>`;
+  right.insertBefore(s,right.firstChild);
+}
+function updateContextBrief(){
+  if(!$('rwaContextBrief'))return;
+  const sym=selected(),price=text('statPrice'),chg=numberFrom('statChange'),buy=numberFrom('buyPct'),label=text('selLabel','Public market feed');
+  $('rwaContextSymbol').textContent=`${sym} / USDT`;$('rwaContextPrice').textContent=price;$('rwaContextSource').textContent=label.toUpperCase();
+  const h=historyReady(),m=marketsReady(),evidence=rootRoute()==='asset'?'asset context':rootRoute()==='assets'?'registry + discovery':'market data';
+  $('rwaContextHistory').textContent=h?'ready':'loading';$('rwaContextRealtime').textContent=m?'live':navigator.onLine?'connecting':'offline';$('rwaContextEvidence').textContent=evidence;
+  $('rwaContextFreshness').textContent=!navigator.onLine?'OFFLINE':m?'LIVE':'CONNECTING';
+  let insight='Waiting for enough live data to form a market insight.';
+  if(chg!==null){
+    const direction=chg>1?'positive':chg<-1?'negative':'neutral';const pressure=buy===null?'order-flow still loading':buy>=56?'buy pressure is elevated':buy<=44?'sell pressure is elevated':'order flow is balanced';
+    insight=`${sym} momentum is ${direction} at ${chg>=0?'+':''}${chg.toFixed(2)}% over 24h; ${pressure}. This is market context, not investment advice.`;
+  }
+  $('rwaContextInsight').textContent=insight;
+}
+function installMobileAssetActions(){
+  if($('rwaMobileAssetActions'))return;
+  const bar=document.createElement('div');bar.id='rwaMobileAssetActions';bar.className='rwa-mobile-asset-actions';bar.innerHTML=`<button type="button" data-p20-action="research">Research</button><button type="button" class="buy" data-p20-action="buy">Buy</button><button type="button" class="sell" data-p20-action="sell">Sell</button>`;document.body.appendChild(bar);updateMobileActions();
+}
+function updateMobileActions(){const el=$('rwaMobileAssetActions');if(el)el.classList.toggle('show',rootRoute()==='asset')}
+function installQualityBadge(){
+  if($('rwaQualityBadge'))return;
+  const b=document.createElement('button');b.id='rwaQualityBadge';b.type='button';b.className='rwa-quality-badge';b.textContent='UX';b.title='Product quality status';b.addEventListener('click',()=>toggleQualityPanel());document.body.appendChild(b);
+  const p=document.createElement('aside');p.id='rwaQualityPanel';p.className='rwa-quality-panel';p.hidden=true;p.innerHTML=`<header><div><small>RWA PRODUCT QUALITY</small><b>P16–P20 live audit</b></div><button type="button" data-quality-close>×</button></header><div id="rwaQualityBody"></div>`;document.body.appendChild(p);p.querySelector('[data-quality-close]').onclick=()=>p.hidden=true;
+  if(new URLSearchParams(location.search).get('qa')==='1')toggleQualityPanel(true);
+}
+function audit(){
+  const issues=[];const add=(sev,code,msg)=>issues.push({sev,code,msg});
+  if(location.pathname!==ROOT)add('BLOCKER','PATH_ESCAPE',`pathname=${location.pathname}`);
+  const r=rootRoute();if(!['markets','intelligence','assets','asset','research','portfolio','social','institutional','trade','trader'].includes(r))add('MAJOR','ROUTE_UNKNOWN',r);
+  if(document.documentElement.scrollWidth>innerWidth+4)add('MAJOR','H_OVERFLOW',`${document.documentElement.scrollWidth}/${innerWidth}`);
+  if(now()-started>8000&&!historyReady())add('MAJOR','HISTORY_DELAYED','Historical chart not ready after 8s');
+  if(now()-started>8000&&!marketsReady())add('MAJOR','MARKET_DELAYED','Live market list/price not ready after 8s');
+  if(!navigator.onLine)add('INFO','OFFLINE','Browser is offline; cached shell active');
+  const externalInternal=qa('a[href]').filter(a=>{try{const u=new URL(a.getAttribute('href'),location.href);return u.origin===location.origin&&u.pathname.startsWith(ROOT)&&u.pathname!==ROOT&&!u.searchParams.has('embed')}catch{return false}});if(externalInternal.length)add('MEDIUM','LEGACY_LINKS',`${externalInternal.length} internal legacy href(s) remain but are guarded`);
+  const scripts=qa('script[src]').filter(s=>!s.dataset.rwaLazy).length;if(document.readyState==='complete'&&rootRoute()==='markets'&&scripts>8)add('MEDIUM','EAGER_SCRIPT_BUDGET',String(scripts));
+  const blocking=issues.filter(x=>x.sev==='BLOCKER'||x.sev==='MAJOR');const result={ok:blocking.length===0,route:route(),pathname:location.pathname,history:historyReady(),markets:marketsReady(),online:navigator.onLine,overflow:document.documentElement.scrollWidth-innerWidth,externalScripts:scripts,firstHistoryMs:quality.firstHistoryAt?Math.round(quality.firstHistoryAt-started):null,firstMarketMs:quality.firstMarketAt?Math.round(quality.firstMarketAt-started):null,readyMs:quality.readyAt?Math.round(quality.readyAt-started):null,issues,blocking};quality.lastAudit=result;return result;
+}
+function renderQuality(){const box=$('rwaQualityBody');if(!box)return;const a=audit();const rows=[['PATH',a.pathname===ROOT?'PASS':'FAIL',a.pathname],['HISTORY',a.history?'PASS':'WAIT',a.firstHistoryMs==null?'—':`${a.firstHistoryMs} ms`],['MARKET',a.markets?'PASS':'WAIT',a.firstMarketMs==null?'—':`${a.firstMarketMs} ms`],['READY',a.ok?'PASS':'CHECK',a.readyMs==null?'—':`${a.readyMs} ms`],['OVERFLOW',a.overflow<=4?'PASS':'FAIL',String(a.overflow)],['NETWORK',a.online?'LIVE':'OFFLINE',a.online?'public feeds':'cached shell']];box.innerHTML=`<div class="rwa-quality-grid">${rows.map(r=>`<div><small>${r[0]}</small><b class="${r[1]==='PASS'||r[1]==='LIVE'?'ok':''}">${r[1]}</b><span>${r[2]}</span></div>`).join('')}</div><section><small>FINDINGS</small>${a.issues.length?a.issues.map(x=>`<p><b>${x.sev}</b> ${x.code} · ${x.msg}</p>`).join(''):'<p><b>PASS</b> No blocking product-quality finding.</p>'}</section>`}
+function toggleQuality(force){const p=$('rwaQualityPanel');if(!p)return;p.hidden=force===true?false:!p.hidden;if(!p.hidden)renderQuality()}
+async function softRetry(){
+  const s=selected();$('rwaFirstLoadStatus')?.classList.remove('warn');if($('rwaFirstLoadStatus'))$('rwaFirstLoadStatus').hidden=false;
+  try{await window.RWAHistoryFirstPaint?.refresh?.(`${s}USDT`)}catch{}
+  try{window.RWASuperApp?.navigate?.(route())}catch{}
+  window.dispatchEvent(new CustomEvent('rwa:retry-data',{detail:{symbol:s}}));updateFirstLoad();updateContextBrief();
+}
+function handleAction(e){
+  const b=e.target.closest?.('[data-p20-action]');if(!b)return;const a=b.dataset.p20Action;e.preventDefault();e.stopPropagation();const sym=selected();
+  if(a==='retry')softRetry();if(a==='research')window.RWASuperApp?.navigate?.(`research/compare/${sym}`);if(a==='trade')window.RWASuperApp?.navigate?.(`trade/${sym}`);if(a==='buy')window.RWAProductOS?.openTrade?.(sym,true,'BUY');if(a==='sell')window.RWAProductOS?.openTrade?.(sym,true,'SELL');
+}
+function removeEscapeTargets(){qa('a[target="_blank"]').forEach(a=>{a.removeAttribute('target');a.removeAttribute('rel')})}
+function onRoute(){quality.routeChanges++;installExperienceRail();updateExperienceRail();updateMobileActions();updateContextBrief();setTimeout(()=>{installExperienceRail();removeEscapeTargets();updateFirstLoad();renderQuality()},80)}
+function boot(){
+  document.documentElement.dataset.rwaP16P20='ready';performance.mark('rwa:p16-p20-boot');installExperienceRail();installFirstLoadStatus();installContextBrief();installMobileAssetActions();installQualityBadge();removeEscapeTargets();
+  document.addEventListener('click',handleAction,true);addEventListener('hashchange',onRoute);addEventListener('popstate',onRoute);addEventListener('online',()=>setTimeout(onRoute,50));addEventListener('offline',()=>setTimeout(onRoute,50));addEventListener('rwa:history-first-paint',()=>{updateFirstLoad();updateContextBrief()});
+  const railHost=document.querySelector('.app')||document.body;const railObserver=new MutationObserver(()=>{if(!$('rwaExperienceRail'))installExperienceRail()});railObserver.observe(railHost,{childList:true});
+  const timer=setInterval(()=>{installExperienceRail();updateFirstLoad();updateContextBrief();updateExperienceRail();updateMobileActions();removeEscapeTargets();if(!$('rwaQualityPanel')?.hidden)renderQuality()},400);
+  window.addEventListener('beforeunload',()=>{clearInterval(timer);railObserver.disconnect()},{once:true});
+  window.RWAExperience={version:'20.0.0',canonical:'https://copytolive.github.io/rwa/',audit,softRetry,mode:modeFor,metrics:()=>({...quality}),refresh:()=>{installExperienceRail();onRoute();return audit()}};
+  window.RWAProductQuality=window.RWAExperience;
+  updateFirstLoad();updateContextBrief();setTimeout(onRoute,250);setTimeout(onRoute,1800);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

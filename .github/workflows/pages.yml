@@ -95,8 +95,8 @@ jobs:
           grep -Fq "realtime-core.js?v=3" index.html
           grep -Fq "market-performance.js?v=2" index.html
           grep -Fq "stable-shell.css?v=3" index.html
-          grep -Fq "superapp-v5.css?v=6" index.html
-          grep -Fq "superapp-v5.js?v=6" index.html
+          grep -Fq "superapp-v5.css?v=13" index.html
+          grep -Fq "superapp-v5.js?v=13" index.html
           grep -Fq "manifest.webmanifest" index.html
           ! grep -Fq "product-os-v3.js" index.html
           ! grep -Fq "product-os-mobile-contract-v3.js" index.html
@@ -245,6 +245,12 @@ jobs:
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
           cd "$GITHUB_WORKSPACE"
           node tools/superapp-v5-browser.mjs
+
+      - name: Validate P16-P20 product contract
+        run: |
+          node --check tools/superapp-p16-p20-audit.mjs
+          node --check tools/superapp-p16-p20-browser.mjs
+          node tools/superapp-p16-p20-audit.mjs
 
       - name: Run repository security gate
         run: node tools/security-gate.mjs
