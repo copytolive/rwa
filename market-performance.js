@@ -2,7 +2,7 @@
 'use strict';
 if(window.RWAMarketPerformanceGuard)return;
 
-const PERF={version:'1.3.4',runtime:'root-terminal-low-jank-v1'};
+const PERF={version:'1.3.4',runtime:'root-terminal-low-jank-v1',enterprise_ui:'12.0.0'};
 const hotIds=new Set(['pairList','pairCount','liveDot','statHigh','statLow','statVol','statChange','buyPct','tradeCount']);
 const NativeMutationObserver=window.MutationObserver;
 const periodic=new Map();
@@ -23,6 +23,9 @@ function loadPersistentMarketLayer(){
   }
   if(!document.querySelector('link[data-rwa-persistent-market-operability]')){
     const l=document.createElement('link');l.rel='stylesheet';l.href='persistent-market-operability-patch-v1.css?v=11';l.dataset.rwaPersistentMarketOperability='1';document.head.appendChild(l);
+  }
+  if(!document.querySelector('link[data-rwa-enterprise-ui-v12]')){
+    const l=document.createElement('link');l.rel='stylesheet';l.href='enterprise-ui-v12.css?v=12';l.dataset.rwaEnterpriseUiV12='1';document.head.appendChild(l);
   }
 }
 
@@ -171,8 +174,100 @@ function suspendWhenHidden(){
 }
 document.addEventListener('visibilitychange',suspendWhenHidden,{passive:true});
 
+/* ENTERPRISE UI V12 — runtime enhancement stays inside an existing root script so the
+   canonical external-script budget remains unchanged. */
+const SVG={
+  search:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>',
+  watch:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"></path></svg>',
+  bell:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 9.5a5.5 5.5 0 0 1 11 0c0 6 2.5 6.5 2.5 6.5H4s2.5-.5 2.5-6.5"></path><path d="M10 19h4"></path></svg>',
+  share:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5"></path><path d="m19 5-8 8"></path><path d="M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"></path></svg>',
+  user:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M5.5 20a6.5 6.5 0 0 1 13 0"></path></svg>',
+  markets:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18V9"></path><path d="M9 18V5"></path><path d="M14 18v-7"></path><path d="M19 18V7"></path></svg>',
+  trade:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h13"></path><path d="m15 4 3 3-3 3"></path><path d="M19 17H6"></path><path d="m9 14-3 3 3 3"></path></svg>',
+  social:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="9" r="3"></circle><circle cx="17" cy="7" r="2.5"></circle><path d="M3.5 19a4.5 4.5 0 0 1 9 0"></path><path d="M14 17a3.5 3.5 0 0 1 6.5 1.8"></path></svg>',
+  portfolio:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="13" rx="2"></rect><path d="M9 6V4h6v2"></path><path d="M4 11h16"></path></svg>',
+  chevron:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"></path></svg>'
+};
+function setDebugMode(){
+  try{document.documentElement.dataset.rwaDebug=new URLSearchParams(location.search).get('debug')==='1'?'1':'0'}catch{document.documentElement.dataset.rwaDebug='0'}
+}
+function upgradeViewportMeta(){
+  const m=document.querySelector('meta[name="viewport"]');if(!m)return;
+  const parts=String(m.content||'').split(',').map(x=>x.trim()).filter(Boolean).filter(x=>!/^user-scalable=/i.test(x));
+  if(!parts.some(x=>/^maximum-scale=/i.test(x)))parts.push('maximum-scale=5');
+  m.content=parts.join(',');
+}
+function upgradeNavSemantics(){
+  document.querySelectorAll('.topnav span[data-v5-route],.product-nav span[data-v5-route]').forEach(s=>{
+    const b=document.createElement('button');b.type='button';b.className=s.className;b.textContent=s.textContent;
+    for(const [k,v] of Object.entries(s.dataset))b.dataset[k]=v;
+    if(s.classList.contains('active'))b.setAttribute('aria-current','page');
+    s.replaceWith(b);
+  });
+  document.querySelectorAll('.topnav [data-v5-route],.product-nav [data-v5-route]').forEach(b=>{
+    if(b.classList.contains('active'))b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
+  });
+}
+function upgradeIcons(){
+  const command=document.querySelector('.rwa-command-button');if(command){const i=command.querySelector('span:first-child');if(i&&!i.querySelector('svg'))i.innerHTML=SVG.search}
+  document.querySelectorAll('.instrument-actions button').forEach(b=>{
+    if(b.dataset.rwaV12Icon)return;const t=(b.textContent||'').trim().toLowerCase();
+    const label=t.includes('watch')?'Watch':t.includes('alert')?'Alert':t.includes('share')?'Share':'';if(!label)return;
+    b.dataset.rwaV12Icon='1';b.innerHTML=(label==='Watch'?SVG.watch:label==='Alert'?SVG.bell:SVG.share)+`<span>${label}</span>`;
+  });
+  const notice=document.querySelector('[data-v5-action="notifications"]');if(notice&&!notice.querySelector('svg'))notice.innerHTML=SVG.bell;
+  const profile=document.querySelector('[data-v5-action="profile"]');if(profile&&!profile.querySelector('svg'))profile.innerHTML=SVG.user;
+  const map={markets:'markets',search:'search',trade:'trade',social:'social',portfolio:'portfolio'};
+  document.querySelectorAll('.mobile-tabs [data-v5-mobile]').forEach(n=>{const s=n.querySelector('span');const key=map[n.dataset.v5Mobile];if(s&&key&&!s.querySelector('svg'))s.innerHTML=SVG[key]});
+}
+function professionalizeTradeChrome(){
+  document.querySelectorAll('#rwaExchange button,#rwaExchange span,#terminal button,#terminal span').forEach(el=>{
+    const t=(el.textContent||'').trim().toUpperCase();
+    if(t==='CHECK'){el.dataset.rwaV12Engineering='hidden';return}
+    if(t==='TESTNET'&&!el.dataset.rwaV12Env){el.textContent='SANDBOX';el.classList.add('rwa-env-badge');el.dataset.rwaV12Env='1'}
+  });
+}
+function syncMobileInstrumentStrip(){
+  const strip=document.getElementById('rwaMobileInstrumentStrip');if(!strip)return;
+  const name=(document.getElementById('selName')?.textContent||'BTC / USDT').trim();
+  const base=(name.split(/[\/\s]/)[0]||'BTC').toUpperCase();
+  const priceText=(document.getElementById('statPrice')?.textContent||'—').trim();
+  const change=document.getElementById('statChange');const changeText=(change?.textContent||'—').trim();
+  const n=strip.querySelector('[data-rwa-mobile-name]'),i=strip.querySelector('[data-rwa-mobile-token]'),p=strip.querySelector('[data-rwa-mobile-price]'),c=strip.querySelector('[data-rwa-mobile-change]');
+  if(n)n.textContent=name;if(i)i.textContent=base.slice(0,2);if(p)p.textContent=priceText;if(c){c.textContent=changeText;c.classList.toggle('up',!changeText.startsWith('-'));c.classList.toggle('down',changeText.startsWith('-'))}
+}
+function installMobileInstrumentStrip(){
+  const chart=document.querySelector('.chart-wrap');if(!chart)return;
+  let strip=document.getElementById('rwaMobileInstrumentStrip');
+  if(!strip){
+    strip=document.createElement('section');strip.id='rwaMobileInstrumentStrip';strip.className='rwa-mobile-instrument-strip';strip.setAttribute('aria-label','Selected market');
+    strip.innerHTML=`<div class="rwa-mobile-instrument-main"><div class="rwa-mobile-instrument-token" data-rwa-mobile-token>BT</div><div class="rwa-mobile-instrument-copy"><b data-rwa-mobile-name>BTC / USDT</b><small>Live market</small></div></div><div class="rwa-mobile-instrument-values"><div><b data-rwa-mobile-price>—</b><span data-rwa-mobile-change>—</span></div><button type="button" data-rwa-mobile-pair aria-label="Choose market">${SVG.chevron}</button></div>`;
+    chart.before(strip);
+    strip.querySelector('[data-rwa-mobile-pair]')?.addEventListener('click',()=>{document.body.classList.add('market-drawer-open');document.getElementById('search')?.focus?.({preventScroll:true})});
+  }
+  syncMobileInstrumentStrip();
+}
+function reconcileEnterpriseUI(){
+  setDebugMode();upgradeViewportMeta();upgradeNavSemantics();upgradeIcons();installMobileInstrumentStrip();syncMobileInstrumentStrip();professionalizeTradeChrome();
+  document.documentElement.dataset.rwaEnterpriseUi='12';
+}
+let pairUnlock=0;
+document.addEventListener('click',e=>{
+  const row=e.target.closest?.('.pairrow[data-sym]');if(!row)return;
+  const route=String(document.documentElement.dataset.rwaRoute||'');
+  if(!route.startsWith('asset')&&!document.body.classList.contains('rwa-super-asset-workspace'))return;
+  clearTimeout(pairUnlock);document.documentElement.dataset.rwaPairTransition='1';
+  document.body.classList.add('rwa-super-asset-workspace','rwa-super-workspace-open');
+  pairUnlock=setTimeout(()=>{delete document.documentElement.dataset.rwaPairTransition},700);
+},true);
+
 installSingleRowHeader();
 loadPersistentMarketLayer();
+reconcileEnterpriseUI();
+setTimeout(reconcileEnterpriseUI,250);setTimeout(reconcileEnterpriseUI,900);setTimeout(reconcileEnterpriseUI,2200);
+const enterpriseTimer=setInterval(()=>{if(!document.hidden)reconcileEnterpriseUI()},1600);
+window.addEventListener('hashchange',()=>setTimeout(reconcileEnterpriseUI,0));
+window.addEventListener('beforeunload',()=>clearInterval(enterpriseTimer),{once:true});
 PERF.header='single-row-global-shell-v1';
 PERF.header_variant='premium-minimal-v2';
 PERF.row_limit=()=>innerWidth<=680?70:innerWidth<=1100?90:140;
@@ -181,5 +276,7 @@ PERF.market_dom_flush_ms=500;
 PERF.book_flush_ms=320;
 PERF.trade_flush_ms=250;
 PERF.persistent_market_workspaces='css-core-router-v3';
+PERF.asset_pair_geometry='route-owned-440px-v12';
+PERF.mobile_nav='five-column-enterprise-v12';
 window.RWAMarketPerformanceGuard=PERF;
 })();
