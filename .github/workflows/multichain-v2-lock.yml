@@ -1,0 +1,52 @@
+name: MULTI CHAIN V2 Lock
+
+on:
+  push:
+    branches:
+      - main
+      - lock/multichain-v2-final-20260828
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  certified-lock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify certified MULTI CHAIN files and isolated index bootstrap
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          expected={
+            'rwa-multichain.js':'da22864a22fcad143dae4a903c46538e5557c50b5adb3bea01312e97d33e0185',
+            'rwa-multichain-engine.js':'03afb06c74446e5bd78b8f058d87fd80d6eb603a28e297008bc243b455753682',
+            'rwa-multichain-registry.json':'f1c0b179dd8d4f5ae75e28c48ea5a6aa61f663208c257da4b4ffc79cf20c8962',
+            'tools/multichain-browser.mjs':'d12c5e463bf2ebe2c39cc55e7f9871fa18179b69af07a828cbe877f93acc6abd',
+            '.github/workflows/multichain-browser.yml':'8a67ce65300c69b2db1bd56820ec5bfa3d94e69f0f254233a32ac96681c32b7d',
+          }
+          bad=[]
+          for p,want in expected.items():
+              got=hashlib.sha256(Path(p).read_bytes()).hexdigest()
+              if got!=want: bad.append(f'{p}: {got} != {want}')
+          ix=Path('index.html').read_text()
+          m=re.search(r'(<style id="rwaMultiChainLauncherBootstrapStyle">.*?<script id="rwaMultiChainLazyBootstrap">.*?</script>)',ix,re.S)
+          if not m:
+              bad.append('index.html: MULTI CHAIN bootstrap block missing')
+          else:
+              got=hashlib.sha256(m.group(1).encode()).hexdigest()
+              want='b1b990af7e3db7454963cee21c5ae322fe96fa34779dd8bb315eb77598c1a2a6'
+              if got!=want: bad.append(f'index MULTI CHAIN bootstrap: {got} != {want}')
+          lock=Path('.github/multichain-v2.lock').read_text()
+          if 'MULTICHAIN_V2_LOCK=1' not in lock or 'policy=chain-abstraction-fail-closed-v2' not in lock:
+              bad.append('.github/multichain-v2.lock: lock marker missing')
+          if bad:
+              raise SystemExit('MULTICHAIN_V2_LOCK=FAIL\n'+'\n'.join(bad))
+          print('MULTICHAIN_V2_LOCK=PASS')
+          print('Protected paths: runtime, engine, registry, browser proof, production workflow, isolated index bootstrap')
+          PY
