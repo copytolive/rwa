@@ -28,7 +28,7 @@ jobs:
           trap 'kill "$pid" 2>/dev/null || true' EXIT
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
           cd "$GITHUB_WORKSPACE"
-          cat >/tmp/diag.mjs <<'NODE'
+          cat >diag-pr7.mjs <<'NODE'
           import {chromium} from 'playwright';
           const b=await chromium.launch({headless:true});
           const c=await b.newContext({locale:'en-US',viewport:{width:1440,height:960},serviceWorkers:'block'});
@@ -47,4 +47,4 @@ jobs:
           await b.close();
           if(!state.superApp)process.exit(2);
           NODE
-          node /tmp/diag.mjs
+          node diag-pr7.mjs
