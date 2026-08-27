@@ -70,6 +70,10 @@ After ATR 1,000,000 is applied, the same production browser must additionally wa
 
 Engine `1.2.0`, deep cache `2.2.0`, cache-busted production scripts, raw-Wilder browser assertions, and the anti-heartbeat layer are now in the same source tree. The ATR production workflow explicitly installs the same Playwright Chromium dependency used by the other real-browser gates before it executes the seven-value matrix. This checkpoint intentionally triggers all current Renko production gates together; it is not accepted as complete until the resulting exact-SHA production artifacts are downloaded and visually inspected.
 
+## Pages deployment recovery checkpoint
+
+GitHub Pages accepted the verified artifact for `cf0050cc8fd6b581c4253f4e6e69f3ce35bb8719`, but two `actions/deploy-pages@v4` attempts remained in the Pages backend until its 10-minute hard timeout and were canceled. Local browser validation on that source revision remained green. This documentation-only change intentionally creates a **new commit SHA / fresh Pages deployment ID** without altering the Renko runtime contract, so the exact same code behavior can be validated against a fresh deployment record. The new SHA is not accepted as final until all three production browser gates pass and the artifacts are visually inspected.
+
 ## Release rule
 
 Do not call the fixed-1s-Close/raw-ATR/no-heartbeat matrix complete until all three current gates pass against the same exact deployed Pages SHA:
