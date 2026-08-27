@@ -24,8 +24,11 @@ async function runViewport(label,viewport){
     const meta=document.querySelector('#tvBrickMeta')?.textContent||'';
     const visibleMatch=meta.match(/([\d,.]+)\s+visible/i);
     const visible=visibleMatch?Number(visibleMatch[1].replace(/,/g,'')):Math.min(data.length,target);
-    const inputWaitMs=Number(card?.dataset.inputWaitMs||NaN),firstFrameMs=Number(card?.dataset.firstFrameMs||NaN),instantSource=card?.dataset.instantSource||null;
-    const immediate=visible>=target&&data.length>=target&&inputWaitMs===0&&Number(wallMs)<=limit&&instantSource==='deploy-seed';
+    const inputWaitMs=Number(card?.dataset.inputWaitMs||NaN),firstFrameMs=Number(card?.dataset.firstFrameMs||NaN),instantSource=card?.dataset.instantSource||null,exactHistory=card?.dataset.exactHistory||null;
+    const instrument=document.querySelector('.instrument'),stats=document.querySelector('.stats');
+    const a=instrument?.getBoundingClientRect?.(),b=stats?.getBoundingClientRect?.();
+    const layoutNoOverlap=!!a&&!!b&&(a.right<=b.left+.5||b.right<=a.left+.5||a.bottom<=b.top+.5||b.bottom<=a.top+.5);
+    const immediate=visible>=target&&data.length>=target&&inputWaitMs===0&&Number(wallMs)<=limit&&firstFrameMs<=limit&&instantSource==='deploy-seed'&&exactHistory==='1'&&layoutNoOverlap;
     return {
       method,
       wallMs,
@@ -42,9 +45,14 @@ async function runViewport(label,viewport){
       firstFramePreload:card?.dataset.firstFramePreload||null,
       firstFrameSeedCount:Number(card?.dataset.firstFrameSeedCount||0),
       firstFrameVisibleReady:card?.dataset.firstFrameVisibleReady||null,
+      seedExactBox:card?.dataset.seedExactBox||null,
       historyState:card?.dataset.historyState||null,
       instantSource,
-      exactHistory:card?.dataset.exactHistory||null,
+      exactHistory,
+      historyDowngradeBlocked:card?.dataset.historyDowngradeBlocked||null,
+      layoutNoOverlap,
+      instrumentRect:a?{left:a.left,top:a.top,right:a.right,bottom:a.bottom,width:a.width,height:a.height}:null,
+      statsRect:b?{left:b.left,top:b.top,right:b.right,bottom:b.bottom,width:b.width,height:b.height}:null,
       liveLabel:document.querySelector('#tvLoadState')?.textContent||null,
       meta,
       passImmediateScreen:immediate,
@@ -100,6 +108,8 @@ const report={
   firstFrameLimitMs:FIRST_FRAME_LIMIT_MS,
   requiredSource:'deploy-seed',
   requiredInputWaitMs:0,
+  requiredExactSeed:true,
+  requiredNoOverlap:true,
   status:results.every(r=>r.pass)?'PASS':'FAIL',
   results,
 };
