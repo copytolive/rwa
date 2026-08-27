@@ -147,7 +147,7 @@ jobs:
           grep -Fq '"policy": "chain-abstraction-fail-closed-v2"' /tmp/rwa-multichain.json
           grep -Fq '"status": "ROUTE_READY"' /tmp/rwa-multichain.json
           echo "MULTICHAIN_V2_EXACT_SHA=PASS:$EXPECTED_SHA"
-      - name: Probe live route-provider chain coverage
+      - name: Probe live route-provider coverage and Base to Solana quote
         shell: bash
         run: |
           set -euo pipefail
@@ -157,10 +157,45 @@ jobs:
           x=json.load(open('/tmp/lifi-chains.json'))
           chains=x.get('chains',x) if isinstance(x,dict) else x
           ids={int(c['id']) for c in chains if isinstance(c,dict) and str(c.get('id','')).isdigit()}
-          required={1,42161,8453,56,137,43114,143,1151111081099710}
+          required={1,42161,8453,56,137,43114,143}
           missing=sorted(required-ids)
-          assert not missing, f'LI.FI coverage missing {missing}'
-          print('MULTICHAIN_PROVIDER_COVERAGE=PASS:'+','.join(map(str,sorted(required))))
+          assert not missing, f'LI.FI EVM coverage missing {missing}'
+          print('MULTICHAIN_EVM_PROVIDER_COVERAGE=PASS:'+','.join(map(str,sorted(required))))
+          PY
+
+          sol_chain='1151111081099710'
+          sol_usdc='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+          curl --connect-timeout 5 --max-time 20 -fsSL "https://li.quest/v1/token?chain=${sol_chain}&token=${sol_usdc}" -o /tmp/lifi-sol-token.json
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/lifi-sol-token.json'))
+          assert int(x.get('chainId',0))==1151111081099710, x
+          assert x.get('symbol')=='USDC', x
+          assert x.get('address')=='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', x
+          print('MULTICHAIN_SOLANA_PROVIDER_IDENTITY=PASS:1151111081099710:USDC')
+          PY
+
+          curl --connect-timeout 5 --max-time 30 --get -fsSL 'https://li.quest/v1/quote' \
+            --data-urlencode 'fromChain=8453' \
+            --data-urlencode 'toChain=1151111081099710' \
+            --data-urlencode 'fromToken=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' \
+            --data-urlencode 'toToken=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' \
+            --data-urlencode 'fromAmount=10000000' \
+            --data-urlencode 'fromAddress=0x1111111111111111111111111111111111111111' \
+            --data-urlencode 'toAddress=11111111111111111111111111111111' \
+            --data-urlencode 'slippage=0.005' \
+            --data-urlencode 'integrator=copytolive-rwa' \
+            -o /tmp/lifi-base-sol-quote.json
+          python - <<'PY'
+          import json
+          q=json.load(open('/tmp/lifi-base-sol-quote.json'))
+          a=q.get('action') or {}; e=q.get('estimate') or {}; tx=q.get('transactionRequest') or {}
+          assert int(a.get('fromChainId',0))==8453, q
+          assert int(a.get('toChainId',0))==1151111081099710, q
+          assert int(e.get('toAmountMin') or 0)>0, q
+          assert q.get('tool'), q
+          assert tx, q
+          print('MULTICHAIN_REAL_BASE_TO_SOLANA_QUOTE=PASS:tool='+str(q.get('tool'))+':min='+str(e.get('toAmountMin')))
           PY
       - name: Install Playwright Chromium
         run: |
@@ -181,10 +216,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=success -f context='rwa/multichain' -f description='MULTI CHAIN V2 - 8 routed networks plus protected Hyperliquid - browser proof PASS'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=success -f context='rwa/multichain' -f description='MULTI CHAIN V2 - 8 routed networks plus protected Hyperliquid - provider + browser proof PASS'
       - name: Publish Multi Chain V2 failure status
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=failure -f context='rwa/multichain' -f description='MULTI CHAIN V2 production proof failed - inspect artifact and logs'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=failure -f context='rwa/multichain' -f description='MULTI CHAIN V2 production proof failed - inspect provider/browser logs'
