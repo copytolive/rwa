@@ -66,6 +66,10 @@ After ATR 1,000,000 is applied, the same production browser must additionally wa
 - Manual chart zoom/pan remains locked during live updates and settings rebuilds; zoom-out must not snap back to the initial/latest position.
 - Traditional continuation 1×, reversal 2×, Percentage (LTP) minimum-tick rounding, projection semantics, and directional Close-source wicks remain covered by the TradingView public-contract gate.
 
+## Same-SHA raw ATR validation checkpoint
+
+Engine `1.2.0`, deep cache `2.2.0`, cache-busted production scripts, raw-Wilder browser assertions, and the anti-heartbeat layer are now in the same source tree. This checkpoint intentionally triggers all current Renko production gates together; it is not accepted as complete until the resulting exact-SHA production artifacts are downloaded and visually inspected.
+
 ## Release rule
 
 Do not call the fixed-1s-Close/raw-ATR/no-heartbeat matrix complete until all three current gates pass against the same exact deployed Pages SHA:
