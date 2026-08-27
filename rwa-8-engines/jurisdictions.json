@@ -1,0 +1,21 @@
+{
+  "version": "2026-08-27",
+  "disclaimer": "Product policy routing only. Not legal advice and not an authoritative statement of local law.",
+  "default": {
+    "register": "ALLOWED",
+    "finance": "REVIEW_REQUIRED",
+    "trade": "REVIEW_REQUIRED",
+    "reviewers": ["legal", "compliance"],
+    "execution": "DISABLED_UNTIL_APPROVED"
+  },
+  "jurisdictions": {
+    "ID": {"label":"Indonesia","register":"ALLOWED","finance":"REVIEW_REQUIRED","trade":"REVIEW_REQUIRED"},
+    "SG": {"label":"Singapore","register":"ALLOWED","finance":"REVIEW_REQUIRED","trade":"REVIEW_REQUIRED"},
+    "AE": {"label":"United Arab Emirates","register":"ALLOWED","finance":"REVIEW_REQUIRED","trade":"REVIEW_REQUIRED"},
+    "US": {"label":"United States","register":"ALLOWED","finance":"REVIEW_REQUIRED","trade":"REVIEW_REQUIRED"},
+    "EU": {"label":"European Union","register":"ALLOWED","finance":"REVIEW_REQUIRED","trade":"REVIEW_REQUIRED"},
+    "GB": {"label":"United Kingdom","register":"ALLOWED","finance":"REVIEW_REQUIRED","trade":"REVIEW_REQUIRED"},
+    "JP": {"label":"Japan","register":"ALLOWED","finance":"REVIEW_REQUIRED","trade":"REVIEW_REQUIRED"},
+    "HK": {"label":"Hong Kong","register":"ALLOWED","finance":"REVIEW_REQUIRED","trade":"REVIEW_REQUIRED"}
+  }
+}
