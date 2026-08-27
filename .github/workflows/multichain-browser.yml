@@ -40,6 +40,40 @@ jobs:
           node --check rwa-multichain.js
           node --check rwa-multichain-engine.js
           node tools/multichain-contract.mjs
+      - name: Create exact V2 source backup package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p proof/multichain-v2-source-backup/.github/workflows proof/multichain-v2-source-backup/tools
+          for f in \
+            .github/workflows/experience-action-zero-flicker-v11.yml \
+            .github/workflows/launch-gate.yml \
+            .github/workflows/multichain-browser.yml \
+            .github/workflows/pages.yml \
+            .github/workflows/release-candidate.yml \
+            index.html rwa-multichain-engine.js rwa-multichain-registry.json rwa-multichain.js \
+            tools/launch-gate-current.mjs tools/multichain-browser.mjs tools/multichain-contract.mjs tools/product-parity-contract.mjs; do
+            mkdir -p "proof/multichain-v2-source-backup/$(dirname "$f")"
+            cp "$f" "proof/multichain-v2-source-backup/$f"
+          done
+          {
+            echo "RWA MULTI CHAIN V2 SOURCE BACKUP"
+            echo "checkout_sha=$(git rev-parse HEAD)"
+            echo "pr_head=${{ github.event.pull_request.head.sha }}"
+            echo "pr_base=${{ github.event.pull_request.base.sha }}"
+            echo "workflow_run=${GITHUB_RUN_ID}"
+            echo "created_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "files=13"
+          } > proof/multichain-v2-source-backup/MANIFEST.txt
+          cd proof
+          zip -qr multichain-v2-source-backup.zip multichain-v2-source-backup
+      - name: Upload exact V2 source backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: multichain-v2-source-backup
+          path: proof/multichain-v2-source-backup.zip
+          retention-days: 30
+          if-no-files-found: error
       - name: Install Playwright Chromium
         run: |
           npm install --no-save playwright@1.55.0
