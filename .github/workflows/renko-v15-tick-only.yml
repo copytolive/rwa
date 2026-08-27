@@ -33,23 +33,23 @@ jobs:
           node --check renko/renko-tv-engine.js
           node --check renko/renko-tv-app.js
           node --check renko/renko-tv-atr-parity.js
+          node --check renko/renko-tv-1s-close-lock.js
+          node --check renko/renko-tv-atr-1s-million-cache.js
           node --check tools/renko-tradingview-official-report.mjs
-          grep -Fq 'id="sourceSelect"' renko/index.html
-          grep -Fq 'value="close"' renko/index.html
-          grep -Fq 'value="ohlc"' renko/index.html
-          grep -Fq 'id="intervalSelect"' renko/index.html
+          grep -Fq 'FIXED RENKO SOURCE' renko/index.html
+          grep -Fq '1s CLOSE' renko/index.html
+          grep -Fq 'no selectable timeframe' renko/index.html
           grep -Fq 'PROJECTION' renko/index.html
           grep -Fq 'PERCENTAGE (LTP)' renko/index.html
+          grep -Fq 'renko-tv-1s-close-lock.js' renko/index.html
+          grep -Fq 'renko-tv-atr-1s-million-cache.js' renko/index.html
           grep -Fq 'renko-tv-atr-parity.js' renko/index.html
-          grep -Fq 'large values load enough available source history' renko/index.html
-          grep -Fq '/api/v3/klines?' renko/renko-tv-app.js
-          grep -Fq "confirmationRule:'source-interval-close'" renko/renko-tv-app.js
-          grep -Fq "projectionRule:'realtime-provisional-until-source-interval-close'" renko/renko-tv-app.js
+          grep -Fq "raw.source='close';raw.interval='1s'" renko/renko-tv-1s-close-lock.js
+          grep -Fq 'TARGETS=[1,10,100,1000,10000,100000,1000000]' renko/renko-tv-atr-1s-million-cache.js
+          grep -Fq 'interval=1s' renko/renko-tv-atr-1s-million-cache.js
           grep -Fq "contract:'tradingview-public-documentation-compatible'" renko/renko-tv-engine.js
           grep -Fq 'data-apply-method="atr"' renko/renko-tv-atr-parity.js
-          grep -Fq 'atrLength===2000' tools/renko-tradingview-official-report.mjs
-          grep -Fq 'coverageStart<atrLive.coverageStart' tools/renko-tradingview-official-report.mjs
-          ! grep -Eqi 'every trade locks|no timeframe|tick-native chart' renko/index.html
+          ! grep -Eqi 'every trade locks|tick-native chart' renko/index.html
           git diff --check
 
       - name: Official Renko rule unit matrix
@@ -58,7 +58,7 @@ jobs:
           node - <<'NODE'
           require('./renko/renko-tv-engine.js');
           const E=global.RWARenkoTVEngine;
-          const bars=closes=>closes.map((c,i)=>({open:c,high:c,low:c,close:c,openTime:i*60000,closeTime:(i+1)*60000-1}));
+          const bars=closes=>closes.map((c,i)=>({open:c,high:c,low:c,close:c,openTime:i*1000,closeTime:(i+1)*1000-1}));
           let r=E.build(bars([100,110,120,100,90]),{method:'traditional',boxSize:10,source:'close',wicks:false},1);
           if(r.bricks.length!==4||r.bricks[2].open!==110||r.bricks[2].close!==100||!r.bricks[2].isReversal)throw Error('Traditional 1x/2x contract failed');
           const pct=E.computeBox([{open:100,high:110,low:90,close:104.05}],{method:'percentage',percentage:.1},.01);
@@ -66,8 +66,8 @@ jobs:
           const atr=E.latestAtr([{open:10,high:12,low:9,close:11},{open:11,high:13,low:10,close:12},{open:12,high:14,low:11,close:13}],3,.01);
           if(Math.abs(atr-3)>1e-12)throw Error('Wilder ATR contract failed');
           const base=E.build(bars([100,110]),{method:'traditional',boxSize:10,source:'close',wicks:false},1);
-          const far=E.project(base,{open:110,high:130,low:110,close:130,openTime:120000,closeTime:179999},{method:'traditional',boxSize:10,source:'close',wicks:false},1);
-          const back=E.project(base,{open:110,high:130,low:105,close:105,openTime:120000,closeTime:179999},{method:'traditional',boxSize:10,source:'close',wicks:false},1);
+          const far=E.project(base,{open:110,high:130,low:110,close:130,openTime:2000,closeTime:2999},{method:'traditional',boxSize:10,source:'close',wicks:false},1);
+          const back=E.project(base,{open:110,high:130,low:105,close:105,openTime:2000,closeTime:2999},{method:'traditional',boxSize:10,source:'close',wicks:false},1);
           if(base.bricks.length!==1||far.length!==2||back.length!==0)throw Error('Projection rebuild contract failed');
           const on=E.build(bars([100,99,110]),{method:'traditional',boxSize:10,source:'close',wicks:true},1),off=E.build(bars([100,99,110]),{method:'traditional',boxSize:10,source:'close',wicks:false},1);
           if(on.bricks[0].low!==99||off.bricks[0].low!==100)throw Error('Close-source wick contract failed');
@@ -79,7 +79,7 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Fresh local browser validation — desktop and mobile
+      - name: Fresh local browser validation — fixed 1s Close desktop and mobile
         env:
           RWA_TEST_URL: http://127.0.0.1:8080/rwa/
         shell: bash
@@ -129,7 +129,7 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - name: Deploy verified TradingView-model Renko
+      - name: Deploy verified fixed-1s-Close TradingView-model Renko
         id: deployment
         uses: actions/deploy-pages@v4
 
@@ -159,7 +159,7 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Open live production — official-contract desktop/mobile gate
+      - name: Open live production — fixed 1s Close official-contract desktop/mobile gate
         env:
           RWA_TEST_URL: https://copytolive.github.io/rwa/
         run: node tools/renko-tradingview-official-report.mjs
