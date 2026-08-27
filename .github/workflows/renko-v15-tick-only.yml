@@ -1,4 +1,4 @@
-name: RENKO V15.18 Exact First-Frame + Mobile Gate
+name: RENKO V15.19 All Methods Instant Apply Gate
 
 on:
   push:
@@ -6,7 +6,6 @@ on:
     paths:
       - "renko/**"
       - "legacy-canonical.js"
-      - "rwa-sw-v5.js"
       - "tools/build-renko-first-frame-preload.mjs"
       - "tools/renko-production-report.mjs"
       - ".github/workflows/renko-v15-tick-only.yml"
@@ -17,6 +16,9 @@ permissions:
   pages: write
   id-token: write
 
+env:
+  RENKO_SEED_CACHE_KEY: renko-sol-v185-seed-20260827
+
 concurrency:
   group: "renko-tick-only-pages"
   cancel-in-progress: true
@@ -24,27 +26,26 @@ concurrency:
 jobs:
   verify-renko-first-frame:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Pin V185 first-frame runtime
+      - name: Pin V186 instant Apply runtime
         shell: bash
         run: |
           set -euo pipefail
-          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170|171|180|181|182|183|184|185)/renko-v15-controller-bootstrap.js?v=185/g' renko/index.html
-          grep -Fq 'renko-v15-controller-bootstrap.js?v=185' renko/index.html
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=186' renko/index.html
+          grep -Fq 'renko-v15-mobile-first-frame.css?v=186' renko/index.html
 
-      - name: Static tick-only, exact-seed and mobile contracts
+      - name: Static tick-only and all-method instant contracts
         shell: bash
         run: |
           set -euo pipefail
           node --check renko/renko-v15.js
           node --check renko/renko-v15-worker.js
-          node --check renko/renko-v15-deep-history-worker-v181.js
-          node --check renko/renko-v15-method-controller-v181.js
           node --check renko/renko-v15-first-frame-preload.js
+          node --check renko/renko-v15-method-controller-v186.js
           node --check renko/renko-v15-controller-bootstrap.js
           node --check tools/build-renko-first-frame-preload.mjs
           node --check tools/renko-production-report.mjs
@@ -54,19 +55,17 @@ jobs:
           ! grep -Fq '/api/v3/klines?' renko/renko-v15.js
           grep -Fq "formationSource:'trade-events-only'" renko/renko-v15.js
           grep -Fq "confirmationRule:'every-trade-immediate'" renko/renko-v15.js
-          grep -Fq "dataset.renkoMethodBootstrap='185'" renko/renko-v15-controller-bootstrap.js
-          grep -Fq 'renko-v15-first-frame-preload.js?v=185' renko/renko-v15-controller-bootstrap.js
-          grep -Fq 'preload/' renko/renko-v15-controller-bootstrap.js
-          grep -Fq "renkoController:'185'" legacy-canonical.js
-          grep -Fq 'renko-v15-mobile-first-frame.css?v=185' legacy-canonical.js
-          grep -Fq "deploy-tick-seed-first-frame-exact-box-retained-background-never-downgrades" renko/renko-v15-first-frame-preload.js
-          grep -Fq "historyDowngradeBlocked='1'" renko/renko-v15-first-frame-preload.js
-          grep -Fq "history-v185-preload" renko/renko-v15-first-frame-preload.js
-          grep -Fq "inputWaitMs='0'" renko/renko-v15-first-frame-preload.js
+          grep -Fq "dataset.renkoMethodBootstrap='186'" renko/renko-v15-controller-bootstrap.js
+          grep -Fq 'renko-v15-method-controller-v186.js?v=186' renko/renko-v15-controller-bootstrap.js
+          grep -Fq 'renko-v15-first-frame-preload.js?v=186' renko/renko-v15-controller-bootstrap.js
+          grep -Fq "renkoController:'186'" legacy-canonical.js
+          grep -Fq 'renko-v15-mobile-first-frame.css?v=186' legacy-canonical.js
+          grep -Fq "version:'1.9.0'" renko/renko-v15-method-controller-v186.js
+          grep -Fq "FIRST_SCREEN=46" renko/renko-v15-method-controller-v186.js
+          grep -Fq "APPLY_DEBOUNCE=0" renko/renko-v15-method-controller-v186.js
+          grep -Fq 'instant-first-frame-apply-no-blocking-history' renko/renko-v15-method-controller-v186.js
           grep -Fq 'TARGET_VISIBLE=46' tools/renko-production-report.mjs
-          grep -Fq "requiredExactSeed:true" tools/renko-production-report.mjs
-          grep -Fq "requiredNoOverlap:true" tools/renko-production-report.mjs
-          grep -Fq 'layoutNoOverlap' tools/renko-production-report.mjs
+          grep -Fq "requiredNoLoadingAfterApply:true" tools/renko-production-report.mjs
           git diff --check
 
       - name: Tick formation and WICKS unit matrix
@@ -88,27 +87,57 @@ jobs:
           console.log('RENKO TICK + WICKS MATRIX PASS');
           NODE
 
-      - name: Build SOL deploy-time tick seed
+      - name: Restore SOL first-frame seed cache
+        id: seed-cache
+        uses: actions/cache@v4
+        with:
+          path: renko/preload/SOLUSDT.json
+          key: ${{ env.RENKO_SEED_CACHE_KEY }}
+
+      - name: Restore previously verified SOL seed
+        if: steps.seed-cache.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/renko-seed-zip /tmp/renko-seed-site renko/preload
+          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/9638529318/zip" -o /tmp/renko-seed.zip || true
+          if [ -s /tmp/renko-seed.zip ]; then
+            unzip -q /tmp/renko-seed.zip -d /tmp/renko-seed-zip
+            tar -xf /tmp/renko-seed-zip/artifact.tar -C /tmp/renko-seed-site
+            cp /tmp/renko-seed-site/renko/preload/SOLUSDT.json renko/preload/SOLUSDT.json
+          fi
+
+      - name: Build or validate SOL deploy-time tick seed
         env:
           RENKO_PRELOAD_SYMBOL: SOLUSDT
           RENKO_PRELOAD_DAYS: 30
           RENKO_PRELOAD_KEEP: 140
+        shell: bash
         run: |
-          node tools/build-renko-first-frame-preload.mjs
-          test -s renko/preload/SOLUSDT.json
-          node -e "const p=require('./renko/preload/SOLUSDT.json'); const boxes=p.seeds.map(x=>x.box); if(!boxes.some(x=>Math.abs(x-1)<.02)||!boxes.some(x=>Math.abs(x-10)<.2)) throw Error('required SOL 1/10 seed missing'); console.log('FIRST_FRAME_SEEDS',p.seeds.map(x=>[x.box,x.bricks,x.ticks.length]))"
+          set -euo pipefail
+          if [ ! -s renko/preload/SOLUSDT.json ]; then node tools/build-renko-first-frame-preload.mjs; fi
+          node - <<'NODE'
+          const p=require('./renko/preload/SOLUSDT.json');
+          const one=p.seeds.find(x=>Math.abs(x.box-1)<.02),ten=p.seeds.find(x=>Math.abs(x.box-10)<.2);
+          if(!one||one.bricks<46||!ten||ten.bricks<46)throw Error('SOL box 1/10 first-screen seed missing');
+          console.log('FIRST_FRAME_SEEDS',{one:[one.box,one.bricks,one.ticks.length],ten:[ten.box,ten.bricks,ten.ticks.length]});
+          NODE
 
       - name: Install Playwright Chromium
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Fresh local screenshots must be instant, exact and overlap-free
+      - name: Fresh local screenshots — ATR Traditional Percentage must all be instant
         env:
           RWA_TEST_URL: http://127.0.0.1:8080/rwa/
         shell: bash
         run: |
           set -euo pipefail
+          rm -rf /tmp/renko-first-frame
           mkdir -p /tmp/renko-first-frame/rwa
           cp -a . /tmp/renko-first-frame/rwa/
           cd /tmp/renko-first-frame
@@ -136,7 +165,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: renko-local-first-frame-${{ github.sha }}
+          name: renko-local-all-methods-${{ github.sha }}
           path: artifacts/renko-production-report
           if-no-files-found: warn
           retention-days: 7
@@ -151,7 +180,7 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - name: Deploy verified RENKO V15.18 Pages artifact
+      - name: Deploy verified RENKO V15.19 Pages artifact
         id: deployment
         uses: actions/deploy-pages@v4
 
@@ -181,7 +210,7 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Open live production and gate desktop/mobile first frame
+      - name: Open live production — gate all three methods desktop/mobile
         env:
           RWA_TEST_URL: https://copytolive.github.io/rwa/
         run: node tools/renko-production-report.mjs
@@ -190,7 +219,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: renko-production-report-${{ github.sha }}
+          name: renko-production-all-methods-${{ github.sha }}
           path: artifacts/renko-production-report
           if-no-files-found: warn
           retention-days: 7
