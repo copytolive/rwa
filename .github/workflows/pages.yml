@@ -118,14 +118,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Pin RENKO V171 history-fill runtime in Pages artifact
+      - name: Pin RENKO V180 Vision deep-history runtime in Pages artifact
         shell: bash
         run: |
           set -euo pipefail
-          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170|171)/renko-v15-controller-bootstrap.js?v=171/g' renko/index.html
-          grep -Fq 'renko-v15-controller-bootstrap.js?v=171' renko/index.html
-          grep -Fq "renkoController:'171'" legacy-canonical.js
-          grep -Fq "version:'1.7.1'" renko/renko-v15-method-controller-v170.js
+          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170|171|180)/renko-v15-controller-bootstrap.js?v=180/g' renko/index.html
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=180' renko/index.html
+          grep -Fq "renkoController:'180'" legacy-canonical.js
+          grep -Fq "version:'1.8.0'" renko/renko-v15-method-controller-v170.js
+          grep -Fq 'renko-v15-deep-history-worker.js?v=180' renko/renko-v15-method-controller-v170.js
 
       - name: Stamp exact deployed SHA
         run: printf '%s\n' "$GITHUB_SHA" > deployment-sha.txt
