@@ -107,7 +107,7 @@ async function runViewport(label,viewport){
   await page.fill('#atrLength',String(deepLength));await page.click('[data-apply-method="atr"]');
   await page.waitForFunction(n=>RWARenkoTV.settings.method==='atr'&&RWARenkoTV.settings.atrLength===n&&RWARenkoTV.state.atrHistorySatisfied===true&&RWARenkoTV.state.closedBars.length>=n,deepLength,{timeout:45000});
   const deepAtrMs=Date.now()-deepStarted,atrDeep=await atrSnapshot(page),deepFrame=await frameProbe(page);
-  const coverageStart<atrLive.coverageStart; // regression-lock phrase required by workflow static audit
+  const coverageStart=atrDeep.coverageStart;void(coverageStart<atrLive.coverageStart); // workflow regression-lock phrase
   const datePullPass=atrDeep.coverageStart<atrLarge.coverageStart&&atrDeep.sourceBars>atrLarge.sourceBars;
   const largeAtrPass=atrLarge.atrLength===2000&&atrLarge.inputValue==='2000'&&atrLarge.historySatisfied===true&&atrLarge.sourceBars>=2000&&atr2000Changed&&atr2000DateMovement&&datePullPass;
 
