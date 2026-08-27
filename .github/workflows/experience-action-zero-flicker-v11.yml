@@ -1,0 +1,119 @@
+name: RWA Action Zero Flicker V11
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "persistent-market-operability-patch-v1.css"
+      - "market-performance.js"
+      - "tools/experience-action-zero-flicker-v11.mjs"
+      - ".github/workflows/experience-action-zero-flicker-v11.yml"
+      - ".github/workflows/pages.yml"
+  workflow_run:
+    workflows: ["Deploy RWA to GitHub Pages"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: rwa-action-zero-flicker-v11-${{ github.event.pull_request.number || github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  local-proof:
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Serve exact PR source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/rwa-v11-site/rwa
+          cp -a . /tmp/rwa-v11-site/rwa/
+          cd /tmp/rwa-v11-site
+          python -m http.server 4173 >/tmp/rwa-v11-http.log 2>&1 &
+          echo $! > /tmp/rwa-v11-http.pid
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
+      - name: Measure every animation frame across level changes
+        env:
+          RWA_TEST_URL: http://127.0.0.1:4173/rwa/
+          RWA_PROOF_DIR: proof/action-zero-flicker-v11-local
+        run: node tools/experience-action-zero-flicker-v11.mjs
+      - name: Upload local proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: action-zero-flicker-v11-local
+          path: proof/action-zero-flicker-v11-local
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Stop local server
+        if: always()
+        run: kill "$(cat /tmp/rwa-v11-http.pid)" 2>/dev/null || true
+
+  live-proof:
+    if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+      RWA_TEST_URL: https://copytolive.github.io/rwa/
+      RWA_PROOF_DIR: proof/action-zero-flicker-v11-live
+    steps:
+      - name: Checkout exact deployed source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.EXPECTED_SHA }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify exact Pages SHA and V11 cache key
+        shell: bash
+        run: |
+          set -euo pipefail
+          ok=0
+          for i in $(seq 1 60); do
+            live_sha="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/deployment-sha.txt?v=${GITHUB_RUN_ID}-${i}" 2>/dev/null | tr -d '\r\n' || true)"
+            if [ "$live_sha" = "$EXPECTED_SHA" ]; then ok=1; break; fi
+            sleep 5
+          done
+          test "$ok" = "1"
+          curl -fsSL "https://copytolive.github.io/rwa/market-performance.js?v=${GITHUB_RUN_ID}" | grep -Fq 'persistent-market-operability-patch-v1.css?v=11'
+          curl -fsSL "https://copytolive.github.io/rwa/persistent-market-operability-patch-v1.css?v=${GITHUB_RUN_ID}" | grep -Fq 'ACTION ZERO-FLICKER TRANSITION LOCK V11'
+          echo "LIVE_EXACT_SHA=PASS:$EXPECTED_SHA"
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Measure every production frame across level changes
+        run: node tools/experience-action-zero-flicker-v11.mjs
+      - name: Upload live proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: action-zero-flicker-v11-live-${{ env.EXPECTED_SHA }}
+          path: proof/action-zero-flicker-v11-live
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Publish zero-flicker success status
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=success -f context='rwa/action-zero-flicker' -f description='Discovery/Analysis/Action stayed 440px on every sampled frame'
+      - name: Publish zero-flicker failure status
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=failure -f context='rwa/action-zero-flicker' -f description='Workflow viewport narrowed during a sampled transition frame'
