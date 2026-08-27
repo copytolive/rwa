@@ -13,6 +13,9 @@ permissions:
   pages: write
   id-token: write
 
+env:
+  RENKO_SEED_CACHE_KEY: renko-sol-v185-seed-20260827
+
 concurrency:
   group: rwa-pages
   cancel-in-progress: true
@@ -36,7 +39,8 @@ jobs:
             tools/superapp-v5-audit.mjs tools/superapp-v5-browser.mjs \
             tools/superapp-p16-p20-audit.mjs tools/superapp-p16-p20-browser.mjs \
             tools/security-gate.mjs tools/build-renko-first-frame-preload.mjs \
-            renko/renko-v15-first-frame-preload.js; do test -s "$f"; done
+            renko/renko-v15-first-frame-preload.js renko/renko-v15-method-controller-v186.js \
+            renko/renko-v15-controller-bootstrap.js renko/renko-v15-mobile-first-frame.css; do test -s "$f"; done
 
           node --check superapp-v5.js
           node --check rwa-sw-v5.js
@@ -51,6 +55,8 @@ jobs:
           node --check tools/security-gate.mjs
           node --check tools/build-renko-first-frame-preload.mjs
           node --check renko/renko-v15-first-frame-preload.js
+          node --check renko/renko-v15-method-controller-v186.js
+          node --check renko/renko-v15-controller-bootstrap.js
 
           python -m json.tool rwa-execution-config.json >/dev/null
           python -m json.tool token/config.json >/dev/null
@@ -81,6 +87,11 @@ jobs:
           grep -Fq '"tgeEnabled": false' token/config.json
           grep -Fq '"mainnetDeploymentEnabled": false' token/config.json
           ! grep -Fq 'ExchangeClient' execution-ops-bridge.js
+
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=186' renko/index.html
+          grep -Fq "renkoController:'186'" legacy-canonical.js
+          grep -Fq "dataset.renkoMethodBootstrap='186'" renko/renko-v15-controller-bootstrap.js
+          grep -Fq "version:'1.9.0'" renko/renko-v15-method-controller-v186.js
 
           node tools/superapp-v5-audit.mjs
           node tools/superapp-p16-p20-audit.mjs
@@ -121,33 +132,64 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build SOL tick-derived first-frame preload
+      - name: Restore SOL first-frame seed cache
+        id: seed-cache
+        uses: actions/cache@v4
+        with:
+          path: renko/preload/SOLUSDT.json
+          key: ${{ env.RENKO_SEED_CACHE_KEY }}
+
+      - name: Restore previously verified SOL seed
+        if: steps.seed-cache.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/renko-seed-zip /tmp/renko-seed-site renko/preload
+          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/9638529318/zip" -o /tmp/renko-seed.zip || true
+          if [ -s /tmp/renko-seed.zip ]; then
+            unzip -q /tmp/renko-seed.zip -d /tmp/renko-seed-zip
+            tar -xf /tmp/renko-seed-zip/artifact.tar -C /tmp/renko-seed-site
+            cp /tmp/renko-seed-site/renko/preload/SOLUSDT.json renko/preload/SOLUSDT.json
+          fi
+
+      - name: Build or validate SOL tick-derived first-frame preload
         env:
           RENKO_PRELOAD_SYMBOL: SOLUSDT
           RENKO_PRELOAD_DAYS: 30
           RENKO_PRELOAD_KEEP: 140
-        run: |
-          node tools/build-renko-first-frame-preload.mjs
-          test -s renko/preload/SOLUSDT.json
-          node -e "const p=require('./renko/preload/SOLUSDT.json'); if(!p.seeds?.length) process.exit(1); console.log('RENKO_PRELOAD_SEEDS',p.seeds.map(x=>[x.box,x.bricks,x.ticks.length]))"
-
-      - name: Pin RENKO V185 first-frame preload runtime in Pages artifact
         shell: bash
         run: |
           set -euo pipefail
-          sed -i -E 's/renko-v15-controller-bootstrap\.js\?v=(154|158|170|171|180|181|182|183|184|185)/renko-v15-controller-bootstrap.js?v=185/g' renko/index.html
-          grep -Fq 'renko-v15-controller-bootstrap.js?v=185' renko/index.html
-          grep -Fq "renkoController:'185'" legacy-canonical.js
-          grep -Fq "dataset.renkoMethodBootstrap='185'" renko/renko-v15-controller-bootstrap.js
-          grep -Fq 'renko-v15-first-frame-preload.js?v=185' renko/renko-v15-controller-bootstrap.js
-          grep -Fq "version:'1.8.4'" renko/renko-v15-method-controller-v181.js
-          grep -Fq 'TARGET=60' renko/renko-v15-method-controller-v181.js
-          grep -Fq 'APPLY_DEBOUNCE=0' renko/renko-v15-method-controller-v181.js
-          grep -Fq "deploy-tick-seed-first-frame-then-exact-background" renko/renko-v15-first-frame-preload.js
+          if [ ! -s renko/preload/SOLUSDT.json ]; then node tools/build-renko-first-frame-preload.mjs; fi
+          node - <<'NODE'
+          const p=require('./renko/preload/SOLUSDT.json');
+          const one=p.seeds.find(x=>Math.abs(x.box-1)<.02),ten=p.seeds.find(x=>Math.abs(x.box-10)<.2);
+          if(!one||one.bricks<46||!ten||ten.bricks<46)throw Error('RENKO first-frame seed incomplete');
+          console.log('RENKO_PRELOAD_READY',{one:one.bricks,ten:ten.bricks});
+          NODE
+
+      - name: Pin RENKO V186 instant Apply runtime in Pages artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'renko-v15-controller-bootstrap.js?v=186' renko/index.html
+          grep -Fq 'renko-v15-mobile-first-frame.css?v=186' renko/index.html
+          grep -Fq "renkoController:'186'" legacy-canonical.js
+          grep -Fq "dataset.renkoMethodBootstrap='186'" renko/renko-v15-controller-bootstrap.js
+          grep -Fq 'renko-v15-first-frame-preload.js?v=186' renko/renko-v15-controller-bootstrap.js
+          grep -Fq 'renko-v15-method-controller-v186.js?v=186' renko/renko-v15-controller-bootstrap.js
+          grep -Fq "version:'1.9.0'" renko/renko-v15-method-controller-v186.js
+          grep -Fq "APPLY_DEBOUNCE=0" renko/renko-v15-method-controller-v186.js
+          grep -Fq 'instant-first-frame-apply-no-blocking-history' renko/renko-v15-method-controller-v186.js
           grep -Fq "inputWaitMs='0'" renko/renko-v15-first-frame-preload.js
 
       - name: Stamp exact deployed SHA
-        run: printf '%s\n' "$GITHUB_SHA" > deployment-sha.txt
+        run: |
+          printf '%s\n' "$GITHUB_SHA" > deployment-sha.txt
+          printf '%s\n' "$GITHUB_SHA" > renko-deployment-sha.txt
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
@@ -169,15 +211,7 @@ jobs:
           git show-ref | sort > backup/refs.txt
           python - <<'PY'
           import json, os, datetime
-          receipt={
-            "name":"RWA-LIVE-SYNC",
-            "version":"8.0",
-            "timestamp":datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d-%H%M%S'),
-            "sha":os.environ['GITHUB_SHA'],
-            "remote":"https://github.com/copytolive/rwa.git",
-            "pages":"https://copytolive.github.io/rwa/",
-            "gate":"pages-deploy-success"
-          }
+          receipt={"name":"RWA-LIVE-SYNC","version":"8.0","timestamp":datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d-%H%M%S'),"sha":os.environ['GITHUB_SHA'],"remote":"https://github.com/copytolive/rwa.git","pages":"https://copytolive.github.io/rwa/","gate":"pages-deploy-success"}
           open('backup/receipt.json','w').write(json.dumps(receipt,separators=(',',':'))+'\n')
           PY
           (cd backup && sha256sum repo.zip repo.bundle refs.txt receipt.json > SHA256SUMS.txt)
