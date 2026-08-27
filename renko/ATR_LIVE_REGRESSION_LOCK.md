@@ -10,6 +10,16 @@ This file intentionally lives under `renko/**` so every change to this lock is c
 - Large ATR values load older available source candles progressively instead of silently clamping the requested length.
 - The newest requested ATR length wins if an older history request is still in progress.
 
+## Zero-blocking ATR switch contract
+
+- `0 ms` means **0 ms Total Blocking Time on the browser main thread**, not physically zero CPU/network wall-clock time. A screenshot or status must never relabel non-zero wall-clock work as literal zero elapsed time.
+- Common ATR lengths `14`, `140`, `500`, `6000`, and `10000` are prewarmed in a Web Worker and older source history is fetched off the interaction-critical path.
+- A prepared APPLY must use the exact precomputed `RWARenkoTVEngine` result, not a placeholder, stale chart, fake geometry, or labels-only optimistic state.
+- A cache-hit switch must report `0 ms BLOCKING` only when measured Total Blocking Time is actually zero for that interaction window.
+- Deep-history cache staging must preserve the real source-bar requirement: ATR 6000 and ATR 10000 may attach progressively fetched older bars before the exact cached geometry is rendered.
+- The cache is scoped by symbol, source interval, source mode, wick mode, minimum tick, and chart generation. A context change invalidates/rewarms instead of reusing stale results.
+- The cache must not restore auto-follow or reset manual zoom/pan.
+
 ## Previously successful behavior that must not regress
 
 - Full spot-pair universe stays lazy/worker-parsed/virtualized; the sidebar must not materialize every pair in the DOM or freeze the laptop.
@@ -20,7 +30,8 @@ This file intentionally lives under `renko/**` so every change to this lock is c
 
 ## Release rule
 
-Do not call this behavior production-complete unless BOTH gates pass against the same exact deployed Pages SHA:
+Do not call this behavior production-complete unless all applicable gates pass against the same exact deployed Pages SHA:
 
 1. `RENKO TradingView Official Contract Gate`
 2. `RENKO Ultra Fast UI Gate`
+3. ATR instant screenshot/performance proof for 14 / 140 / 500 / 6000 / 10000 showing exact cache hit and measured 0 ms Total Blocking Time.
