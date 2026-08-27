@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'index.html'
+      - 'superapp-v5.js'
       - 'product-os-v3.js'
       - 'product-os-mobile-contract-v3.js'
       - 'unified-design-v3.css'
@@ -16,6 +17,7 @@ on:
     branches: [main]
     paths:
       - 'index.html'
+      - 'superapp-v5.js'
       - 'product-os-v3.js'
       - 'product-os-mobile-contract-v3.js'
       - 'unified-design-v3.css'
@@ -32,17 +34,27 @@ jobs:
       - uses: actions/checkout@v4
       - name: JavaScript syntax
         run: |
+          node --check superapp-v5.js
           node --check product-os-v3.js
           node --check product-os-mobile-contract-v3.js
           node --input-type=module --check < trade/config.js
-      - name: Product shell is activated
+      - name: Canonical root uses lazy product shell
         run: |
-          grep -q 'unified-design-v3.css' index.html
-          grep -q 'product-os-v3.js' index.html
-          grep -q 'product-os-mobile-contract-v3.js' index.html
+          test "$(grep -o '<script src=' index.html | wc -l | tr -d ' ')" = "6"
+          ! grep -Fq 'unified-design-v3.css' index.html
+          ! grep -Fq 'product-os-v3.js' index.html
+          ! grep -Fq 'product-os-mobile-contract-v3.js' index.html
+          ! grep -Fq 'rwa-fundamentals.js' index.html
+          ! grep -Fq 'rwa-fundamentals.css' index.html
+          grep -Eq 'market-performance\.js\?v=[0-9]+' index.html
+          grep -Eq 'superapp-v5\.js\?v=[0-9]+' index.html
+          grep -Fq 'ensureTrade()' superapp-v5.js
+          grep -Fq 'ensureFundamentals()' superapp-v5.js
+          grep -Fq "loadStyleOnce('rwa-fundamentals.css?v=1'" superapp-v5.js
+          grep -Fq "loadScriptOnce('rwa-fundamentals.js?v=1'" superapp-v5.js
           grep -q "product-os-v3.js" trade/config.js
           grep -q "unified-design-v3.css" trade/config.js
-      - name: 1-22 product surfaces exist
+      - name: 1-22 product surfaces remain available
         run: |
           test -f trader/index.html
           test -f asset/index.html
@@ -54,24 +66,23 @@ jobs:
           grep -q 'rwa-home-dashboard' unified-design-v3.css
           grep -q 'tabular-nums' unified-design-v3.css
           grep -q 'Risk Engine' product-os-v3.js
+          grep -Fq 'data-v5-mobile="trade"' superapp-v5.js
+          grep -Fq "if(name==='asset')" superapp-v5.js
       - name: Typography floors and touch targets
         run: |
           grep -q -- '--rwa-text-2xs:9px' unified-design-v3.css
           grep -q -- '--rwa-control-lg:44px' unified-design-v3.css
           grep -q 'mobile-tabs a>small{font-size:10px' unified-design-v3.css
           grep -q 'suite-field input.*font-size:13px' unified-design-v3.css
-      - name: Pages and live deployment contracts
+      - name: Pages deployment follows canonical lazy root
         run: |
-          grep -q 'realtime-core.js?v=3' .github/workflows/pages.yml
-          grep -q 'market-performance.js?v=2' .github/workflows/pages.yml
-          grep -q 'stable-shell.css?v=3' .github/workflows/pages.yml
-          grep -q 'unified-design-v3.css?v=1' .github/workflows/pages.yml
-          grep -q 'product-os-v3.js?v=1' .github/workflows/pages.yml
-          grep -q 'product-os-mobile-contract-v3.js?v=1' .github/workflows/pages.yml
-          grep -q 'unified-design-v3.css?v=1' .github/workflows/live-browser-smoke.yml
-          grep -q 'product-os-v3.js?v=1' .github/workflows/live-browser-smoke.yml
-          grep -q '<title>RWA Trader</title>' .github/workflows/live-browser-smoke.yml
-          grep -q '<title>RWA Asset</title>' .github/workflows/live-browser-smoke.yml
+          grep -Fq "! grep -Fq 'product-os-v3.js' index.html" .github/workflows/pages.yml
+          grep -Fq "! grep -Fq 'product-os-mobile-contract-v3.js' index.html" .github/workflows/pages.yml
+          grep -Fq "! grep -Fq 'unified-design-v3.css' index.html" .github/workflows/pages.yml
+          grep -Fq 'node tools/superapp-v5-browser.mjs' .github/workflows/pages.yml
+          test -s .github/workflows/live-browser-smoke.yml
+          grep -q '<title>RWA Trader</title>' trader/index.html
+          grep -q '<title>RWA Asset</title>' asset/index.html
       - name: Safety invariants preserved
         run: |
           grep -q "mainnetEnabled" trade/config.js
