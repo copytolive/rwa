@@ -1,4 +1,4 @@
-name: RENKO V15 Tick Native Compact Production Gate
+name: RENKO V15.1 Full Tick Native Production Gate
 
 on:
   push:
@@ -17,7 +17,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "renko-v15-pages"
+  group: "renko-v15-full-tick-pages"
   cancel-in-progress: false
 
 jobs:
@@ -30,22 +30,57 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Activate V15 parent-shell cache version
+      - name: Activate fully tick-native V15.1
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
+
+          # Parent shell cache bust.
           p=Path('superapp-v5.js');s=p.read_text()
-          s=re.sub(r"tab==='renko'\?'\d+':'1'","tab==='renko'?'150':'1'",s)
+          s=re.sub(r"tab==='renko'\?'\d+':'1'","tab==='renko'?'151':'1'",s)
           old="const toolUrl=`${tab}/?embed=1&symbol=${encodeURIComponent(sym)}`;"
-          if old in s:s=s.replace(old,"const toolUrl=`${tab}/?embed=1&v=${tab==='renko'?'150':'1'}&symbol=${encodeURIComponent(sym)}`;")
-          if "tab==='renko'?'150':'1'" not in s:raise SystemExit('RENKO iframe cache v150 missing')
+          if old in s:s=s.replace(old,"const toolUrl=`${tab}/?embed=1&v=${tab==='renko'?'151':'1'}&symbol=${encodeURIComponent(sym)}`;")
+          if "tab==='renko'?'151':'1'" not in s:raise SystemExit('RENKO iframe cache v151 missing')
           p.write_text(s)
-          p=Path('index.html');s=p.read_text();s=re.sub(r'superapp-v5\.js\?v=\d+','superapp-v5.js?v=17',s);p.write_text(s)
+          p=Path('index.html');s=p.read_text();s=re.sub(r'superapp-v5\.js\?v=\d+','superapp-v5.js?v=18',s);p.write_text(s)
+
+          # V15.1: remove hidden 1m ATR calibration. Tick ATR is Wilder-smoothed absolute trade-to-trade movement.
+          p=Path('renko/renko-v15.js');s=p.read_text()
+          old_atr="""function wilderAtr(rows,len){const tr=[];let prev=NaN;for(const r of rows||[]){const h=Number(r?.[2]),l=Number(r?.[3]),c=Number(r?.[4]);if(![h,l,c].every(Number.isFinite))continue;tr.push(Number.isFinite(prev)?Math.max(h-l,Math.abs(h-prev),Math.abs(l-prev)):h-l);prev=c}if(!tr.length)return NaN;len=Math.max(1,Math.floor(Number(len)||14));if(tr.length<len)return tr.reduce((a,b)=>a+b,0)/tr.length;let a=tr.slice(0,len).reduce((x,y)=>x+y,0)/len;for(let i=len;i<tr.length;i++)a=((a*(len-1))+tr[i])/len;return a}
+async function fetchAtr(symbol){try{const rows=await fetchJson(`/api/v3/klines?symbol=${encodeURIComponent(symbol)}&interval=1m&limit=${Math.max(80,C.atrLength+40)}`),t=now(),closed=(Array.isArray(rows)?rows:[]).filter(r=>Number(r?.[6]||0)<t);return wilderAtr(closed,C.atrLength)}catch(e){console.warn('[V15 ATR calibration]',e);return NaN}}
+"""
+          new_atr="""function tickAtr(ticks,len){len=Math.max(1,Math.floor(Number(len)||14));const src=(Array.isArray(ticks)?ticks:[]).slice(-Math.max(500,len*50)),moves=[];let prev=NaN;for(const t of src){const p=Number(t?.price);if(!Number.isFinite(p))continue;if(Number.isFinite(prev)){const tr=Math.abs(p-prev);if(tr>0)moves.push(tr)}prev=p}if(!moves.length)return NaN;const recent=moves.slice(-Math.max(len,Math.min(moves.length,len*20)));if(recent.length<len)return recent.reduce((a,b)=>a+b,0)/recent.length;let a=recent.slice(0,len).reduce((x,y)=>x+y,0)/len;for(let i=len;i<recent.length;i++)a=((a*(len-1))+recent[i])/len;return a}
+"""
+          if old_atr in s:s=s.replace(old_atr,new_atr,1)
+          if 'function tickAtr(ticks,len)' not in s:raise SystemExit('Tick ATR function missing')
+          old_reset="const [tick,ltp,atr,rows]=await Promise.all([fetchTickSize(symbol),fetchLtp(symbol),fetchAtr(symbol),latestAgg(symbol)]);if(generation!==S.generation)return;S.tickSize=tick;S.ltpSnapshot=ltp;S.atrValue=atr;S.box=activeBox();if(rows.length){S.ticks=rows;"
+          new_reset="const [tick,ltp,rows]=await Promise.all([fetchTickSize(symbol),fetchLtp(symbol),latestAgg(symbol)]);if(generation!==S.generation)return;S.tickSize=tick;S.ltpSnapshot=ltp;S.atrValue=tickAtr(rows,C.atrLength);if(!(S.atrValue>0))S.atrValue=S.tickSize;S.box=activeBox();if(rows.length){S.ticks=rows;"
+          if old_reset in s:s=s.replace(old_reset,new_reset,1)
+          old_apply="if(method==='atr')S.atrValue=await fetchAtr(S.symbol);S.box=activeBox();"
+          new_apply="if(method==='atr'){S.atrValue=tickAtr(S.ticks,C.atrLength);if(!(S.atrValue>0))S.atrValue=S.tickSize}S.box=activeBox();"
+          if old_apply in s:s=s.replace(old_apply,new_apply,1)
+          s=s.replace("version:'15.0.0'","version:'15.1.0'")
+          s=s.replace("atrSizing:'hidden-completed-1m-wilder-snapshot-sizing-only'","atrSizing:'wilder-absolute-trade-move-no-timeframe'")
+          s=s.replace("diagnostics,uniformAudit};","diagnostics,uniformAudit,tickAtr};")
+          if '/api/v3/klines?' in s or 'fetchAtr(' in s or 'wilderAtr(' in s:raise SystemExit('bar/timeframe ATR dependency still exists')
+          if "atrSizing:'wilder-absolute-trade-move-no-timeframe'" not in s:raise SystemExit('tick ATR contract missing')
+          p.write_text(s)
+
+          # Make the UI explicit: ATR itself is now tick based.
+          p=Path('renko/index.html');s=p.read_text()
+          s=s.replace('RENKO V15 — Tick Native','RENKO V15.1 — Full Tick Native')
+          s=s.replace('ATR LENGTH</label><input id="v15AtrLength"','TICK ATR LEN</label><input id="v15AtrLength"')
+          s=s.replace('ATR SNAPSHOT</small><b id="v11AtrNow">—</b>','TICK ATR</small><b id="v11AtrNow">—</b>')
+          s=s.replace('ATR Length is used only to calibrate a fixed box snapshot from completed regular bars. It never delays or clocks brick formation; formation remains trade-event based.','Tick ATR uses Wilder smoothing of absolute price changes between price-changing trade events. No candle or timeframe is used for ATR sizing or formation.')
+          s=re.sub(r'renko-v15\.css\?v=\d+','renko-v15.css?v=151',s)
+          s=re.sub(r'renko-v15\.js\?v=\d+','renko-v15.js?v=151',s)
+          s=re.sub(r'renko-v15-method-profiles\.js\?v=\d+','renko-v15-method-profiles.js?v=151',s)
+          p.write_text(s)
           PY
 
-      - name: Static tick-native contracts
+      - name: Static full-tick contracts
         shell: bash
         run: |
           set -euo pipefail
@@ -54,20 +89,23 @@ jobs:
           node --check renko/renko-v15-worker.js
           node --check renko/renko-v15-method-profiles.js
           node --check tools/renko-v15-functional.mjs
-          grep -Fq 'superapp-v5.js?v=17' index.html
-          grep -Fq "tab==='renko'?'150':'1'" superapp-v5.js
-          grep -Fq 'RENKO V15' renko/index.html
-          grep -Fq 'renko-v15.js?v=150' renko/index.html
-          grep -Fq 'renko-v15-method-profiles.js?v=150' renko/index.html
-          grep -Fq 'renko-v15.css?v=150' renko/index.html
+          grep -Fq 'superapp-v5.js?v=18' index.html
+          grep -Fq "tab==='renko'?'151':'1'" superapp-v5.js
+          grep -Fq 'RENKO V15.1' renko/index.html
+          grep -Fq 'renko-v15.js?v=151' renko/index.html
+          grep -Fq 'renko-v15-method-profiles.js?v=151' renko/index.html
+          grep -Fq 'renko-v15.css?v=151' renko/index.html
           ! grep -Fq 'id="v14Resolution"' renko/index.html
           ! grep -Fq '>RESOLUTION<' renko/index.html
           ! grep -Fq '1 minute</option>' renko/index.html
-          ! grep -Fq 'projection → bar-close' renko/index.html
-          ! grep -Fq 'Bar close</b>' renko/index.html
+          ! grep -Fq '/api/v3/klines?' renko/renko-v15.js
+          ! grep -Fq 'fetchAtr(' renko/renko-v15.js
+          grep -Fq 'function tickAtr(ticks,len)' renko/renko-v15.js
+          grep -Fq "version:'15.1.0'" renko/renko-v15.js
           grep -Fq "formationSource:'trade-events-only'" renko/renko-v15.js
           grep -Fq "confirmationRule:'every-trade-immediate'" renko/renko-v15.js
           grep -Fq "timeframeControl:false" renko/renko-v15.js
+          grep -Fq "atrSizing:'wilder-absolute-trade-move-no-timeframe'" renko/renko-v15.js
           grep -Fq "liveDrain:'all-unseen-raw-trades-in-order'" renko/renko-v15.js
           grep -Fq 'uniformAudit' renko/renko-v15-worker.js
           git diff --check
@@ -76,21 +114,14 @@ jobs:
         shell: bash
         run: |
           node - <<'NODE'
-          const fs=require('fs'),vm=require('vm');
-          const code=fs.readFileSync('renko/renko-v15-worker.js','utf8');
-          const s={console,postMessage(){}};s.self=s;s.globalThis=s;vm.createContext(s);vm.runInContext(code,s);
-          const E=s.RenkoV15Engine;
+          const fs=require('fs'),vm=require('vm');const code=fs.readFileSync('renko/renko-v15-worker.js','utf8');const s={console,postMessage(){}};s.self=s;s.globalThis=s;vm.createContext(s);vm.runInContext(code,s);const E=s.RenkoV15Engine;
           const ticks=prices=>prices.map((price,i)=>({id:i+1,price,time:i+1}));
           const uniform=(r,label)=>{if(!r.audit?.ok)throw Error(label+' audit '+JSON.stringify(r.audit));const tol=Math.max(1e-10,Math.abs(r.box)*1e-9);for(const b of r.bricks){if(Math.abs(Math.abs(b.close-b.open)-r.box)>tol)throw Error(label+' non-uniform body')}};
-          let r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:false,ticks:ticks([100,150])});
-          if(r.bricks.length!==5||r.bricks.at(-1).close!==150)throw Error('one trade did not lock five continuation bricks immediately');uniform(r,'Traditional multi-brick');
-          r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:false,ticks:ticks([100,110,120,100,90])});
-          if(r.bricks.length!==4||!r.bricks[2].isReversal||r.bricks[2].open!==110||r.bricks[2].close!==100)throw Error('2-box reversal failed');uniform(r,'Traditional reversal');
-          r=E.buildTicks({method:'percentage',percentage:.01,ltpSnapshot:79130,tickSize:.01,wicks:false,ticks:ticks([79130,82330])});
-          if(Math.abs(r.box-800)>.001)throw Error('Percentage LTP fixed box failed '+r.box);uniform(r,'Percentage');
-          r=E.buildTicks({method:'atr',atrValue:32.51,tickSize:.01,wicks:false,ticks:ticks([79000,79100,79200])});
-          if(Math.abs(r.box-32.51)>.001)throw Error('ATR snapshot box failed '+r.box);uniform(r,'ATR');
-          console.log('RENKO V15 TICK MATRIX PASS');
+          let r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:false,ticks:ticks([100,150])});if(r.bricks.length!==5||r.bricks.at(-1).close!==150)throw Error('one trade did not lock five bricks immediately');uniform(r,'Traditional');
+          r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:false,ticks:ticks([100,110,120,100,90])});if(r.bricks.length!==4||!r.bricks[2].isReversal||r.bricks[2].open!==110||r.bricks[2].close!==100)throw Error('2-box reversal failed');uniform(r,'Reversal');
+          r=E.buildTicks({method:'percentage',percentage:.01,ltpSnapshot:79130,tickSize:.01,wicks:false,ticks:ticks([79130,82330])});if(Math.abs(r.box-800)>.001)throw Error('Percentage fixed LTP failed');uniform(r,'Percentage');
+          r=E.buildTicks({method:'atr',atrValue:2.5,tickSize:.01,wicks:false,ticks:ticks([100,110,120])});if(Math.abs(r.box-2.5)>.001)throw Error('Tick ATR box mapping failed');uniform(r,'Tick ATR');
+          console.log('RENKO V15.1 FULL TICK MATRIX PASS');
           NODE
 
       - name: Install Playwright Chromium
@@ -98,25 +129,25 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Browser acceptance - no timeframe, compact setup, symbols and formation
+      - name: Browser acceptance - fully tick native and compact
         shell: bash
         run: |
-          python3 -m http.server 8080 > /tmp/renko-v15-http.log 2>&1 &
+          python3 -m http.server 8080 > /tmp/renko-v151-http.log 2>&1 &
           server=$!
           trap 'kill $server || true' EXIT
           for i in {1..30}; do curl -fsS http://127.0.0.1:8080/ >/dev/null && break || true; sleep 1; done
           RENKO_TEST_BASE='http://127.0.0.1:8080/' node tools/renko-v15-functional.mjs
 
-      - name: Persist browser-verified V15 shell
+      - name: Persist browser-verified V15.1 source
         shell: bash
         run: |
-          if git diff --quiet -- index.html superapp-v5.js; then
-            echo 'Parent shell already on RENKO V15 cache version'
+          if git diff --quiet -- index.html superapp-v5.js renko/index.html renko/renko-v15.js; then
+            echo 'Production already on V15.1 full tick runtime'
           else
             git config user.name 'copytolive-actions'
             git config user.email 'actions@users.noreply.github.com'
-            git add index.html superapp-v5.js
-            git commit -m 'Activate RENKO V15 tick-native shell cache'
+            git add index.html superapp-v5.js renko/index.html renko/renko-v15.js
+            git commit -m 'Activate RENKO V15.1 fully tick-native runtime'
             git pull --rebase origin main
             git push origin HEAD:main
           fi
@@ -138,6 +169,6 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - name: Deploy verified RENKO V15 Pages artifact
+      - name: Deploy verified RENKO V15.1 Pages artifact
         id: deployment
         uses: actions/deploy-pages@v4
