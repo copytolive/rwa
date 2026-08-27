@@ -1,41 +1,86 @@
 <!doctype html>
 <html lang="en">
-<head><script src="../legacy-canonical.js?v=9"></script>
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#131722">
-<title>RENKO V15.19 — Instant Tick Native</title>
-<meta name="description" content="RENKO V15 tick-native chart. Every Binance trade can immediately lock one or many Renko bricks; no chart timeframe or candle-close lock.">
+<meta name="theme-color" content="#0d111a">
+<title>RENKO — TradingView Documented Model</title>
+<meta name="description" content="Renko chart aligned to TradingView's publicly documented source-interval, projection, ATR, Traditional, Percentage (LTP), and wick rules.">
 <link rel="preconnect" href="https://data-api.binance.vision" crossorigin>
 <link rel="preconnect" href="https://data-stream.binance.vision" crossorigin>
-<link rel="stylesheet" href="renko.css?v=1"><link rel="stylesheet" href="renko-v2.css?v=2"><link rel="stylesheet" href="renko-v3.css?v=3"><link rel="stylesheet" href="renko-v9-lwc.css?v=91"><link rel="stylesheet" href="renko-v10.css?v=100"><link rel="stylesheet" href="renko-v11.css?v=112"><link rel="stylesheet" href="renko-v15.css?v=151"><link rel="stylesheet" href="renko-v15-mobile-first-frame.css?v=186">
+<link rel="stylesheet" href="renko-tv.css?v=160">
 <script src="https://unpkg.com/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
 <div class="app">
-<header class="topbar"><a class="brand" href="./" aria-label="Open Renko"><span class="brandmark">R</span><strong>RENKO</strong></a><nav class="nav"><a class="active" href="./">Renko Chart</a></nav><div class="top-status"><span id="modePill" class="mode-pill">ATR · TICK · V15</span><span id="feedPill" class="feed-pill"><i></i><b>CONNECTING</b></span></div></header>
+<header class="topbar">
+  <a class="brand" href="./"><span class="brandmark">R</span><strong>RENKO</strong></a>
+  <nav class="nav"><a class="active" href="./">TradingView Model</a></nav>
+  <div class="top-status"><span id="modePill" class="mode-pill">ATR · 1m · CLOSE</span><span id="feedPill" class="feed-pill"><i></i><b>CONNECTING</b></span></div>
+</header>
 <main class="workspace">
-<aside class="markets" aria-label="Crypto pair selector"><div class="aside-head"><div><small>ALL SPOT CRYPTO</small><h1>Renko Markets</h1></div><span id="pairTotal">—</span></div><div class="search"><span>⌕</span><input id="pairSearch" autocomplete="off" placeholder="Search any Binance spot crypto pair…"></div><div class="quote-note"><b id="pairShown">Top markets</b><span id="universeNote">Loading complete spot crypto universe…</span></div><div id="pairList" class="pair-list"><div class="empty">Loading crypto markets…</div></div></aside>
+<aside class="markets" aria-label="Crypto pair selector">
+  <div class="aside-head"><div><small>ALL SPOT CRYPTO</small><h1>Renko Markets</h1></div><span id="pairTotal">—</span></div>
+  <div class="search"><span>⌕</span><input id="pairSearch" autocomplete="off" placeholder="Search any Binance spot crypto pair…"></div>
+  <div class="quote-note"><b id="pairShown">Top markets</b><span id="universeNote">Loading universe…</span></div>
+  <div id="pairList" class="pair-list"><div class="empty">Loading crypto markets…</div></div>
+</aside>
 <section class="terminal">
-<div class="instrument-bar"><div class="instrument"><div id="pairIcon" class="pair-icon">BT</div><div><div class="pair-title"><b id="pairName">BTC / USDT</b><span>SPOT</span></div><small id="sourceText">Tick-native Renko · every Binance trade can lock one or many bricks immediately · no timeframe.</small></div></div><div class="stats"><div><small>REAL LAST</small><b id="lastPrice">—</b></div><div><small>BOX SIZE</small><b id="brickValue">—</b></div><div><small>CONFIRMED BRICKS</small><b id="brickCount">0</b></div><div><small>LIVE TICKS</small><b id="tickCount">0</b></div></div></div>
-<div class="easybar" aria-label="Quick Renko controls"><button id="openPairs" class="open-pairs">☰ Pairs</button><div id="quickPairs" class="easy-group quick"><span class="easy-label">QUICK</span><button data-quick="BTC">BTC</button><button data-quick="ETH">ETH</button><button data-quick="SOL">SOL</button><button data-quick="XRP">XRP</button><button data-quick="BNB">BNB</button><button data-quick="DOGE">DOGE</button></div><div class="easy-health"><span id="tickHealth" class="tick-health wait">WAITING</span><span id="tickAge" class="tick-age">waiting</span></div></div>
-<div class="v10-toolbar v11-toolbar">
-<div class="v10-card v15-box-card" id="v15BoxCard">
-  <div class="v15-box-head"><b>BOX SIZE ASSIGNMENT METHOD</b><small><b class="v15-tick-badge">TICK NATIVE</b> · no timeframe · every trade confirms immediately · method settings stay independent</small></div>
-  <div class="v15-profile-grid">
-    <section class="v15-profile" data-v15-profile="atr"><div class="v15-method"><small>METHOD</small><b>ATR</b><span class="v15-state">SAVED</span></div><div class="v15-field"><label>TICK ATR LEN</label><input id="v15AtrLength" inputmode="numeric" value="14"></div><label class="v15-check"><input id="v15AtrWicks" type="checkbox" checked> WICKS</label><div class="v15-field"><label>ENTRY CONFIRM</label><select id="v15AtrConfirm"><option value="2">Reversal + 1</option><option value="1">First reversal</option></select></div><button class="v15-apply" data-v15-apply="atr">APPLY</button></section>
-    <section class="v15-profile" data-v15-profile="traditional"><div class="v15-method"><small>METHOD</small><b>TRADITIONAL</b><span class="v15-state">SAVED</span></div><div class="v15-field"><label>BOX</label><input id="v15TraditionalBox" inputmode="decimal" value="100"></div><label class="v15-check"><input id="v15TraditionalWicks" type="checkbox" checked> WICKS</label><div class="v15-field"><label>ENTRY CONFIRM</label><select id="v15TraditionalConfirm"><option value="2">Reversal + 1</option><option value="1">First reversal</option></select></div><button class="v15-apply" data-v15-apply="traditional">APPLY</button></section>
-    <section class="v15-profile" data-v15-profile="percentage"><div class="v15-method"><small>METHOD</small><b>PERCENTAGE</b><span class="v15-state">SAVED</span></div><div class="v15-field"><label>PERCENT %</label><input id="v15Percentage" inputmode="decimal" value="1"></div><label class="v15-check"><input id="v15PercentageWicks" type="checkbox" checked> WICKS</label><div class="v15-field"><label>ENTRY CONFIRM</label><select id="v15PercentageConfirm"><option value="2">Reversal + 1</option><option value="1">First reversal</option></select></div><button class="v15-apply" data-v15-apply="percentage">APPLY</button></section>
+  <div class="instrument-bar">
+    <div class="instrument"><div id="pairIcon" class="pair-icon">SO</div><div><div class="pair-title"><b id="pairName">SOL / USDT</b><span>SPOT</span></div><small id="sourceText">TradingView documented model · source interval Close/OHLC · confirmed only when source interval closes.</small></div></div>
+    <div class="stats">
+      <div class="stat"><small>REAL LAST</small><b id="lastPrice">—</b></div>
+      <div class="stat"><small>BOX SIZE</small><b id="brickValue">—</b></div>
+      <div class="stat"><small>CONFIRMED</small><b id="brickCount">0</b></div>
+      <div class="stat"><small>PROJECTION</small><b id="projectionCount">0</b></div>
+      <div class="stat"><small>SOURCE BARS</small><b id="sourceBarCount">0</b></div>
+    </div>
   </div>
-  <div class="v15-summary"><div><small>METHOD</small><b id="v11MethodLabel">ATR</b></div><div><small>CURRENT BOX</small><b id="v11CurrentBox">—</b></div><div><small>TICK ATR</small><b id="v11AtrNow">—</b></div><div><small>LTP SNAPSHOT</small><b id="v12LtpSnapshot">—</b></div><div><small>MIN TICK</small><b id="v11TickSize">—</b></div><div><small>FORMATION</small><b>TICK</b></div><div><small>CONTINUATION</small><b>1× box</b></div><div><small>REVERSAL</small><b>2× box</b></div><div><small>LOCK</small><b>Every trade</b></div></div>
+  <div class="easybar"><button id="openPairs" class="open-pairs">☰ Pairs</button><span class="easy-label">QUICK</span><div class="quick"><button data-quick="BTC">BTC</button><button data-quick="ETH">ETH</button><button data-quick="SOL">SOL</button><button data-quick="XRP">XRP</button><button data-quick="BNB">BNB</button><button data-quick="DOGE">DOGE</button></div><div class="easy-health"><span id="tickHealth" class="health">WAITING</span><span id="tickAge">waiting</span></div></div>
+  <div class="control-deck">
+    <section class="card source-card">
+      <div class="source-head"><div><small>TRADINGVIEW SOURCE MODEL</small><b>Resolution + Source</b></div><small>Historical locks at interval close</small></div>
+      <div class="source-grid">
+        <label class="field"><span>SOURCE</span><select id="sourceSelect"><option value="close">Close</option><option value="ohlc">OHLC</option></select></label>
+        <label class="field"><span>SOURCE INTERVAL</span><select id="intervalSelect"><option value="1s">1 second</option><option value="1m">1 minute</option><option value="3m">3 minutes</option><option value="5m">5 minutes</option><option value="15m">15 minutes</option><option value="30m">30 minutes</option><option value="1h">1 hour</option><option value="4h">4 hours</option><option value="1d">1 day</option></select></label>
+      </div>
+      <label class="toggleline"><input id="wicksToggle" type="checkbox" checked><b>WICKS</b><span>Close extrema when Source=Close; High/Low when Source=OHLC.</span></label>
+    </section>
+    <section class="card method-card">
+      <div class="source-head"><div><small>BOX SIZE ASSIGNMENT METHOD</small><b>ATR · Traditional · Percentage (LTP)</b></div><small>TradingView public rules</small></div>
+      <div class="method-grid">
+        <div class="method" data-method="atr"><div class="method-title"><b>ATR</b><span>READY</span></div><label class="field"><span>ATR LENGTH</span><input id="atrLength" inputmode="numeric" value="14"></label><button data-apply-method="atr">APPLY</button></div>
+        <div class="method" data-method="traditional"><div class="method-title"><b>TRADITIONAL</b><span>READY</span></div><label class="field"><span>BOX SIZE</span><input id="traditionalBox" inputmode="decimal" value="1"></label><button data-apply-method="traditional">APPLY</button></div>
+        <div class="method" data-method="percentage"><div class="method-title"><b>PERCENTAGE (LTP)</b><span>READY</span></div><label class="field"><span>PERCENT %</span><input id="percentageValue" inputmode="decimal" value="1"></label><button data-apply-method="percentage">APPLY</button></div>
+      </div>
+      <div class="summary">
+        <div><small>METHOD</small><b id="currentMethod">ATR</b></div><div><small>SOURCE</small><b id="currentSource">CLOSE</b></div><div><small>INTERVAL</small><b id="currentInterval">1m</b></div><div><small>REGULAR-CANDLE ATR</small><b id="currentAtr">—</b></div><div><small>LATEST CLOSED PRICE</small><b id="ltpSnapshot">—</b></div><div><small>MIN TICK</small><b id="minTick">—</b></div>
+      </div>
+    </section>
+  </div>
+  <div class="chart-toolbar"><span class="pill"><strong>CONFIRMED</strong> source interval closed</span><span class="pill legend-proj"><i class="swatch up"></i><i class="swatch down"></i><strong>PROJECTION</strong> realtime provisional</span><span class="pill"><strong id="tvBrickMeta">0 confirmed</strong></span><b id="tvLoadState" class="load-state">Loading source history…</b></div>
+  <div id="chartWrap" class="chart-wrap">
+    <div id="chartHost" class="chart-host"></div>
+    <div id="chartEmpty" class="chart-empty"><span class="spinner"></span><b>Preparing source-interval Renko…</b><small>Historical bars first; realtime bricks remain projection until the interval closes.</small></div>
+    <div class="coverage" id="tvCoverage">Preparing source history</div>
+    <div class="chart-nav"><button id="tvPanOlder" title="Older history">←</button><button id="tvZoomOut" title="Zoom out">−</button><button id="tvZoomIn" title="Zoom in">+</button><button id="tvPanNewer" title="Newer history">→</button><button id="tvReset" title="Reset latest">⌂</button><button id="tvLive" class="live" title="Return to live">LIVE</button></div>
+  </div>
+  <div class="auditbar"><span id="auditSource">Source contract</span><span id="auditContinuation">1× continuation</span><span id="auditReversal">2× reversal</span><span id="auditProjection">projection ≠ confirmed</span><span id="auditWicks">wicks</span></div>
+  <div class="attribution">Rendered with <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener">TradingView Lightweight Charts™</a>. Renko calculations are an independent implementation of TradingView's public documentation, not proprietary TradingView code.</div>
+  <details class="methodology"><summary>Official TradingView parity contract and limits</summary><div class="method-grid-info">
+    <div><b>Historical source</b><p>The selected chart interval supplies Close or OHLC values. Confirmed history changes only after that source interval closes.</p></div>
+    <div><b>Realtime projection</b><p>Current-interval bricks are provisional projections. They can change or disappear and are rebuilt from the current source bar until it closes.</p></div>
+    <div><b>Traditional</b><p>Fixed absolute box. Continuation requires 1× box; reversal requires 2× box.</p></div>
+    <div><b>Percentage (LTP)</b><p>Latest closed price × user percent, rounded to the nearest exchange minimum tick and applied consistently across the rebuild.</p></div>
+    <div><b>ATR</b><p>Wilder ATR is calculated from ordinary source-interval OHLC candles and used as the Renko box size.</p></div>
+    <div><b>Wicks</b><p>Close source uses discarded close extrema. OHLC source uses actual High/Low excursions. Up bricks carry low wicks; down bricks carry high wicks.</p></div>
+    <div><b>Deep history</b><p>Older Binance source bars load progressively. TradingView itself may substitute higher intervals when its own lower-timeframe history ends; Binance history depth differs.</p></div>
+    <div><b>Exact-output limit</b><p>TradingView does not publicly specify every proprietary historical OHLC traversal/anchoring detail. This page matches the published contract and exposes the remaining undocumented boundary instead of claiming false 100% byte-for-byte output parity.</p></div>
+  </div></details>
+</section>
+</main>
 </div>
-<div class="v10-card"><div class="v10-card-head"><b>ENTRY / EXIT ENGINE</b><small>Signals use immediately confirmed tick bricks; execution reference uses real market price</small></div><div class="v10-signal"><div class="v10-signal-main"><small>ACTION</small><b id="signalAction" data-kind="wait">WAIT</b><small>POSITION</small><b id="signalPosition">FLAT</b></div><div class="v10-signal-stat"><small>ENTRY TRIGGER</small><b id="signalEntry">—</b></div><div class="v10-signal-stat"><small>REAL MARKET</small><b id="signalMarket">—</b></div><div class="v10-signal-stat"><small>HARD STOP</small><b id="signalHardStop">—</b></div><div class="v10-signal-stat"><small>RENKO TRAIL</small><b id="signalTrail">—</b></div><div class="v10-signal-foot"><span id="signalReason">Every trade can confirm one or many bricks immediately.</span><span id="signalFreshness" class="v10-live-state" data-kind="stale">WAITING</span></div></div><div class="v11-parity-badges"><span>✓ 1× continuation</span><span>✓ 2× reversal</span><span>✓ tick-excursion wicks</span><span>✓ every-trade confirmation</span></div></div>
-</div>
-<div class="tv-toolbar" aria-label="Renko chart navigation"><span class="tv-pill"><strong>TICK NATIVE</strong> · no timeframe · every threshold-crossing trade locks immediately</span><span class="tv-pill secondary"><strong id="tvBrickMeta">60 visible</strong></span><div class="tv-status"><b id="tvLoadState" data-kind="loading">Loading trade-event history…</b></div></div>
-<div id="chartWrap" class="chart-wrap"><canvas id="renkoCanvas"></canvas><div id="chartEmpty" class="chart-empty"><span class="spinner"></span><b>Preparing RENKO V15…</b><small>Loading trade-event history; live raw Binance trades confirm bricks immediately.</small></div><div id="tooltip" class="tooltip" hidden></div><div id="tvLoading" class="tv-loading" hidden>Loading older trade history</div><div class="tv-chart-status"><span id="tvCoverage">Preparing trade history</span></div><div class="tv-chart-nav" aria-label="Chart navigation"><button id="tvPanOlder" title="Older history">←</button><button id="tvZoomOut" title="Zoom out">−</button><span id="tvZoomValue" class="zoom-value">60</span><button id="tvZoomIn" title="Zoom in">+</button><button id="tvPanNewer" title="Newer history">→</button><button id="tvReset" title="Reset latest">⌂</button><button id="tvLive" class="live" title="Return to live">LIVE</button></div></div>
-<div class="lwc-attribution">Rendered with&nbsp;<a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener noreferrer">TradingView Lightweight Charts™</a> · formation engine is independent tick-native Renko.</div>
-<details class="methodology"><summary>RENKO V15 — tick-native formation rules</summary><div class="method-grid"><div><b>Formation</b><p>No visible or hidden chart timeframe controls formation. Historical formation consumes Binance aggregate trade events; live formation consumes individual Binance @trade events.</p></div><div><b>Immediate multi-brick</b><p>If one trade crosses five box thresholds, all five valid bricks lock immediately on that trade.</p></div><div><b>Traditional</b><p>Fixed absolute box. Same-direction continuation needs one box; reversal needs two boxes.</p></div><div><b>Percentage (LTP)</b><p>Percentage assigns one fixed box from the symbol-load LTP snapshot, rounded to the nearest exchange minimum tick and then applied consistently across all bars for that build.</p></div><div><b>ATR</b><p>Tick ATR uses Wilder smoothing of absolute price changes between price-changing trade events. No candle or timeframe is used for ATR sizing or formation.</p></div><div><b>Wicks</b><p>Wicks record tick excursions that do not become body movement. Every confirmed body remains exactly one active box.</p></div><div><b>History</b><p>Older Binance aggregate trade events load in the background and when you pan left. No OHLC candle is used to form historical bricks.</p></div><div><b>Execution</b><p>Renko levels are synthetic thresholds. The blue REAL line and hard-stop check use current Binance market price.</p></div></div></details>
-<div class="renko-compat-hidden" aria-hidden="true"><input id="brickSize" value="100"><button id="applyBrick"></button><button id="autoBox"></button><button data-box-pct="0.0005"></button><button data-box-pct="0.001"></button><button data-box-pct="0.0025"></button><div class="controlbar"><div class="field"><div class="stepper"><button id="zoomOut">−</button><b id="visibleValue">60</b><button id="zoomIn">+</button></div></div><label class="toggle"><input id="followLive" type="checkbox" checked><span></span><b>FOLLOW LIVE</b></label><button id="resetChart">Rebuild live ticks</button><div class="thresholds"><span>UP <b id="nextUp">—</b></span><span>DOWN <b id="nextDown">—</b></span></div></div><div class="archivebar"><b id="fastArchiveStatus"></b><span id="fastArchiveDetail"></span><i id="fastArchiveProgressFill"></i><small id="fastArchiveProgressText"></small><div id="fastArchiveCoverage"></div><button id="archiveLoad">RAW TICK AUDIT</button><button id="archiveCancel" disabled>CANCEL</button></div><div class="historybar"><b id="fastHistoryCoverage"></b><span id="fastHistoryCount"></span><span id="fastHistoryFrom"></span><span id="fastHistoryTo"></span><span id="fastHistoryState"></span><button id="historyStart">START</button><button id="historyPrev">OLDER</button><button id="historyAll">60</button><button id="historyNext">NEWER</button><button id="historyLive">LIVE</button></div><b id="archiveStatus"></b><span id="archiveDetail"></span><i id="archiveProgressFill"></i><small id="archiveProgressText"></small><div id="archiveCoverage"></div><b id="historyCoverage"></b><span id="historyCount">0 bricks</span><span id="historyFrom">—</span><span id="historyTo">LIVE</span><span id="historyState"></span><input id="historyRange" type="range" min="0" max="0" value="0" disabled><div id="historyIntegrity"></div></div>
-</section></main></div>
-<script src="renko-v3.js?v=31"></script><script src="renko-v15.js?v=151"></script><script src="renko-v15-controller-bootstrap.js?v=186"></script>
-</body></html>
+<script src="renko-tv-engine.js?v=160"></script>
+<script src="renko-tv-app.js?v=160"></script>
+</body>
+</html>
