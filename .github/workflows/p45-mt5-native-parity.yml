@@ -72,15 +72,15 @@ jobs:
           $patched=$src.Replace('python -m gdown --id $id -O $out','python -m gdown $id -O $out')
           $old="Ensure ((Get-Content `$ImportReceipt -Raw) -match 'status=PASS') 'MT5 custom-symbol import failed'"
           $new=@'
-$ir=Get-Content $ImportReceipt -Raw
-if($ir -notmatch 'status=PASS'){
-  if(($ir -match 'rows_read=5526570') -and ($ir -match 'bars_mt5=100000')){
-    Write-Host 'MT5_IMPORT_BARSCAP_COMPAT=ACCEPTED rows_read=5526570 bars_mt5=100000; Bars() is chart-cap limited. Comparator remains authoritative.'
-  }else{
-    throw 'MT5 custom-symbol import failed'
-  }
-}
-'@
+          $ir=Get-Content $ImportReceipt -Raw
+          if($ir -notmatch 'status=PASS'){
+            if(($ir -match 'rows_read=5526570') -and ($ir -match 'bars_mt5=100000')){
+              Write-Host 'MT5_IMPORT_BARSCAP_COMPAT=ACCEPTED rows_read=5526570 bars_mt5=100000; Bars() is chart-cap limited. Comparator remains authoritative.'
+            }else{
+              throw 'MT5 custom-symbol import failed'
+            }
+          }
+          '@
           $patched=$patched.Replace($old,$new.TrimEnd())
           if($patched -eq $src){ throw 'Expected compatibility patch targets not found in verified P45 runner' }
           if($patched -notmatch 'MT5_IMPORT_BARSCAP_COMPAT=ACCEPTED'){ throw 'MT5 bar-cap compatibility patch was not applied' }
