@@ -113,3 +113,4 @@ jobs:
           name: renko-real-public-final-drift-safe-${{ env.AUDITED_RENKO_SHA }}
           path: artifacts/renko-real-public-final
           retention-days: 30
+# manual rerun marker: 2026-08-28 current-public drift-safe validation
