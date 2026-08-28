@@ -1,0 +1,56 @@
+/* XAUT/USDT live market-data adapter for the TradingView-observable Renko runtime.
+ *
+ * The base RENKO app speaks Binance-shaped REST/WebSocket messages. Binance Spot
+ * does not provide the XAUTUSDT market used by the public ?symbol=XAUT route, so
+ * this narrow adapter supplies that one symbol from Gate Spot XAUT_USDT while
+ * leaving every other symbol untouched.
+ *
+ * Gate Spot public REST supports 1s,1m,5m,15m,30m,1h,4h,1d candles. The RENKO
+ * contract also exposes 3m, so 3m is deterministically aggregated from Gate 1m
+ * candles. Gate's candle WebSocket does not expose 1s/3m: 1s is aggregated from
+ * public trades and 3m from public 1m candles. Confirmed/projection semantics are
+ * preserved by emitting Binance-shaped kline events with k.x only when the
+ * source interval is complete.
+ */
+(()=>{
+'use strict';
+if(window.RWARenkoXAUTProvider)return;
+const NATIVE_FETCH=window.fetch.bind(window);
+const NativeWS=window.WebSocket;
+const BINANCE_HOST_RE=/(^|\.)binance\.(vision|com)$/i;
+const SYMBOL='XAUTUSDT';
+const PAIR='XAUT_USDT';
+const GATE_HTTP='https://api.gateio.ws/api/v4';
+const GATE_WS='wss://api.gateio.ws/ws/v4/';
+const STEPS={"1s":1000,"1m":60000,"3m":180000,"5m":300000,"15m":900000,"30m":1800000,"1h":3600000,"4h":14400000,"1d":86400000};
+const GATE_INTERVAL={"1s":"1s","1m":"1m","5m":"5m","15m":"15m","30m":"30m","1h":"1h","4h":"4h","1d":"1d"};
+const stats={restRequests:0,restErrors:0,wsConnections:0,wsMessages:0,lastRestAt:0,lastWsAt:0,lastError:'',provider:'gate-spot',pair:PAIR};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function parseUrl(input){try{return new URL(typeof input==='string'?input:input?.url,location.href)}catch{return null}}
+function xautBinanceUrl(u){return !!u&&BINANCE_HOST_RE.test(u.hostname)&&String(u.searchParams.get('symbol')||'').toUpperCase()===SYMBOL}
+function jsonResponse(value,status=200){return new Response(JSON.stringify(value),{status,headers:{'content-type':'application/json','cache-control':'no-store','x-renko-provider':'gate-spot'}})}
+async function gateJson(path,init={},attempts=4){let last;for(let i=0;i<attempts;i++){try{stats.restRequests++;stats.lastRestAt=Date.now();const r=await NATIVE_FETCH(GATE_HTTP+path,{cache:'no-store',credentials:'omit',...init});if(!r.ok)throw new Error(`Gate HTTP ${r.status} ${path}`);return await r.json()}catch(e){last=e;stats.restErrors++;stats.lastError=String(e?.message||e);if(i+1<attempts)await sleep(120*(i+1))}}throw last||new Error('Gate market data unavailable')}
+function gateRowToBinance(x,interval){const step=STEPS[interval]||60000,t=Number(x?.[0])*1000;return[t,String(x?.[5]),String(x?.[3]),String(x?.[4]),String(x?.[2]),String(x?.[6]??0),t+step-1,String(x?.[1]??0),0,'0','0','0']}
+async function directCandles(interval,limit,endMs){const gi=GATE_INTERVAL[interval];if(!gi)throw new Error(`Gate interval unsupported: ${interval}`);limit=Math.max(1,Math.min(1000,Math.floor(Number(limit)||1000)));let path=`/spot/candlesticks?currency_pair=${PAIR}&interval=${encodeURIComponent(gi)}`;if(Number.isFinite(Number(endMs))){const stepSec=(STEPS[interval]||60000)/1000,to=Math.floor(Number(endMs)/1000),from=Math.max(0,Math.floor(to-stepSec*(limit-1)));path+=`&from=${from}&to=${to}`}else path+=`&limit=${limit}`;const rows=await gateJson(path);return(Array.isArray(rows)?rows:[]).map(x=>gateRowToBinance(x,interval)).filter(x=>Number.isFinite(Number(x[0]))).sort((a,b)=>Number(a[0])-Number(b[0])).slice(-limit)}
+function aggregate3m(rows,limit){const groups=new Map(),step=STEPS['3m'];for(const x of rows||[]){const t=Number(x?.[0]);if(!Number.isFinite(t))continue;const key=Math.floor(t/step)*step;let g=groups.get(key);const o=Number(x[1]),h=Number(x[2]),l=Number(x[3]),c=Number(x[4]),v=Number(x[5])||0,q=Number(x[7])||0;if(!g){g={t,o,h,l,c,v,q,last:t};groups.set(key,g)}else{if(t<g.t){g.t=t;g.o=o}if(h>g.h)g.h=h;if(l<g.l)g.l=l;if(t>=g.last){g.last=t;g.c=c}g.v+=v;g.q+=q}}return[...groups.entries()].sort((a,b)=>a[0]-b[0]).map(([t,g])=>[t,String(g.o),String(g.h),String(g.l),String(g.c),String(g.v),t+step-1,String(g.q),0,'0','0','0']).slice(-limit)}
+async function candles3m(limit,endMs){limit=Math.max(1,Math.min(1000,Math.floor(Number(limit)||1000)));const need=Math.min(3000,limit*3+6),all=[];let cursor=Number.isFinite(Number(endMs))?Number(endMs):Date.now();while(all.length<need){const take=Math.min(1000,need-all.length),page=await directCandles('1m',take,cursor);if(!page.length)break;all.push(...page);const oldest=Number(page[0]?.[0]);if(!Number.isFinite(oldest)||oldest<=0)break;cursor=oldest-1;if(page.length<take)break}const dedup=new Map();for(const x of all)dedup.set(Number(x[0]),x);return aggregate3m([...dedup.values()].sort((a,b)=>Number(a[0])-Number(b[0])),limit)}
+async function adaptFetch(input,init){const u=parseUrl(input);if(!xautBinanceUrl(u))return NATIVE_FETCH(input,init);try{if(u.pathname.endsWith('/api/v3/exchangeInfo')){const p=await gateJson(`/spot/currency_pairs/${PAIR}`,init);const precision=Math.max(0,Math.min(12,Math.floor(Number(p?.precision)||0))),tick=(1/Math.pow(10,precision)).toFixed(precision);return jsonResponse({timezone:'UTC',serverTime:Date.now(),symbols:[{symbol:SYMBOL,status:String(p?.trade_status||'').toLowerCase()==='tradable'?'TRADING':'TRADING',baseAsset:'XAUT',quoteAsset:'USDT',isSpotTradingAllowed:true,filters:[{filterType:'PRICE_FILTER',tickSize:tick}]}]})}if(u.pathname.endsWith('/api/v3/ticker/price')){const a=await gateJson(`/spot/tickers?currency_pair=${PAIR}`,init),p=Array.isArray(a)?a[0]:a;return jsonResponse({symbol:SYMBOL,price:String(p?.last??'')})}if(u.pathname.endsWith('/api/v3/klines')){const interval=String(u.searchParams.get('interval')||'1m'),limit=Number(u.searchParams.get('limit')||1000),end=u.searchParams.has('endTime')?Number(u.searchParams.get('endTime')):NaN,rows=interval==='3m'?await candles3m(limit,end):await directCandles(interval,limit,end);return jsonResponse(rows)}return NATIVE_FETCH(input,init)}catch(e){stats.lastError=String(e?.message||e);console.error('[RENKO XAUT Gate provider]',e);return jsonResponse({code:-1,msg:String(e?.message||e)},502)}}
+window.fetch=adaptFetch;
+function emit(target,name,event){try{const fn=target[`on${name}`];if(typeof fn==='function')fn.call(target,event);for(const cb of target._listeners?.get(name)||[])try{cb.call(target,event)}catch{}}catch{}}
+function binancePayload(interval,b,closed){const step=STEPS[interval]||60000;return{e:'kline',E:Date.now(),s:SYMBOL,k:{t:Number(b.t),T:Number(b.t)+step-1,s:SYMBOL,i:interval,o:String(b.o),c:String(b.c),h:String(b.h),l:String(b.l),v:String(b.v||0),x:!!closed}}}
+class GateSocketAdapter{
+  constructor(url){this.url=String(url);this.readyState=NativeWS.CONNECTING;this.bufferedAmount=0;this.extensions='';this.protocol='';this.binaryType='blob';this._listeners=new Map();this._inner=null;this._closed=false;this._three=null;this._second=null;const m=this.url.match(/\/xautusdt@kline_([^/?]+)/i);this.interval=m?.[1]||'1m';this._open()}
+  addEventListener(n,cb){if(typeof cb!=='function')return;const s=this._listeners.get(n)||new Set();s.add(cb);this._listeners.set(n,s)}
+  removeEventListener(n,cb){this._listeners.get(n)?.delete(cb)}
+  send(data){try{return this._inner?.send(data)}catch{}}
+  close(code,reason){this._closed=true;this.readyState=NativeWS.CLOSING;try{this._inner?.close(code,reason)}catch{};this.readyState=NativeWS.CLOSED}
+  _message(obj){stats.wsMessages++;stats.lastWsAt=Date.now();emit(this,'message',new MessageEvent('message',{data:JSON.stringify(obj)}))}
+  _open(){stats.wsConnections++;const w=new NativeWS(GATE_WS);this._inner=w;w.onopen=()=>{if(this._closed)return;this.readyState=NativeWS.OPEN;const interval=this.interval==='3m'?'1m':this.interval;if(this.interval==='1s')w.send(JSON.stringify({time:Math.floor(Date.now()/1000),channel:'spot.trades',event:'subscribe',payload:[PAIR]}));else w.send(JSON.stringify({time:Math.floor(Date.now()/1000),channel:'spot.candlesticks',event:'subscribe',payload:[interval,PAIR]}));emit(this,'open',new Event('open'))};w.onerror=e=>emit(this,'error',e instanceof Event?e:new Event('error'));w.onclose=e=>{this.readyState=NativeWS.CLOSED;emit(this,'close',e)};w.onmessage=e=>this._handle(e)}
+  _handle(e){let m;try{m=JSON.parse(e.data)}catch{return}if(m?.event!=='update')return;if(this.interval==='1s'&&m.channel==='spot.trades'){const rows=Array.isArray(m.result)?m.result:[m.result];for(const r of rows){if(!r)continue;let ms=Number(r.create_time_ms);if(!Number.isFinite(ms)){const s=Number(r.create_time);ms=Number.isFinite(s)?s*1000:Date.now()}if(ms<1e12)ms*=1000;const sec=Math.floor(ms/1000)*1000,p=Number(r.price),v=Number(r.amount)||0;if(!(p>0))continue;if(this._second&&this._second.t!==sec){this._message(binancePayload('1s',this._second,true));this._second=null}if(!this._second)this._second={t:sec,o:p,h:p,l:p,c:p,v};else{this._second.h=Math.max(this._second.h,p);this._second.l=Math.min(this._second.l,p);this._second.c=p;this._second.v+=v}this._message(binancePayload('1s',this._second,false))}return}if(m.channel!=='spot.candlesticks'||!m.result)return;const r=m.result,t=Number(r.t)*1000,b={t,o:Number(r.o),h:Number(r.h),l:Number(r.l),c:Number(r.c),v:Number(r.v)||0};if(![b.t,b.o,b.h,b.l,b.c].every(Number.isFinite))return;if(this.interval!=='3m'){this._message(binancePayload(this.interval,b,!!r.w));return}const bucket=Math.floor(t/STEPS['3m'])*STEPS['3m'];if(!this._three||this._three.t!==bucket){if(this._three)this._message(binancePayload('3m',this._three,true));this._three={t:bucket,o:b.o,h:b.h,l:b.l,c:b.c,v:b.v,last:t}}else{this._three.h=Math.max(this._three.h,b.h);this._three.l=Math.min(this._three.l,b.l);if(t>=this._three.last){this._three.last=t;this._three.c=b.c}this._three.v+=b.v}const minuteIndex=Math.floor((t-bucket)/60000),closed=!!r.w&&minuteIndex>=2;this._message(binancePayload('3m',this._three,closed));if(closed)this._three=null}
+}
+function WSProxy(url,protocols){const s=String(url||'');if(/xautusdt@kline_/i.test(s)&&/binance\.vision/i.test(s))return new GateSocketAdapter(s);return protocols===undefined?new NativeWS(url):new NativeWS(url,protocols)}
+for(const k of ['CONNECTING','OPEN','CLOSING','CLOSED'])Object.defineProperty(WSProxy,k,{value:NativeWS[k]});WSProxy.prototype=NativeWS.prototype;window.WebSocket=WSProxy;
+window.RWARenkoXAUTProvider={version:'1.0.0',symbol:SYMBOL,pair:PAIR,provider:'Gate Spot',http:GATE_HTTP,ws:GATE_WS,stats,intervals:['1s','1m','3m','5m','15m','30m','1h','4h','1d'],threeMinute:'aggregated-from-Gate-1m',oneSecondRealtime:'aggregated-from-Gate-public-trades'};
+function markProvider(){const T=window.RWARenkoTV;if(!T||T.state?.symbol!==SYMBOL)return;document.documentElement.dataset.marketProvider='gate-spot';const pairSpan=document.querySelector('.pair-title span');if(pairSpan)pairSpan.textContent='GATE SPOT';const src=document.getElementById('sourceText');if(src&&!src.textContent.includes('Gate XAUT/USDT'))src.textContent=`Gate XAUT/USDT Spot · ${src.textContent}`}
+window.addEventListener('renko:tv-ready',markProvider);setInterval(markProvider,3000);
+})();
