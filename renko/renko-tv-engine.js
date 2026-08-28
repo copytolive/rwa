@@ -1,11 +1,10 @@
 /* TradingView-documented Renko compatibility engine.
- * Public contract source: TradingView Help Center + official Renko/Percentage LTP docs.
- * Historical input is source-interval Close or OHLC. Realtime is projection only
- * until the source interval closes. Percentage (LTP) uses the symbol-load LTP,
- * first rounds to the exchange minimum tick, then applies TradingView's documented
- * additional stability rounding (the official AAPL 216 x 1% example becomes 2).
- * ATR uses the standard Wilder ATR value from ordinary source-interval candles
- * directly as box size.
+ * Historical production input is fixed 1-second Close or OHLC. Realtime is
+ * projection only until each 1-second source candle closes. Percentage (LTP)
+ * uses the symbol-load LTP, first rounds to the exchange minimum tick, then
+ * applies the documented stability rounding. ATR uses the positive standard
+ * Wilder ATR value directly as box size; a prepared deep ATR exact box remains
+ * the reported ATR across later fixed-1s chart rebuilds.
  */
 (function(root){
 'use strict';
@@ -13,19 +12,7 @@ const num=v=>Number(v);
 const finite=v=>Number.isFinite(num(v));
 function decimals(x){const s=String(x);if(s.includes('e-'))return Math.min(12,Number(s.split('e-')[1])||0);const i=s.indexOf('.');return i<0?0:Math.min(12,s.length-i-1)}
 function roundTick(v,tick){v=num(v);tick=num(tick);if(!Number.isFinite(v))return NaN;if(!(tick>0))return v;const d=decimals(tick);return Number((Math.round(v/tick)*tick).toFixed(d))}
-/* TradingView publicly documents an additional stability rounding after min-tick
- * rounding for PercentageLTP, and gives 216 * 1% = 2.16 -> 2 as its canonical
- * example. The proprietary helper is not published. This deterministic one-
- * significant-digit quantizer reproduces that documented observable example and
- * keeps the threshold stable within each order-of-magnitude bucket. */
-function percentageLtpStableRound(v,tick=0){
-  let x=roundTick(v,tick);if(!(x>0))return x;
-  const mag=Math.pow(10,Math.floor(Math.log10(Math.abs(x))));
-  let y=Math.round(x/mag)*mag;
-  if(!(y>0))y=mag;
-  y=roundTick(y,tick);
-  return y>0?y:x;
-}
+function percentageLtpStableRound(v,tick=0){let x=roundTick(v,tick);if(!(x>0))return x;const mag=Math.pow(10,Math.floor(Math.log10(Math.abs(x))));let y=Math.round(x/mag)*mag;if(!(y>0))y=mag;y=roundTick(y,tick);return y>0?y:x}
 function floorGrid(v,box,tick){v=num(v);box=num(box);if(!(box>0))return NaN;const raw=Math.floor((v/box)+1e-12)*box;return roundTick(raw,tick>0?tick:box/1e6)}
 function cloneState(s){return s?{lastClose:num(s.lastClose),direction:num(s.direction)||0,pendingHigh:num(s.pendingHigh),pendingLow:num(s.pendingLow),anchor:num(s.anchor),lastSourceTime:num(s.lastSourceTime)||0}:null}
 function initState(anchor){return{lastClose:anchor,direction:0,pendingHigh:anchor,pendingLow:anchor,anchor,lastSourceTime:0}}
@@ -42,8 +29,8 @@ function computeBox(bars,settings={},tickSize=0){const exact=num(settings?._exac
 function ohlcPath(bar){const o=num(bar?.open),h=num(bar?.high),l=num(bar?.low),c=num(bar?.close);if(![o,h,l,c].every(Number.isFinite))return[];const dh=Math.abs(h-o),dl=Math.abs(o-l);return dh<=dl?[o,h,l,c]:[o,l,h,c]}
 function barPrices(bar,source='close'){if(String(source).toLowerCase()==='ohlc')return ohlcPath(bar);const c=num(bar?.close);return Number.isFinite(c)?[c]:[]}
 function firstSourcePrice(bars,source){for(const b of bars||[]){const a=barPrices(b,source);if(a.length&&Number.isFinite(a[0]))return a[0]}return NaN}
-function build(bars,settings={},tickSize=0){const src=(Array.isArray(bars)?bars:[]).filter(b=>finite(b?.close)).sort((a,b)=>(num(a.openTime||a.time)-num(b.openTime||b.time)));const source=String(settings.source||'close').toLowerCase()==='ohlc'?'ohlc':'close',box=computeBox(src,settings,tickSize),rawAtr=latestAtr(src,settings.atrLength||14);if(!src.length||!(box>0))return{bricks:[],box,atr:rawAtr,state:null,anchor:NaN,source};const first=firstSourcePrice(src,source),anchor=floorGrid(first,box,tickSize),state=initState(anchor),bricks=[];for(const bar of src){const tm=num(bar.closeTime||bar.time||bar.openTime)||0;for(const p of barPrices(bar,source))processPrice(state,p,bricks,{box,wicks:settings.wicks!==false,sourceTime:tm,sourceKind:'confirmed'})}return{bricks,box,atr:rawAtr,state:cloneState(state),anchor,source}}
+function build(bars,settings={},tickSize=0){const src=(Array.isArray(bars)?bars:[]).filter(b=>finite(b?.close)).sort((a,b)=>(num(a.openTime||a.time)-num(b.openTime||b.time)));const source=String(settings.source||'close').toLowerCase()==='ohlc'?'ohlc':'close',box=computeBox(src,settings,tickSize),exact=num(settings?._exactBox),rawAtr=Number.isFinite(exact)&&exact>0?exact:latestAtr(src,settings.atrLength||14);if(!src.length||!(box>0))return{bricks:[],box,atr:rawAtr,state:null,anchor:NaN,source};const first=firstSourcePrice(src,source),anchor=floorGrid(first,box,tickSize),state=initState(anchor),bricks=[];for(const bar of src){const tm=num(bar.closeTime||bar.time||bar.openTime)||0;for(const p of barPrices(bar,source))processPrice(state,p,bricks,{box,wicks:settings.wicks!==false,sourceTime:tm,sourceKind:'confirmed'})}return{bricks,box,atr:rawAtr,state:cloneState(state),anchor,source}}
 function project(base,currentBar,settings={},tickSize=0){if(!base?.state||!currentBar)return[];const state=cloneState(base.state),out=[],source=String(settings.source||base.source||'close').toLowerCase()==='ohlc'?'ohlc':'close';for(const p of barPrices(currentBar,source))processPrice(state,p,out,{box:base.box,wicks:settings.wicks!==false,sourceTime:num(currentBar.closeTime||currentBar.time||Date.now()),sourceKind:'projection'});return out.map(b=>({...b,projection:true}))}
 function audit(bricks){let continuation=true,reversal=true,wicksDirectional=true;for(let i=1;i<(bricks?.length||0);i++){const b=bricks[i],p=bricks[i-1],box=num(b.box);if(num(b.direction)===num(p.direction)&&Math.abs(Math.abs(num(b.close)-num(b.open))-box)>Math.max(1e-9,box*1e-9))continuation=false;if(num(b.direction)!==num(p.direction)&&!b.isReversal)reversal=false;if(num(b.direction)>0&&num(b.high)>Math.max(num(b.open),num(b.close))+1e-9)wicksDirectional=false;if(num(b.direction)<0&&num(b.low)<Math.min(num(b.open),num(b.close))-1e-9)wicksDirectional=false}return{continuation,reversal,wicksDirectional,count:bricks?.length||0}}
-root.RWARenkoTVEngine={version:'1.3.0',contract:'tradingview-public-documentation-compatible',roundTick,percentageLtpStableRound,floorGrid,trueRange,atrSeries,latestAtr,atrBox,computeBox,ohlcPath,barPrices,build,project,processPrice,initState,cloneState,audit};
+root.RWARenkoTVEngine={version:'1.4.0-fixed-1s',contract:'tradingview-public-documentation-compatible-fixed-1s',roundTick,percentageLtpStableRound,floorGrid,trueRange,atrSeries,latestAtr,atrBox,computeBox,ohlcPath,barPrices,build,project,processPrice,initState,cloneState,audit};
 })(typeof self!=='undefined'?self:globalThis);
