@@ -1,0 +1,66 @@
+name: RWA Business Production
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "business-service/**"
+      - "rwa-business-console.js"
+      - "rwa-business-console.css"
+      - "rwa-commerce-config.json"
+      - "chart-core.js"
+      - "tools/rwa-business-console-browser.mjs"
+      - ".github/workflows/rwa-business-production.yml"
+  pull_request:
+    paths:
+      - "business-service/**"
+      - "rwa-business-console.js"
+      - "rwa-business-console.css"
+      - "rwa-commerce-config.json"
+      - "chart-core.js"
+      - "tools/rwa-business-console-browser.mjs"
+      - ".github/workflows/rwa-business-production.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+      - name: Business service checks
+        working-directory: business-service
+        run: npm run check
+      - name: Fail-closed config contract
+        run: |
+          python -m json.tool rwa-commerce-config.json >/dev/null
+          test "$(python -c 'import json; print(json.load(open("rwa-commerce-config.json"))["business_api_base"])')" = ""
+          grep -Fq 'SETTLED_EVIDENCE_REQUIRED_V1' rwa-commerce-config.json
+          grep -Fq 'TRANSACTION_VALIDATED' business-service/validation.mjs
+          grep -Fq 'AWAITING_AUTHORIZED_FUNDING' business-service/store.mjs
+          grep -Fq 'terminal_signature_invalid' business-service/server.mjs
+      - name: Build production image
+        run: docker build -f business-service/Dockerfile -t rwa-business:${GITHUB_SHA} business-service
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+      - name: Install Playwright
+        run: npm install --no-save playwright@1.55.0 && npx playwright install --with-deps chromium
+      - name: Start static RWA shell
+        run: python3 -m http.server 4173 >/tmp/rwa-business-http.log 2>&1 &
+      - name: Browser desktop + mobile acceptance
+        run: node tools/rwa-business-console-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rwa-business-browser-${{ github.sha }}
+          path: artifacts/rwa-business-console
+          if-no-files-found: error

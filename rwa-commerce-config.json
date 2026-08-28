@@ -1,12 +1,16 @@
 {
-  "schema": 4,
+  "schema": 5,
   "source": "SEABLUEPRINT_COMMERCE",
   "candidate_base": "https://seablueprint.com/rwa-commerce",
   "fallback_candidate_base": "https://copytolive.com/rwa-commerce",
   "api_base": "",
+  "business_candidate_base": "https://seablueprint.com/rwa-business",
+  "business_api_base": "",
   "mode": "LOCKED_UNTIL_BACKEND_AND_CHECKOUT_READY",
+  "business_mode": "LOCKED_UNTIL_REAL_SETTLEMENT_AND_RECONCILIATION",
   "shell_mode": "SINGLE_MAIN_DOCUMENT",
   "navigation_policy": "NO_TOP_LEVEL_ECOMMERCE_NAVIGATION",
   "policy": "ONE_TOKEN_ONE_PHYSICAL_STORE_V1",
-  "note": "Seablueprint ecommerce is mounted inside the existing RWA main document. candidate_base is probe-only and reuses the live Seablueprint edge. Set api_base only after HTTPS healthz/readyz, payment configuration and at least one real verified store are proven. Empty api_base keeps frontend honest preview-only. Ecommerce interactions must not replace the top-level RWA page."
+  "business_validation_policy": "SETTLED_EVIDENCE_REQUIRED_V1",
+  "note": "Seablueprint ecommerce and business validation run inside the existing RWA main document. candidate_base/business_candidate_base are probe-only. Set api_base only after HTTPS healthz/readyz, production payment configuration and at least one real verified store are proven. Set business_api_base only after the business service is deployed against the real commerce ledger and its readiness gate passes. Empty API fields keep frontend honest and fail-closed. Wallet connection or KYB alone never means TRANSACTION VALIDATED; qualifying SETTLED evidence plus reconciliation are required."
 }
