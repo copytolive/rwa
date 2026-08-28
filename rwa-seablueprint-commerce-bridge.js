@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 if(window.RWASeablueprintCommerceBridge)return;
-const VERSION='1.2.1';
+const VERSION='1.2.3';
 const CONFIG='rwa-commerce-config.json';
 const state={rootPath:location.pathname,returnHash:'',config:null,opening:false,storefrontLoaded:false,liveLoaded:false};
 const $=s=>document.querySelector(s);
@@ -33,6 +33,12 @@ function restoreReturnContext(){
   try{history.replaceState(history.state,'',`${state.rootPath}${location.search}${h||''}`)}catch{}
   if(h&&window.RWASuperApp?.navigate){const r=h.replace(/^#/,'');if(r&&r!=='shop')queueMicrotask(()=>window.RWASuperApp.navigate(r,{replace:true}))}
 }
+function tradeCoin(anchor){
+  const raw=anchor.getAttribute('href')||'';
+  if(/^#trade\//i.test(raw))return decodeURIComponent(raw.replace(/^#trade\//i,'').split(/[?#&]/)[0]||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+  if(!/^trade\//i.test(raw))return'';
+  const m=raw.match(/[?&]coin=([^&#]+)/i);return decodeURIComponent(m?.[1]||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+}
 function decorate(){
   const screen=$('#rwaShopScreen');if(!screen)return;
   screen.dataset.seablueprintSingleShell='1';
@@ -43,11 +49,11 @@ function decorate(){
   qa('[data-rwa-shop]').forEach(x=>{x.dataset.seablueprintManaged='1';if(x.closest('.topnav'))x.textContent='Ecommerce';if(x.closest('.product-nav'))x.textContent='Physical Ecommerce'});
   qa('[data-rwa-command]').forEach(x=>{x.hidden=true;x.setAttribute('aria-hidden','true')});
   const cmd=$('#rwaCommandOpen');if(cmd){cmd.hidden=true;cmd.setAttribute('aria-hidden','true')}
-  qa('#rwaShopScreen a[href]').forEach(a=>{a.removeAttribute('target');a.removeAttribute('rel')});
+  qa('#rwaShopScreen a[href]').forEach(a=>{a.removeAttribute('target');a.removeAttribute('rel');const coin=tradeCoin(a);if(coin){a.dataset.rwaShopTrade=coin;a.setAttribute('href',`#trade/${coin}`)}});
   restoreSingleShell();
 }
 async function ensureRuntime(){
-  loadStyle('rwa-seablueprint-commerce-bridge.css?v=1.2.1','bridge');
+  loadStyle('rwa-seablueprint-commerce-bridge.css?v=1.2.3','bridge');
   if(!window.RWAStorefront){await loadScript('rwa-storefront.js?v=2','storefront')}
   state.storefrontLoaded=!!window.RWAStorefront;
   const cfg=await config();
@@ -65,10 +71,24 @@ async function open(tab='stores'){
   catch(e){toast(e?.message||'Seablueprint ecommerce unavailable')}
   finally{state.opening=false}
 }
-function close({restore=true}={}){try{window.RWAStorefront?.close?.()}catch{}document.body.classList.remove('rwa-seablueprint-commerce-open');restoreSingleShell();if(restore)restoreReturnContext();else state.returnHash=''}
-function tradeCoin(anchor){
-  const raw=anchor.getAttribute('href')||'';if(!/^trade\//i.test(raw))return'';
-  const m=raw.match(/[?&]coin=([^&#]+)/i);return decodeURIComponent(m?.[1]||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+function hardCloseShell(){
+  $('#rwaShopScreen')?.classList.remove('open');
+  $('#rwaCartDrawer')?.classList.remove('open');
+  document.documentElement.style.overflow='';
+  document.body.classList.remove('rwa-shop-open','rwa-seablueprint-commerce-open');
+}
+function close({restore=true}={}){
+  try{window.RWAStorefront?.close?.()}catch{}
+  hardCloseShell();
+  restoreSingleShell();
+  if(restore)restoreReturnContext();else state.returnHash='';
+  queueMicrotask(hardCloseShell);
+  requestAnimationFrame(hardCloseShell);
+}
+function navigateTrade(coin){
+  const route=`trade/${coin}`;close({restore:false});
+  try{if(window.RWASuperApp?.navigate)window.RWASuperApp.navigate(route,{replace:true});else history.replaceState(history.state,'',`${state.rootPath}${location.search}#${route}`)}catch{location.hash=`#${route}`}
+  queueMicrotask(()=>{hardCloseShell();if(location.pathname!==state.rootPath)restoreSingleShell();if(location.hash!==`#${route}`){try{history.replaceState(history.state,'',`${state.rootPath}${location.search}#${route}`)}catch{location.hash=`#${route}`};try{window.RWASuperApp?.navigate?.(route,{replace:true})}catch{}}});
 }
 function externalCommerce(anchor){
   try{const u=new URL(anchor.href,location.href);return u.origin!==location.origin}catch{return false}
@@ -83,13 +103,13 @@ document.addEventListener('click',e=>{
   const launch=e.target.closest?.('[data-rwa-seablueprint-commerce]');if(launch){e.preventDefault();e.stopImmediatePropagation();open('stores');return}
   if(e.target.closest?.('#rwaShopClose')){e.preventDefault();e.stopImmediatePropagation();close();return}
   const a=e.target.closest?.('#rwaShopScreen a[href]');if(!a)return;
-  const coin=tradeCoin(a);if(coin){e.preventDefault();e.stopImmediatePropagation();close({restore:false});if(window.RWASuperApp?.navigate)window.RWASuperApp.navigate(`trade/${coin}`);else location.hash=`#trade/${coin}`;return}
+  const coin=tradeCoin(a);if(coin){e.preventDefault();e.stopImmediatePropagation();navigateTrade(coin);return}
   if(externalCommerce(a)){e.preventDefault();e.stopImmediatePropagation();toast('External ecommerce navigation is disabled in single-shell mode.')}
 },true);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#rwaShopScreen')?.classList.contains('open')){e.preventDefault();e.stopImmediatePropagation();close()}},true);
 addEventListener('popstate',()=>setTimeout(restoreSingleShell,0));
 addEventListener('hashchange',()=>setTimeout(()=>{if(location.hash!=='#shop'&&$('#rwaShopScreen')?.classList.contains('open'))close()},0));
-function boot(){loadStyle('rwa-seablueprint-commerce-bridge.css?v=1.2.1','bridge');config().finally(reconcile);reconcile();new MutationObserver(()=>queueMicrotask(reconcile)).observe(document.documentElement,{subtree:true,childList:true});let n=0;const t=setInterval(()=>{reconcile();if(++n>40)clearInterval(t)},100)}
+function boot(){loadStyle('rwa-seablueprint-commerce-bridge.css?v=1.2.3','bridge');config().finally(reconcile);reconcile();new MutationObserver(()=>queueMicrotask(reconcile)).observe(document.documentElement,{subtree:true,childList:true});let n=0;const t=setInterval(()=>{reconcile();if(++n>40)clearInterval(t)},100)}
 window.RWASeablueprintCommerceBridge={version:VERSION,mode:'SINGLE_MAIN_DOCUMENT',source:'SEABLUEPRINT_COMMERCE_CONTRACT',open,close,audit,reconcile,config};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
