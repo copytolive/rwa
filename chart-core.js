@@ -49,6 +49,6 @@ boot();
 /* RWA_ECOMMERCE_PRODUCTION_LABEL_V1_BOOTSTRAP */
 (()=>{if(window.RWAEcommerceProductionLabel)return;import('./rwa-ecommerce-production-label.js?v=1.0.0').catch(()=>console.error('Ecommerce production label failed to load'))})();
 /* RWA_TARGET_DASHBOARD_V1_BOOTSTRAP */
-(()=>{if(!document.querySelector('link[data-rwa-target-dashboard-v1]')){const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-target-dashboard-v1.css?v=1.0.0';l.dataset.rwaTargetDashboardV1='1';document.head.appendChild(l)}if(window.RWATargetDashboardV1)return;import('./rwa-target-dashboard-v1.js?v=1.0.0').catch(()=>console.error('RWA target dashboard V1 failed to load'))})();
+(()=>{if(!document.querySelector('link[data-rwa-target-dashboard-v1]')){const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-target-dashboard-v1.css?v=1.0.0';l.dataset.rwaTargetDashboardV1='1';document.head.appendChild(l)}if(!document.querySelector('link[data-rwa-target-dashboard-compat]')){const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-target-dashboard-v1-compat.css?v=1.0.0';l.dataset.rwaTargetDashboardCompat='1';document.head.appendChild(l)}if(window.RWATargetDashboardV1)return;import('./rwa-target-dashboard-v1.js?v=1.0.0').catch(()=>console.error('RWA target dashboard V1 failed to load'))})();
 /* RWA_REAL_BUSINESS_VALIDATION_CONSOLE_V1_BOOTSTRAP */
 (()=>{if(window.RWABusinessConsole)return;import('./rwa-business-console.js?v=1.0.0').catch(()=>console.error('RWA business validation console failed to load'))})();
