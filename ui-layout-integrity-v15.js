@@ -13,6 +13,7 @@ function mountMarketplace(){
   if(!b){b=document.createElement('button');b.id='rwaMarketplaceLaunch';b.type='button';b.className='rwa-marketplace-launch';b.setAttribute('aria-label','Open RWA Asset Marketplace');b.innerHTML='<span class="rwa-marketplace-mark">◇</span><span class="rwa-marketplace-label">MARKETPLACE</span>';const anchor=$('#rwaMultiChainLaunch')||host.querySelector('.signin');host.insertBefore(b,anchor||null);b.addEventListener('click',()=>{try{window.RWAFundamentals?.close?.()}catch{};try{window.RWAMultiChain?.close?.()}catch{};window.RWASuperApp?.navigate?.('assets')})}
   const r=String(window.RWASuperApp?.route?.()||location.hash||'');b.classList.toggle('active',/(^|#|\/)assets(?:\/|$)/i.test(r));return true
 }
+function syncFundVisual(){const f=$('#rwaFundamentals');if(!f)return;const open=isFundOpen();if(open){f.style.setProperty('transform','translateX(0)','important');f.style.setProperty('right','0','important');f.style.setProperty('visibility','visible','important');f.style.setProperty('pointer-events','auto','important')}else{f.style.removeProperty('transform');f.style.removeProperty('right');f.style.setProperty('visibility','hidden','important');f.style.setProperty('pointer-events','none','important')}}
 function syncLegacyRight(){const r=$('.right');if(!r)return;if(isFundOpen())r.style.setProperty('display','none','important');else r.style.removeProperty('display')}
 async function prepareFundamentals(){
   if(isWorkspaceOpen()){try{window.RWASuperApp?.navigate?.('markets')}catch{};for(let i=0;i<20&&isWorkspaceOpen();i++)await wait(20)}
@@ -21,16 +22,17 @@ async function prepareFundamentals(){
 }
 function patchSuper(){
   const api=window.RWASuperApp;if(!api||patchedSuper)return false;const nav=api.navigate?.bind(api);if(typeof nav!=='function')return false;
-  api.navigate=(route,...rest)=>{try{window.RWAFundamentals?.close?.()}catch{};const out=nav(route,...rest);queueMicrotask(()=>{mountMarketplace();syncLegacyRight()});return out};patchedSuper=true;mountMarketplace();return true
+  api.navigate=(route,...rest)=>{try{window.RWAFundamentals?.close?.()}catch{};const out=nav(route,...rest);queueMicrotask(()=>{mountMarketplace();syncFundVisual();syncLegacyRight()});return out};patchedSuper=true;mountMarketplace();return true
 }
 function patchFundamentals(){
-  const api=window.RWAFundamentals;if(!api||patchedFund)return false;const open=api.open?.bind(api),openAsset=api.openAsset?.bind(api);if(typeof open!=='function')return false;
-  api.open=async(...args)=>{await prepareFundamentals();const out=await open(...args);syncLegacyRight();return out};
-  if(typeof openAsset==='function')api.openAsset=async(...args)=>{await prepareFundamentals();const out=await openAsset(...args);syncLegacyRight();return out};
+  const api=window.RWAFundamentals;if(!api||patchedFund)return false;const open=api.open?.bind(api),openAsset=api.openAsset?.bind(api),close=api.close?.bind(api);if(typeof open!=='function')return false;
+  api.open=async(...args)=>{await prepareFundamentals();const out=await open(...args);document.body.classList.remove('rwa-super-workspace-open','rwa-super-asset-workspace');syncFundVisual();syncLegacyRight();return out};
+  if(typeof openAsset==='function')api.openAsset=async(...args)=>{await prepareFundamentals();const out=await openAsset(...args);document.body.classList.remove('rwa-super-workspace-open','rwa-super-asset-workspace');syncFundVisual();syncLegacyRight();return out};
+  if(typeof close==='function')api.close=(...args)=>{const out=close(...args);queueMicrotask(()=>{syncFundVisual();syncLegacyRight()});return out};
   patchedFund=true;return true
 }
 function reconcile(){
-  if(reconciling)return;reconciling=true;try{mountMarketplace();patchSuper();patchFundamentals();if(isWorkspaceOpen()&&isFundOpen()){try{window.RWAFundamentals?.close?.()}catch{const f=$('#rwaFundamentals');f?.classList.remove('open');document.body.classList.remove('rwa-fundamentals-open')}}syncLegacyRight()}finally{reconciling=false}
+  if(reconciling)return;reconciling=true;try{mountMarketplace();patchSuper();patchFundamentals();if(isWorkspaceOpen()&&isFundOpen()){try{window.RWAFundamentals?.close?.()}catch{const f=$('#rwaFundamentals');f?.classList.remove('open');document.body.classList.remove('rwa-fundamentals-open')}}syncFundVisual();syncLegacyRight()}finally{reconciling=false}
 }
 function visible(el){if(!el)return false;const s=getComputedStyle(el),r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity||1)>0&&r.width>1&&r.height>1}
 function intersection(a,b){if(!a||!b)return 0;const x=Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left)),y=Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));return x*y}
