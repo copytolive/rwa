@@ -1,18 +1,20 @@
-/* RWA × SEABLUEPRINT TARGET FINAL GEOMETRY V1.5
+/* RWA × SEABLUEPRINT TARGET FINAL GEOMETRY V1.6
    Order Book is docked in front of the chart edge so the canonical market shell keeps its accepted width.
-   Compact desktop widths reserve enough visible chart area without weakening the browser acceptance gate. */
+   Compact desktop widths reserve exactly the Ecommerce rail width in the market grid, eliminating dead space without weakening the browser gate. */
 @media(min-width:1701px){
  body.rwa-target-dashboard-v1 .topnav{flex:1 1 auto!important;min-width:430px!important}
  body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open .right{display:block!important;position:fixed!important;top:70px!important;right:clamp(360px,27vw,440px)!important;bottom:28px!important;width:250px!important;height:auto!important;z-index:10030!important;overflow:auto!important;border-left:1px solid #1b2a40!important;border-right:1px solid #1b2a40!important;background:#060f1a!important;box-shadow:-10px 0 24px rgba(0,0,0,.22)!important}
 }
 @media(min-width:1451px) and (max-width:1700px){
  body.rwa-target-dashboard-v1 .topnav{flex:1 1 auto!important;min-width:390px!important}
+ body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open .layout{padding-right:416px!important}
  body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open #rwaShopScreen[data-seablueprint-single-shell="1"],body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open #rwaCartDrawer{width:416px!important;min-width:416px!important;max-width:416px!important}
  body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open .right{display:block!important;position:fixed!important;top:70px!important;right:416px!important;bottom:28px!important;width:250px!important;height:auto!important;z-index:10030!important;overflow:auto!important;border-left:1px solid #1b2a40!important;border-right:1px solid #1b2a40!important;background:#060f1a!important;box-shadow:-10px 0 24px rgba(0,0,0,.22)!important}
 }
 @media(min-width:1121px) and (max-width:1450px){
  body.rwa-target-dashboard-v1 .topnav{flex:1 1 auto!important;min-width:330px!important}
  body.rwa-target-dashboard-v1 .topnav [data-rwa-target-nav="reports"]{display:none!important}
+ body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open .layout{padding-right:340px!important}
  body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open #rwaShopScreen[data-seablueprint-single-shell="1"],body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open #rwaCartDrawer{width:340px!important;min-width:340px!important;max-width:340px!important}
  body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open .right{display:block!important;position:fixed!important;top:70px!important;right:340px!important;bottom:28px!important;width:210px!important;height:auto!important;z-index:10030!important;overflow:auto!important;border-left:1px solid #1b2a40!important;border-right:1px solid #1b2a40!important;background:#060f1a!important;box-shadow:-8px 0 20px rgba(0,0,0,.2)!important}
 }
