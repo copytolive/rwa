@@ -4,7 +4,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 const base = process.env.RWA_UI_URL || 'http://127.0.0.1:4173/rwa/';
 const proof = process.env.RWA_UI_PROOF_DIR || 'proof/launch-ui-final';
 const publicMode = /^https:\/\//i.test(base);
-const VERSION = '1.2.4';
+const VERSION = '1.3.0';
 await mkdir(proof, { recursive: true });
 
 const browser = await chromium.launch({ headless: true });
