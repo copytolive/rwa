@@ -26,8 +26,6 @@ async function installMocks(page){
     class FakeWebSocket{constructor(url){this.url=url;this.readyState=0;setTimeout(()=>{this.readyState=1;this.onopen?.({type:'open'})},15)}send(){}close(){this.readyState=3;this.onclose?.({type:'close'})}}
     window.WebSocket=FakeWebSocket;
   });
-  // Current runtime can use either Binance public API hostname. Keep both deterministic
-  // instead of aborting one host; the contract under test is RENKO behavior, not host choice.
   await page.route('**/api/v3/**',async r=>{
     const u=new URL(r.request().url()),p=u.pathname,symbol=u.searchParams.get('symbol');
     if(p.endsWith('/klines'))return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(symbol==='GOLD20Y'?[]:mockKlines(u.href))});
@@ -51,7 +49,7 @@ function collectErrors(page){
 async function fixtureRun(label,viewport){
   const context=await browser.newContext({viewport,deviceScaleFactor:1}),page=await context.newPage();
   await installMocks(page);
-  const errors=collectErrors(page),url=`${BASE}/renko/?fixture=gold20y&parityBrowser=3&ts=${Date.now()}`;
+  const errors=collectErrors(page),url=`${BASE}/renko/?fixture=gold20y&parityBrowser=4&ts=${Date.now()}`;
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>window.RWARenkoTV?.state?.status==='live'&&document.documentElement.dataset.renkoParityFixtureReady==='true',null,{timeout:60000});
   await page.waitForTimeout(500);
@@ -81,7 +79,7 @@ async function fixtureRun(label,viewport){
 async function modelRun(label,viewport){
   const context=await browser.newContext({viewport,deviceScaleFactor:1}),page=await context.newPage();
   await installMocks(page);
-  const errors=collectErrors(page),url=`${BASE}/renko/?symbol=SOL&parityModel=3&ts=${Date.now()}`;
+  const errors=collectErrors(page),url=`${BASE}/renko/?symbol=SOL&parityModel=4&ts=${Date.now()}`;
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoTVEngine?.version==='1.4.0-fixed-1s'&&window.RWARenkoPercentageLTP?.version==='1.0.0'&&window.RWARenkoTV?.settings?.interval==='1s'&&window.RWARenkoTV?.state?.box>0,null,{timeout:60000});
 
@@ -90,32 +88,29 @@ async function modelRun(label,viewport){
     const b=[{openTime:0,closeTime:999,open:216,high:216,low:216,close:216}],pct=E.computeBox(b,{method:'percentage',percentage:.01},.01);
     const base=E.build([{openTime:0,closeTime:999,open:100,high:100,low:100,close:100},{openTime:1000,closeTime:1999,open:100,high:111,low:99,close:110}],{method:'traditional',boxSize:10,source:'close',wicks:true},1);
     const proj=E.project(base,{openTime:2000,closeTime:2999,open:110,high:131,low:109,close:130},{method:'traditional',boxSize:10,source:'close',wicks:true},1);
+    const percentageCard=document.querySelector('.method[data-method="percentage"]'),percentageButton=document.querySelector('[data-apply-method="percentage"]');
+    const percentageUiHidden=!!percentageCard&&getComputedStyle(percentageCard).display==='none'&&!!percentageButton&&!percentageButton.getClientRects().length;
     RWARenkoTV.settings.interval='5m';
-    return{percentageBox:pct,percentagePass:Math.abs(pct-2)<1e-12,projectionCount:proj.length,projectionSeparate:proj.every(x=>x.projection===true),sourceVisible:!!document.querySelector('#sourceSelect'),intervalExists:!!document.querySelector('#intervalSelect'),mutationLock:RWARenkoTV.settings.interval,fixedInterval:window.RENKO_FIXED_INTERVAL};
+    return{percentageBox:pct,percentagePass:Math.abs(pct-2)<1e-12,percentageUiHidden,projectionCount:proj.length,projectionSeparate:proj.every(x=>x.projection===true),sourceVisible:!!document.querySelector('#sourceSelect'),intervalExists:!!document.querySelector('#intervalSelect'),mutationLock:RWARenkoTV.settings.interval,fixedInterval:window.RENKO_FIXED_INTERVAL};
   });
 
   await page.selectOption('#sourceSelect','ohlc');
   await page.waitForFunction(()=>RWARenkoTV.settings.source==='ohlc'&&RWARenkoTV.settings.interval==='1s'&&RWARenkoTV.state.status==='live',null,{timeout:15000});
   await page.waitForTimeout(350);
-  const beforePercentage=await page.evaluate(()=>{
+  const percentageEngine=await page.evaluate(()=>{
     let ltp=Number(RWARenkoTV.state.percentageLtpSnapshot);
     if(!(ltp>0))ltp=Number(RWARenkoPercentageLTP.snapshotFor(RWARenkoTV));
     const tick=Number(RWARenkoTV.state.tickSize)||.01;
-    return{ltp,lastClosed:Number(RWARenkoTV.state.closedBars.at(-1)?.close),tick,expectedBox:RWARenkoTVEngine.percentageLtpStableRound(ltp*.01,tick)};
+    const card=document.querySelector('.method[data-method="percentage"]'),button=document.querySelector('[data-apply-method="percentage"]');
+    return{ltp,lastClosed:Number(RWARenkoTV.state.closedBars.at(-1)?.close),tick,expectedBox:RWARenkoTVEngine.percentageLtpStableRound(ltp*.01,tick),cardPresent:!!card,cardVisible:!!card&&!!card.getClientRects().length,buttonPresent:!!button,buttonVisible:!!button&&!!button.getClientRects().length};
   });
-  if(!(beforePercentage.ltp>0&&beforePercentage.expectedBox>0))errors.push(`percentage snapshot unavailable: ${JSON.stringify(beforePercentage)}`);
+  if(!(percentageEngine.ltp>0&&percentageEngine.expectedBox>0))errors.push(`percentage engine snapshot unavailable: ${JSON.stringify(percentageEngine)}`);
 
-  await page.fill('#percentageValue','1');
-  await page.click('[data-apply-method="percentage"]');
-  await page.waitForFunction(()=>RWARenkoTV.settings.method==='percentage'&&RWARenkoTV.settings.interval==='1s'&&RWARenkoTV.state.box>0,null,{timeout:15000});
-  await page.waitForTimeout(150);
   const ui=await page.evaluate(()=>({source:RWARenkoTV.settings.source,interval:RWARenkoTV.settings.interval,sourceValue:document.querySelector('#sourceSelect')?.value,intervalExists:!!document.querySelector('#intervalSelect'),method:RWARenkoTV.settings.method,box:Number(RWARenkoTV.state.box),ltpSnapshot:Number(RWARenkoTV.state.percentageLtpSnapshot),lastClosed:Number(RWARenkoTV.state.closedBars.at(-1)?.close),tick:Number(RWARenkoTV.state.tickSize)||.01,publicDocsParity:RWARenkoTV.state.publicDocsParity,exactProprietaryOutputParity:RWARenkoTV.state.exactProprietaryOutputParity,profile:window.RENKO_PARITY_PROFILE}));
-  const expectedBox=await page.evaluate(()=>RWARenkoTVEngine.percentageLtpStableRound(Number(RWARenkoTV.state.percentageLtpSnapshot)*.01,Number(RWARenkoTV.state.tickSize)||.01));
-  const snapshotFrozen=Math.abs(ui.ltpSnapshot-beforePercentage.ltp)<1e-12;
-  const uiPercentagePass=Math.abs(ui.box-expectedBox)<1e-12&&expectedBox>0;
   await page.screenshot({path:path.join(OUT,`model-${label}.png`),fullPage:true});
-  const pass=errors.length===0&&contract.percentagePass&&contract.projectionSeparate&&contract.sourceVisible&&!contract.intervalExists&&contract.mutationLock==='1s'&&contract.fixedInterval==='1s'&&ui.source==='ohlc'&&ui.interval==='1s'&&ui.sourceValue==='ohlc'&&!ui.intervalExists&&ui.method==='percentage'&&uiPercentagePass&&snapshotFrozen&&ui.publicDocsParity===true&&ui.exactProprietaryOutputParity===false&&ui.profile?.observableParity===true;
-  results.push({kind:'model',label,viewport,url,errors,contract,beforePercentage,ui,expectedBox,snapshotFrozen,uiPercentagePass,pass});
+  const percentageRemovedPass=contract.percentageUiHidden&&percentageEngine.cardPresent&&!percentageEngine.cardVisible&&percentageEngine.buttonPresent&&!percentageEngine.buttonVisible;
+  const pass=errors.length===0&&contract.percentagePass&&percentageRemovedPass&&contract.projectionSeparate&&contract.sourceVisible&&!contract.intervalExists&&contract.mutationLock==='1s'&&contract.fixedInterval==='1s'&&ui.source==='ohlc'&&ui.interval==='1s'&&ui.sourceValue==='ohlc'&&!ui.intervalExists&&ui.method==='atr'&&ui.box>0&&ui.publicDocsParity===true&&ui.exactProprietaryOutputParity===false&&ui.profile?.observableParity===true;
+  results.push({kind:'model',label,viewport,url,errors,contract,percentageEngine,percentageRemovedPass,ui,pass});
   await context.close();
 }
 
@@ -126,7 +121,7 @@ try{
   await modelRun('mobile',{width:390,height:844});
 }finally{await browser.close()}
 
-const report={schema:'renko-tradingview-observable-fixed-1s-browser-report-v3',generatedAt:new Date().toISOString(),base:BASE,status:results.every(x=>x.pass)?'PASS':'FAIL',results,claimBoundary:'Browser proof covers observable/documented behavior and official examples with production hard-locked to 1s. GOLD parity is asserted by explicit 800/900/1000/1200 box witness applications, not by incidental initial UI box state. TradingView proprietary source code and unpublished helpers are not available.'};
+const report={schema:'renko-tradingview-observable-fixed-1s-browser-report-v4',generatedAt:new Date().toISOString(),base:BASE,status:results.every(x=>x.pass)?'PASS':'FAIL',results,claimBoundary:'Browser proof covers observable/documented behavior and official examples with production hard-locked to 1s. Percentage calculation compatibility remains engine-tested while the Percentage (LTP) user control is intentionally hidden on desktop and mobile. GOLD parity is asserted by explicit 800/900/1000/1200 box witness applications. TradingView proprietary source code and unpublished helpers are not available.'};
 await fs.writeFile(path.join(OUT,'report.json'),JSON.stringify(report,null,2));
 console.log('RENKO_OBSERVABLE_BROWSER_REPORT',JSON.stringify(report));
 if(report.status!=='PASS')process.exitCode=2;
