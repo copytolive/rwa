@@ -4,9 +4,11 @@ on:
     branches:
       - main
       - fix/renko-atr-control-all-pairs-20260828
+      - fix/renko-atr-chart-stability-20260828
     paths:
       - 'renko/**'
       - 'tools/renko-atr-control-all-pairs-report.mjs'
+      - 'tools/renko-atr-stability-report.mjs'
       - 'tools/renko-xaut-*.mjs'
       - '.github/workflows/renko-atr-control-all-pairs.yml'
   workflow_dispatch:
@@ -15,19 +17,21 @@ permissions:
 jobs:
   exact-browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Static ATR control routing contract
+      - name: Static ATR control + stability contract
         run: |
           set -euo pipefail
           node --check renko/renko-tv-atr-control.js
           node --check tools/renko-atr-control-all-pairs-report.mjs
-          grep -q 'renko-tv-atr-control.js' renko/index.html
-          grep -q 'xaut-deep-matrix-only-other-pairs-local-fixed1s-atr' renko/renko-tv-atr-control.js
+          node --check tools/renko-atr-stability-report.mjs
+          grep -q 'renko-tv-atr-control.js?v=2' renko/index.html
+          grep -q 'snapshot-box-stable-between-closes' renko/renko-tv-atr-control.js
+          grep -q '_exactBox=box' renko/renko-tv-atr-control.js
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
@@ -47,6 +51,10 @@ jobs:
         run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_ATR_VIEWPORT=desktop RENKO_ATR_CONTROL_OUT=artifacts/atr-control-desktop node tools/renko-atr-control-all-pairs-report.mjs
       - name: Mobile — physical ATR 100 Apply on all 50 launch pairs
         run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_ATR_VIEWPORT=mobile RENKO_ATR_CONTROL_OUT=artifacts/atr-control-mobile node tools/renko-atr-control-all-pairs-report.mjs
+      - name: Desktop — ATR chart pulse stability across real 1s closes
+        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_ATR_STABILITY_VIEWPORT=desktop RENKO_ATR_STABILITY_OUT=artifacts/atr-stability-desktop node tools/renko-atr-stability-report.mjs
+      - name: Mobile — ATR chart pulse stability across real 1s closes
+        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_ATR_STABILITY_VIEWPORT=mobile RENKO_ATR_STABILITY_OUT=artifacts/atr-stability-mobile node tools/renko-atr-stability-report.mjs
       - name: XAUT provider regression — desktop + mobile
         run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_XAUT_OUT=artifacts/xaut-provider node tools/renko-xaut-live-provider-report.mjs
       - name: XAUT deep ATR matrix regression — desktop + mobile
@@ -58,6 +66,8 @@ jobs:
           path: |
             artifacts/atr-control-desktop
             artifacts/atr-control-mobile
+            artifacts/atr-stability-desktop
+            artifacts/atr-stability-mobile
             artifacts/xaut-provider
             artifacts/xaut-atr-matrix
           retention-days: 30
