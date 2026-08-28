@@ -1,4 +1,5 @@
 name: RENKO Fixed 1s Public Production Closure
+# Final fixed-1s public-production closure trigger after Pages compatibility repair.
 
 on:
   push:
