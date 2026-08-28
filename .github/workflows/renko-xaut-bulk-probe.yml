@@ -1,4 +1,4 @@
-name: RENKO XAUT Gate Bulk Probe
+name: RENKO XAUT Provider Depth Probe
 on:
   push:
     branches:
@@ -13,16 +13,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - name: Probe XAUT daily 1m archive and CORS
+      - name: Probe Bitfinex XAUT spot symbols and history
         shell: bash
         run: |
           set -euo pipefail
-          url='https://download.gatedata.org/spot/candlesticks_1m/202607/XAUT_USDT-20260731.csv.gz'
-          echo "URL=$url"
-          curl -sSIL "$url" | tee /tmp/headers
-          grep -iE '^(access-control-allow-origin|content-type|content-length|etag|last-modified):' /tmp/headers || true
-          curl -fL --retry 3 --retry-delay 1 "$url" -o /tmp/xaut.csv.gz
-          gzip -dc /tmp/xaut.csv.gz >/tmp/xaut.csv
-          echo "compressed=$(wc -c </tmp/xaut.csv.gz) lines=$(wc -l </tmp/xaut.csv)"
-          head -n 3 /tmp/xaut.csv
-          tail -n 3 /tmp/xaut.csv
+          echo '--- XAUT pairs from Bitfinex config ---'
+          curl -fsS 'https://api-pub.bitfinex.com/v2/conf/pub:list:pair:exchange' -o /tmp/pairs.json
+          python3 - <<'PY'
+          import json
+          x=json.load(open('/tmp/pairs.json'))
+          pairs=x[0] if x and isinstance(x[0],list) else []
+          print([p for p in pairs if 'XAUT' in p])
+          PY
+          for sym in 'tXAUTUSD' 'tXAUTUST' 'tXAUT:UST'; do
+            echo "--- $sym ticker ---"
+            curl -sS -w '\nHTTP=%{http_code}\n' "https://api-pub.bitfinex.com/v2/ticker/$sym" || true
+            echo "--- $sym first 1m from Jan 2020 ---"
+            curl -sS -w '\nHTTP=%{http_code}\n' "https://api-pub.bitfinex.com/v2/candles/trade:1m:$sym/hist?start=1577836800000&end=1609459200000&sort=1&limit=5" || true
+          done
