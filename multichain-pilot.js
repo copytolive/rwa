@@ -18,6 +18,13 @@ function renderReceipts(){const h=$('receipts');h.innerHTML=state.receipts.lengt
 async function getCfg(){if(state.cfg)return state.cfg;const r=await fetch('launch/multichain-pilot.json',{cache:'no-store'});state.cfg=await r.json();if(!state.cfg?.enabled||state.cfg?.unrestricted_mainnet!==false)throw Error('Pilot policy unavailable');return state.cfg}
 async function waitEngine(){for(let i=0;i<120;i++){if(ENGINE()?.revision==='3.0.0-tuntas')return ENGINE();await sleep(50)}throw Error('MULTI CHAIN engine unavailable')}
 async function post(url,body){const r=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});const x=await r.json().catch(()=>null);if(!r.ok)throw Error(x?.message||x?.error||`HTTP ${r.status}`);return x}
+function evidenceUrl(network,hash){
+  const e=state.cfg?.evidence||{};
+  if(network==='solana')return `${e.solana_explorer||'https://solscan.io/tx/'}${encodeURIComponent(String(hash||''))}`;
+  const base=e.evm_explorers?.[network];
+  return base?`${base}${encodeURIComponent(String(hash||''))}`:'';
+}
+function lifiStatusUrl(params){return `${state.cfg?.evidence?.lifi_status_api||'https://li.quest/v1/status'}?${params.toString()}`}
 async function providerStatus(hash,q){
   const e=ENGINE();let last=null;
   for(let i=0;i<120;i++){
@@ -88,9 +95,10 @@ async function runRoute(kind){
     const hash=route.from==='solana'?await sendSolanaQuote(q):await sendEvmQuote(q);
     log('Source transaction confirmed',{hash});
     const ps=await providerStatus(hash,q),provider=String(ps?.status||ps?.substatus||'PENDING').toUpperCase();
-    const receipt={id:kind.toLowerCase().replaceAll('_','-'),kind,status:provider==='DONE'?'VERIFIED':'PENDING_PROVIDER_FINALITY',source_network:route.from,destination_network:route.to,source_family:route.from==='solana'?'SVM':'EVM',destination_family:route.to==='solana'?'SVM':'EVM',token:route.from_token,amount,tx_hash:hash,provider_status:provider,evidence_url:'',provider_payload:ps,captured_at:new Date().toISOString()};
+    const success=['DONE','SUCCESS','COMPLETED'].includes(provider);
+    const receipt={id:kind.toLowerCase().replaceAll('_','-'),kind,status:success?'VERIFIED':'PENDING_PROVIDER_FINALITY',source_network:route.from,destination_network:route.to,source_family:route.from==='solana'?'SVM':'EVM',destination_family:route.to==='solana'?'SVM':'EVM',token:route.from_token,amount,tx_hash:hash,provider_status:provider,evidence_url:evidenceUrl(route.from,hash),provider_payload:ps,captured_at:new Date().toISOString()};
     state.receipts=state.receipts.filter(x=>x.kind!==kind);state.receipts.push(receipt);state.totalUsd+=amount;saveReceipts();
-    setStatus(`${kind}: ${receipt.status}`,'ok');log('Receipt captured',receipt)
+    setStatus(`${kind}: ${receipt.status}`,success?'ok':'busy');log('Receipt captured',receipt)
   }catch(err){setStatus(String(err?.message||err),'error');log('Pilot failed',{error:String(err?.message||err)})}
   finally{state.busy=false}
 }
@@ -99,7 +107,7 @@ async function hyperState(user){return post(HLI,{type:'clearinghouseState',user}
 async function fundHyperliquid(){
   if(state.busy)return;state.busy=true;setStatus('Hyperliquid funding pilot running…','busy');
   try{
-    const cfg=await getCfg(),r=cfg.routes.HYPERLIQUID_FUNDING,amount=Number($('amt-HYPERLIQUID_FUNDING').value);
+    const cfg=await getCfg(),r=cfg.routes.HYPERLIQUID_FUNDING,amount=Number($('amt-HYPERLIQUID_FUNDING').value),target=Number(r.target_account_value_usdc||100);
     if(!(amount>=Number(r.min_amount)&&amount<=Number(r.max_amount)))throw Error(`Hyperliquid pilot must be ${r.min_amount}-${r.max_amount} USDC`);
     if(state.totalUsd+amount>Number(cfg.max_total_usd_per_session))throw Error('Pilot session cap exceeded');
     const e=await waitEngine();await e.connect('arbitrum');
@@ -111,12 +119,13 @@ async function fundHyperliquid(){
     const amount6=BigInt(Math.round(amount*1_000_000)),tx={from:user,to:f.arbitrum_usdc_address,data:transferData(f.bridge_address,amount6),value:'0x0'};
     await p.request({method:'wallet_switchEthereumChain',params:[{chainId:'0xa4b1'}]});
     const gas=await p.request({method:'eth_estimateGas',params:[tx]});tx.gas=gas;
-    if(!confirm(`REAL HYPERLIQUID FUNDING\n${amount} USDC on Arbitrum\nOfficial Bridge2: ${f.bridge_address}\n\nThis transfers real USDC. Continue?`))throw Error('User cancelled');
+    if(!confirm(`REAL HYPERLIQUID FUNDING\n${amount} USDC on Arbitrum\nOfficial Bridge2: ${f.bridge_address}\nCurrent account value: ${beforeValue.toFixed(2)} USDC\nActivation target: ${target.toFixed(2)} USDC\n\nThis transfers real USDC. Continue?`))throw Error('User cancelled');
     const hash=await p.request({method:'eth_sendTransaction',params:[tx]});await e.waitEvmReceipt(hash,'arbitrum');
-    let after=null,credited=false;
-    for(let i=0;i<36;i++){await sleep(5000);after=await hyperState(user).catch(()=>null);const v=Number(after?.marginSummary?.accountValue||0);if(v>beforeValue){credited=true;break}}
-    const receipt={id:'hyperliquid-funding',kind:'HYPERLIQUID_FUNDING',status:credited?'VERIFIED':'SOURCE_CONFIRMED_AWAITING_CREDIT',source_network:'arbitrum',destination_network:'hyperliquid',source_family:'EVM',destination_family:'HYPERLIQUID',token:'USDC',amount,tx_hash:String(hash),provider_status:credited?'CREDITED':'PENDING_CREDIT',evidence_url:'',before_account_value:beforeValue,after_account_value:Number(after?.marginSummary?.accountValue||0),captured_at:new Date().toISOString()};
-    state.receipts=state.receipts.filter(x=>x.kind!=='HYPERLIQUID_FUNDING');state.receipts.push(receipt);state.totalUsd+=amount;saveReceipts();setStatus(`Hyperliquid funding: ${receipt.status}`,credited?'ok':'busy');log('Hyperliquid funding receipt',receipt)
+    let after=null,credited=false,targetMet=false;
+    for(let i=0;i<36;i++){await sleep(5000);after=await hyperState(user).catch(()=>null);const v=Number(after?.marginSummary?.accountValue||0);credited=v>beforeValue;targetMet=v>=target;if(targetMet)break}
+    const afterValue=Number(after?.marginSummary?.accountValue||0);
+    const receipt={id:'hyperliquid-funding',kind:'HYPERLIQUID_FUNDING',status:targetMet?'VERIFIED':credited?'CREDITED_BELOW_TARGET':'SOURCE_CONFIRMED_AWAITING_CREDIT',source_network:'arbitrum',destination_network:'hyperliquid',source_family:'EVM',destination_family:'HYPERLIQUID',token:'USDC',amount,tx_hash:String(hash),provider_status:targetMet?'CREDITED_TARGET_MET':credited?'CREDITED':'PENDING_CREDIT',evidence_url:evidenceUrl('arbitrum',hash),wallet:user,before_account_value:beforeValue,after_account_value:afterValue,target_account_value:target,captured_at:new Date().toISOString()};
+    state.receipts=state.receipts.filter(x=>x.kind!=='HYPERLIQUID_FUNDING');state.receipts.push(receipt);state.totalUsd+=amount;saveReceipts();setStatus(`Hyperliquid funding: ${receipt.status}`,targetMet?'ok':'busy');log('Hyperliquid funding receipt',receipt)
   }catch(err){setStatus(String(err?.message||err),'error');log('Funding pilot failed',{error:String(err?.message||err)})}
   finally{state.busy=false}
 }
@@ -127,10 +136,10 @@ async function captureFailure(){
     if(!(amount>0&&amount<=2))throw Error('Failure/refund evidence amount must be >0 and <=2');
     const fromChain=$('failure-from-chain').value.trim(),toChain=$('failure-to-chain').value.trim(),bridge=$('failure-bridge').value.trim();
     const params=new URLSearchParams({txHash:hash});if(fromChain)params.set('fromChain',fromChain);if(toChain)params.set('toChain',toChain);if(bridge)params.set('bridge',bridge);
-    const r=await fetch(`https://li.quest/v1/status?${params}`,{cache:'no-store'}),x=await r.json();
+    const statusUrl=lifiStatusUrl(params),r=await fetch(statusUrl,{cache:'no-store'}),x=await r.json();
     const s=String(x?.status||x?.substatus||'').toUpperCase();
     if(!(s.includes('FAIL')||s.includes('REFUND')||s==='INVALID'))throw Error(`Provider status is ${s||'unknown'}, not failed/refunded`);
-    const receipt={id:'failure-or-refund',kind:'FAILURE_OR_REFUND',status:'VERIFIED',source_network:'',destination_network:'',source_family:family,destination_family:'',token:'USDC',amount,tx_hash:hash,provider_status:s.includes('REFUND')?'REFUNDED':'FAILED',evidence_url:'',provider_payload:x,captured_at:new Date().toISOString()};
+    const receipt={id:'failure-or-refund',kind:'FAILURE_OR_REFUND',status:'VERIFIED',source_network:'',destination_network:'',source_family:family,destination_family:'',token:'USDC',amount,tx_hash:hash,provider_status:s.includes('REFUND')?'REFUNDED':'FAILED',evidence_url:statusUrl,provider_payload:x,captured_at:new Date().toISOString()};
     state.receipts=state.receipts.filter(x=>x.kind!=='FAILURE_OR_REFUND');state.receipts.push(receipt);saveReceipts();setStatus('Failure/refund receipt verified','ok');log('Failure/refund captured',receipt)
   }catch(err){setStatus(String(err?.message||err),'error')}
 }
