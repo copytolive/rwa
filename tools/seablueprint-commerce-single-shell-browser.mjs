@@ -10,7 +10,7 @@ const opened=[];
 context.on('page',p=>{if(p!==page)opened.push(p)});
 const pageErrors=[];page.on('pageerror',e=>pageErrors.push(String(e)));
 await page.goto(base,{waitUntil:'domcontentloaded',timeout:30000});
-await page.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.2.1'&&window.RWASuperApp?.version,{timeout:20000});
+await page.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.2.2'&&window.RWASuperApp?.version,{timeout:20000});
 await page.waitForSelector('#rwaSeablueprintCommerceLaunch',{state:'visible'});
 const rootPath=await page.evaluate(()=>location.pathname);
 const initialCore=await page.evaluate(()=>({routes:[...document.querySelectorAll('[data-v5-route]')].map(x=>x.dataset.v5Route),layout:window.RWAUILayoutIntegrity?.audit?.()||null,commerce:window.RWASeablueprintCommerceBridge.audit()}));
@@ -34,10 +34,13 @@ if(during.audit.externalCommerceLinks!==0)throw Error(`external ecommerce links 
 if(during.overflow>4)throw Error(`root horizontal overflow while ecommerce open: ${during.overflow}`);
 for(const route of ['markets','intelligence','assets','research','portfolio','institutional'])if(!during.coreRoutes.includes(route))throw Error(`commerce removed core route: ${route}`);
 await page.screenshot({path:`${proof}/01-desktop-ecommerce-single-shell.png`,fullPage:true});
-const trade=page.locator('#rwaShopScreen a[href^="trade/"]').first();
+const trade=page.locator('#rwaShopScreen [data-rwa-shop-trade]').first();
 if(await trade.count()){
+  const safeHref=await trade.getAttribute('href');
+  if(!/^#trade\/[A-Za-z0-9]+$/.test(safeHref||''))throw Error(`shop trade link is not canonical in-document: ${safeHref}`);
   await trade.click();
-  await page.waitForFunction(()=>location.hash.startsWith('#trade/')&&!document.querySelector('#rwaShopScreen')?.classList.contains('open'));
+  try{await page.waitForFunction(()=>location.pathname==='/rwa/'&&location.hash.startsWith('#trade/')&&!document.querySelector('#rwaShopScreen')?.classList.contains('open'),{timeout:30000})}
+  catch(e){const state=await page.evaluate(()=>({path:location.pathname,hash:location.hash,shopOpen:document.querySelector('#rwaShopScreen')?.classList.contains('open'),route:document.documentElement.dataset.rwaRoute,commerce:window.RWASeablueprintCommerceBridge?.audit?.()}));throw Error(`internal trade transition timeout: ${JSON.stringify(state)} :: ${e.message}`)}
   const afterTrade=await page.evaluate(()=>({path:location.pathname,hash:location.hash,shopOpen:document.querySelector('#rwaShopScreen')?.classList.contains('open')}));
   if(afterTrade.path!==rootPath||afterTrade.shopOpen)throw Error(`internal trade transition escaped shell: ${JSON.stringify(afterTrade)}`);
   await page.evaluate(()=>window.RWASuperApp.navigate('asset/PENDLE'));
@@ -59,7 +62,7 @@ const mobile=await context.newPage();
 const mobileErrors=[];mobile.on('pageerror',e=>mobileErrors.push(String(e)));
 await mobile.setViewportSize({width:390,height:844});
 await mobile.goto(base,{waitUntil:'domcontentloaded',timeout:30000});
-await mobile.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.2.1'&&window.RWASuperApp?.version,{timeout:20000});
+await mobile.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.2.2'&&window.RWASuperApp?.version,{timeout:20000});
 await mobile.waitForSelector('#rwaSeablueprintCommerceLaunch',{state:'visible'});
 const mobilePath=await mobile.evaluate(()=>location.pathname);
 await mobile.locator('#rwaSeablueprintCommerceLaunch').click();
@@ -71,7 +74,7 @@ await mobile.locator('#rwaShopClose').click();
 await mobile.waitForFunction(()=>!document.querySelector('#rwaShopScreen')?.classList.contains('open'));
 if(mobileErrors.length)throw Error(`mobile page errors: ${mobileErrors.join(' | ')}`);
 await mobile.close();
-const result={ok:true,version:'1.2.1',source:'SEABLUEPRINT_COMMERCE_CONTRACT',singleMainDocument:true,topLevelPathPreserved:true,assetContextRestored:true,externalCommerceNavigationBlocked:true,backendFailClosed:true,coreRoutesPreserved:true,desktop1536:true,mobile390:true,extraPagesOpened:opened.length};
+const result={ok:true,version:'1.2.2',source:'SEABLUEPRINT_COMMERCE_CONTRACT',singleMainDocument:true,topLevelPathPreserved:true,assetContextRestored:true,internalTradeCanonicalHash:true,externalCommerceNavigationBlocked:true,backendFailClosed:true,coreRoutesPreserved:true,desktop1536:true,mobile390:true,extraPagesOpened:opened.length};
 await writeFile(`${proof}/browser-result.json`,JSON.stringify(result,null,2));
 console.log(JSON.stringify(result,null,2));
 await context.close();
