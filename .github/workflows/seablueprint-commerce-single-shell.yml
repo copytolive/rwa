@@ -62,7 +62,7 @@ jobs:
           grep -Fq "rwa-target-dashboard-v1.css?v=1.1.0" chart-core.js
           grep -Fq "rwa-target-dashboard-v1-compat.css?v=1.1.0" chart-core.js
           grep -Fq "rwa-target-dashboard-v1-workspace.css?v=1.1.0" chart-core.js
-          grep -Fq "rwa-target-dashboard-v1-final.css?v=1.6.0" chart-core.js
+          grep -Fq "rwa-target-dashboard-v1-final.css?v=1.7.0" chart-core.js
           test -s rwa-target-dashboard-v1-workspace.css
           test -s rwa-target-dashboard-v1-final.css
           node -e "const c=require('./rwa-commerce-config.json'); if(c.shell_mode!=='SINGLE_MAIN_DOCUMENT'||c.navigation_policy!=='NO_TOP_LEVEL_ECOMMERCE_NAVIGATION'||c.source!=='SEABLUEPRINT_COMMERCE'||c.api_base!=='') process.exit(1)"
