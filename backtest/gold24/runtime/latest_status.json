@@ -1,0 +1,15 @@
+{
+  "counter_increment": 0,
+  "fixed_sl": 12.5,
+  "fixed_tp": 25.0,
+  "gate_a": "BLOCKED",
+  "goal_policy": "GOLD24_WEEKLY_PROFIT_RR12_V2_20260828",
+  "min_profitable_weeks_pct": 55.0,
+  "min_trades_per_week": 2.0,
+  "reason": "GATE_A_FAIL: crosscheck_pass is not true",
+  "rules_sha256": "b719bb4317fbfda681a2a6c785748d9454d72845a8d3a4858c94d8e098d0fb95",
+  "simulation_executed": false,
+  "strategy_engine": "PAUSED",
+  "updated_at": "2026-08-28T11:07:56.961272+00:00",
+  "worker": "GOLD24_WEEKLY_PROFIT_V2"
+}
