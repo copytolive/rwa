@@ -127,7 +127,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Wait for GitHub Pages exact SHA and byte-bind RENKO payload
+      - name: Wait for deployed descendant with identical RENKO tree and byte-bind payload
         shell: bash
         env:
           PUBLIC_BASE: https://copytolive.github.io/rwa
@@ -136,13 +136,26 @@ jobs:
           OUT=artifacts/renko-public-fixed-1s-closure
           mkdir -p "$OUT"
           matched=0
+          stamp=''
           for attempt in $(seq 1 120); do
             stamp=$(curl -fsSL --retry 2 --retry-delay 1 -H 'Cache-Control: no-cache' "$PUBLIC_BASE/renko-deployment-sha.txt?fixed1s=${GITHUB_SHA}-${attempt}" 2>/dev/null | tr -d '\r\n' || true)
-            if [ "$stamp" = "$GITHUB_SHA" ]; then matched=1; break; fi
-            echo "Waiting for Pages SHA ${GITHUB_SHA}; observed ${stamp:-missing} (${attempt}/120)"
+            ok=1
+            if ! [[ "$stamp" =~ ^[0-9a-f]{40}$ ]]; then
+              ok=0
+            else
+              git fetch --quiet --no-tags origin "$stamp" || ok=0
+              if [ "$ok" = 1 ]; then
+                git cat-file -e "$stamp^{commit}" || ok=0
+                git merge-base --is-ancestor "$GITHUB_SHA" "$stamp" || ok=0
+                git diff --quiet "$GITHUB_SHA".."$stamp" -- renko/ || ok=0
+              fi
+            fi
+            if [ "$ok" = 1 ]; then matched=1; break; fi
+            echo "Waiting for deployed descendant with identical RENKO tree; closure=${GITHUB_SHA} observed=${stamp:-missing} (${attempt}/120)"
             sleep 10
           done
           test "$matched" = 1
+          export DEPLOYED_SHA="$stamp"
           files=(
             renko/index.html
             renko/renko-tv.css
@@ -162,22 +175,23 @@ jobs:
           )
           : > "$OUT/deployment-manifest.tsv"
           for p in "${files[@]}"; do
-            expected=$(git rev-parse "$GITHUB_SHA:$p")
-            curl -fsSL --retry 4 --retry-delay 1 -H 'Cache-Control: no-cache' "$PUBLIC_BASE/$p?fixed1s=${GITHUB_SHA}" -o /tmp/renko-public-file
+            expected=$(git rev-parse "$DEPLOYED_SHA:$p")
+            curl -fsSL --retry 4 --retry-delay 1 -H 'Cache-Control: no-cache' "$PUBLIC_BASE/$p?fixed1s=${DEPLOYED_SHA}" -o /tmp/renko-public-file
             actual=$(git hash-object /tmp/renko-public-file)
             printf '%s\t%s\t%s\n' "$p" "$expected" "$actual" >> "$OUT/deployment-manifest.tsv"
             test "$expected" = "$actual"
           done
-          printf '%s\n' "$GITHUB_SHA" > "$OUT/deployment-sha.txt"
+          printf '%s\n' "$GITHUB_SHA" > "$OUT/closure-run-sha.txt"
+          printf '%s\n' "$DEPLOYED_SHA" > "$OUT/deployment-sha.txt"
           python3 - <<'PY'
           import json,os,datetime
           out='artifacts/renko-public-fixed-1s-closure'
           rows=[]
           for line in open(out+'/deployment-manifest.tsv'):
               p,e,a=line.rstrip('\n').split('\t'); rows.append({'path':p,'expectedBlob':e,'publicBlob':a,'match':e==a})
-          m={'schema':'renko-public-fixed-1s-deployment-manifest-v1','generatedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'targetSha':os.environ['GITHUB_SHA'],'publicBase':os.environ['PUBLIC_BASE'],'fixedInterval':'1s','timeframeSelectorAbsent':True,'allMatch':bool(rows) and all(x['match'] for x in rows),'files':rows}
+          m={'schema':'renko-public-fixed-1s-deployment-manifest-v2','generatedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'closureRunSha':os.environ['GITHUB_SHA'],'deployedSha':os.environ['DEPLOYED_SHA'],'renkoTreeUnchangedFromClosureRun':True,'publicBase':os.environ['PUBLIC_BASE'],'fixedInterval':'1s','timeframeSelectorAbsent':True,'allMatch':bool(rows) and all(x['match'] for x in rows),'files':rows}
           open(out+'/deployment-manifest.json','w').write(json.dumps(m,indent=2)+'\n')
-          assert m['allMatch']
+          assert m['allMatch'] and m['renkoTreeUnchangedFromClosureRun']
           print(json.dumps(m))
           PY
       - name: Install real browser runtime
@@ -212,8 +226,9 @@ jobs:
             'atrMatrix':'artifacts/renko-public-xaut-atr-matrix/report.json',
             'deployment':out+'/deployment-manifest.json'}
           data={k:json.load(open(v)) for k,v in reports.items()}
-          checks={k:(v.get('status')=='PASS' if k!='deployment' else bool(v.get('allMatch'))) for k,v in data.items()}
-          receipt={'schema':'renko-public-fixed-1s-closure-v1','generatedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'targetSha':os.environ['GITHUB_SHA'],'publicUrl':'https://copytolive.github.io/rwa/renko/','fixedInterval':'1s','timeframeSelectorAbsent':True,'atrLengths':[1,10,100,1000,10000,100000,1000000],'checks':checks,'status':'PASS' if all(checks.values()) else 'FAIL','claimBoundary':'Observable/documented TradingView Renko behavior only; no proprietary TradingView source-code identity claim.'}
+          checks={k:(v.get('status')=='PASS' if k!='deployment' else bool(v.get('allMatch') and v.get('renkoTreeUnchangedFromClosureRun'))) for k,v in data.items()}
+          deployment=data['deployment']
+          receipt={'schema':'renko-public-fixed-1s-closure-v2','generatedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'closureRunSha':os.environ['GITHUB_SHA'],'deployedSha':deployment.get('deployedSha'),'renkoTreeUnchangedFromClosureRun':bool(deployment.get('renkoTreeUnchangedFromClosureRun')),'publicUrl':'https://copytolive.github.io/rwa/renko/','fixedInterval':'1s','timeframeSelectorAbsent':True,'atrLengths':[1,10,100,1000,10000,100000,1000000],'checks':checks,'status':'PASS' if all(checks.values()) else 'FAIL','claimBoundary':'Observable/documented TradingView Renko behavior only; no proprietary TradingView source-code identity claim.'}
           open(out+'/closure-report.json','w').write(json.dumps(receipt,indent=2)+'\n')
           print(json.dumps(receipt))
           assert receipt['status']=='PASS'
