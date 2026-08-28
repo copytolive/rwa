@@ -5,6 +5,7 @@ on:
       - main
       - fix/renko-atr-control-all-pairs-20260828
       - fix/renko-atr-chart-stability-20260828
+      - fix/renko-tiny-price-precision-20260829
     paths:
       - 'renko/**'
       - 'tools/renko-atr-control-all-pairs-report.mjs'
