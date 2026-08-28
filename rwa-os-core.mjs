@@ -32,6 +32,7 @@ export function validateSeries(input={}){
 }
 
 export function validateEconomicTerms(e={}){
+  if(e?.immutable&&e?.governed)e={...e.immutable,...e.governed};
   const basis=String(e.basis||'NET_PROFIT').toUpperCase();if(!BASES.includes(basis))throw Error('invalid_distribution_basis');
   const investorAllocationBps=bps(e.investorAllocationBps??0,'investor_allocation');
   const reserveBps=bps(e.reserveBps??0,'reserve');
@@ -89,7 +90,7 @@ export function holderSnapshot({checkpoints=[],policy='RECORD_DATE',recordAt=Dat
 }
 export function allocateEntitlements(poolMinor,snapshot,{minimumPayoutMinor=0}={}){
   const pool=Math.max(0,int(poolMinor)),min=Math.max(0,int(minimumPayoutMinor));if(!snapshot?.holders?.length||snapshot.totalWeight<=0)return{poolMinor:pool,allocatedMinor:0,withheldMinor:pool,entitlements:[]};
-  const raw=snapshot.holders.map(h=>({wallet:h.wallet,weight:h.weight,raw:pool*h.weight/snapshot.totalWeight}));let rows=raw.map(x=>({...x,amountMinor:Math.floor(x.raw),fraction:x.raw-Math.floor(x.raw)}));let remainder=pool-rows.reduce((n,x)=>n+x.amountMinor,0);rows.sort((a,b)=>b.fraction-a.fraction||a.wallet.localeCompare(b.wallet));for(let i=0;i<remainder;i++)rows[i%rows.length].amountMinor++;rows.sort((a,b)=>a.wallet.localeCompare(b.wallet));let withheld=0;const entitlements=[];for(const x of rows){if(x.amountMinor<min){withheld+=x.amountMinor;continue}entitlements.push({wallet:x.wallet,amountMinor:x.amountMinor,weight:x.weight})}const allocated=entitlements.reduce((n,x)=>n+x.amountMinor,0);return{poolMinor:pool,allocatedMinor:allocated,withheldMinor:pool-allocated,minimumPayoutMinor:min,entitlements};
+  const raw=snapshot.holders.map(h=>({wallet:h.wallet,weight:h.weight,raw:pool*h.weight/snapshot.totalWeight}));let rows=raw.map(x=>({...x,amountMinor:Math.floor(x.raw),fraction:x.raw-Math.floor(x.raw)}));let remainder=pool-rows.reduce((n,x)=>n+x.amountMinor,0);rows.sort((a,b)=>b.fraction-a.fraction||a.wallet.localeCompare(b.wallet));for(let i=0;i<remainder;i++)rows[i%rows.length].amountMinor++;rows.sort((a,b)=>a.wallet.localeCompare(b.wallet));const entitlements=[];for(const x of rows){if(x.amountMinor<min)continue;entitlements.push({wallet:x.wallet,amountMinor:x.amountMinor,weight:x.weight})}const allocated=entitlements.reduce((n,x)=>n+x.amountMinor,0);return{poolMinor:pool,allocatedMinor:allocated,withheldMinor:pool-allocated,minimumPayoutMinor:min,entitlements};
 }
 export async function distributionManifest({seriesId,periodId,calculation,snapshot,allocation,evidenceUrls=[]}={}){
   if(!seriesId||!periodId)throw Error('series_period_required');if(!calculation||!snapshot||!allocation)throw Error('distribution_inputs_required');if(allocation.allocatedMinor>calculation.poolMinor)throw Error('allocation_exceeds_pool');
