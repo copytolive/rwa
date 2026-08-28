@@ -19,7 +19,7 @@ root.searchParams.set('__rwa_public_smoke', cache);
 
 try {
   await page.goto(root.href, { waitUntil: 'domcontentloaded', timeout: 45000 });
-  await page.waitForFunction(() => window.RWASeablueprintCommerceBridge?.version === '1.2.3' && window.RWASuperApp?.version, { timeout: 30000 });
+  await page.waitForFunction(() => window.RWASeablueprintCommerceBridge?.version === '1.2.4' && window.RWASuperApp?.version, { timeout: 30000 });
   await page.waitForSelector('#rwaSeablueprintCommerceLaunch', { state: 'visible', timeout: 20000 });
 
   const publicBytes = await page.evaluate(async nonce => {
@@ -27,22 +27,24 @@ try {
       const r = await fetch(`${path}?__public_verify=${encodeURIComponent(nonce)}`, { cache: 'no-store' });
       return { ok: r.ok, status: r.status, text: await r.text() };
     }
-    const [bridge, chart, configRaw] = await Promise.all([
+    const [bridge, chart, configRaw, deployed] = await Promise.all([
       text('rwa-seablueprint-commerce-bridge.js'),
       text('chart-core.js'),
-      text('rwa-commerce-config.json')
+      text('rwa-commerce-config.json'),
+      text('deployment-sha.txt')
     ]);
     let config = null;
     try { config = JSON.parse(configRaw.text); } catch {}
-    return { bridge, chart, configRaw, config };
+    return { bridge, chart, configRaw, config, deployed };
   }, cache);
 
   if (!publicBytes.bridge.ok) throw Error(`public bridge HTTP ${publicBytes.bridge.status}`);
   if (!publicBytes.chart.ok) throw Error(`public chart-core HTTP ${publicBytes.chart.status}`);
   if (!publicBytes.configRaw.ok) throw Error(`public commerce config HTTP ${publicBytes.configRaw.status}`);
-  if (!/VERSION=['"]1\.2\.3['"]/.test(publicBytes.bridge.text)) throw Error('public bridge is not V1.2.3');
-  if (!publicBytes.bridge.text.includes('hardCloseShell')) throw Error('public bridge missing deterministic overlay close');
-  if (!publicBytes.chart.text.includes('rwa-seablueprint-commerce-bridge.js?v=1.2.3')) throw Error('public chart-core is not loading bridge V1.2.3');
+  if (!publicBytes.deployed.ok || !/^[0-9a-f]{40}\s*$/i.test(publicBytes.deployed.text)) throw Error(`public deployment SHA invalid: ${publicBytes.deployed.text}`);
+  if (!/VERSION=['"]1\.2\.4['"]/.test(publicBytes.bridge.text)) throw Error('public bridge is not V1.2.4');
+  if (!publicBytes.bridge.text.includes('hardCloseShell') || !publicBytes.bridge.text.includes("window.addEventListener('click',captureClick,true)")) throw Error('public bridge missing deterministic earliest-capture overlay close');
+  if (!publicBytes.chart.text.includes('rwa-seablueprint-commerce-bridge.js?v=1.2.4')) throw Error('public chart-core is not loading bridge V1.2.4');
   const cfg = publicBytes.config || {};
   if (cfg.shell_mode !== 'SINGLE_MAIN_DOCUMENT') throw Error(`public shell_mode mismatch: ${cfg.shell_mode}`);
   if (cfg.navigation_policy !== 'NO_TOP_LEVEL_ECOMMERCE_NAVIGATION') throw Error(`public navigation policy mismatch: ${cfg.navigation_policy}`);
@@ -79,7 +81,14 @@ try {
   const tradeHref = await trade.getAttribute('href');
   if (!/^#trade\/[A-Za-z0-9]+$/.test(tradeHref || '')) throw Error(`public trade href is not canonical: ${tradeHref}`);
   await trade.click();
-  await page.waitForFunction(() => location.pathname === '/rwa/' && location.hash.startsWith('#trade/') && !document.querySelector('#rwaShopScreen')?.classList.contains('open'), { timeout: 30000 });
+  try {
+    await page.waitForFunction(() => location.pathname === '/rwa/' && location.hash.startsWith('#trade/') && !document.querySelector('#rwaShopScreen')?.classList.contains('open'), { timeout: 30000 });
+  } catch (error) {
+    const state = await page.evaluate(() => ({ path: location.pathname, hash: location.hash, route: document.documentElement.dataset.rwaRoute || '', shopOpen: document.querySelector('#rwaShopScreen')?.classList.contains('open'), commerce: window.RWASeablueprintCommerceBridge?.audit?.() }));
+    await writeFile(`${proof}/trade-timeout-state.json`, JSON.stringify(state, null, 2));
+    await page.screenshot({ path: `${proof}/trade-timeout.png`, fullPage: true });
+    throw new Error(`public trade transition timeout: ${JSON.stringify(state)} :: ${error.message}`);
+  }
   const afterTrade = await page.evaluate(() => ({ path: location.pathname, hash: location.hash, shopOpen: document.querySelector('#rwaShopScreen')?.classList.contains('open') }));
   if (afterTrade.path !== '/rwa/' || afterTrade.shopOpen) throw Error(`public trade handoff failed: ${JSON.stringify(afterTrade)}`);
 
@@ -102,7 +111,7 @@ try {
   await mobile.setViewportSize({ width: 390, height: 844 });
   const mobileUrl = new URL(base); mobileUrl.searchParams.set('__rwa_public_mobile', cache);
   await mobile.goto(mobileUrl.href, { waitUntil: 'domcontentloaded', timeout: 45000 });
-  await mobile.waitForFunction(() => window.RWASeablueprintCommerceBridge?.version === '1.2.3' && window.RWASuperApp?.version, { timeout: 30000 });
+  await mobile.waitForFunction(() => window.RWASeablueprintCommerceBridge?.version === '1.2.4' && window.RWASuperApp?.version, { timeout: 30000 });
   await mobile.waitForSelector('#rwaSeablueprintCommerceLaunch', { state: 'visible', timeout: 20000 });
   await mobile.locator('#rwaSeablueprintCommerceLaunch').click();
   await mobile.waitForFunction(() => document.querySelector('#rwaShopScreen')?.classList.contains('open'), { timeout: 20000 });
@@ -120,9 +129,10 @@ try {
 
   const result = {
     ok: true,
-    contract: 'seablueprint-commerce-public-sync-v1.2.3',
+    contract: 'seablueprint-commerce-public-sync-v1.2.4',
     publicUrl: base,
-    version: '1.2.3',
+    deployedSha: publicBytes.deployed.text.trim(),
+    version: '1.2.4',
     staticBytesVerified: true,
     configFailClosed: true,
     singleShellInteractionVerified: true,
@@ -135,6 +145,13 @@ try {
   };
   await writeFile(`${proof}/browser-result.json`, JSON.stringify(result, null, 2));
   console.log(JSON.stringify(result, null, 2));
+} catch (error) {
+  try {
+    const failure = await page.evaluate(() => ({ path: location.pathname, hash: location.hash, route: document.documentElement.dataset.rwaRoute || '', shopOpen: document.querySelector('#rwaShopScreen')?.classList.contains('open'), bridge: window.RWASeablueprintCommerceBridge?.version || '', commerce: window.RWASeablueprintCommerceBridge?.audit?.() || null }));
+    await writeFile(`${proof}/failure-state.json`, JSON.stringify({ error: String(error.message || error), ...failure }, null, 2));
+    await page.screenshot({ path: `${proof}/failure.png`, fullPage: true });
+  } catch {}
+  throw error;
 } finally {
   await context.close();
   await browser.close();
