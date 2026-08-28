@@ -22,11 +22,9 @@ jobs:
           for age in 0 3600 86400 604800 1036800; do
             to=$((now-age)); from=$((to-999))
             code=$(curl -sS -o /tmp/r.json -w '%{http_code}' "$root&from=$from&to=$to" || true)
-            echo "AGE=$age HTTP=$code BODY=$(cat /tmp/r.json | head -c 500)"
-            if [[ "$code" == 200 ]]; then python3 - <<'PY'
-import json
-x=json.load(open('/tmp/r.json')); print('rows',len(x),'first',x[0] if x else None,'last',x[-1] if x else None)
-PY
+            echo "AGE=$age HTTP=$code BODY=$(head -c 500 /tmp/r.json)"
+            if [[ "$code" == 200 ]]; then
+              echo "rows=$(jq 'length' /tmp/r.json) first=$(jq -c '.[0]' /tmp/r.json) last=$(jq -c '.[-1]' /tmp/r.json)"
             fi
           done
           echo '--- Gate daily 1s archive variants ---'
