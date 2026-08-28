@@ -1,0 +1,63 @@
+name: RWA UI Layout Integrity V15
+
+on:
+  push:
+    branches: ["fix/ui-marketplace-layout-v15-20260828", "main"]
+    paths:
+      - "chart-core.js"
+      - "ui-layout-integrity-v15.js"
+      - "ui-layout-integrity-v15.css"
+      - "tools/ui-layout-integrity-v15-browser.mjs"
+      - ".github/workflows/ui-layout-integrity-v15.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "chart-core.js"
+      - "ui-layout-integrity-v15.js"
+      - "ui-layout-integrity-v15.css"
+      - "tools/ui-layout-integrity-v15-browser.mjs"
+      - ".github/workflows/ui-layout-integrity-v15.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static syntax
+        run: |
+          set -euxo pipefail
+          node --check chart-core.js
+          node --check ui-layout-integrity-v15.js
+          node --check tools/ui-layout-integrity-v15-browser.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Serve canonical root and run collision acceptance
+        env:
+          RWA_UI_URL: http://127.0.0.1:4173/rwa/
+          RWA_UI_PROOF_DIR: proof/ui-layout-integrity-v15
+        run: |
+          set -euxo pipefail
+          mkdir -p /tmp/rwa-ui-site/rwa
+          cp -a . /tmp/rwa-ui-site/rwa/
+          cd /tmp/rwa-ui-site
+          python -m http.server 4173 >/tmp/rwa-ui-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
+          cd "$GITHUB_WORKSPACE"
+          node tools/ui-layout-integrity-v15-browser.mjs
+      - name: Upload browser proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-layout-integrity-v15-${{ github.sha }}
+          path: proof/ui-layout-integrity-v15/
+          retention-days: 30
+          if-no-files-found: error
