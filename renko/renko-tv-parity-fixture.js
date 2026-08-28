@@ -21,9 +21,10 @@ async function apply(){
   const from=bars[0]?.openTime||0,to=bars.at(-1)?.closeTime||0,years=(to-from)/(365.2425*86400000);
   const repaint=()=>{
     if(T.state.parityFixture!=='gold20y')return;
-    const count=T.state.confirmed?.length||0,box=Number(T.state.box);
+    const count=T.state.confirmed?.length||0,box=Number(T.state.box),pure=years>=20&&T.state.closedBars.length===bars.length;
     document.documentElement.dataset.renkoParityFixture='gold20y';
-    document.documentElement.dataset.renkoParityFixtureReady=count===5&&years>=20&&T.state.closedBars.length===bars.length?'true':'false';
+    document.documentElement.dataset.renkoParityFixtureReady=pure?'true':'false';
+    document.documentElement.dataset.renkoParityFixtureExpectedCount=(box===900||box===1000)?'5':box===1200?'4':'';
     document.documentElement.dataset.renkoParityFixtureBrickCount=String(count);
     document.documentElement.dataset.renkoParityFixtureSpanYears=years.toFixed(2);
     document.documentElement.dataset.renkoParityFixtureSourceBars=String(T.state.closedBars.length);
@@ -35,8 +36,7 @@ async function apply(){
     const load=document.getElementById('tvLoadState');if(load){load.textContent=`PARITY WITNESS · GOLD 20Y · BOX ${Number.isFinite(box)?box.toLocaleString():'—'} · ${count} BRICKS`;load.className='load-state live'}
   };
   repaint();
-  const timer=setInterval(repaint,80);
-  window.addEventListener('beforeunload',()=>clearInterval(timer),{once:true});
+  const timer=setInterval(repaint,80);window.addEventListener('beforeunload',()=>clearInterval(timer),{once:true});
   window.RENKO_GOLD20Y_FIXTURE={fixture:f,count:T.state.confirmed?.length||0,years,bars,repaint};
 }
 if(window.RWARenkoTV?.state?.status==='live')void apply();else window.addEventListener('renko:tv-ready',()=>void apply(),{once:true});
