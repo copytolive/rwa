@@ -43,7 +43,7 @@ jobs:
           ! grep -Fq 'renko-v12-worker.js?v=' renko/index.html
           grep -Fq "FIXED_INTERVAL='1s'" renko/renko-tv-app.js
           grep -Fq "confirmationRule:'fixed-1s-close'" renko/renko-tv-app.js
-          grep -Fq "contract:'tradingview-public-documentation-compatible'" renko/renko-tv-engine.js
+          grep -Fq "contract:'tradingview-public-documentation-compatible-fixed-1s'" renko/renko-tv-engine.js
           python - <<'PY'
           from html.parser import HTMLParser
           from collections import Counter
