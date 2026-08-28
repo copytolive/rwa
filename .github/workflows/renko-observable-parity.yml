@@ -3,15 +3,18 @@ name: RENKO TradingView Observable Parity
 on:
   push:
     branches:
+      - main
       - fix/renko-tradingview-observable-parity-20260828
     paths:
       - 'renko/**'
       - 'tools/renko-observable-parity-gate.mjs'
+      - 'tools/renko-observable-browser-report.mjs'
       - '.github/workflows/renko-observable-parity.yml'
   pull_request:
     paths:
       - 'renko/**'
       - 'tools/renko-observable-parity-gate.mjs'
+      - 'tools/renko-observable-browser-report.mjs'
       - '.github/workflows/renko-observable-parity.yml'
   workflow_dispatch:
 
@@ -19,16 +22,54 @@ permissions:
   contents: read
 
 jobs:
-  contract:
+  observable-parity:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+      - name: Node
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
       - name: Syntax
         run: |
           node --check renko/renko-tv-engine.js
+          node --check renko/renko-tv-history-ladder.js
+          node --check renko/renko-tv-parity-fixture.js
           node --check tools/renko-observable-parity-gate.mjs
-      - name: TradingView observable parity gate
+          node --check tools/renko-observable-browser-report.mjs
+      - name: TradingView observable contract gate
         run: node tools/renko-observable-parity-gate.mjs
+      - name: Install real browser dependencies
+        run: |
+          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
+          npx playwright install --with-deps chromium
+      - name: Serve exact checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/renko-observable-site
+          mkdir -p /tmp/renko-observable-site/rwa
+          cp -a . /tmp/renko-observable-site/rwa/
+          cd /tmp/renko-observable-site
+          python3 -m http.server 8080 >/tmp/renko-observable-http.log 2>&1 &
+          echo $! > /tmp/renko-observable-http.pid
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/rwa/renko/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/renko-observable-http.log
+          exit 1
+      - name: Desktop + mobile browser proof
+        env:
+          RWA_TEST_URL: http://127.0.0.1:8080/rwa
+        run: node tools/renko-observable-browser-report.mjs
+      - name: Stop server
+        if: always()
+        run: kill "$(cat /tmp/renko-observable-http.pid 2>/dev/null)" 2>/dev/null || true
+      - name: Upload browser screenshots and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: renko-observable-parity-${{ github.sha }}
+          path: artifacts/renko-observable-parity
+          if-no-files-found: warn
+          retention-days: 14
