@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 if(window.RWASeablueprintCommerceBridge)return;
-const VERSION='1.2.4';
+const VERSION='1.3.0';
 const CONFIG='rwa-commerce-config.json';
 const state={rootPath:location.pathname,returnHash:'',config:null,opening:false,storefrontLoaded:false,liveLoaded:false};
 const $=s=>document.querySelector(s);
@@ -21,7 +21,7 @@ async function config(){
 function mountLauncher(){
   const host=$('.top-actions');if(!host)return false;
   let b=$('#rwaSeablueprintCommerceLaunch');
-  if(!b){b=document.createElement('button');b.id='rwaSeablueprintCommerceLaunch';b.type='button';b.className='rwa-seablueprint-commerce-launch';b.dataset.rwaSeablueprintCommerce='1';b.setAttribute('aria-label','Open Seablueprint ecommerce inside RWA');b.setAttribute('aria-haspopup','dialog');b.innerHTML='<span class="rwa-seablueprint-commerce-mark">S</span><span class="rwa-seablueprint-commerce-label">ECOMMERCE</span>';const anchor=$('#rwaMarketplaceLaunch')||$('#rwaMultiChainLaunch')||host.querySelector('.signin');host.insertBefore(b,anchor||null)}
+  if(!b){b=document.createElement('button');b.id='rwaSeablueprintCommerceLaunch';b.type='button';b.className='rwa-seablueprint-commerce-launch';b.dataset.rwaSeablueprintCommerce='1';b.setAttribute('aria-label','Open Seablueprint ecommerce beside live market');b.setAttribute('aria-haspopup','dialog');b.innerHTML='<span class="rwa-seablueprint-commerce-mark">S</span><span class="rwa-seablueprint-commerce-label">ECOMMERCE</span>';const anchor=$('#rwaMarketplaceLaunch')||$('#rwaMultiChainLaunch')||host.querySelector('.signin');host.insertBefore(b,anchor||null)}
   return true;
 }
 function restoreSingleShell(){
@@ -37,6 +37,18 @@ function restoreReturnContext(){
   try{history.replaceState(history.state,'',`${state.rootPath}${location.search}${h||''}`)}catch{}
   if(h&&window.RWASuperApp?.navigate){const r=h.replace(/^#/,'');if(r&&r!=='shop')queueMicrotask(()=>window.RWASuperApp.navigate(r,{replace:true}))}
 }
+function marketRoute(){const r=String(location.hash||'#markets').replace(/^#/,'');return !r||r==='markets'||r.startsWith('trade/')}
+function ensureMarketBackdrop(){
+  if(marketRoute())return;
+  try{window.RWASuperApp?.navigate?.('markets',{replace:true})}catch{writeRoute('markets')}
+}
+function syncRailGeometry(){
+  const screen=$('#rwaShopScreen');if(!screen)return;
+  const bars=qa('.topbar,.productbar,.trustbar,#rwaExperienceRail');
+  let top=0;
+  for(const el of bars){const cs=getComputedStyle(el);if(cs.display==='none'||cs.visibility==='hidden')continue;const r=el.getBoundingClientRect();if(r.height>0&&r.bottom>0&&r.top<innerHeight)top=Math.max(top,r.bottom)}
+  screen.style.setProperty('--rwa-commerce-rail-top',`${Math.max(46,Math.round(top))}px`);
+}
 function tradeCoin(anchor){
   const raw=anchor.getAttribute('href')||'';
   if(/^#trade\//i.test(raw))return decodeURIComponent(raw.replace(/^#trade\//i,'').split(/[?#&]/)[0]||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
@@ -46,18 +58,20 @@ function tradeCoin(anchor){
 function decorate(){
   const screen=$('#rwaShopScreen');if(!screen)return;
   screen.dataset.seablueprintSingleShell='1';
+  screen.dataset.seablueprintPlacement='market-side-rail';
+  screen.setAttribute('aria-label','Seablueprint Ecommerce side rail beside RWA market');
   const brand=screen.querySelector('.rwa-shop-brand b');if(brand)brand.textContent='Seablueprint Ecommerce';
-  const small=screen.querySelector('.rwa-shop-brand small');if(small)small.textContent='RWA × SEABLUEPRINT · SINGLE SHELL';
+  const small=screen.querySelector('.rwa-shop-brand small');if(small)small.textContent='RWA × SEABLUEPRINT · MARKET SIDE RAIL';
   const body=$('#rwaShopBody');
-  if(body&&!body.querySelector('[data-seablueprint-source]')){const strip=document.createElement('div');strip.className='rwa-seablueprint-source';strip.dataset.seablueprintSource='1';const live=!!String(state.config?.api_base||'').trim();strip.innerHTML=`<div><b>SEABLUEPRINT COMMERCE</b><span>Runs inside this RWA page — no ecommerce page navigation.</span></div><span class="${live?'live':'locked'}">${live?'LIVE BACKEND':'BACKEND LOCKED'}</span>`;body.prepend(strip)}
+  if(body&&!body.querySelector('[data-seablueprint-source]')){const strip=document.createElement('div');strip.className='rwa-seablueprint-source';strip.dataset.seablueprintSource='1';const live=!!String(state.config?.api_base||'').trim();strip.innerHTML=`<div><b>SEABLUEPRINT COMMERCE</b><span>Products stay beside the live market — no ecommerce page navigation.</span></div><span class="${live?'live':'locked'}">${live?'LIVE BACKEND':'BACKEND LOCKED'}</span>`;body.prepend(strip)}
   qa('[data-rwa-shop]').forEach(x=>{x.dataset.seablueprintManaged='1';if(x.closest('.topnav'))x.textContent='Ecommerce';if(x.closest('.product-nav'))x.textContent='Physical Ecommerce'});
   qa('[data-rwa-command]').forEach(x=>{x.hidden=true;x.setAttribute('aria-hidden','true')});
   const cmd=$('#rwaCommandOpen');if(cmd){cmd.hidden=true;cmd.setAttribute('aria-hidden','true')}
   qa('#rwaShopScreen a[href]').forEach(a=>{a.removeAttribute('target');a.removeAttribute('rel');const coin=tradeCoin(a);if(coin){a.dataset.rwaShopTrade=coin;a.setAttribute('href',`#trade/${coin}`)}});
-  restoreSingleShell();
+  syncRailGeometry();restoreSingleShell();
 }
 async function ensureRuntime(){
-  loadStyle('rwa-seablueprint-commerce-bridge.css?v=1.2.4','bridge');
+  loadStyle('rwa-seablueprint-commerce-bridge.css?v=1.3.0','bridge');
   if(!window.RWAStorefront){await loadScript('rwa-storefront.js?v=2','storefront')}
   state.storefrontLoaded=!!window.RWAStorefront;
   const cfg=await config();
@@ -68,10 +82,10 @@ async function ensureRuntime(){
   }
   decorate();
 }
-async function open(tab='stores'){
+async function open(tab='products'){
   if(state.opening)return;state.opening=true;
   const before=location.pathname;if(location.hash!=='#shop')state.returnHash=location.hash||'';
-  try{await ensureRuntime();window.RWAStorefront?.open?.(tab);decorate();if(location.pathname!==before)restoreSingleShell();document.body.classList.add('rwa-seablueprint-commerce-open')}
+  try{await ensureRuntime();ensureMarketBackdrop();await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));window.RWAStorefront?.open?.(tab);decorate();if(location.pathname!==before)restoreSingleShell();document.body.classList.add('rwa-seablueprint-commerce-open');syncRailGeometry()}
   catch(e){toast(e?.message||'Seablueprint ecommerce unavailable')}
   finally{state.opening=false}
 }
@@ -91,27 +105,23 @@ function close({restore=true}={}){
 }
 function navigateTrade(coin){
   const route=`trade/${coin}`;
-  close({restore:false});
-  hardCloseShell();
-  try{
-    if(window.RWASuperApp?.navigate)window.RWASuperApp.navigate(route,{replace:true});
-    else writeRoute(route);
-  }catch{writeRoute(route)}
-  if(location.pathname!==state.rootPath)restoreSingleShell();
-  if(location.hash!==`#${route}`)writeRoute(route);
-  hardCloseShell();
+  close({restore:false});hardCloseShell();
+  try{if(window.RWASuperApp?.navigate)window.RWASuperApp.navigate(route,{replace:true});else writeRoute(route)}catch{writeRoute(route)}
+  if(location.pathname!==state.rootPath)restoreSingleShell();if(location.hash!==`#${route}`)writeRoute(route);hardCloseShell();
 }
-function externalCommerce(anchor){
-  try{const u=new URL(anchor.href,location.href);return u.origin!==location.origin}catch{return false}
-}
+function externalCommerce(anchor){try{const u=new URL(anchor.href,location.href);return u.origin!==location.origin}catch{return false}}
 function audit(){
   const launch=$('#rwaSeablueprintCommerceLaunch'),screen=$('#rwaShopScreen'),openNow=!!screen?.classList.contains('open'),external=openNow?qa('#rwaShopScreen a[href]').filter(externalCommerce).length:0;
-  const findings=[];if(!launch)findings.push('ECOMMERCE_LAUNCHER_MISSING');if(!samePath())findings.push('TOP_LEVEL_PATH_CHANGED');if(openNow&&!screen?.dataset.seablueprintSingleShell)findings.push('SHOP_NOT_SINGLE_SHELL');if(external)findings.push('EXTERNAL_COMMERCE_LINK_PRESENT');
-  return{ok:findings.length===0,version:VERSION,rootPath:state.rootPath,currentPath:location.pathname,returnHash:state.returnHash,launcherVisible:!!launch&&getComputedStyle(launch).display!=='none',shopOpen:openNow,storefrontLoaded:state.storefrontLoaded,liveLoaded:state.liveLoaded,candidateBase:state.config?.candidate_base||'',apiBaseConfigured:!!String(state.config?.api_base||'').trim(),externalCommerceLinks:external,findings};
+  const sr=screen?.getBoundingClientRect(),chart=document.querySelector('.chart-wrap'),cr=chart?.getBoundingClientRect();
+  const visibleChartWidth=openNow&&cr&&sr?Math.max(0,Math.min(cr.right,sr.left,innerWidth)-Math.max(cr.left,0)):cr?Math.max(0,Math.min(cr.right,innerWidth)-Math.max(cr.left,0)):0;
+  const marketVisible=!!chart&&getComputedStyle(chart).display!=='none'&&cr&&cr.height>80&&visibleChartWidth>0;
+  const railRightAligned=!openNow||!sr||Math.abs(innerWidth-sr.right)<=4;
+  const findings=[];if(!launch)findings.push('ECOMMERCE_LAUNCHER_MISSING');if(!samePath())findings.push('TOP_LEVEL_PATH_CHANGED');if(openNow&&!screen?.dataset.seablueprintSingleShell)findings.push('SHOP_NOT_SINGLE_SHELL');if(openNow&&screen?.dataset.seablueprintPlacement!=='market-side-rail')findings.push('SHOP_NOT_MARKET_SIDE_RAIL');if(openNow&&!marketVisible)findings.push('MARKET_CHART_NOT_VISIBLE');if(openNow&&!railRightAligned)findings.push('RAIL_NOT_RIGHT_ALIGNED');if(external)findings.push('EXTERNAL_COMMERCE_LINK_PRESENT');
+  return{ok:findings.length===0,version:VERSION,mode:'MARKET_SIDE_RAIL',rootPath:state.rootPath,currentPath:location.pathname,returnHash:state.returnHash,launcherVisible:!!launch&&getComputedStyle(launch).display!=='none',shopOpen:openNow,placement:screen?.dataset.seablueprintPlacement||'',storefrontLoaded:state.storefrontLoaded,liveLoaded:state.liveLoaded,candidateBase:state.config?.candidate_base||'',apiBaseConfigured:!!String(state.config?.api_base||'').trim(),externalCommerceLinks:external,marketVisible,visibleChartWidth:Math.round(visibleChartWidth||0),railWidth:Math.round(sr?.width||0),railLeft:Math.round(sr?.left||0),railRightAligned,findings};
 }
 function reconcile(){mountLauncher();decorate()}
 function captureClick(e){
-  const launch=e.target.closest?.('[data-rwa-seablueprint-commerce]');if(launch){e.preventDefault();e.stopImmediatePropagation();open('stores');return}
+  const launch=e.target.closest?.('[data-rwa-seablueprint-commerce],[data-rwa-shop]');if(launch){e.preventDefault();e.stopImmediatePropagation();open('products');return}
   if(e.target.closest?.('#rwaShopClose')){e.preventDefault();e.stopImmediatePropagation();close();return}
   const a=e.target.closest?.('#rwaShopScreen a[href]');if(!a)return;
   const coin=tradeCoin(a);if(coin){e.preventDefault();e.stopImmediatePropagation();navigateTrade(coin);return}
@@ -119,9 +129,10 @@ function captureClick(e){
 }
 window.addEventListener('click',captureClick,true);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#rwaShopScreen')?.classList.contains('open')){e.preventDefault();e.stopImmediatePropagation();close()}},true);
+addEventListener('resize',()=>requestAnimationFrame(syncRailGeometry),{passive:true});
 addEventListener('popstate',()=>setTimeout(restoreSingleShell,0));
 addEventListener('hashchange',()=>setTimeout(()=>{if(location.hash!=='#shop'&&$('#rwaShopScreen')?.classList.contains('open'))close()},0));
-function boot(){loadStyle('rwa-seablueprint-commerce-bridge.css?v=1.2.4','bridge');config().finally(reconcile);reconcile();new MutationObserver(()=>queueMicrotask(reconcile)).observe(document.documentElement,{subtree:true,childList:true});let n=0;const t=setInterval(()=>{reconcile();if(++n>40)clearInterval(t)},100)}
-window.RWASeablueprintCommerceBridge={version:VERSION,mode:'SINGLE_MAIN_DOCUMENT',source:'SEABLUEPRINT_COMMERCE_CONTRACT',open,close,audit,reconcile,config};
+function boot(){loadStyle('rwa-seablueprint-commerce-bridge.css?v=1.3.0','bridge');config().finally(reconcile);reconcile();new MutationObserver(()=>queueMicrotask(reconcile)).observe(document.documentElement,{subtree:true,childList:true});let n=0;const t=setInterval(()=>{reconcile();if(++n>40)clearInterval(t)},100)}
+window.RWASeablueprintCommerceBridge={version:VERSION,mode:'MARKET_SIDE_RAIL',source:'SEABLUEPRINT_COMMERCE_CONTRACT',open,close,audit,reconcile,config};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
