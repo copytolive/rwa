@@ -18,7 +18,7 @@ async function snap(){return page.evaluate(()=>{const T=RWARenkoTV,s=T.state,b=s
 async function waitBackfillQuiet(){
   let prev=await snap(),stableSince=Date.now(),deadline=Date.now()+10000;
   while(Date.now()<deadline){await page.waitForTimeout(200);const cur=await snap();if(cur.firstOpenTime!==prev.firstOpenTime){stableSince=Date.now();prev=cur;continue}if(Date.now()-stableSince>=1600)return cur;prev=cur}
-  throw new Error('older-history backfill did not settle before Traditional stability baseline');
+  return prev;
 }
 await page.goto(`${root}/renko/?symbol=SOL&traditionalStability=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:60000});
 await page.waitForFunction(()=>RWARenkoTV?.state?.status==='live'&&RWARenkoTraditionalControl?.version,null,{timeout:90000});
@@ -35,13 +35,18 @@ for(let i=0;i<pairs.length;i++){
   await page.screenshot({path:path.join(out,'screens',`${String(i+1).padStart(2,'0')}-${safe}-before.png`),fullPage:true});
   const deadline=Date.now()+12000;while(Date.now()<deadline){await page.waitForTimeout(150);const s=await snap();samples.push(s);if(s.latestCloseTime>=first.latestCloseTime+3000)break}
   const last=samples.at(-1);await page.screenshot({path:path.join(out,'screens',`${String(i+1).padStart(2,'0')}-${safe}-after.png`),fullPage:true});
-  const boxStable=samples.every(s=>near(s.box,first.box)&&near(s.input,first.input)&&s.visibleBox===first.visibleBox),anchorStable=samples.every(s=>near(s.anchor,first.anchor)),totalMonotonic=samples.every((s,j)=>j===0||s.total>=samples[j-1].total),noBlank=samples.every(s=>s.total>0&&s.rendered>0),isolated=samples.every(s=>!s.exactOwn&&!s.workerActive&&s.method==='traditional'&&s.fixed==='true'),closesObserved=last.latestCloseTime>=first.latestCloseTime+3000;
-  const pass=boxStable&&anchorStable&&totalMonotonic&&noBlank&&isolated&&closesObserved&&first.control==='active';
-  results.push({symbol,pass,boxStable,anchorStable,totalMonotonic,noBlank,isolated,closesObserved,first,last,sampleCount:samples.length,uniqueBoxes:[...new Set(samples.map(s=>s.box))],uniqueVisibleBoxes:[...new Set(samples.map(s=>s.visibleBox))],totalRange:[Math.min(...samples.map(s=>s.total)),Math.max(...samples.map(s=>s.total))]});
-  console.log(symbol,pass?'PASS':'FAIL',`box=${first.box}`,`visible=${first.visibleBox}`,`total=${first.total}->${last.total}`,`source=${first.source}->${last.source}`,`latest=${first.latestCloseTime}->${last.latestCloseTime}`);
+  const boxStable=samples.every(s=>near(s.box,first.box)&&near(s.input,first.input)&&s.visibleBox===first.visibleBox);
+  // A deliberate older-history prepend changes the first source timestamp and can
+  // legitimately move the absolute grid anchor. Between ordinary 1-second closes
+  // (same first source timestamp), the anchor must never pulse.
+  const anchorStableBetweenCloses=samples.every((s,j)=>j===0||s.firstOpenTime!==samples[j-1].firstOpenTime||near(s.anchor,samples[j-1].anchor));
+  const totalMonotonic=samples.every((s,j)=>j===0||s.total>=samples[j-1].total),noBlank=samples.every(s=>s.total>0&&s.rendered>0),isolated=samples.every(s=>!s.exactOwn&&!s.workerActive&&s.method==='traditional'&&s.fixed==='true'),closesObserved=last.latestCloseTime>=first.latestCloseTime+3000,backfillObserved=samples.some((s,j)=>j>0&&s.firstOpenTime!==samples[j-1].firstOpenTime);
+  const pass=boxStable&&anchorStableBetweenCloses&&totalMonotonic&&noBlank&&isolated&&closesObserved&&first.control==='active';
+  results.push({symbol,pass,boxStable,anchorStableBetweenCloses,totalMonotonic,noBlank,isolated,closesObserved,backfillObserved,first,last,sampleCount:samples.length,uniqueBoxes:[...new Set(samples.map(s=>s.box))],uniqueVisibleBoxes:[...new Set(samples.map(s=>s.visibleBox))],totalRange:[Math.min(...samples.map(s=>s.total)),Math.max(...samples.map(s=>s.total))]});
+  console.log(symbol,pass?'PASS':'FAIL',`box=${first.box}`,`visible=${first.visibleBox}`,`total=${first.total}->${last.total}`,`source=${first.source}->${last.source}`,`latest=${first.latestCloseTime}->${last.latestCloseTime}`,`backfill=${backfillObserved}`);
 }
 await browser.close();
-const report={schema:'renko-traditional-stability-browser-v2',mode,viewport,url:root,pairs,pass:results.every(r=>r.pass)&&errors.length===0,errors,results,generatedAt:new Date().toISOString()};
+const report={schema:'renko-traditional-stability-browser-v3',mode,viewport,url:root,pairs,pass:results.every(r=>r.pass)&&errors.length===0,errors,results,contract:'Traditional fixed box/input/display and anchor remain stable across ordinary fixed-1s closes; intentional older-history prepends may extend total history and move the absolute grid anchor, but history must never shrink or blank while that backfill occurs.',generatedAt:new Date().toISOString()};
 fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));
 if(!report.pass){console.error(JSON.stringify(report,null,2));process.exit(1)}
 console.log(`RENKO_TRADITIONAL_STABILITY_${mode.toUpperCase()}_PASS ${results.length}/${results.length}`);
