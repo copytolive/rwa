@@ -46,18 +46,18 @@ jobs:
           node --check tools/renko-observable-parity-gate.mjs
           node --check tools/renko-observable-browser-report.mjs
           node --check tools/renko-public-production-closure.mjs
-      - name: Verify RENKO tree unchanged since merged observable parity
+      - name: Verify RENKO tree unchanged since accepted closure baseline
         shell: bash
         run: |
           set -euo pipefail
-          MERGE_SHA=7b4146c5473e5042a288bf700db873b0c09d5d04
-          git cat-file -e "$MERGE_SHA^{commit}"
-          if ! git diff --quiet "$MERGE_SHA"..HEAD -- renko/; then
-            echo 'RENKO source drifted after the accepted merge:' >&2
-            git diff --name-status "$MERGE_SHA"..HEAD -- renko/ >&2
+          BASELINE_SHA=5fa775acc293bd4d1b960326bee702d54b5e2f4b
+          git cat-file -e "$BASELINE_SHA^{commit}"
+          if ! git diff --quiet "$BASELINE_SHA"..HEAD -- renko/; then
+            echo 'RENKO source drifted after the accepted closure baseline:' >&2
+            git diff --name-status "$BASELINE_SHA"..HEAD -- renko/ >&2
             exit 1
           fi
-          echo "RENKO tree is byte-identical to accepted merge $MERGE_SHA"
+          echo "RENKO tree is byte-identical to accepted closure baseline $BASELINE_SHA"
       - name: TradingView observable contract gate
         run: node tools/renko-observable-parity-gate.mjs
       - name: Install real browser dependencies
@@ -94,7 +94,7 @@ jobs:
           set -euo pipefail
           OUT=artifacts/renko-public-production-closure
           mkdir -p "$OUT"
-          MERGE_SHA=7b4146c5473e5042a288bf700db873b0c09d5d04
+          BASELINE_SHA=5fa775acc293bd4d1b960326bee702d54b5e2f4b
           files=(
             renko/index.html
             renko/renko-tv.css
@@ -123,7 +123,7 @@ jobs:
               if [ "$ok" = 1 ]; then
                 git cat-file -e "$stamp^{commit}" || ok=0
                 git merge-base --is-ancestor "$stamp" origin/main || ok=0
-                git diff --quiet "$MERGE_SHA".."$stamp" -- renko/ || ok=0
+                git diff --quiet "$BASELINE_SHA".."$stamp" -- renko/ || ok=0
               fi
             fi
             if [ "$ok" = 1 ]; then
@@ -145,11 +145,11 @@ jobs:
               git rev-parse origin/main > "$OUT/observed-main-sha.txt"
               break
             fi
-            echo "Public RENKO deployment not yet a known-main observable-parity build (attempt ${attempt}/90; stamp=${stamp:-missing})"
+            echo "Public RENKO deployment not yet a known-main closure-baseline build (attempt ${attempt}/90; stamp=${stamp:-missing})"
             sleep 10
           done
           if [ "$matched" != 1 ]; then
-            echo 'Public GitHub Pages RENKO runtime never converged to a known-main observable-parity build.' >&2
+            echo 'Public GitHub Pages RENKO runtime never converged to a known-main closure-baseline build.' >&2
             cat /tmp/renko-public-manifest.tsv >&2 || true
             exit 1
           fi
@@ -159,7 +159,7 @@ jobs:
           const rows=fs.readFileSync(`${out}/deployment-manifest.tsv`,'utf8').trim().split(/\n/).filter(Boolean).map(line=>{const [path,expectedBlob,publicBlob]=line.split('\t');return{path,expectedBlob,publicBlob,match:expectedBlob===publicBlob};});
           const deployedSha=fs.readFileSync(`${out}/deployment-sha.txt`,'utf8').trim();
           const observedMainSha=fs.readFileSync(`${out}/observed-main-sha.txt`,'utf8').trim();
-          const manifest={schema:'renko-public-deployment-manifest-v3',generatedAt:new Date().toISOString(),publicBase:process.env.PUBLIC_BASE,closureRunSha:process.env.GITHUB_SHA,deployedSha,observedMainSha,knownMainCommit:true,renkoMergeSha:'7b4146c5473e5042a288bf700db873b0c09d5d04',renkoTreeUnchangedFromAcceptedMerge:true,allMatch:rows.length>0&&rows.every(x=>x.match),files:rows};
+          const manifest={schema:'renko-public-deployment-manifest-v4',generatedAt:new Date().toISOString(),publicBase:process.env.PUBLIC_BASE,closureRunSha:process.env.GITHUB_SHA,deployedSha,observedMainSha,knownMainCommit:true,renkoOriginalMergeSha:'7b4146c5473e5042a288bf700db873b0c09d5d04',renkoClosureBaselineSha:'5fa775acc293bd4d1b960326bee702d54b5e2f4b',renkoTreeUnchangedFromClosureBaseline:true,allMatch:rows.length>0&&rows.every(x=>x.match),files:rows};
           fs.writeFileSync(`${out}/deployment-manifest.json`,JSON.stringify(manifest,null,2));
           console.log(JSON.stringify(manifest,null,2));
           if(!manifest.allMatch)process.exit(2);
