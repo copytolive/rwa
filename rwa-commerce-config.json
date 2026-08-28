@@ -1,9 +1,12 @@
 {
-  "schema": 3,
+  "schema": 4,
+  "source": "SEABLUEPRINT_COMMERCE",
   "candidate_base": "https://seablueprint.com/rwa-commerce",
   "fallback_candidate_base": "https://copytolive.com/rwa-commerce",
   "api_base": "",
   "mode": "LOCKED_UNTIL_BACKEND_AND_CHECKOUT_READY",
+  "shell_mode": "SINGLE_MAIN_DOCUMENT",
+  "navigation_policy": "NO_TOP_LEVEL_ECOMMERCE_NAVIGATION",
   "policy": "ONE_TOKEN_ONE_PHYSICAL_STORE_V1",
-  "note": "candidate_base is probe-only and reuses the live Seablueprint edge. Set api_base only after HTTPS healthz/readyz, payment configuration and at least one real verified store are proven. Empty api_base keeps frontend honest preview-only."
+  "note": "Seablueprint ecommerce is mounted inside the existing RWA main document. candidate_base is probe-only and reuses the live Seablueprint edge. Set api_base only after HTTPS healthz/readyz, payment configuration and at least one real verified store are proven. Empty api_base keeps frontend honest preview-only. Ecommerce interactions must not replace the top-level RWA page."
 }
