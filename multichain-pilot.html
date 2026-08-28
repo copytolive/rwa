@@ -12,19 +12,19 @@
 <main class="shell">
 <div id="status" class="status">Loading pilot policy…</div>
 <header class="head"><div><h1>MULTI CHAIN Real Receipt Pilot</h1><p>Operator-only real-wallet proof console. It is deliberately separated from unrestricted mainnet execution. No private key or seed phrase is ever requested or stored.</p></div><span class="badge">PILOT ONLY</span></header>
-<div class="warn"><b>Real-value transactions.</b> Every send requires the connected wallet to show and confirm the transaction. Route values are hard-capped by <code>launch/multichain-pilot.json</code>. Do not continue unless the wallet addresses and transaction details are correct.</div>
+<div class="warn"><b>Real-value transactions.</b> Every send requires the connected wallet to show and confirm the transaction. Route values are hard-capped by <code>launch/multichain-pilot.json</code>. Hyperliquid builder activation may require roughly 100 USDC of real account value. Verify every address and amount in your wallet before signing.</div>
 <section class="grid">
 <article class="card"><h2>EVM → EVM</h2><p>Base USDC → Arbitrum USDC · max 2 USDC</p><div class="row"><input id="amt-EVM_TO_EVM" type="number" min="0.1" max="2" step="0.1" value="1"><button id="run-EVM_TO_EVM">Run receipt</button></div></article>
 <article class="card"><h2>EVM → Solana</h2><p>Base USDC → Solana USDC · max 2 USDC</p><div class="row"><input id="amt-EVM_TO_SOLANA" type="number" min="0.1" max="2" step="0.1" value="1"><button id="run-EVM_TO_SOLANA">Run receipt</button></div></article>
 <article class="card"><h2>Solana → EVM</h2><p>Solana USDC → Arbitrum USDC · max 2 USDC</p><div class="row"><input id="amt-SOLANA_TO_EVM" type="number" min="0.1" max="2" step="0.1" value="1"><button id="run-SOLANA_TO_EVM">Run receipt</button></div></article>
 <article class="card"><h2>Same-chain</h2><p>Base USDC → USDT · max 2 USDC</p><div class="row"><input id="amt-SAME_CHAIN" type="number" min="0.1" max="2" step="0.1" value="1"><button id="run-SAME_CHAIN">Run receipt</button></div></article>
-<article class="card"><h2>Hyperliquid funding</h2><p>Native Arbitrum USDC → official Hyperliquid Bridge2 · 5–10 USDC</p><div class="row"><input id="amt-HYPERLIQUID_FUNDING" type="number" min="5" max="10" step="0.5" value="5"><button id="run-HYPERLIQUID_FUNDING">Fund pilot</button></div><small>Uses the provider-documented Bridge2 contract and waits for Arbitrum receipt plus Hyperliquid account-value credit.</small></article>
+<article class="card"><h2>Hyperliquid funding / builder activation</h2><p>Native Arbitrum USDC → official Hyperliquid Bridge2 · 5–105 USDC · target account value ≥100 USDC</p><div class="row"><input id="amt-HYPERLIQUID_FUNDING" type="number" min="5" max="105" step="0.5" value="100"><button id="run-HYPERLIQUID_FUNDING">Fund builder pilot</button></div><small>Uses the provider-documented Bridge2 contract, waits for the Arbitrum receipt and then verifies the Hyperliquid account-value credit. The wallet still performs the final real-money signature.</small></article>
 <article class="card"><h2>Failure / refund evidence</h2><p>Only capture an existing genuine failed/refunded LI.FI transaction. The console will not intentionally create a failing transaction.</p><div class="row"><input id="failure-hash" placeholder="real tx hash / Solana signature"></div><div class="row"><select id="failure-family"><option>EVM</option><option>SVM</option></select><input id="failure-amount" type="number" min="0.01" max="2" step="0.01" value="1"></div><div class="row"><input id="failure-from-chain" placeholder="fromChain id"><input id="failure-to-chain" placeholder="toChain id"><input id="failure-bridge" placeholder="bridge/tool optional"></div><div class="row"><button id="capture-failure">Verify provider status</button></div></article>
 </section>
-<section class="section"><h2>Captured receipts</h2><div id="receipts" class="receipts"></div><div class="footer"><button id="export">Export evidence JSON</button></div></section>
+<section class="section"><h2>Captured receipts</h2><div id="receipts" class="receipts"></div><div class="footer"><button id="export">Export machine-verifiable evidence JSON</button></div></section>
 <section class="section"><h2>Operator log</h2><div id="log" class="log"></div></section>
 </main>
 <script src="rwa-multichain-engine.js?v=3"></script>
-<script src="multichain-pilot.js?v=1"></script>
+<script src="multichain-pilot.js?v=2"></script>
 </body>
 </html>
