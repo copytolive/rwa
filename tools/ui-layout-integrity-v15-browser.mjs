@@ -8,7 +8,7 @@ async function open(viewport){const p=await browser.newPage({viewport});const pa
 async function audit(p,label){const a=await p.evaluate(()=>window.RWAUILayoutIntegrity.audit());if(!a.ok)throw Error(`${label}: ${JSON.stringify(a)}`);if(a.horizontalOverflowPx>4)throw Error(`${label}: horizontal overflow ${a.horizontalOverflowPx}`);return a}
 async function rect(p,sel){return p.locator(sel).evaluate(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height,display:s.display,visibility:s.visibility}})}
 function near(a,b,t=2){return Math.abs(a-b)<=t}
-async function assertDock(p,sel,label,expected=440){const d=await rect(p,sel);if(d.display==='none'||d.visibility==='hidden')throw Error(`${label}: dock hidden ${JSON.stringify(d)}`);if(!near(d.width,expected,2))throw Error(`${label}: width ${d.width} != ${expected}`);const vw=await p.evaluate(()=>innerWidth);if(!near(d.right,vw,2))throw Error(`${label}: right edge ${d.right} != ${vw}`);return d}
+async function assertDock(p,sel,label,expected=440){const d=await rect(p,sel);if(d.display==='none'||d.visibility==='hidden')throw Error(`${label}: dock hidden ${JSON.stringify(d)}`);if(!near(d.width,expected,2))throw Error(`${label}: width ${d.width} != ${expected}`);const vr=await p.evaluate(()=>document.documentElement.clientWidth);if(!near(d.right,vr,2))throw Error(`${label}: right edge ${d.right} != ${vr}`);return d}
 async function loadFundamentals(p){await p.addStyleTag({url:new URL('rwa-fundamentals.css',base).href});await p.addScriptTag({url:new URL('rwa-fundamentals.js',base).href});await p.waitForFunction(()=>window.RWAFundamentals?.version,{timeout:10000});await p.evaluate(()=>window.RWAUILayoutIntegrity.reconcile());await p.waitForTimeout(100)}
 async function transitionParity(p,label){
   await p.evaluate(()=>window.RWASuperApp.navigate('asset/PENDLE'));
@@ -25,7 +25,7 @@ async function transitionParity(p,label){
   if(!near(layoutAsset.width,layoutFund.width,1)||!near(layoutAsset.right,layoutFund.right,1))throw Error(`${label}: main layout jumped asset=${JSON.stringify(layoutAsset)} fund=${JSON.stringify(layoutFund)}`);
   const stale=await p.locator('[data-v5-action="legacy-fundamentals"]:visible').count();if(stale)throw Error(`${label}: stale Open market fundamentals launcher still visible`);
   if(await p.locator('#rwaSuperWorkspace:visible').count())throw Error(`${label}: asset workspace still visible behind fundamentals`);
-  const during=await audit(p,`${label} fundamentals`);if(during.contextWidthPx&& !near(during.contextWidthPx,440,2))throw Error(`${label}: audit context width mismatch ${JSON.stringify(during)}`);
+  const during=await audit(p,`${label} fundamentals`);if(during.contextWidthPx&&!near(during.contextWidthPx,440,2))throw Error(`${label}: audit context width mismatch ${JSON.stringify(during)}`);
   await p.locator('.rwa-fund-close').click();
   await p.waitForFunction(()=>!document.body.classList.contains('rwa-fundamentals-open')&&document.body.classList.contains('rwa-super-asset-workspace')&&!document.querySelector('#rwaSuperWorkspace')?.hidden);
   await p.waitForTimeout(100);
@@ -33,25 +33,8 @@ async function transitionParity(p,label){
   return{asset,fund,restored,layoutAsset,layoutFund};
 }
 
-const wide=await open({width:2048,height:1181});
-await audit(wide.p,'wide initial');
-await wide.p.screenshot({path:`${proof}/01-wide-marketplace-visible.png`,fullPage:true});
-const wideParity=await transitionParity(wide.p,'wide 2048');
-await wide.p.screenshot({path:`${proof}/02-wide-restored-asset.png`,fullPage:true});
-if(wide.pageErrors.length)throw Error(`wide page errors: ${wide.pageErrors.join(' | ')}`);await wide.p.close();
-
-const desktop=await open({width:1536,height:1000});
-await desktop.p.locator('#rwaMarketplaceLaunch').click();await desktop.p.waitForFunction(()=>String(window.RWASuperApp?.route?.()).startsWith('assets'));await desktop.p.waitForSelector('#rwaSuperWorkspace:not([hidden])',{state:'visible'});await audit(desktop.p,'desktop marketplace');
-await desktop.p.screenshot({path:`${proof}/03-desktop-marketplace.png`,fullPage:true});
-const desktopParity=await transitionParity(desktop.p,'desktop 1536');
-await desktop.p.evaluate(()=>window.RWAFundamentals.open('PENDLE'));await desktop.p.waitForFunction(()=>document.body.classList.contains('rwa-fundamentals-open'));await desktop.p.waitForTimeout(100);await audit(desktop.p,'desktop direct fundamentals');
-await desktop.p.screenshot({path:`${proof}/04-desktop-fundamentals-440.png`,fullPage:true});
-if(desktop.pageErrors.length)throw Error(`desktop page errors: ${desktop.pageErrors.join(' | ')}`);await desktop.p.close();
-
-const medium=await open({width:1280,height:900});
-const mediumParity=await transitionParity(medium.p,'medium 1280');await medium.p.screenshot({path:`${proof}/05-medium-1280-parity.png`,fullPage:true});if(medium.pageErrors.length)throw Error(`medium page errors: ${medium.pageErrors.join(' | ')}`);await medium.p.close();
-
+const wide=await open({width:2048,height:1181});await audit(wide.p,'wide initial');await wide.p.screenshot({path:`${proof}/01-wide-marketplace-visible.png`,fullPage:true});const wideParity=await transitionParity(wide.p,'wide 2048');await wide.p.screenshot({path:`${proof}/02-wide-restored-asset.png`,fullPage:true});if(wide.pageErrors.length)throw Error(`wide page errors: ${wide.pageErrors.join(' | ')}`);await wide.p.close();
+const desktop=await open({width:1536,height:1000});await desktop.p.locator('#rwaMarketplaceLaunch').click();await desktop.p.waitForFunction(()=>String(window.RWASuperApp?.route?.()).startsWith('assets'));await desktop.p.waitForSelector('#rwaSuperWorkspace:not([hidden])',{state:'visible'});await audit(desktop.p,'desktop marketplace');await desktop.p.screenshot({path:`${proof}/03-desktop-marketplace.png`,fullPage:true});const desktopParity=await transitionParity(desktop.p,'desktop 1536');await desktop.p.evaluate(()=>window.RWAFundamentals.open('PENDLE'));await desktop.p.waitForFunction(()=>document.body.classList.contains('rwa-fundamentals-open'));await desktop.p.waitForTimeout(100);await audit(desktop.p,'desktop direct fundamentals');await desktop.p.screenshot({path:`${proof}/04-desktop-fundamentals-440.png`,fullPage:true});if(desktop.pageErrors.length)throw Error(`desktop page errors: ${desktop.pageErrors.join(' | ')}`);await desktop.p.close();
+const medium=await open({width:1280,height:900});const mediumParity=await transitionParity(medium.p,'medium 1280');await medium.p.screenshot({path:`${proof}/05-medium-1280-parity.png`,fullPage:true});if(medium.pageErrors.length)throw Error(`medium page errors: ${medium.pageErrors.join(' | ')}`);await medium.p.close();
 const mobile=await open({width:390,height:844});const mb=mobile.p.locator('#rwaMarketplaceLaunch');if(!await mb.isVisible())throw Error('mobile marketplace launcher not visible');await audit(mobile.p,'mobile initial');await mobile.p.screenshot({path:`${proof}/06-mobile-marketplace-visible.png`,fullPage:true});await mb.click();await mobile.p.waitForFunction(()=>String(window.RWASuperApp?.route?.()).startsWith('assets'));await mobile.p.waitForSelector('#rwaSuperWorkspace:not([hidden])',{state:'visible'});await audit(mobile.p,'mobile marketplace');await mobile.p.screenshot({path:`${proof}/07-mobile-marketplace.png`,fullPage:true});if(mobile.pageErrors.length)throw Error(`mobile page errors: ${mobile.pageErrors.join(' | ')}`);await mobile.p.close();
-
-const result={ok:true,version:'16.0.0',canonicalDesktopDockPx:440,wide2048Parity:wideParity,desktop1536Parity:desktopParity,medium1280Parity:mediumParity,marketplaceProminent:true,assetFundamentalsSameWidth:true,assetFundamentalsSameEdges:true,mainLayoutNoJump:true,staleFundamentalsLauncherHidden:true,assetRestoredAfterFundamentalsClose:true,noContextOverlap:true,noRootHorizontalOverflow:true,mobile390:true};
-await writeFile(`${proof}/browser-result.json`,JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));await browser.close();
+const result={ok:true,version:'16.0.0',canonicalDesktopDockPx:440,wide2048Parity:wideParity,desktop1536Parity:desktopParity,medium1280Parity:mediumParity,marketplaceProminent:true,assetFundamentalsSameWidth:true,assetFundamentalsSameEdges:true,mainLayoutNoJump:true,staleFundamentalsLauncherHidden:true,assetRestoredAfterFundamentalsClose:true,noContextOverlap:true,noRootHorizontalOverflow:true,mobile390:true};await writeFile(`${proof}/browser-result.json`,JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));await browser.close();
