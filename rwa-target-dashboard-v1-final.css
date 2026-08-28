@@ -1,8 +1,14 @@
-/* RWA × SEABLUEPRINT TARGET FINAL GEOMETRY V1.4
-   Order Book is docked in front of the chart edge so the canonical market shell keeps its accepted width. */
-@media(min-width:1451px){
+/* RWA × SEABLUEPRINT TARGET FINAL GEOMETRY V1.5
+   Order Book is docked in front of the chart edge so the canonical market shell keeps its accepted width.
+   Compact desktop widths reserve enough visible chart area without weakening the browser acceptance gate. */
+@media(min-width:1701px){
  body.rwa-target-dashboard-v1 .topnav{flex:1 1 auto!important;min-width:430px!important}
  body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open .right{display:block!important;position:fixed!important;top:70px!important;right:clamp(360px,27vw,440px)!important;bottom:28px!important;width:250px!important;height:auto!important;z-index:10030!important;overflow:auto!important;border-left:1px solid #1b2a40!important;border-right:1px solid #1b2a40!important;background:#060f1a!important;box-shadow:-10px 0 24px rgba(0,0,0,.22)!important}
+}
+@media(min-width:1451px) and (max-width:1700px){
+ body.rwa-target-dashboard-v1 .topnav{flex:1 1 auto!important;min-width:390px!important}
+ body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open #rwaShopScreen[data-seablueprint-single-shell="1"],body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open #rwaCartDrawer{width:416px!important;min-width:416px!important;max-width:416px!important}
+ body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open .right{display:block!important;position:fixed!important;top:70px!important;right:416px!important;bottom:28px!important;width:250px!important;height:auto!important;z-index:10030!important;overflow:auto!important;border-left:1px solid #1b2a40!important;border-right:1px solid #1b2a40!important;background:#060f1a!important;box-shadow:-10px 0 24px rgba(0,0,0,.22)!important}
 }
 @media(min-width:1121px) and (max-width:1450px){
  body.rwa-target-dashboard-v1 .topnav{flex:1 1 auto!important;min-width:330px!important}
@@ -15,5 +21,5 @@
  body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open .right .mover-section{display:none!important}
  body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open .right .order-section{min-height:100%!important}
 }
-@media(min-width:1600px){body.rwa-target-dashboard-v1 .topbar{gap:12px!important}body.rwa-target-dashboard-v1 .topnav button{padding-left:11px!important;padding-right:11px!important}}
-@media(max-width:1599px) and (min-width:1121px){body.rwa-target-dashboard-v1 .topnav button{padding-left:7px!important;padding-right:7px!important;font-size:9px!important}body.rwa-target-dashboard-v1 .rwa-target-inpage{display:none!important}body.rwa-target-dashboard-v1 .rwa-seablueprint-commerce-launch{padding:0 8px!important}}
+@media(min-width:1701px){body.rwa-target-dashboard-v1 .topbar{gap:12px!important}body.rwa-target-dashboard-v1 .topnav button{padding-left:11px!important;padding-right:11px!important}}
+@media(max-width:1700px) and (min-width:1121px){body.rwa-target-dashboard-v1 .topnav button{padding-left:7px!important;padding-right:7px!important;font-size:9px!important}body.rwa-target-dashboard-v1 .rwa-target-inpage{display:none!important}body.rwa-target-dashboard-v1 .rwa-seablueprint-commerce-launch{padding:0 8px!important}}
