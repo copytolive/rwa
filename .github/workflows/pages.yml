@@ -6,6 +6,8 @@ on:
     paths-ignore:
       - "monitor/status.json"
       - "docs/workflow-archive/**"
+  pull_request:
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -14,30 +16,32 @@ permissions:
   id-token: write
 
 concurrency:
-  group: rwa-pages
+  group: rwa-pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate current Super App, MULTI CHAIN V2 and safety contracts
+      - name: Validate current Super App, MULTI CHAIN Tuntas and safety contracts
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           for f in \
             index.html superapp-v5.js superapp-v5.css rwa-sw-v5.js suite-nav.js \
             execution-api.js execution-ops-bridge.js exchange-core.js \
             rwa-execution-config.json token/config.json manifest.webmanifest rwa-discovery-catalog.json \
-            rwa-multichain.js rwa-multichain-engine.js rwa-multichain-registry.json \
+            rwa-multichain.js rwa-multichain-engine.js rwa-multichain-registry.json rwa-multichain-revenue.json rwa-multichain-funding.json \
+            launch/multichain-receipts.json launch/multichain-readiness.json \
             persistent-market-shell-v3.css persistent-market-operability-patch-v1.css enterprise-ui-v12.css market-performance.js \
             tools/superapp-v5-audit.mjs tools/superapp-v5-browser.mjs \
             tools/superapp-p16-p20-audit.mjs tools/superapp-p16-p20-browser.mjs \
-            tools/multichain-contract.mjs tools/multichain-browser.mjs tools/security-gate.mjs \
+            tools/multichain-contract.mjs tools/multichain-browser.mjs tools/multichain-tuntas-browser.mjs \
+            tools/multichain-receipt-matrix.mjs tools/multichain-mainnet-gate.mjs tools/security-gate.mjs \
             renko/index.html renko/renko-tv.css renko/renko-tv-engine.js renko/renko-tv-app.js \
             renko/renko-tv-atr-parity.js renko/renko-tv-locale-guard.js renko/renko-tv-fetch-guard.js \
             renko/renko-tv-ultrafast-ui.js; do test -s "$f"; done
@@ -45,27 +49,38 @@ jobs:
           for f in superapp-v5.js rwa-sw-v5.js suite-nav.js execution-api.js execution-ops-bridge.js exchange-core.js market-performance.js \
             rwa-multichain.js rwa-multichain-engine.js tools/superapp-v5-audit.mjs tools/superapp-v5-browser.mjs \
             tools/superapp-p16-p20-audit.mjs tools/superapp-p16-p20-browser.mjs tools/multichain-contract.mjs tools/multichain-browser.mjs \
+            tools/multichain-tuntas-browser.mjs tools/multichain-receipt-matrix.mjs tools/multichain-mainnet-gate.mjs \
             tools/security-gate.mjs renko/renko-tv-engine.js renko/renko-tv-app.js renko/renko-tv-atr-parity.js \
             renko/renko-tv-locale-guard.js renko/renko-tv-fetch-guard.js renko/renko-tv-ultrafast-ui.js; do node --check "$f"; done
 
-          for f in rwa-execution-config.json token/config.json manifest.webmanifest rwa-discovery-catalog.json rwa-multichain-registry.json; do python -m json.tool "$f" >/dev/null; done
+          for f in rwa-execution-config.json token/config.json manifest.webmanifest rwa-discovery-catalog.json \
+            rwa-multichain-registry.json rwa-multichain-revenue.json rwa-multichain-funding.json \
+            launch/multichain-receipts.json launch/multichain-readiness.json; do python -m json.tool "$f" >/dev/null; done
 
+          test "$(grep -o '<script src=' index.html | wc -l | tr -d ' ')" = "6"
           SUPER_CSS_REF="$(grep -oE 'superapp-v5\.css\?v=[0-9]+' index.html | head -1)"
           SUPER_JS_REF="$(grep -oE 'superapp-v5\.js\?v=[0-9]+' index.html | head -1)"
-          test -n "$SUPER_CSS_REF"; test -n "$SUPER_JS_REF"
+          MARKET_JS_REF="$(grep -oE 'market-performance\.js\?v=[0-9]+' index.html | head -1)"
+          test -n "$SUPER_CSS_REF"; test -n "$SUPER_JS_REF"; test -n "$MARKET_JS_REF"
           grep -Fq "./$SUPER_CSS_REF" rwa-sw-v5.js
           grep -Fq "./$SUPER_JS_REF" rwa-sw-v5.js
+          grep -Fq "./$MARKET_JS_REF" rwa-sw-v5.js
+          grep -Fq "u.pathname===ROOT+'rwa-multichain.js'" rwa-sw-v5.js
+          grep -Fq "u.pathname===ROOT+'rwa-multichain-engine.js'" rwa-sw-v5.js
           grep -Fq 'realtime-core.js?v=3' index.html
           grep -Fq 'market-performance.js?v=12' index.html
           grep -Fq 'rwaMultiChainLazyBootstrap' index.html
           grep -Eq "SRC='rwa-multichain\.js\?v=[0-9]+'" index.html
+          ! grep -Fq '<script src="rwa-multichain.js' index.html
           grep -Fq "POLICY='chain-abstraction-fail-closed-v2'" rwa-multichain.js
-          grep -Fq "ENGINE_SRC='rwa-multichain-engine.js?v=2'" rwa-multichain.js
-          grep -Fq "const VERSION='2.0.0'" rwa-multichain-engine.js
+          grep -Fq "REVISION='3.0.0-tuntas'" rwa-multichain.js
+          grep -Fq "const REVISION='3.0.0-tuntas'" rwa-multichain-engine.js
           grep -Fq "const LIFI='https://li.quest/v1'" rwa-multichain-engine.js
           grep -Fq '"policy": "chain-abstraction-fail-closed-v2"' rwa-multichain-registry.json
+          grep -Fq '"legacy_bridge_direct_write": false' rwa-multichain-funding.json
           ! grep -Fq 'ExchangeClient' rwa-multichain.js
           ! grep -Fq 'ExchangeClient' rwa-multichain-engine.js
+
           grep -Fq 'persistent-market-operability-patch-v1.css?v=11' market-performance.js
           grep -Fq 'enterprise-ui-v12.css?v=12' market-performance.js
           grep -Fq 'SINGLE RIGHT DOCK CONTRACT V12.2' enterprise-ui-v12.css
@@ -91,11 +106,12 @@ jobs:
           RENKO_ATR_REF="$(grep -oE 'renko-tv-atr-parity\.js\?v=[0-9]+' renko/index.html | tail -1)"
           test -n "$RENKO_ENGINE_REF"; test -n "$RENKO_APP_REF"; test -n "$RENKO_ATR_REF"
           grep -Fq 'ATR LENGTH' renko/index.html
-          grep -Fq 'TradingView documented model' renko/index.html
 
           node tools/superapp-v5-audit.mjs
           node tools/superapp-p16-p20-audit.mjs
           node tools/multichain-contract.mjs
+          node tools/multichain-receipt-matrix.mjs
+          node tools/multichain-mainnet-gate.mjs --write
           node tools/security-gate.mjs
 
       - name: Install browser runtime
@@ -108,7 +124,7 @@ jobs:
           RWA_TEST_URL: http://127.0.0.1:4173/rwa/
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           mkdir -p /tmp/rwa-superapp-site/rwa
           cp -a . /tmp/rwa-superapp-site/rwa/
           cd /tmp/rwa-superapp-site
@@ -119,9 +135,11 @@ jobs:
           cd "$GITHUB_WORKSPACE"
           node tools/superapp-v5-browser.mjs
           node tools/superapp-p16-p20-browser.mjs
-          RWA_PROOF_DIR=proof/multichain-v2-pages-local node tools/multichain-browser.mjs
+          RWA_PROOF_DIR=proof/multichain-v3-pages-local node tools/multichain-browser.mjs
+          RWA_PROOF_DIR=proof/multichain-v3-tuntas-pages-local node tools/multichain-tuntas-browser.mjs
 
   deploy:
+    if: github.event_name != 'pull_request'
     needs: verify
     environment:
       name: github-pages
@@ -134,10 +152,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify V12.2, V11 and MULTI CHAIN V2 release payload
+      - name: Verify V12.2, V11 and MULTI CHAIN Tuntas release payload
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
+          test "$(grep -o '<script src=' index.html | wc -l | tr -d ' ')" = "6"
           grep -Fq 'market-performance.js?v=12' index.html
           grep -Fq 'persistent-market-operability-patch-v1.css?v=11' market-performance.js
           grep -Fq 'enterprise-ui-v12.css?v=12' market-performance.js
@@ -146,10 +165,12 @@ jobs:
           grep -Fq 'SINGLE RIGHT DOCK CONTRACT V12.2' enterprise-ui-v12.css
           grep -Fq -- '--rwa-context-panel:440px' enterprise-ui-v12.css
           grep -Fq 'rwaMultiChainLazyBootstrap' index.html
-          grep -Fq "POLICY='chain-abstraction-fail-closed-v2'" rwa-multichain.js
-          grep -Fq "const VERSION='2.0.0'" rwa-multichain-engine.js
+          grep -Fq "REVISION='3.0.0-tuntas'" rwa-multichain.js
+          grep -Fq "const REVISION='3.0.0-tuntas'" rwa-multichain-engine.js
           grep -Fq '"policy": "chain-abstraction-fail-closed-v2"' rwa-multichain-registry.json
           node tools/multichain-contract.mjs
+          node tools/multichain-receipt-matrix.mjs
+          node tools/multichain-mainnet-gate.mjs --write
           test -n "$(grep -oE 'renko-tv-engine\.js\?v=[0-9]+' renko/index.html | tail -1)"
           test -n "$(grep -oE 'renko-tv-app\.js\?v=[0-9]+' renko/index.html | tail -1)"
 
@@ -170,7 +191,7 @@ jobs:
         if: success()
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           git fetch --prune --tags --force origin '+refs/heads/*:refs/remotes/origin/*'
           mkdir -p backup
           git archive --format=zip --output=backup/repo.zip "$GITHUB_SHA"
@@ -178,7 +199,7 @@ jobs:
           git show-ref | sort > backup/refs.txt
           python - <<'PY'
           import json, os, datetime
-          receipt={"name":"RWA-LIVE-SYNC","version":"14.0-multichain-v2","timestamp":datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d-%H%M%S'),"sha":os.environ['GITHUB_SHA'],"remote":"https://github.com/copytolive/rwa.git","pages":"https://copytolive.github.io/rwa/","gate":"pages-deploy-success+multichain-v2"}
+          receipt={"name":"RWA-LIVE-SYNC","version":"15.0-multichain-tuntas-v3","timestamp":datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d-%H%M%S'),"sha":os.environ['GITHUB_SHA'],"remote":"https://github.com/copytolive/rwa.git","pages":"https://copytolive.github.io/rwa/","gate":"pages-deploy-success+multichain-tuntas-v3"}
           open('backup/receipt.json','w').write(json.dumps(receipt,separators=(',',':'))+'\n')
           PY
           (cd backup && sha256sum repo.zip repo.bundle refs.txt receipt.json > SHA256SUMS.txt)

@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "mode": "TRANSITIONAL_PROVIDER_VALIDATION_REQUIRED",
+  "hyperliquid": {
+    "enabled": false,
+    "adapter_verified": false,
+    "staging_network": "arbitrum",
+    "staging_token": "USDC",
+    "official_deposit_url": "https://app.hyperliquid.xyz/",
+    "provider_mode": "CCTP_OR_CURRENT_OFFICIAL_DEPOSIT",
+    "legacy_bridge_direct_write": false,
+    "activation_gate": "HYPERLIQUID_CURRENT_DEPOSIT_ADAPTER_VERIFIED",
+    "evidence_url": ""
+  },
+  "policy": {
+    "stage_cross_chain_to_arbitrum_usdc": true,
+    "no_direct_legacy_bridge_write": true,
+    "no_second_exchange_write_path": true,
+    "final_hyperliquid_handoff_fail_closed": true,
+    "requires_current_provider_evidence": true
+  }
+}
