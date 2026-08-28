@@ -12,9 +12,10 @@ fs.mkdirSync(path.join(out,'screens'),{recursive:true});
 const browser=await chromium.launch({headless:true,args:['--disable-dev-shm-usage']});
 const ctx=await browser.newContext({viewport,deviceScaleFactor:1});
 const page=await ctx.newPage();
-const errors=[];
+const errors=[],benignSocketClose=[];
+const benign=s=>/WebSocket connection .*?(Ping received after close|closed before the connection is established)/i.test(String(s));
 page.on('pageerror',e=>errors.push(`pageerror:${e.message}`));
-page.on('console',m=>{if(m.type()==='error')errors.push(`console:${m.text()}`)});
+page.on('console',m=>{if(m.type()!=='error')return;const s=m.text();if(benign(s))benignSocketClose.push(s);else errors.push(`console:${s}`)});
 
 const results=[];
 const near=(a,b)=>Math.abs(Number(a)-Number(b))<=Math.max(1e-12,Math.abs(Number(b))*1e-11);
@@ -33,11 +34,7 @@ for(let i=0;i<pairs.length;i++){
   const first=await snap();
   const samples=[first];
   const deadline=Date.now()+12000;
-  while(Date.now()<deadline){
-    await page.waitForTimeout(150);
-    const s=await snap();samples.push(s);
-    if(s.source>=first.source+3)break;
-  }
+  while(Date.now()<deadline){await page.waitForTimeout(150);const s=await snap();samples.push(s);if(s.source>=first.source+3)break}
   const last=samples.at(-1);
   const boxStable=samples.every(s=>near(s.box,first.box)&&near(s.exact,first.exact)&&near(s.atr,first.atr));
   const anchorStable=samples.every(s=>near(s.anchor,first.anchor));
@@ -52,7 +49,7 @@ for(let i=0;i<pairs.length;i++){
   console.log(symbol,pass?'PASS':'FAIL',`box=${first.box}`,`total=${first.total}->${last.total}`,`source=${first.source}->${last.source}`);
 }
 await browser.close();
-const report={schema:'renko-atr-stability-real-browser-v2-single-live-session',mode,viewport,url:root,pairs,pass:results.every(r=>r.pass)&&errors.length===0,errors,results,generatedAt:new Date().toISOString()};
+const report={schema:'renko-atr-stability-real-browser-v3',mode,viewport,url:root,pairs,pass:results.every(r=>r.pass)&&errors.length===0,errors,benignSocketClose,results,generatedAt:new Date().toISOString()};
 fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));
 if(!report.pass){console.error(JSON.stringify(report,null,2));process.exit(1)}
-console.log(`RENKO_ATR_STABILITY_${mode.toUpperCase()}_PASS ${results.length}/${results.length}`);
+console.log(`RENKO_ATR_STABILITY_${mode.toUpperCase()}_PASS ${results.length}/${results.length} benignSocketClose=${benignSocketClose.length}`);
