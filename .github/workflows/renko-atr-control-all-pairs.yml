@@ -28,11 +28,14 @@ jobs:
           set -euo pipefail
           node --check renko/renko-tv-engine.js
           node --check renko/renko-tv-atr-control.js
+          node --check renko/renko-tv-confirmed-count-guard.js
           node --check tools/renko-atr-control-all-pairs-report.mjs
           node --check tools/renko-atr-stability-report.mjs
           grep -Fq "version:'1.4.0-fixed-1s'" renko/renko-tv-engine.js
           grep -Fq "contract:'tradingview-public-documentation-compatible-fixed-1s'" renko/renko-tv-engine.js
           grep -q 'renko-tv-atr-control.js?v=2' renko/index.html
+          grep -q 'renko-tv-confirmed-count-guard.js?v=1' renko/index.html
+          grep -q 'visible-confirmed-count-is-full-engine-total-never-render-cap' renko/renko-tv-confirmed-count-guard.js
           grep -q 'snapshot-box-stable-between-closes' renko/renko-tv-atr-control.js
           grep -q '_exactBox=box' renko/renko-tv-atr-control.js
       - name: Install Chromium
@@ -89,14 +92,16 @@ jobs:
           set -euo pipefail
           index='https://copytolive.github.io/rwa/renko/'
           control='https://copytolive.github.io/rwa/renko/renko-tv-atr-control.js'
+          guard='https://copytolive.github.io/rwa/renko/renko-tv-confirmed-count-guard.js'
           stamp='https://copytolive.github.io/rwa/renko-deployment-sha.txt'
           for i in $(seq 1 90); do
             ts=$(date +%s%N)
             got=$(curl -fsS "$stamp?ts=$ts" 2>/dev/null | tr -d '\r\n' || true)
             html=$(curl -fsS "$index?ts=$ts" 2>/dev/null || true)
             js=$(curl -fsS "$control?ts=$ts" 2>/dev/null || true)
+            guardjs=$(curl -fsS "$guard?ts=$ts" 2>/dev/null || true)
             echo "attempt=$i deployed=$got"
-            if [ "$got" = "$GITHUB_SHA" ] && grep -q 'renko-tv-atr-control.js?v=2' <<<"$html" && grep -q 'snapshot-box-stable-between-closes' <<<"$js"; then
+            if [ "$got" = "$GITHUB_SHA" ] && grep -q 'renko-tv-atr-control.js?v=2' <<<"$html" && grep -q 'renko-tv-confirmed-count-guard.js?v=1' <<<"$html" && grep -q 'snapshot-box-stable-between-closes' <<<"$js" && grep -q 'visible-confirmed-count-is-full-engine-total-never-render-cap' <<<"$guardjs"; then
               echo "PUBLIC_ANTI_PULSE_RUNTIME_PRESENT deployed=$got"
               exit 0
             fi
