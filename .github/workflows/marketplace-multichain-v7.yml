@@ -11,11 +11,13 @@ on:
       - "rwa-marketplace-v2.css"
       - "rwa-marketplace-v2.js"
       - "rwa-marketplace-v2.json"
+      - "rwa-marketplace-checkout-split.js"
       - "rwa-market-universe.js"
       - "rwa-trade-protection.js"
       - "rwa-multichain-engine.js"
       - "rwa-multichain-registry.json"
       - "rwa-commerce-registry.json"
+      - "suite-nav.js"
       - "tools/marketplace-multichain-v7-contract.mjs"
       - "tools/marketplace-v2-browser.mjs"
       - ".github/workflows/marketplace-multichain-v7.yml"
@@ -43,6 +45,8 @@ jobs:
             rwa-market-universe.js \
             rwa-trade-protection.js \
             rwa-marketplace-v2.js \
+            rwa-marketplace-checkout-split.js \
+            suite-nav.js \
             tools/marketplace-multichain-v7-contract.mjs \
             tools/marketplace-v2-browser.mjs; do
             node --check "$f"
