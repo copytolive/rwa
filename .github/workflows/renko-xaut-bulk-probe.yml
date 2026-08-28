@@ -13,32 +13,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Measure Gate XAUT fixed 1s retention and archive
+      - name: Probe OKX XAUT-USDT fixed 1s history
         shell: bash
         run: |
-          set -u
-          root='https://api.gateio.ws/api/v4/spot/candlesticks?currency_pair=XAUT_USDT&interval=1s'
-          now=$(date +%s)
-          for age in 0 3600 86400 604800 1036800; do
-            to=$((now-age)); from=$((to-999))
-            code=$(curl -sS -o /tmp/r.json -w '%{http_code}' "$root&from=$from&to=$to" || true)
-            echo "AGE=$age HTTP=$code BODY=$(head -c 500 /tmp/r.json)"
-            if [[ "$code" == 200 ]]; then
-              echo "rows=$(jq 'length' /tmp/r.json) first=$(jq -c '.[0]' /tmp/r.json) last=$(jq -c '.[-1]' /tmp/r.json)"
-            fi
+          set -euo pipefail
+          echo '--- instrument ---'
+          curl -fsS 'https://www.okx.com/api/v5/public/instruments?instType=SPOT&instId=XAUT-USDT' | tee /tmp/inst.json
+          echo
+          echo '--- ticker ---'
+          curl -fsS 'https://www.okx.com/api/v5/market/ticker?instId=XAUT-USDT' | tee /tmp/ticker.json
+          echo
+          nowms=$(( $(date +%s) * 1000 ))
+          for age in 0 3600 86400 604800 1036800 5184000; do
+            target=$((nowms-age*1000))
+            url="https://www.okx.com/api/v5/market/history-candles?instId=XAUT-USDT&bar=1s&after=$target&limit=5"
+            code=$(curl -sS -o /tmp/c.json -w '%{http_code}' "$url")
+            echo "AGE=$age HTTP=$code CODE=$(jq -r '.code' /tmp/c.json) MSG=$(jq -r '.msg' /tmp/c.json) ROWS=$(jq '.data|length' /tmp/c.json) FIRST=$(jq -c '.data[0]' /tmp/c.json) LAST=$(jq -c '.data[-1]' /tmp/c.json)"
           done
-          echo '--- Gate daily 1s archive variants ---'
-          d=$(date -u -d '2 days ago' +%Y%m%d); ym=${d:0:6}
-          for url in \
-            "https://download.gatedata.org/spot/candlesticks_1s/$ym/XAUT_USDT-$d.csv.gz" \
-            "https://download.gatedata.org/spot/candlesticks_1s/$ym/XAUT_USDT-$ym.csv.gz" \
-            "https://download.gatedata.org/spot/candlesticks_1s/$ym/XAUT_USDT-${ym}01.csv.gz"; do
-            code=$(curl -L -sS -o /tmp/a.gz -w '%{http_code}' "$url" || true)
-            bytes=$(wc -c </tmp/a.gz 2>/dev/null || echo 0)
-            echo "$code $bytes $url"
-            if [[ "$code" == 200 && "$bytes" -gt 100 ]]; then
-              gzip -dc /tmp/a.gz >/tmp/a.csv
-              echo "lines=$(wc -l </tmp/a.csv)"
-              head -n 2 /tmp/a.csv; tail -n 2 /tmp/a.csv
-            fi
-          done
+          test "$(jq -r '.code' /tmp/inst.json)" = 0
+          test "$(jq '.data|length' /tmp/inst.json)" -gt 0
