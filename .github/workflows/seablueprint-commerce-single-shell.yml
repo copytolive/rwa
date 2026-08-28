@@ -7,6 +7,7 @@ on:
       - 'chart-core.js'
       - 'rwa-seablueprint-commerce-bridge.js'
       - 'rwa-seablueprint-commerce-bridge.css'
+      - 'rwa-ecommerce-production-label.js'
       - 'rwa-commerce-config.json'
       - 'rwa-storefront.js'
       - 'rwa-commerce-api.js'
@@ -19,6 +20,7 @@ on:
       - 'chart-core.js'
       - 'rwa-seablueprint-commerce-bridge.js'
       - 'rwa-seablueprint-commerce-bridge.css'
+      - 'rwa-ecommerce-production-label.js'
       - 'rwa-commerce-config.json'
       - 'rwa-storefront.js'
       - 'rwa-commerce-api.js'
@@ -41,7 +43,10 @@ jobs:
           set -euxo pipefail
           node --check chart-core.js
           node --check rwa-seablueprint-commerce-bridge.js
+          node --check rwa-ecommerce-production-label.js
           node --check tools/seablueprint-commerce-single-shell-browser.mjs
+          grep -Fq "const LABEL='Ecommerce production'" rwa-ecommerce-production-label.js
+          grep -Fq "rwa-ecommerce-production-label.js?v=1.0.0" chart-core.js
           node -e "const c=require('./rwa-commerce-config.json'); if(c.shell_mode!=='SINGLE_MAIN_DOCUMENT'||c.navigation_policy!=='NO_TOP_LEVEL_ECOMMERCE_NAVIGATION'||c.source!=='SEABLUEPRINT_COMMERCE'||c.api_base!=='') process.exit(1)"
       - name: Install Chromium
         run: |
