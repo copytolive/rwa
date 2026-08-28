@@ -69,7 +69,7 @@ await page.route('**/*',async route=>{
     }
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:b.id,result:'0x0'})});
   }
-  if(u.pathname.includes('/exchange'))directWrites.push(req.url());
+  if(u.pathname==='/exchange')directWrites.push(req.url());
   return route.continue();
 });
 
