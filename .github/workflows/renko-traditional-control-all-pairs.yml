@@ -5,6 +5,7 @@ on:
       - main
       - fix/renko-traditional-control-all-pairs-20260829
       - fix/renko-traditional-first-frame-target-20260829
+      - fix/renko-traditional-live-tick-limit-20260829
     paths:
       - 'renko/**'
       - 'tools/renko-traditional-*.mjs'
