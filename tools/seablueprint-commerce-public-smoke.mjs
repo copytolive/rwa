@@ -126,6 +126,9 @@ try {
   await mobile.locator('#rwaShopClose').click();
   await mobile.waitForFunction(() => !document.querySelector('#rwaShopScreen')?.classList.contains('open'), { timeout: 20000 });
   if (mobileErrors.length) throw Error(`public mobile page errors: ${mobileErrors.join(' | ')}`);
+
+  const unexpectedPages = opened.filter(p => p !== mobile);
+  if (unexpectedPages.length) throw Error(`public ecommerce opened ${unexpectedPages.length} unexpected top-level page(s)`);
   await mobile.close();
 
   const result = {
@@ -141,7 +144,7 @@ try {
     canonicalTradeVerified: true,
     deterministicOverlayCloseVerified: true,
     assetContextRestored: true,
-    noPopups: opened.length === 0,
+    noPopups: unexpectedPages.length === 0,
     desktop1536: true,
     mobile390: true
   };
