@@ -1,6 +1,6 @@
 {
   "schema": 5,
-  "generated_at": "2026-08-28T00:51:22.256Z",
+  "generated_at": "2026-08-28T08:09:18.649Z",
   "status": "BLOCKED",
   "engineering_ready": true,
   "beta_ready": false,
@@ -181,6 +181,10 @@
     "revenue_deferred": {
       "ok": true,
       "detail": "builder/platform fee remains OFF until final revenue wallet approval"
+    },
+    "multichain_mainnet": {
+      "ok": false,
+      "detail": "MULTI CHAIN BLOCKED; global mainnet remains locked"
     }
   },
   "blockers": [
@@ -259,8 +263,34 @@
     {
       "gate": "mainnet_control",
       "detail": "mainnet_enabled=false"
+    },
+    {
+      "gate": "multichain_mainnet",
+      "detail": "MULTI CHAIN BLOCKED; global mainnet remains locked"
     }
   ],
   "revenue": "DEFERRED",
-  "token_tge": "DEFERRED"
+  "token_tge": "DEFERRED",
+  "multichain": {
+    "status": "BLOCKED",
+    "ready": false,
+    "blockers": [
+      {
+        "gate": "real_receipt_matrix",
+        "detail": "real external-wallet cross-chain receipt matrix required"
+      },
+      {
+        "gate": "lifi_provider_approval",
+        "detail": "LI.FI partner+payout approval evidence required before fee activation"
+      },
+      {
+        "gate": "hyperliquid_builder_approval",
+        "detail": "Hyperliquid builder eligibility, builder address and fee approval evidence required"
+      },
+      {
+        "gate": "hyperliquid_funding_adapter",
+        "detail": "current Hyperliquid CCTP/official deposit adapter evidence required; legacy bridge direct write remains disabled"
+      }
+    ]
+  }
 }
