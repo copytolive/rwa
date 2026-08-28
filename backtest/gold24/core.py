@@ -19,6 +19,7 @@ SL_MAX = 25.0
 TP_MIN = 5.0
 TP_MAX = 25.0
 COST_FLOOR_RT = 0.0032
+NOVELTY_EPS = 1e-12
 
 FAMILIES = {
     "TREND_EMA": 0,
@@ -99,6 +100,11 @@ def symmetric_ratio_diff(a: float, b: float) -> float:
     return max(a, b) / min(a, b) - 1.0
 
 
+def _at_least(value: float, threshold: float) -> bool:
+    """Inclusive threshold comparison with only binary-float representation tolerance."""
+    return value > threshold or math.isclose(value, threshold, rel_tol=0.0, abs_tol=NOVELTY_EPS)
+
+
 def novelty_pass(new: Candidate, prior: Candidate) -> bool:
     if new.symbol != prior.symbol or new.family != prior.family:
         return True
@@ -109,11 +115,11 @@ def novelty_pass(new: Candidate, prior: Candidate) -> bool:
         symmetric_ratio_diff(new.p2, prior.p2),
         symmetric_ratio_diff(new.p3, prior.p3),
     ]
-    if any(x >= 0.20 for x in params):
+    if any(_at_least(x, 0.20) for x in params):
         return True
-    if symmetric_ratio_diff(new.sl, prior.sl) >= 0.30:
+    if _at_least(symmetric_ratio_diff(new.sl, prior.sl), 0.30):
         return True
-    if symmetric_ratio_diff(new.tp, prior.tp) >= 0.30:
+    if _at_least(symmetric_ratio_diff(new.tp, prior.tp), 0.30):
         return True
     return False
 
@@ -199,7 +205,7 @@ def _ema(x: pd.Series, n: int) -> np.ndarray:
 def _rsi(x: pd.Series, n: int) -> np.ndarray:
     d = x.diff()
     gain = d.clip(lower=0).rolling(n).mean()
-    loss = (-d.clip(upper=0)).rolling(n).mean().replace(0, np.nan)
+    loss = (-d.clip(upper=0).rolling(n).mean()).replace(0, np.nan)
     return (100 - 100 / (1 + gain / loss)).fillna(50).to_numpy(float)
 
 
