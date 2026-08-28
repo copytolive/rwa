@@ -9,12 +9,14 @@ on:
       - 'renko/**'
       - 'tools/renko-observable-parity-gate.mjs'
       - 'tools/renko-observable-browser-report.mjs'
+      - 'tools/renko-public-production-closure.mjs'
       - '.github/workflows/renko-observable-parity.yml'
   pull_request:
     paths:
       - 'renko/**'
       - 'tools/renko-observable-parity-gate.mjs'
       - 'tools/renko-observable-browser-report.mjs'
+      - 'tools/renko-public-production-closure.mjs'
       - '.github/workflows/renko-observable-parity.yml'
   workflow_dispatch:
 
@@ -24,10 +26,12 @@ permissions:
 jobs:
   observable-parity:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
       - name: Checkout exact source
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Node
         uses: actions/setup-node@v4
         with:
@@ -41,6 +45,19 @@ jobs:
           node --check renko/renko-tv-parity-fixture.js
           node --check tools/renko-observable-parity-gate.mjs
           node --check tools/renko-observable-browser-report.mjs
+          node --check tools/renko-public-production-closure.mjs
+      - name: Verify RENKO tree unchanged since merged observable parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          MERGE_SHA=7b4146c5473e5042a288bf700db873b0c09d5d04
+          git cat-file -e "$MERGE_SHA^{commit}"
+          if ! git diff --quiet "$MERGE_SHA"..HEAD -- renko/; then
+            echo 'RENKO source drifted after the accepted merge:' >&2
+            git diff --name-status "$MERGE_SHA"..HEAD -- renko/ >&2
+            exit 1
+          fi
+          echo "RENKO tree is byte-identical to accepted merge $MERGE_SHA"
       - name: TradingView observable contract gate
         run: node tools/renko-observable-parity-gate.mjs
       - name: Install real browser dependencies
@@ -60,18 +77,90 @@ jobs:
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/rwa/renko/ >/dev/null && exit 0; sleep 1; done
           cat /tmp/renko-observable-http.log
           exit 1
-      - name: Desktop + mobile browser proof
+      - name: Exact-checkout desktop + mobile browser proof
         env:
           RWA_TEST_URL: http://127.0.0.1:8080/rwa
         run: node tools/renko-observable-browser-report.mjs
-      - name: Stop server
+      - name: Preserve exact-checkout evidence
+        run: mv artifacts/renko-observable-parity artifacts/renko-observable-parity-local
+      - name: Stop exact-checkout server
         if: always()
         run: kill "$(cat /tmp/renko-observable-http.pid 2>/dev/null)" 2>/dev/null || true
-      - name: Upload browser screenshots and report
+      - name: Wait for exact public GitHub Pages RENKO runtime
+        shell: bash
+        env:
+          PUBLIC_BASE: https://copytolive.github.io/rwa
+        run: |
+          set -euo pipefail
+          OUT=artifacts/renko-public-production-closure
+          mkdir -p "$OUT"
+          files=(
+            renko/index.html
+            renko/renko-tv.css
+            renko/renko-tv-engine.js
+            renko/renko-tv-locale-guard.js
+            renko/renko-tv-fetch-guard.js
+            renko/renko-tv-stable-chart-v2.js
+            renko/renko-tv-ultrafast-ui.js
+            renko/renko-tv-app.js
+            renko/renko-tv-percentage-ltp-runtime.js
+            renko/renko-tv-history-ladder.js
+            renko/renko-tv-atr-parity.js
+            renko/renko-tv-parity-fixture.js
+            renko/fixtures/gold-20y-close-parity.json
+          )
+          matched=0
+          for attempt in $(seq 1 60); do
+            ok=1
+            : > /tmp/renko-public-manifest.tsv
+            for p in "${files[@]}"; do
+              expected=$(git rev-parse "HEAD:$p")
+              if ! curl -fsSL --retry 2 --retry-delay 1 -H 'Cache-Control: no-cache' "$PUBLIC_BASE/$p?renko-closure=${GITHUB_SHA}-${attempt}" -o /tmp/renko-public-file; then
+                ok=0
+                break
+              fi
+              actual=$(git hash-object /tmp/renko-public-file)
+              printf '%s\t%s\t%s\n' "$p" "$expected" "$actual" >> /tmp/renko-public-manifest.tsv
+              if [ "$expected" != "$actual" ]; then ok=0; fi
+            done
+            if [ "$ok" = 1 ]; then
+              matched=1
+              cp /tmp/renko-public-manifest.tsv "$OUT/deployment-manifest.tsv"
+              break
+            fi
+            echo "Public RENKO runtime has not converged to ${GITHUB_SHA} yet (attempt ${attempt}/60)"
+            sleep 10
+          done
+          if [ "$matched" != 1 ]; then
+            echo 'Public GitHub Pages RENKO runtime never matched the exact current-main blobs.' >&2
+            cat /tmp/renko-public-manifest.tsv >&2 || true
+            exit 1
+          fi
+          node <<'NODE'
+          const fs=require('fs');
+          const out='artifacts/renko-public-production-closure';
+          const rows=fs.readFileSync(`${out}/deployment-manifest.tsv`,'utf8').trim().split(/\n/).filter(Boolean).map(line=>{const [path,expectedBlob,publicBlob]=line.split('\t');return{path,expectedBlob,publicBlob,match:expectedBlob===publicBlob};});
+          const manifest={schema:'renko-public-deployment-manifest-v1',generatedAt:new Date().toISOString(),publicBase:process.env.PUBLIC_BASE,targetSha:process.env.GITHUB_SHA,renkoMergeSha:'7b4146c5473e5042a288bf700db873b0c09d5d04',allMatch:rows.length>0&&rows.every(x=>x.match),files:rows};
+          fs.writeFileSync(`${out}/deployment-manifest.json`,JSON.stringify(manifest,null,2));
+          console.log(JSON.stringify(manifest,null,2));
+          if(!manifest.allMatch)process.exit(2);
+          NODE
+      - name: PUBLIC desktop + mobile observable browser proof
+        env:
+          RWA_TEST_URL: https://copytolive.github.io/rwa
+        run: node tools/renko-observable-browser-report.mjs
+      - name: PUBLIC production stability + history closure
+        env:
+          RWA_TEST_URL: https://copytolive.github.io/rwa
+        run: node tools/renko-public-production-closure.mjs
+      - name: Upload local + PUBLIC closure evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: renko-observable-parity-${{ github.sha }}
-          path: artifacts/renko-observable-parity
+          name: renko-public-production-closure-${{ github.sha }}
+          path: |
+            artifacts/renko-observable-parity-local
+            artifacts/renko-observable-parity
+            artifacts/renko-public-production-closure
           if-no-files-found: warn
           retention-days: 14
