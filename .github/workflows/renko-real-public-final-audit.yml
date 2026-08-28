@@ -45,7 +45,7 @@ jobs:
       - name: PUBLIC mobile — 50/50 pair switches + 51 first-frame screenshots
         run: RENKO_50PAIR_VIEWPORT=mobile RENKO_50PAIR_OUT=artifacts/renko-real-public-final/50pair-mobile node tools/renko-50pair-switch-report.mjs
       - name: PUBLIC XAUT fixed-1s provider — desktop + mobile
-        run: RENKO_XAUT_PROVIDER_OUT=artifacts/renko-real-public-final/xaut-provider node tools/renko-xaut-live-provider-report.mjs
+        run: RENKO_XAUT_OUT=artifacts/renko-real-public-final/xaut-provider node tools/renko-xaut-live-provider-report.mjs
       - name: PUBLIC XAUT ATR 1..1,000,000 — desktop + mobile
         run: RENKO_XAUT_MATRIX_OUT=artifacts/renko-real-public-final/xaut-atr-matrix node tools/renko-xaut-atr-matrix-report.mjs
       - name: Final public receipt
