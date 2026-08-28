@@ -14,7 +14,7 @@ permissions:
 jobs:
   xaut-live-provider:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,9 +22,11 @@ jobs:
           node-version: 22
       - name: Syntax
         run: |
+          node --check renko/renko-tv-engine.js
           node --check renko/renko-tv-locale-guard.js
           node --check renko/renko-tv-atr-parity.js
           node --check tools/renko-xaut-live-provider-report.mjs
+          node --check tools/renko-xaut-atr-matrix-report.mjs
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
@@ -43,9 +45,13 @@ jobs:
           exit 1
       - name: Real XAUT Gate Spot desktop + mobile browser proof
         run: RWA_TEST_URL=http://127.0.0.1:8080/rwa node tools/renko-xaut-live-provider-report.mjs
+      - name: Seven XAUT ATR lengths — desktop + mobile real browser proof
+        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa node tools/renko-xaut-atr-matrix-report.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: renko-xaut-provider-${{ github.sha }}
-          path: artifacts/renko-xaut-provider
-          retention-days: 7
+          name: renko-xaut-atr-matrix-${{ github.sha }}
+          path: |
+            artifacts/renko-xaut-provider
+            artifacts/renko-xaut-atr-matrix
+          retention-days: 14
