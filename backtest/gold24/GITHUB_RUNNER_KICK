@@ -1,2 +1,3 @@
-kick_utc=2026-08-28T14:01:00Z
-reason=user_run_after_reading_gold_rr12_weekly_profit_rules_v2
+policy=GOLD_CANONICAL_V11_20260828
+reason=replace_old_rr12_weekly_policy_and_start_v11_gold_search
+ranking=minimum_trades_first_then_net_profit_factor_desc
