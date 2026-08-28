@@ -1,0 +1,138 @@
+name: GOLD24 Canonical Auto Backtest
+
+on:
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - 'backtest/gold24/tradingview_gate_a.py'
+      - 'backtest/gold24/weekly_profit_runner.py'
+      - 'backtest/gold24/weekly_metrics.py'
+      - 'backtest/gold24/core.py'
+      - 'backtest/gold24/store.py'
+      - 'backtest/gold24/RULES_GOAL_RR12_2026.md'
+      - 'backtest/gold24/GITHUB_RUNNER_KICK'
+      - '.github/workflows/gold24-canonical-auto.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: gold24-canonical-auto
+  cancel-in-progress: false
+
+jobs:
+  canonical-backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      GOLD24_STATE_DIR: ${{ github.workspace }}/.gold24-canonical
+      GOLD24_TIMEFRAME: D1
+      GOLD24_BATCH_SIZE: '32'
+      GOLD24_FLAT_LOT: '1.0'
+      GOLD24_SEED: '20260828'
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned dependencies
+        run: |
+          set -euo pipefail
+          pip install -r backtest/gold24/requirements.txt
+          pip install 'websocket-client>=1.8,<2' 'requests>=2.32,<3'
+          pip install 'git+https://github.com/rongardF/tvdatafeed.git@e6f6aaa7de439ac6e454d9b26d2760ded8dc4923'
+
+      - name: Fetch true-source TradingView Gate A material
+        run: |
+          set -euo pipefail
+          rm -rf "$RUNNER_TEMP/gold24-data"
+          mkdir -p "$RUNNER_TEMP/gold24-data"
+          python backtest/gold24/tradingview_gate_a.py --out-dir "$RUNNER_TEMP/gold24-data" --bars 6500
+
+      - name: Restore state only when the primary dataset SHA is unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$GOLD24_STATE_DIR" "$RUNNER_TEMP/gold24-prev"
+          mkdir -p "$GOLD24_STATE_DIR" "$RUNNER_TEMP/gold24-prev"
+          PREV="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow gold24-canonical-auto.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId' 2>/dev/null || true)"
+          if [ -n "$PREV" ]; then
+            gh run download "$PREV" --repo "$GITHUB_REPOSITORY" -n gold24-canonical-state -D "$RUNNER_TEMP/gold24-prev" || true
+          fi
+          NEW_SHA="$(python -c 'import json,sys; print(json.load(open(sys.argv[1])).get("primary_sha256", ""))' "$RUNNER_TEMP/gold24-data/gate_a_receipt.json")"
+          OLD_SHA=""
+          if [ -f "$RUNNER_TEMP/gold24-prev/gate_a/gate_a_receipt.json" ]; then
+            OLD_SHA="$(python -c 'import json,sys; print(json.load(open(sys.argv[1])).get("primary_sha256", ""))' "$RUNNER_TEMP/gold24-prev/gate_a/gate_a_receipt.json")"
+          fi
+          if [ -n "$NEW_SHA" ] && [ "$NEW_SHA" = "$OLD_SHA" ]; then
+            cp -a "$RUNNER_TEMP/gold24-prev/." "$GOLD24_STATE_DIR/"
+            echo "Restored canonical state for unchanged dataset SHA $NEW_SHA"
+          else
+            echo "Starting fresh canonical state because dataset SHA changed or no prior state exists."
+          fi
+          mkdir -p "$GOLD24_STATE_DIR/gate_a"
+          cp -a "$RUNNER_TEMP/gold24-data/." "$GOLD24_STATE_DIR/gate_a/"
+
+      - name: Run one legal canonical batch if Gate A passes
+        working-directory: backtest/gold24
+        env:
+          GOLD24_DATASET: ${{ github.workspace }}/.gold24-canonical/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv
+          GOLD24_CROSSCHECK: ${{ github.workspace }}/.gold24-canonical/gate_a/gate_a_receipt.json
+        run: |
+          set -euo pipefail
+          python weekly_profit_runner.py --self-test
+          python weekly_profit_runner.py --once
+
+      - name: Show canonical status and latest receipt
+        if: always()
+        shell: bash
+        run: |
+          set -u
+          echo '===== GATE A ====='
+          cat "$GOLD24_STATE_DIR/gate_a/gate_a_receipt.json" 2>/dev/null || true
+          echo '===== STATUS ====='
+          cat "$GOLD24_STATE_DIR/status.json" 2>/dev/null || true
+          echo '===== LATEST BATCH RECEIPT ====='
+          LATEST="$(find "$GOLD24_STATE_DIR/weekly_profit_receipts" -name 'batch_*.json' -type f 2>/dev/null | sort | tail -1)"
+          [ -z "$LATEST" ] || cat "$LATEST"
+
+      - name: Publish compact runtime proof to repository
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p backtest/gold24/runtime
+          [ ! -f "$GOLD24_STATE_DIR/status.json" ] || cp "$GOLD24_STATE_DIR/status.json" backtest/gold24/runtime/latest_status.json
+          [ ! -f "$GOLD24_STATE_DIR/gate_a/gate_a_receipt.json" ] || cp "$GOLD24_STATE_DIR/gate_a/gate_a_receipt.json" backtest/gold24/runtime/latest_gate_a_receipt.json
+          LATEST="$(find "$GOLD24_STATE_DIR/weekly_profit_receipts" -name 'batch_*.json' -type f 2>/dev/null | sort | tail -1)"
+          [ -z "$LATEST" ] || cp "$LATEST" backtest/gold24/runtime/latest_batch_receipt.json
+          [ ! -f "$GOLD24_STATE_DIR/TOP200_WEEKLY_PROFIT.json" ] || cp "$GOLD24_STATE_DIR/TOP200_WEEKLY_PROFIT.json" backtest/gold24/runtime/latest_top200.json
+          git config user.name 'gold24-bot'
+          git config user.email 'gold24-bot@users.noreply.github.com'
+          git add backtest/gold24/runtime
+          if ! git diff --cached --quiet; then
+            git commit -m 'chore(gold24): publish canonical runtime proof [skip ci]'
+            git push origin HEAD:main
+          else
+            echo 'No runtime proof changes to publish.'
+          fi
+
+      - name: Upload resumable canonical state
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold24-canonical-state
+          path: ${{ env.GOLD24_STATE_DIR }}/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 7
+          compression-level: 6
