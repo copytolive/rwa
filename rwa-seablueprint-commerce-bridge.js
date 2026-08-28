@@ -112,12 +112,12 @@ function navigateTrade(coin){
 function externalCommerce(anchor){try{const u=new URL(anchor.href,location.href);return u.origin!==location.origin}catch{return false}}
 function audit(){
   const launch=$('#rwaSeablueprintCommerceLaunch'),screen=$('#rwaShopScreen'),openNow=!!screen?.classList.contains('open'),external=openNow?qa('#rwaShopScreen a[href]').filter(externalCommerce).length:0;
-  const sr=screen?.getBoundingClientRect(),chart=document.querySelector('.chart-wrap'),cr=chart?.getBoundingClientRect();
-  const visibleChartWidth=openNow&&cr&&sr?Math.max(0,Math.min(cr.right,sr.left,innerWidth)-Math.max(cr.left,0)):cr?Math.max(0,Math.min(cr.right,innerWidth)-Math.max(cr.left,0)):0;
+  const sr=screen?.getBoundingClientRect(),chart=document.querySelector('.chart-wrap'),cr=chart?.getBoundingClientRect(),viewportRight=document.documentElement.clientWidth||innerWidth;
+  const visibleChartWidth=openNow&&cr&&sr?Math.max(0,Math.min(cr.right,sr.left,viewportRight)-Math.max(cr.left,0)):cr?Math.max(0,Math.min(cr.right,viewportRight)-Math.max(cr.left,0)):0;
   const marketVisible=!!chart&&getComputedStyle(chart).display!=='none'&&cr&&cr.height>80&&visibleChartWidth>0;
-  const railRightAligned=!openNow||!sr||Math.abs(innerWidth-sr.right)<=4;
+  const railRightAligned=!openNow||!sr||Math.abs(viewportRight-sr.right)<=4;
   const findings=[];if(!launch)findings.push('ECOMMERCE_LAUNCHER_MISSING');if(!samePath())findings.push('TOP_LEVEL_PATH_CHANGED');if(openNow&&!screen?.dataset.seablueprintSingleShell)findings.push('SHOP_NOT_SINGLE_SHELL');if(openNow&&screen?.dataset.seablueprintPlacement!=='market-side-rail')findings.push('SHOP_NOT_MARKET_SIDE_RAIL');if(openNow&&!marketVisible)findings.push('MARKET_CHART_NOT_VISIBLE');if(openNow&&!railRightAligned)findings.push('RAIL_NOT_RIGHT_ALIGNED');if(external)findings.push('EXTERNAL_COMMERCE_LINK_PRESENT');
-  return{ok:findings.length===0,version:VERSION,mode:'MARKET_SIDE_RAIL',rootPath:state.rootPath,currentPath:location.pathname,returnHash:state.returnHash,launcherVisible:!!launch&&getComputedStyle(launch).display!=='none',shopOpen:openNow,placement:screen?.dataset.seablueprintPlacement||'',storefrontLoaded:state.storefrontLoaded,liveLoaded:state.liveLoaded,candidateBase:state.config?.candidate_base||'',apiBaseConfigured:!!String(state.config?.api_base||'').trim(),externalCommerceLinks:external,marketVisible,visibleChartWidth:Math.round(visibleChartWidth||0),railWidth:Math.round(sr?.width||0),railLeft:Math.round(sr?.left||0),railRightAligned,findings};
+  return{ok:findings.length===0,version:VERSION,mode:'MARKET_SIDE_RAIL',rootPath:state.rootPath,currentPath:location.pathname,returnHash:state.returnHash,launcherVisible:!!launch&&getComputedStyle(launch).display!=='none',shopOpen:openNow,placement:screen?.dataset.seablueprintPlacement||'',storefrontLoaded:state.storefrontLoaded,liveLoaded:state.liveLoaded,candidateBase:state.config?.candidate_base||'',apiBaseConfigured:!!String(state.config?.api_base||'').trim(),externalCommerceLinks:external,marketVisible,visibleChartWidth:Math.round(visibleChartWidth||0),railWidth:Math.round(sr?.width||0),railLeft:Math.round(sr?.left||0),viewportRight,railRightAligned,findings};
 }
 function reconcile(){mountLauncher();decorate()}
 function captureClick(e){
