@@ -3,9 +3,9 @@ const BASE=(process.env.RWA_TEST_URL||'https://copytolive.github.io/rwa').replac
 const browser=await chromium.launch({headless:true});
 const page=await browser.newPage({viewport:{width:1280,height:800}});
 const errors=[];page.on('pageerror',e=>errors.push(String(e?.message||e)));
-await page.goto(`${BASE}/renko/?symbol=SOL&deepV3Proof=1&ts=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:60000});
-await page.waitForFunction(()=>window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoATRInstant?.warm,null,{timeout:60000});
-const pre=await page.evaluate(()=>({rule:RWARenkoATRInstant.rule,version:RWARenkoATRInstant.version,targets:RWARenkoATRInstant.targets}));
+await page.goto(`${BASE}/renko/?symbol=SOL&atrPerf1s=1&deepV3Proof=1&ts=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:60000});
+await page.waitForFunction(()=>window.RENKO_ATR_PERF_1S===true&&window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoTVEngine?.version==='1.3.0'&&window.RWARenkoATRInstant?.warm&&window.RWARenko1sCloseLock?.version==='1.0.0'&&RWARenkoTV.settings.interval==='1s'&&RWARenkoTV.settings.source==='close',null,{timeout:60000});
+const pre=await page.evaluate(()=>({rule:RWARenkoATRInstant.rule,version:RWARenkoATRInstant.version,targets:RWARenkoATRInstant.targets,perfProfile:window.RENKO_ATR_PERF_1S,interval:RWARenkoTV.settings.interval,source:RWARenkoTV.settings.source}));
 if(!String(pre.rule||'').includes('unique-nonoverlap-1s-history'))throw new Error(`Deep ATR v3 is not active: ${JSON.stringify(pre)}`);
 await page.evaluate(()=>RWARenkoATRInstant.warm());
 await page.waitForFunction(()=>document.documentElement.dataset.atrInstantReady==='true'&&RWARenkoATRInstant.warmContext===RWARenkoATRInstant.contextKey(),null,{timeout:360000});
