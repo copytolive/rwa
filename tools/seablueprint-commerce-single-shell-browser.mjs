@@ -32,7 +32,8 @@ async function inspectOpen(page,v){
     const products=[...document.querySelectorAll('#rwaShopScreen .rwa-product-card')];
     const source=document.querySelector('[data-seablueprint-source]')?.textContent||'';
     const activeTab=document.querySelector('#rwaShopScreen [data-shop-tab].active')?.textContent||'';
-    const visibleChartWidth=chartRect&&panel?Math.max(0,Math.min(chartRect.right,panel.left,innerWidth)-Math.max(chartRect.left,0)):0;
+    const clientWidth=document.documentElement.clientWidth;
+    const visibleChartWidth=chartRect&&panel?Math.max(0,Math.min(chartRect.right,panel.left,clientWidth)-Math.max(chartRect.left,0)):0;
     return{
       path:location.pathname,hash:location.hash,
       audit:window.RWASeablueprintCommerceBridge?.audit?.(),
@@ -40,9 +41,9 @@ async function inspectOpen(page,v){
       chart:chartRect?{left:chartRect.left,right:chartRect.right,width:chartRect.width,height:chartRect.height}:null,
       main:mainRect?{left:mainRect.left,right:mainRect.right,width:mainRect.width,height:mainRect.height}:null,
       visibleChartWidth,products:products.length,activeTab,source,
-      rootOverflow:Math.max(0,document.documentElement.scrollWidth-document.documentElement.clientWidth),
-      bodyOverflow:Math.max(0,document.body.scrollWidth-document.body.clientWidth),
-      viewport:{width:innerWidth,height:innerHeight},
+      rootOverflow:Math.max(0,document.documentElement.scrollWidth-clientWidth),
+      bodyOverflow:Math.max(0,document.body.scrollWidth-clientWidth),
+      viewport:{width:innerWidth,clientWidth,height:innerHeight},
       marketShell:document.body.classList.contains('rwa-super-market-open'),
       placement:screen?.dataset.seablueprintPlacement||'',
     };
@@ -70,7 +71,7 @@ async function runViewport(v,index){
   if(s.audit.apiBaseConfigured)throw Error(`${v.name}: test fixture expected backend fail-closed`);
   if(s.placement!=='market-side-rail')throw Error(`${v.name}: wrong placement ${s.placement}`);
   if(!s.marketShell)throw Error(`${v.name}: market shell not visible behind ecommerce rail`);
-  if(!s.panel||Math.abs(s.panel.right-v.width)>4)throw Error(`${v.name}: rail is not right-aligned ${JSON.stringify(s.panel)}`);
+  if(!s.panel||Math.abs(s.panel.right-s.viewport.clientWidth)>4)throw Error(`${v.name}: rail is not right-aligned ${JSON.stringify({panel:s.panel,viewport:s.viewport})}`);
   if(!s.chart||s.chart.height<100||s.visibleChartWidth<=0)throw Error(`${v.name}: chart not visibly retained ${JSON.stringify({chart:s.chart,visible:s.visibleChartWidth})}`);
   if(!/Products/i.test(s.activeTab))throw Error(`${v.name}: ecommerce must open directly on products, got ${s.activeTab}`);
   if(s.products<1)throw Error(`${v.name}: no product cards visible beside market`);
