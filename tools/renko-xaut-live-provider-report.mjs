@@ -16,7 +16,7 @@ async function run(label,viewport){
   page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text())});
   page.on('requestfailed',r=>failed.push({url:r.url(),error:r.failure()?.errorText||''}));
   await page.addInitScript(()=>{try{localStorage.setItem('rwa_renko_tradingview_settings_v1',JSON.stringify({interval:'1m',source:'close',method:'atr',atrLength:14}))}catch{}});
-  const url=`${base}/renko/?symbol=XAUT&fixed1sProviderProof=1&ts=${Date.now()}`;
+  const url=`${base}/renko/?symbol=XAUT&fixed1sProviderProof=2&ts=${Date.now()}`;
   const response=await page.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
   await page.waitForFunction(()=>window.RWARenkoTV?.state?.symbol==='XAUTUSDT'&&window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoTV?.settings?.interval==='1s'&&window.RWARenkoTV?.state?.closedBars?.length>100&&Number(window.RWARenkoTV?.state?.lastPrice)>0&&document.documentElement.dataset.marketProvider==='okx-spot',null,{timeout:60000});
   await sleep(1200);
@@ -38,20 +38,19 @@ async function run(label,viewport){
   await page.selectOption('#sourceSelect','close');
   await page.fill('#traditionalBox','5');await page.click('[data-apply-method="traditional"]');await sleep(250);
   const traditional=await page.evaluate(()=>({method:window.RWARenkoTV.settings.method,interval:window.RWARenkoTV.settings.interval,box:window.RWARenkoTV.state.box}));
-  await page.fill('#percentageValue','1');await page.click('[data-apply-method="percentage"]');await sleep(250);
-  const percentage=await page.evaluate(()=>({method:window.RWARenkoTV.settings.method,interval:window.RWARenkoTV.settings.interval,box:window.RWARenkoTV.state.box}));
+  const percentageUi=await page.evaluate(()=>{const card=document.querySelector('.method[data-method="percentage"]'),button=document.querySelector('[data-apply-method="percentage"]'),tick=Number(window.RWARenkoTV.state.tickSize)||.01,ltp=Number(window.RWARenkoTV.state.percentageLtpSnapshot)||Number(window.RWARenkoTV.state.lastPrice);return{cardPresent:!!card,cardVisible:!!card&&!!card.getClientRects().length,buttonPresent:!!button,buttonVisible:!!button&&!!button.getClientRects().length,engineBox:window.RWARenkoTVEngine.percentageLtpStableRound(ltp*.01,tick),ltp,tick}});
   const beforeRevision=await page.evaluate(()=>Number(window.RWARenkoTV.state.closedBars.at(-1)?.closeTime)||0);
   await page.waitForFunction(r=>Number(window.RWARenkoTV?.state?.closedBars?.at(-1)?.closeTime)>r,beforeRevision,{timeout:15000});
-  const afterClose=await page.evaluate(()=>({interval:window.RWARenkoTV.settings.interval,status:window.RWARenkoTV.state.status,lastEventAt:window.RWARenkoTV.state.lastEventAt,bars:window.RWARenkoTV.state.closedBars.length}));
+  const afterClose=await page.evaluate(()=>({interval:window.RWARenkoTV.settings.interval,status:window.RWARenkoTV.state.status,lastEventAt:window.RWARenkoTV.state.lastEventAt,bars:window.RWARenkoTV.state.closedBars.length,method:window.RWARenkoTV.settings.method}));
   await page.screenshot({path:path.join(out,`${label}.png`),fullPage:true});
   const relevantFailures=failed.filter(x=>/XAUT|okx|binance/i.test(x.url));
-  const pass=!!response?.ok()&&initial.provider==='OKX Spot'&&initial.providerFixedInterval==='1s'&&initial.providerIntervals.join(',')==='1s'&&initial.interval==='1s'&&initial.fixedInterval==='1s'&&!initial.intervalSelectorExists&&initial.intervalSelectCount===0&&initial.tick>0&&initial.last>0&&initial.bars>100&&mutationLock==='1s'&&ohlc.source==='ohlc'&&ohlc.interval==='1s'&&traditional.method==='traditional'&&traditional.interval==='1s'&&percentage.method==='percentage'&&percentage.interval==='1s'&&afterClose.interval==='1s'&&afterClose.status==='live'&&!errors.length;
-  results.push({label,viewport,url,httpStatus:response?.status(),initial,mutationLock,ohlc,traditional,percentage,afterClose,errors,consoleErrors,relevantFailures:relevantFailures.slice(0,50),pass});
+  const pass=!!response?.ok()&&initial.provider==='OKX Spot'&&initial.providerFixedInterval==='1s'&&initial.providerIntervals.join(',')==='1s'&&initial.interval==='1s'&&initial.fixedInterval==='1s'&&!initial.intervalSelectorExists&&initial.intervalSelectCount===0&&initial.tick>0&&initial.last>0&&initial.bars>100&&mutationLock==='1s'&&ohlc.source==='ohlc'&&ohlc.interval==='1s'&&traditional.method==='traditional'&&traditional.interval==='1s'&&percentageUi.cardPresent&&!percentageUi.cardVisible&&percentageUi.buttonPresent&&!percentageUi.buttonVisible&&percentageUi.engineBox>0&&afterClose.interval==='1s'&&afterClose.status==='live'&&afterClose.method==='traditional'&&!errors.length;
+  results.push({label,viewport,url,httpStatus:response?.status(),initial,mutationLock,ohlc,traditional,percentageUi,afterClose,errors,consoleErrors,relevantFailures:relevantFailures.slice(0,50),pass});
   await page.close();
 }
 
 try{await run('desktop',{width:1900,height:1000});await run('mobile',{width:390,height:844})}finally{await browser.close()}
-const report={schema:'renko-xaut-okx-fixed-1s-live-provider-v1',generatedAt:new Date().toISOString(),base,status:results.every(r=>r.pass)?'PASS':'FAIL',contract:'No timeframe selector exists. Runtime interval is permanently fixed to 1s across persisted stale settings, direct mutation, source changes, method changes and later live closes.',results};
+const report={schema:'renko-xaut-okx-fixed-1s-live-provider-v2',generatedAt:new Date().toISOString(),base,status:results.every(r=>r.pass)?'PASS':'FAIL',contract:'No timeframe selector exists. Runtime interval is permanently fixed to 1s across persisted stale settings, direct mutation, source changes, visible ATR/Traditional method use and later live closes. Percentage engine compatibility remains checked while its user-facing control is intentionally hidden.',results};
 fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));
 console.log('RENKO_XAUT_PROVIDER_REPORT '+JSON.stringify(report));
 if(report.status!=='PASS')process.exit(2);
