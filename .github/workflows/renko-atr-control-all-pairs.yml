@@ -5,6 +5,7 @@ on:
       - main
       - fix/renko-atr-control-all-pairs-20260828
       - fix/renko-atr-chart-stability-20260828
+      - fix/renko-atr-visible-pulse-20260828
     paths:
       - 'renko/**'
       - 'tools/renko-atr-control-all-pairs-report.mjs'
@@ -29,9 +30,10 @@ jobs:
           node --check renko/renko-tv-atr-control.js
           node --check tools/renko-atr-control-all-pairs-report.mjs
           node --check tools/renko-atr-stability-report.mjs
-          grep -q 'renko-tv-atr-control.js?v=2' renko/index.html
+          grep -q 'renko-tv-atr-control.js?v=3' renko/index.html
           grep -q 'snapshot-box-stable-between-closes' renko/renko-tv-atr-control.js
           grep -q '_exactBox=box' renko/renko-tv-atr-control.js
+          grep -q 'visible-ui-stable' renko/renko-tv-atr-control.js
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
@@ -51,9 +53,9 @@ jobs:
         run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_ATR_VIEWPORT=desktop RENKO_ATR_CONTROL_OUT=artifacts/atr-control-desktop node tools/renko-atr-control-all-pairs-report.mjs
       - name: Mobile — physical ATR 100 Apply on all 50 launch pairs
         run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_ATR_VIEWPORT=mobile RENKO_ATR_CONTROL_OUT=artifacts/atr-control-mobile node tools/renko-atr-control-all-pairs-report.mjs
-      - name: Desktop — ATR chart pulse stability across real 1s closes
+      - name: Desktop — ATR chart + visible UI pulse stability across real 1s closes
         run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_ATR_STABILITY_VIEWPORT=desktop RENKO_ATR_STABILITY_OUT=artifacts/atr-stability-desktop node tools/renko-atr-stability-report.mjs
-      - name: Mobile — ATR chart pulse stability across real 1s closes
+      - name: Mobile — ATR chart + visible UI pulse stability across real 1s closes
         run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_ATR_STABILITY_VIEWPORT=mobile RENKO_ATR_STABILITY_OUT=artifacts/atr-stability-mobile node tools/renko-atr-stability-report.mjs
       - name: XAUT provider regression — desktop + mobile
         run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_XAUT_OUT=artifacts/xaut-provider node tools/renko-xaut-live-provider-report.mjs
@@ -81,14 +83,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Wait for exact GitHub Pages SHA
+      - name: Wait for deployed visible-ATR anti-pulse runtime
         run: |
           set -euo pipefail
-          url='https://copytolive.github.io/rwa/renko-deployment-sha.txt'
-          for i in $(seq 1 90); do
-            got=$(curl -fsS "$url?ts=$(date +%s%N)" 2>/dev/null | tr -d '\r\n' || true)
-            echo "attempt=$i expected=$GITHUB_SHA got=$got"
-            if [[ "$got" == "$GITHUB_SHA" ]]; then exit 0; fi
+          index='https://copytolive.github.io/rwa/renko/'
+          control='https://copytolive.github.io/rwa/renko/renko-tv-atr-control.js'
+          stamp='https://copytolive.github.io/rwa/renko-deployment-sha.txt'
+          for i in $(seq 1 120); do
+            ts=$(date +%s%N)
+            got=$(curl -fsS "$stamp?ts=$ts" 2>/dev/null | tr -d '\r\n' || true)
+            html=$(curl -fsS "$index?ts=$ts" 2>/dev/null || true)
+            js=$(curl -fsS "$control?ts=$ts" 2>/dev/null || true)
+            echo "attempt=$i deployed=$got"
+            if grep -q 'renko-tv-atr-control.js?v=3' <<<"$html" && grep -q 'visible-ui-stable' <<<"$js"; then
+              echo "PUBLIC_VISIBLE_ATR_ANTI_PULSE_RUNTIME_PRESENT deployed=$got"
+              exit 0
+            fi
             sleep 5
           done
           exit 1
@@ -100,9 +110,9 @@ jobs:
         run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_ATR_VIEWPORT=desktop RENKO_ATR_CONTROL_OUT=artifacts/public-atr-control-desktop node tools/renko-atr-control-all-pairs-report.mjs
       - name: PUBLIC mobile — ATR 100 Apply on all 50 launch pairs
         run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_ATR_VIEWPORT=mobile RENKO_ATR_CONTROL_OUT=artifacts/public-atr-control-mobile node tools/renko-atr-control-all-pairs-report.mjs
-      - name: PUBLIC desktop — no pulse across real 1s closes
+      - name: PUBLIC desktop — chart and visible ATR do not pulse
         run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_ATR_STABILITY_VIEWPORT=desktop RENKO_ATR_STABILITY_OUT=artifacts/public-atr-stability-desktop node tools/renko-atr-stability-report.mjs
-      - name: PUBLIC mobile — no pulse across real 1s closes
+      - name: PUBLIC mobile — chart and visible ATR do not pulse
         run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_ATR_STABILITY_VIEWPORT=mobile RENKO_ATR_STABILITY_OUT=artifacts/public-atr-stability-mobile node tools/renko-atr-stability-report.mjs
       - uses: actions/upload-artifact@v4
         if: always()
