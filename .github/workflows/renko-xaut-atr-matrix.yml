@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - fix/renko-xaut-atr-matrix-20260828
+      - fix/renko-50pair-zero-ms-switch-20260828
     paths:
       - 'renko/**'
       - 'tools/renko-xaut-*.mjs'
@@ -36,6 +37,7 @@ jobs:
           ! grep -q 'TIMEFRAME</span>' renko/index.html
           ! grep -q "Math.min(500" renko/renko-tv-app.js
           grep -q "FIXED_INTERVAL='1s'" renko/renko-tv-app.js
+          grep -q 'RWARenkoBrickBudget' renko/renko-tv-fixed-1s.js
           grep -q '"interval": "1s"' renko/xaut-okx-1s-pack.meta.json
           python3 - <<'PY'
           import json
