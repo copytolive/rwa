@@ -11,23 +11,32 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 8
     steps:
-      - name: Probe Bitfinex XAUT spot symbols and history
-        shell: bash
+      - name: Measure Bitfinex XAUT/USDT 1m bar depth
         run: |
-          set -euo pipefail
-          echo '--- XAUT pairs from Bitfinex config ---'
-          curl -fsS 'https://api-pub.bitfinex.com/v2/conf/pub:list:pair:exchange' -o /tmp/pairs.json
           python3 - <<'PY'
-          import json
-          x=json.load(open('/tmp/pairs.json'))
-          pairs=x[0] if x and isinstance(x[0],list) else []
-          print([p for p in pairs if 'XAUT' in p])
+          import datetime as dt,json,time,urllib.parse,urllib.request
+          sym='tXAUT:UST'; end=2**63-1; total=0; pages=0; newest=None; oldest=None
+          while pages < 105 and total < 1_010_000:
+              q=urllib.parse.urlencode({'end':end,'sort':-1,'limit':10000})
+              u=f'https://api-pub.bitfinex.com/v2/candles/trade:1m:{sym}/hist?{q}'
+              last=None
+              for a in range(5):
+                  try:
+                      with urllib.request.urlopen(u,timeout=30) as r: rows=json.load(r)
+                      if isinstance(rows,list) and (not rows or isinstance(rows[0],list)): break
+                  except Exception as e:
+                      last=e; time.sleep(2+a)
+              else: raise SystemExit(f'fetch failed {last}')
+              if not rows: break
+              pages+=1; total+=len(rows)
+              mts=[int(x[0]) for x in rows if isinstance(x,list) and x]
+              if not mts: break
+              hi=max(mts); lo=min(mts); newest=newest or hi; oldest=lo; end=lo-1
+              print(f'page={pages:03d} rows={len(rows):5d} total={total:8d} oldest={dt.datetime.fromtimestamp(lo/1000,dt.timezone.utc).isoformat()}')
+              if len(rows)<10000: break
+              time.sleep(2.15)
+          print('RESULT',json.dumps({'symbol':sym,'pages':pages,'bars':total,'newest':newest,'oldest':oldest,'enoughFor1000000':total>=1000000,'oldestUtc':dt.datetime.fromtimestamp(oldest/1000,dt.timezone.utc).isoformat() if oldest else None}))
+          if total < 1_000_000: raise SystemExit(2)
           PY
-          for sym in 'tXAUTUSD' 'tXAUTUST' 'tXAUT:UST'; do
-            echo "--- $sym ticker ---"
-            curl -sS -w '\nHTTP=%{http_code}\n' "https://api-pub.bitfinex.com/v2/ticker/$sym" || true
-            echo "--- $sym first 1m from Jan 2020 ---"
-            curl -sS -w '\nHTTP=%{http_code}\n' "https://api-pub.bitfinex.com/v2/candles/trade:1m:$sym/hist?start=1577836800000&end=1609459200000&sort=1&limit=5" || true
-          done
