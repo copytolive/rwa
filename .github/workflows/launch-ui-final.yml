@@ -1,0 +1,100 @@
+name: RWA Launch UI Final
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'chart-core.js'
+      - 'rwa-seablueprint-commerce-bridge.js'
+      - 'rwa-seablueprint-commerce-bridge.css'
+      - 'rwa-commerce-config.json'
+      - 'rwa-storefront.js'
+      - 'superapp-v5.js'
+      - 'superapp-v5.css'
+      - 'ui-layout-integrity-v15.js'
+      - 'ui-layout-integrity-v15.css'
+      - 'tools/launch-ui-final-browser.mjs'
+      - 'tools/seablueprint-commerce-single-shell-browser.mjs'
+      - '.github/workflows/launch-ui-final.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'chart-core.js'
+      - 'rwa-seablueprint-commerce-bridge.js'
+      - 'rwa-seablueprint-commerce-bridge.css'
+      - 'rwa-commerce-config.json'
+      - 'rwa-storefront.js'
+      - 'superapp-v5.js'
+      - 'superapp-v5.css'
+      - 'ui-layout-integrity-v15.js'
+      - 'ui-layout-integrity-v15.css'
+      - 'tools/launch-ui-final-browser.mjs'
+      - 'tools/seablueprint-commerce-single-shell-browser.mjs'
+      - '.github/workflows/launch-ui-final.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Static launch contracts
+        shell: bash
+        run: |
+          set -euxo pipefail
+          node --check chart-core.js
+          node --check rwa-seablueprint-commerce-bridge.js
+          node --check tools/launch-ui-final-browser.mjs
+          node --check tools/seablueprint-commerce-single-shell-browser.mjs
+          grep -Fq "const VERSION='1.2.4'" rwa-seablueprint-commerce-bridge.js
+          grep -Fq "window.addEventListener('click',captureClick,true)" rwa-seablueprint-commerce-bridge.js
+          grep -Fq "rwa-seablueprint-commerce-bridge.js?v=1.2.4" chart-core.js
+          node - <<'NODE'
+          const c=require('./rwa-commerce-config.json');
+          if(c.shell_mode!=='SINGLE_MAIN_DOCUMENT') throw Error('shell_mode');
+          if(c.navigation_policy!=='NO_TOP_LEVEL_ECOMMERCE_NAVIGATION') throw Error('navigation_policy');
+          if(c.source!=='SEABLUEPRINT_COMMERCE') throw Error('source');
+          if(c.api_base!=='') throw Error('api_base must remain fail-closed before real backend proof');
+          NODE
+          test "$(grep -o '<script src=' index.html | wc -l | tr -d ' ')" = "6"
+
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Serve exact PR/main tree
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p /tmp/rwa-launch-ui/rwa
+          cp -a . /tmp/rwa-launch-ui/rwa/
+          cd /tmp/rwa-launch-ui
+          python -m http.server 4173 >/tmp/rwa-launch-ui-http.log 2>&1 &
+          echo $! > /tmp/rwa-launch-ui.pid
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && exit 0; sleep 1; done
+          exit 1
+
+      - name: Run full desktop mobile stress startup matrix
+        env:
+          RWA_UI_URL: http://127.0.0.1:4173/rwa/
+          RWA_UI_PROOF_DIR: proof/launch-ui-final
+        run: node tools/launch-ui-final-browser.mjs
+
+      - name: Stop local server
+        if: always()
+        run: kill "$(cat /tmp/rwa-launch-ui.pid)" 2>/dev/null || true
+
+      - name: Upload final browser matrix proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: launch-ui-final-${{ github.sha }}
+          path: proof/launch-ui-final/
+          if-no-files-found: error
+          retention-days: 30
