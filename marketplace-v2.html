@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>RWA Markets + Marketplace</title>
+  <link rel="stylesheet" href="rwa-marketplace-v2.css?v=1">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="RWA home"><span class="brand-mark">R</span><span><b>RWA</b><small>Markets + Marketplace</small></span></a>
+      <nav class="tabs" aria-label="Workspace">
+        <button data-tab="markets" class="active">Markets</button>
+        <button data-tab="marketplace">Marketplace</button>
+        <button data-tab="portfolio">Portfolio</button>
+        <button data-tab="activity">Activity</button>
+      </nav>
+      <div class="top-actions"><span id="launchState" class="state-pill">READINESS …</span><a href="marketplace-seller.html">Seller</a><a href="launch/">Launch gate</a></div>
+    </header>
+
+    <main>
+      <section id="marketsPanel" class="panel active">
+        <div class="section-head">
+          <div><small>MULTI CHAIN MARKET UNIVERSE</small><h1>Search provider-listed tokens. Route pairs on demand.</h1><p>All route-capable chains share one discovery surface. A pair is never advertised as executable until a real quote, minimum received amount and simulation exist.</p></div>
+          <div class="kpis"><div><span>Networks</span><b id="networkCount">—</b></div><div><span>Tokens</span><b id="tokenCount">—</b></div><div><span>Pair model</span><b>On demand</b></div></div>
+        </div>
+
+        <div class="market-grid">
+          <section class="card universe-card">
+            <div class="card-head"><div><small>DISCOVERY</small><h2>Token universe</h2></div><button id="refreshUniverse">Refresh</button></div>
+            <div class="filters"><select id="universeNetwork"></select><input id="tokenSearch" placeholder="Search symbol, name or contract address"><select id="tokenSort"><option value="relevance">Relevance</option><option value="price">Price</option><option value="symbol">Symbol</option></select></div>
+            <div id="tokenResults" class="token-list"><div class="empty">Loading provider token catalog…</div></div>
+          </section>
+
+          <section class="card route-card">
+            <div class="card-head"><div><small>PROTECTED ROUTE</small><h2>Swap / bridge</h2></div><span id="walletState" class="muted">Wallet not connected</span></div>
+            <div class="route-fields">
+              <label>From network<select id="fromNetwork"></select></label>
+              <label>To network<select id="toNetwork"></select></label>
+              <label>From token<input id="fromToken" value="USDC" autocomplete="off"></label>
+              <label>To token<input id="toToken" value="USDC" autocomplete="off"></label>
+              <label class="wide">Amount<input id="routeAmount" type="number" min="0" step="any" placeholder="100"></label>
+            </div>
+            <div class="risk-settings">
+              <div><span>Slippage</span><div class="segmented" id="slippagePresets"><button data-slip="0.001">0.1%</button><button data-slip="0.005" class="active">0.5%</button><button data-slip="0.01">1%</button><button data-slip="auto">Auto</button></div></div>
+              <label>Custom %<input id="customSlippage" type="number" min="0.05" max="5" step="0.05" placeholder="0.50"></label>
+            </div>
+            <div class="route-actions"><button id="connectWallet">Connect wallet</button><button id="previewRoute" class="primary">Preview protected route</button></div>
+            <div id="quoteBox" class="quote-box"><div class="empty">No quote yet. Preview does not send a transaction.</div></div>
+            <label id="impactAckWrap" class="ack" hidden><input id="impactAck" type="checkbox"> I acknowledge the displayed high price/economic impact.</label>
+            <button id="executeRoute" class="execute" disabled>MAINNET LOCKED</button>
+          </section>
+        </div>
+      </section>
+
+      <section id="marketplacePanel" class="panel">
+        <div class="section-head">
+          <div><small>ONE RWA TOKEN · MULTI-SELLER COMMERCE</small><h1 id="marketplaceTitle">RWA Marketplace</h1><p>One RWA marketplace token can anchor many verified sellers, stores and products. Trading the token and purchasing physical goods remain separate actions and separate legal/economic flows.</p></div>
+          <div class="kpis"><div><span>Live sellers</span><b id="sellerCount">0</b></div><div><span>Live products</span><b id="productCount">0</b></div><div><span>Checkout</span><b id="checkoutState">LOCKED</b></div></div>
+        </div>
+        <div class="marketplace-toolbar"><input id="catalogSearch" placeholder="Search products, seller, SKU…"><select id="categoryFilter"><option value="">All categories</option></select><a id="tradeRwa" class="button-link" href="trade/?coin=RWA">Trade $RWA</a></div>
+        <div class="marketplace-layout">
+          <section class="catalog"><div id="catalogGrid" class="catalog-grid"></div></section>
+          <aside class="cart"><div class="card-head"><div><small>CART</small><h2>Order</h2></div><span id="cartCount">0 items</span></div><div id="cartItems" class="cart-items"><div class="empty">No items</div></div><div class="cart-total"><span>Subtotal</span><b id="cartTotal">$0.00</b></div><button id="checkoutButton" class="execute" disabled>Checkout locked</button><p id="checkoutNote" class="muted">Live checkout requires verified inventory, seller evidence and a healthy payment backend.</p></aside>
+        </div>
+      </section>
+
+      <section id="portfolioPanel" class="panel"><div class="section-head"><div><small>UNIFIED BALANCE</small><h1>Portfolio across connected chains.</h1><p>Native balances plus provider-discovered assets are displayed only from connected wallets and live RPC/provider responses.</p></div><button id="refreshPortfolio" class="button-link">Refresh balances</button></div><div id="portfolioGrid" class="portfolio-grid"><div class="empty">Connect wallets from Markets to load balances.</div></div></section>
+
+      <section id="activityPanel" class="panel"><div class="section-head"><div><small>ROUTE LIFECYCLE</small><h1>Recoverable transaction activity.</h1><p>Approval, source transaction and provider terminal state remain separate so a failed bridge/swap cannot be presented as complete.</p></div><button id="refreshActivity" class="button-link">Refresh</button></div><div id="activityList" class="activity-list"><div class="empty">No route activity yet.</div></div></section>
+    </main>
+  </div>
+  <script src="rwa-multichain-engine.js?v=2"></script>
+  <script src="rwa-market-universe.js?v=1"></script>
+  <script src="rwa-trade-protection.js?v=1"></script>
+  <script src="rwa-marketplace-v2.js?v=1"></script>
+  <script src="rwa-marketplace-checkout-split.js?v=1"></script>
+</body>
+</html>

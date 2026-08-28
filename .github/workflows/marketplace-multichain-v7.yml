@@ -1,0 +1,95 @@
+name: RWA Marketplace + MULTI CHAIN V7
+
+on:
+  push:
+    branches:
+      - main
+      - feat/fomo-marketplace-parity-v7-20260828
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "marketplace-v2.html"
+      - "marketplace-seller.html"
+      - "rwa-marketplace-v2.css"
+      - "rwa-marketplace-v2.js"
+      - "rwa-marketplace-v2.json"
+      - "rwa-marketplace-checkout-split.js"
+      - "rwa-marketplace-seller.css"
+      - "rwa-marketplace-seller.js"
+      - "rwa-market-universe.js"
+      - "rwa-trade-protection.js"
+      - "rwa-multichain-engine.js"
+      - "rwa-multichain-registry.json"
+      - "rwa-commerce-registry.json"
+      - "suite-nav.js"
+      - "tools/marketplace-multichain-v7-contract.mjs"
+      - "tools/marketplace-v2-browser.mjs"
+      - "tools/marketplace-seller-browser.mjs"
+      - ".github/workflows/marketplace-multichain-v7.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rwa-marketplace-multichain-v7-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  contract-and-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate V7 source and contracts
+        shell: bash
+        run: |
+          set -euxo pipefail
+          for f in \
+            rwa-market-universe.js \
+            rwa-trade-protection.js \
+            rwa-marketplace-v2.js \
+            rwa-marketplace-checkout-split.js \
+            rwa-marketplace-seller.js \
+            suite-nav.js \
+            tools/marketplace-multichain-v7-contract.mjs \
+            tools/marketplace-v2-browser.mjs \
+            tools/marketplace-seller-browser.mjs; do
+            node --check "$f"
+          done
+          python -m json.tool rwa-marketplace-v2.json >/dev/null
+          node tools/marketplace-multichain-v7-contract.mjs
+
+      - name: Install browser runtime
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run deterministic Marketplace + MULTI CHAIN browser proof
+        env:
+          RWA_MARKETPLACE_URL: http://127.0.0.1:4173/rwa/marketplace-v2.html
+          RWA_SELLER_URL: http://127.0.0.1:4173/rwa/marketplace-seller.html
+          RWA_PROOF_DIR: proof/marketplace-v7
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p /tmp/rwa-marketplace-site/rwa
+          cp -a . /tmp/rwa-marketplace-site/rwa/
+          cd /tmp/rwa-marketplace-site
+          python -m http.server 4173 >/tmp/rwa-marketplace-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/marketplace-v2.html >/dev/null && break; sleep 1; done
+          cd "$GITHUB_WORKSPACE"
+          node tools/marketplace-v2-browser.mjs
+          node tools/marketplace-seller-browser.mjs
+
+      - name: Upload V7 proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: marketplace-multichain-v7-${{ github.sha }}
+          path: proof/marketplace-v7/
+          retention-days: 30
+          if-no-files-found: warn
