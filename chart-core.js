@@ -45,6 +45,6 @@ boot();
 /* RWA_UI_LAYOUT_INTEGRITY_V16_2_BOOTSTRAP */
 (()=>{if(document.querySelector('script[data-rwa-ui-layout-v15]'))return;const s=document.createElement('script');s.src='ui-layout-integrity-v15.js?v=16.2';s.async=false;s.dataset.rwaUiLayoutV15='1';s.onerror=()=>console.error('RWA UI Layout Integrity V16.2 failed to load');document.head.appendChild(s)})();
 /* RWA_SEABLUEPRINT_COMMERCE_SINGLE_SHELL_V1_BOOTSTRAP */
-(()=>{if(window.RWASeablueprintCommerceBridge)return;import('./rwa-seablueprint-commerce-bridge.js?v=1.2.4').catch(()=>console.error('Seablueprint single-shell commerce bridge failed to load'))})();
+(()=>{if(window.RWASeablueprintCommerceBridge)return;import('./rwa-seablueprint-commerce-bridge.js?v=1.3.0').catch(()=>console.error('Seablueprint single-shell commerce bridge failed to load'))})();
 /* RWA_REAL_BUSINESS_VALIDATION_CONSOLE_V1_BOOTSTRAP */
 (()=>{if(window.RWABusinessConsole)return;import('./rwa-business-console.js?v=1.0.0').catch(()=>console.error('RWA business validation console failed to load'))})();
