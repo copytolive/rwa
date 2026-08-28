@@ -7,7 +7,7 @@ on:
       - '.github/workflows/gold24-github-runner.yml'
       - 'backtest/gold24/GITHUB_RUNNER_KICK'
   schedule:
-    - cron: '17 * * * *'
+    - cron: '7,22,37,52 * * * *'
   workflow_dispatch:
 
 permissions:
