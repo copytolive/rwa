@@ -15,6 +15,8 @@ const multiReadiness='launch/multichain-readiness.json';
 let createdLegacy=false;
 let originalLaunch=null;
 const legacyNames=s=>String(s).replaceAll('launch-gate-current.mjs','launch-gate.mjs');
+const nativeLog=console.log.bind(console);
+let captured=[];
 try{
   const release=await readFile(releasePath,'utf8');
   if(!existsSync(legacyPath)){
@@ -23,7 +25,12 @@ try{
   }
   originalLaunch=await readFile(launchPath,'utf8');
   await writeFile(launchPath,legacyNames(originalLaunch));
+
+  // launch-gate.mjs prints its JSON result. Capture that output so callers that
+  // redirect this wrapper receive exactly one JSON document, never two.
+  console.log=(...args)=>captured.push(args.map(x=>typeof x==='string'?x:JSON.stringify(x)).join(' '));
   await import('./launch-gate.mjs');
+  console.log=nativeLog;
 
   if(process.argv.includes('--write')){
     const [global,multi]=await Promise.all([
@@ -41,10 +48,15 @@ try{
     }
     global.multichain={status:multi?.status||'UNAVAILABLE',ready:multiOk,blockers:multi?.blockers||[]};
     await writeFile(globalReadiness,JSON.stringify(global,null,2)+'\n');
-    console.log(JSON.stringify({launch_gate_current:'POSTPROCESSED',global_status:global.status,global_mainnet_ready:global.mainnet_ready,multichain_ready:multiOk},null,2));
+    nativeLog(JSON.stringify(global,null,2));
     if(process.argv.includes('--require-mainnet')&&!global.mainnet_ready)process.exit(3);
+  }else{
+    // Preserve the legacy no-write behavior for callers that only inspect the
+    // auditor output.
+    for(const line of captured)nativeLog(line);
   }
 }finally{
+  console.log=nativeLog;
   if(originalLaunch!==null)await writeFile(launchPath,originalLaunch).catch(()=>{});
   if(createdLegacy)await unlink(legacyPath).catch(()=>{});
 }
