@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "generated_at": "2026-08-28T00:00:00.000Z",
+  "status": "BLOCKED",
+  "ready": false,
+  "execution_unlock_requires": "GLOBAL_READY_FOR_MAINNET_AND_MULTICHAIN_READY",
+  "checks": {
+    "real_receipt_matrix": {
+      "ok": false,
+      "detail": "EVM_TO_EVM=PENDING · EVM_TO_SOLANA=PENDING · SOLANA_TO_EVM=PENDING · SAME_CHAIN=PENDING · FAILURE_OR_REFUND=PENDING"
+    },
+    "lifi_provider_approval": {
+      "ok": false,
+      "detail": "LI.FI partner+payout approval evidence required before fee activation"
+    },
+    "hyperliquid_builder_approval": {
+      "ok": false,
+      "detail": "Hyperliquid builder eligibility, builder address and fee approval evidence required"
+    },
+    "hyperliquid_funding_adapter": {
+      "ok": false,
+      "detail": "current Hyperliquid CCTP/official deposit adapter evidence required; legacy bridge direct write remains disabled"
+    },
+    "fail_closed_policy": {
+      "ok": true,
+      "detail": "provider-confirmed visible-fee and funding fail-closed policies present"
+    }
+  },
+  "blockers": [
+    {"gate":"real_receipt_matrix","detail":"real external-wallet cross-chain receipt matrix required"},
+    {"gate":"lifi_provider_approval","detail":"LI.FI partner+payout approval evidence required before fee activation"},
+    {"gate":"hyperliquid_builder_approval","detail":"Hyperliquid builder eligibility, builder address and fee approval evidence required"},
+    {"gate":"hyperliquid_funding_adapter","detail":"current Hyperliquid CCTP/official deposit adapter evidence required; legacy bridge direct write remains disabled"}
+  ],
+  "revenue_mode": "EXTERNAL_SETUP_REQUIRED",
+  "funding_mode": "TRANSITIONAL_PROVIDER_VALIDATION_REQUIRED"
+}
