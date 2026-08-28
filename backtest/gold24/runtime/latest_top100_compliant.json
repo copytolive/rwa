@@ -1,0 +1,29 @@
+{
+  "classification": "NO_COMPLIANT_PORTFOLIO_YET",
+  "count": 0,
+  "gate_a": {
+    "crosscheck_provider": "TradingView",
+    "crosscheck_receipt_sha256": "272eed9b31bc9467780e37a70fd012ae58d5aa511f21c329b3758df4d5ac4fff",
+    "dataset_sha256": "f78e8aed7cdf9e7660b15f8ceb7507d0af29ddaf22b8431b2b63c963c3f306ac",
+    "end_utc": "2026-08-27 00:00:00+00:00",
+    "gate_a": "PASS",
+    "rows": 6500,
+    "rules_sha256": "6b7fc2920b48a5db18a3fd63e9c4afd4f0281c84003a4e6ebe141b275110b07e",
+    "start_utc": "2000-10-23 00:00:00+00:00",
+    "zero_volume_rows": 10
+  },
+  "policy": "GOLD24_WEEKLY_PROFIT_RR12_V3_SCREENING_20260828",
+  "portfolio": {
+    "families": {},
+    "family_cap_complete": false,
+    "rejected_correlation_gt_0_50": 0,
+    "rejected_duplicate_execution_profile_v2": 0,
+    "rejected_family_cap": 0,
+    "required_coverage_complete": false
+  },
+  "portfolio_draft_count": 0,
+  "preportfolio_pass_count": 0,
+  "ranking": [],
+  "rules_sha256": "b719bb4317fbfda681a2a6c785748d9454d72845a8d3a4858c94d8e098d0fb95",
+  "schema": "gold24-top100-compliant-v3"
+}
