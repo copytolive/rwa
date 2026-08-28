@@ -2,12 +2,16 @@
 :root{--rwa-context-w:clamp(390px,31vw,500px)}
 .rwa-marketplace-launch{display:inline-flex!important;align-items:center;justify-content:center;gap:7px;height:32px;min-width:126px;padding:0 12px;border:1px solid #6558d6;border-radius:8px;background:linear-gradient(180deg,#211c45,#15142a);color:#eeeaff;font:900 10px/1 system-ui;letter-spacing:.07em;white-space:nowrap;cursor:pointer;box-shadow:0 0 0 1px rgba(139,124,255,.08) inset}.rwa-marketplace-launch:hover,.rwa-marketplace-launch.active{border-color:#9386ff;background:linear-gradient(180deg,#2b245d,#1a1736);color:#fff}.rwa-marketplace-launch .rwa-marketplace-mark{font-size:12px;color:#a99fff}.rwa-marketplace-launch .rwa-marketplace-label{display:inline}
 /* Hard fail-safe: contextual workspaces are mutually exclusive. */
+.rwa-fundamentals:not(.open){visibility:hidden!important;pointer-events:none!important}
+.rwa-fundamentals.open{visibility:visible!important}
 body.rwa-super-workspace-open .rwa-fundamentals.open{transform:translateX(102%)!important;visibility:hidden!important;pointer-events:none!important}
 body.rwa-fundamentals-open #rwaSuperWorkspace:not([hidden]){visibility:hidden!important;pointer-events:none!important}
 @media(min-width:681px){
   body.rwa-super-asset-workspace.rwa-super-workspace-open .layout{padding-right:var(--rwa-context-w)!important}
   body.rwa-super-asset-workspace #rwaSuperWorkspace{top:48px!important;bottom:34px!important;width:var(--rwa-context-w)!important;max-width:calc(100vw - 320px)!important;border-left:1px solid #283342!important;box-shadow:-18px 0 48px rgba(0,0,0,.38)!important}
-  .rwa-fundamentals{top:48px!important;width:var(--rwa-context-w)!important;max-width:calc(100vw - 320px)!important;z-index:8890!important}
+  body.rwa-fundamentals-open .layout{grid-template-columns:clamp(220px,17vw,286px) minmax(0,1fr)!important;padding-right:var(--rwa-context-w)!important}
+  body.rwa-fundamentals-open .right{display:none!important}
+  .rwa-fundamentals{top:48px!important;right:0!important;bottom:34px!important;width:var(--rwa-context-w)!important;max-width:calc(100vw - 320px)!important;z-index:8890!important;box-shadow:-18px 0 48px rgba(0,0,0,.38)!important}
   .rwa-fund-tabs{max-width:100%;overflow-x:auto!important;overscroll-behavior-x:contain}.rwa-fund-tabs button{white-space:nowrap}
   body.rwa-super-asset-workspace #rwaSuperWorkspace .rwa-super-workspace-head{top:-13px!important}
 }
