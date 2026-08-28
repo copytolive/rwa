@@ -1,0 +1,73 @@
+name: RENKO XAUT Fixed 1s ATR Matrix Gate
+on:
+  push:
+    branches:
+      - main
+      - fix/renko-xaut-atr-matrix-20260828
+    paths:
+      - 'renko/**'
+      - 'tools/renko-xaut-*.mjs'
+      - '.github/workflows/renko-xaut-atr-matrix.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  xaut-fixed-1s:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax + fixed-1s static lock
+        run: |
+          set -euo pipefail
+          node --check renko/renko-tv-engine.js
+          node --check renko/renko-tv-fixed-1s.js
+          node --check renko/renko-tv-locale-guard.js
+          node --check renko/renko-tv-app.js
+          node --check renko/renko-tv-atr-fixed1s.js
+          node --check tools/renko-xaut-live-provider-report.mjs
+          node --check tools/renko-xaut-atr-matrix-report.mjs
+          test -f renko/xaut-okx-1s-pack.csv.gz
+          test -f renko/xaut-okx-1s-pack.meta.json
+          ! grep -q 'id="intervalSelect"' renko/index.html
+          ! grep -q 'TIMEFRAME</span>' renko/index.html
+          ! grep -q "Math.min(500" renko/renko-tv-app.js
+          grep -q "FIXED_INTERVAL='1s'" renko/renko-tv-app.js
+          grep -q '"interval": "1s"' renko/xaut-okx-1s-pack.meta.json
+          python3 - <<'PY'
+          import json
+          m=json.load(open('renko/xaut-okx-1s-pack.meta.json'))
+          assert m['interval']=='1s' and m['rows']>=1000999,m
+          print('FIXED_1S_STATIC_LOCK_PASS',m['rows'],m['fromUtc'],m['toUtc'])
+          PY
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
+          npx playwright install --with-deps chromium
+      - name: Serve exact checkout
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/renko-xaut-site
+          mkdir -p /tmp/renko-xaut-site/rwa
+          cp -a . /tmp/renko-xaut-site/rwa/
+          cd /tmp/renko-xaut-site
+          python3 -m http.server 8080 >/tmp/renko-xaut-http.log 2>&1 &
+          echo $! >/tmp/renko-xaut-http.pid
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/rwa/renko/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/renko-xaut-http.log
+          exit 1
+      - name: Fixed 1s XAUT OKX desktop + mobile browser proof
+        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa node tools/renko-xaut-live-provider-report.mjs
+      - name: Seven fixed-1s ATR lengths — desktop + mobile real browser proof
+        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa node tools/renko-xaut-atr-matrix-report.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-xaut-fixed-1s-atr-matrix-${{ github.sha }}
+          path: |
+            artifacts/renko-xaut-provider
+            artifacts/renko-xaut-atr-matrix
+          retention-days: 14

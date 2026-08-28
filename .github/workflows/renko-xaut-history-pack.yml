@@ -1,0 +1,59 @@
+name: RENKO XAUT Fixed 1s History Pack
+on:
+  push:
+    branches:
+      - main
+      - fix/renko-xaut-atr-matrix-20260828
+    paths:
+      - 'tools/build-xaut-okx-1s-pack.py'
+      - '.github/workflows/renko-xaut-history-pack.yml'
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: renko-xaut-okx-1s-pack-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      RENKO_FIXED_INTERVAL: '1s'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Build XAUT OKX fixed 1s pack
+        run: python3 tools/build-xaut-okx-1s-pack.py
+      - name: Validate fixed 1s pack
+        run: |
+          python3 - <<'PY'
+          import gzip,json
+          from pathlib import Path
+          m=json.loads(Path('renko/xaut-okx-1s-pack.meta.json').read_text())
+          assert m['schema']=='renko-xaut-okx-1s-pack-v1',m
+          assert m['instrument']=='XAUT-USDT' and m['interval']=='1s',m
+          assert m['rows']>=1000999,m
+          with gzip.open('renko/xaut-okx-1s-pack.csv.gz','rt') as f:
+              first=f.readline().strip().split(',')
+              count=1+sum(1 for _ in f)
+          assert count==m['rows'],(count,m['rows'])
+          print('RENKO_XAUT_OKX_1S_PACK_PASS',json.dumps({k:m[k] for k in ['rows','fromUtc','toUtc','interval','provider']}))
+          PY
+      - name: Commit refreshed pack onto latest source branch
+        run: |
+          set -euo pipefail
+          cp renko/xaut-okx-1s-pack.csv.gz /tmp/xaut-okx-1s-pack.csv.gz
+          cp renko/xaut-okx-1s-pack.meta.json /tmp/xaut-okx-1s-pack.meta.json
+          git fetch origin "${GITHUB_REF_NAME}"
+          git reset --hard "origin/${GITHUB_REF_NAME}"
+          cp /tmp/xaut-okx-1s-pack.csv.gz renko/xaut-okx-1s-pack.csv.gz
+          cp /tmp/xaut-okx-1s-pack.meta.json renko/xaut-okx-1s-pack.meta.json
+          git config user.name 'copytolive-renko-bot'
+          git config user.email 'copytolive@gmail.com'
+          git add -f renko/xaut-okx-1s-pack.csv.gz renko/xaut-okx-1s-pack.meta.json
+          if git diff --cached --quiet; then echo 'pack unchanged'; exit 0; fi
+          git commit -m 'data(renko): refresh XAUT OKX fixed 1s history pack'
+          git push origin HEAD:${GITHUB_REF_NAME}
