@@ -1,0 +1,101 @@
+name: RENKO 50 Pair Zero-ms Switch Gate
+on:
+  push:
+    branches:
+      - main
+      - fix/renko-50pair-zero-ms-switch-20260828
+    paths:
+      - 'renko/**'
+      - 'tools/renko-50pair-switch-report.mjs'
+      - '.github/workflows/renko-50pair-switch.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-checkout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Static zero-blank / lazy-memory contract
+        run: |
+          set -euo pipefail
+          node --check renko/renko-tv-switch-fast.js
+          node --check renko/renko-tv-atr-fixed1s.js
+          node --check renko/renko-tv-fixed-1s.js
+          node --check tools/renko-50pair-switch-report.mjs
+          grep -q 'renko-tv-switch-fast.css' renko/index.html
+          grep -q 'renko-tv-switch-fast.js' renko/index.html
+          grep -q 'ON DEMAND' renko/renko-tv-atr-fixed1s.js
+          grep -q 'workerActive' renko/renko-tv-atr-fixed1s.js
+          grep -q 'RWARenkoBrickBudget' renko/renko-tv-fixed-1s.js
+          grep -q 'chart-wrap.switching .chart-empty' renko/renko-tv-switch-fast.css
+          ! grep -q "symbol===XAUT)void warm" renko/renko-tv-atr-fixed1s.js
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
+          npx playwright install --with-deps chromium
+      - name: Serve exact checkout
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/renko-switch-site
+          mkdir -p /tmp/renko-switch-site/rwa
+          cp -a . /tmp/renko-switch-site/rwa/
+          cd /tmp/renko-switch-site
+          python3 -m http.server 8080 >/tmp/renko-switch-http.log 2>&1 &
+          echo $! >/tmp/renko-switch-http.pid
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/rwa/renko/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/renko-switch-http.log
+          exit 1
+      - name: Desktop browser — XAUT to 50 pair switches + 51 first-frame screenshots
+        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_50PAIR_VIEWPORT=desktop RENKO_50PAIR_OUT=artifacts/renko-50pair-exact-desktop node tools/renko-50pair-switch-report.mjs
+      - name: Mobile browser — XAUT to 50 pair switches + 51 first-frame screenshots
+        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_50PAIR_VIEWPORT=mobile RENKO_50PAIR_OUT=artifacts/renko-50pair-exact-mobile node tools/renko-50pair-switch-report.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-50pair-exact-${{ github.sha }}
+          path: |
+            artifacts/renko-50pair-exact-desktop
+            artifacts/renko-50pair-exact-mobile
+          retention-days: 14
+  public-production:
+    if: github.ref == 'refs/heads/main'
+    needs: exact-checkout
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for exact GitHub Pages SHA
+        run: |
+          set -euo pipefail
+          url='https://copytolive.github.io/rwa/renko-deployment-sha.txt'
+          for i in $(seq 1 90); do
+            got=$(curl -fsS "$url?ts=$(date +%s%N)" 2>/dev/null | tr -d '\r\n' || true)
+            echo "attempt=$i expected=$GITHUB_SHA got=$got"
+            if [[ "$got" == "$GITHUB_SHA" ]]; then exit 0; fi
+            sleep 5
+          done
+          exit 1
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
+          npx playwright install --with-deps chromium
+      - name: PUBLIC desktop — XAUT to 50 pair switches + 51 first-frame screenshots
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_50PAIR_VIEWPORT=desktop RENKO_50PAIR_OUT=artifacts/renko-50pair-public-desktop node tools/renko-50pair-switch-report.mjs
+      - name: PUBLIC mobile — XAUT to 50 pair switches + 51 first-frame screenshots
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_50PAIR_VIEWPORT=mobile RENKO_50PAIR_OUT=artifacts/renko-50pair-public-mobile node tools/renko-50pair-switch-report.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-50pair-public-${{ github.sha }}
+          path: |
+            artifacts/renko-50pair-public-desktop
+            artifacts/renko-50pair-public-mobile
+          retention-days: 14
