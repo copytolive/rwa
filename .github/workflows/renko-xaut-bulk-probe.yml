@@ -13,31 +13,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - name: Probe archive naming variants
+      - name: Probe XAUT daily 1m archive and CORS
         shell: bash
         run: |
-          set -u
-          base='https://download.gatedata.org/spot/candlesticks_1m'
-          urls=(
-            "$base/202607/XAUT_USDT-202607.csv.gz"
-            "$base/202607/XAUT_USDT-20260731.csv.gz"
-            "$base/202507/XAUT_USDT-202507.csv.gz"
-            "$base/202507/XAUT_USDT-20250701.csv.gz"
-            "$base/202607/BTC_USDT-202607.csv.gz"
-            "$base/202607/BTC_USDT-20260731.csv.gz"
-            "$base/202507/BTC_USDT-202507.csv.gz"
-            "$base/202507/BTC_USDT-20250701.csv.gz"
-          )
-          found=''
-          for url in "${urls[@]}"; do
-            code=$(curl -L -sS -o /tmp/probe.gz -w '%{http_code}' "$url" || true)
-            bytes=$(wc -c </tmp/probe.gz 2>/dev/null || echo 0)
-            echo "$code $bytes $url"
-            if [[ "$code" == 200 && "$bytes" -gt 100 ]]; then found="$url"; cp /tmp/probe.gz /tmp/found.gz; break; fi
-          done
-          if [[ -z "$found" ]]; then echo 'NO_ARCHIVE_VARIANT_FOUND'; exit 2; fi
-          echo "FOUND=$found"
-          gzip -dc /tmp/found.gz >/tmp/found.csv
-          wc -l /tmp/found.csv
-          head -n 5 /tmp/found.csv
-          tail -n 5 /tmp/found.csv
+          set -euo pipefail
+          url='https://download.gatedata.org/spot/candlesticks_1m/202607/XAUT_USDT-20260731.csv.gz'
+          echo "URL=$url"
+          curl -sSIL "$url" | tee /tmp/headers
+          grep -iE '^(access-control-allow-origin|content-type|content-length|etag|last-modified):' /tmp/headers || true
+          curl -fL --retry 3 --retry-delay 1 "$url" -o /tmp/xaut.csv.gz
+          gzip -dc /tmp/xaut.csv.gz >/tmp/xaut.csv
+          echo "compressed=$(wc -c </tmp/xaut.csv.gz) lines=$(wc -l </tmp/xaut.csv)"
+          head -n 3 /tmp/xaut.csv
+          tail -n 3 /tmp/xaut.csv
