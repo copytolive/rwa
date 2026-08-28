@@ -1,0 +1,1 @@
+Launch V6 entry point: run `node tools/launch-finalization-audit.mjs`. A `GO` result is valid only when the canonical global gate, MULTI CHAIN, revenue provider setup, production services, evidence, beta thresholds and mainnet control all pass.
