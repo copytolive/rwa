@@ -29,11 +29,11 @@ concurrency:
 jobs:
   canonical-backtest:
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 70
     env:
       GOLD24_STATE_DIR: ${{ github.workspace }}/.gold24-canonical
       GOLD24_TIMEFRAME: D1
-      GOLD24_BATCH_SIZE: '32'
+      GOLD24_BATCH_SIZE: '1000'
       GOLD24_FLAT_LOT: '1.0'
       GOLD24_SEED: '20260828'
       GH_TOKEN: ${{ github.token }}
@@ -105,7 +105,7 @@ jobs:
           set -euo pipefail
           python pipeline_selftest.py
 
-      - name: Run one legal canonical batch
+      - name: Run legal canonical engine for one hour
         working-directory: backtest/gold24
         env:
           GOLD24_DATASET: ${{ github.workspace }}/.gold24-canonical/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv
@@ -113,7 +113,7 @@ jobs:
         run: |
           set -euo pipefail
           python weekly_profit_runner.py --self-test
-          python weekly_profit_runner.py --once
+          timeout --preserve-status --signal=INT 3600s python weekly_profit_runner.py
 
       - name: Run full promotion screening
         working-directory: backtest/gold24
@@ -153,8 +153,6 @@ jobs:
           exact_dupes = sum(int(x.get('exact_execution_duplicates_archived',0) or 0) for x in receipts)
           zero_trade = sum(int(x.get('zero_trade_configs',0) or 0) for x in receipts)
           screened = audit.get('screened', [])
-          def count(path):
-              return sum(bool(r.get(path)) for r in screened)
           summary = {
               'schema':'gold24-public-validation-v3',
               'validation':'PASS',
