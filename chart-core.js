@@ -45,6 +45,10 @@ boot();
 /* RWA_UI_LAYOUT_INTEGRITY_V16_2_BOOTSTRAP */
 (()=>{if(document.querySelector('script[data-rwa-ui-layout-v15]'))return;const s=document.createElement('script');s.src='ui-layout-integrity-v15.js?v=16.2';s.async=false;s.dataset.rwaUiLayoutV15='1';s.onerror=()=>console.error('RWA UI Layout Integrity V16.2 failed to load');document.head.appendChild(s)})();
 /* RWA_SEABLUEPRINT_COMMERCE_SINGLE_SHELL_V1_BOOTSTRAP */
-(()=>{if(window.RWASeablueprintCommerceBridge)return;import('./rwa-seablueprint-commerce-bridge.js?v=1.2.4').catch(()=>console.error('Seablueprint single-shell commerce bridge failed to load'))})();
+(()=>{if(window.RWASeablueprintCommerceBridge)return;import('./rwa-seablueprint-commerce-bridge.js?v=1.3.0').catch(()=>console.error('Seablueprint single-shell commerce bridge failed to load'))})();
+/* RWA_ECOMMERCE_PRODUCTION_LABEL_V1_BOOTSTRAP */
+(()=>{if(window.RWAEcommerceProductionLabel)return;import('./rwa-ecommerce-production-label.js?v=1.0.0').catch(()=>console.error('Ecommerce production label failed to load'))})();
+/* RWA_TARGET_DASHBOARD_V1_BOOTSTRAP */
+(()=>{for(const [key,href] of [['base','rwa-target-dashboard-v1.css?v=1.1.0'],['compat','rwa-target-dashboard-v1-compat.css?v=1.1.0'],['workspace','rwa-target-dashboard-v1-workspace.css?v=1.1.0'],['final','rwa-target-dashboard-v1-final.css?v=1.7.0']]){if(document.querySelector(`link[data-rwa-target-dashboard-${key}]`))continue;const l=document.createElement('link');l.rel='stylesheet';l.href=href;l.dataset[`rwaTargetDashboard${key[0].toUpperCase()+key.slice(1)}`]='1';document.head.appendChild(l)}if(window.RWATargetDashboardV1)return;import('./rwa-target-dashboard-v1.js?v=1.2.1').catch(()=>console.error('RWA target dashboard V1 failed to load'))})();
 /* RWA_REAL_BUSINESS_VALIDATION_CONSOLE_V1_BOOTSTRAP */
 (()=>{if(window.RWABusinessConsole)return;import('./rwa-business-console.js?v=1.0.0').catch(()=>console.error('RWA business validation console failed to load'))})();

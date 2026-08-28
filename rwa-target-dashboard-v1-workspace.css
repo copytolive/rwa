@@ -1,0 +1,93 @@
+/* RWA × SEABLUEPRINT TARGET WORKSPACE V1.1
+   Visual convergence only. Economic/merchant/payment truth remains governed by existing fail-closed runtimes. */
+body.rwa-target-dashboard-v1 #rwaTargetMarketCard{flex:0 0 auto;margin:10px;border:1px solid #1f3048;border-radius:11px;background:linear-gradient(160deg,#081526,#050d18);padding:12px;display:grid;grid-template-columns:minmax(0,1fr) 74px;gap:10px;align-items:end;box-shadow:inset 0 1px rgba(255,255,255,.025)}
+body.rwa-target-dashboard-v1 #rwaTargetMarketCard small{display:block;color:#6f829e;font-size:7px;font-weight:850;letter-spacing:.1em}
+body.rwa-target-dashboard-v1 #rwaTargetMarketCard b{display:block;margin-top:6px;color:#eef5ff;font-size:15px;line-height:1.1}
+body.rwa-target-dashboard-v1 #rwaTargetMarketCard>div>span{display:block;margin-top:6px;color:#71839b;font-size:7px;line-height:1.4}
+body.rwa-target-dashboard-v1 .rwa-target-market-spark{height:45px;display:flex;align-items:flex-end;gap:3px}
+body.rwa-target-dashboard-v1 .rwa-target-market-spark i{display:block;flex:1;border-radius:2px 2px 0 0;background:linear-gradient(#6f7dff,#2d4e9d);opacity:.85}
+body.rwa-target-dashboard-v1 .rwa-target-market-spark i:nth-child(1){height:20%}body.rwa-target-dashboard-v1 .rwa-target-market-spark i:nth-child(2){height:44%}body.rwa-target-dashboard-v1 .rwa-target-market-spark i:nth-child(3){height:35%}body.rwa-target-dashboard-v1 .rwa-target-market-spark i:nth-child(4){height:62%}body.rwa-target-dashboard-v1 .rwa-target-market-spark i:nth-child(5){height:54%}body.rwa-target-dashboard-v1 .rwa-target-market-spark i:nth-child(6){height:76%}body.rwa-target-dashboard-v1 .rwa-target-market-spark i:nth-child(7){height:68%}body.rwa-target-dashboard-v1 .rwa-target-market-spark i:nth-child(8){height:94%}
+
+/* Target trading ticket replaces the old presentation panels, but execution still routes through the protected existing trade workspace. */
+body.rwa-target-dashboard-v1 .bottom{display:none!important}
+body.rwa-target-dashboard-v1 #rwaTargetOrderTicket{display:block;border-top:1px solid #18283d;border-bottom:1px solid #18283d;background:#050d17;min-height:270px;color:#eaf1fc}
+body.rwa-target-dashboard-v1 .rwa-target-trade-nav{height:40px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid #1b2a40;background:#07111e}
+body.rwa-target-dashboard-v1 .rwa-target-trade-nav>div{display:flex;align-items:center;gap:5px}
+body.rwa-target-dashboard-v1 .rwa-target-trade-nav button{height:38px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:transparent;color:#889ab2;font-size:8.5px;font-weight:750}
+body.rwa-target-dashboard-v1 .rwa-target-trade-nav button.active{color:#8fa6ff;border-bottom-color:#6e7fff}
+body.rwa-target-dashboard-v1 .rwa-target-trade-nav span{font-size:7px;color:#70819a}
+body.rwa-target-dashboard-v1 .rwa-target-trade-nav b{font-size:8px;padding:5px 8px;border:1px solid #21314a;border-radius:6px;background:#091321;color:#c5d0e1}
+body.rwa-target-dashboard-v1 .rwa-target-order-modes{height:38px;display:flex;align-items:center;gap:5px;padding:0 12px;border-bottom:1px solid #16253a}
+body.rwa-target-dashboard-v1 .rwa-target-order-modes button{height:26px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:#8293ab;font-size:8px;font-weight:750}
+body.rwa-target-dashboard-v1 .rwa-target-order-modes button.active{background:#102048;color:#aab9ff}
+body.rwa-target-dashboard-v1 .rwa-target-order-modes>span{margin-left:auto;color:#64758e;font-size:7px}
+body.rwa-target-dashboard-v1 .rwa-target-order-grid{display:grid;grid-template-columns:minmax(0,1fr) 38px minmax(0,1fr);gap:9px;padding:11px 12px 8px;align-items:center}
+body.rwa-target-dashboard-v1 .rwa-target-order-side{min-width:0;display:grid;grid-template-columns:1fr auto;gap:7px 10px;align-items:center}
+body.rwa-target-dashboard-v1 .rwa-target-order-side>small{color:#63748c;font-size:6.5px;letter-spacing:.08em}
+body.rwa-target-dashboard-v1 .rwa-target-order-side>b{justify-self:end;color:#aab7c9;font-size:8px}
+body.rwa-target-dashboard-v1 .rwa-target-order-side label{grid-column:1/-1;height:33px;border:1px solid #213149;border-radius:6px;background:#07111e;padding:0 9px;display:flex;align-items:center;justify-content:space-between;color:#75869f;font-size:8px}
+body.rwa-target-dashboard-v1 .rwa-target-order-side label span{color:#d7e0ed;font-weight:700}
+body.rwa-target-dashboard-v1 .rwa-target-order-side label i{font-style:normal;color:#71829a}
+body.rwa-target-dashboard-v1 .rwa-target-slider{grid-column:1/-1;height:13px;position:relative;display:flex;justify-content:space-between;align-items:center}
+body.rwa-target-dashboard-v1 .rwa-target-slider:before{content:'';position:absolute;left:3px;right:3px;top:6px;height:2px;background:#24344d}
+body.rwa-target-dashboard-v1 .rwa-target-slider i{position:relative;width:7px;height:7px;border-radius:50%;background:#667895;border:1px solid #9eb0cb}
+body.rwa-target-dashboard-v1 .rwa-target-order-side>button{grid-column:1/-1;height:34px;border:0;border-radius:6px;color:#fff;font-size:9px;font-weight:850}
+body.rwa-target-dashboard-v1 .rwa-target-order-side.buy>button{background:linear-gradient(180deg,#20bf88,#11966e)}
+body.rwa-target-dashboard-v1 .rwa-target-order-side.sell>button{background:linear-gradient(180deg,#ef5366,#c9374a)}
+body.rwa-target-dashboard-v1 .rwa-target-swap{width:30px;height:30px;border-radius:50%;border:1px solid #1e3049;background:#081321;display:grid;place-items:center;color:#7689a6;font-size:14px}
+body.rwa-target-dashboard-v1 .rwa-target-trade-note{margin:0;padding:0 12px 9px;color:#61728a;font-size:6.5px;text-align:center}
+
+/* Ecommerce target: compact store/product/cart rail. The legacy educational hero is hidden only visually; all evidence remains available through Verification Rules. */
+body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-shop-hero,body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-live-guard{display:none!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-shop-shell{padding:0 9px 10px!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-shop-head{min-height:52px!important;height:52px!important;padding:0 5px!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-shop-head-actions{gap:5px!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] #rwaCartOpen,body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] #rwaShopClose{height:30px!important;min-width:30px!important;border-radius:7px!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-seablueprint-source{margin:7px 0!important;padding:7px 8px!important;min-height:34px!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-seablueprint-source div span{white-space:normal!important;line-height:1.2!important}
+body.rwa-target-dashboard-v1 #rwaTargetStoreSummary{border:1px solid #223654;border-radius:10px;background:linear-gradient(150deg,#091527,#07101d);padding:10px;margin:0 0 8px}
+body.rwa-target-dashboard-v1 .rwa-target-store-head{display:grid;grid-template-columns:38px minmax(0,1fr);gap:8px;align-items:center}
+body.rwa-target-dashboard-v1 .rwa-target-store-logo{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(145deg,#4f64ef,#273b94);color:#fff;font-size:16px;font-weight:950}
+body.rwa-target-dashboard-v1 .rwa-target-store-head b{display:block;color:#f1f5fc;font-size:10px;line-height:1.2}
+body.rwa-target-dashboard-v1 .rwa-target-store-head small{display:block;margin-top:3px;color:#7386a1;font-size:7px;line-height:1.25}
+body.rwa-target-dashboard-v1 .rwa-target-store-head div div{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+body.rwa-target-dashboard-v1 .rwa-target-store-head em{font-style:normal;border:1px solid #574c24;border-radius:999px;background:#211b0b;color:#e7c76b;padding:3px 5px;font-size:5.5px;font-weight:900;letter-spacing:.04em}
+body.rwa-target-dashboard-v1 .rwa-target-store-head em+em{border-color:#374052;background:#121824;color:#9ba8ba}
+body.rwa-target-dashboard-v1 .rwa-target-store-metrics{display:grid;grid-template-columns:repeat(3,1fr);margin-top:9px;border-top:1px solid #1c2b42;border-bottom:1px solid #1c2b42}
+body.rwa-target-dashboard-v1 .rwa-target-store-metrics span{padding:7px 5px;text-align:center;border-right:1px solid #1c2b42}
+body.rwa-target-dashboard-v1 .rwa-target-store-metrics span:last-child{border-right:0}
+body.rwa-target-dashboard-v1 .rwa-target-store-metrics b{display:block;color:#eef4fc;font-size:11px}
+body.rwa-target-dashboard-v1 .rwa-target-store-metrics small{display:block;margin-top:2px;color:#647690;font-size:5.5px}
+body.rwa-target-dashboard-v1 #rwaTargetStoreSummary>button{width:100%;height:28px;margin-top:8px;border:1px solid #4056b0;border-radius:6px;background:#253a91;color:#dce5ff;font-size:7px;font-weight:850}
+body.rwa-target-dashboard-v1 #rwaShopScreen .rwa-shop-toolbar{display:grid!important;grid-template-columns:1fr!important;gap:6px!important;margin:0 0 7px!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen .rwa-shop-tabs{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:3px!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen [data-shop-tab]{height:29px!important;padding:0 4px!important;border:0!important;border-bottom:2px solid transparent!important;background:#07101b!important;border-radius:5px 5px 0 0!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen .rwa-shop-search{height:30px!important;font-size:8px!important;background:#07101b!important;border-color:#1c2d46!important}
+body.rwa-target-dashboard-v1 #rwaTargetProductsHeading{display:flex;align-items:center;justify-content:space-between;margin:5px 1px 6px}
+body.rwa-target-dashboard-v1 #rwaTargetProductsHeading b{font-size:9px;color:#edf3fc}
+body.rwa-target-dashboard-v1 #rwaTargetProductsHeading span{font-size:5.5px;color:#697a92}
+body.rwa-target-dashboard-v1 #rwaShopScreen .rwa-products-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen .rwa-product-card{min-width:0!important;border:1px solid #20314b!important;border-radius:8px!important;background:#07111e!important;overflow:hidden!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen .rwa-product-image{height:58px!important;display:grid!important;place-items:center!important;background:radial-gradient(circle at 65% 30%,rgba(97,121,255,.28),transparent 26%),linear-gradient(145deg,#13233c,#08111d)!important;color:#7188e7!important;font-size:20px!important;font-weight:950!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen .rwa-product-body{padding:7px!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen .rwa-product-body>small{font-size:5.5px!important;color:#647691!important;line-height:1.2!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen .rwa-product-body h4{margin:4px 0 6px!important;font-size:8px!important;line-height:1.25!important;min-height:20px!important;color:#eef4fc!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen .rwa-product-price{display:block!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen .rwa-product-price b{display:block!important;font-size:8px!important;color:#eaf1fc!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen .rwa-product-price button{width:100%!important;height:25px!important;margin-top:5px!important;border-radius:5px!important;font-size:6px!important}
+body.rwa-target-dashboard-v1 #rwaTargetCartSummary{position:sticky;bottom:0;z-index:3;margin:8px 0 0;padding:8px;border:1px solid #253653;border-radius:9px;background:rgba(6,15,27,.975);backdrop-filter:blur(12px);display:grid;grid-template-columns:minmax(0,1fr) 98px;gap:8px;align-items:center}
+body.rwa-target-dashboard-v1 #rwaTargetCartSummary b{font-size:9px;color:#eef4fc}
+body.rwa-target-dashboard-v1 #rwaTargetCartSummary small{display:block;margin-top:2px;font-size:5.5px;color:#6d7d94}
+body.rwa-target-dashboard-v1 #rwaTargetCartSummary button{height:30px;border:1px solid #5368d8;border-radius:6px;background:#3549b4;color:#fff;font-size:7px;font-weight:850}
+body.rwa-target-dashboard-v1 #rwaTargetCartSummary.locked button{border-color:#3a4558;background:#172131;color:#9ba8ba}
+
+/* Keep right-side order book visually independent from the fixed commerce rail. */
+body.rwa-target-dashboard-v1 .right{background:#06101b!important}
+body.rwa-target-dashboard-v1 .right .order-section{background:#060f1a!important}
+body.rwa-target-dashboard-v1 .right .bookrow{min-height:22px!important;align-items:center!important}
+body.rwa-target-dashboard-v1 .right .activity-section,body.rwa-target-dashboard-v1 .right .institutional-card{display:none!important}
+
+@media(min-width:1366px){body.rwa-target-dashboard-v1 .chart-wrap{height:430px!important;min-height:430px!important}}
+@media(max-width:1120px){body.rwa-target-dashboard-v1 #rwaTargetMarketCard{display:none!important}body.rwa-target-dashboard-v1 #rwaTargetOrderTicket{min-height:245px}body.rwa-target-dashboard-v1 .rwa-target-trade-nav>div:last-child{display:none!important}}
+@media(max-width:900px){body.rwa-target-dashboard-v1 .bottom{display:grid!important}body.rwa-target-dashboard-v1 #rwaTargetOrderTicket{display:none!important}body.rwa-target-dashboard-v1 #rwaShopScreen .rwa-products-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:380px){body.rwa-target-dashboard-v1 #rwaShopScreen .rwa-product-image{height:48px!important}body.rwa-target-dashboard-v1 #rwaTargetStoreSummary{padding:8px!important}body.rwa-target-dashboard-v1 #rwaTargetCartSummary{grid-template-columns:1fr 82px!important}}
