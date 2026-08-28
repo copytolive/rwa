@@ -1,66 +1,68 @@
-name: RENKO TradingView Observable Parity
+name: RENKO Fixed 1s Public Production Closure
 
 on:
   push:
     branches:
       - main
-      - fix/renko-tradingview-observable-parity-20260828
+      - fix/renko-xaut-atr-matrix-20260828
     paths:
       - 'renko/**'
       - 'tools/renko-observable-parity-gate.mjs'
       - 'tools/renko-observable-browser-report.mjs'
-      - 'tools/renko-public-production-closure.mjs'
+      - 'tools/renko-xaut-live-provider-report.mjs'
+      - 'tools/renko-xaut-atr-matrix-report.mjs'
       - '.github/workflows/renko-observable-parity.yml'
   pull_request:
+    branches: [main]
     paths:
       - 'renko/**'
       - 'tools/renko-observable-parity-gate.mjs'
       - 'tools/renko-observable-browser-report.mjs'
-      - 'tools/renko-public-production-closure.mjs'
+      - 'tools/renko-xaut-live-provider-report.mjs'
+      - 'tools/renko-xaut-atr-matrix-report.mjs'
       - '.github/workflows/renko-observable-parity.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: renko-fixed-1s-closure-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  observable-parity:
+  exact-checkout:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 35
     steps:
       - name: Checkout exact source
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Syntax
-        run: |
-          node --check renko/renko-tv-engine.js
-          node --check renko/renko-tv-stable-chart-v2.js
-          node --check renko/renko-tv-percentage-ltp-runtime.js
-          node --check renko/renko-tv-history-ladder.js
-          node --check renko/renko-tv-parity-fixture.js
-          node --check tools/renko-observable-parity-gate.mjs
-          node --check tools/renko-observable-browser-report.mjs
-          node --check tools/renko-public-production-closure.mjs
-      - name: Verify RENKO tree unchanged since accepted closure baseline
+      - name: Syntax and fixed-1s contract gate
         shell: bash
         run: |
           set -euo pipefail
-          BASELINE_SHA=5fa775acc293bd4d1b960326bee702d54b5e2f4b
-          git cat-file -e "$BASELINE_SHA^{commit}"
-          if ! git diff --quiet "$BASELINE_SHA"..HEAD -- renko/; then
-            echo 'RENKO source drifted after the accepted closure baseline:' >&2
-            git diff --name-status "$BASELINE_SHA"..HEAD -- renko/ >&2
-            exit 1
-          fi
-          echo "RENKO tree is byte-identical to accepted closure baseline $BASELINE_SHA"
-      - name: TradingView observable contract gate
-        run: node tools/renko-observable-parity-gate.mjs
-      - name: Install real browser dependencies
+          node --check renko/renko-tv-engine.js
+          node --check renko/renko-tv-fixed-1s.js
+          node --check renko/renko-tv-locale-guard.js
+          node --check renko/renko-tv-app.js
+          node --check renko/renko-tv-atr-fixed1s.js
+          node --check renko/renko-tv-percentage-ltp-runtime.js
+          node --check renko/renko-tv-parity-fixture.js
+          node --check tools/renko-observable-parity-gate.mjs
+          node --check tools/renko-observable-browser-report.mjs
+          node --check tools/renko-xaut-live-provider-report.mjs
+          node --check tools/renko-xaut-atr-matrix-report.mjs
+          ! grep -q 'id="intervalSelect"' renko/index.html
+          ! grep -q 'TIMEFRAME</span>' renko/index.html
+          grep -q "FIXED_INTERVAL='1s'" renko/renko-tv-app.js
+          test -s renko/xaut-okx-1s-pack.csv.gz
+          node tools/renko-observable-parity-gate.mjs
+      - name: Install real browser runtime
         run: |
           npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
           npx playwright install --with-deps chromium
@@ -68,118 +70,160 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf /tmp/renko-observable-site
-          mkdir -p /tmp/renko-observable-site/rwa
-          cp -a . /tmp/renko-observable-site/rwa/
-          cd /tmp/renko-observable-site
-          python3 -m http.server 8080 >/tmp/renko-observable-http.log 2>&1 &
-          echo $! > /tmp/renko-observable-http.pid
+          rm -rf /tmp/renko-fixed-site
+          mkdir -p /tmp/renko-fixed-site/rwa
+          cp -a . /tmp/renko-fixed-site/rwa/
+          cd /tmp/renko-fixed-site
+          python3 -m http.server 8080 >/tmp/renko-fixed-http.log 2>&1 &
+          echo $! >/tmp/renko-fixed-http.pid
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/rwa/renko/ >/dev/null && exit 0; sleep 1; done
-          cat /tmp/renko-observable-http.log
+          cat /tmp/renko-fixed-http.log
           exit 1
-      - name: Exact-checkout desktop + mobile browser proof
+      - name: Exact-checkout observable GOLD/model desktop + mobile
         env:
           RWA_TEST_URL: http://127.0.0.1:8080/rwa
         run: node tools/renko-observable-browser-report.mjs
-      - name: Preserve exact-checkout evidence
-        run: mv artifacts/renko-observable-parity artifacts/renko-observable-parity-local
-      - name: Stop exact-checkout server
+      - name: Exact-checkout live XAUT fixed-1s desktop + mobile
+        env:
+          RWA_TEST_URL: http://127.0.0.1:8080/rwa
+          RENKO_XAUT_OUT: artifacts/renko-xaut-provider
+        run: node tools/renko-xaut-live-provider-report.mjs
+      - name: Exact-checkout seven XAUT ATR lengths desktop + mobile
+        env:
+          RWA_TEST_URL: http://127.0.0.1:8080/rwa
+          RENKO_XAUT_MATRIX_OUT: artifacts/renko-xaut-atr-matrix
+        run: node tools/renko-xaut-atr-matrix-report.mjs
+      - name: Exact-checkout receipt
         if: always()
-        run: kill "$(cat /tmp/renko-observable-http.pid 2>/dev/null)" 2>/dev/null || true
-      - name: Bind proof to exact SHA served by public GitHub Pages
+        shell: bash
+        run: |
+          mkdir -p artifacts/renko-fixed-1s-closure
+          printf '%s\n' "$GITHUB_SHA" > artifacts/renko-fixed-1s-closure/exact-checkout-sha.txt
+          printf '%s\n' 'production interval selector: ABSENT' > artifacts/renko-fixed-1s-closure/contract.txt
+          printf '%s\n' 'production source interval: FIXED 1s' >> artifacts/renko-fixed-1s-closure/contract.txt
+          printf '%s\n' 'claim boundary: observable/documented TradingView Renko behavior; no proprietary-source claim' >> artifacts/renko-fixed-1s-closure/contract.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-fixed-1s-exact-${{ github.sha }}
+          path: |
+            artifacts/renko-observable-parity
+            artifacts/renko-xaut-provider
+            artifacts/renko-xaut-atr-matrix
+            artifacts/renko-fixed-1s-closure
+          retention-days: 14
+
+  public-production:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: exact-checkout
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact main SHA
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Wait for GitHub Pages exact SHA and byte-bind RENKO payload
         shell: bash
         env:
           PUBLIC_BASE: https://copytolive.github.io/rwa
         run: |
           set -euo pipefail
-          OUT=artifacts/renko-public-production-closure
+          OUT=artifacts/renko-public-fixed-1s-closure
           mkdir -p "$OUT"
-          BASELINE_SHA=5fa775acc293bd4d1b960326bee702d54b5e2f4b
+          matched=0
+          for attempt in $(seq 1 120); do
+            stamp=$(curl -fsSL --retry 2 --retry-delay 1 -H 'Cache-Control: no-cache' "$PUBLIC_BASE/renko-deployment-sha.txt?fixed1s=${GITHUB_SHA}-${attempt}" 2>/dev/null | tr -d '\r\n' || true)
+            if [ "$stamp" = "$GITHUB_SHA" ]; then matched=1; break; fi
+            echo "Waiting for Pages SHA ${GITHUB_SHA}; observed ${stamp:-missing} (${attempt}/120)"
+            sleep 10
+          done
+          test "$matched" = 1
           files=(
             renko/index.html
             renko/renko-tv.css
             renko/renko-tv-engine.js
+            renko/renko-tv-fixed-1s.js
             renko/renko-tv-locale-guard.js
             renko/renko-tv-fetch-guard.js
             renko/renko-tv-stable-chart-v2.js
             renko/renko-tv-ultrafast-ui.js
             renko/renko-tv-app.js
             renko/renko-tv-percentage-ltp-runtime.js
-            renko/renko-tv-history-ladder.js
-            renko/renko-tv-atr-parity.js
+            renko/renko-tv-atr-fixed1s.js
             renko/renko-tv-parity-fixture.js
             renko/fixtures/gold-20y-close-parity.json
+            renko/xaut-okx-1s-pack.meta.json
+            renko/xaut-okx-1s-pack.csv.gz
           )
-          matched=0
-          for attempt in $(seq 1 90); do
-            ok=1
-            : > /tmp/renko-public-manifest.tsv
-            stamp=$(curl -fsSL --retry 2 --retry-delay 1 -H 'Cache-Control: no-cache' "$PUBLIC_BASE/renko-deployment-sha.txt?renko-closure=${GITHUB_SHA}-${attempt}" 2>/dev/null | tr -d '\r\n' || true)
-            if ! [[ "$stamp" =~ ^[0-9a-f]{40}$ ]]; then
-              ok=0
-            else
-              git fetch --quiet --no-tags origin "$stamp" || ok=0
-              git fetch --quiet --no-tags origin main || ok=0
-              if [ "$ok" = 1 ]; then
-                git cat-file -e "$stamp^{commit}" || ok=0
-                git merge-base --is-ancestor "$stamp" origin/main || ok=0
-                git diff --quiet "$BASELINE_SHA".."$stamp" -- renko/ || ok=0
-              fi
-            fi
-            if [ "$ok" = 1 ]; then
-              for p in "${files[@]}"; do
-                expected=$(git rev-parse "$stamp:$p")
-                if ! curl -fsSL --retry 2 --retry-delay 1 -H 'Cache-Control: no-cache' "$PUBLIC_BASE/$p?renko-closure=${GITHUB_SHA}-${attempt}" -o /tmp/renko-public-file; then
-                  ok=0
-                  break
-                fi
-                actual=$(git hash-object /tmp/renko-public-file)
-                printf '%s\t%s\t%s\n' "$p" "$expected" "$actual" >> /tmp/renko-public-manifest.tsv
-                if [ "$expected" != "$actual" ]; then ok=0; fi
-              done
-            fi
-            if [ "$ok" = 1 ]; then
-              matched=1
-              cp /tmp/renko-public-manifest.tsv "$OUT/deployment-manifest.tsv"
-              printf '%s\n' "$stamp" > "$OUT/deployment-sha.txt"
-              git rev-parse origin/main > "$OUT/observed-main-sha.txt"
-              break
-            fi
-            echo "Public RENKO deployment not yet a known-main closure-baseline build (attempt ${attempt}/90; stamp=${stamp:-missing})"
-            sleep 10
+          : > "$OUT/deployment-manifest.tsv"
+          for p in "${files[@]}"; do
+            expected=$(git rev-parse "$GITHUB_SHA:$p")
+            curl -fsSL --retry 4 --retry-delay 1 -H 'Cache-Control: no-cache' "$PUBLIC_BASE/$p?fixed1s=${GITHUB_SHA}" -o /tmp/renko-public-file
+            actual=$(git hash-object /tmp/renko-public-file)
+            printf '%s\t%s\t%s\n' "$p" "$expected" "$actual" >> "$OUT/deployment-manifest.tsv"
+            test "$expected" = "$actual"
           done
-          if [ "$matched" != 1 ]; then
-            echo 'Public GitHub Pages RENKO runtime never converged to a known-main closure-baseline build.' >&2
-            cat /tmp/renko-public-manifest.tsv >&2 || true
-            exit 1
-          fi
-          node <<'NODE'
-          const fs=require('fs');
-          const out='artifacts/renko-public-production-closure';
-          const rows=fs.readFileSync(`${out}/deployment-manifest.tsv`,'utf8').trim().split(/\n/).filter(Boolean).map(line=>{const [path,expectedBlob,publicBlob]=line.split('\t');return{path,expectedBlob,publicBlob,match:expectedBlob===publicBlob};});
-          const deployedSha=fs.readFileSync(`${out}/deployment-sha.txt`,'utf8').trim();
-          const observedMainSha=fs.readFileSync(`${out}/observed-main-sha.txt`,'utf8').trim();
-          const manifest={schema:'renko-public-deployment-manifest-v4',generatedAt:new Date().toISOString(),publicBase:process.env.PUBLIC_BASE,closureRunSha:process.env.GITHUB_SHA,deployedSha,observedMainSha,knownMainCommit:true,renkoOriginalMergeSha:'7b4146c5473e5042a288bf700db873b0c09d5d04',renkoClosureBaselineSha:'5fa775acc293bd4d1b960326bee702d54b5e2f4b',renkoTreeUnchangedFromClosureBaseline:true,allMatch:rows.length>0&&rows.every(x=>x.match),files:rows};
-          fs.writeFileSync(`${out}/deployment-manifest.json`,JSON.stringify(manifest,null,2));
-          console.log(JSON.stringify(manifest,null,2));
-          if(!manifest.allMatch)process.exit(2);
-          NODE
-      - name: PUBLIC desktop + mobile observable browser proof
+          printf '%s\n' "$GITHUB_SHA" > "$OUT/deployment-sha.txt"
+          python3 - <<'PY'
+          import json,os,datetime
+          out='artifacts/renko-public-fixed-1s-closure'
+          rows=[]
+          for line in open(out+'/deployment-manifest.tsv'):
+              p,e,a=line.rstrip('\n').split('\t'); rows.append({'path':p,'expectedBlob':e,'publicBlob':a,'match':e==a})
+          m={'schema':'renko-public-fixed-1s-deployment-manifest-v1','generatedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'targetSha':os.environ['GITHUB_SHA'],'publicBase':os.environ['PUBLIC_BASE'],'fixedInterval':'1s','timeframeSelectorAbsent':True,'allMatch':bool(rows) and all(x['match'] for x in rows),'files':rows}
+          open(out+'/deployment-manifest.json','w').write(json.dumps(m,indent=2)+'\n')
+          assert m['allMatch']
+          print(json.dumps(m))
+          PY
+      - name: Install real browser runtime
+        run: |
+          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
+          npx playwright install --with-deps chromium
+      - name: PUBLIC observable GOLD/model desktop + mobile
         env:
           RWA_TEST_URL: https://copytolive.github.io/rwa
         run: node tools/renko-observable-browser-report.mjs
-      - name: PUBLIC production stability + history closure
+      - name: Preserve public observable report
+        run: mv artifacts/renko-observable-parity artifacts/renko-public-observable-parity
+      - name: PUBLIC live XAUT fixed-1s desktop + mobile
         env:
           RWA_TEST_URL: https://copytolive.github.io/rwa
-        run: node tools/renko-public-production-closure.mjs
-      - name: Upload local + PUBLIC closure evidence
+          RENKO_XAUT_OUT: artifacts/renko-public-xaut-provider
+        run: node tools/renko-xaut-live-provider-report.mjs
+      - name: PUBLIC seven XAUT ATR lengths desktop + mobile
+        env:
+          RWA_TEST_URL: https://copytolive.github.io/rwa
+          RENKO_XAUT_MATRIX_OUT: artifacts/renko-public-xaut-atr-matrix
+        run: node tools/renko-xaut-atr-matrix-report.mjs
+      - name: Final public closure receipt
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json,os,datetime
+          out='artifacts/renko-public-fixed-1s-closure'
+          reports={
+            'observable':'artifacts/renko-public-observable-parity/report.json',
+            'provider':'artifacts/renko-public-xaut-provider/report.json',
+            'atrMatrix':'artifacts/renko-public-xaut-atr-matrix/report.json',
+            'deployment':out+'/deployment-manifest.json'}
+          data={k:json.load(open(v)) for k,v in reports.items()}
+          checks={k:(v.get('status')=='PASS' if k!='deployment' else bool(v.get('allMatch'))) for k,v in data.items()}
+          receipt={'schema':'renko-public-fixed-1s-closure-v1','generatedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'targetSha':os.environ['GITHUB_SHA'],'publicUrl':'https://copytolive.github.io/rwa/renko/','fixedInterval':'1s','timeframeSelectorAbsent':True,'atrLengths':[1,10,100,1000,10000,100000,1000000],'checks':checks,'status':'PASS' if all(checks.values()) else 'FAIL','claimBoundary':'Observable/documented TradingView Renko behavior only; no proprietary TradingView source-code identity claim.'}
+          open(out+'/closure-report.json','w').write(json.dumps(receipt,indent=2)+'\n')
+          print(json.dumps(receipt))
+          assert receipt['status']=='PASS'
+          PY
+      - uses: actions/upload-artifact@v4
         if: always()
-        uses: actions/upload-artifact@v4
         with:
-          name: renko-public-production-closure-${{ github.sha }}
+          name: renko-public-fixed-1s-closure-${{ github.sha }}
           path: |
-            artifacts/renko-observable-parity-local
-            artifacts/renko-observable-parity
-            artifacts/renko-public-production-closure
-          if-no-files-found: warn
+            artifacts/renko-public-observable-parity
+            artifacts/renko-public-xaut-provider
+            artifacts/renko-public-xaut-atr-matrix
+            artifacts/renko-public-fixed-1s-closure
           retention-days: 14
