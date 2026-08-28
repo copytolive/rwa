@@ -1,4 +1,4 @@
-name: RENKO XAUT Provider Depth Probe
+name: RENKO XAUT Fixed 1s Depth Probe
 on:
   push:
     branches:
@@ -11,32 +11,43 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 5
     steps:
-      - name: Measure Bitfinex XAUT/USDT 1m bar depth
+      - name: Probe Gate XAUT fixed 1s REST and archive
+        shell: bash
         run: |
+          set -euo pipefail
+          echo '--- Gate latest 1s REST ---'
+          curl -fsS 'https://api.gateio.ws/api/v4/spot/candlesticks?currency_pair=XAUT_USDT&interval=1s&limit=10' -o /tmp/latest.json
           python3 - <<'PY'
-          import datetime as dt,json,time,urllib.parse,urllib.request
-          sym='tXAUT:UST'; end=2**63-1; total=0; pages=0; newest=None; oldest=None
-          while pages < 105 and total < 1_010_000:
-              q=urllib.parse.urlencode({'end':end,'sort':-1,'limit':10000})
-              u=f'https://api-pub.bitfinex.com/v2/candles/trade:1m:{sym}/hist?{q}'
-              last=None
-              for a in range(5):
-                  try:
-                      with urllib.request.urlopen(u,timeout=30) as r: rows=json.load(r)
-                      if isinstance(rows,list) and (not rows or isinstance(rows[0],list)): break
-                  except Exception as e:
-                      last=e; time.sleep(2+a)
-              else: raise SystemExit(f'fetch failed {last}')
-              if not rows: break
-              pages+=1; total+=len(rows)
-              mts=[int(x[0]) for x in rows if isinstance(x,list) and x]
-              if not mts: break
-              hi=max(mts); lo=min(mts); newest=newest or hi; oldest=lo; end=lo-1
-              print(f'page={pages:03d} rows={len(rows):5d} total={total:8d} oldest={dt.datetime.fromtimestamp(lo/1000,dt.timezone.utc).isoformat()}')
-              if len(rows)<10000: break
-              time.sleep(2.15)
-          print('RESULT',json.dumps({'symbol':sym,'pages':pages,'bars':total,'newest':newest,'oldest':oldest,'enoughFor1000000':total>=1000000,'oldestUtc':dt.datetime.fromtimestamp(oldest/1000,dt.timezone.utc).isoformat() if oldest else None}))
-          if total < 1_000_000: raise SystemExit(2)
+          import json
+          a=json.load(open('/tmp/latest.json'))
+          print('rows',len(a),'first',a[0] if a else None,'last',a[-1] if a else None)
           PY
+          echo '--- Gate historical 1s REST about 12 days back ---'
+          now=$(date +%s)
+          to=$((now-12*86400))
+          from=$((to-999))
+          curl -fsS "https://api.gateio.ws/api/v4/spot/candlesticks?currency_pair=XAUT_USDT&interval=1s&from=$from&to=$to" -o /tmp/old.json
+          python3 - <<'PY'
+          import json
+          a=json.load(open('/tmp/old.json'))
+          print('rows',len(a),'first',a[0] if a else None,'last',a[-1] if a else None)
+          PY
+          echo '--- Gate daily 1s archive variants ---'
+          d=$(date -u -d '2 days ago' +%Y%m%d)
+          ym=${d:0:6}
+          for url in \
+            "https://download.gatedata.org/spot/candlesticks_1s/$ym/XAUT_USDT-$d.csv.gz" \
+            "https://download.gatedata.org/spot/candlesticks_1s/$ym/XAUT_USDT-$ym.csv.gz" \
+            "https://download.gatedata.org/spot/candlesticks_1s/$ym/XAUT_USDT-${ym}01.csv.gz"; do
+            code=$(curl -L -sS -o /tmp/a.gz -w '%{http_code}' "$url" || true)
+            bytes=$(wc -c </tmp/a.gz 2>/dev/null || echo 0)
+            echo "$code $bytes $url"
+            if [[ "$code" == 200 && "$bytes" -gt 100 ]]; then
+              gzip -dc /tmp/a.gz >/tmp/a.csv
+              echo "lines=$(wc -l </tmp/a.csv)"
+              head -n 2 /tmp/a.csv
+              tail -n 2 /tmp/a.csv
+            fi
+          done
