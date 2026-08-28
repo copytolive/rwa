@@ -1,13 +1,14 @@
-name: RENKO V12 Tick Native Gate
+name: RENKO Fixed 1s Canonical Compatibility Gate
 
 on:
   push:
     branches: ["main"]
     paths:
       - "renko/index.html"
-      - "renko/renko-v3.js"
-      - "renko/renko-v12.js"
-      - "renko/renko-v12-worker.js"
+      - "renko/renko-tv-engine.js"
+      - "renko/renko-tv-app.js"
+      - "renko/renko-tv-atr-control.js"
+      - "renko/renko-tv-atr-fixed1s.js"
       - ".github/workflows/renko-v11.yml"
   workflow_dispatch:
 
@@ -15,7 +16,7 @@ permissions:
   contents: read
 
 jobs:
-  verify-v12:
+  verify-fixed-1s-canonical:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,28 +24,26 @@ jobs:
       - name: JavaScript syntax
         run: |
           set -euo pipefail
-          node --check renko/renko-v3.js
-          node --check renko/renko-v12.js
-          node --check renko/renko-v12-worker.js
-      - name: Tick-native DOM and runtime contract
+          node --check renko/renko-tv-engine.js
+          node --check renko/renko-tv-app.js
+          node --check renko/renko-tv-atr-control.js
+          node --check renko/renko-tv-atr-fixed1s.js
+      - name: Canonical fixed-1s DOM and runtime contract
         run: |
           set -euo pipefail
           test -s renko/index.html
-          test -s renko/renko-v12.js
-          test -s renko/renko-v12-worker.js
-          grep -Fq 'RENKO V12' renko/index.html
-          grep -Fq 'renko-v12.js?v=120' renko/index.html
-          grep -Fq 'data-renko-method="atr"' renko/index.html
-          grep -Fq 'data-renko-method="traditional"' renko/index.html
-          grep -Fq 'data-renko-method="percentage"' renko/index.html
-          ! grep -Fq 'id="v11Interval"' renko/index.html
-          ! grep -Fq 'id="v11Source"' renko/index.html
-          ! grep -Fq 'id="v11Projection"' renko/index.html
-          grep -Fq 'Every trade' renko/index.html
-          grep -Fq "formation:'tick-by-tick'" renko/renko-v12.js
-          grep -Fq "lockRule:'every-trade-threshold'" renko/renko-v12.js
-          grep -Fq "liveSource:'binance-individual-@trade'" renko/renko-v12.js
-          grep -Fq "historicalSource:'binance-public-aggTrades'" renko/renko-v12.js
+          grep -Fq 'Fixed 1s TradingView Observable Model' renko/index.html
+          grep -Fq '1s Fixed Source' renko/index.html
+          grep -Fq 'PERCENTAGE (LTP)' renko/index.html
+          grep -Fq 'renko-tv-app.js?v=187' renko/index.html
+          grep -Fq 'renko-tv-atr-control.js?v=2' renko/index.html
+          grep -Fq 'renko-tv-atr-fixed1s.js?v=4' renko/index.html
+          ! grep -Fq 'id="intervalSelect"' renko/index.html
+          ! grep -Fq 'renko-v12.js?v=' renko/index.html
+          ! grep -Fq 'renko-v12-worker.js?v=' renko/index.html
+          grep -Fq "FIXED_INTERVAL='1s'" renko/renko-tv-app.js
+          grep -Fq "confirmationRule:'fixed-1s-close'" renko/renko-tv-app.js
+          grep -Fq "contract:'tradingview-public-documentation-compatible'" renko/renko-tv-engine.js
           python - <<'PY'
           from html.parser import HTMLParser
           from collections import Counter
@@ -57,32 +56,23 @@ jobs:
           p=P(); p.feed(Path('renko/index.html').read_text())
           dup=[k for k,v in Counter(p.ids).items() if v>1]
           assert not dup, f'duplicate DOM ids: {dup}'
-          required={'brickSize','v11AtrLength','v11Percent','v11Wicks','v11Confirm','v11Apply','signalAction','signalMarket','chartWrap','v12LtpSnapshot'}
-          missing=sorted(required-set(p.ids)); assert not missing, f'missing V12 DOM ids: {missing}'
-          forbidden={'v11Interval','v11Source','v11Projection'}
-          assert not (forbidden & set(p.ids)), f'interval/source/projection controls still present: {forbidden & set(p.ids)}'
-          print('RENKO V12 DOM contract PASS')
+          required={'atrLength','traditionalBox','percentageValue','wicksToggle','chartWrap','currentAtr','currentInterval','sourceSelect','tvLive'}
+          missing=sorted(required-set(p.ids)); assert not missing, f'missing canonical DOM ids: {missing}'
+          assert 'intervalSelect' not in p.ids, 'timeframe selector must not exist in fixed-1s production'
+          print('RENKO FIXED 1S CANONICAL DOM PASS')
           PY
-      - name: Every-trade formation, multi-brick and wick tests
+      - name: Fixed-1s Renko rule unit matrix
         run: |
           node - <<'NODE'
-          const fs=require('fs'),vm=require('vm');
-          const code=fs.readFileSync('renko/renko-v12-worker.js','utf8');
-          const s={console,postMessage(){}};s.self=s;s.globalThis=s;vm.createContext(s);vm.runInContext(code,s);
-          const E=s.RenkoV12Engine;
-          const ticks=a=>a.map((price,i)=>({id:i+1,price,time:i+1}));
-          let r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:true,ticks:ticks([100,110,120,170])});
-          if(r.bricks.length!==7)throw Error(`single tick multi-brick expected 7 total, got ${r.bricks.length}`);
-          if(r.bricks.at(-1).close!==170)throw Error('single tick did not lock through final crossed threshold');
-          r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:true,ticks:ticks([100,110,120,100])});
-          const rev=r.bricks.at(-1);if(r.bricks.length!==3||rev.direction!==-1||!rev.isReversal||rev.open!==110||rev.close!==100)throw Error('2-box reversal contract');
-          r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:true,ticks:ticks([100,95,110])});
-          if(r.bricks.length!==1||r.bricks[0].low!==95||r.bricks[0].high!==110)throw Error('actual tick low wick contract');
-          r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:true,ticks:ticks([100,110,120,125,100])});
-          const d=r.bricks.at(-1);if(d.direction!==-1||d.high!==125||d.low!==100)throw Error('actual tick high wick contract');
-          r=E.buildTicks({method:'percentage',percentage:.01,ltpSnapshot:100,tickSize:.1,wicks:true,ticks:ticks([100,101,102])});
-          if(Math.abs(r.box-1)>1e-9)throw Error('Percentage LTP snapshot sizing');
-          r=E.buildTicks({method:'atr',atrBox:7.3,tickSize:.1,wicks:false,ticks:ticks([100,107.3,114.6])});
-          if(Math.abs(r.box-7.3)>1e-9)throw Error('ATR sizing-only snapshot');
-          console.log('RENKO V12 tick-native engine tests PASS');
+          require('./renko/renko-tv-engine.js');
+          const E=global.RWARenkoTVEngine;
+          const bars=closes=>closes.map((c,i)=>({open:c,high:c,low:c,close:c,openTime:i*1000,closeTime:(i+1)*1000-1}));
+          let r=E.build(bars([100,110,120,100,90]),{method:'traditional',boxSize:10,source:'close',wicks:false},1);
+          if(r.bricks.length!==4||r.bricks[2].direction!==-1||!r.bricks[2].isReversal||r.bricks[2].open!==110||r.bricks[2].close!==100)throw Error('Traditional 1x continuation / 2x reversal contract failed');
+          const atrBars=[{open:10,high:10.017,low:10,close:10.011},{open:10.011,high:10.028,low:10.006,close:10.02},{open:10.02,high:10.039,low:10.014,close:10.03}];
+          const atr=E.latestAtr(atrBars,3,.01),box=E.computeBox(atrBars,{method:'atr',atrLength:3},.01);
+          if(!(atr>0)||Math.abs(box-atr)>1e-15)throw Error('raw positive Wilder ATR must be box size');
+          const exact=.01759154004858781;if(Math.abs(E.computeBox(atrBars,{method:'atr',atrLength:3,_exactBox:exact},.01)-exact)>1e-15)throw Error('_exactBox contract failed');
+          const pct=E.computeBox([{open:100,high:110,low:90,close:104.05}],{method:'percentage',percentage:.1},.01);if(Math.abs(pct-10.41)>1e-12)throw Error('Percentage min-tick contract failed');
+          console.log('RENKO FIXED 1S CANONICAL ENGINE PASS');
           NODE
