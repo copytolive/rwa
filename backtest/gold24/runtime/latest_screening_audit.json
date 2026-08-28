@@ -11,7 +11,7 @@
     "zero_volume_rows": 10
   },
   "gate_c_candidates_screened": 0,
-  "generated_at": "2026-08-28T11:49:50.050806+00:00",
+  "generated_at": "2026-08-28T11:50:38.299263+00:00",
   "policy": "GOLD24_WEEKLY_PROFIT_RR12_V3_SCREENING_20260828",
   "portfolio": {
     "families": {},
@@ -23,7 +23,7 @@
   },
   "portfolio_draft_count": 0,
   "preportfolio_pass_count": 0,
-  "rules_sha256": "b719bb4317fbfda681a2a6c785748d9454d72845a8d3a4858c94d8e098d0fb95",
+  "rules_sha256": "4155f4f05be89a7df3b367f6579ae804ba2c853047dda73465f542983d3fd2e2",
   "schema": "gold24-screening-audit-v3",
   "screened": [],
   "top100_compliant_count": 0
