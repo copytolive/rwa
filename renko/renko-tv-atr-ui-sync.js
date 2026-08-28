@@ -1,22 +1,21 @@
-/* Keep the visible XAUT deep-ATR status synchronized with the already-validated matrix state. */
+/* Keep the visible XAUT deep-ATR status synchronized with the currently applied, validated deep ATR state. */
 (()=>{
 'use strict';
 if(window.RWARenkoATRUiSync)return;
-const XAUT='XAUTUSDT', MATRIX=[1,10,100,1000,10000,100000,1000000];
+const XAUT='XAUTUSDT';
 const num=v=>Number(v);
-function allReady(){const A=window.RWARenkoATRFixed1s,e=A?.entries;if(!(e instanceof Map)||e.size<MATRIX.length)return false;return MATRIX.every(n=>{const x=e.get(n);return !!x?.satisfied&&Number.isFinite(num(x.rawAtr))&&num(x.rawAtr)>0&&num(x.sourceCount)>=n})}
 function sync(){
-  const T=window.RWARenkoTV,A=window.RWARenkoATRFixed1s;if(!T||!A||T.state?.symbol!==XAUT||T.settings?.method!=='atr'||!T.state?.atrMatrixPrepared||!T.state?.atrHistorySatisfied||!allReady())return false;
-  const s=T.state,n=Math.max(1,Math.floor(num(s.atrAppliedLength||T.settings.atrLength)||14)),count=Math.max(num(s.atrHistorySourceCount)||0,...MATRIX.map(k=>num(A.entries.get(k)?.sourceCount)||0));
-  document.documentElement.dataset.atrMatrixReady='true';
-  document.documentElement.dataset.atrMatrixAvailable=String(Math.max(num(document.documentElement.dataset.atrMatrixAvailable)||0,count));
-  const metric=document.getElementById('atrFixed1sMetric');if(metric)metric.textContent=`ATR 1s MATRIX · READY 7/7 · ${count.toLocaleString()} OKX 1s bars`;
+  const T=window.RWARenkoTV;if(!T||T.state?.symbol!==XAUT||T.settings?.method!=='atr')return false;
+  const s=T.state,n=Math.max(1,Math.floor(num(s.atrAppliedLength||T.settings.atrLength)||14)),count=num(s.atrHistorySourceCount)||0,raw=num(s.atrRaw),box=num(s.box),tol=Math.max(1e-12,Math.abs(raw)*1e-10);
+  const valid=!!s.atrHistorySatisfied&&count>=n&&Number.isFinite(raw)&&raw>0&&Number.isFinite(box)&&Math.abs(raw-box)<=tol;
+  if(!valid)return false;
+  const metric=document.getElementById('atrFixed1sMetric');if(metric)metric.textContent=`ATR 1s ACTIVE · LENGTH ${n.toLocaleString()} · ${count.toLocaleString()} OKX 1s bars`;
   const badge=document.querySelector('.method[data-method="atr"] .method-title span');if(badge)badge.textContent=`ACTIVE · ${n}`;
   const source=document.getElementById('sourceBarCount');if(source)source.textContent=count.toLocaleString();
   return true;
 }
 window.addEventListener('renko:tv-ready',()=>setTimeout(sync,0));
 window.addEventListener('renko:symbol-switch-end',()=>setTimeout(sync,0));
-setInterval(sync,100);
-window.RWARenkoATRUiSync={version:'1.0.0',rule:'show-ready-only-when-all-seven-real-entries-satisfied',sync,allReady};
+setInterval(sync,75);
+window.RWARenkoATRUiSync={version:'1.1.0',rule:'visible-status-follows-current-real-deep-atr-state',sync};
 })();
