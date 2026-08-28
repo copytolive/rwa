@@ -1,0 +1,69 @@
+name: RWA Total Launch Finalization V6
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "launch/**"
+      - "rwa-assets.json"
+      - "rwa-commerce-config.json"
+      - "rwa-multichain-revenue.json"
+      - "agent-worker/public-config.json"
+      - "agent-worker/control.json"
+      - "tools/launch-finalization-audit.mjs"
+      - ".github/workflows/launch-finalization-v6.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "launch/**"
+      - "rwa-assets.json"
+      - "rwa-commerce-config.json"
+      - "rwa-multichain-revenue.json"
+      - "agent-worker/public-config.json"
+      - "agent-worker/control.json"
+      - "tools/launch-finalization-audit.mjs"
+      - ".github/workflows/launch-finalization-v6.yml"
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+      - name: Validate finalization sources
+        run: |
+          node --check tools/launch-finalization-audit.mjs
+          for f in launch/readiness.json launch/multichain-readiness.json rwa-multichain-revenue.json rwa-assets.json launch/product-rwa-testnet.json rwa-commerce-config.json agent-worker/public-config.json agent-worker/control.json launch/external-gates.json launch/beta-registry.json; do python -m json.tool "$f" >/dev/null; done
+      - name: Produce total-launch audit
+        run: |
+          node tools/launch-finalization-audit.mjs | tee /tmp/launch-v6.json
+          python -m json.tool /tmp/launch-v6.json >/dev/null
+      - name: Publish finalization status
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          GO="$(node -e "const x=require('/tmp/launch-v6.json');process.stdout.write(String(x.launch_go))")"
+          STATUS="$(node -e "const x=require('/tmp/launch-v6.json');process.stdout.write(x.status)")"
+          BLOCKERS="$(node -e "const x=require('/tmp/launch-v6.json');process.stdout.write(x.blockers.map(b=>b.gate).slice(0,4).join(','))")"
+          if [ "$GO" = "true" ]; then
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/total-launch-v6' -f description='GO: global + multichain + revenue + production + beta gates PASS'
+          else
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=pending -f context='rwa/total-launch-v6' -f description="${STATUS}: ${BLOCKERS:-external authorization pending}"
+          fi
+      - name: Upload audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: total-launch-v6-${{ github.sha }}
+          path: /tmp/launch-v6.json
+          retention-days: 30
