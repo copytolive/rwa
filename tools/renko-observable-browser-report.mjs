@@ -51,26 +51,37 @@ function collectErrors(page){
 async function fixtureRun(label,viewport){
   const context=await browser.newContext({viewport,deviceScaleFactor:1}),page=await context.newPage();
   await installMocks(page);
-  const errors=collectErrors(page),url=`${BASE}/renko/?fixture=gold20y&parityBrowser=2&ts=${Date.now()}`;
+  const errors=collectErrors(page),url=`${BASE}/renko/?fixture=gold20y&parityBrowser=3&ts=${Date.now()}`;
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>window.RWARenkoTV?.state?.status==='live'&&document.documentElement.dataset.renkoParityFixtureReady==='true',null,{timeout:60000});
   await page.waitForTimeout(500);
   const snap=()=>page.evaluate(()=>({count:RWARenkoTV.state.confirmed.length,box:RWARenkoTV.state.box,method:RWARenkoTV.settings.method,source:RWARenkoTV.settings.source,interval:RWARenkoTV.settings.interval,sourceBars:RWARenkoTV.state.closedBars.length,fixtureBars:RENKO_GOLD20Y_FIXTURE.bars.length,spanYears:Number(document.documentElement.dataset.renkoParityFixtureSpanYears),coverage:document.querySelector('#tvCoverage')?.textContent,pair:document.querySelector('#pairName')?.textContent,sourceText:document.querySelector('#sourceText')?.textContent,sourceVisible:!!document.querySelector('#sourceSelect'),intervalExists:!!document.querySelector('#intervalSelect'),profile:window.RENKO_PARITY_PROFILE,fixture:window.RENKO_GOLD20Y_FIXTURE?.fixture?.schema,ready:document.documentElement.dataset.renkoParityFixtureReady}));
+  const applyTraditional=async(box,count)=>{
+    await page.fill('#traditionalBox',String(box));
+    await page.click('[data-apply-method="traditional"]');
+    await page.waitForFunction(({box,count})=>RWARenkoTV.settings.method==='traditional'&&RWARenkoTV.state.box===box&&RWARenkoTV.state.confirmed.length===count,{box,count},{timeout:10000});
+    await page.waitForTimeout(120);
+    return snap();
+  };
   const initial=await snap();
-  await page.fill('#traditionalBox','1000');await page.click('[data-apply-method="traditional"]');await page.waitForFunction(()=>RWARenkoTV.state.box===1000,null,{timeout:10000});await page.waitForTimeout(120);const s1000=await snap();
-  await page.fill('#traditionalBox','1200');await page.click('[data-apply-method="traditional"]');await page.waitForFunction(()=>RWARenkoTV.state.box===1200,null,{timeout:10000});await page.waitForTimeout(120);const s1200=await snap();
-  await page.fill('#traditionalBox','900');await page.click('[data-apply-method="traditional"]');await page.waitForFunction(()=>RWARenkoTV.state.box===900&&RWARenkoTV.state.confirmed.length===5,null,{timeout:10000});await page.waitForTimeout(250);const final=await snap();
+  const s800=await applyTraditional(800,6);
+  const s900=await applyTraditional(900,5);
+  const s1000=await applyTraditional(1000,5);
+  const s1200=await applyTraditional(1200,4);
+  const final=await applyTraditional(900,5);
+  await page.waitForTimeout(130);
   await page.screenshot({path:path.join(OUT,`gold20y-${label}.png`),fullPage:true});
   const pure=x=>x.sourceBars===x.fixtureBars&&x.ready==='true'&&x.interval==='1s'&&!x.intervalExists;
-  const pass=errors.length===0&&initial.count===5&&initial.box===900&&initial.method==='traditional'&&initial.source==='close'&&initial.interval==='1s'&&initial.spanYears>=20&&initial.sourceVisible&&!initial.intervalExists&&initial.profile?.observableParity===true&&pure(initial)&&s1000.count===5&&pure(s1000)&&s1200.count===4&&pure(s1200)&&final.count===5&&final.box===900&&pure(final)&&/SOURCE RANGE 2002/.test(final.coverage||'')&&/2026/.test(final.coverage||'')&&/20Y PARITY WITNESS/.test(final.pair||'');
-  results.push({kind:'gold20y',label,viewport,url,errors,initial,s1000,s1200,final,pass});
+  const fixtureIdentity=x=>x.fixture==='renko-gold-long-history-visual-fixture-v1'&&x.source==='close'&&x.interval==='1s'&&x.spanYears>=20&&x.sourceVisible&&!x.intervalExists&&x.profile?.observableParity===true&&pure(x);
+  const pass=errors.length===0&&initial.method==='traditional'&&fixtureIdentity(initial)&&s800.count===6&&s800.box===800&&fixtureIdentity(s800)&&s900.count===5&&s900.box===900&&fixtureIdentity(s900)&&s1000.count===5&&s1000.box===1000&&fixtureIdentity(s1000)&&s1200.count===4&&s1200.box===1200&&fixtureIdentity(s1200)&&final.count===5&&final.box===900&&fixtureIdentity(final)&&/SOURCE RANGE 2002/.test(final.coverage||'')&&/2026/.test(final.coverage||'')&&/20Y PARITY WITNESS/.test(final.pair||'');
+  results.push({kind:'gold20y',label,viewport,url,errors,initial,witnessMatrix:{s800,s900,s1000,s1200,final900:final},pass});
   await context.close();
 }
 
 async function modelRun(label,viewport){
   const context=await browser.newContext({viewport,deviceScaleFactor:1}),page=await context.newPage();
   await installMocks(page);
-  const errors=collectErrors(page),url=`${BASE}/renko/?symbol=SOL&parityModel=2&ts=${Date.now()}`;
+  const errors=collectErrors(page),url=`${BASE}/renko/?symbol=SOL&parityModel=3&ts=${Date.now()}`;
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoTVEngine?.version==='1.4.0-fixed-1s'&&window.RWARenkoPercentageLTP?.version==='1.0.0'&&window.RWARenkoTV?.settings?.interval==='1s'&&window.RWARenkoTV?.state?.box>0,null,{timeout:60000});
 
@@ -115,7 +126,7 @@ try{
   await modelRun('mobile',{width:390,height:844});
 }finally{await browser.close()}
 
-const report={schema:'renko-tradingview-observable-fixed-1s-browser-report-v2',generatedAt:new Date().toISOString(),base:BASE,status:results.every(x=>x.pass)?'PASS':'FAIL',results,claimBoundary:'Browser proof covers observable/documented behavior and official examples with production hard-locked to 1s. TradingView proprietary source code and unpublished helpers are not available.'};
+const report={schema:'renko-tradingview-observable-fixed-1s-browser-report-v3',generatedAt:new Date().toISOString(),base:BASE,status:results.every(x=>x.pass)?'PASS':'FAIL',results,claimBoundary:'Browser proof covers observable/documented behavior and official examples with production hard-locked to 1s. GOLD parity is asserted by explicit 800/900/1000/1200 box witness applications, not by incidental initial UI box state. TradingView proprietary source code and unpublished helpers are not available.'};
 await fs.writeFile(path.join(OUT,'report.json'),JSON.stringify(report,null,2));
 console.log('RENKO_OBSERVABLE_BROWSER_REPORT',JSON.stringify(report));
 if(report.status!=='PASS')process.exitCode=2;
