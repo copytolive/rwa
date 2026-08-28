@@ -41,9 +41,13 @@ Supported snapshot policies:
 
 All payouts use integer minor-unit accounting. Remainders are allocated deterministically; the sum of entitlements can never exceed the funded distribution pool.
 
-## On-chain commitments
+## On-chain commitments and series units
 
 `RWASeriesRegistry.sol` commits metadata, immutable economics, governed economics and legal evidence hashes. Governed changes are timelocked.
+
+`RWASeriesUnits1155.sol` provides a scalable per-series unit ledger. One ERC-1155 token id maps to one RWA Series. Issuance is capped, requires an active series, and only eligible accounts may receive issuance. Ordinary transfers require both sender and receiver to be eligible and can be frozen by compliance. A transfer-agent role exists for controlled administrative transfers. These technical controls do not themselves establish that an instrument may lawfully be offered or transferred in a jurisdiction.
+
+Holder checkpoints consumed by the distribution engine may be produced from these series-unit balances or another trusted canonical ownership source. Production must record the snapshot source reference so holder entitlements are reproducible.
 
 `RWADistributionVault.sol` accepts only an active series, requires an ERC20 pool to be funded before claims, commits an immutable Merkle root + manifest hash, blocks invalid/double claims, and never fabricates a payout receipt.
 
@@ -58,7 +62,7 @@ Run locally:
 ```bash
 node tools/rwa-os-core.test.mjs
 node rwa-os-service/test.mjs
-cd token && npm ci && npm run verify
+cd token && npm install --no-audit --no-fund && npm run verify
 ```
 
-Browser acceptance is executed by `.github/workflows/rwa-operating-system-v14.yml`. Default mode must show zero fabricated revenue. `?fixture=1` is reserved for deterministic CI and is visibly labelled `BROWSER TEST FIXTURE`.
+Browser acceptance is executed by `.github/workflows/rwa-operating-system-v14.yml`. It verifies Marketplace → RWA OS navigation, desktop operation at 1600×1000, mobile operation at 390×844, the transaction barcode, settled-only revenue, refund exclusion, holder entitlements, funding-gated distribution and audit hashes. Default mode must show zero fabricated series/revenue. `?fixture=1` is reserved for deterministic CI and is visibly labelled `BROWSER TEST FIXTURE`.
