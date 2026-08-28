@@ -35,7 +35,7 @@ jobs:
           url='https://copytolive.github.io/rwa/chart-core.js'
           for i in $(seq 1 60); do
             body="$(curl -fsSL --max-time 20 "${url}?sha=${GITHUB_SHA}&n=${i}" || true)"
-            if grep -Fq "rwa-seablueprint-commerce-bridge.js?v=1.4.0" <<<"$body" && grep -Fq "rwa-target-dashboard-v2-hardening.js?v=2.0.1" <<<"$body"; then
+            if grep -Fq "rwa-seablueprint-commerce-bridge.js?v=1.4.0" <<<"$body" && grep -Fq "rwa-target-dashboard-v2-hardening.js?v=2.0.2" <<<"$body"; then
               echo "Exact inline-commerce assets are public"
               exit 0
             fi
