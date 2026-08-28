@@ -23,7 +23,7 @@ ok(guard.includes('defaultSlippage:0.005')&&guard.includes('maxSlippage:0.05'),'
 ok(guard.includes('explicitAckImpact:0.03')&&guard.includes('hardBlockImpact:0.10'),'price-impact acknowledgement/hard block missing');
 ok(guard.includes('Minimum received is zero or unavailable')&&guard.includes('Quote expired; request a fresh route'),'minimum received / stale quote guards missing');
 ok(guard.includes('MEV')&&guard.includes('no MEV protection is claimed'),'MEV disclosure missing');
-ok(html.includes('Token universe')&&html.includes('Minimum received')&&html.includes('Slippage')&&html.includes('Marketplace'),'marketplace surface missing required UX');
+ok(html.includes('Token universe')&&html.includes('Slippage')&&html.includes('Marketplace')&&marketJs.includes('Minimum received')&&marketJs.includes('Price/economic impact'),'marketplace surface missing required UX');
 ok(marketJs.includes('state.engine.simulate(state.quote)')&&marketJs.includes("MAINNET LOCKED"),'route simulation or fail-closed execution missing');
 ok(engine.includes("r?.mainnet_ready===true&&r?.status==='READY_FOR_MAINNET'")&&engine.includes("m?.ready===true&&m?.status==='READY'"),'dual mainnet gate missing from route engine');
 ok(engine.includes('toAmountMin')&&engine.includes('QUOTE_MAX_AGE_MS=55000'),'provider minimum output / quote freshness missing from engine');
