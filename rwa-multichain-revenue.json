@@ -1,0 +1,30 @@
+{
+  "version": "1.0.0",
+  "mode": "EXTERNAL_SETUP_REQUIRED",
+  "currency": "USD",
+  "integrator": "copytolive-rwa",
+  "disclosure": "Application fees are included in the route quote only after the corresponding provider payout configuration is verified.",
+  "lifi": {
+    "enabled": false,
+    "partner_configured": false,
+    "fee_bps": 20,
+    "fee_decimal": 0.002,
+    "payout_wallet_configured_externally": false,
+    "activation_gate": "LI_FI_PORTAL_FEE_WALLET_VERIFIED"
+  },
+  "hyperliquid": {
+    "enabled": false,
+    "builder_wallet_configured": false,
+    "builder_address": "",
+    "perp_fee_tenths_bp": 0,
+    "spot_fee_tenths_bp": 0,
+    "activation_gate": "HYPERLIQUID_BUILDER_APPROVED_AND_ELIGIBLE"
+  },
+  "policy": {
+    "never_charge_without_provider_confirmation": true,
+    "never_bypass_ready_for_mainnet": true,
+    "no_hidden_fee": true,
+    "fee_must_be_visible_in_quote": true,
+    "fail_closed": true
+  }
+}
