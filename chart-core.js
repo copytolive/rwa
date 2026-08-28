@@ -42,5 +42,5 @@ window.addEventListener('visibilitychange',()=>{if(!document.hidden){queueDraw()
 window.RWAChartCore={openTradingView,liveCandle,redraw:queueDraw};
 boot();
 })();
-/* RWA_UI_LAYOUT_INTEGRITY_V16_BOOTSTRAP */
-(()=>{if(document.querySelector('script[data-rwa-ui-layout-v15]'))return;const s=document.createElement('script');s.src='ui-layout-integrity-v15.js?v=16';s.async=false;s.dataset.rwaUiLayoutV15='1';s.onerror=()=>console.error('RWA UI Layout Integrity V16 failed to load');document.head.appendChild(s)})();
+/* RWA_UI_LAYOUT_INTEGRITY_V16_2_BOOTSTRAP */
+(()=>{if(document.querySelector('script[data-rwa-ui-layout-v15]'))return;const s=document.createElement('script');s.src='ui-layout-integrity-v15.js?v=16.2';s.async=false;s.dataset.rwaUiLayoutV15='1';s.onerror=()=>console.error('RWA UI Layout Integrity V16.2 failed to load');document.head.appendChild(s)})();
