@@ -1,21 +1,48 @@
 {
-  "batch": 14,
-  "candidate_cursor": 21347644,
+  "worker": "GOLD24_WEEKLY_PROFIT_V2",
+  "goal_policy": "GOLD24_WEEKLY_PROFIT_RR12_V2_20260828",
+  "strategy_engine": "PAUSED",
+  "gate_a": "BLOCKED_DRIVE_APPROVED_CROSSCHECK_BYTES_RECEIPT_MISSING",
+  "reason": "Fail-closed under the user-locked V2 policy: connected Google Drive search did not find the referenced XAUUSD_OANDA_TRADINGVIEW_D1_CROSSCHECK.csv bytes nor a verifiable Drive receipt carrying crosscheck_pass=true with provider/symbol/timeframe/coverage/primary_sha256. GitHub currently contains a programmatic TradingView/OANDA receipt, but Drive-first evidence required by this policy is absent, so no V2 strategy simulation is legal.",
+  "drive_search_evidence": {
+    "searched_terms": [
+      "OANDA XAUUSD GOLD 2026 crosscheck receipt",
+      "TradingView XAUUSD 2026 crosscheck_pass true receipt SHA256",
+      "XAUUSD OANDA",
+      "TradingView export GOLD",
+      "XAUUSD_OANDA_TRADINGVIEW_D1_CROSSCHECK",
+      "7d756a6f10abd8160e0231f43413075c0a86bbd0106eda7da13b3b4e823ef232"
+    ],
+    "approved_crosscheck_bytes_found": false,
+    "approved_receipt_found": false
+  },
+  "github_receipt_observed": {
+    "crosscheck_pass": true,
+    "provider": "TradingView",
+    "crosscheck_symbol": "OANDA:XAUUSD",
+    "timeframe": "D1",
+    "crosscheck_rows": 6500,
+    "crosscheck_end_utc": "2026-08-27 00:00:00+00:00",
+    "crosscheck_data_file": "XAUUSD_OANDA_TRADINGVIEW_D1_CROSSCHECK.csv",
+    "crosscheck_data_sha256": "7d756a6f10abd8160e0231f43413075c0a86bbd0106eda7da13b3b4e823ef232",
+    "primary_sha256": "f78e8aed7cdf9e7660b15f8ceb7507d0af29ddaf22b8431b2b63c963c3f306ac",
+    "note": "Observed in GitHub only; insufficient for the Drive-first Gate A requirement."
+  },
+  "frozen_previous_state": {
+    "batch": 14,
+    "candidate_cursor": 21347644,
+    "top200_count": 0,
+    "new_gate_c_candidates": 0
+  },
   "fixed_sl": 12.5,
   "fixed_tp": 25.0,
-  "gate_a": "PASS",
-  "goal_policy": "GOLD24_WEEKLY_PROFIT_RR12_V2_20260828",
-  "ledger_shard": "/home/runner/work/rwa/rwa/.gold24-canonical/weekly_profit_ledgers/ledger_00000014.parquet",
-  "min_profitable_weeks_pct": 55.0,
   "min_trades_per_week": 2.0,
-  "new_gate_c_candidates": 0,
-  "receipt": "/home/runner/work/rwa/rwa/.gold24-canonical/weekly_profit_receipts/batch_00000014.json",
+  "min_profitable_weeks_pct": 55.0,
+  "simulation_executed": false,
+  "simulated_this_batch": 0,
+  "counter_increment": 0,
+  "top200_changed": false,
+  "top100_compliant_changed": false,
   "rules_sha256": "4155f4f05be89a7df3b367f6579ae804ba2c853047dda73465f542983d3fd2e2",
-  "seconds": 3399.4238595962524,
-  "simulated_this_batch": 188,
-  "simulation_executed": true,
-  "strategy_engine": "RUNNING",
-  "top200_count": 0,
-  "updated_at": "2026-08-28T15:27:00.552808+00:00",
-  "worker": "GOLD24_WEEKLY_PROFIT_V2"
+  "updated_at": "2026-08-28T22:09:50Z"
 }
