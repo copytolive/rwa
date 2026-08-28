@@ -5,9 +5,9 @@
  * 3) Keep the heavy full-market universe off the critical render path; it is
  *    fetched only when the user opens/focuses the pair selector.
  * 4) Preserve the null endTime fix for kline history.
- * 5) Bound only the latest fixed-1s switch window. Historical pagination that
- *    carries a real endTime keeps the requested depth, so pan/deep-history
- *    semantics are not weakened.
+ * 5) Keep the latest fixed-1s source window at Binance's full 1000-bar page.
+ *    Rendered Renko geometry is independently virtualized, so this restores
+ *    enough source movement for quiet pairs without reintroducing Chrome OOM.
  */
 (()=>{
 'use strict';
@@ -15,7 +15,7 @@ if(window.RWARenkoFetchGuard)return;
 
 const nativeFetch=window.fetch.bind(window);
 const DATA_ROOT='https://data-api.binance.vision';
-const INITIAL_KLINE_LIMIT=240;
+const INITIAL_KLINE_LIMIT=1000;
 const inflight=new Map();
 const cache=new Map();
 const stats={nativeCalls:0,deduped:0,cacheHits:0,lazyUniverseWaits:0,canonicalized:0,initialKlineLimited:0};
@@ -105,8 +105,8 @@ window.fetch=async function(input,init={}){
 };
 
 window.RWARenkoFetchGuard={
-  version:'2.1.0',
-  rule:'single-cors-safe-binance-rest-plus-lazy-market-universe-plus-bounded-latest-1s-window',
+  version:'2.2.0',
+  rule:'single-cors-safe-binance-rest-plus-lazy-market-universe-plus-full-1000bar-latest-1s-window',
   initialKlineLimit:INITIAL_KLINE_LIMIT,
   stats,
   wakeMarkets,
