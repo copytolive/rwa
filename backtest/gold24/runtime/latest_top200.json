@@ -1,0 +1,9 @@
+{
+  "classification": "GATE_C_CANDIDATE_NOT_FINAL",
+  "count": 0,
+  "gate_a": "PASS",
+  "goal_policy": "GOLD24_WEEKLY_PROFIT_RR12_V2_20260828",
+  "ranking": [],
+  "rules_sha256": "b719bb4317fbfda681a2a6c785748d9454d72845a8d3a4858c94d8e098d0fb95",
+  "schema": "gold24-weekly-profit-top200-v2"
+}
