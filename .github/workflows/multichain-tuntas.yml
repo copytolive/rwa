@@ -1,0 +1,73 @@
+name: MULTI CHAIN Tuntas V3
+
+on:
+  push:
+    branches:
+      - main
+      - fix/multichain-tuntas-v3-20260828
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tuntas-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate hardened source and fail-closed gates
+        shell: bash
+        run: |
+          set -euxo pipefail
+          node --check rwa-multichain.js
+          node --check rwa-multichain-engine.js
+          node --check tools/multichain-contract.mjs
+          node --check tools/multichain-receipt-matrix.mjs
+          node --check tools/multichain-mainnet-gate.mjs
+          node --check tools/multichain-tuntas-browser.mjs
+          node --check tools/launch-gate-current.mjs
+          for f in rwa-multichain-registry.json rwa-multichain-revenue.json rwa-multichain-funding.json launch/multichain-receipts.json launch/multichain-readiness.json; do python -m json.tool "$f" >/dev/null; done
+          node tools/multichain-contract.mjs
+          node tools/multichain-receipt-matrix.mjs
+          node tools/multichain-mainnet-gate.mjs --write
+          node - <<'NODE'
+          const fs=require('fs');
+          const r=JSON.parse(fs.readFileSync('launch/multichain-readiness.json','utf8'));
+          if(r.ready!==false||r.status!=='BLOCKED')throw Error('external receipt/provider gates must remain fail-closed until real evidence exists');
+          console.log('MULTI CHAIN external gates truthfully BLOCKED pending real evidence');
+          NODE
+
+      - name: Install browser runtime
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run local MULTI CHAIN browser proofs
+        env:
+          RWA_TEST_URL: http://127.0.0.1:4173/rwa/
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p /tmp/rwa-multichain-site/rwa
+          cp -a . /tmp/rwa-multichain-site/rwa/
+          cd /tmp/rwa-multichain-site
+          python -m http.server 4173 >/tmp/rwa-multichain-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
+          cd "$GITHUB_WORKSPACE"
+          RWA_PROOF_DIR=proof/multichain-v3-regression node tools/multichain-browser.mjs
+          RWA_PROOF_DIR=proof/multichain-v3-tuntas node tools/multichain-tuntas-browser.mjs
+
+      - name: Upload proof bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: multichain-tuntas-${{ github.sha }}
+          path: proof/
+          retention-days: 30
+          if-no-files-found: warn
