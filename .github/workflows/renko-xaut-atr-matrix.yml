@@ -33,9 +33,10 @@ jobs:
           test -f renko/xaut-okx-1s-pack.csv.gz
           test -f renko/xaut-okx-1s-pack.meta.json
           ! grep -q 'id="intervalSelect"' renko/index.html
+          ! grep -q 'TIMEFRAME</span>' renko/index.html
           ! grep -q "Math.min(500" renko/renko-tv-app.js
           grep -q "FIXED_INTERVAL='1s'" renko/renko-tv-app.js
-          grep -q "interval:'1s'" renko/xaut-okx-1s-pack.meta.json
+          grep -q '"interval": "1s"' renko/xaut-okx-1s-pack.meta.json
           python3 - <<'PY'
           import json
           m=json.load(open('renko/xaut-okx-1s-pack.meta.json'))
