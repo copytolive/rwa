@@ -1,27 +1,39 @@
-/* RWA UI Layout Integrity V15 — single-context surface + visible marketplace entry */
+/* RWA UI Layout Integrity V16 — one canonical context rail across every transition */
 :root{--rwa-context-w:clamp(390px,31vw,500px)}
 .rwa-marketplace-launch{display:inline-flex!important;align-items:center;justify-content:center;gap:7px;height:32px;min-width:126px;padding:0 12px;border:1px solid #6558d6;border-radius:8px;background:linear-gradient(180deg,#211c45,#15142a);color:#eeeaff;font:900 10px/1 system-ui;letter-spacing:.07em;white-space:nowrap;cursor:pointer;box-shadow:0 0 0 1px rgba(139,124,255,.08) inset}.rwa-marketplace-launch:hover,.rwa-marketplace-launch.active{border-color:#9386ff;background:linear-gradient(180deg,#2b245d,#1a1736);color:#fff}.rwa-marketplace-launch .rwa-marketplace-mark{font-size:12px;color:#a99fff}.rwa-marketplace-launch .rwa-marketplace-label{display:inline}
-/* Context surfaces are mutually exclusive in JS. Closed drawers are never allowed to leave a visual sliver. */
-.rwa-fundamentals:not(.open){visibility:hidden!important;pointer-events:none!important}
-.rwa-fundamentals.open{visibility:visible!important;transform:translateX(0)!important;pointer-events:auto!important}
-body.rwa-fundamentals-open #rwaSuperWorkspace:not([hidden]){visibility:hidden!important;pointer-events:none!important}
+/* Closed context surfaces must be physically absent, not merely shifted off screen. */
+.rwa-fundamentals{transition:none!important}
+.rwa-fundamentals:not(.open){visibility:hidden!important;pointer-events:none!important;transform:none!important}
+.rwa-fundamentals.open{visibility:visible!important;transform:none!important;pointer-events:auto!important}
+html body.rwa-fundamentals-open #rwaSuperWorkspace{display:none!important;visibility:hidden!important;pointer-events:none!important;transform:none!important}
+body.rwa-fundamentals-open .right{display:none!important}
+/* Keep the native desktop scrollbar present while Fundamentals owns the dock. This preserves the exact layout viewport used by Asset Detail without reserving a second gutter. */
+html body.rwa-fundamentals-open{overflow-x:hidden!important;overflow-y:scroll!important;scrollbar-gutter:auto!important}
 @media(min-width:681px){
-  body.rwa-super-asset-workspace.rwa-super-workspace-open .layout{padding-right:var(--rwa-context-w)!important}
-  body.rwa-super-asset-workspace #rwaSuperWorkspace{top:48px!important;bottom:34px!important;width:var(--rwa-context-w)!important;max-width:calc(100vw - 320px)!important;border-left:1px solid #283342!important;box-shadow:-18px 0 48px rgba(0,0,0,.38)!important}
-  body.rwa-fundamentals-open .layout{grid-template-columns:clamp(220px,17vw,286px) minmax(0,1fr)!important;padding-right:var(--rwa-context-w)!important}
-  body.rwa-fundamentals-open .right{display:none!important}
-  .rwa-fundamentals{top:48px!important;right:0!important;bottom:34px!important;width:var(--rwa-context-w)!important;max-width:calc(100vw - 320px)!important;z-index:8890!important;box-shadow:-18px 0 48px rgba(0,0,0,.38)!important}
+  body.rwa-super-asset-workspace #rwaSuperWorkspace,.rwa-fundamentals{position:fixed!important;right:0!important;left:auto!important;top:94px!important;bottom:34px!important;width:var(--rwa-context-w)!important;min-width:var(--rwa-context-w)!important;max-width:var(--rwa-context-w)!important;height:auto!important;box-sizing:border-box!important;border-left:1px solid #283342!important;box-shadow:-18px 0 48px rgba(0,0,0,.38)!important;transition:none!important}
+  body.rwa-super-asset-workspace #rwaSuperWorkspace{transform:none!important}
+  body.rwa-super-asset-workspace.rwa-super-workspace-open .layout,body.rwa-fundamentals-open .layout{padding-right:var(--rwa-context-w)!important}
+  .rwa-fundamentals{z-index:8900!important}
   .rwa-fund-tabs{max-width:100%;overflow-x:auto!important;overscroll-behavior-x:contain}.rwa-fund-tabs button{white-space:nowrap}
   body.rwa-super-asset-workspace #rwaSuperWorkspace .rwa-super-workspace-head{top:-13px!important}
 }
-@media(max-width:1320px) and (min-width:901px){:root{--rwa-context-w:420px}.rwa-marketplace-launch{min-width:108px;padding:0 9px;font-size:9px}.rwa-marketplace-launch .rwa-marketplace-label{letter-spacing:.04em}}
+/* Enterprise V12.2 already defines one 440px desktop dock. V16 adopts it instead of competing with it. */
+@media(min-width:1200px){
+  :root{--rwa-context-w:var(--rwa-context-panel,440px)}
+  html body.rwa-super-asset-workspace #rwaSuperWorkspace,html body .rwa-fundamentals{width:var(--rwa-context-panel,440px)!important;min-width:var(--rwa-context-panel,440px)!important;max-width:var(--rwa-context-panel,440px)!important;right:0!important;left:auto!important;top:94px!important;bottom:34px!important;transform:none!important;transition:none!important}
+  html body.rwa-super-asset-workspace.rwa-super-workspace-open .layout,html body.rwa-fundamentals-open .layout{width:calc(100% - var(--rwa-context-panel,440px))!important;margin-right:var(--rwa-context-panel,440px)!important;padding-right:0!important;box-sizing:border-box!important}
+}
+@media(max-width:1199px) and (min-width:901px){:root{--rwa-context-w:420px}.rwa-marketplace-launch{min-width:108px;padding:0 9px;font-size:9px}.rwa-marketplace-launch .rwa-marketplace-label{letter-spacing:.04em}}
 @media(max-width:1100px) and (min-width:681px){:root{--rwa-context-w:390px}.rwa-marketplace-launch{min-width:42px;width:42px;padding:0}.rwa-marketplace-launch .rwa-marketplace-label{display:none}.rwa-marketplace-launch .rwa-marketplace-mark{font-size:15px}.rwa-command-button .label{display:none!important}}
-@media(max-width:900px) and (min-width:681px){body.rwa-super-asset-workspace #rwaSuperWorkspace,.rwa-fundamentals{max-width:calc(100vw - 210px)!important}}
+@media(max-width:900px) and (min-width:681px){body.rwa-super-asset-workspace #rwaSuperWorkspace,.rwa-fundamentals{width:min(var(--rwa-context-w),calc(100vw - 210px))!important;min-width:min(var(--rwa-context-w),calc(100vw - 210px))!important;max-width:min(var(--rwa-context-w),calc(100vw - 210px))!important}}
 @media(max-width:680px){
+  html body.rwa-fundamentals-open{overflow:hidden!important;scrollbar-gutter:auto!important}
+  .rwa-fundamentals{transition:none!important}
   .rwa-marketplace-launch{position:fixed;right:12px;bottom:124px;z-index:9640;height:42px;min-width:118px;border-radius:22px;padding:0 14px;background:#211c45;box-shadow:0 10px 28px rgba(0,0,0,.4)}
   body.rwa-super-workspace-open .rwa-marketplace-launch,body.rwa-fundamentals-open .rwa-marketplace-launch,body.rwa-multichain-open .rwa-marketplace-launch{display:none!important}
-  body.rwa-fundamentals-open #rwaSuperWorkspace:not([hidden]){display:none!important}
+  html body.rwa-fundamentals-open #rwaSuperWorkspace{display:none!important}
   .rwa-fundamentals{z-index:9100!important}
 }
-/* No contextual surface may create root horizontal scroll. */
-#rwaSuperWorkspace,.rwa-fundamentals,.rwa-fund-body,.rwa-super-body,.rwa-super-card,.rwa-fund-card{min-width:0;max-width:100%;box-sizing:border-box}
+/* No contextual surface may create root horizontal scroll or escape its dock. */
+#rwaSuperWorkspace,.rwa-fundamentals,.rwa-fund-body,.rwa-super-body,.rwa-super-card,.rwa-fund-card{min-width:0;box-sizing:border-box}
+#rwaSuperWorkspace .rwa-super-body,.rwa-fundamentals .rwa-fund-body{max-width:100%;overflow-x:hidden}
