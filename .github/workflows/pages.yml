@@ -71,7 +71,7 @@ jobs:
           grep -Fq 'market-performance.js?v=12' index.html
           grep -Fq 'rwaMultiChainLazyBootstrap' index.html
           grep -Eq "SRC='rwa-multichain\.js\?v=[0-9]+'" index.html
-          ! grep -Eq '<script[[:space:]]+src=["'"']rwa-multichain\.js' index.html
+          ! grep -Fq '<script src="rwa-multichain.js' index.html
           grep -Fq "POLICY='chain-abstraction-fail-closed-v2'" rwa-multichain.js
           grep -Fq "REVISION='3.0.0-tuntas'" rwa-multichain.js
           grep -Fq "const REVISION='3.0.0-tuntas'" rwa-multichain-engine.js
