@@ -35,6 +35,8 @@ jobs:
       - name: Syntax
         run: |
           node --check renko/renko-tv-engine.js
+          node --check renko/renko-tv-stable-chart-v2.js
+          node --check renko/renko-tv-percentage-ltp-runtime.js
           node --check renko/renko-tv-history-ladder.js
           node --check renko/renko-tv-parity-fixture.js
           node --check tools/renko-observable-parity-gate.mjs
