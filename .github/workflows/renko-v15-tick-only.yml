@@ -52,7 +52,8 @@ jobs:
           grep -Fq "FIXED_INTERVAL='1s'" renko/renko-tv-app.js
           grep -Fq "formationSource:'fixed-1s-close-or-ohlc'" renko/renko-tv-app.js
           grep -Fq "confirmationRule:'fixed-1s-close'" renko/renko-tv-app.js
-          grep -Fq "contract:'tradingview-public-documentation-compatible'" renko/renko-tv-engine.js
+          grep -Fq "contract:'tradingview-public-documentation-compatible-fixed-1s'" renko/renko-tv-engine.js
+          grep -Fq "version:'1.4.0-fixed-1s'" renko/renko-tv-engine.js
           grep -Fq '_exactBox' renko/renko-tv-engine.js
           grep -Fq "rule:'render-only-on-renko-geometry-change-any-source-interval'" renko/renko-tv-stable-chart-v2.js
           grep -Fq "rule:'xaut-deep-matrix-other-pairs-local-fixed1s-atr-snapshot-box-stable-between-closes-runtime-only-single-owner-display'" renko/renko-tv-atr-control.js
@@ -67,6 +68,7 @@ jobs:
           node - <<'NODE'
           require('./renko/renko-tv-engine.js');
           const E=global.RWARenkoTVEngine;
+          if(E.version!=='1.4.0-fixed-1s'||E.contract!=='tradingview-public-documentation-compatible-fixed-1s')throw Error('fixed-1s engine identity contract failed');
           const bars=closes=>closes.map((c,i)=>({open:c,high:c,low:c,close:c,openTime:i*1000,closeTime:(i+1)*1000-1}));
           let r=E.build(bars([100,110,120,100,90]),{method:'traditional',boxSize:10,source:'close',wicks:false},1);
           if(r.bricks.length!==4||r.bricks[2].open!==110||r.bricks[2].close!==100||!r.bricks[2].isReversal)throw Error('Traditional 1x/2x contract failed');
