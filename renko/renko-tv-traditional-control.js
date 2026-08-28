@@ -4,10 +4,13 @@
  * saved manual value gets one pair-aware fixed suggestion calibrated locally
  * against the already-loaded fixed-1s source window. We target roughly 60
  * confirmed bricks (acceptance floor 46) when exchange tick geometry permits;
- * if one minimum tick itself cannot produce 46 bricks, we use that minimum tick
- * and never fabricate sub-tick bricks. The suggestion is frozen for the symbol
- * and never recalculated between 1-second closes. Editing BOX SIZE + Apply saves
- * the user's exact per-symbol preference after minimum-tick normalization.
+ * when the one-tick geometry has enough room, calibration keeps a small safety
+ * headroom above that floor so ordinary 1-second closes do not make a fresh
+ * first frame flicker below acceptance. If one minimum tick itself cannot
+ * produce 46 bricks, we use that minimum tick and never fabricate sub-tick
+ * bricks. The suggestion is frozen for the symbol and never recalculated
+ * between 1-second closes. Editing BOX SIZE + Apply saves the user's exact
+ * per-symbol preference after minimum-tick normalization.
  *
  * Isolation rule: ATR's ephemeral settings._exactBox and XAUT deep ATR worker
  * can never own a Traditional rebuild.
@@ -18,7 +21,7 @@ if(window.RWARenkoTraditionalControl)return;
 const PROFILE_STORE='rwa_renko_traditional_symbol_boxes_v1';
 const SETTINGS_STORE='rwa_renko_tradingview_settings_v1';
 const SUGGESTION_REVISION='2.1.0-first-frame';
-const TARGET_MIN=46,TARGET=60,TARGET_MAX=80;
+const TARGET_MIN=46,TARGET_HEADROOM=52,TARGET=60,TARGET_MAX=80;
 const tv=()=>window.RWARenkoTV||null;
 const same=(a,b)=>Math.abs(Number(a)-Number(b))<=Math.max(1e-12,Math.abs(Number(b))*1e-10);
 const parse=v=>{const n=Number(String(v??'').trim().replace(/,/g,'.'));return Number.isFinite(n)?n:NaN};
@@ -40,8 +43,10 @@ function calibratedSuggestion(T=tv()){
   const evalMult=m=>{m=Math.max(1,Math.floor(Number(m)||1));if(cache.has(m))return cache.get(m);const box=normalize(m*tick,tick),count=countFor(T,bars,box),v={m,box,count};cache.set(m,v);return v};
   const first=evalMult(1),attainable=first.count>=TARGET_MIN;
   if(!attainable){const out={box:first.box,expectedBricks:first.count,maxAtMinTick:first.count,targetAttainable:false,limited:true,targetMin:TARGET_MIN,target:TARGET,targetMax:TARGET_MAX,calibratedBars:bars.length,calibrationMs:performance.now()-started};stats.lastSuggestionMs=out.calibrationMs;return out}
+  const floor=first.count>=TARGET_HEADROOM?TARGET_HEADROOM:TARGET_MIN;
   let best=first;
-  const consider=v=>{if(v.count<TARGET_MIN)return;if(Math.abs(v.count-TARGET)<Math.abs(best.count-TARGET)||(Math.abs(v.count-TARGET)===Math.abs(best.count-TARGET)&&v.box<best.box))best=v};
+  const score=v=>Math.abs(v.count-TARGET)+(v.count<TARGET_MIN?1e9:0)+(v.count<floor?1e6:0);
+  const consider=v=>{if(v.count<TARGET_MIN)return;if(score(v)<score(best)||(score(v)===score(best)&&v.box<best.box))best=v};
   let low=1,high=2,h=evalMult(high);consider(h),consider(first);
   for(let i=0;i<22&&h.count>TARGET;i++){low=high;high*=2;h=evalMult(high);consider(h)}
   let lo=1,hi=high;
@@ -49,8 +54,8 @@ function calibratedSuggestion(T=tv()){
     const mid=Math.floor((lo+hi)/2),v=evalMult(mid);consider(v);
     if(v.count>TARGET)lo=mid+1;else if(v.count<TARGET)hi=mid-1;else break;
   }
-  for(const m of [Math.max(1,lo-2),Math.max(1,lo-1),lo,lo+1,lo+2,Math.max(1,hi-1),Math.max(1,hi),hi+1])consider(evalMult(m));
-  const out={box:best.box,expectedBricks:best.count,maxAtMinTick:first.count,targetAttainable:true,limited:false,targetMin:TARGET_MIN,target:TARGET,targetMax:TARGET_MAX,calibratedBars:bars.length,calibrationMs:performance.now()-started};stats.lastSuggestionMs=out.calibrationMs;return out;
+  for(const m of [Math.max(1,lo-3),Math.max(1,lo-2),Math.max(1,lo-1),lo,lo+1,lo+2,lo+3,Math.max(1,hi-2),Math.max(1,hi-1),Math.max(1,hi),hi+1,hi+2])consider(evalMult(m));
+  const out={box:best.box,expectedBricks:best.count,maxAtMinTick:first.count,targetAttainable:true,limited:false,targetMin:TARGET_MIN,targetHeadroom:floor,target:TARGET,targetMax:TARGET_MAX,calibratedBars:bars.length,calibrationMs:performance.now()-started};stats.lastSuggestionMs=out.calibrationMs;return out;
 }
 function suggested(T=tv()){return calibratedSuggestion(T).box}
 function resolve(T=tv(),symbol=T?.state?.symbol){
@@ -100,5 +105,5 @@ document.addEventListener('click',e=>{const b=e.target?.closest?.('[data-apply-m
 const input=document.getElementById('traditionalBox');if(input)input.addEventListener('keydown',e=>{if(e.key!=='Enter')return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();applyFromInput('enter')},true);
 window.addEventListener('renko:tv-ready',()=>queueMicrotask(()=>prepareSymbol('tv-ready')));
 window.addEventListener('renko:symbol-switch-end',e=>{if(e.detail?.ok!==false)queueMicrotask(()=>prepareSymbol('symbol-ready'))});
-window.RWARenkoTraditionalControl={version:'2.1.0-first-frame',suggestionRevision:SUGGESTION_REVISION,rule:'pair-aware-fixed-absolute-box-min-tick-positive-first-frame-target-no-atr-exact-ownership-stable-between-1s-closes',target:{min:TARGET_MIN,ideal:TARGET,max:TARGET_MAX},profileStore:PROFILE_STORE,normalize,countFor,calibratedSuggestion,suggested,resolve,activate,applyFromInput,prepareSymbol,clearAtrOwnership,stats,get profiles(){return profiles}};
+window.RWARenkoTraditionalControl={version:'2.1.0-first-frame',suggestionRevision:SUGGESTION_REVISION,rule:'pair-aware-fixed-absolute-box-min-tick-positive-first-frame-target-no-atr-exact-ownership-stable-between-1s-closes',target:{min:TARGET_MIN,headroom:TARGET_HEADROOM,ideal:TARGET,max:TARGET_MAX},profileStore:PROFILE_STORE,normalize,countFor,calibratedSuggestion,suggested,resolve,activate,applyFromInput,prepareSymbol,clearAtrOwnership,stats,get profiles(){return profiles}};
 })();
