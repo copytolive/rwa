@@ -110,9 +110,13 @@ jobs:
             renko/fixtures/gold-20y-close-parity.json
           )
           matched=0
-          for attempt in $(seq 1 60); do
+          for attempt in $(seq 1 90); do
             ok=1
             : > /tmp/renko-public-manifest.tsv
+            stamp=$(curl -fsSL --retry 2 --retry-delay 1 -H 'Cache-Control: no-cache' "$PUBLIC_BASE/renko-deployment-sha.txt?renko-closure=${GITHUB_SHA}-${attempt}" 2>/dev/null | tr -d '\r\n' || true)
+            if [ "$stamp" != "$GITHUB_SHA" ]; then
+              ok=0
+            fi
             for p in "${files[@]}"; do
               expected=$(git rev-parse "HEAD:$p")
               if ! curl -fsSL --retry 2 --retry-delay 1 -H 'Cache-Control: no-cache' "$PUBLIC_BASE/$p?renko-closure=${GITHUB_SHA}-${attempt}" -o /tmp/renko-public-file; then
@@ -126,13 +130,14 @@ jobs:
             if [ "$ok" = 1 ]; then
               matched=1
               cp /tmp/renko-public-manifest.tsv "$OUT/deployment-manifest.tsv"
+              printf '%s\n' "$stamp" > "$OUT/deployment-sha.txt"
               break
             fi
-            echo "Public RENKO runtime has not converged to ${GITHUB_SHA} yet (attempt ${attempt}/60)"
+            echo "Public RENKO runtime/stamp has not converged to ${GITHUB_SHA} yet (attempt ${attempt}/90; stamp=${stamp:-missing})"
             sleep 10
           done
           if [ "$matched" != 1 ]; then
-            echo 'Public GitHub Pages RENKO runtime never matched the exact current-main blobs.' >&2
+            echo 'Public GitHub Pages RENKO runtime/stamp never matched the exact current-main build.' >&2
             cat /tmp/renko-public-manifest.tsv >&2 || true
             exit 1
           fi
@@ -140,7 +145,8 @@ jobs:
           const fs=require('fs');
           const out='artifacts/renko-public-production-closure';
           const rows=fs.readFileSync(`${out}/deployment-manifest.tsv`,'utf8').trim().split(/\n/).filter(Boolean).map(line=>{const [path,expectedBlob,publicBlob]=line.split('\t');return{path,expectedBlob,publicBlob,match:expectedBlob===publicBlob};});
-          const manifest={schema:'renko-public-deployment-manifest-v1',generatedAt:new Date().toISOString(),publicBase:process.env.PUBLIC_BASE,targetSha:process.env.GITHUB_SHA,renkoMergeSha:'7b4146c5473e5042a288bf700db873b0c09d5d04',allMatch:rows.length>0&&rows.every(x=>x.match),files:rows};
+          const deployedSha=fs.readFileSync(`${out}/deployment-sha.txt`,'utf8').trim();
+          const manifest={schema:'renko-public-deployment-manifest-v2',generatedAt:new Date().toISOString(),publicBase:process.env.PUBLIC_BASE,targetSha:process.env.GITHUB_SHA,deployedSha,stampMatch:deployedSha===process.env.GITHUB_SHA,renkoMergeSha:'7b4146c5473e5042a288bf700db873b0c09d5d04',allMatch:rows.length>0&&rows.every(x=>x.match)&&deployedSha===process.env.GITHUB_SHA,files:rows};
           fs.writeFileSync(`${out}/deployment-manifest.json`,JSON.stringify(manifest,null,2));
           console.log(JSON.stringify(manifest,null,2));
           if(!manifest.allMatch)process.exit(2);
