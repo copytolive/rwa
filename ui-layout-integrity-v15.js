@@ -56,7 +56,7 @@ function patchFundamentals(){
   patchedFund=true;return true
 }
 function reconcile(){
-  if(reconciling)return;reconciling=true;try{mountMarketplace();patchSuper();patchFundamentals();if(isFundOpen())suspendWorkspace();syncFundVisual();syncLegacyRight()}finally{reconciling=false}
+  if(reconciling)return;reconciling=true;try{mountMarketplace();patchSuper();patchFundamentals();const fundOpen=isFundOpen();if(fundOpen)suspendWorkspace();syncFundVisual();syncLegacyRight();if(!fundOpen&&returnRoute&&!suppressRestore)restoreContext()}finally{reconciling=false}
 }
 function visible(el){if(!el)return false;const s=getComputedStyle(el),r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity||1)>0&&r.width>1&&r.height>1}
 function intersection(a,b){if(!a||!b)return 0;const x=Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left)),y=Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));return x*y}
