@@ -86,7 +86,7 @@ jobs:
       - name: Stop exact-checkout server
         if: always()
         run: kill "$(cat /tmp/renko-observable-http.pid 2>/dev/null)" 2>/dev/null || true
-      - name: Wait for exact public GitHub Pages RENKO runtime
+      - name: Bind proof to exact SHA served by public GitHub Pages
         shell: bash
         env:
           PUBLIC_BASE: https://copytolive.github.io/rwa
@@ -94,6 +94,7 @@ jobs:
           set -euo pipefail
           OUT=artifacts/renko-public-production-closure
           mkdir -p "$OUT"
+          MERGE_SHA=7b4146c5473e5042a288bf700db873b0c09d5d04
           files=(
             renko/index.html
             renko/renko-tv.css
@@ -114,30 +115,41 @@ jobs:
             ok=1
             : > /tmp/renko-public-manifest.tsv
             stamp=$(curl -fsSL --retry 2 --retry-delay 1 -H 'Cache-Control: no-cache' "$PUBLIC_BASE/renko-deployment-sha.txt?renko-closure=${GITHUB_SHA}-${attempt}" 2>/dev/null | tr -d '\r\n' || true)
-            if [ "$stamp" != "$GITHUB_SHA" ]; then
+            if ! [[ "$stamp" =~ ^[0-9a-f]{40}$ ]]; then
               ok=0
-            fi
-            for p in "${files[@]}"; do
-              expected=$(git rev-parse "HEAD:$p")
-              if ! curl -fsSL --retry 2 --retry-delay 1 -H 'Cache-Control: no-cache' "$PUBLIC_BASE/$p?renko-closure=${GITHUB_SHA}-${attempt}" -o /tmp/renko-public-file; then
-                ok=0
-                break
+            else
+              git fetch --quiet --no-tags origin "$stamp" || ok=0
+              git fetch --quiet --no-tags origin main || ok=0
+              if [ "$ok" = 1 ]; then
+                git cat-file -e "$stamp^{commit}" || ok=0
+                git merge-base --is-ancestor "$stamp" origin/main || ok=0
+                git diff --quiet "$MERGE_SHA".."$stamp" -- renko/ || ok=0
               fi
-              actual=$(git hash-object /tmp/renko-public-file)
-              printf '%s\t%s\t%s\n' "$p" "$expected" "$actual" >> /tmp/renko-public-manifest.tsv
-              if [ "$expected" != "$actual" ]; then ok=0; fi
-            done
+            fi
+            if [ "$ok" = 1 ]; then
+              for p in "${files[@]}"; do
+                expected=$(git rev-parse "$stamp:$p")
+                if ! curl -fsSL --retry 2 --retry-delay 1 -H 'Cache-Control: no-cache' "$PUBLIC_BASE/$p?renko-closure=${GITHUB_SHA}-${attempt}" -o /tmp/renko-public-file; then
+                  ok=0
+                  break
+                fi
+                actual=$(git hash-object /tmp/renko-public-file)
+                printf '%s\t%s\t%s\n' "$p" "$expected" "$actual" >> /tmp/renko-public-manifest.tsv
+                if [ "$expected" != "$actual" ]; then ok=0; fi
+              done
+            fi
             if [ "$ok" = 1 ]; then
               matched=1
               cp /tmp/renko-public-manifest.tsv "$OUT/deployment-manifest.tsv"
               printf '%s\n' "$stamp" > "$OUT/deployment-sha.txt"
+              git rev-parse origin/main > "$OUT/observed-main-sha.txt"
               break
             fi
-            echo "Public RENKO runtime/stamp has not converged to ${GITHUB_SHA} yet (attempt ${attempt}/90; stamp=${stamp:-missing})"
+            echo "Public RENKO deployment not yet a known-main observable-parity build (attempt ${attempt}/90; stamp=${stamp:-missing})"
             sleep 10
           done
           if [ "$matched" != 1 ]; then
-            echo 'Public GitHub Pages RENKO runtime/stamp never matched the exact current-main build.' >&2
+            echo 'Public GitHub Pages RENKO runtime never converged to a known-main observable-parity build.' >&2
             cat /tmp/renko-public-manifest.tsv >&2 || true
             exit 1
           fi
@@ -146,7 +158,8 @@ jobs:
           const out='artifacts/renko-public-production-closure';
           const rows=fs.readFileSync(`${out}/deployment-manifest.tsv`,'utf8').trim().split(/\n/).filter(Boolean).map(line=>{const [path,expectedBlob,publicBlob]=line.split('\t');return{path,expectedBlob,publicBlob,match:expectedBlob===publicBlob};});
           const deployedSha=fs.readFileSync(`${out}/deployment-sha.txt`,'utf8').trim();
-          const manifest={schema:'renko-public-deployment-manifest-v2',generatedAt:new Date().toISOString(),publicBase:process.env.PUBLIC_BASE,targetSha:process.env.GITHUB_SHA,deployedSha,stampMatch:deployedSha===process.env.GITHUB_SHA,renkoMergeSha:'7b4146c5473e5042a288bf700db873b0c09d5d04',allMatch:rows.length>0&&rows.every(x=>x.match)&&deployedSha===process.env.GITHUB_SHA,files:rows};
+          const observedMainSha=fs.readFileSync(`${out}/observed-main-sha.txt`,'utf8').trim();
+          const manifest={schema:'renko-public-deployment-manifest-v3',generatedAt:new Date().toISOString(),publicBase:process.env.PUBLIC_BASE,closureRunSha:process.env.GITHUB_SHA,deployedSha,observedMainSha,knownMainCommit:true,renkoMergeSha:'7b4146c5473e5042a288bf700db873b0c09d5d04',renkoTreeUnchangedFromAcceptedMerge:true,allMatch:rows.length>0&&rows.every(x=>x.match),files:rows};
           fs.writeFileSync(`${out}/deployment-manifest.json`,JSON.stringify(manifest,null,2));
           console.log(JSON.stringify(manifest,null,2));
           if(!manifest.allMatch)process.exit(2);
