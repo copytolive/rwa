@@ -8,6 +8,11 @@ on:
       - 'backtest/gold24/GITHUB_RUNNER_KICK'
   schedule:
     - cron: '7,22,37,52 * * * *'
+  workflow_run:
+    workflows:
+      - 'RWA 24x7 Monitor'
+    types:
+      - completed
   workflow_dispatch:
 
 permissions:
