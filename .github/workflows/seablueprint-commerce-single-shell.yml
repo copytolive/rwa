@@ -1,0 +1,71 @@
+name: Seablueprint Ecommerce Single Shell
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'chart-core.js'
+      - 'rwa-seablueprint-commerce-bridge.js'
+      - 'rwa-seablueprint-commerce-bridge.css'
+      - 'rwa-commerce-config.json'
+      - 'rwa-storefront.js'
+      - 'rwa-commerce-api.js'
+      - 'rwa-commerce-live.js'
+      - 'tools/seablueprint-commerce-single-shell-browser.mjs'
+      - '.github/workflows/seablueprint-commerce-single-shell.yml'
+  pull_request:
+    paths:
+      - 'chart-core.js'
+      - 'rwa-seablueprint-commerce-bridge.js'
+      - 'rwa-seablueprint-commerce-bridge.css'
+      - 'rwa-commerce-config.json'
+      - 'rwa-storefront.js'
+      - 'rwa-commerce-api.js'
+      - 'rwa-commerce-live.js'
+      - 'tools/seablueprint-commerce-single-shell-browser.mjs'
+      - '.github/workflows/seablueprint-commerce-single-shell.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-single-shell:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static syntax and contract
+        run: |
+          set -euxo pipefail
+          node --check chart-core.js
+          node --check rwa-seablueprint-commerce-bridge.js
+          node --check tools/seablueprint-commerce-single-shell-browser.mjs
+          node -e "const c=require('./rwa-commerce-config.json'); if(c.shell_mode!=='SINGLE_MAIN_DOCUMENT'||c.navigation_policy!=='NO_TOP_LEVEL_ECOMMERCE_NAVIGATION'||c.api_base!=='') process.exit(1)"
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Serve canonical root and verify ecommerce stays inside main page
+        env:
+          RWA_UI_URL: http://127.0.0.1:4173/rwa/
+          RWA_ECOMMERCE_PROOF_DIR: proof/seablueprint-commerce-single-shell
+        run: |
+          set -euxo pipefail
+          mkdir -p /tmp/rwa-commerce-site/rwa
+          cp -a . /tmp/rwa-commerce-site/rwa/
+          cd /tmp/rwa-commerce-site
+          python -m http.server 4173 >/tmp/rwa-commerce-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
+          cd "$GITHUB_WORKSPACE"
+          node tools/seablueprint-commerce-single-shell-browser.mjs
+      - name: Upload browser proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seablueprint-commerce-single-shell-${{ github.sha }}
+          path: proof/seablueprint-commerce-single-shell/
+          if-no-files-found: error
+          retention-days: 30
