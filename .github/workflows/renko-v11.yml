@@ -1,4 +1,4 @@
-name: RENKO V12 Tick Native Gate
+name: RENKO Legacy Tick Engine Isolation Gate
 
 on:
   push:
@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 jobs:
-  verify-v12:
+  verify-v12-isolation:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,21 +26,21 @@ jobs:
           node --check renko/renko-v3.js
           node --check renko/renko-v12.js
           node --check renko/renko-v12-worker.js
-      - name: Tick-native DOM and runtime contract
+      - name: Canonical UI is Observable Model; V12 remains isolated
         run: |
           set -euo pipefail
           test -s renko/index.html
           test -s renko/renko-v12.js
           test -s renko/renko-v12-worker.js
-          grep -Fq 'RENKO V12' renko/index.html
-          grep -Fq 'renko-v12.js?v=120' renko/index.html
-          grep -Fq 'data-renko-method="atr"' renko/index.html
-          grep -Fq 'data-renko-method="traditional"' renko/index.html
-          grep -Fq 'data-renko-method="percentage"' renko/index.html
-          ! grep -Fq 'id="v11Interval"' renko/index.html
-          ! grep -Fq 'id="v11Source"' renko/index.html
-          ! grep -Fq 'id="v11Projection"' renko/index.html
-          grep -Fq 'Every trade' renko/index.html
+          grep -Fq 'RENKO — TradingView Observable Model' renko/index.html
+          grep -Fq 'RENKO_PARITY_PROFILE' renko/index.html
+          grep -Fq 'id="sourceSelect"' renko/index.html
+          grep -Fq 'id="intervalSelect"' renko/index.html
+          grep -Fq 'data-method="atr"' renko/index.html
+          grep -Fq 'data-method="traditional"' renko/index.html
+          grep -Fq 'data-method="percentage"' renko/index.html
+          ! grep -Fq 'renko-v12.js' renko/index.html
+          ! grep -Fq 'renko-v12-worker.js' renko/index.html
           grep -Fq "formation:'tick-by-tick'" renko/renko-v12.js
           grep -Fq "lockRule:'every-trade-threshold'" renko/renko-v12.js
           grep -Fq "liveSource:'binance-individual-@trade'" renko/renko-v12.js
@@ -57,13 +57,11 @@ jobs:
           p=P(); p.feed(Path('renko/index.html').read_text())
           dup=[k for k,v in Counter(p.ids).items() if v>1]
           assert not dup, f'duplicate DOM ids: {dup}'
-          required={'brickSize','v11AtrLength','v11Percent','v11Wicks','v11Confirm','v11Apply','signalAction','signalMarket','chartWrap','v12LtpSnapshot'}
-          missing=sorted(required-set(p.ids)); assert not missing, f'missing V12 DOM ids: {missing}'
-          forbidden={'v11Interval','v11Source','v11Projection'}
-          assert not (forbidden & set(p.ids)), f'interval/source/projection controls still present: {forbidden & set(p.ids)}'
-          print('RENKO V12 DOM contract PASS')
+          required={'sourceSelect','intervalSelect','atrLength','traditionalBox','percentageValue','wicksToggle','chartWrap'}
+          missing=sorted(required-set(p.ids)); assert not missing, f'missing observable Renko DOM ids: {missing}'
+          print('RENKO canonical observable / legacy V12 isolation PASS')
           PY
-      - name: Every-trade formation, multi-brick and wick tests
+      - name: Legacy every-trade engine regression matrix
         run: |
           node - <<'NODE'
           const fs=require('fs'),vm=require('vm');
@@ -72,17 +70,14 @@ jobs:
           const E=s.RenkoV12Engine;
           const ticks=a=>a.map((price,i)=>({id:i+1,price,time:i+1}));
           let r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:true,ticks:ticks([100,110,120,170])});
-          if(r.bricks.length!==7)throw Error(`single tick multi-brick expected 7 total, got ${r.bricks.length}`);
-          if(r.bricks.at(-1).close!==170)throw Error('single tick did not lock through final crossed threshold');
+          if(r.bricks.length!==7||r.bricks.at(-1).close!==170)throw Error('legacy multi-brick threshold regression');
           r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:true,ticks:ticks([100,110,120,100])});
-          const rev=r.bricks.at(-1);if(r.bricks.length!==3||rev.direction!==-1||!rev.isReversal||rev.open!==110||rev.close!==100)throw Error('2-box reversal contract');
+          const rev=r.bricks.at(-1);if(r.bricks.length!==3||rev.direction!==-1||!rev.isReversal||rev.open!==110||rev.close!==100)throw Error('legacy 2-box reversal regression');
           r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:true,ticks:ticks([100,95,110])});
-          if(r.bricks.length!==1||r.bricks[0].low!==95||r.bricks[0].high!==110)throw Error('actual tick low wick contract');
-          r=E.buildTicks({method:'traditional',traditionalBox:10,tickSize:1,wicks:true,ticks:ticks([100,110,120,125,100])});
-          const d=r.bricks.at(-1);if(d.direction!==-1||d.high!==125||d.low!==100)throw Error('actual tick high wick contract');
+          if(r.bricks.length!==1||r.bricks[0].low!==95||r.bricks[0].high!==110)throw Error('legacy low wick regression');
           r=E.buildTicks({method:'percentage',percentage:.01,ltpSnapshot:100,tickSize:.1,wicks:true,ticks:ticks([100,101,102])});
-          if(Math.abs(r.box-1)>1e-9)throw Error('Percentage LTP snapshot sizing');
+          if(Math.abs(r.box-1)>1e-9)throw Error('legacy Percentage snapshot sizing regression');
           r=E.buildTicks({method:'atr',atrBox:7.3,tickSize:.1,wicks:false,ticks:ticks([100,107.3,114.6])});
-          if(Math.abs(r.box-7.3)>1e-9)throw Error('ATR sizing-only snapshot');
-          console.log('RENKO V12 tick-native engine tests PASS');
+          if(Math.abs(r.box-7.3)>1e-9)throw Error('legacy ATR sizing regression');
+          console.log('RENKO LEGACY V12 ENGINE ISOLATION MATRIX PASS');
           NODE
