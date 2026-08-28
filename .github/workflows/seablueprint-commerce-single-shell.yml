@@ -58,7 +58,7 @@ jobs:
           node --check tools/seablueprint-commerce-single-shell-browser.mjs
           grep -Fq "const LABEL='Ecommerce production'" rwa-ecommerce-production-label.js
           grep -Fq "rwa-ecommerce-production-label.js?v=1.0.0" chart-core.js
-          grep -Fq "rwa-target-dashboard-v1.js?v=1.1.0" chart-core.js
+          grep -Fq "rwa-target-dashboard-v1.js?v=1.2.0" chart-core.js
           grep -Fq "rwa-target-dashboard-v1.css?v=1.1.0" chart-core.js
           grep -Fq "rwa-target-dashboard-v1-compat.css?v=1.1.0" chart-core.js
           grep -Fq "rwa-target-dashboard-v1-workspace.css?v=1.1.0" chart-core.js
