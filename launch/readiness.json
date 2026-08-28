@@ -1,6 +1,6 @@
 {
   "schema": 5,
-  "generated_at": "2026-08-28T08:09:18.649Z",
+  "generated_at": "2026-08-28T14:17:06.811Z",
   "status": "BLOCKED",
   "engineering_ready": true,
   "beta_ready": false,
@@ -277,19 +277,15 @@
     "blockers": [
       {
         "gate": "real_receipt_matrix",
-        "detail": "real external-wallet cross-chain receipt matrix required"
+        "detail": "EVM_TO_EVM=PENDING · EVM_TO_SOLANA=PENDING · SOLANA_TO_EVM=PENDING · SAME_CHAIN=PENDING · FAILURE_OR_REFUND=PENDING"
       },
       {
-        "gate": "lifi_provider_approval",
-        "detail": "LI.FI partner+payout approval evidence required before fee activation"
+        "gate": "lifi_fee_setup",
+        "detail": "LI.FI Portal integrator verification and fee-wallet setup still required"
       },
       {
-        "gate": "hyperliquid_builder_approval",
-        "detail": "Hyperliquid builder eligibility, builder address and fee approval evidence required"
-      },
-      {
-        "gate": "hyperliquid_funding_adapter",
-        "detail": "current Hyperliquid CCTP/official deposit adapter evidence required; legacy bridge direct write remains disabled"
+        "gate": "hyperliquid_builder_setup",
+        "detail": "builder address, >=100 USDC perps account value, and user approval flow still required"
       }
     ]
   }
