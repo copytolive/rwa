@@ -1,0 +1,1 @@
+Repository automation can validate, probe, ingest and gate evidence. It cannot originate legal approval, wallet signatures, provider-account approval, funding, payment credentials, real inventory outcomes or real beta users. Those remain external inputs by design.
