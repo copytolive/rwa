@@ -81,14 +81,18 @@ if(funding){
   ok(funding.policy?.official_bridge2_only===true&&funding.policy?.no_unverified_bridge_write===true&&funding.policy?.final_hyperliquid_handoff_fail_closed===true,'Hyperliquid funding safety policy missing');
 }
 if(pilot){
-  ok(pilot.schema===1&&pilot.status==='PILOT_ONLY'&&pilot.enabled===true,'pilot policy missing');
+  const routes=pilot.routes||{},fund=routes.HYPERLIQUID_FUNDING||{},ordinary=Object.entries(routes).filter(([k])=>k!=='HYPERLIQUID_FUNDING').map(([,v])=>v);
+  ok(pilot.schema===2&&pilot.status==='PILOT_ONLY'&&pilot.enabled===true,'pilot V2 policy missing');
   ok(pilot.unrestricted_mainnet===false,'pilot must never unlock unrestricted mainnet');
-  ok(Number(pilot.max_total_usd_per_session)<=25,'pilot total-value cap too high');
-  ok(Object.values(pilot.routes||{}).every(x=>Number(x.max_amount)<=10),'pilot route cap too high');
+  ok(Number(pilot.max_total_usd_per_session)<=125,'pilot total-value cap too high');
+  ok(ordinary.every(x=>Number(x.max_amount)<=2),'ordinary real-receipt route cap must stay <=2 USDC');
+  ok(Number(fund.min_amount)>=5&&Number(fund.max_amount)<=105&&Number(fund.target_account_value_usdc)>=100,'Hyperliquid builder activation funding must stay 5-105 USDC with >=100 USDC target');
   ok(pilot.failure_or_refund?.intentional_failure_forbidden===true,'pilot must forbid intentional failure');
-  ok(pilot.policy?.never_store_private_keys===true&&pilot.policy?.never_request_seed_phrase===true&&pilot.policy?.no_background_signing===true,'pilot wallet-safety policy missing');
+  ok(pilot.policy?.never_store_private_keys===true&&pilot.policy?.never_request_seed_phrase===true&&pilot.policy?.no_background_signing===true&&pilot.policy?.builder_activation_requires_user_signature===true,'pilot wallet-safety policy missing');
+  ok(/^https:\/\//.test(String(pilot.evidence?.evm_explorers?.arbitrum||''))&&/^https:\/\//.test(String(pilot.evidence?.solana_explorer||''))&&/^https:\/\//.test(String(pilot.evidence?.lifi_status_api||'')),'pilot machine-verifiable HTTPS evidence endpoints missing');
   ok(pilotJs.includes('REAL MONEY PILOT')&&pilotJs.includes('REAL HYPERLIQUID FUNDING'),'explicit real-value confirmation copy missing');
+  ok(pilotJs.includes('evidenceUrl(')&&pilotJs.includes('lifiStatusUrl('),'pilot must emit machine-verifiable receipt evidence URLs');
   ok(!/privateKey|seed phrase.*prompt|mnemonic.*prompt/i.test(pilotJs),'pilot must not request wallet secrets');
 }
-if(fail.length){console.error(JSON.stringify({ok:false,contract:'rwa-multichain-mainnet-go-v4',fail},null,2));process.exit(1)}
-console.log(JSON.stringify({ok:true,contract:'rwa-multichain-mainnet-go-v4',policy:'chain-abstraction-fail-closed-v2',networks:registry.networks.length,first_paint_scripts:staticScripts,capabilities:['address-family-binding','solana-rpc-preflight','approval-receipt-barrier','persistent-lifecycle','walletconnect-evm-solana-abstraction','official-hyperliquid-bridge2','real-receipt-pilot','dual-mainnet-gate','visible-fee-disclosure']},null,2));
+if(fail.length){console.error(JSON.stringify({ok:false,contract:'rwa-multichain-mainnet-go-v5',fail},null,2));process.exit(1)}
+console.log(JSON.stringify({ok:true,contract:'rwa-multichain-mainnet-go-v5',policy:'chain-abstraction-fail-closed-v2',networks:registry.networks.length,first_paint_scripts:staticScripts,capabilities:['address-family-binding','solana-rpc-preflight','approval-receipt-barrier','persistent-lifecycle','walletconnect-evm-solana-abstraction','official-hyperliquid-bridge2','machine-verifiable-real-receipt-pilot','builder-activation-target','dual-mainnet-gate','visible-fee-disclosure']},null,2));
