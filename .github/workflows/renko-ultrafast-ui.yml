@@ -27,8 +27,10 @@ jobs:
           set -euo pipefail
           node --check renko/renko-tv-ultrafast-ui.js
           node --check tools/renko-ultrafast-ui-report.mjs
-          grep -q 'renko-tv-ultrafast-ui.js' renko/index.html
+          grep -q 'renko-tv-ultrafast-ui.js?v=171' renko/index.html
+          grep -q "version:'1.1.1'" renko/renko-tv-ultrafast-ui.js
           grep -q "rule:'search-only-universe-plus-fast50-launch-list-plus-manual-zoom-lock'" renko/renko-tv-ultrafast-ui.js
+          grep -q "addEventListener('focus'" renko/renko-tv-ultrafast-ui.js
           grep -q 'ensureListViewport' renko/renko-tv-ultrafast-ui.js
           grep -q 'blockingMs' renko/renko-tv-ultrafast-ui.js
           grep -q 'Fast 50 ready' renko/renko-tv-ultrafast-ui.js
