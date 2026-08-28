@@ -2,9 +2,9 @@
   "name": "rwa-token-pre-tge",
   "private": true,
   "version": "0.4.0",
-  "description": "PRE-TGE platform token, redeemable Product RWA, segregated RWA Series commitments and fully-funded Merkle distribution vault; no automatic deployment",
+  "description": "PRE-TGE platform token, redeemable Product RWA, compliance-gated RWA Series units and fully-funded Merkle distribution vault; no automatic deployment",
   "scripts": {
-    "compile": "rm -rf build && mkdir -p build && solcjs --base-path . --include-path node_modules --abi --bin contracts/RWAToken.sol contracts/RWAVestingVault.sol contracts/ProductInventoryGate.sol contracts/ProductRWA1155.sol contracts/RedemptionManager.sol contracts/RWASeriesRegistry.sol contracts/RWADistributionVault.sol contracts/interfaces/*.sol -o build",
+    "compile": "rm -rf build && mkdir -p build && solcjs --base-path . --include-path node_modules --abi --bin contracts/RWAToken.sol contracts/RWAVestingVault.sol contracts/ProductInventoryGate.sol contracts/ProductRWA1155.sol contracts/RedemptionManager.sol contracts/RWASeriesRegistry.sol contracts/RWASeriesUnits1155.sol contracts/RWADistributionVault.sol contracts/interfaces/*.sol -o build",
     "test": "node test/contracts.test.mjs && node test/product-rwa.test.mjs && node test/rwa-operating.test.mjs",
     "verify": "npm run compile && npm test"
   },
