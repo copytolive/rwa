@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - fix/renko-traditional-control-all-pairs-20260829
+      - fix/renko-traditional-first-frame-target-20260829
     paths:
       - 'renko/**'
       - 'tools/renko-traditional-*.mjs'
@@ -29,8 +30,8 @@ jobs:
           node --check tools/renko-traditional-control-all-pairs-report.mjs
           node --check tools/renko-traditional-stability-report.mjs
           grep -q "traditionalRevision:'2.0.0-pair-safe'" renko/renko-tv-engine.js
-          grep -q "renko-tv-traditional-control.js?v=1" renko/index.html
-          grep -q "pair-aware-fixed-absolute-box-min-tick-positive-no-atr-exact-ownership" renko/renko-tv-traditional-control.js
+          grep -q "renko-tv-traditional-control.js?v=2" renko/index.html
+          grep -q "pair-aware-fixed-absolute-box-min-tick-positive-first-frame-target-no-atr-exact-ownership" renko/renko-tv-traditional-control.js
           node tools/renko-traditional-engine-contract.mjs
       - name: Install Chromium
         run: |
@@ -87,7 +88,7 @@ jobs:
             html=$(curl -fsS "$index?ts=$ts" 2>/dev/null || true)
             js=$(curl -fsS "$runtime?ts=$ts" 2>/dev/null || true)
             echo "attempt=$i deployed=$got"
-            if [ "$got" = "$GITHUB_SHA" ] && grep -q 'renko-tv-traditional-control.js?v=1' <<<"$html" && grep -q 'pair-aware-fixed-absolute-box-min-tick-positive-no-atr-exact-ownership' <<<"$js"; then
+            if [ "$got" = "$GITHUB_SHA" ] && grep -q 'renko-tv-traditional-control.js?v=2' <<<"$html" && grep -q 'pair-aware-fixed-absolute-box-min-tick-positive-first-frame-target-no-atr-exact-ownership' <<<"$js"; then
               echo "PUBLIC_TRADITIONAL_RUNTIME_PRESENT deployed=$got"
               exit 0
             fi
