@@ -45,9 +45,12 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          for i in $(seq 1 20); do
-            DEPLOYED="$(curl -fsSL --no-cache "https://copytolive.github.io/rwa/deployment-sha.txt?proof=$RANDOM" | tr -d '\r\n' || true)"
-            if [ "$DEPLOYED" = "$EXPECTED_SHA" ]; then exit 0; fi
+          for i in $(seq 1 30); do
+            DEPLOYED="$(curl -fsSL -H 'Cache-Control: no-cache, no-store, must-revalidate' -H 'Pragma: no-cache' "https://copytolive.github.io/rwa/deployment-sha.txt?proof=$RANDOM-$RANDOM" | tr -d '\r\n' || true)"
+            if [ "$DEPLOYED" = "$EXPECTED_SHA" ]; then
+              echo "exact public Pages SHA verified: $DEPLOYED"
+              exit 0
+            fi
             echo "waiting for exact Pages SHA: expected=$EXPECTED_SHA got=$DEPLOYED"
             sleep 5
           done
