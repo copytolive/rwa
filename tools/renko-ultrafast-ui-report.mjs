@@ -28,7 +28,9 @@ async function run(label,viewport){
   const readyMs=Date.now()-started,before=await page.evaluate(()=>({...RWARenkoUltraUI.stats}));
 
   // Opening/focusing the market drawer must be cheap: the full universe remains dormant.
-  const open=page.locator('#openPairs'),search=page.locator('#pairSearch');if(await open.isVisible())await open.click();else await search.focus();await page.waitForTimeout(180);
+  // Wait for the canonical 50 launch rows so the assertion measures behavior, not event-loop timing.
+  const open=page.locator('#openPairs'),search=page.locator('#pairSearch');if(await open.isVisible())await open.click();else await search.focus();
+  await page.waitForFunction(()=>document.querySelectorAll('#pairList .pair-row').length===50,null,{timeout:5000});
   const dormant=await page.evaluate(()=>({requested:RWARenkoUltraUI.stats.universeRequested,loaded:RWARenkoUltraUI.stats.universeLoaded,launchRows:document.querySelectorAll('#pairList .pair-row').length,dormant:document.documentElement.dataset.renkoUniverseDormant}));
   const dormantPass=!dormant.requested&&!dormant.loaded&&dormant.launchRows===50&&dormant.dormant==='true';
 
