@@ -11,8 +11,8 @@ const page=await browser.newPage({viewport:{width:1900,height:1000},deviceScaleF
 const errors=[];
 page.on('pageerror',e=>errors.push(String(e?.message||e)));
 page.on('console',m=>{if(m.type()==='error'&&!/Failed to load resource|WebSocket connection|Invalid language tag: en-US@posix/i.test(m.text()))errors.push(m.text())});
-await page.goto(`${BASE}/renko/?symbol=SOL&atrZeroBlocking=1&ts=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:60000});
-await page.waitForFunction(()=>window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoTVEngine?.version==='1.2.0'&&window.RWARenkoATRParity?.version==='3.0.0'&&window.RWARenkoATRInstant?.version==='2.2.0'&&window.RWARenkoStableChart?.version==='1.0.0'&&window.RWARenko1sCloseLock?.version==='1.0.0'&&RWARenkoTV.settings.interval==='1s'&&RWARenkoTV.settings.source==='close',null,{timeout:60000});
+await page.goto(`${BASE}/renko/?symbol=SOL&atrPerf1s=1&atrZeroBlocking=1&ts=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:60000});
+await page.waitForFunction(()=>window.RENKO_ATR_PERF_1S===true&&window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoTVEngine?.version==='1.3.0'&&window.RWARenkoATRParity?.version==='3.0.0'&&window.RWARenkoATRInstant?.version==='2.2.0'&&window.RWARenkoStableChart?.version==='2.0.0'&&window.RWARenko1sCloseLock?.version==='1.0.0'&&RWARenkoTV.settings.interval==='1s'&&RWARenkoTV.settings.source==='close',null,{timeout:60000});
 
 async function warmExact(){
   await page.evaluate(()=>RWARenkoATRInstant.warm());
@@ -29,9 +29,11 @@ async function snapshot(){return page.evaluate(()=>{
   const historySourceCount=Number(RWARenkoTV.state.atrHistorySourceCount)||RWARenkoTV.state.closedBars.length;
   const expectedMinSpanMs=Math.max(0,(Math.min(historySourceCount,Number(RWARenkoTV.settings.atrLength)||1)-1)*900);
   const historySpanPass=(Number(RWARenkoTV.settings.atrLength)||0)<1000||historySpanMs>=expectedMinSpanMs;
+  const grid=document.querySelector('.source-grid');
+  const controlsHidden=!!grid?.hidden&&document.querySelector('#intervalSelect')?.offsetParent===null&&document.querySelector('#sourceSelect')?.offsetParent===null;
   return {
     atrLength:RWARenkoTV.settings.atrLength,interval:RWARenkoTV.settings.interval,source:RWARenkoTV.settings.source,
-    fixedSource:RWARenkoTV.state.fixedSourceProfile===true,noTimeframeControls:!document.querySelector('#intervalSelect')&&!document.querySelector('#sourceSelect'),
+    fixedSource:RWARenkoTV.state.fixedSourceProfile===true,controlsHidden,perfProfile:window.RENKO_ATR_PERF_1S===true,
     tickSize,atr:RWARenkoTV.state.atr,atrRaw,box,rawPositive,rawBoxPass,rawBoxDelta:rawPositive?Math.abs(box-atrRaw):null,zeroAtrTickFallback:!rawPositive,
     confirmed:RWARenkoTV.state.confirmed.length,
     sourceBars:historySourceCount,displayBars:RWARenkoTV.state.closedBars.length,
@@ -48,7 +50,7 @@ async function snapshot(){return page.evaluate(()=>{
 })}
 
 await warmExact();
-const sourceProfile=await page.evaluate(()=>({engine:RWARenkoTVEngine.version,interval:RWARenkoTV.settings.interval,source:RWARenkoTV.settings.source,fixed:RWARenkoTV.state.fixedSourceProfile===true,noTimeframeControls:!document.querySelector('#intervalSelect')&&!document.querySelector('#sourceSelect'),stableLayer:RWARenkoStableChart.version,deepCache:RWARenkoATRInstant.version,modePill:document.querySelector('#modePill')?.textContent}));
+const sourceProfile=await page.evaluate(()=>{const grid=document.querySelector('.source-grid');return{engine:RWARenkoTVEngine.version,interval:RWARenkoTV.settings.interval,source:RWARenkoTV.settings.source,fixed:RWARenkoTV.state.fixedSourceProfile===true,controlsHidden:!!grid?.hidden&&document.querySelector('#intervalSelect')?.offsetParent===null&&document.querySelector('#sourceSelect')?.offsetParent===null,perfProfile:window.RENKO_ATR_PERF_1S===true,stableLayer:RWARenkoStableChart.version,deepCache:RWARenkoATRInstant.version,modePill:document.querySelector('#modePill')?.textContent}});
 const results=[];let failure=null;
 for(const length of VALUES){
   let passed=null,lastError=null;
@@ -85,8 +87,8 @@ if(!failure&&results.length===VALUES.length){
   await page.screenshot({path:path.join(OUT,'atr-1000000-live-stable-after-source-closes.png'),fullPage:true});
   if(!exactLivePass)failure={length:1000000,error:'deep ATR did not remain raw-exact/date-span-stable across live 1s closes',state:after};
 }
-const sourcePass=sourceProfile.engine==='1.2.0'&&sourceProfile.interval==='1s'&&sourceProfile.source==='close'&&sourceProfile.fixed&&sourceProfile.noTimeframeControls&&sourceProfile.stableLayer==='1.0.0'&&sourceProfile.deepCache==='2.2.0';
-const pass=!failure&&errors.length===0&&sourcePass&&datePullPass&&results.length===VALUES.length&&results.every((x,i)=>x.cacheHit&&x.blockingMs===0&&x.atrLength===VALUES[i]&&x.lastApply?.length===VALUES[i]&&x.interval==='1s'&&x.source==='close'&&x.fixedSource&&x.noTimeframeControls&&x.historySatisfied&&x.sourceBars>=VALUES[i]&&x.rawBoxPass&&x.historySpanPass&&x.exactEntry?.length===VALUES[i]&&Math.abs(Number(x.box)-Number(x.exactEntry.box))<Math.max(1e-12,Math.abs(Number(x.box))*1e-10)&&x.warmContext===x.currentContext&&x.currentContext===x.preparedContext)&&livePersistence?.exactLivePass===true;
-const report={url:page.url(),values:VALUES,sourceProfile,results,datePullPass,livePersistence,failure,errors,pass,note:'All seven ATR values use fixed Binance 1-second CLOSED-kline Close. Every positive Wilder ATR must be used directly as the Renko box with no minimum-tick rounding; only a non-positive ATR may use the market tick as a renderer-safe fallback. Large ATR look-backs additionally must pull the actual source-history start timestamp backward in proportion to the 1-second look-back, not merely increase a source-count label. 0 ms is measured main-thread Total Blocking Time for an exact prepared-cache switch. Live persistence proves the deep ATR remains exact across subsequent 1s closes.'};
+const sourcePass=sourceProfile.engine==='1.3.0'&&sourceProfile.interval==='1s'&&sourceProfile.source==='close'&&sourceProfile.fixed&&sourceProfile.controlsHidden&&sourceProfile.perfProfile&&sourceProfile.stableLayer==='2.0.0'&&sourceProfile.deepCache==='2.2.0';
+const pass=!failure&&errors.length===0&&sourcePass&&datePullPass&&results.length===VALUES.length&&results.every((x,i)=>x.cacheHit&&x.blockingMs===0&&x.atrLength===VALUES[i]&&x.lastApply?.length===VALUES[i]&&x.interval==='1s'&&x.source==='close'&&x.fixedSource&&x.controlsHidden&&x.perfProfile&&x.historySatisfied&&x.sourceBars>=VALUES[i]&&x.rawBoxPass&&x.historySpanPass&&x.exactEntry?.length===VALUES[i]&&Math.abs(Number(x.box)-Number(x.exactEntry.box))<Math.max(1e-12,Math.abs(Number(x.box))*1e-10)&&x.warmContext===x.currentContext&&x.currentContext===x.preparedContext)&&livePersistence?.exactLivePass===true;
+const report={url:page.url(),values:VALUES,sourceProfile,results,datePullPass,livePersistence,failure,errors,pass,note:'This is an isolated compatibility/performance profile selected with atrPerf1s=1. The normal product remains the TradingView Observable Model with selectable Source and Interval. In this profile all seven ATR values use fixed Binance 1-second CLOSED-kline Close, positive Wilder ATR is used directly as box, deep history must move backward with the requested look-back, and prepared exact-cache switches must measure 0 ms main-thread Total Blocking Time.'};
 await fs.writeFile(path.join(OUT,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
 await browser.close();if(!pass)process.exit(1);
