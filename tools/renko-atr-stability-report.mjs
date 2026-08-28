@@ -10,7 +10,7 @@ const viewport=mode==='mobile'?{width:390,height:844}:{width:1900,height:1000};
 fs.mkdirSync(path.join(out,'screens'),{recursive:true});
 
 const browser=await chromium.launch({headless:true,args:['--disable-dev-shm-usage']});
-const ctx=await browser.newContext({viewportSize:viewport,deviceScaleFactor:1});
+const ctx=await browser.newContext({viewport,deviceScaleFactor:1});
 const page=await ctx.newPage();
 const errors=[];
 page.on('pageerror',e=>errors.push(`pageerror:${e.message}`));
@@ -23,10 +23,10 @@ async function snap(){return page.evaluate(()=>{const T=window.RWARenkoTV;const 
 for(let i=0;i<pairs.length;i++){
   const symbol=pairs[i],base=symbol.replace(/USDT$/,'');
   await page.goto(`${root}/renko/?symbol=${encodeURIComponent(base)}&stability=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:30000});
-  await page.waitForFunction(s=>window.RWARenkoTV?.state?.symbol===s&&window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoATRControl,{arg:symbol,timeout:30000});
+  await page.waitForFunction(s=>window.RWARenkoTV?.state?.symbol===s&&window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoATRControl,symbol,{timeout:30000});
   await page.locator('#atrLength').fill('100');
   await page.locator('[data-apply-method="atr"]').click();
-  await page.waitForFunction(()=>document.documentElement.dataset.atrControlStatus==='active'&&Number(window.RWARenkoTV?.settings?._exactBox)>0,{timeout:15000});
+  await page.waitForFunction(()=>document.documentElement.dataset.atrControlStatus==='active'&&Number(window.RWARenkoTV?.settings?._exactBox)>0,null,{timeout:15000});
   const first=await snap();
   const samples=[first];
   const deadline=Date.now()+12000;
