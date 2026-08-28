@@ -71,7 +71,8 @@ async function runViewport(v,index){
   if(s.audit.apiBaseConfigured)throw Error(`${v.name}: test fixture expected backend fail-closed`);
   if(s.placement!=='market-side-rail')throw Error(`${v.name}: wrong placement ${s.placement}`);
   if(!s.marketShell)throw Error(`${v.name}: market shell not visible behind ecommerce rail`);
-  if(!s.panel||Math.abs(s.panel.right-s.viewport.clientWidth)>4)throw Error(`${v.name}: rail is not right-aligned ${JSON.stringify({panel:s.panel,viewport:s.viewport})}`);
+  const rightGap=s.viewport.clientWidth-s.panel?.right;
+  if(!s.panel||rightGap<0||rightGap>20)throw Error(`${v.name}: rail is not right-anchored within native scrollbar allowance ${JSON.stringify({panel:s.panel,viewport:s.viewport,rightGap})}`);
   if(!s.chart||s.chart.height<100||s.visibleChartWidth<=0)throw Error(`${v.name}: chart not visibly retained ${JSON.stringify({chart:s.chart,visible:s.visibleChartWidth})}`);
   if(!/Products/i.test(s.activeTab))throw Error(`${v.name}: ecommerce must open directly on products, got ${s.activeTab}`);
   if(s.products<1)throw Error(`${v.name}: no product cards visible beside market`);
@@ -97,14 +98,12 @@ async function runViewport(v,index){
   await page.locator('#rwaShopClose').click();
   await page.waitForFunction(()=>!document.querySelector('#rwaShopScreen')?.classList.contains('open'));
   if(pageErrors.length)throw Error(`${v.name}: page errors ${pageErrors.join(' | ')}`);
-  results.push({name:v.name,ok:true,panelWidth:Math.round(s.panel.width),panelLeft:Math.round(s.panel.left),visibleChartWidth:Math.round(s.visibleChartWidth),products:s.products,overflow:Math.max(s.rootOverflow,s.bodyOverflow)});
+  results.push({name:v.name,ok:true,panelWidth:Math.round(s.panel.width),panelLeft:Math.round(s.panel.left),rightGap:Math.round(rightGap),visibleChartWidth:Math.round(s.visibleChartWidth),products:s.products,overflow:Math.max(s.rootOverflow,s.bodyOverflow)});
   await page.close();
 }
 
 for(let i=0;i<viewports.length;i++)await runViewport(viewports[i],i);
 
-// Context restoration contract: opening Ecommerce from Asset first returns the visible background to Markets,
-// then closing restores the exact Asset workspace/hash.
 const restore=await context.newPage();
 await restore.setViewportSize({width:1600,height:1000});
 await restore.goto(base,{waitUntil:'domcontentloaded',timeout:30000});
