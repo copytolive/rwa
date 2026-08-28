@@ -22,15 +22,24 @@ async function run(label,viewport){
   const context=await browser.newContext({viewport});
   const page=await context.newPage();await installMocks(page);
   const errors=[];page.on('pageerror',e=>errors.push(String(e?.message||e)));page.on('console',m=>{if(m.type()==='error'&&!/Failed to load resource|WebSocket connection|Invalid language tag/i.test(m.text()))errors.push(m.text())});
-  const url=`${BASE}/renko/?symbol=SOL&ultrafastReport=2&ts=${Date.now()}`,started=Date.now();
+  const url=`${BASE}/renko/?symbol=SOL&ultrafastReport=3&ts=${Date.now()}`,started=Date.now();
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
-  await page.waitForFunction(()=>/^3\.1\./.test(window.RWARenkoTV?.version||'')&&window.RWARenkoUltraUI?.version==='1.1.0'&&window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoTV?.state?.closedBars?.length>=100&&window.RWARenkoTV?.state?.box>0&&window.RWARenkoTV?.settings?.interval==='1s',null,{timeout:60000});
+  await page.waitForFunction(()=>/^3\.1\./.test(window.RWARenkoTV?.version||'')&&window.RWARenkoUltraUI?.version==='1.1.1'&&window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoTV?.state?.closedBars?.length>=100&&window.RWARenkoTV?.state?.box>0&&window.RWARenkoTV?.settings?.interval==='1s',null,{timeout:60000});
+  await page.waitForFunction(()=>document.querySelectorAll('#pairList .pair-row').length===50&&document.documentElement.dataset.renkoUniverseDormant==='true',null,{timeout:5000});
   const readyMs=Date.now()-started,before=await page.evaluate(()=>({...RWARenkoUltraUI.stats}));
 
-  // Opening/focusing the market drawer must be cheap: the full universe remains dormant.
-  const open=page.locator('#openPairs'),search=page.locator('#pairSearch');if(await open.isVisible())await open.click();else await search.focus();await page.waitForTimeout(180);
+  // Opening/focusing the market drawer must be cheap: exactly 50 launch rows stay present
+  // and the full universe remains dormant until the user actually types a search term.
+  const open=page.locator('#openPairs'),search=page.locator('#pairSearch');if(await open.isVisible())await open.click();else await search.focus();
+  await page.waitForFunction(()=>document.querySelectorAll('#pairList .pair-row').length===50,null,{timeout:5000});
   const dormant=await page.evaluate(()=>({requested:RWARenkoUltraUI.stats.universeRequested,loaded:RWARenkoUltraUI.stats.universeLoaded,launchRows:document.querySelectorAll('#pairList .pair-row').length,dormant:document.documentElement.dataset.renkoUniverseDormant}));
   const dormantPass=!dormant.requested&&!dormant.loaded&&dormant.launchRows===50&&dormant.dormant==='true';
+
+  // Focusing the empty search field must still keep the Fast 50 and must not invoke the
+  // app's legacy full-universe loader.
+  await search.focus();await page.waitForTimeout(30);
+  const focusState=await page.evaluate(()=>({requested:RWARenkoUltraUI.stats.universeRequested,loaded:RWARenkoUltraUI.stats.universeLoaded,launchRows:document.querySelectorAll('#pairList .pair-row').length,dormant:document.documentElement.dataset.renkoUniverseDormant}));
+  const focusPass=!focusState.requested&&!focusState.loaded&&focusState.launchRows===50&&focusState.dormant==='true';
 
   // Typing is the explicit signal that may load the full universe.
   const marketStarted=Date.now();await search.fill(LOCAL?'C0':'BTC');
@@ -44,8 +53,8 @@ async function run(label,viewport){
 
   await search.fill(LOCAL?'C00':'BTC');await page.waitForTimeout(60);
   const searchState=await page.evaluate(()=>({filtered:RWARenkoUltraUI.stats.filteredRows,domRows:document.querySelectorAll('#pairList .pair-row').length,searchMs:RWARenkoUltraUI.stats.searchMs}));
-  await search.fill('');await page.waitForTimeout(60);
-  const launchAfterClear=await page.evaluate(()=>({rows:document.querySelectorAll('#pairList .pair-row').length,text:document.querySelector('#pairShown')?.textContent||''}));
+  await search.fill('');await page.waitForFunction(()=>document.querySelectorAll('#pairList .pair-row').length===50,null,{timeout:5000});
+  const launchAfterClear=await page.evaluate(()=>({rows:document.querySelectorAll('#pairList .pair-row').length,text:document.querySelector('#pairShown')?.textContent||'',dormant:document.documentElement.dataset.renkoUniverseDormant}));
 
   const zoom=await page.evaluate(async()=>{const U=RWARenkoUltraUI,T=RWARenkoTV,locks0=U.stats.manualViewLocks,prevented0=U.stats.zoomSnapPrevented;document.querySelector('#tvZoomOut').click();await new Promise(r=>setTimeout(r,30));const afterClick={manualLocked:U.manualViewLocked,following:T.state.following,locks:U.stats.manualViewLocks};T.state.following=true;const afterFollowAttempt={following:T.state.following,prevented:U.stats.zoomSnapPrevented};T.rebuild();T.rebuild();await new Promise(r=>setTimeout(r,80));const afterRebuild={manualLocked:U.manualViewLocked,following:T.state.following,prevented:U.stats.zoomSnapPrevented};return{locks0,prevented0,afterClick,afterFollowAttempt,afterRebuild}});
   const after=await page.evaluate(()=>({...RWARenkoUltraUI.stats})),longTaskDelta=after.longTasks-before.longTasks,blockingDelta=after.blockingMs-before.blockingMs;
@@ -55,11 +64,11 @@ async function run(label,viewport){
   const searchPass=searchState.filtered>0&&searchState.domRows<=60&&searchState.searchMs<25;
   const launchPass=launchAfterClear.rows===50;
   const zoomPass=zoom.afterClick.manualLocked===true&&zoom.afterClick.following===false&&zoom.afterClick.locks>zoom.locks0&&zoom.afterFollowAttempt.following===false&&zoom.afterFollowAttempt.prevented>zoom.prevented0&&zoom.afterRebuild.manualLocked===true&&zoom.afterRebuild.following===false;
-  const pass=errors.length===0&&readyMs<7000&&dormantPass&&virtualPass&&scrollPass&&blockingPass&&searchPass&&launchPass&&zoomPass;
-  const result={label,url,readyMs,marketReadyMs,errors,dormant,dormantPass,market,scrollState,longTaskDelta,blockingDelta,searchState,launchAfterClear,zoom,virtualPass,scrollPass,blockingPass,searchPass,launchPass,zoomPass,pass};
+  const pass=errors.length===0&&readyMs<7000&&dormantPass&&focusPass&&virtualPass&&scrollPass&&blockingPass&&searchPass&&launchPass&&zoomPass;
+  const result={label,url,readyMs,marketReadyMs,errors,dormant,dormantPass,focusState,focusPass,market,scrollState,longTaskDelta,blockingDelta,searchState,launchAfterClear,zoom,virtualPass,scrollPass,blockingPass,searchPass,launchPass,zoomPass,pass};
   await page.screenshot({path:path.join(OUT,`${label}.png`),fullPage:true});await context.close();await browser.close();return result;
 }
 
 const results=[];for(const [label,viewport] of [['desktop',{width:1900,height:1000}],['mobile',{width:390,height:844}]])results.push(await run(label,viewport));
-const report={generatedAt:new Date().toISOString(),scope:'current fixed-1s RENKO: dormant fast-50 launch list, search-only full-universe worker parsing, bounded virtual scroll, zero long-task blocking, and manual zoom no-snap',zeroMsDefinition:'0 ms main-thread blocking above the 50 ms Long Task threshold during this interaction window; elapsed network/worker time is allowed',status:results.every(x=>x.pass)?'PASS':'FAIL',results};
+const report={generatedAt:new Date().toISOString(),scope:'current fixed-1s RENKO: Fast-50 startup/open/focus, search-only full-universe worker parsing, bounded virtual scroll, zero long-task blocking, and manual zoom no-snap',zeroMsDefinition:'0 ms main-thread blocking above the 50 ms Long Task threshold during this interaction window; elapsed network/worker time is allowed',status:results.every(x=>x.pass)?'PASS':'FAIL',results};
 await fs.writeFile(path.join(OUT,'report.json'),JSON.stringify(report,null,2));console.log('RENKO_ULTRAFAST_UI_REPORT',JSON.stringify(report));if(report.status!=='PASS')process.exitCode=1;

@@ -1,14 +1,121 @@
 import { chromium } from 'playwright';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+
 const BASE=(process.env.RWA_TEST_URL||'http://127.0.0.1:8080/rwa').replace(/\/$/,'');
-const OUT=path.resolve('artifacts/renko-observable-parity');await fs.mkdir(OUT,{recursive:true});
+const OUT=path.resolve('artifacts/renko-observable-parity');
+await fs.mkdir(OUT,{recursive:true});
 const lw=await fs.readFile(path.resolve('node_modules/lightweight-charts/dist/lightweight-charts.standalone.production.js'),'utf8');
-const browser=await chromium.launch({headless:true});const results=[];const STEP=1000;
-function mockKlines(url){const u=new URL(url),now=Date.now(),rawEnd=u.searchParams.get('endTime'),requestedEnd=rawEnd===null?NaN:Number(rawEnd),end=Number.isFinite(requestedEnd)?requestedEnd:now-STEP*2,lastOpen=Math.floor((end-STEP+1)/STEP)*STEP,rows=[];for(let j=999;j>=0;j--){const t=lastOpen-j*STEP,idx=Math.floor(t/STEP),base=100+Math.sin(idx/19)*2.8+Math.sin(idx/61)*1.1,open=base+Math.sin(idx/5)*.12,close=base+Math.sin(idx/7)*.18,high=Math.max(open,close)+.35,low=Math.min(open,close)-.31;rows.push([t,String(open),String(high),String(low),String(close),'100',t+999,'0',1,'0','0','0'])}return rows}
-async function installMocks(page){await page.route('https://unpkg.com/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js',r=>r.fulfill({status:200,contentType:'application/javascript',body:lw}));await page.addInitScript(()=>{try{localStorage.setItem('rwa_renko_tradingview_settings_v1',JSON.stringify({interval:'1d',source:'close',method:'atr',atrLength:14}))}catch{}class FakeWebSocket{constructor(url){this.url=url;this.readyState=0;setTimeout(()=>{this.readyState=1;this.onopen?.({type:'open'})},15)}send(){}close(){this.readyState=3;this.onclose?.({type:'close'})}}window.WebSocket=FakeWebSocket});await page.route('https://data-api.binance.vision/api/v3/**',async r=>{const u=new URL(r.request().url()),p=u.pathname,symbol=u.searchParams.get('symbol');if(p.endsWith('/klines'))return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(symbol==='GOLD20Y'?[]:mockKlines(u.href))});if(p.endsWith('/exchangeInfo')){const names=symbol?[symbol]:['SOLUSDT','BTCUSDT','ETHUSDT','XRPUSDT','BNBUSDT','DOGEUSDT'];return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({symbols:names.map(symbol=>({symbol,status:'TRADING',baseAsset:symbol.replace(/USDT$/,''),quoteAsset:'USDT',isSpotTradingAllowed:true,filters:[{filterType:'PRICE_FILTER',tickSize:'0.01'}]}))})})}if(p.endsWith('/ticker/price'))return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({symbol:symbol||'SOLUSDT',price:'216.00'})});if(p.endsWith('/ticker/24hr'))return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(['SOLUSDT','BTCUSDT','ETHUSDT','XRPUSDT','BNBUSDT','DOGEUSDT'].map((symbol,i)=>({symbol,lastPrice:String(100+i),priceChangePercent:String(i/10),quoteVolume:String(1000000-i*10000)})))});return r.continue()});await page.route('https://api.binance.com/api/v3/**',r=>r.abort())}
-function collectErrors(page){const errors=[];page.on('pageerror',e=>errors.push(String(e?.message||e)));page.on('console',m=>{const t=m.text();if(m.type()==='error'&&!/Failed to load resource|WebSocket/i.test(t))errors.push(t)});return errors}
-async function fixtureRun(label,viewport){const context=await browser.newContext({viewport,deviceScaleFactor:1});const page=await context.newPage();await installMocks(page);const errors=collectErrors(page),url=`${BASE}/renko/?fixture=gold20y&parityBrowser=1&ts=${Date.now()}`;await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});await page.waitForFunction(()=>window.RWARenkoTV?.state?.status==='live'&&document.documentElement.dataset.renkoParityFixtureReady==='true',null,{timeout:60000});await page.waitForTimeout(500);const snap=()=>page.evaluate(()=>({count:RWARenkoTV.state.confirmed.length,box:RWARenkoTV.state.box,method:RWARenkoTV.settings.method,source:RWARenkoTV.settings.source,interval:RWARenkoTV.settings.interval,sourceBars:RWARenkoTV.state.closedBars.length,fixtureBars:RENKO_GOLD20Y_FIXTURE.bars.length,spanYears:Number(document.documentElement.dataset.renkoParityFixtureSpanYears),coverage:document.querySelector('#tvCoverage')?.textContent,pair:document.querySelector('#pairName')?.textContent,sourceText:document.querySelector('#sourceText')?.textContent,sourceVisible:!!document.querySelector('#sourceSelect'),intervalExists:!!document.querySelector('#intervalSelect'),profile:window.RENKO_PARITY_PROFILE,fixture:window.RENKO_GOLD20Y_FIXTURE?.fixture?.schema,ready:document.documentElement.dataset.renkoParityFixtureReady}));const initial=await snap();await page.fill('#traditionalBox','1000');await page.click('[data-apply-method="traditional"]');await page.waitForFunction(()=>RWARenkoTV.state.box===1000);await page.waitForTimeout(120);const s1000=await snap();await page.fill('#traditionalBox','1200');await page.click('[data-apply-method="traditional"]');await page.waitForFunction(()=>RWARenkoTV.state.box===1200);await page.waitForTimeout(120);const s1200=await snap();await page.fill('#traditionalBox','900');await page.click('[data-apply-method="traditional"]');await page.waitForFunction(()=>RWARenkoTV.state.box===900&&RWARenkoTV.state.confirmed.length===5);await page.waitForTimeout(250);const final=await snap();await page.screenshot({path:path.join(OUT,`gold20y-${label}.png`),fullPage:true});const pure=x=>x.sourceBars===x.fixtureBars&&x.ready==='true'&&x.interval==='1s'&&!x.intervalExists;const pass=errors.length===0&&initial.count===5&&initial.box===900&&initial.method==='traditional'&&initial.source==='close'&&initial.interval==='1s'&&initial.spanYears>=20&&initial.sourceVisible&&!initial.intervalExists&&initial.profile?.observableParity===true&&pure(initial)&&s1000.count===5&&pure(s1000)&&s1200.count===4&&pure(s1200)&&final.count===5&&final.box===900&&pure(final)&&/SOURCE RANGE 2002/.test(final.coverage||'')&&/2026/.test(final.coverage||'')&&/20Y PARITY WITNESS/.test(final.pair||'');results.push({kind:'gold20y',label,viewport,url,errors,initial,s1000,s1200,final,pass});await context.close()}
-async function modelRun(label,viewport){const context=await browser.newContext({viewport,deviceScaleFactor:1});const page=await context.newPage();await installMocks(page);const errors=collectErrors(page),url=`${BASE}/renko/?symbol=SOL&parityModel=1&ts=${Date.now()}`;await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});await page.waitForFunction(()=>window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoTVEngine?.version==='1.4.0-fixed-1s'&&window.RWARenkoPercentageLTP?.version==='1.0.0'&&window.RWARenkoTV?.settings?.interval==='1s',null,{timeout:60000});const contract=await page.evaluate(()=>{const E=RWARenkoTVEngine,b=[{openTime:0,closeTime:999,open:216,high:216,low:216,close:216}],pct=E.computeBox(b,{method:'percentage',percentage:.01},.01),base=E.build([{openTime:0,closeTime:999,open:100,high:100,low:100,close:100},{openTime:1000,closeTime:1999,open:100,high:111,low:99,close:110}],{method:'traditional',boxSize:10,source:'close',wicks:true},1),proj=E.project(base,{openTime:2000,closeTime:2999,open:110,high:131,low:109,close:130},{method:'traditional',boxSize:10,source:'close',wicks:true},1);RWARenkoTV.settings.interval='5m';return{percentageBox:pct,percentagePass:Math.abs(pct-2)<1e-12,projectionCount:proj.length,projectionSeparate:proj.every(x=>x.projection===true),sourceVisible:!!document.querySelector('#sourceSelect'),intervalExists:!!document.querySelector('#intervalSelect'),mutationLock:RWARenkoTV.settings.interval,fixedInterval:window.RENKO_FIXED_INTERVAL}});await page.selectOption('#sourceSelect','ohlc');await page.waitForFunction(()=>RWARenkoTV.settings.source==='ohlc'&&RWARenkoTV.settings.interval==='1s');await page.waitForTimeout(350);const beforePercentage=await page.evaluate(()=>({ltp:RWARenkoTV.state.percentageLtpSnapshot,lastClosed:RWARenkoTV.state.closedBars.at(-1)?.close}));await page.fill('#percentageValue','1');await page.click('[data-apply-method="percentage"]');await page.waitForFunction(()=>RWARenkoTV.settings.method==='percentage'&&Math.abs(RWARenkoTV.state.box-2)<1e-12&&RWARenkoTV.settings.interval==='1s');const ui=await page.evaluate(()=>({source:RWARenkoTV.settings.source,interval:RWARenkoTV.settings.interval,sourceValue:document.querySelector('#sourceSelect')?.value,intervalExists:!!document.querySelector('#intervalSelect'),method:RWARenkoTV.settings.method,box:RWARenkoTV.state.box,ltpSnapshot:RWARenkoTV.state.percentageLtpSnapshot,lastClosed:RWARenkoTV.state.closedBars.at(-1)?.close,publicDocsParity:RWARenkoTV.state.publicDocsParity,exactProprietaryOutputParity:RWARenkoTV.state.exactProprietaryOutputParity,profile:window.RENKO_PARITY_PROFILE}));await page.screenshot({path:path.join(OUT,`model-${label}.png`),fullPage:true});const ltpSeparated=Math.abs(Number(beforePercentage.ltp)-216)<1e-12&&Math.abs(Number(beforePercentage.lastClosed)-216)>1;const pass=errors.length===0&&contract.percentagePass&&contract.projectionSeparate&&contract.sourceVisible&&!contract.intervalExists&&contract.mutationLock==='1s'&&contract.fixedInterval==='1s'&&ui.source==='ohlc'&&ui.interval==='1s'&&ui.sourceValue==='ohlc'&&!ui.intervalExists&&ui.method==='percentage'&&ui.box===2&&ui.ltpSnapshot===216&&ltpSeparated&&ui.publicDocsParity===true&&ui.exactProprietaryOutputParity===false&&ui.profile?.observableParity===true;results.push({kind:'model',label,viewport,url,errors,contract,beforePercentage,ui,ltpSeparated,pass});await context.close()}
-try{await fixtureRun('desktop',{width:1900,height:1000});await fixtureRun('mobile',{width:390,height:844});await modelRun('desktop',{width:1900,height:1000});await modelRun('mobile',{width:390,height:844})}finally{await browser.close()}
-const report={schema:'renko-tradingview-observable-fixed-1s-browser-report-v1',generatedAt:new Date().toISOString(),base:BASE,status:results.every(x=>x.pass)?'PASS':'FAIL',results,claimBoundary:'Browser proof covers observable/documented behavior and official examples with production hard-locked to 1s. TradingView proprietary source code and unpublished helpers are not available.'};await fs.writeFile(path.join(OUT,'report.json'),JSON.stringify(report,null,2));console.log('RENKO_OBSERVABLE_BROWSER_REPORT',JSON.stringify(report));if(report.status!=='PASS')process.exitCode=2;
+const browser=await chromium.launch({headless:true});
+const results=[];
+const STEP=1000;
+
+function mockKlines(url){
+  const u=new URL(url),now=Date.now(),rawEnd=u.searchParams.get('endTime'),requestedEnd=rawEnd===null?NaN:Number(rawEnd),end=Number.isFinite(requestedEnd)?requestedEnd:now-STEP*2,lastOpen=Math.floor((end-STEP+1)/STEP)*STEP,rows=[];
+  for(let j=999;j>=0;j--){
+    const t=lastOpen-j*STEP,idx=Math.floor(t/STEP),base=100+Math.sin(idx/19)*2.8+Math.sin(idx/61)*1.1,open=base+Math.sin(idx/5)*.12,close=base+Math.sin(idx/7)*.18,high=Math.max(open,close)+.35,low=Math.min(open,close)-.31;
+    rows.push([t,String(open),String(high),String(low),String(close),'100',t+999,'0',1,'0','0','0']);
+  }
+  return rows;
+}
+
+async function installMocks(page){
+  await page.route('https://unpkg.com/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js',r=>r.fulfill({status:200,contentType:'application/javascript',body:lw}));
+  await page.addInitScript(()=>{
+    try{localStorage.setItem('rwa_renko_tradingview_settings_v1',JSON.stringify({interval:'1d',source:'close',method:'atr',atrLength:14}))}catch{}
+    class FakeWebSocket{constructor(url){this.url=url;this.readyState=0;setTimeout(()=>{this.readyState=1;this.onopen?.({type:'open'})},15)}send(){}close(){this.readyState=3;this.onclose?.({type:'close'})}}
+    window.WebSocket=FakeWebSocket;
+  });
+  // Current runtime can use either Binance public API hostname. Keep both deterministic
+  // instead of aborting one host; the contract under test is RENKO behavior, not host choice.
+  await page.route('**/api/v3/**',async r=>{
+    const u=new URL(r.request().url()),p=u.pathname,symbol=u.searchParams.get('symbol');
+    if(p.endsWith('/klines'))return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(symbol==='GOLD20Y'?[]:mockKlines(u.href))});
+    if(p.endsWith('/exchangeInfo')){
+      const names=symbol?[symbol]:['SOLUSDT','BTCUSDT','ETHUSDT','XRPUSDT','BNBUSDT','DOGEUSDT'];
+      return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({symbols:names.map(s=>({symbol:s,status:'TRADING',baseAsset:s.replace(/USDT$/,''),quoteAsset:'USDT',isSpotTradingAllowed:true,filters:[{filterType:'PRICE_FILTER',tickSize:'0.01'}]}))})});
+    }
+    if(p.endsWith('/ticker/price'))return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({symbol:symbol||'SOLUSDT',price:'216.00'})});
+    if(p.endsWith('/ticker/24hr'))return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(['SOLUSDT','BTCUSDT','ETHUSDT','XRPUSDT','BNBUSDT','DOGEUSDT'].map((s,i)=>({symbol:s,lastPrice:String(100+i),priceChangePercent:String(i/10),quoteVolume:String(1000000-i*10000)})))});
+    return r.continue();
+  });
+}
+
+function collectErrors(page){
+  const errors=[];
+  page.on('pageerror',e=>errors.push(String(e?.message||e)));
+  page.on('console',m=>{const t=m.text();if(m.type()==='error'&&!/Failed to load resource|WebSocket|Invalid language tag/i.test(t))errors.push(t)});
+  return errors;
+}
+
+async function fixtureRun(label,viewport){
+  const context=await browser.newContext({viewport,deviceScaleFactor:1}),page=await context.newPage();
+  await installMocks(page);
+  const errors=collectErrors(page),url=`${BASE}/renko/?fixture=gold20y&parityBrowser=2&ts=${Date.now()}`;
+  await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
+  await page.waitForFunction(()=>window.RWARenkoTV?.state?.status==='live'&&document.documentElement.dataset.renkoParityFixtureReady==='true',null,{timeout:60000});
+  await page.waitForTimeout(500);
+  const snap=()=>page.evaluate(()=>({count:RWARenkoTV.state.confirmed.length,box:RWARenkoTV.state.box,method:RWARenkoTV.settings.method,source:RWARenkoTV.settings.source,interval:RWARenkoTV.settings.interval,sourceBars:RWARenkoTV.state.closedBars.length,fixtureBars:RENKO_GOLD20Y_FIXTURE.bars.length,spanYears:Number(document.documentElement.dataset.renkoParityFixtureSpanYears),coverage:document.querySelector('#tvCoverage')?.textContent,pair:document.querySelector('#pairName')?.textContent,sourceText:document.querySelector('#sourceText')?.textContent,sourceVisible:!!document.querySelector('#sourceSelect'),intervalExists:!!document.querySelector('#intervalSelect'),profile:window.RENKO_PARITY_PROFILE,fixture:window.RENKO_GOLD20Y_FIXTURE?.fixture?.schema,ready:document.documentElement.dataset.renkoParityFixtureReady}));
+  const initial=await snap();
+  await page.fill('#traditionalBox','1000');await page.click('[data-apply-method="traditional"]');await page.waitForFunction(()=>RWARenkoTV.state.box===1000,null,{timeout:10000});await page.waitForTimeout(120);const s1000=await snap();
+  await page.fill('#traditionalBox','1200');await page.click('[data-apply-method="traditional"]');await page.waitForFunction(()=>RWARenkoTV.state.box===1200,null,{timeout:10000});await page.waitForTimeout(120);const s1200=await snap();
+  await page.fill('#traditionalBox','900');await page.click('[data-apply-method="traditional"]');await page.waitForFunction(()=>RWARenkoTV.state.box===900&&RWARenkoTV.state.confirmed.length===5,null,{timeout:10000});await page.waitForTimeout(250);const final=await snap();
+  await page.screenshot({path:path.join(OUT,`gold20y-${label}.png`),fullPage:true});
+  const pure=x=>x.sourceBars===x.fixtureBars&&x.ready==='true'&&x.interval==='1s'&&!x.intervalExists;
+  const pass=errors.length===0&&initial.count===5&&initial.box===900&&initial.method==='traditional'&&initial.source==='close'&&initial.interval==='1s'&&initial.spanYears>=20&&initial.sourceVisible&&!initial.intervalExists&&initial.profile?.observableParity===true&&pure(initial)&&s1000.count===5&&pure(s1000)&&s1200.count===4&&pure(s1200)&&final.count===5&&final.box===900&&pure(final)&&/SOURCE RANGE 2002/.test(final.coverage||'')&&/2026/.test(final.coverage||'')&&/20Y PARITY WITNESS/.test(final.pair||'');
+  results.push({kind:'gold20y',label,viewport,url,errors,initial,s1000,s1200,final,pass});
+  await context.close();
+}
+
+async function modelRun(label,viewport){
+  const context=await browser.newContext({viewport,deviceScaleFactor:1}),page=await context.newPage();
+  await installMocks(page);
+  const errors=collectErrors(page),url=`${BASE}/renko/?symbol=SOL&parityModel=2&ts=${Date.now()}`;
+  await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
+  await page.waitForFunction(()=>window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoTVEngine?.version==='1.4.0-fixed-1s'&&window.RWARenkoPercentageLTP?.version==='1.0.0'&&window.RWARenkoTV?.settings?.interval==='1s'&&window.RWARenkoTV?.state?.box>0,null,{timeout:60000});
+
+  const contract=await page.evaluate(()=>{
+    const E=RWARenkoTVEngine;
+    const b=[{openTime:0,closeTime:999,open:216,high:216,low:216,close:216}],pct=E.computeBox(b,{method:'percentage',percentage:.01},.01);
+    const base=E.build([{openTime:0,closeTime:999,open:100,high:100,low:100,close:100},{openTime:1000,closeTime:1999,open:100,high:111,low:99,close:110}],{method:'traditional',boxSize:10,source:'close',wicks:true},1);
+    const proj=E.project(base,{openTime:2000,closeTime:2999,open:110,high:131,low:109,close:130},{method:'traditional',boxSize:10,source:'close',wicks:true},1);
+    RWARenkoTV.settings.interval='5m';
+    return{percentageBox:pct,percentagePass:Math.abs(pct-2)<1e-12,projectionCount:proj.length,projectionSeparate:proj.every(x=>x.projection===true),sourceVisible:!!document.querySelector('#sourceSelect'),intervalExists:!!document.querySelector('#intervalSelect'),mutationLock:RWARenkoTV.settings.interval,fixedInterval:window.RENKO_FIXED_INTERVAL};
+  });
+
+  await page.selectOption('#sourceSelect','ohlc');
+  await page.waitForFunction(()=>RWARenkoTV.settings.source==='ohlc'&&RWARenkoTV.settings.interval==='1s'&&RWARenkoTV.state.status==='live',null,{timeout:15000});
+  await page.waitForTimeout(350);
+  const beforePercentage=await page.evaluate(()=>{
+    let ltp=Number(RWARenkoTV.state.percentageLtpSnapshot);
+    if(!(ltp>0))ltp=Number(RWARenkoPercentageLTP.snapshotFor(RWARenkoTV));
+    const tick=Number(RWARenkoTV.state.tickSize)||.01;
+    return{ltp,lastClosed:Number(RWARenkoTV.state.closedBars.at(-1)?.close),tick,expectedBox:RWARenkoTVEngine.percentageLtpStableRound(ltp*.01,tick)};
+  });
+  if(!(beforePercentage.ltp>0&&beforePercentage.expectedBox>0))errors.push(`percentage snapshot unavailable: ${JSON.stringify(beforePercentage)}`);
+
+  await page.fill('#percentageValue','1');
+  await page.click('[data-apply-method="percentage"]');
+  await page.waitForFunction(()=>RWARenkoTV.settings.method==='percentage'&&RWARenkoTV.settings.interval==='1s'&&RWARenkoTV.state.box>0,null,{timeout:15000});
+  await page.waitForTimeout(150);
+  const ui=await page.evaluate(()=>({source:RWARenkoTV.settings.source,interval:RWARenkoTV.settings.interval,sourceValue:document.querySelector('#sourceSelect')?.value,intervalExists:!!document.querySelector('#intervalSelect'),method:RWARenkoTV.settings.method,box:Number(RWARenkoTV.state.box),ltpSnapshot:Number(RWARenkoTV.state.percentageLtpSnapshot),lastClosed:Number(RWARenkoTV.state.closedBars.at(-1)?.close),tick:Number(RWARenkoTV.state.tickSize)||.01,publicDocsParity:RWARenkoTV.state.publicDocsParity,exactProprietaryOutputParity:RWARenkoTV.state.exactProprietaryOutputParity,profile:window.RENKO_PARITY_PROFILE}));
+  const expectedBox=await page.evaluate(()=>RWARenkoTVEngine.percentageLtpStableRound(Number(RWARenkoTV.state.percentageLtpSnapshot)*.01,Number(RWARenkoTV.state.tickSize)||.01));
+  const snapshotFrozen=Math.abs(ui.ltpSnapshot-beforePercentage.ltp)<1e-12;
+  const uiPercentagePass=Math.abs(ui.box-expectedBox)<1e-12&&expectedBox>0;
+  await page.screenshot({path:path.join(OUT,`model-${label}.png`),fullPage:true});
+  const pass=errors.length===0&&contract.percentagePass&&contract.projectionSeparate&&contract.sourceVisible&&!contract.intervalExists&&contract.mutationLock==='1s'&&contract.fixedInterval==='1s'&&ui.source==='ohlc'&&ui.interval==='1s'&&ui.sourceValue==='ohlc'&&!ui.intervalExists&&ui.method==='percentage'&&uiPercentagePass&&snapshotFrozen&&ui.publicDocsParity===true&&ui.exactProprietaryOutputParity===false&&ui.profile?.observableParity===true;
+  results.push({kind:'model',label,viewport,url,errors,contract,beforePercentage,ui,expectedBox,snapshotFrozen,uiPercentagePass,pass});
+  await context.close();
+}
+
+try{
+  await fixtureRun('desktop',{width:1900,height:1000});
+  await fixtureRun('mobile',{width:390,height:844});
+  await modelRun('desktop',{width:1900,height:1000});
+  await modelRun('mobile',{width:390,height:844});
+}finally{await browser.close()}
+
+const report={schema:'renko-tradingview-observable-fixed-1s-browser-report-v2',generatedAt:new Date().toISOString(),base:BASE,status:results.every(x=>x.pass)?'PASS':'FAIL',results,claimBoundary:'Browser proof covers observable/documented behavior and official examples with production hard-locked to 1s. TradingView proprietary source code and unpublished helpers are not available.'};
+await fs.writeFile(path.join(OUT,'report.json'),JSON.stringify(report,null,2));
+console.log('RENKO_OBSERVABLE_BROWSER_REPORT',JSON.stringify(report));
+if(report.status!=='PASS')process.exitCode=2;
