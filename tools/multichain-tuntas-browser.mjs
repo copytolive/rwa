@@ -2,14 +2,14 @@ import {chromium} from 'playwright';
 import {mkdir,writeFile} from 'node:fs/promises';
 import path from 'node:path';
 
-const URL=process.env.RWA_TEST_URL||'http://127.0.0.1:4173/rwa/';
+const TARGET_URL=process.env.RWA_TEST_URL||'http://127.0.0.1:4173/rwa/';
 const OUT=process.env.RWA_PROOF_DIR||'proof/multichain-tuntas-v3';
 const EVM='0x1111111111111111111111111111111111111111';
 const SOL='11111111111111111111111111111111';
 const APPROVAL_HASH='0x'+'aa'.repeat(32);
 const ROUTE_HASH='0x'+'bb'.repeat(32);
 const chainIds=[1,42161,8453,56,137,43114,143];
-const report={contract:'rwa-multichain-tuntas-browser-v3',url:URL,ok:false,checks:{},errors:[]};
+const report={contract:'rwa-multichain-tuntas-browser-v3',url:TARGET_URL,ok:false,checks:{},errors:[]};
 await mkdir(OUT,{recursive:true});
 const browser=await chromium.launch({headless:true});
 const context=await browser.newContext({viewport:{width:1600,height:1000},serviceWorkers:'block'});
@@ -44,10 +44,10 @@ await context.addInitScript(({evm,sol,approvalHash,routeHash})=>{
   window.solana={publicKey:pk,connect:async()=>({publicKey:pk}),request:async({method})=>{if(method==='signAndSendTransaction')return{signature:'5'.repeat(88)};throw Error(`unsupported Solana method ${method}`)}};
 },{evm:EVM,sol:SOL,approvalHash:APPROVAL_HASH,routeHash:ROUTE_HASH});
 const page=await context.newPage();
-page.on('request',r=>{try{const u=new URL(r.url());if(/\/exchange(?:$|[/?#])/.test(u.pathname))directWrites.push(r.url())}catch{}});
+page.on('request',r=>{try{const u=new globalThis.URL(r.url());if(/\/exchange(?:$|[/?#])/.test(u.pathname))directWrites.push(r.url())}catch{}});
 page.on('pageerror',e=>report.errors.push(String(e?.message||e)));
 await page.route('https://li.quest/v1/**',async route=>{
-  const u=new URL(route.request().url());
+  const u=new globalThis.URL(route.request().url());
   if(u.pathname==='/v1/chains')return route.fulfill({json:{chains:[...chainIds.map(chain),{id:1151111081099710,name:'Solana',key:'sol',chainType:'SVM',nativeToken:{symbol:'SOL',decimals:9,priceUSD:'150'},rpcUrls:['https://mock-rpc.local/solana']}]}});
   if(u.pathname==='/v1/token')return route.fulfill({json:usdc(Number(u.searchParams.get('chain')))});
   if(u.pathname==='/v1/status')return route.fulfill({json:{status:'DONE',substatus:'COMPLETED',receiving:{txHash:'5'.repeat(88)}}});
@@ -77,7 +77,7 @@ await page.route('https://mock-rpc.local/**',rpcHandler);
 await page.route('https://api.mainnet-beta.solana.com/**',rpcHandler);
 await page.route('**/launch/readiness.json',r=>r.fulfill({json:{status:'READY_FOR_MAINNET',mainnet_ready:true}}));
 await page.route('**/launch/multichain-readiness.json',r=>r.fulfill({json:{status:'READY',ready:true}}));
-await page.goto(URL,{waitUntil:'domcontentloaded',timeout:45000});
+await page.goto(TARGET_URL,{waitUntil:'domcontentloaded',timeout:45000});
 await page.waitForSelector('#rwaMultiChainLaunch',{state:'visible',timeout:15000});
 await page.locator('#rwaMultiChainLaunch').click();
 await page.waitForFunction(()=>window.RWAMultiChainEngine?.revision==='3.0.0-tuntas',null,{timeout:12000});
