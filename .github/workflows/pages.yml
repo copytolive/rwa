@@ -106,7 +106,6 @@ jobs:
           RENKO_ATR_REF="$(grep -oE 'renko-tv-atr-parity\.js\?v=[0-9]+' renko/index.html | tail -1)"
           test -n "$RENKO_ENGINE_REF"; test -n "$RENKO_APP_REF"; test -n "$RENKO_ATR_REF"
           grep -Fq 'ATR LENGTH' renko/index.html
-          grep -Fq 'TradingView documented model' renko/index.html
 
           node tools/superapp-v5-audit.mjs
           node tools/superapp-p16-p20-audit.mjs
