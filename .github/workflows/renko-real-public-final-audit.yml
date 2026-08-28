@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      AUDITED_RENKO_SHA: aac8118d288b9cac0e7aee952429491c2fb32dba
+      AUDITED_RENKO_SHA: 39ddf463b6a32c6f70246ab4e4011b7edf889fa2
       RWA_TEST_URL: https://copytolive.github.io/rwa
     steps:
       - uses: actions/checkout@v4
@@ -28,6 +28,7 @@ jobs:
           files=(
             renko/index.html
             renko/renko-tv.css
+            renko/renko-mobile-visual-fix.css
             renko/renko-tv-engine.js
             renko/renko-tv-fixed-1s.js
             renko/renko-tv-locale-guard.js
@@ -68,7 +69,7 @@ jobs:
           [[ "$snapshot_ok" == 1 ]]
           echo "PUBLIC_START_SHA=$start" >> "$GITHUB_ENV"
           main=$(git ls-remote https://github.com/copytolive/rwa.git refs/heads/main | awk '{print $1}')
-          printf 'audited_renko_sha=%s\npublic_start_sha=%s\nmain_sha_at_audit_start=%s\ncritical_files=15\nstart_byte_binding=PASS\npublic_url=%s/renko/?symbol=XAUT\n' "$AUDITED_RENKO_SHA" "$start" "$main" "$RWA_TEST_URL" > artifacts/renko-real-public-final/deployment-proof.txt
+          printf 'audited_renko_sha=%s\npublic_start_sha=%s\nmain_sha_at_audit_start=%s\ncritical_files=16\nstart_byte_binding=PASS\npublic_url=%s/renko/?symbol=XAUT\n' "$AUDITED_RENKO_SHA" "$start" "$main" "$RWA_TEST_URL" > artifacts/renko-real-public-final/deployment-proof.txt
           cat artifacts/renko-real-public-final/deployment-proof.txt
       - name: Install Chromium
         run: |
@@ -87,7 +88,7 @@ jobs:
         run: |
           set -euo pipefail
           files=(
-            renko/index.html renko/renko-tv.css renko/renko-tv-engine.js renko/renko-tv-fixed-1s.js
+            renko/index.html renko/renko-tv.css renko/renko-mobile-visual-fix.css renko/renko-tv-engine.js renko/renko-tv-fixed-1s.js
             renko/renko-tv-locale-guard.js renko/renko-tv-fetch-guard.js renko/renko-tv-stable-chart-v2.js
             renko/renko-tv-ultrafast-ui.js renko/renko-tv-app.js renko/renko-tv-switch-fast.js
             renko/renko-tv-switch-fast.css renko/renko-tv-percentage-ltp-runtime.js renko/renko-tv-atr-fixed1s.js
@@ -113,4 +114,4 @@ jobs:
           name: renko-real-public-final-drift-safe-${{ env.AUDITED_RENKO_SHA }}
           path: artifacts/renko-real-public-final
           retention-days: 30
-# manual rerun marker: 2026-08-28 current-public drift-safe validation
+# final mobile-toolbar-fixed public audit: 2026-08-28
