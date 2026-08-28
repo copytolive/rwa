@@ -13,28 +13,62 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      EXPECTED_PUBLIC_SHA: aac8118d288b9cac0e7aee952429491c2fb32dba
+      AUDITED_RENKO_SHA: aac8118d288b9cac0e7aee952429491c2fb32dba
       RWA_TEST_URL: https://copytolive.github.io/rwa
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Bind audit to exact public deployment
+      - name: Bind current public RENKO bytes to browser-audited baseline
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p artifacts/renko-real-public-final
-          stamp=''
-          for i in $(seq 1 30); do
-            stamp=$(curl -fsS "https://copytolive.github.io/rwa/renko-deployment-sha.txt?ts=$(date +%s%N)" | tr -d '\r\n' || true)
-            echo "attempt=$i expected=$EXPECTED_PUBLIC_SHA public=$stamp"
-            [[ "$stamp" == "$EXPECTED_PUBLIC_SHA" ]] && break
+          mkdir -p artifacts/renko-real-public-final/byte-binding
+          files=(
+            renko/index.html
+            renko/renko-tv.css
+            renko/renko-tv-engine.js
+            renko/renko-tv-fixed-1s.js
+            renko/renko-tv-locale-guard.js
+            renko/renko-tv-fetch-guard.js
+            renko/renko-tv-stable-chart-v2.js
+            renko/renko-tv-ultrafast-ui.js
+            renko/renko-tv-app.js
+            renko/renko-tv-switch-fast.js
+            renko/renko-tv-switch-fast.css
+            renko/renko-tv-percentage-ltp-runtime.js
+            renko/renko-tv-atr-fixed1s.js
+            renko/renko-tv-atr-ui-sync.js
+            renko/renko-tv-parity-fixture.js
+          )
+          snapshot_ok=0
+          for attempt in $(seq 1 5); do
+            start=$(curl -fsS "https://copytolive.github.io/rwa/renko-deployment-sha.txt?ts=$(date +%s%N)" | tr -d '\r\n')
+            : > artifacts/renko-real-public-final/byte-binding/start-hashes.txt
+            rm -rf /tmp/renko-bind && mkdir -p /tmp/renko-bind
+            ok=1
+            for f in "${files[@]}"; do
+              public="https://copytolive.github.io/rwa/$f?ts=$(date +%s%N)"
+              raw_start="https://raw.githubusercontent.com/copytolive/rwa/$start/$f"
+              raw_audited="https://raw.githubusercontent.com/copytolive/rwa/$AUDITED_RENKO_SHA/$f"
+              mkdir -p "/tmp/renko-bind/$(dirname "$f")"
+              curl -fsS "$public" -o "/tmp/renko-bind/public-${f//\//_}" || { ok=0; break; }
+              curl -fsS "$raw_start" -o "/tmp/renko-bind/start-${f//\//_}" || { ok=0; break; }
+              curl -fsS "$raw_audited" -o "/tmp/renko-bind/audited-${f//\//_}" || { ok=0; break; }
+              cmp "/tmp/renko-bind/public-${f//\//_}" "/tmp/renko-bind/start-${f//\//_}" || { ok=0; break; }
+              cmp "/tmp/renko-bind/start-${f//\//_}" "/tmp/renko-bind/audited-${f//\//_}" || { ok=0; break; }
+              sha256sum "/tmp/renko-bind/public-${f//\//_}" | sed "s#  .*#  $f#" >> artifacts/renko-real-public-final/byte-binding/start-hashes.txt
+            done
+            finish=$(curl -fsS "https://copytolive.github.io/rwa/renko-deployment-sha.txt?ts=$(date +%s%N)" | tr -d '\r\n')
+            echo "attempt=$attempt start=$start finish=$finish files_ok=$ok"
+            if [[ "$ok" == 1 && "$start" == "$finish" ]]; then snapshot_ok=1; break; fi
             sleep 2
           done
-          [[ "$stamp" == "$EXPECTED_PUBLIC_SHA" ]]
+          [[ "$snapshot_ok" == 1 ]]
+          echo "PUBLIC_START_SHA=$start" >> "$GITHUB_ENV"
           main=$(git ls-remote https://github.com/copytolive/rwa.git refs/heads/main | awk '{print $1}')
-          printf 'expected_public_sha=%s\npublic_deployment_sha=%s\nmain_sha_at_audit_start=%s\npublic_url=%s/renko/?symbol=XAUT\n' "$EXPECTED_PUBLIC_SHA" "$stamp" "$main" "$RWA_TEST_URL" > artifacts/renko-real-public-final/deployment-proof.txt
+          printf 'audited_renko_sha=%s\npublic_start_sha=%s\nmain_sha_at_audit_start=%s\ncritical_files=15\nstart_byte_binding=PASS\npublic_url=%s/renko/?symbol=XAUT\n' "$AUDITED_RENKO_SHA" "$start" "$main" "$RWA_TEST_URL" > artifacts/renko-real-public-final/deployment-proof.txt
           cat artifacts/renko-real-public-final/deployment-proof.txt
       - name: Install Chromium
         run: |
@@ -48,19 +82,34 @@ jobs:
         run: RENKO_XAUT_OUT=artifacts/renko-real-public-final/xaut-provider node tools/renko-xaut-live-provider-report.mjs
       - name: PUBLIC XAUT ATR 1..1,000,000 — desktop + mobile
         run: RENKO_XAUT_MATRIX_OUT=artifacts/renko-real-public-final/xaut-atr-matrix node tools/renko-xaut-atr-matrix-report.mjs
-      - name: Final public receipt
+      - name: Final public receipt with drift-safe RENKO byte binding
         shell: bash
         run: |
           set -euo pipefail
-          stamp=$(curl -fsS "https://copytolive.github.io/rwa/renko-deployment-sha.txt?ts=$(date +%s%N)" | tr -d '\r\n')
-          [[ "$stamp" == "$EXPECTED_PUBLIC_SHA" ]]
-          main=$(git ls-remote https://github.com/copytolive/rwa.git refs/heads/main | awk '{print $1}')
-          printf '\nmain_sha_at_audit_end=%s\npublic_deployment_sha_at_audit_end=%s\nstatus=PASS\n' "$main" "$stamp" >> artifacts/renko-real-public-final/deployment-proof.txt
+          files=(
+            renko/index.html renko/renko-tv.css renko/renko-tv-engine.js renko/renko-tv-fixed-1s.js
+            renko/renko-tv-locale-guard.js renko/renko-tv-fetch-guard.js renko/renko-tv-stable-chart-v2.js
+            renko/renko-tv-ultrafast-ui.js renko/renko-tv-app.js renko/renko-tv-switch-fast.js
+            renko/renko-tv-switch-fast.css renko/renko-tv-percentage-ltp-runtime.js renko/renko-tv-atr-fixed1s.js
+            renko/renko-tv-atr-ui-sync.js renko/renko-tv-parity-fixture.js
+          )
+          end=$(curl -fsS "https://copytolive.github.io/rwa/renko-deployment-sha.txt?ts=$(date +%s%N)" | tr -d '\r\n')
+          : > artifacts/renko-real-public-final/byte-binding/end-hashes.txt
+          for f in "${files[@]}"; do
+            curl -fsS "https://copytolive.github.io/rwa/$f?ts=$(date +%s%N)" -o "/tmp/end-${f//\//_}"
+            curl -fsS "https://raw.githubusercontent.com/copytolive/rwa/$end/$f" -o "/tmp/endraw-${f//\//_}"
+            curl -fsS "https://raw.githubusercontent.com/copytolive/rwa/$AUDITED_RENKO_SHA/$f" -o "/tmp/auditraw-${f//\//_}"
+            cmp "/tmp/end-${f//\//_}" "/tmp/endraw-${f//\//_}"
+            cmp "/tmp/endraw-${f//\//_}" "/tmp/auditraw-${f//\//_}"
+            sha256sum "/tmp/end-${f//\//_}" | sed "s#  .*#  $f#" >> artifacts/renko-real-public-final/byte-binding/end-hashes.txt
+          done
           node -e "const fs=require('fs'); for(const p of ['50pair-desktop/report.json','50pair-mobile/report.json','xaut-provider/report.json','xaut-atr-matrix/report.json']){const j=JSON.parse(fs.readFileSync('artifacts/renko-real-public-final/'+p)); if(j.status!=='PASS') throw new Error(p+' '+j.status); console.log(p,j.status)}"
+          main=$(git ls-remote https://github.com/copytolive/rwa.git refs/heads/main | awk '{print $1}')
+          printf '\npublic_end_sha=%s\nmain_sha_at_audit_end=%s\npublic_drifted_during_browser=%s\nend_byte_binding_to_audited_renko=PASS\nall_browser_reports=PASS\nstatus=PASS\n' "$end" "$main" "$([[ "$end" == "$PUBLIC_START_SHA" ]] && echo false || echo true)" >> artifacts/renko-real-public-final/deployment-proof.txt
           cat artifacts/renko-real-public-final/deployment-proof.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: renko-real-public-final-${{ env.EXPECTED_PUBLIC_SHA }}
+          name: renko-real-public-final-drift-safe-${{ env.AUDITED_RENKO_SHA }}
           path: artifacts/renko-real-public-final
           retention-days: 30
