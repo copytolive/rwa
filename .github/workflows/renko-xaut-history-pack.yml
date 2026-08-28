@@ -42,9 +42,15 @@ jobs:
           assert count==m['rows'],(count,m['rows'])
           print('RENKO_XAUT_OKX_1S_PACK_PASS',json.dumps({k:m[k] for k in ['rows','fromUtc','toUtc','interval','provider']}))
           PY
-      - name: Commit refreshed pack to source branch
+      - name: Commit refreshed pack onto latest source branch
         run: |
           set -euo pipefail
+          cp renko/xaut-okx-1s-pack.csv.gz /tmp/xaut-okx-1s-pack.csv.gz
+          cp renko/xaut-okx-1s-pack.meta.json /tmp/xaut-okx-1s-pack.meta.json
+          git fetch origin "${GITHUB_REF_NAME}"
+          git reset --hard "origin/${GITHUB_REF_NAME}"
+          cp /tmp/xaut-okx-1s-pack.csv.gz renko/xaut-okx-1s-pack.csv.gz
+          cp /tmp/xaut-okx-1s-pack.meta.json renko/xaut-okx-1s-pack.meta.json
           git config user.name 'copytolive-renko-bot'
           git config user.email 'copytolive@gmail.com'
           git add -f renko/xaut-okx-1s-pack.csv.gz renko/xaut-okx-1s-pack.meta.json
