@@ -22,6 +22,13 @@ if(revenue.lifi?.enabled){
   ok(revenue.mode!=='LIVE','disabled LI.FI revenue cannot claim LIVE');
 }
 
+ok(engine.includes("const REVENUE_URL='rwa-multichain-revenue.json'"),'engine loads canonical revenue config');
+ok(engine.includes('function lifiRevenueEnabled('),'engine has explicit revenue activation predicate');
+ok(engine.includes("x.enabled===true&&x.partner_configured===true&&x.payout_wallet_configured_externally===true"),'fee requires local enable + provider + payout verification');
+ok(engine.includes("if(feeEnabled)p.set('fee'"),'LI.FI fee is appended only behind revenue predicate');
+ok(engine.includes('appFeeEnabled:'),'quote summary exposes application-fee state');
+ok(engine.includes('appFeeBps:'),'quote summary exposes application-fee bps');
+ok(engine.includes("revision:'3.0.0-revenue-ready'"),'engine exposes revenue-ready revision');
 ok(engine.includes("integrator:INTEGRATOR"),'LI.FI quote keeps canonical integrator');
 ok(engine.includes("READY_FOR_MAINNET"),'multichain execution remains machine-gated');
 ok(!engine.includes("'/exchange'")&&!engine.includes('"/exchange"'),'multichain engine has no direct exchange writer');
