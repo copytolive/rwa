@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      EXPECTED_PUBLIC_SHA: c6b22ea5f57009bbab732255eae37e00b97047da
+      EXPECTED_PUBLIC_SHA: aac8118d288b9cac0e7aee952429491c2fb32dba
       RWA_TEST_URL: https://copytolive.github.io/rwa
     steps:
       - uses: actions/checkout@v4
