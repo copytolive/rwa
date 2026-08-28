@@ -1,22 +1,32 @@
 {
-  "version": "1.0.0",
-  "mode": "TRANSITIONAL_PROVIDER_VALIDATION_REQUIRED",
+  "version": "2.0.0",
+  "mode": "OFFICIAL_BRIDGE2_VERIFIED_USER_SIGNATURE_REQUIRED",
   "hyperliquid": {
-    "enabled": false,
-    "adapter_verified": false,
+    "enabled": true,
+    "adapter_verified": true,
+    "adapter": "HYPERLIQUID_BRIDGE2_ARBITRUM_USDC",
     "staging_network": "arbitrum",
     "staging_token": "USDC",
+    "arbitrum_chain_id": 42161,
+    "arbitrum_usdc_address": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+    "bridge_address": "0x2df1c51e09aecf9cacb7bc98cb1742757f163df7",
+    "minimum_deposit_usdc": 5,
     "official_deposit_url": "https://app.hyperliquid.xyz/",
-    "provider_mode": "CCTP_OR_CURRENT_OFFICIAL_DEPOSIT",
+    "provider_mode": "OFFICIAL_BRIDGE2",
     "legacy_bridge_direct_write": false,
-    "activation_gate": "HYPERLIQUID_CURRENT_DEPOSIT_ADAPTER_VERIFIED",
-    "evidence_url": ""
+    "activation_gate": "USER_WALLET_CONFIRMATION_AND_MAINNET_CONTROL",
+    "evidence_url": "https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/bridge2",
+    "usdc_evidence_url": "https://developers.circle.com/stablecoins/usdc-contract-addresses"
   },
   "policy": {
     "stage_cross_chain_to_arbitrum_usdc": true,
+    "official_bridge2_only": true,
+    "minimum_deposit_enforced": true,
+    "no_unverified_bridge_write": true,
     "no_direct_legacy_bridge_write": true,
     "no_second_exchange_write_path": true,
     "final_hyperliquid_handoff_fail_closed": true,
-    "requires_current_provider_evidence": true
+    "requires_current_provider_evidence": true,
+    "wallet_signature_required": true
   }
 }
