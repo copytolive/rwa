@@ -9,6 +9,7 @@ const ok=(v,m)=>{if(!v)errors.push(m)};
 ok(market.policy==='ONE_RWA_TOKEN_MULTI_SELLER_MARKETPLACE_V2','marketplace v2 policy missing');
 ok(market.marketplace_token?.symbol==='RWA','one RWA marketplace token missing');
 ok(market.model?.multi_seller===true&&market.model?.multi_product===true&&market.model?.seller_storefronts===true,'multi-seller marketplace model incomplete');
+ok(market.model?.multi_seller_cart===true&&market.model?.checkout_model==='SELLER_SCOPED_SPLIT_CHECKOUT_V1'&&market.model?.combined_multi_seller_settlement===false,'safe multi-seller checkout contract missing');
 ok(market.model?.token_trading_separate_from_product_purchase===true,'trade and product purchase must remain separate');
 ok(market.verification?.no_fake_inventory===true&&market.verification?.no_fake_ratings===true&&market.verification?.no_fake_sales===true&&market.verification?.no_fake_prices===true,'non-fabrication marketplace rules missing');
 ok(Array.isArray(market.live_sellers)&&market.live_sellers.length===0,'unverified live sellers were introduced');
@@ -28,6 +29,6 @@ ok(marketJs.includes('state.engine.simulate(state.quote)')&&marketJs.includes("M
 ok(engine.includes("r?.mainnet_ready===true&&r?.status==='READY_FOR_MAINNET'")&&engine.includes("m?.ready===true&&m?.status==='READY'"),'dual mainnet gate missing from route engine');
 ok(engine.includes('toAmountMin')&&engine.includes('QUOTE_MAX_AGE_MS=55000'),'provider minimum output / quote freshness missing from engine');
 ok(commerce.rules?.checkout_requires_backend===true&&commerce.rules?.inventory_requires_backend===true&&commerce.rules?.payment_requires_backend===true,'legacy commerce backend safety gates were weakened');
-const out={ok:errors.length===0,contract:'rwa-marketplace-multichain-v7',marketplacePolicy:market.policy,routeNetworks:routeNetworks.map(n=>n.id),dynamicTokenUniverse:true,onDemandPairs:true,slippage:{defaultPct:.5,maxPct:5,ackImpactPct:3,hardBlockImpactPct:10},execution:'GLOBAL_READY_FOR_MAINNET + MULTICHAIN_READY + simulation + wallet confirmation',errors};
+const out={ok:errors.length===0,contract:'rwa-marketplace-multichain-v7',marketplacePolicy:market.policy,checkoutModel:market.model.checkout_model,routeNetworks:routeNetworks.map(n=>n.id),dynamicTokenUniverse:true,onDemandPairs:true,slippage:{defaultPct:.5,maxPct:5,ackImpactPct:3,hardBlockImpactPct:10},execution:'GLOBAL_READY_FOR_MAINNET + MULTICHAIN_READY + simulation + wallet confirmation',errors};
 console.log(JSON.stringify(out,null,2));
 if(errors.length)process.exit(1);
