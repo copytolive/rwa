@@ -1,4 +1,4 @@
-name: RENKO ATR Zero Blocking Gate
+name: RENKO ATR 1s Performance Compatibility Gate
 on:
   push:
     branches: [main]
@@ -14,34 +14,38 @@ permissions:
 jobs:
   production-zero-blocking:
     runs-on: ubuntu-latest
-    timeout-minutes: 22
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-      - name: Static deep ATR and stable-chart checks
+      - name: Static isolated 1s ATR performance checks
         run: |
           set -euo pipefail
           node --check renko/renko-tv-engine.js
-          node --check renko/renko-tv-stable-chart.js
+          node --check renko/renko-tv-stable-chart-v2.js
+          node --check renko/renko-tv-1s-close-lock.js
           node --check renko/renko-tv-atr-1s-million-cache-v3.js
-          node --check renko/renko-tv-atr-1s-million-cache.js
           node --check tools/binance-1s-range-integrity.mjs
           node --check tools/renko-deep-v3-runtime-proof.mjs
           node --check tools/renko-atr-zero-blocking-report.mjs
+          grep -Fq "RENKO_ATR_PERF_1S" renko/index.html
+          grep -Fq "atrPerf1s" renko/index.html
+          grep -Fq 'renko-tv-1s-close-lock.js?v=173' renko/index.html
           grep -Fq 'renko-tv-atr-1s-million-cache-v3.js?v=180' renko/index.html
           grep -Fq 'unique-nonoverlap-1s-history' renko/renko-tv-atr-1s-million-cache-v3.js
           grep -Fq "_exactBox" renko/renko-tv-engine.js
-          grep -Fq "rule:'render-only-on-renko-geometry-change-fixed-1s-close'" renko/renko-tv-stable-chart.js
+          grep -Fq "render-only-on-renko-geometry-change-any-source-interval" renko/renko-tv-stable-chart-v2.js
+          grep -Fq 'atrPerf1s=1' tools/renko-atr-zero-blocking-report.mjs
           grep -Fq 'rawBoxPass' tools/renko-atr-zero-blocking-report.mjs
           grep -Fq 'livePersistence' tools/renko-atr-zero-blocking-report.mjs
-      - name: Probe Binance fixed 1s historical window semantics
+      - name: Probe Binance 1s historical window semantics
         run: node tools/binance-1s-range-integrity.mjs
       - name: Wait for exact deployed Pages SHA
         run: |
           set -euo pipefail
-          for i in $(seq 1 100); do
-            live="$(curl -fsSL --max-time 8 "https://copytolive.github.io/rwa/renko-deployment-sha.txt?ts=$(date +%s)" || true)"
-            if [ "$live" = "$GITHUB_SHA" ]; then exit 0; fi
-            sleep 4
+          for i in $(seq 1 120); do
+            live="$(curl -fsSL --max-time 8 "https://copytolive.github.io/rwa/renko-deployment-sha.txt?ts=${GITHUB_RUN_ID}-${i}" 2>/dev/null | tr -d '\r\n' || true)"
+            if [ "$live" = "$GITHUB_SHA" ]; then echo "RENKO_LIVE_EXACT_SHA=PASS:$GITHUB_SHA"; exit 0; fi
+            sleep 5
           done
           echo "Expected $GITHUB_SHA but production did not reach that exact SHA" >&2
           exit 1
@@ -49,13 +53,14 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Prove unique-window v3 worker is the production runtime
+      - name: Prove deep worker in isolated 1s profile
         run: RWA_TEST_URL=https://copytolive.github.io/rwa node tools/renko-deep-v3-runtime-proof.mjs
-      - name: Capture seven raw-Wilder ATR 0ms plus live 1s no-heartbeat persistence proof
+      - name: Capture seven raw-Wilder ATR 0ms plus live 1s persistence proof
         run: RWA_TEST_URL=https://copytolive.github.io/rwa node tools/renko-atr-zero-blocking-report.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: renko-atr-zero-blocking-${{ github.sha }}
+          name: renko-atr-1s-performance-${{ github.sha }}
           path: artifacts/renko-atr-zero-blocking
-          retention-days: 7
+          retention-days: 14
+          if-no-files-found: warn
