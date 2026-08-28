@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "contract": "rwa-launch-final-external-inputs-v1",
+  "note": "Template only. Do not commit secrets, private keys, seed phrases, fabricated tx hashes, fabricated approvals, or assumed balances.",
+  "multichain": {
+    "receipts_file": "multichain-real-receipts.json",
+    "required_classes": ["EVM_TO_EVM", "EVM_TO_SOLANA", "SOLANA_TO_EVM", "SAME_CHAIN", "FAILURE_OR_REFUND"],
+    "lifi": {
+      "integrator": "copytolive-rwa",
+      "production_portal_verified": false,
+      "fee_wallet_configured": false,
+      "payout_wallet_configured": false,
+      "evidence_url": ""
+    },
+    "hyperliquid": {
+      "builder_address": "",
+      "account_value_usdc": 0,
+      "builder_fee_approval_verified": false,
+      "evidence_url": ""
+    }
+  },
+  "rwa_asset": {
+    "asset_name": "",
+    "ownership_url": "",
+    "appraisal_url": "",
+    "legal_url": "",
+    "kyb_url": "",
+    "disclosure_url": ""
+  },
+  "product_rwa_testnet": {
+    "chain_id": 998,
+    "inventory_gate": "",
+    "product_rwa_1155": "",
+    "redemption_manager": "",
+    "deployment_transactions": [],
+    "inventory_evidence_url": "",
+    "verification_evidence_url": ""
+  },
+  "production_services": {
+    "commerce_api_base": "",
+    "worker_base_url": ""
+  },
+  "external_gates": {
+    "legal_terms": "",
+    "operating_economics": "",
+    "inventory_reconciliation": "",
+    "refund_shortage_remedy": "",
+    "settlement_tieout": "",
+    "incident_backup_recovery": "",
+    "evidence_repository": ""
+  },
+  "beta": {
+    "internal_required": 3,
+    "closed_required": 20,
+    "public_required": 100
+  }
+}
