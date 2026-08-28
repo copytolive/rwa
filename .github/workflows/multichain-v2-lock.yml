@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - lock/multichain-v2-final-20260828
+      - feat/multichain-real-execution-fees-v3-20260828
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -25,10 +26,13 @@ jobs:
           import hashlib,re
           expected={
             'rwa-multichain.js':'da22864a22fcad143dae4a903c46538e5557c50b5adb3bea01312e97d33e0185',
-            'rwa-multichain-engine.js':'03afb06c74446e5bd78b8f058d87fd80d6eb603a28e297008bc243b455753682',
+            'rwa-multichain-engine.js':'95459fe655787a27c7e4ffbbcaf4c952574fa8f1a8c2cf0c9c1c53e182ced40a',
             'rwa-multichain-registry.json':'f1c0b179dd8d4f5ae75e28c48ea5a6aa61f663208c257da4b4ffc79cf20c8962',
-            'tools/multichain-browser.mjs':'76ac026ab2911a9663bfb50803f5bbec53462ea20c473bda9ae78d515311be70',
+            'tools/multichain-browser.mjs':'068c54ca1d8131b4a872a9fe8f626637af4c5b544790d1700ff151199b45bd7e',
             '.github/workflows/multichain-browser.yml':'8a67ce65300c69b2db1bd56820ec5bfa3d94e69f0f254233a32ac96681c32b7d',
+            'rwa-multichain-revenue.json':'57456ee7a8f6b735797cb59441359832cdd69da6fe84ef9f1f6812fcd1778882',
+            'tools/multichain-revenue-contract.mjs':'f1857c42cc1eb08a928af7a4920b3133e3cce733be9abc5d34c1a386d18c24c1',
+            '.github/workflows/multichain-revenue-gate.yml':'f18ef8780b1c4e07a4216f8e9d0153f6558361b65cb75e51d84317a3bdf3ad90',
           }
           bad=[]
           for p,want in expected.items():
@@ -43,10 +47,12 @@ jobs:
               want='b1b990af7e3db7454963cee21c5ae322fe96fa34779dd8bb315eb77598c1a2a6'
               if got!=want: bad.append(f'index MULTI CHAIN bootstrap: {got} != {want}')
           lock=Path('.github/multichain-v2.lock').read_text()
-          if 'MULTICHAIN_V2_LOCK=1' not in lock or 'policy=chain-abstraction-fail-closed-v2' not in lock:
-              bad.append('.github/multichain-v2.lock: lock marker missing')
+          required=('MULTICHAIN_V2_LOCK=1','MULTICHAIN_REVENUE_V3_LOCK=1','policy=chain-abstraction-fail-closed-v2','revenue_policy=provider-confirmed-visible-fee-fail-closed-v1')
+          for marker in required:
+              if marker not in lock: bad.append(f'.github/multichain-v2.lock: missing {marker}')
           if bad:
               raise SystemExit('MULTICHAIN_V2_LOCK=FAIL\n'+'\n'.join(bad))
           print('MULTICHAIN_V2_LOCK=PASS')
-          print('Protected paths: runtime, engine, registry, browser proof, production workflow, isolated index bootstrap')
+          print('MULTICHAIN_REVENUE_V3_LOCK=PASS')
+          print('Protected paths: runtime, engine, registry, browser proof, production workflow, revenue config/contract/gate, isolated index bootstrap')
           PY
