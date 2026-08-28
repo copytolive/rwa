@@ -92,17 +92,14 @@ function close({restore=true}={}){
 function navigateTrade(coin){
   const route=`trade/${coin}`;
   close({restore:false});
-  writeRoute(route);
   hardCloseShell();
-  queueMicrotask(()=>{
-    hardCloseShell();
-    if(location.pathname!==state.rootPath)restoreSingleShell();
-    if(location.hash!==`#${route}`)writeRoute(route);
-    try{window.RWASuperApp?.navigate?.(route,{replace:true})}catch{}
-    hardCloseShell();
-  });
-  requestAnimationFrame(()=>{if(location.hash!==`#${route}`)writeRoute(route);hardCloseShell()});
-  setTimeout(()=>{if(location.hash!==`#${route}`)writeRoute(route);hardCloseShell()},0);
+  try{
+    if(window.RWASuperApp?.navigate)window.RWASuperApp.navigate(route,{replace:true});
+    else writeRoute(route);
+  }catch{writeRoute(route)}
+  if(location.pathname!==state.rootPath)restoreSingleShell();
+  if(location.hash!==`#${route}`)writeRoute(route);
+  hardCloseShell();
 }
 function externalCommerce(anchor){
   try{const u=new URL(anchor.href,location.href);return u.origin!==location.origin}catch{return false}
