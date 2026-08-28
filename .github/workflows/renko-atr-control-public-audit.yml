@@ -1,0 +1,64 @@
+name: RENKO ATR Control Public Audit
+on:
+  push:
+    branches:
+      - audit/renko-atr-control-public-20260828
+    paths:
+      - '.github/workflows/renko-atr-control-public-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      AUDITED_RENKO_SHA: 891df0a6446870f5e69afa8bd3dad4ffeffbe07a
+      RWA_TEST_URL: https://copytolive.github.io/rwa
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Bind public ATR runtime bytes to merged RENKO release
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/renko-atr-control-public/byte-binding
+          files=(renko/index.html renko/renko-tv-app.js renko/renko-tv-engine.js renko/renko-tv-fixed-1s.js renko/renko-tv-atr-control.js renko/renko-tv-atr-fixed1s.js renko/renko-tv-atr-ui-sync.js)
+          stamp=$(curl -fsS "https://copytolive.github.io/rwa/renko-deployment-sha.txt?ts=$(date +%s%N)" | tr -d '\r\n')
+          echo "public_deployment_sha=$stamp" | tee artifacts/renko-atr-control-public/deployment-proof.txt
+          echo "audited_renko_sha=$AUDITED_RENKO_SHA" | tee -a artifacts/renko-atr-control-public/deployment-proof.txt
+          for f in "${files[@]}"; do
+            curl -fsS "https://copytolive.github.io/rwa/$f?ts=$(date +%s%N)" -o "/tmp/public-${f//\//_}"
+            curl -fsS "https://raw.githubusercontent.com/copytolive/rwa/$AUDITED_RENKO_SHA/$f" -o "/tmp/audited-${f//\//_}"
+            cmp "/tmp/public-${f//\//_}" "/tmp/audited-${f//\//_}"
+            sha256sum "/tmp/public-${f//\//_}" | sed "s#  .*#  $f#" >> artifacts/renko-atr-control-public/byte-binding/hashes.txt
+          done
+          echo 'critical_renko_byte_binding=PASS' | tee -a artifacts/renko-atr-control-public/deployment-proof.txt
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
+          npx playwright install --with-deps chromium
+      - name: PUBLIC desktop — physical ATR 100 Apply on all 50 pairs
+        run: RENKO_ATR_VIEWPORT=desktop RENKO_ATR_CONTROL_OUT=artifacts/renko-atr-control-public/desktop node tools/renko-atr-control-all-pairs-report.mjs
+      - name: PUBLIC mobile — physical ATR 100 Apply on all 50 pairs
+        run: RENKO_ATR_VIEWPORT=mobile RENKO_ATR_CONTROL_OUT=artifacts/renko-atr-control-public/mobile node tools/renko-atr-control-all-pairs-report.mjs
+      - name: Final public ATR control receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs=require('fs');
+          const d=JSON.parse(fs.readFileSync('artifacts/renko-atr-control-public/desktop/report.json'));
+          const m=JSON.parse(fs.readFileSync('artifacts/renko-atr-control-public/mobile/report.json'));
+          if(d.status!=='PASS'||m.status!=='PASS'||d.passCount!==50||m.passCount!==50) throw new Error(JSON.stringify({desktop:d.status,dp:d.passCount,mobile:m.status,mp:m.passCount}));
+          fs.appendFileSync('artifacts/renko-atr-control-public/deployment-proof.txt',`desktop=${d.passCount}/${d.count} PASS\nmobile=${m.passCount}/${m.count} PASS\nphysical_ATR100_APPLY=100/100 PASS\nstatus=PASS\n`);
+          NODE
+          cat artifacts/renko-atr-control-public/deployment-proof.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-atr-control-public-${{ env.AUDITED_RENKO_SHA }}
+          path: artifacts/renko-atr-control-public
+          retention-days: 30
