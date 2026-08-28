@@ -1,0 +1,1 @@
+`READY_FOR_MAINNET` and `GO` are machine-derived states. Do not edit readiness JSON or provider flags to force a green result. The only valid way to close an external gate is to supply the real receipt, public HTTPS evidence, provider/account approval, service health proof, or verified beta activity required by the corresponding validator.
