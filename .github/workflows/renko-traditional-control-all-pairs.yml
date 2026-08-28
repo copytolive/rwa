@@ -1,0 +1,118 @@
+name: RENKO Traditional Control All Pairs Gate
+on:
+  push:
+    branches:
+      - main
+      - fix/renko-traditional-control-all-pairs-20260829
+    paths:
+      - 'renko/**'
+      - 'tools/renko-traditional-*.mjs'
+      - '.github/workflows/renko-traditional-control-all-pairs.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Static + engine Traditional contract
+        run: |
+          set -euo pipefail
+          node --check renko/renko-tv-engine.js
+          node --check renko/renko-tv-traditional-control.js
+          node --check tools/renko-traditional-engine-contract.mjs
+          node --check tools/renko-traditional-control-all-pairs-report.mjs
+          node --check tools/renko-traditional-stability-report.mjs
+          grep -q "traditionalRevision:'2.0.0-pair-safe'" renko/renko-tv-engine.js
+          grep -q "renko-tv-traditional-control.js?v=1" renko/index.html
+          grep -q "pair-aware-fixed-absolute-box-min-tick-positive-no-atr-exact-ownership" renko/renko-tv-traditional-control.js
+          node tools/renko-traditional-engine-contract.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
+          npx playwright install --with-deps chromium
+      - name: Serve exact checkout
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/renko-traditional-site
+          mkdir -p /tmp/renko-traditional-site/rwa
+          cp -a . /tmp/renko-traditional-site/rwa/
+          cd /tmp/renko-traditional-site
+          python3 -m http.server 8080 >/tmp/renko-traditional-http.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/rwa/renko/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/renko-traditional-http.log
+          exit 1
+      - name: Desktop — Traditional Apply on all 50 launch pairs
+        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_TRADITIONAL_VIEWPORT=desktop RENKO_TRADITIONAL_OUT=artifacts/traditional-desktop node tools/renko-traditional-control-all-pairs-report.mjs
+      - name: Mobile — Traditional Apply on all 50 launch pairs
+        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_TRADITIONAL_VIEWPORT=mobile RENKO_TRADITIONAL_OUT=artifacts/traditional-mobile node tools/renko-traditional-control-all-pairs-report.mjs
+      - name: Desktop — Traditional fixed-box stability across real 1s closes
+        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_TRADITIONAL_STABILITY_VIEWPORT=desktop RENKO_TRADITIONAL_STABILITY_OUT=artifacts/traditional-stability-desktop node tools/renko-traditional-stability-report.mjs
+      - name: Mobile — Traditional fixed-box stability across real 1s closes
+        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_TRADITIONAL_STABILITY_VIEWPORT=mobile RENKO_TRADITIONAL_STABILITY_OUT=artifacts/traditional-stability-mobile node tools/renko-traditional-stability-report.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-traditional-exact-${{ github.sha }}
+          path: |
+            artifacts/traditional-desktop
+            artifacts/traditional-mobile
+            artifacts/traditional-stability-desktop
+            artifacts/traditional-stability-mobile
+          retention-days: 30
+  public-production:
+    if: github.ref == 'refs/heads/main'
+    needs: exact-browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for exact GitHub Pages SHA + Traditional runtime
+        run: |
+          set -euo pipefail
+          index='https://copytolive.github.io/rwa/renko/'
+          runtime='https://copytolive.github.io/rwa/renko/renko-tv-traditional-control.js'
+          stamp='https://copytolive.github.io/rwa/renko-deployment-sha.txt'
+          for i in $(seq 1 90); do
+            ts=$(date +%s%N)
+            got=$(curl -fsS "$stamp?ts=$ts" 2>/dev/null | tr -d '\r\n' || true)
+            html=$(curl -fsS "$index?ts=$ts" 2>/dev/null || true)
+            js=$(curl -fsS "$runtime?ts=$ts" 2>/dev/null || true)
+            echo "attempt=$i deployed=$got"
+            if [ "$got" = "$GITHUB_SHA" ] && grep -q 'renko-tv-traditional-control.js?v=1' <<<"$html" && grep -q 'pair-aware-fixed-absolute-box-min-tick-positive-no-atr-exact-ownership' <<<"$js"; then
+              echo "PUBLIC_TRADITIONAL_RUNTIME_PRESENT deployed=$got"
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
+          npx playwright install --with-deps chromium
+      - name: PUBLIC desktop — Traditional on all 50 launch pairs
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_TRADITIONAL_VIEWPORT=desktop RENKO_TRADITIONAL_OUT=artifacts/public-traditional-desktop node tools/renko-traditional-control-all-pairs-report.mjs
+      - name: PUBLIC mobile — Traditional on all 50 launch pairs
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_TRADITIONAL_VIEWPORT=mobile RENKO_TRADITIONAL_OUT=artifacts/public-traditional-mobile node tools/renko-traditional-control-all-pairs-report.mjs
+      - name: PUBLIC desktop — Traditional fixed-box stability
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_TRADITIONAL_STABILITY_VIEWPORT=desktop RENKO_TRADITIONAL_STABILITY_OUT=artifacts/public-traditional-stability-desktop node tools/renko-traditional-stability-report.mjs
+      - name: PUBLIC mobile — Traditional fixed-box stability
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_TRADITIONAL_STABILITY_VIEWPORT=mobile RENKO_TRADITIONAL_STABILITY_OUT=artifacts/public-traditional-stability-mobile node tools/renko-traditional-stability-report.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-traditional-public-${{ github.sha }}
+          path: |
+            artifacts/public-traditional-desktop
+            artifacts/public-traditional-mobile
+            artifacts/public-traditional-stability-desktop
+            artifacts/public-traditional-stability-mobile
+          retention-days: 30
