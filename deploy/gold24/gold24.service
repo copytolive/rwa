@@ -1,5 +1,5 @@
 [Unit]
-Description=GOLD24 continuous rules-locked backtest worker
+Description=GOLD24 continuous weekly-profit rules-locked backtest worker
 After=network-online.target
 Wants=network-online.target
 
@@ -9,7 +9,7 @@ User=gold24
 Group=gold24
 WorkingDirectory=/opt/rwa
 EnvironmentFile=/etc/gold24.env
-ExecStart=/opt/gold24-venv/bin/python /opt/rwa/backtest/gold24/worker.py
+ExecStart=/opt/gold24-venv/bin/python /opt/rwa/backtest/gold24/weekly_profit_runner.py
 Restart=always
 RestartSec=3
 TimeoutStopSec=30
