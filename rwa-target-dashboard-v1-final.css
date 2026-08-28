@@ -1,0 +1,19 @@
+/* RWA × SEABLUEPRINT TARGET FINAL GEOMETRY V1.2 */
+@media(min-width:1451px){
+ body.rwa-target-dashboard-v1 .topnav{flex:1 1 auto!important;min-width:430px!important}
+ body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open .layout{grid-template-columns:286px minmax(0,1fr)!important;padding-right:calc(clamp(360px,27vw,440px) + 250px)!important}
+ body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open .right{display:block!important;position:fixed!important;top:70px!important;right:clamp(360px,27vw,440px)!important;bottom:28px!important;width:250px!important;height:auto!important;z-index:10030!important;overflow:auto!important;border-left:1px solid #1b2a40!important;border-right:1px solid #1b2a40!important;background:#060f1a!important}
+}
+@media(min-width:1121px) and (max-width:1450px){
+ body.rwa-target-dashboard-v1 .topnav{flex:1 1 auto!important;min-width:330px!important}
+ body.rwa-target-dashboard-v1 .topnav [data-rwa-target-nav="reports"]{display:none!important}
+ body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open .layout{grid-template-columns:220px minmax(0,1fr)!important;padding-right:calc(clamp(360px,27vw,440px) + 210px)!important}
+ body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open .right{display:block!important;position:fixed!important;top:70px!important;right:clamp(360px,27vw,440px)!important;bottom:28px!important;width:210px!important;height:auto!important;z-index:10030!important;overflow:auto!important;border-left:1px solid #1b2a40!important;border-right:1px solid #1b2a40!important;background:#060f1a!important}
+}
+@media(min-width:1121px){
+ body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open .right .aside-label{position:sticky!important;top:0!important;z-index:2!important}
+ body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open .right .mover-section{display:none!important}
+ body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open .right .order-section{min-height:100%!important}
+}
+@media(min-width:1600px){body.rwa-target-dashboard-v1 .topbar{gap:12px!important}body.rwa-target-dashboard-v1 .topnav button{padding-left:11px!important;padding-right:11px!important}}
+@media(max-width:1599px) and (min-width:1121px){body.rwa-target-dashboard-v1 .topnav button{padding-left:7px!important;padding-right:7px!important;font-size:9px!important}body.rwa-target-dashboard-v1 .rwa-target-inpage{display:none!important}body.rwa-target-dashboard-v1 .rwa-seablueprint-commerce-launch{padding:0 8px!important}}
