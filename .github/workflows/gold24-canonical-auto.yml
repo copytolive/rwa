@@ -50,14 +50,7 @@ jobs:
           pip install 'websocket-client>=1.8,<2' 'requests>=2.32,<3'
           pip install 'git+https://github.com/rongardF/tvdatafeed.git@e6f6aaa7de439ac6e454d9b26d2760ded8dc4923'
 
-      - name: Fetch true-source TradingView Gate A material
-        run: |
-          set -euo pipefail
-          rm -rf "$RUNNER_TEMP/gold24-data"
-          mkdir -p "$RUNNER_TEMP/gold24-data"
-          python backtest/gold24/tradingview_gate_a.py --out-dir "$RUNNER_TEMP/gold24-data" --bars 6500
-
-      - name: Restore state only when the primary dataset SHA is unchanged
+      - name: Restore frozen canonical state
         shell: bash
         run: |
           set -euo pipefail
@@ -67,21 +60,45 @@ jobs:
           if [ -n "$PREV" ]; then
             gh run download "$PREV" --repo "$GITHUB_REPOSITORY" -n gold24-canonical-state -D "$RUNNER_TEMP/gold24-prev" || true
           fi
-          NEW_SHA="$(python -c 'import json,sys; print(json.load(open(sys.argv[1])).get("primary_sha256", ""))' "$RUNNER_TEMP/gold24-data/gate_a_receipt.json")"
-          OLD_SHA=""
-          if [ -f "$RUNNER_TEMP/gold24-prev/gate_a/gate_a_receipt.json" ]; then
-            OLD_SHA="$(python -c 'import json,sys; print(json.load(open(sys.argv[1])).get("primary_sha256", ""))' "$RUNNER_TEMP/gold24-prev/gate_a/gate_a_receipt.json")"
+          if [ -f "$RUNNER_TEMP/gold24-prev/gate_a/gate_a_receipt.json" ] && [ -f "$RUNNER_TEMP/gold24-prev/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv" ]; then
+            PASS="$(python -c 'import json,sys; print(str(bool(json.load(open(sys.argv[1])).get("crosscheck_pass"))).lower())' "$RUNNER_TEMP/gold24-prev/gate_a/gate_a_receipt.json")"
+            END_YEAR="$(python -c 'import json,sys; x=json.load(open(sys.argv[1])); print(str(x.get("primary_end_utc", ""))[:4])' "$RUNNER_TEMP/gold24-prev/gate_a/gate_a_receipt.json")"
+            if [ "$PASS" = "true" ] && [ "${END_YEAR:-0}" -ge 2026 ]; then
+              cp -a "$RUNNER_TEMP/gold24-prev/." "$GOLD24_STATE_DIR/"
+              echo 'GOLD24_CANONICAL_RESTORED=true' >> "$GITHUB_ENV"
+              echo "Restored frozen Gate-A PASS state from run $PREV; search will continue without resetting candidate history."
+            fi
           fi
-          if [ -n "$NEW_SHA" ] && [ "$NEW_SHA" = "$OLD_SHA" ]; then
-            cp -a "$RUNNER_TEMP/gold24-prev/." "$GOLD24_STATE_DIR/"
-            echo "Restored canonical state for unchanged dataset SHA $NEW_SHA"
-          else
-            echo "Starting fresh canonical state because dataset SHA changed or no prior state exists."
+          if [ ! -f "$GOLD24_STATE_DIR/gate_a/gate_a_receipt.json" ]; then
+            echo 'GOLD24_CANONICAL_RESTORED=false' >> "$GITHUB_ENV"
           fi
-          mkdir -p "$GOLD24_STATE_DIR/gate_a"
+
+      - name: Bootstrap true-source TradingView Gate A material when needed
+        if: env.GOLD24_CANONICAL_RESTORED != 'true'
+        run: |
+          set -euo pipefail
+          rm -rf "$RUNNER_TEMP/gold24-data"
+          mkdir -p "$RUNNER_TEMP/gold24-data" "$GOLD24_STATE_DIR/gate_a"
+          python backtest/gold24/tradingview_gate_a.py --out-dir "$RUNNER_TEMP/gold24-data" --bars 6500
           cp -a "$RUNNER_TEMP/gold24-data/." "$GOLD24_STATE_DIR/gate_a/"
 
-      - name: Run one legal canonical batch if Gate A passes
+      - name: Verify frozen Gate A receipt and canonical dataset hash
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, pathlib
+          root = pathlib.Path('.gold24-canonical/gate_a')
+          receipt = json.loads((root/'gate_a_receipt.json').read_text())
+          data = root/'GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv'
+          got = hashlib.sha256(data.read_bytes()).hexdigest()
+          assert receipt.get('crosscheck_pass') is True, 'Gate A receipt is not PASS'
+          assert str(receipt.get('primary_end_utc',''))[:4] >= '2026', 'canonical data does not reach 2026'
+          assert receipt.get('primary_sha256') == got, 'canonical dataset SHA differs from Gate A receipt'
+          print(json.dumps({'gate_a':'PASS','primary_sha256':got,'end_utc':receipt.get('primary_end_utc')}, sort_keys=True))
+          PY
+
+      - name: Run one legal canonical batch
         working-directory: backtest/gold24
         env:
           GOLD24_DATASET: ${{ github.workspace }}/.gold24-canonical/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv
@@ -121,6 +138,7 @@ jobs:
           git add backtest/gold24/runtime
           if ! git diff --cached --quiet; then
             git commit -m 'chore(gold24): publish canonical runtime proof [skip ci]'
+            git pull --rebase origin main
             git push origin HEAD:main
           else
             echo 'No runtime proof changes to publish.'
