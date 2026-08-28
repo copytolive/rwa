@@ -1,12 +1,12 @@
 {
-  "batch": 7,
-  "candidate_cursor": 20261060,
-  "cumulative_configs_archived": 224,
-  "cumulative_configs_with_trades": 221,
-  "cumulative_exact_execution_duplicates_archived": 0,
-  "cumulative_execution_hash_nonzero": 221,
-  "cumulative_execution_hash_unique": 221,
-  "cumulative_zero_trade_configs": 3,
+  "batch": 14,
+  "candidate_cursor": 21347644,
+  "cumulative_configs_archived": 6412,
+  "cumulative_configs_with_trades": 6267,
+  "cumulative_exact_execution_duplicates_archived": 7,
+  "cumulative_execution_hash_nonzero": 6267,
+  "cumulative_execution_hash_unique": 6260,
+  "cumulative_zero_trade_configs": 145,
   "gate_a_strict": {
     "crosscheck_bytes_verified": true,
     "crosscheck_file": "XAUUSD_OANDA_TRADINGVIEW_D1_CROSSCHECK.csv",
@@ -18,7 +18,7 @@
     "duplicate_timestamp_rows": 0,
     "gap_threshold_hours": 168.0,
     "gate_a": "PASS",
-    "generated_at": "2026-08-28T14:02:16.248488+00:00",
+    "generated_at": "2026-08-28T14:21:08.625960+00:00",
     "max_gap_hours": 120.0,
     "monotonic_increasing": true,
     "nan_ohlcv_cells": 0,
@@ -43,8 +43,8 @@
   "gate_c_candidate_count": 0,
   "github_event": "push",
   "github_run_attempt": "1",
-  "github_run_id": "33178150242",
-  "github_sha": "912557ece69a729064e9ead5001778cb08da307c",
+  "github_run_id": "33179629130",
+  "github_sha": "c6b22ea5f57009bbab732255eae37e00b97047da",
   "portfolio": {
     "families": {},
     "family_cap_complete": false,
@@ -53,7 +53,7 @@
     "rejected_family_cap": 0,
     "required_coverage_complete": false
   },
-  "previous_successful_run_id": "33175629646",
+  "previous_successful_run_id": "33178150242",
   "restored_previous_state": true,
   "schema": "gold24-public-validation-v3",
   "screening": {
@@ -69,7 +69,7 @@
     "top100_compliant": 0,
     "walk_forward_pass": 0
   },
-  "simulated_this_batch": 32,
+  "simulated_this_batch": 188,
   "simulation_executed": true,
   "strategy_engine": "RUNNING",
   "top200_gate_c_count": 0,
