@@ -27,5 +27,25 @@
 <div class="attribution">Rendered with <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener">TradingView Lightweight Charts™</a>. Calculations independently reproduce documented/observable TradingView Renko behavior; this is not TradingView proprietary source code.</div>
 <details class="methodology"><summary>TradingView observable parity contract and limits</summary><div class="method-grid-info"><div><b>Historical source</b><p>The selected chart interval supplies Close or OHLC values. Confirmed history changes only after that source interval closes.</p></div><div><b>Deep history ladder</b><p>The selected timeframe remains the finest recent resolution. When that history is exhausted, older Renko history is extended with the higher-timeframe ladder documented by TradingView: sub-minute up to 60m, sub-60m up to 240m, and sub-240m up to 1D.</p></div><div><b>Realtime projection</b><p>Current-interval bricks are provisional projections. They can change or disappear and become confirmed only when the selected source interval closes.</p></div><div><b>Traditional</b><p>Fixed absolute box. Continuation requires 1× box; reversal requires 2× box.</p></div><div><b>Percentage (LTP)</b><p>Symbol-load LTP × percentage, rounded to minimum tick, then additionally stability-rounded as TradingView documents. The canonical AAPL example 216 × 1% becomes box 2.</p></div><div><b>ATR</b><p>Wilder ATR is calculated from ordinary source-interval OHLC candles and its positive raw value is used as the Renko box.</p></div><div><b>Wicks</b><p>Close source uses discarded Close extrema. OHLC source uses actual High/Low excursions. Up bricks have low wicks; down bricks have high wicks.</p></div><div><b>Long-history regression</b><p>A GOLD 2002–2026 visual/algorithm witness is included in the parity gate: with a sufficiently large Traditional box, the full multi-decade date span remains while the Renko output collapses to only about five bricks.</p></div><div><b>Claim boundary</b><p>Observable parity is regression-tested. TradingView does not publish its proprietary source code or every internal OHLC traversal helper, so this page does not claim access to those internals.</p></div></div></details>
 </section></main></div>
-<script src="renko-tv-engine.js?v=181"></script><script src="renko-tv-locale-guard.js?v=165"></script><script src="renko-tv-fetch-guard.js?v=164"></script><script src="renko-tv-stable-chart-v2.js?v=183"></script><script src="renko-tv-ultrafast-ui.js?v=169"></script><script src="renko-tv-app.js?v=160"></script><script src="renko-tv-percentage-ltp-runtime.js?v=182"></script><script src="renko-tv-history-ladder.js?v=181"></script><script src="renko-tv-atr-parity.js?v=181"></script><script src="renko-tv-parity-fixture.js?v=182"></script>
+<script src="renko-tv-engine.js?v=181"></script>
+<script src="renko-tv-locale-guard.js?v=165"></script>
+<script src="renko-tv-fetch-guard.js?v=164"></script>
+<script src="renko-tv-stable-chart-v2.js?v=183"></script>
+<script src="renko-tv-ultrafast-ui.js?v=169"></script>
+<script>
+window.RENKO_ATR_PERF_1S=new URLSearchParams(location.search).has('atrPerf1s');
+if(window.RENKO_ATR_PERF_1S)document.write('<script src="renko-tv-1s-close-lock.js?v=173"><\/script>');
+</script>
+<script src="renko-tv-app.js?v=160"></script>
+<script src="renko-tv-percentage-ltp-runtime.js?v=182"></script>
+<script>
+if(window.RENKO_ATR_PERF_1S){
+  document.write('<script src="renko-tv-atr-1s-million-cache-v3.js?v=180"><\/script>');
+  document.write('<script src="renko-tv-deep-coverage-lock.js?v=179"><\/script>');
+}else{
+  document.write('<script src="renko-tv-history-ladder.js?v=181"><\/script>');
+}
+</script>
+<script src="renko-tv-atr-parity.js?v=181"></script>
+<script src="renko-tv-parity-fixture.js?v=182"></script>
 </body></html>
