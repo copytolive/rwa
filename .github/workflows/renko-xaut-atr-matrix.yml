@@ -1,0 +1,51 @@
+name: RENKO XAUT ATR Matrix Gate
+on:
+  push:
+    branches:
+      - main
+      - fix/renko-xaut-atr-matrix-20260828
+    paths:
+      - 'renko/**'
+      - 'tools/renko-xaut-*.mjs'
+      - '.github/workflows/renko-xaut-atr-matrix.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  xaut-live-provider:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax
+        run: |
+          node --check renko/renko-tv-locale-guard.js
+          node --check renko/renko-tv-atr-parity.js
+          node --check tools/renko-xaut-live-provider-report.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
+          npx playwright install --with-deps chromium
+      - name: Serve exact checkout
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/renko-xaut-site
+          mkdir -p /tmp/renko-xaut-site/rwa
+          cp -a . /tmp/renko-xaut-site/rwa/
+          cd /tmp/renko-xaut-site
+          python3 -m http.server 8080 >/tmp/renko-xaut-http.log 2>&1 &
+          echo $! >/tmp/renko-xaut-http.pid
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/rwa/renko/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/renko-xaut-http.log
+          exit 1
+      - name: Real XAUT Gate Spot desktop + mobile browser proof
+        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa node tools/renko-xaut-live-provider-report.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-xaut-provider-${{ github.sha }}
+          path: artifacts/renko-xaut-provider
+          retention-days: 7
