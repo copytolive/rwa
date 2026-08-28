@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "version": "14.0.0",
+  "policy": "RWA_OPERATING_SYSTEM_FAIL_CLOSED_V14",
+  "status": "ENGINEERING_READY_EXTERNAL_EVIDENCE_REQUIRED",
+  "series_model": {
+    "platform_token": "RWA",
+    "asset_cashflows_segregated_by_series": true,
+    "supported_business_types": ["PROPERTY", "AGRICULTURE", "HOTEL", "FRANCHISE", "SME", "RENTAL", "ENERGY", "INFRASTRUCTURE", "CUSTOM"],
+    "economic_terms_hash_required": true,
+    "legal_evidence_required_before_activation": true
+  },
+  "transaction_network": {
+    "reference_format": "RWA-{SERIES}-{SHA256_PREFIX}",
+    "merchant_location_terminal_required": true,
+    "external_reference_idempotency_required": true,
+    "states": ["CREATED", "PAID", "SETTLED", "REFUNDED", "REVERSED", "CANCELLED"],
+    "distribution_eligible_state": "SETTLED",
+    "refunds_and_reversals_excluded": true,
+    "terminal_hmac_required_in_production": true
+  },
+  "distribution": {
+    "bases": ["GROSS_REVENUE", "NET_REVENUE", "NET_PROFIT", "RENTAL_INCOME", "ROYALTY", "HARVEST_PROCEEDS", "CUSTOM"],
+    "frequencies": ["DAILY", "WEEKLY", "MONTHLY", "QUARTERLY", "ANNUAL", "MANUAL"],
+    "snapshot_policies": ["RECORD_DATE", "AVERAGE_BALANCE", "TIME_WEIGHTED"],
+    "integer_minor_unit_accounting": true,
+    "deterministic_remainder_allocation": true,
+    "payout_requires_authorized_funding": true,
+    "automatic_fund_movement_from_static_ui": false
+  },
+  "governance": {
+    "immutable_after_activation": ["basis", "investorAllocationBps", "payoutAsset", "holderUnitDefinition"],
+    "governed_with_notice": ["reserveBps", "frequency", "snapshotPolicy", "minimumPayoutMinor"],
+    "no_unilateral_silent_economic_changes": true
+  },
+  "non_fabrication": {
+    "no_fake_revenue": true,
+    "no_fake_inventory": true,
+    "no_fake_holders": true,
+    "no_fake_distributions": true,
+    "no_fake_payout_receipts": true,
+    "browser_fixture_must_be_visibly_labeled": true
+  },
+  "launch_dependencies": [
+    "verified_asset_evidence",
+    "jurisdiction_and_legal_approval",
+    "production_pos_or_payment_provider",
+    "production_commerce_backend",
+    "trusted_holder_snapshot_source",
+    "authorized_distribution_funding",
+    "real_payout_receipts",
+    "global_mainnet_readiness"
+  ]
+}

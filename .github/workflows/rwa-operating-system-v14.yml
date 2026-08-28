@@ -1,0 +1,103 @@
+name: RWA Operating System V14
+
+on:
+  push:
+    branches: ["feat/rwa-operating-system-v14-20260828", "main"]
+    paths:
+      - "rwa-os.html"
+      - "rwa-os.css"
+      - "rwa-os-core.mjs"
+      - "rwa-os-app.mjs"
+      - "rwa-os-config.json"
+      - "rwa-os-service/**"
+      - "token/contracts/RWASeriesRegistry.sol"
+      - "token/contracts/RWADistributionVault.sol"
+      - "token/test/rwa-operating.test.mjs"
+      - "token/package.json"
+      - "tools/rwa-os-*.mjs"
+      - ".github/workflows/rwa-operating-system-v14.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "rwa-os*"
+      - "rwa-os-service/**"
+      - "token/contracts/RWASeriesRegistry.sol"
+      - "token/contracts/RWADistributionVault.sol"
+      - "token/test/rwa-operating.test.mjs"
+      - "token/package.json"
+      - "tools/rwa-os-*.mjs"
+      - ".github/workflows/rwa-operating-system-v14.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  core-service-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static syntax + config
+        run: |
+          set -euxo pipefail
+          node --check rwa-os-core.mjs
+          node --check rwa-os-app.mjs
+          node --check rwa-os-service/store.mjs
+          node --check rwa-os-service/server.mjs
+          node --check rwa-os-service/test.mjs
+          node --check tools/rwa-os-core.test.mjs
+          node --check tools/rwa-os-browser.mjs
+          python -m json.tool rwa-os-config.json >/dev/null
+      - name: Core economic and ledger tests
+        run: node tools/rwa-os-core.test.mjs
+      - name: Backend ledger/distribution tests
+        run: node rwa-os-service/test.mjs
+      - name: Solidity series and distribution tests
+        working-directory: token
+        run: |
+          npm ci
+          npm run verify
+      - name: Upload deterministic test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rwa-os-v14-contract-${{ github.sha }}
+          path: |
+            rwa-os-config.json
+            token/build/
+          retention-days: 30
+          if-no-files-found: warn
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Serve repository and run browser acceptance
+        env:
+          RWA_OS_URL: http://127.0.0.1:4173/rwa/rwa-os.html
+          RWA_OS_PROOF_DIR: proof/rwa-os-v14
+        run: |
+          set -euxo pipefail
+          mkdir -p /tmp/rwa-os-site/rwa
+          cp -a . /tmp/rwa-os-site/rwa/
+          cd /tmp/rwa-os-site
+          python -m http.server 4173 >/tmp/rwa-os-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/rwa-os.html >/dev/null && break; sleep 1; done
+          cd "$GITHUB_WORKSPACE"
+          node tools/rwa-os-browser.mjs
+      - name: Upload browser proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rwa-os-v14-browser-${{ github.sha }}
+          path: proof/rwa-os-v14/
+          retention-days: 30
+          if-no-files-found: error
