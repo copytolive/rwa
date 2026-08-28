@@ -55,7 +55,11 @@ function accept(d,T,resolve,reject){
 async function warm(T=tv()){
   if(!T||T.state?.symbol!==XAUT||T.state?.status!=='live'||!T.state?.closedBars?.length)return false;
   lock(T);const rev=currentRevision(T);
-  if(entries.size===MATRIX.length&&revision===rev&&document.documentElement.dataset.atrMatrixReady==='true')return true;
+  /* Once the seven prepared Wilder states exist, do not re-download/recompute the
+   * 1,005,000-row pack just because a newer live 1s close arrived. The worker's
+   * incremental refresh path advances those states asynchronously. This makes
+   * user switching among prepared ATR lengths O(1) and non-blocking. */
+  if(entries.size===MATRIX.length&&document.documentElement.dataset.atrMatrixReady==='true')return true;
   if(warmPromise&&document.documentElement.dataset.atrMatrixReady==='warming')return warmPromise;
   if(worker){try{worker.terminate()}catch{}worker=null}
   entries.clear();document.documentElement.dataset.atrMatrixReady='warming';setMetric('ATR 1s MATRIX · background warm 0%');
@@ -68,7 +72,9 @@ function tbtSince(mark){return longTasks.filter(x=>x.start>=mark).reduce((a,x)=>
 async function apply(length){
   const T=tv();if(!T)return false;lock(T);const n=parseLength(length);
   if(!SET.has(n)){delete T.settings._exactBox;T.settings.atrLength=n;T.settings.method='atr';save(n);if(T.state.closedBars.length<n){badge(`NEEDS HISTORY · ${n}`);load(`ATR ${n.toLocaleString()} needs fixed-1s history`);return false}T.rebuild({fit:false});badge(`ACTIVE · ${n}`);return true}
-  let e=entries.get(n);if(!e?.satisfied||revision!==currentRevision(T)){badge(`PREPARING · ${n}`);load(`ATR ${n.toLocaleString()} · preparing fixed 1s OKX history…`);if(!await warm(T))return false;e=entries.get(n)}
+  /* A prepared entry is immediately usable. Revision drift is handled by the
+   * worker refresh loop and must never force a full-pack warm during a click. */
+  let e=entries.get(n);if(!e?.satisfied){badge(`PREPARING · ${n}`);load(`ATR ${n.toLocaleString()} · preparing fixed 1s OKX history…`);if(!await warm(T))return false;e=entries.get(n)}
   if(!e?.satisfied)return false;
   const mark=performance.now();applying=true;
   try{T.settings.atrLength=n;T.settings.method='atr';T.settings._exactBox=Number(e.rawAtr);save(n);T.rebuild({fit:false});Object.assign(T.state,{atr:Number(e.rawAtr),box:Number(e.rawAtr),atrRaw:Number(e.rawAtr),atrRequestedLength:n,atrAppliedLength:n,atrHistorySatisfied:true,atrHistorySourceCount:Number(e.sourceCount),atrHistoryFrom:Number(e.fromTime),atrHistoryTo:Number(e.toTime),atrHistoryGeneration:T.state.generation,atrMatrixPrepared:true,atrMatrixProvider:'OKX Spot XAUT-USDT fixed 1s'})}finally{applying=false}
@@ -86,7 +92,7 @@ document.addEventListener('click',e=>{const b=e.target?.closest?.('[data-apply-m
 const input=document.getElementById('atrLength');if(input){input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();void fromInput()}},true);input.addEventListener('change',e=>{e.stopImmediatePropagation();void fromInput()},true)}
 window.addEventListener('renko:tv-ready',()=>{const T=tv();lock(T);if(T?.state?.symbol===XAUT)void warm(T)},{once:true});
 setInterval(()=>{const T=tv();if(!T)return;lock(T);if(T.state?.symbol!==XAUT||T.state?.status!=='live')return;const cur=currentRevision(T);if(worker&&revision&&cur>revision){const newer=(T.state.closedBars||[]).filter(b=>Number(b.closeTime)>revision);if(newer.length)worker.postMessage({type:'refresh',token,newBars:newer,revision:cur})}},1500);
-const api={version:'2.0.0',matrix:MATRIX,parseLength,warm,apply,get entries(){return entries},get revision(){return revision},get warmMs(){return warmMs},get applying(){return applying}};
+const api={version:'2.1.0',matrix:MATRIX,parseLength,warm,apply,get entries(){return entries},get revision(){return revision},get warmMs(){return warmMs},get applying(){return applying}};
 window.RWARenkoATRFixed1s=api;
-window.RWARenkoATRParity={version:'fixed-1s-2.0.0',rule:'fixed-1s-okx-deep-wilder-matrix',matrix:MATRIX,parseLength,warmMatrix:warm,applyPreparedMatrix:apply,ensureAtrHistory:apply,applyAtrFromInput:fromInput,drainApplyQueue:apply,get applying(){return applying},get matrixReady(){return document.documentElement.dataset.atrMatrixReady},get matrixWarmMs(){return warmMs},get matrixEntries(){return entries}};
+window.RWARenkoATRParity={version:'fixed-1s-2.1.0',rule:'fixed-1s-okx-deep-wilder-matrix',matrix:MATRIX,parseLength,warmMatrix:warm,applyPreparedMatrix:apply,ensureAtrHistory:apply,applyAtrFromInput:fromInput,drainApplyQueue:apply,get applying(){return applying},get matrixReady(){return document.documentElement.dataset.atrMatrixReady},get matrixWarmMs(){return warmMs},get matrixEntries(){return entries}};
 })();
