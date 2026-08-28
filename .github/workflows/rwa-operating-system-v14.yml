@@ -10,6 +10,7 @@ on:
       - "rwa-os-app.mjs"
       - "rwa-os-config.json"
       - "rwa-os-service/**"
+      - "marketplace-v2.html"
       - "token/contracts/RWASeriesRegistry.sol"
       - "token/contracts/RWADistributionVault.sol"
       - "token/test/rwa-operating.test.mjs"
@@ -21,6 +22,7 @@ on:
     paths:
       - "rwa-os*"
       - "rwa-os-service/**"
+      - "marketplace-v2.html"
       - "token/contracts/RWASeriesRegistry.sol"
       - "token/contracts/RWADistributionVault.sol"
       - "token/test/rwa-operating.test.mjs"
@@ -81,6 +83,7 @@ jobs:
       - name: Serve repository and run browser acceptance
         env:
           RWA_OS_URL: http://127.0.0.1:4173/rwa/rwa-os.html
+          RWA_MARKETPLACE_URL: http://127.0.0.1:4173/rwa/marketplace-v2.html
           RWA_OS_PROOF_DIR: proof/rwa-os-v14
         run: |
           set -euxo pipefail
