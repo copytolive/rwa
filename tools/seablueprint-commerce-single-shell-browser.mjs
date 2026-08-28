@@ -23,12 +23,17 @@ const results=[];
 
 async function inspectOpen(page,v){
   return page.evaluate(({width})=>{
+    const r=el=>{const x=el?.getBoundingClientRect();return x?{left:x.left,right:x.right,width:x.width,top:x.top,bottom:x.bottom,height:x.height}:null};
+    const css=(el,props)=>{if(!el)return null;const s=getComputedStyle(el);return Object.fromEntries(props.map(p=>[p,s[p]]))};
     const screen=document.querySelector('#rwaShopScreen');
-    const panel=screen?.getBoundingClientRect();
+    const panel=r(screen);
     const chart=document.querySelector('.chart-wrap');
-    const chartRect=chart?.getBoundingClientRect();
+    const chartRect=r(chart);
     const main=document.querySelector('.main');
-    const mainRect=main?.getBoundingClientRect();
+    const mainRect=r(main);
+    const layout=document.querySelector('.layout');
+    const left=document.querySelector('.left');
+    const right=document.querySelector('.right');
     const products=[...document.querySelectorAll('#rwaShopScreen .rwa-product-card')];
     const source=document.querySelector('[data-seablueprint-source]')?.textContent||'';
     const activeTab=document.querySelector('#rwaShopScreen [data-shop-tab].active')?.textContent||'';
@@ -37,13 +42,21 @@ async function inspectOpen(page,v){
     return{
       path:location.pathname,hash:location.hash,
       audit:window.RWASeablueprintCommerceBridge?.audit?.(),
-      panel:panel?{left:panel.left,right:panel.right,width:panel.width,top:panel.top,bottom:panel.bottom,height:panel.height}:null,
-      chart:chartRect?{left:chartRect.left,right:chartRect.right,width:chartRect.width,height:chartRect.height}:null,
-      main:mainRect?{left:mainRect.left,right:mainRect.right,width:mainRect.width,height:mainRect.height}:null,
+      panel,chart:chartRect,main:mainRect,layout:r(layout),left:r(left),right:r(right),
+      computed:{
+        layout:css(layout,['display','width','maxWidth','minWidth','paddingLeft','paddingRight','marginLeft','marginRight','gridTemplateColumns','boxSizing']),
+        left:css(left,['display','width','maxWidth','minWidth','position']),
+        main:css(main,['display','width','maxWidth','minWidth','paddingLeft','paddingRight','marginLeft','marginRight','position','boxSizing']),
+        right:css(right,['display','width','maxWidth','minWidth','position','left','right']),
+        chart:css(chart,['display','width','maxWidth','minWidth','paddingLeft','paddingRight','marginLeft','marginRight','position','boxSizing']),
+        panel:css(screen,['display','width','maxWidth','minWidth','position','left','right','boxSizing']),
+      },
+      bodyClass:document.body.className,
+      htmlClass:document.documentElement.className,
       visibleChartWidth,products:products.length,activeTab,source,
       rootOverflow:Math.max(0,document.documentElement.scrollWidth-clientWidth),
       bodyOverflow:Math.max(0,document.body.scrollWidth-clientWidth),
-      viewport:{width:innerWidth,clientWidth,height:innerHeight},
+      viewport:{width:innerWidth,clientWidth,height:innerHeight,bodyClientWidth:document.body.clientWidth,bodyScrollWidth:document.body.scrollWidth,rootScrollWidth:document.documentElement.scrollWidth},
       marketShell:document.body.classList.contains('rwa-super-market-open'),
       placement:screen?.dataset.seablueprintPlacement||'',
     };
@@ -81,7 +94,7 @@ async function runViewport(v,index){
   if(v.width>=1000){
     if(s.panel.width>445||s.panel.width<335)throw Error(`${v.name}: desktop rail width outside contract ${s.panel.width}`);
     if(s.panel.left<v.width*.60)throw Error(`${v.name}: ecommerce rail consumes market instead of side rail ${s.panel.left}`);
-    if(s.visibleChartWidth<Math.min(420,v.width*.26))throw Error(`${v.name}: too little chart remains visible ${s.visibleChartWidth}`);
+    if(s.visibleChartWidth<Math.min(420,v.width*.26))throw Error(`${v.name}: too little chart remains visible ${s.visibleChartWidth}; geometry=${JSON.stringify({layout:s.layout,left:s.left,main:s.main,right:s.right,chart:s.chart,panel:s.panel,computed:s.computed,bodyClass:s.bodyClass,htmlClass:s.htmlClass,viewport:s.viewport})}`);
   }else{
     if(s.panel.left<40)throw Error(`${v.name}: mobile rail must leave market edge visible; left=${s.panel.left}`);
     if(s.panel.width>v.width-40+2)throw Error(`${v.name}: mobile rail too wide ${s.panel.width}`);
