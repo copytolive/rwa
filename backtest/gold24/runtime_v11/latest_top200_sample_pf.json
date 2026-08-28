@@ -171,6 +171,87 @@
       "candidate": {
         "direction_mode": "LONG_ONLY",
         "entry_method": "LIMIT",
+        "expiry": 5,
+        "family": "ATR_BREAKOUT",
+        "fast": 21,
+        "offset": 1.0,
+        "p1": 1.8,
+        "p2": 55.0,
+        "p3": 1.0,
+        "sl": 24.0,
+        "slow": 26,
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "tp": 24.5
+      },
+      "config_hash": "31d3c2841ffa23efa0a1fc2572d5ddef48b567ed51fec727d028ab8e13cade5e",
+      "execution_hash": "642d21dd801417672426d51194c0f612",
+      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=LONG_ONLY|SL=24.00|TP=24.50|OFF=1.00|EXP=5",
+      "metrics": {
+        "avg_win_loss": 0.6223459282288433,
+        "baseline_qualified_v11": false,
+        "calmar": -0.021759298981846795,
+        "exact_execution_duplicate": false,
+        "expectancy": -1.8006070725388599,
+        "full_metrics_pass": false,
+        "goal_policy": "GOLD_CANONICAL_V11_20260828",
+        "h1_entry_hours_pass": true,
+        "history_years": 25.842573579739906,
+        "max_consec_loss": 8,
+        "max_dd_pct": 12.36020276422064,
+        "minimum_trades_required_v11": 300,
+        "multi_layer_count": 2,
+        "multi_layer_pass": true,
+        "net_expectancy": -1.8006070725388599,
+        "net_profit": -695.03433,
+        "profit_factor": 0.8605277032300055,
+        "profit_factor_net": 0.8605277032300055,
+        "profitable_months_pct": 21.221864951768488,
+        "recovery": -0.5296235036855708,
+        "sample_pass_v11": true,
+        "sharpe": -0.2330774081524958,
+        "sortino": -0.1442506465782916,
+        "sqn": -1.4168607797389132,
+        "target_candidate_v11": false,
+        "target_pf_2_to_8": false,
+        "tier1_flags_v11": {
+          "full_trade_log": true,
+          "h1_profitable_months": true,
+          "h1_sqn": true,
+          "history": true,
+          "max_drawdown": true,
+          "net_ev_per_trade": false,
+          "profit_factor": false,
+          "sample": true,
+          "win_rate": true
+        },
+        "tier1_pass": false,
+        "tier1_pass_v11": false,
+        "tier2_flags_v11": {
+          "avg_win_loss": false,
+          "calmar": false,
+          "max_consecutive_losses": true,
+          "profitable_months": false,
+          "recovery": false,
+          "sharpe": false,
+          "sortino": false,
+          "sqn": false
+        },
+        "tier2_pass": false,
+        "tier2_pass_count": 1,
+        "tier2_pass_count_v11": 1,
+        "tier2_pass_v11": false,
+        "trades": 386,
+        "win_rate_pct": 58.031088082901555,
+        "wins": 224,
+        "wr": 58.031088082901555
+      },
+      "rank": 3
+    },
+    {
+      "candidate": {
+        "direction_mode": "LONG_ONLY",
+        "entry_method": "LIMIT",
         "expiry": 6,
         "family": "MOMENTUM_RSI_ROC",
         "fast": 26,
@@ -246,7 +327,7 @@
         "wins": 318,
         "wr": 57.2972972972973
       },
-      "rank": 3
+      "rank": 4
     },
     {
       "candidate": {
@@ -327,7 +408,7 @@
         "wins": 315,
         "wr": 55.95026642984014
       },
-      "rank": 4
+      "rank": 5
     },
     {
       "candidate": {
@@ -408,7 +489,7 @@
         "wins": 181,
         "wr": 56.918238993710695
       },
-      "rank": 5
+      "rank": 6
     },
     {
       "candidate": {
@@ -489,7 +570,7 @@
         "wins": 244,
         "wr": 54.22222222222222
       },
-      "rank": 6
+      "rank": 7
     },
     {
       "candidate": {
@@ -570,7 +651,7 @@
         "wins": 246,
         "wr": 57.74647887323944
       },
-      "rank": 7
+      "rank": 8
     },
     {
       "candidate": {
@@ -651,7 +732,7 @@
         "wins": 283,
         "wr": 56.82730923694779
       },
-      "rank": 8
+      "rank": 9
     },
     {
       "candidate": {
@@ -732,7 +813,7 @@
         "wins": 186,
         "wr": 54.54545454545455
       },
-      "rank": 9
+      "rank": 10
     },
     {
       "candidate": {
@@ -813,7 +894,7 @@
         "wins": 189,
         "wr": 51.63934426229508
       },
-      "rank": 10
+      "rank": 11
     },
     {
       "candidate": {
@@ -894,7 +975,7 @@
         "wins": 240,
         "wr": 53.57142857142857
       },
-      "rank": 11
+      "rank": 12
     },
     {
       "candidate": {
@@ -975,7 +1056,7 @@
         "wins": 149,
         "wr": 49.666666666666664
       },
-      "rank": 12
+      "rank": 13
     },
     {
       "candidate": {
@@ -1056,7 +1137,7 @@
         "wins": 187,
         "wr": 54.04624277456647
       },
-      "rank": 13
+      "rank": 14
     },
     {
       "candidate": {
@@ -1137,7 +1218,7 @@
         "wins": 303,
         "wr": 56.63551401869159
       },
-      "rank": 14
+      "rank": 15
     },
     {
       "candidate": {
@@ -1218,7 +1299,7 @@
         "wins": 257,
         "wr": 56.2363238512035
       },
-      "rank": 15
+      "rank": 16
     },
     {
       "candidate": {
@@ -1299,7 +1380,7 @@
         "wins": 288,
         "wr": 56.80473372781065
       },
-      "rank": 16
+      "rank": 17
     },
     {
       "candidate": {
@@ -1380,7 +1461,7 @@
         "wins": 233,
         "wr": 52.59593679458239
       },
-      "rank": 17
+      "rank": 18
     },
     {
       "candidate": {
@@ -1461,7 +1542,7 @@
         "wins": 242,
         "wr": 52.1551724137931
       },
-      "rank": 18
+      "rank": 19
     },
     {
       "candidate": {
@@ -1542,7 +1623,7 @@
         "wins": 240,
         "wr": 55.04587155963303
       },
-      "rank": 19
+      "rank": 20
     },
     {
       "candidate": {
@@ -1623,7 +1704,7 @@
         "wins": 252,
         "wr": 53.389830508474574
       },
-      "rank": 20
+      "rank": 21
     },
     {
       "candidate": {
@@ -1704,7 +1785,88 @@
         "wins": 167,
         "wr": 53.01587301587302
       },
-      "rank": 21
+      "rank": 22
+    },
+    {
+      "candidate": {
+        "direction_mode": "LONG_ONLY",
+        "entry_method": "LIMIT",
+        "expiry": 2,
+        "family": "TREND_EMA",
+        "fast": 13,
+        "offset": 4.25,
+        "p1": 66.0,
+        "p2": 62.0,
+        "p3": 1.0,
+        "sl": 24.0,
+        "slow": 34,
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "tp": 25.0
+      },
+      "config_hash": "4e48aba00bf222f8c315ac767d1a075dd5363478f34bf4421edd1e49c71f5ecc",
+      "execution_hash": "7533d1ccfe2ca47e8d58f6b0c02454dd",
+      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=LONG_ONLY|SL=24.00|TP=25.00|OFF=4.25|EXP=2",
+      "metrics": {
+        "avg_win_loss": 0.6479774947980013,
+        "baseline_qualified_v11": false,
+        "calmar": -0.02984105834751791,
+        "exact_execution_duplicate": false,
+        "expectancy": -2.67872125935162,
+        "full_metrics_pass": false,
+        "goal_policy": "GOLD_CANONICAL_V11_20260828",
+        "h1_entry_hours_pass": true,
+        "history_years": 25.842573579739906,
+        "max_consec_loss": 7,
+        "max_dd_pct": 13.929063354879645,
+        "minimum_trades_required_v11": 300,
+        "multi_layer_count": 2,
+        "multi_layer_pass": true,
+        "net_expectancy": -2.67872125935162,
+        "net_profit": -1074.1672249999997,
+        "profit_factor": 0.8036368929897,
+        "profit_factor_net": 0.8036368929897,
+        "profitable_months_pct": 21.221864951768488,
+        "recovery": -0.74363147985712,
+        "sample_pass_v11": true,
+        "sharpe": -0.3528358609362781,
+        "sortino": -0.2302526558319116,
+        "sqn": -2.0635896198255264,
+        "target_candidate_v11": false,
+        "target_pf_2_to_8": false,
+        "tier1_flags_v11": {
+          "full_trade_log": true,
+          "h1_profitable_months": true,
+          "h1_sqn": true,
+          "history": true,
+          "max_drawdown": true,
+          "net_ev_per_trade": false,
+          "profit_factor": false,
+          "sample": true,
+          "win_rate": true
+        },
+        "tier1_pass": false,
+        "tier1_pass_v11": false,
+        "tier2_flags_v11": {
+          "avg_win_loss": false,
+          "calmar": false,
+          "max_consecutive_losses": true,
+          "profitable_months": false,
+          "recovery": false,
+          "sharpe": false,
+          "sortino": false,
+          "sqn": false
+        },
+        "tier2_pass": false,
+        "tier2_pass_count": 1,
+        "tier2_pass_count_v11": 1,
+        "tier2_pass_v11": false,
+        "trades": 401,
+        "win_rate_pct": 55.36159600997506,
+        "wins": 222,
+        "wr": 55.36159600997506
+      },
+      "rank": 23
     },
     {
       "candidate": {
@@ -1785,7 +1947,7 @@
         "wins": 180,
         "wr": 55.900621118012424
       },
-      "rank": 22
+      "rank": 24
     },
     {
       "candidate": {
@@ -1866,7 +2028,7 @@
         "wins": 186,
         "wr": 52.10084033613445
       },
-      "rank": 23
+      "rank": 25
     },
     {
       "candidate": {
@@ -1947,7 +2109,7 @@
         "wins": 194,
         "wr": 49.36386768447837
       },
-      "rank": 24
+      "rank": 26
     },
     {
       "candidate": {
@@ -2028,7 +2190,7 @@
         "wins": 297,
         "wr": 55.3072625698324
       },
-      "rank": 25
+      "rank": 27
     },
     {
       "candidate": {
@@ -2109,7 +2271,7 @@
         "wins": 171,
         "wr": 55.33980582524272
       },
-      "rank": 26
+      "rank": 28
     },
     {
       "candidate": {
@@ -2190,7 +2352,7 @@
         "wins": 346,
         "wr": 56.351791530944624
       },
-      "rank": 27
+      "rank": 29
     },
     {
       "candidate": {
@@ -2271,7 +2433,7 @@
         "wins": 165,
         "wr": 52.715654952076676
       },
-      "rank": 28
+      "rank": 30
     },
     {
       "candidate": {
@@ -2352,7 +2514,7 @@
         "wins": 311,
         "wr": 54.08695652173913
       },
-      "rank": 29
+      "rank": 31
     },
     {
       "candidate": {
@@ -2433,7 +2595,88 @@
         "wins": 160,
         "wr": 51.77993527508091
       },
-      "rank": 30
+      "rank": 32
+    },
+    {
+      "candidate": {
+        "direction_mode": "LONG_ONLY",
+        "entry_method": "LIMIT",
+        "expiry": 2,
+        "family": "PRICE_STRUCTURE",
+        "fast": 8,
+        "offset": 3.25,
+        "p1": 66.0,
+        "p2": 66.0,
+        "p3": 1.0,
+        "sl": 25.0,
+        "slow": 10,
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "tp": 25.0
+      },
+      "config_hash": "238b5265eaf865fae5a6abe9e8775be0975d41001e2a2011c6f61be5ffd8dc7a",
+      "execution_hash": "bac833208924ac8c5843fd9a3f4e970f",
+      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=LONG_ONLY|SL=25.00|TP=25.00|OFF=3.25|EXP=2",
+      "metrics": {
+        "avg_win_loss": 0.6529394265763309,
+        "baseline_qualified_v11": false,
+        "calmar": -0.030363178826609306,
+        "exact_execution_duplicate": false,
+        "expectancy": -2.883009685714282,
+        "full_metrics_pass": false,
+        "goal_policy": "GOLD_CANONICAL_V11_20260828",
+        "h1_entry_hours_pass": true,
+        "history_years": 25.842573579739906,
+        "max_consec_loss": 6,
+        "max_dd_pct": 12.859709171046305,
+        "minimum_trades_required_v11": 300,
+        "multi_layer_count": 2,
+        "multi_layer_pass": true,
+        "net_expectancy": -2.883009685714282,
+        "net_profit": -1009.0533899999988,
+        "profit_factor": 0.7934453791307311,
+        "profit_factor_net": 0.7934453791307311,
+        "profitable_months_pct": 23.794212218649516,
+        "recovery": -0.760495388973789,
+        "sample_pass_v11": true,
+        "sharpe": -0.41574801126869704,
+        "sortino": -0.331570609441728,
+        "sqn": -2.0416426634431026,
+        "target_candidate_v11": false,
+        "target_pf_2_to_8": false,
+        "tier1_flags_v11": {
+          "full_trade_log": true,
+          "h1_profitable_months": true,
+          "h1_sqn": true,
+          "history": true,
+          "max_drawdown": true,
+          "net_ev_per_trade": false,
+          "profit_factor": false,
+          "sample": true,
+          "win_rate": true
+        },
+        "tier1_pass": false,
+        "tier1_pass_v11": false,
+        "tier2_flags_v11": {
+          "avg_win_loss": false,
+          "calmar": false,
+          "max_consecutive_losses": true,
+          "profitable_months": false,
+          "recovery": false,
+          "sharpe": false,
+          "sortino": false,
+          "sqn": false
+        },
+        "tier2_pass": false,
+        "tier2_pass_count": 1,
+        "tier2_pass_count_v11": 1,
+        "tier2_pass_v11": false,
+        "trades": 350,
+        "win_rate_pct": 54.857142857142854,
+        "wins": 192,
+        "wr": 54.857142857142854
+      },
+      "rank": 33
     },
     {
       "candidate": {
@@ -2514,7 +2757,7 @@
         "wins": 234,
         "wr": 57.21271393643032
       },
-      "rank": 31
+      "rank": 34
     },
     {
       "candidate": {
@@ -2595,7 +2838,7 @@
         "wins": 274,
         "wr": 55.24193548387097
       },
-      "rank": 32
+      "rank": 35
     },
     {
       "candidate": {
@@ -2676,7 +2919,7 @@
         "wins": 244,
         "wr": 52.36051502145923
       },
-      "rank": 33
+      "rank": 36
     },
     {
       "candidate": {
@@ -2757,7 +3000,88 @@
         "wins": 241,
         "wr": 55.40229885057471
       },
-      "rank": 34
+      "rank": 37
+    },
+    {
+      "candidate": {
+        "direction_mode": "LONG_ONLY",
+        "entry_method": "LIMIT",
+        "expiry": 5,
+        "family": "KELTNER_BREAKOUT",
+        "fast": 8,
+        "offset": 1.5,
+        "p1": 1.2,
+        "p2": 55.0,
+        "p3": 1.0,
+        "sl": 25.0,
+        "slow": 34,
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "tp": 25.0
+      },
+      "config_hash": "0d9184b35618d8ff16fbd95452b868df0f4be61a2bcbf0531caeb0a5cf9e1938",
+      "execution_hash": "d6bbcd4872fcf8d7f7818cf6dd10299e",
+      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=LONG_ONLY|SL=25.00|TP=25.00|OFF=1.50|EXP=5",
+      "metrics": {
+        "avg_win_loss": 0.6213860427580696,
+        "baseline_qualified_v11": false,
+        "calmar": -0.029831834245106548,
+        "exact_execution_duplicate": false,
+        "expectancy": -2.9820436213235295,
+        "full_metrics_pass": false,
+        "goal_policy": "GOLD_CANONICAL_V11_20260828",
+        "h1_entry_hours_pass": true,
+        "history_years": 25.842573579739906,
+        "max_consec_loss": 8,
+        "max_dd_pct": 21.04249210728469,
+        "minimum_trades_required_v11": 300,
+        "multi_layer_count": 2,
+        "multi_layer_pass": true,
+        "net_expectancy": -2.9820436213235295,
+        "net_profit": -1622.23173,
+        "profit_factor": 0.7870889874935548,
+        "profit_factor_net": 0.7870889874935548,
+        "profitable_months_pct": 24.437299035369776,
+        "recovery": -0.7265755973192736,
+        "sample_pass_v11": true,
+        "sharpe": -0.47180140425259576,
+        "sortino": -0.3217928283809635,
+        "sqn": -2.6826732898157064,
+        "target_candidate_v11": false,
+        "target_pf_2_to_8": false,
+        "tier1_flags_v11": {
+          "full_trade_log": true,
+          "h1_profitable_months": true,
+          "h1_sqn": true,
+          "history": true,
+          "max_drawdown": true,
+          "net_ev_per_trade": false,
+          "profit_factor": false,
+          "sample": true,
+          "win_rate": true
+        },
+        "tier1_pass": false,
+        "tier1_pass_v11": false,
+        "tier2_flags_v11": {
+          "avg_win_loss": false,
+          "calmar": false,
+          "max_consecutive_losses": true,
+          "profitable_months": false,
+          "recovery": false,
+          "sharpe": false,
+          "sortino": false,
+          "sqn": false
+        },
+        "tier2_pass": false,
+        "tier2_pass_count": 1,
+        "tier2_pass_count_v11": 1,
+        "tier2_pass_v11": false,
+        "trades": 544,
+        "win_rate_pct": 55.88235294117647,
+        "wins": 304,
+        "wr": 55.88235294117647
+      },
+      "rank": 38
     },
     {
       "candidate": {
@@ -2838,7 +3162,7 @@
         "wins": 263,
         "wr": 53.564154786150716
       },
-      "rank": 35
+      "rank": 39
     },
     {
       "candidate": {
@@ -2919,7 +3243,7 @@
         "wins": 207,
         "wr": 52.01005025125628
       },
-      "rank": 36
+      "rank": 40
     },
     {
       "candidate": {
@@ -3000,7 +3324,7 @@
         "wins": 279,
         "wr": 53.65384615384615
       },
-      "rank": 37
+      "rank": 41
     },
     {
       "candidate": {
@@ -3081,7 +3405,7 @@
         "wins": 281,
         "wr": 55.09803921568628
       },
-      "rank": 38
+      "rank": 42
     },
     {
       "candidate": {
@@ -3162,7 +3486,7 @@
         "wins": 162,
         "wr": 46.68587896253602
       },
-      "rank": 39
+      "rank": 43
     },
     {
       "candidate": {
@@ -3243,7 +3567,7 @@
         "wins": 225,
         "wr": 54.21686746987952
       },
-      "rank": 40
+      "rank": 44
     },
     {
       "candidate": {
@@ -3324,7 +3648,7 @@
         "wins": 170,
         "wr": 52.147239263803684
       },
-      "rank": 41
+      "rank": 45
     },
     {
       "candidate": {
@@ -3405,7 +3729,7 @@
         "wins": 281,
         "wr": 54.77582846003899
       },
-      "rank": 42
+      "rank": 46
     },
     {
       "candidate": {
@@ -3486,7 +3810,7 @@
         "wins": 279,
         "wr": 54.06976744186046
       },
-      "rank": 43
+      "rank": 47
     },
     {
       "candidate": {
@@ -3567,7 +3891,7 @@
         "wins": 368,
         "wr": 53.179190751445084
       },
-      "rank": 44
+      "rank": 48
     },
     {
       "candidate": {
@@ -3648,7 +3972,7 @@
         "wins": 214,
         "wr": 52.06812652068127
       },
-      "rank": 45
+      "rank": 49
     },
     {
       "candidate": {
@@ -3729,7 +4053,7 @@
         "wins": 184,
         "wr": 54.437869822485204
       },
-      "rank": 46
+      "rank": 50
     },
     {
       "candidate": {
@@ -3810,7 +4134,7 @@
         "wins": 288,
         "wr": 54.44234404536862
       },
-      "rank": 47
+      "rank": 51
     },
     {
       "candidate": {
@@ -3891,7 +4215,7 @@
         "wins": 193,
         "wr": 53.611111111111114
       },
-      "rank": 48
+      "rank": 52
     },
     {
       "candidate": {
@@ -3972,7 +4296,7 @@
         "wins": 186,
         "wr": 52.69121813031161
       },
-      "rank": 49
+      "rank": 53
     },
     {
       "candidate": {
@@ -4053,7 +4377,7 @@
         "wins": 283,
         "wr": 55.81854043392505
       },
-      "rank": 50
+      "rank": 54
     },
     {
       "candidate": {
@@ -4134,7 +4458,7 @@
         "wins": 240,
         "wr": 52.5164113785558
       },
-      "rank": 51
+      "rank": 55
     },
     {
       "candidate": {
@@ -4215,7 +4539,7 @@
         "wins": 181,
         "wr": 56.5625
       },
-      "rank": 52
+      "rank": 56
     },
     {
       "candidate": {
@@ -4296,7 +4620,7 @@
         "wins": 218,
         "wr": 45.89473684210526
       },
-      "rank": 53
+      "rank": 57
     },
     {
       "candidate": {
@@ -4377,7 +4701,7 @@
         "wins": 139,
         "wr": 46.333333333333336
       },
-      "rank": 54
+      "rank": 58
     },
     {
       "candidate": {
@@ -4458,7 +4782,7 @@
         "wins": 121,
         "wr": 40.06622516556291
       },
-      "rank": 55
+      "rank": 59
     },
     {
       "candidate": {
@@ -4539,7 +4863,7 @@
         "wins": 372,
         "wr": 55.02958579881657
       },
-      "rank": 56
+      "rank": 60
     },
     {
       "candidate": {
@@ -4620,7 +4944,7 @@
         "wins": 318,
         "wr": 54.45205479452055
       },
-      "rank": 57
+      "rank": 61
     },
     {
       "candidate": {
@@ -4701,7 +5025,7 @@
         "wins": 272,
         "wr": 55.06072874493927
       },
-      "rank": 58
+      "rank": 62
     },
     {
       "candidate": {
@@ -4782,7 +5106,7 @@
         "wins": 298,
         "wr": 53.30948121645796
       },
-      "rank": 59
+      "rank": 63
     },
     {
       "candidate": {
@@ -4863,7 +5187,7 @@
         "wins": 250,
         "wr": 55.309734513274336
       },
-      "rank": 60
+      "rank": 64
     },
     {
       "candidate": {
@@ -4944,7 +5268,7 @@
         "wins": 168,
         "wr": 50.149253731343286
       },
-      "rank": 61
+      "rank": 65
     },
     {
       "candidate": {
@@ -5025,7 +5349,7 @@
         "wins": 327,
         "wr": 54.95798319327731
       },
-      "rank": 62
+      "rank": 66
     },
     {
       "candidate": {
@@ -5106,7 +5430,7 @@
         "wins": 202,
         "wr": 54.15549597855228
       },
-      "rank": 63
+      "rank": 67
     },
     {
       "candidate": {
@@ -5187,7 +5511,169 @@
         "wins": 346,
         "wr": 54.40251572327044
       },
-      "rank": 64
+      "rank": 68
+    },
+    {
+      "candidate": {
+        "direction_mode": "LONG_ONLY",
+        "entry_method": "LIMIT",
+        "expiry": 8,
+        "family": "ATR_BREAKOUT",
+        "fast": 5,
+        "offset": 2.0,
+        "p1": 0.5,
+        "p2": 55.0,
+        "p3": 1.0,
+        "sl": 25.0,
+        "slow": 26,
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "tp": 25.0
+      },
+      "config_hash": "c3d39397b3d8657bffddf6a664424861db8c0efde3cb404e2df16a68ca717aa0",
+      "execution_hash": "f5c8b0008a462af4a768a60be281b12a",
+      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=LONG_ONLY|SL=25.00|TP=25.00|OFF=2.00|EXP=8",
+      "metrics": {
+        "avg_win_loss": 0.6435990706093598,
+        "baseline_qualified_v11": false,
+        "calmar": -0.0319584116662653,
+        "exact_execution_duplicate": false,
+        "expectancy": -3.2750159034267914,
+        "full_metrics_pass": false,
+        "goal_policy": "GOLD_CANONICAL_V11_20260828",
+        "h1_entry_hours_pass": true,
+        "history_years": 25.842573579739906,
+        "max_consec_loss": 9,
+        "max_dd_pct": 25.458188224756718,
+        "minimum_trades_required_v11": 300,
+        "multi_layer_count": 2,
+        "multi_layer_pass": true,
+        "net_expectancy": -3.2750159034267914,
+        "net_profit": -2102.56021,
+        "profit_factor": 0.7714372421687532,
+        "profit_factor_net": 0.7714372421687532,
+        "profitable_months_pct": 28.29581993569132,
+        "recovery": -0.7795331149679828,
+        "sample_pass_v11": true,
+        "sharpe": -0.5565624425786687,
+        "sortino": -0.4194842646732927,
+        "sqn": -3.118954053054197,
+        "target_candidate_v11": false,
+        "target_pf_2_to_8": false,
+        "tier1_flags_v11": {
+          "full_trade_log": true,
+          "h1_profitable_months": true,
+          "h1_sqn": true,
+          "history": true,
+          "max_drawdown": false,
+          "net_ev_per_trade": false,
+          "profit_factor": false,
+          "sample": true,
+          "win_rate": true
+        },
+        "tier1_pass": false,
+        "tier1_pass_v11": false,
+        "tier2_flags_v11": {
+          "avg_win_loss": false,
+          "calmar": false,
+          "max_consecutive_losses": true,
+          "profitable_months": false,
+          "recovery": false,
+          "sharpe": false,
+          "sortino": false,
+          "sqn": false
+        },
+        "tier2_pass": false,
+        "tier2_pass_count": 1,
+        "tier2_pass_count_v11": 1,
+        "tier2_pass_v11": false,
+        "trades": 642,
+        "win_rate_pct": 54.517133956386296,
+        "wins": 350,
+        "wr": 54.517133956386296
+      },
+      "rank": 69
+    },
+    {
+      "candidate": {
+        "direction_mode": "LONG_ONLY",
+        "entry_method": "LIMIT",
+        "expiry": 8,
+        "family": "TREND_EMA",
+        "fast": 5,
+        "offset": 2.25,
+        "p1": 66.0,
+        "p2": 66.0,
+        "p3": 1.0,
+        "sl": 15.5,
+        "slow": 7,
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "tp": 22.5
+      },
+      "config_hash": "be03c8d19c948d95080187a1d6263ed0f92a1a66ed227f35d9ab310bf7e63778",
+      "execution_hash": "87ce3c026b5f2286f2f15a167baa14b6",
+      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=LONG_ONLY|SL=15.50|TP=22.50|OFF=2.25|EXP=8",
+      "metrics": {
+        "avg_win_loss": 0.8622129243888488,
+        "baseline_qualified_v11": false,
+        "calmar": -0.031097927221802157,
+        "exact_execution_duplicate": false,
+        "expectancy": -2.603302736842105,
+        "full_metrics_pass": false,
+        "goal_policy": "GOLD_CANONICAL_V11_20260828",
+        "h1_entry_hours_pass": true,
+        "history_years": 25.842573579739906,
+        "max_consec_loss": 10,
+        "max_dd_pct": 21.541657467273218,
+        "minimum_trades_required_v11": 300,
+        "multi_layer_count": 2,
+        "multi_layer_pass": true,
+        "net_expectancy": -2.603302736842105,
+        "net_profit": -1731.1963199999998,
+        "profit_factor": 0.7713243825017051,
+        "profit_factor_net": 0.7713243825017051,
+        "profitable_months_pct": 31.189710610932476,
+        "recovery": -0.762541795413407,
+        "sample_pass_v11": true,
+        "sharpe": -0.5417285546334948,
+        "sortino": -0.47328022954261745,
+        "sqn": -3.000075589659877,
+        "target_candidate_v11": false,
+        "target_pf_2_to_8": false,
+        "tier1_flags_v11": {
+          "full_trade_log": true,
+          "h1_profitable_months": true,
+          "h1_sqn": true,
+          "history": true,
+          "max_drawdown": true,
+          "net_ev_per_trade": false,
+          "profit_factor": false,
+          "sample": true,
+          "win_rate": false
+        },
+        "tier1_pass": false,
+        "tier1_pass_v11": false,
+        "tier2_flags_v11": {
+          "avg_win_loss": false,
+          "calmar": false,
+          "max_consecutive_losses": true,
+          "profitable_months": false,
+          "recovery": false,
+          "sharpe": false,
+          "sortino": false,
+          "sqn": false
+        },
+        "tier2_pass": false,
+        "tier2_pass_count": 1,
+        "tier2_pass_count_v11": 1,
+        "tier2_pass_v11": false,
+        "trades": 665,
+        "win_rate_pct": 47.21804511278196,
+        "wins": 314,
+        "wr": 47.21804511278196
+      },
+      "rank": 70
     },
     {
       "candidate": {
@@ -5268,7 +5754,7 @@
         "wins": 183,
         "wr": 46.56488549618321
       },
-      "rank": 65
+      "rank": 71
     },
     {
       "candidate": {
@@ -5349,7 +5835,7 @@
         "wins": 263,
         "wr": 54.22680412371134
       },
-      "rank": 66
+      "rank": 72
     },
     {
       "candidate": {
@@ -5430,7 +5916,7 @@
         "wins": 374,
         "wr": 53.200568990042676
       },
-      "rank": 67
+      "rank": 73
     },
     {
       "candidate": {
@@ -5511,7 +5997,7 @@
         "wins": 291,
         "wr": 49.914236706689536
       },
-      "rank": 68
+      "rank": 74
     },
     {
       "candidate": {
@@ -5592,7 +6078,7 @@
         "wins": 339,
         "wr": 55.75657894736842
       },
-      "rank": 69
+      "rank": 75
     },
     {
       "candidate": {
@@ -5673,7 +6159,7 @@
         "wins": 367,
         "wr": 54.53194650817236
       },
-      "rank": 70
+      "rank": 76
     },
     {
       "candidate": {
@@ -5754,7 +6240,7 @@
         "wins": 279,
         "wr": 50.72727272727273
       },
-      "rank": 71
+      "rank": 77
     },
     {
       "candidate": {
@@ -5835,7 +6321,7 @@
         "wins": 226,
         "wr": 46.21676891615542
       },
-      "rank": 72
+      "rank": 78
     },
     {
       "candidate": {
@@ -5916,7 +6402,7 @@
         "wins": 157,
         "wr": 51.81518151815182
       },
-      "rank": 73
+      "rank": 79
     },
     {
       "candidate": {
@@ -5997,7 +6483,7 @@
         "wins": 274,
         "wr": 53.93700787401575
       },
-      "rank": 74
+      "rank": 80
     },
     {
       "candidate": {
@@ -6078,7 +6564,7 @@
         "wins": 242,
         "wr": 55.125284738041
       },
-      "rank": 75
+      "rank": 81
     },
     {
       "candidate": {
@@ -6159,7 +6645,7 @@
         "wins": 304,
         "wr": 52.14408233276158
       },
-      "rank": 76
+      "rank": 82
     },
     {
       "candidate": {
@@ -6240,7 +6726,7 @@
         "wins": 173,
         "wr": 55.62700964630225
       },
-      "rank": 77
+      "rank": 83
     },
     {
       "candidate": {
@@ -6321,7 +6807,7 @@
         "wins": 257,
         "wr": 53.541666666666664
       },
-      "rank": 78
+      "rank": 84
     },
     {
       "candidate": {
@@ -6402,7 +6888,88 @@
         "wins": 235,
         "wr": 48.057259713701434
       },
-      "rank": 79
+      "rank": 85
+    },
+    {
+      "candidate": {
+        "direction_mode": "LONG_ONLY",
+        "entry_method": "LIMIT",
+        "expiry": 7,
+        "family": "MOMENTUM_RSI_ROC",
+        "fast": 26,
+        "offset": 3.5,
+        "p1": 2.5,
+        "p2": 66.0,
+        "p3": 1.0,
+        "sl": 17.0,
+        "slow": 55,
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "tp": 21.0
+      },
+      "config_hash": "0ae5b7ce30ca6f7c8567753ebbd5c5f70a6512091f936c23419d405fd7cb0d37",
+      "execution_hash": "00da674c73ef8dc98f12c965f77ba1fd",
+      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=LONG_ONLY|SL=17.00|TP=21.00|OFF=3.50|EXP=7",
+      "metrics": {
+        "avg_win_loss": 0.7348269752538545,
+        "baseline_qualified_v11": false,
+        "calmar": -0.03111131672897793,
+        "exact_execution_duplicate": false,
+        "expectancy": -2.6829191830065326,
+        "full_metrics_pass": false,
+        "goal_policy": "GOLD_CANONICAL_V11_20260828",
+        "h1_entry_hours_pass": true,
+        "history_years": 25.842573579739906,
+        "max_consec_loss": 5,
+        "max_dd_pct": 10.211154879945292,
+        "minimum_trades_required_v11": 300,
+        "multi_layer_count": 2,
+        "multi_layer_pass": true,
+        "net_expectancy": -2.6829191830065326,
+        "net_profit": -820.973269999999,
+        "profit_factor": 0.7642200542640087,
+        "profit_factor_net": 0.7642200542640087,
+        "profitable_months_pct": 13.82636655948553,
+        "recovery": -0.7864659140514401,
+        "sample_pass_v11": true,
+        "sharpe": -0.3597167464988532,
+        "sortino": -0.21031678890967143,
+        "sqn": -2.145265547618125,
+        "target_candidate_v11": false,
+        "target_pf_2_to_8": false,
+        "tier1_flags_v11": {
+          "full_trade_log": true,
+          "h1_profitable_months": true,
+          "h1_sqn": true,
+          "history": true,
+          "max_drawdown": true,
+          "net_ev_per_trade": false,
+          "profit_factor": false,
+          "sample": true,
+          "win_rate": true
+        },
+        "tier1_pass": false,
+        "tier1_pass_v11": false,
+        "tier2_flags_v11": {
+          "avg_win_loss": false,
+          "calmar": false,
+          "max_consecutive_losses": true,
+          "profitable_months": false,
+          "recovery": false,
+          "sharpe": false,
+          "sortino": false,
+          "sqn": false
+        },
+        "tier2_pass": false,
+        "tier2_pass_count": 1,
+        "tier2_pass_count_v11": 1,
+        "tier2_pass_v11": false,
+        "trades": 306,
+        "win_rate_pct": 50.98039215686274,
+        "wins": 156,
+        "wr": 50.98039215686274
+      },
+      "rank": 86
     },
     {
       "candidate": {
@@ -6483,7 +7050,7 @@
         "wins": 324,
         "wr": 53.910149750415975
       },
-      "rank": 80
+      "rank": 87
     },
     {
       "candidate": {
@@ -6564,7 +7131,7 @@
         "wins": 439,
         "wr": 54.39900867410161
       },
-      "rank": 81
+      "rank": 88
     },
     {
       "candidate": {
@@ -6645,7 +7212,7 @@
         "wins": 141,
         "wr": 47.0
       },
-      "rank": 82
+      "rank": 89
     },
     {
       "candidate": {
@@ -6726,7 +7293,7 @@
         "wins": 407,
         "wr": 54.77792732166891
       },
-      "rank": 83
+      "rank": 90
     },
     {
       "candidate": {
@@ -6807,7 +7374,7 @@
         "wins": 296,
         "wr": 53.04659498207885
       },
-      "rank": 84
+      "rank": 91
     },
     {
       "candidate": {
@@ -6888,7 +7455,88 @@
         "wins": 164,
         "wr": 47.39884393063584
       },
-      "rank": 85
+      "rank": 92
+    },
+    {
+      "candidate": {
+        "direction_mode": "LONG_ONLY",
+        "entry_method": "LIMIT",
+        "expiry": 4,
+        "family": "MOMENTUM_RSI_ROC",
+        "fast": 3,
+        "offset": 4.5,
+        "p1": 0.3,
+        "p2": 58.0,
+        "p3": 1.0,
+        "sl": 23.5,
+        "slow": 100,
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "tp": 25.0
+      },
+      "config_hash": "4020ed1aff0434264280eda49cf46edb3697abf34a6323a3099831afed06b2b4",
+      "execution_hash": "d3e993d00f3c378ef7ec009b9e1f39e6",
+      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=LONG_ONLY|SL=23.50|TP=25.00|OFF=4.50|EXP=4",
+      "metrics": {
+        "avg_win_loss": 0.6642825457703722,
+        "baseline_qualified_v11": false,
+        "calmar": -0.032801056939959196,
+        "exact_execution_duplicate": false,
+        "expectancy": -3.3550534869431643,
+        "full_metrics_pass": false,
+        "goal_policy": "GOLD_CANONICAL_V11_20260828",
+        "h1_entry_hours_pass": true,
+        "history_years": 25.842573579739906,
+        "max_consec_loss": 7,
+        "max_dd_pct": 25.76658348392541,
+        "minimum_trades_required_v11": 300,
+        "multi_layer_count": 2,
+        "multi_layer_pass": true,
+        "net_expectancy": -3.3550534869431643,
+        "net_profit": -2184.13982,
+        "profit_factor": 0.7582435637576286,
+        "profit_factor_net": 0.7582435637576286,
+        "profitable_months_pct": 33.762057877813504,
+        "recovery": -0.8050934010748049,
+        "sample_pass_v11": true,
+        "sharpe": -0.6091837415212159,
+        "sortino": -0.48788308423403115,
+        "sqn": -3.4320998793569886,
+        "target_candidate_v11": false,
+        "target_pf_2_to_8": false,
+        "tier1_flags_v11": {
+          "full_trade_log": true,
+          "h1_profitable_months": true,
+          "h1_sqn": true,
+          "history": true,
+          "max_drawdown": false,
+          "net_ev_per_trade": false,
+          "profit_factor": false,
+          "sample": true,
+          "win_rate": true
+        },
+        "tier1_pass": false,
+        "tier1_pass_v11": false,
+        "tier2_flags_v11": {
+          "avg_win_loss": false,
+          "calmar": false,
+          "max_consecutive_losses": true,
+          "profitable_months": false,
+          "recovery": false,
+          "sharpe": false,
+          "sortino": false,
+          "sqn": false
+        },
+        "tier2_pass": false,
+        "tier2_pass_count": 1,
+        "tier2_pass_count_v11": 1,
+        "tier2_pass_v11": false,
+        "trades": 651,
+        "win_rate_pct": 53.3026113671275,
+        "wins": 347,
+        "wr": 53.3026113671275
+      },
+      "rank": 93
     },
     {
       "candidate": {
@@ -6969,7 +7617,7 @@
         "wins": 407,
         "wr": 54.05046480743692
       },
-      "rank": 86
+      "rank": 94
     },
     {
       "candidate": {
@@ -7050,7 +7698,7 @@
         "wins": 247,
         "wr": 50.614754098360656
       },
-      "rank": 87
+      "rank": 95
     },
     {
       "candidate": {
@@ -7131,7 +7779,88 @@
         "wins": 207,
         "wr": 51.75
       },
-      "rank": 88
+      "rank": 96
+    },
+    {
+      "candidate": {
+        "direction_mode": "BOTH",
+        "entry_method": "LIMIT",
+        "expiry": 8,
+        "family": "KELTNER_BREAKOUT",
+        "fast": 13,
+        "offset": 5.0,
+        "p1": 1.2,
+        "p2": 55.0,
+        "p3": 1.0,
+        "sl": 24.5,
+        "slow": 14,
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "tp": 24.5
+      },
+      "config_hash": "6b3ec976177ce3331dbedcd4772daaa8d8464cebc8fcc2de986bf89525d7fe8f",
+      "execution_hash": "3b8a3fe44e52f10596097fe422aa3aa2",
+      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=BOTH|SL=24.50|TP=24.50|OFF=5.00|EXP=8",
+      "metrics": {
+        "avg_win_loss": 0.6645066498008606,
+        "baseline_qualified_v11": false,
+        "calmar": -0.03440513060572737,
+        "exact_execution_duplicate": false,
+        "expectancy": -3.472212671905697,
+        "full_metrics_pass": false,
+        "goal_policy": "GOLD_CANONICAL_V11_20260828",
+        "h1_entry_hours_pass": true,
+        "history_years": 25.842573579739906,
+        "max_consec_loss": 8,
+        "max_dd_pct": 19.877654043958337,
+        "minimum_trades_required_v11": 300,
+        "multi_layer_count": 2,
+        "multi_layer_pass": true,
+        "net_expectancy": -3.472212671905697,
+        "net_profit": -1767.3562499999998,
+        "profit_factor": 0.7566441264539211,
+        "profit_factor_net": 0.7566441264539211,
+        "profitable_months_pct": 31.189710610932476,
+        "recovery": -0.8653131555693404,
+        "sample_pass_v11": true,
+        "sharpe": -0.5491431654642712,
+        "sortino": -0.4568114034511649,
+        "sqn": -2.9633847693209883,
+        "target_candidate_v11": false,
+        "target_pf_2_to_8": false,
+        "tier1_flags_v11": {
+          "full_trade_log": true,
+          "h1_profitable_months": true,
+          "h1_sqn": true,
+          "history": true,
+          "max_drawdown": true,
+          "net_ev_per_trade": false,
+          "profit_factor": false,
+          "sample": true,
+          "win_rate": true
+        },
+        "tier1_pass": false,
+        "tier1_pass_v11": false,
+        "tier2_flags_v11": {
+          "avg_win_loss": false,
+          "calmar": false,
+          "max_consecutive_losses": true,
+          "profitable_months": false,
+          "recovery": false,
+          "sharpe": false,
+          "sortino": false,
+          "sqn": false
+        },
+        "tier2_pass": false,
+        "tier2_pass_count": 1,
+        "tier2_pass_count_v11": 1,
+        "tier2_pass_v11": false,
+        "trades": 509,
+        "win_rate_pct": 53.24165029469548,
+        "wins": 271,
+        "wr": 53.24165029469548
+      },
+      "rank": 97
     },
     {
       "candidate": {
@@ -7212,7 +7941,7 @@
         "wins": 164,
         "wr": 54.12541254125413
       },
-      "rank": 89
+      "rank": 98
     },
     {
       "candidate": {
@@ -7293,7 +8022,7 @@
         "wins": 333,
         "wr": 53.02547770700637
       },
-      "rank": 90
+      "rank": 99
     },
     {
       "candidate": {
@@ -7374,7 +8103,7 @@
         "wins": 285,
         "wr": 50.80213903743316
       },
-      "rank": 91
+      "rank": 100
     },
     {
       "candidate": {
@@ -7455,7 +8184,7 @@
         "wins": 204,
         "wr": 49.27536231884058
       },
-      "rank": 92
+      "rank": 101
     },
     {
       "candidate": {
@@ -7536,7 +8265,7 @@
         "wins": 273,
         "wr": 55.714285714285715
       },
-      "rank": 93
+      "rank": 102
     },
     {
       "candidate": {
@@ -7617,7 +8346,7 @@
         "wins": 149,
         "wr": 49.01315789473684
       },
-      "rank": 94
+      "rank": 103
     },
     {
       "candidate": {
@@ -7698,7 +8427,7 @@
         "wins": 312,
         "wr": 53.70051635111876
       },
-      "rank": 95
+      "rank": 104
     },
     {
       "candidate": {
@@ -7779,7 +8508,7 @@
         "wins": 268,
         "wr": 49.174311926605505
       },
-      "rank": 96
+      "rank": 105
     },
     {
       "candidate": {
@@ -7860,7 +8589,7 @@
         "wins": 352,
         "wr": 53.414264036418814
       },
-      "rank": 97
+      "rank": 106
     },
     {
       "candidate": {
@@ -7941,7 +8670,7 @@
         "wins": 444,
         "wr": 54.61254612546126
       },
-      "rank": 98
+      "rank": 107
     },
     {
       "candidate": {
@@ -8022,7 +8751,7 @@
         "wins": 177,
         "wr": 49.30362116991643
       },
-      "rank": 99
+      "rank": 108
     },
     {
       "candidate": {
@@ -8103,7 +8832,88 @@
         "wins": 148,
         "wr": 42.52873563218391
       },
-      "rank": 100
+      "rank": 109
+    },
+    {
+      "candidate": {
+        "direction_mode": "BOTH",
+        "entry_method": "LIMIT",
+        "expiry": 8,
+        "family": "ATR_BREAKOUT",
+        "fast": 26,
+        "offset": 4.25,
+        "p1": 2.2,
+        "p2": 55.0,
+        "p3": 1.0,
+        "sl": 22.0,
+        "slow": 144,
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "tp": 24.0
+      },
+      "config_hash": "c5aa481a8001906c2e19f83b5cd229acc19561136cd94e65f81ab72a2f1bf087",
+      "execution_hash": "8b63a01e0206af655ef3c38679ca468c",
+      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=BOTH|SL=22.00|TP=24.00|OFF=4.25|EXP=8",
+      "metrics": {
+        "avg_win_loss": 0.6864600624253032,
+        "baseline_qualified_v11": false,
+        "calmar": -0.03588895249274072,
+        "exact_execution_duplicate": false,
+        "expectancy": -3.427012460701329,
+        "full_metrics_pass": false,
+        "goal_policy": "GOLD_CANONICAL_V11_20260828",
+        "h1_entry_hours_pass": true,
+        "history_years": 25.842573579739906,
+        "max_consec_loss": 8,
+        "max_dd_pct": 30.55798047308556,
+        "minimum_trades_required_v11": 300,
+        "multi_layer_count": 2,
+        "multi_layer_pass": true,
+        "net_expectancy": -3.427012460701329,
+        "net_profit": -2834.1393049999992,
+        "profit_factor": 0.7471320376396607,
+        "profit_factor_net": 0.7471320376396607,
+        "profitable_months_pct": 29.260450160771704,
+        "recovery": -0.8987740515843808,
+        "sample_pass_v11": true,
+        "sharpe": -0.7135734404832846,
+        "sortino": -0.5560150727922857,
+        "sqn": -3.992762267872146,
+        "target_candidate_v11": false,
+        "target_pf_2_to_8": false,
+        "tier1_flags_v11": {
+          "full_trade_log": true,
+          "h1_profitable_months": true,
+          "h1_sqn": true,
+          "history": true,
+          "max_drawdown": false,
+          "net_ev_per_trade": false,
+          "profit_factor": false,
+          "sample": true,
+          "win_rate": true
+        },
+        "tier1_pass": false,
+        "tier1_pass_v11": false,
+        "tier2_flags_v11": {
+          "avg_win_loss": false,
+          "calmar": false,
+          "max_consecutive_losses": true,
+          "profitable_months": false,
+          "recovery": false,
+          "sharpe": false,
+          "sortino": false,
+          "sqn": false
+        },
+        "tier2_pass": false,
+        "tier2_pass_count": 1,
+        "tier2_pass_count_v11": 1,
+        "tier2_pass_v11": false,
+        "trades": 827,
+        "win_rate_pct": 52.11608222490931,
+        "wins": 431,
+        "wr": 52.11608222490931
+      },
+      "rank": 110
     },
     {
       "candidate": {
@@ -8184,7 +8994,7 @@
         "wins": 257,
         "wr": 55.50755939524838
       },
-      "rank": 101
+      "rank": 111
     },
     {
       "candidate": {
@@ -8265,7 +9075,7 @@
         "wins": 327,
         "wr": 52.74193548387097
       },
-      "rank": 102
+      "rank": 112
     },
     {
       "candidate": {
@@ -8346,7 +9156,7 @@
         "wins": 225,
         "wr": 52.69320843091335
       },
-      "rank": 103
+      "rank": 113
     },
     {
       "candidate": {
@@ -8427,7 +9237,7 @@
         "wins": 345,
         "wr": 54.24528301886792
       },
-      "rank": 104
+      "rank": 114
     },
     {
       "candidate": {
@@ -8508,7 +9318,88 @@
         "wins": 219,
         "wr": 52.89855072463768
       },
-      "rank": 105
+      "rank": 115
+    },
+    {
+      "candidate": {
+        "direction_mode": "BOTH",
+        "entry_method": "LIMIT",
+        "expiry": 8,
+        "family": "PRICE_STRUCTURE",
+        "fast": 21,
+        "offset": 1.25,
+        "p1": 55.0,
+        "p2": 52.0,
+        "p3": 1.0,
+        "sl": 17.0,
+        "slow": 26,
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "tp": 23.5
+      },
+      "config_hash": "2b787b381d834da027b35d10d32e8f219b8c2f5fe731f71405bc98dd5c65d0d9",
+      "execution_hash": "bc5a27288ae29473588d630f929a4903",
+      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=BOTH|SL=17.00|TP=23.50|OFF=1.25|EXP=8",
+      "metrics": {
+        "avg_win_loss": 0.8620909253292103,
+        "baseline_qualified_v11": false,
+        "calmar": -0.03415526514555224,
+        "exact_execution_duplicate": false,
+        "expectancy": -3.0891776954177876,
+        "full_metrics_pass": false,
+        "goal_policy": "GOLD_CANONICAL_V11_20260828",
+        "h1_entry_hours_pass": true,
+        "history_years": 25.842573579739906,
+        "max_consec_loss": 10,
+        "max_dd_pct": 12.984444593264241,
+        "minimum_trades_required_v11": 300,
+        "multi_layer_count": 2,
+        "multi_layer_pass": true,
+        "net_expectancy": -3.0891776954177876,
+        "net_profit": -1146.0849249999992,
+        "profit_factor": 0.7451238148574079,
+        "profit_factor_net": 0.7451238148574079,
+        "profitable_months_pct": 24.115755627009648,
+        "recovery": -0.8674710042432382,
+        "sample_pass_v11": true,
+        "sharpe": -0.5370416115393438,
+        "sortino": -0.42851664634644304,
+        "sqn": -2.689398383721666,
+        "target_candidate_v11": false,
+        "target_pf_2_to_8": false,
+        "tier1_flags_v11": {
+          "full_trade_log": true,
+          "h1_profitable_months": true,
+          "h1_sqn": true,
+          "history": true,
+          "max_drawdown": true,
+          "net_ev_per_trade": false,
+          "profit_factor": false,
+          "sample": true,
+          "win_rate": false
+        },
+        "tier1_pass": false,
+        "tier1_pass_v11": false,
+        "tier2_flags_v11": {
+          "avg_win_loss": false,
+          "calmar": false,
+          "max_consecutive_losses": true,
+          "profitable_months": false,
+          "recovery": false,
+          "sharpe": false,
+          "sortino": false,
+          "sqn": false
+        },
+        "tier2_pass": false,
+        "tier2_pass_count": 1,
+        "tier2_pass_count_v11": 1,
+        "tier2_pass_v11": false,
+        "trades": 371,
+        "win_rate_pct": 46.3611859838275,
+        "wins": 172,
+        "wr": 46.3611859838275
+      },
+      "rank": 116
     },
     {
       "candidate": {
@@ -8589,7 +9480,7 @@
         "wins": 373,
         "wr": 53.669064748201436
       },
-      "rank": 106
+      "rank": 117
     },
     {
       "candidate": {
@@ -8670,7 +9561,7 @@
         "wins": 204,
         "wr": 51.776649746192895
       },
-      "rank": 107
+      "rank": 118
     },
     {
       "candidate": {
@@ -8751,7 +9642,7 @@
         "wins": 344,
         "wr": 53.250773993808046
       },
-      "rank": 108
+      "rank": 119
     },
     {
       "candidate": {
@@ -8832,7 +9723,7 @@
         "wins": 197,
         "wr": 52.53333333333333
       },
-      "rank": 109
+      "rank": 120
     },
     {
       "candidate": {
@@ -8913,7 +9804,7 @@
         "wins": 313,
         "wr": 50.40257648953301
       },
-      "rank": 110
+      "rank": 121
     },
     {
       "candidate": {
@@ -8994,7 +9885,7 @@
         "wins": 128,
         "wr": 40.0
       },
-      "rank": 111
+      "rank": 122
     },
     {
       "candidate": {
@@ -9075,7 +9966,7 @@
         "wins": 232,
         "wr": 52.48868778280543
       },
-      "rank": 112
+      "rank": 123
     },
     {
       "candidate": {
@@ -9156,7 +10047,7 @@
         "wins": 340,
         "wr": 53.042121684867396
       },
-      "rank": 113
+      "rank": 124
     },
     {
       "candidate": {
@@ -9237,7 +10128,7 @@
         "wins": 178,
         "wr": 50.140845070422536
       },
-      "rank": 114
+      "rank": 125
     },
     {
       "candidate": {
@@ -9318,7 +10209,7 @@
         "wins": 366,
         "wr": 54.22222222222222
       },
-      "rank": 115
+      "rank": 126
     },
     {
       "candidate": {
@@ -9399,7 +10290,7 @@
         "wins": 275,
         "wr": 52.28136882129277
       },
-      "rank": 116
+      "rank": 127
     },
     {
       "candidate": {
@@ -9480,7 +10371,7 @@
         "wins": 277,
         "wr": 52.56166982922201
       },
-      "rank": 117
+      "rank": 128
     },
     {
       "candidate": {
@@ -9561,7 +10452,7 @@
         "wins": 123,
         "wr": 40.32786885245902
       },
-      "rank": 118
+      "rank": 129
     },
     {
       "candidate": {
@@ -9642,7 +10533,7 @@
         "wins": 324,
         "wr": 54.09015025041736
       },
-      "rank": 119
+      "rank": 130
     },
     {
       "candidate": {
@@ -9723,7 +10614,7 @@
         "wins": 302,
         "wr": 52.705061082024436
       },
-      "rank": 120
+      "rank": 131
     },
     {
       "candidate": {
@@ -9804,7 +10695,7 @@
         "wins": 195,
         "wr": 53.42465753424658
       },
-      "rank": 121
+      "rank": 132
     },
     {
       "candidate": {
@@ -9885,7 +10776,7 @@
         "wins": 230,
         "wr": 50.77262693156733
       },
-      "rank": 122
+      "rank": 133
     },
     {
       "candidate": {
@@ -9966,7 +10857,7 @@
         "wins": 169,
         "wr": 53.99361022364217
       },
-      "rank": 123
+      "rank": 134
     },
     {
       "candidate": {
@@ -10047,7 +10938,7 @@
         "wins": 222,
         "wr": 47.53747323340471
       },
-      "rank": 124
+      "rank": 135
     },
     {
       "candidate": {
@@ -10128,7 +11019,7 @@
         "wins": 290,
         "wr": 54.00372439478585
       },
-      "rank": 125
+      "rank": 136
     },
     {
       "candidate": {
@@ -10209,7 +11100,7 @@
         "wins": 193,
         "wr": 45.95238095238095
       },
-      "rank": 126
+      "rank": 137
     },
     {
       "candidate": {
@@ -10290,7 +11181,7 @@
         "wins": 421,
         "wr": 53.56234096692112
       },
-      "rank": 127
+      "rank": 138
     },
     {
       "candidate": {
@@ -10371,7 +11262,7 @@
         "wins": 187,
         "wr": 48.57142857142857
       },
-      "rank": 128
+      "rank": 139
     },
     {
       "candidate": {
@@ -10452,7 +11343,7 @@
         "wins": 329,
         "wr": 45.2544704264099
       },
-      "rank": 129
+      "rank": 140
     },
     {
       "candidate": {
@@ -10533,7 +11424,7 @@
         "wins": 205,
         "wr": 51.12219451371571
       },
-      "rank": 130
+      "rank": 141
     },
     {
       "candidate": {
@@ -10614,7 +11505,7 @@
         "wins": 343,
         "wr": 45.43046357615894
       },
-      "rank": 131
+      "rank": 142
     },
     {
       "candidate": {
@@ -10695,7 +11586,7 @@
         "wins": 219,
         "wr": 43.280632411067195
       },
-      "rank": 132
+      "rank": 143
     },
     {
       "candidate": {
@@ -10776,7 +11667,7 @@
         "wins": 417,
         "wr": 52.32120451693852
       },
-      "rank": 133
+      "rank": 144
     },
     {
       "candidate": {
@@ -10857,7 +11748,7 @@
         "wins": 350,
         "wr": 51.31964809384164
       },
-      "rank": 134
+      "rank": 145
     },
     {
       "candidate": {
@@ -10938,7 +11829,7 @@
         "wins": 235,
         "wr": 48.35390946502058
       },
-      "rank": 135
+      "rank": 146
     },
     {
       "candidate": {
@@ -11019,7 +11910,7 @@
         "wins": 378,
         "wr": 54.154727793696274
       },
-      "rank": 136
+      "rank": 147
     },
     {
       "candidate": {
@@ -11100,7 +11991,7 @@
         "wins": 284,
         "wr": 54.095238095238095
       },
-      "rank": 137
+      "rank": 148
     },
     {
       "candidate": {
@@ -11181,7 +12072,7 @@
         "wins": 194,
         "wr": 52.57452574525745
       },
-      "rank": 138
+      "rank": 149
     },
     {
       "candidate": {
@@ -11262,7 +12153,7 @@
         "wins": 276,
         "wr": 52.075471698113205
       },
-      "rank": 139
+      "rank": 150
     },
     {
       "candidate": {
@@ -11343,7 +12234,7 @@
         "wins": 339,
         "wr": 52.55813953488372
       },
-      "rank": 140
+      "rank": 151
     },
     {
       "candidate": {
@@ -11424,7 +12315,7 @@
         "wins": 223,
         "wr": 47.04641350210971
       },
-      "rank": 141
+      "rank": 152
     },
     {
       "candidate": {
@@ -11505,7 +12396,7 @@
         "wins": 446,
         "wr": 53.34928229665072
       },
-      "rank": 142
+      "rank": 153
     },
     {
       "candidate": {
@@ -11586,7 +12477,7 @@
         "wins": 281,
         "wr": 53.32068311195446
       },
-      "rank": 143
+      "rank": 154
     },
     {
       "candidate": {
@@ -11667,7 +12558,7 @@
         "wins": 280,
         "wr": 41.42011834319526
       },
-      "rank": 144
+      "rank": 155
     },
     {
       "candidate": {
@@ -11748,7 +12639,7 @@
         "wins": 351,
         "wr": 49.787234042553195
       },
-      "rank": 145
+      "rank": 156
     },
     {
       "candidate": {
@@ -11829,7 +12720,7 @@
         "wins": 179,
         "wr": 54.74006116207951
       },
-      "rank": 146
+      "rank": 157
     },
     {
       "candidate": {
@@ -11910,7 +12801,7 @@
         "wins": 313,
         "wr": 47.49620637329287
       },
-      "rank": 147
+      "rank": 158
     },
     {
       "candidate": {
@@ -11991,7 +12882,7 @@
         "wins": 300,
         "wr": 52.816901408450704
       },
-      "rank": 148
+      "rank": 159
     },
     {
       "candidate": {
@@ -12072,7 +12963,7 @@
         "wins": 256,
         "wr": 52.244897959183675
       },
-      "rank": 149
+      "rank": 160
     },
     {
       "candidate": {
@@ -12153,7 +13044,7 @@
         "wins": 275,
         "wr": 57.41127348643006
       },
-      "rank": 150
+      "rank": 161
     },
     {
       "candidate": {
@@ -12234,7 +13125,7 @@
         "wins": 345,
         "wr": 44.747081712062254
       },
-      "rank": 151
+      "rank": 162
     },
     {
       "candidate": {
@@ -12315,7 +13206,7 @@
         "wins": 329,
         "wr": 52.72435897435897
       },
-      "rank": 152
+      "rank": 163
     },
     {
       "candidate": {
@@ -12396,7 +13287,7 @@
         "wins": 254,
         "wr": 51.73116089613035
       },
-      "rank": 153
+      "rank": 164
     },
     {
       "candidate": {
@@ -12477,7 +13368,7 @@
         "wins": 349,
         "wr": 47.289972899728994
       },
-      "rank": 154
+      "rank": 165
     },
     {
       "candidate": {
@@ -12558,7 +13449,88 @@
         "wins": 343,
         "wr": 51.96969696969697
       },
-      "rank": 155
+      "rank": 166
+    },
+    {
+      "candidate": {
+        "direction_mode": "LONG_ONLY",
+        "entry_method": "LIMIT",
+        "expiry": 4,
+        "family": "ZSCORE_REVERSION",
+        "fast": 3,
+        "offset": 1.25,
+        "p1": 0.7,
+        "p2": 25.0,
+        "p3": 1.0,
+        "sl": 24.0,
+        "slow": 26,
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "tp": 24.0
+      },
+      "config_hash": "79d37c82004f81fc89f27154361a7c8e0c6487b1f845dac2d154bb9978e35a5d",
+      "execution_hash": "aa031943ae92af9679b3bb8c3a28fda3",
+      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=LONG_ONLY|SL=24.00|TP=24.00|OFF=1.25|EXP=4",
+      "metrics": {
+        "avg_win_loss": 0.6686265184915018,
+        "baseline_qualified_v11": false,
+        "calmar": -0.030267625170391017,
+        "exact_execution_duplicate": false,
+        "expectancy": -3.911696347962385,
+        "full_metrics_pass": false,
+        "goal_policy": "GOLD_CANONICAL_V11_20260828",
+        "h1_entry_hours_pass": true,
+        "history_years": 25.842573579739906,
+        "max_consec_loss": 7,
+        "max_dd_pct": 15.952975898207653,
+        "minimum_trades_required_v11": 300,
+        "multi_layer_count": 2,
+        "multi_layer_pass": true,
+        "net_expectancy": -3.911696347962385,
+        "net_profit": -1247.8311350000008,
+        "profit_factor": 0.7254379220234595,
+        "profit_factor_net": 0.7254379220234595,
+        "profitable_months_pct": 27.65273311897106,
+        "recovery": -0.7511397771114844,
+        "sample_pass_v11": true,
+        "sharpe": -0.40939530878910296,
+        "sortino": -0.2166381104311388,
+        "sqn": -2.782740322892392,
+        "target_candidate_v11": false,
+        "target_pf_2_to_8": false,
+        "tier1_flags_v11": {
+          "full_trade_log": true,
+          "h1_profitable_months": true,
+          "h1_sqn": true,
+          "history": true,
+          "max_drawdown": true,
+          "net_ev_per_trade": false,
+          "profit_factor": false,
+          "sample": true,
+          "win_rate": true
+        },
+        "tier1_pass": false,
+        "tier1_pass_v11": false,
+        "tier2_flags_v11": {
+          "avg_win_loss": false,
+          "calmar": false,
+          "max_consecutive_losses": true,
+          "profitable_months": false,
+          "recovery": false,
+          "sharpe": false,
+          "sortino": false,
+          "sqn": false
+        },
+        "tier2_pass": false,
+        "tier2_pass_count": 1,
+        "tier2_pass_count_v11": 1,
+        "tier2_pass_v11": false,
+        "trades": 319,
+        "win_rate_pct": 52.03761755485893,
+        "wins": 166,
+        "wr": 52.03761755485893
+      },
+      "rank": 167
     },
     {
       "candidate": {
@@ -12639,7 +13611,88 @@
         "wins": 192,
         "wr": 42.01312910284464
       },
-      "rank": 156
+      "rank": 168
+    },
+    {
+      "candidate": {
+        "direction_mode": "LONG_ONLY",
+        "entry_method": "LIMIT",
+        "expiry": 8,
+        "family": "MOMENTUM_RSI_ROC",
+        "fast": 26,
+        "offset": 1.5,
+        "p1": 0.5,
+        "p2": 66.0,
+        "p3": 1.0,
+        "sl": 17.0,
+        "slow": 144,
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "tp": 18.0
+      },
+      "config_hash": "910a59aa02bd87e9bdf1721e6cbea16a03a2dc552029cf068e700e253fb4e5fa",
+      "execution_hash": "19dd5bff903b17b555d151deeae6cc12",
+      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=LONG_ONLY|SL=17.00|TP=18.00|OFF=1.50|EXP=8",
+      "metrics": {
+        "avg_win_loss": 0.5889721245362699,
+        "baseline_qualified_v11": false,
+        "calmar": -0.03160522804675531,
+        "exact_execution_duplicate": false,
+        "expectancy": -2.8589043236074256,
+        "full_metrics_pass": false,
+        "goal_policy": "GOLD_CANONICAL_V11_20260828",
+        "h1_entry_hours_pass": true,
+        "history_years": 25.842573579739906,
+        "max_consec_loss": 5,
+        "max_dd_pct": 13.19612078025005,
+        "minimum_trades_required_v11": 300,
+        "multi_layer_count": 2,
+        "multi_layer_pass": true,
+        "net_expectancy": -2.8589043236074256,
+        "net_profit": -1077.8069299999995,
+        "profit_factor": 0.7248887686600245,
+        "profit_factor_net": 0.7248887686600245,
+        "profitable_months_pct": 15.755627009646302,
+        "recovery": -0.7946249680323647,
+        "sample_pass_v11": true,
+        "sharpe": -0.4475518371185525,
+        "sortino": -0.23446556330414828,
+        "sqn": -2.8222997933348175,
+        "target_candidate_v11": false,
+        "target_pf_2_to_8": false,
+        "tier1_flags_v11": {
+          "full_trade_log": true,
+          "h1_profitable_months": true,
+          "h1_sqn": true,
+          "history": true,
+          "max_drawdown": true,
+          "net_ev_per_trade": false,
+          "profit_factor": false,
+          "sample": true,
+          "win_rate": true
+        },
+        "tier1_pass": false,
+        "tier1_pass_v11": false,
+        "tier2_flags_v11": {
+          "avg_win_loss": false,
+          "calmar": false,
+          "max_consecutive_losses": true,
+          "profitable_months": false,
+          "recovery": false,
+          "sharpe": false,
+          "sortino": false,
+          "sqn": false
+        },
+        "tier2_pass": false,
+        "tier2_pass_count": 1,
+        "tier2_pass_count_v11": 1,
+        "tier2_pass_v11": false,
+        "trades": 377,
+        "win_rate_pct": 55.172413793103445,
+        "wins": 208,
+        "wr": 55.172413793103445
+      },
+      "rank": 169
     },
     {
       "candidate": {
@@ -12720,7 +13773,7 @@
         "wins": 162,
         "wr": 51.757188498402556
       },
-      "rank": 157
+      "rank": 170
     },
     {
       "candidate": {
@@ -12801,7 +13854,7 @@
         "wins": 314,
         "wr": 53.4923339011925
       },
-      "rank": 158
+      "rank": 171
     },
     {
       "candidate": {
@@ -12882,7 +13935,7 @@
         "wins": 438,
         "wr": 52.962515114873035
       },
-      "rank": 159
+      "rank": 172
     },
     {
       "candidate": {
@@ -12963,7 +14016,7 @@
         "wins": 192,
         "wr": 42.572062084257205
       },
-      "rank": 160
+      "rank": 173
     },
     {
       "candidate": {
@@ -13044,7 +14097,7 @@
         "wins": 283,
         "wr": 46.24183006535948
       },
-      "rank": 161
+      "rank": 174
     },
     {
       "candidate": {
@@ -13125,7 +14178,7 @@
         "wins": 173,
         "wr": 45.40682414698163
       },
-      "rank": 162
+      "rank": 175
     },
     {
       "candidate": {
@@ -13206,7 +14259,7 @@
         "wins": 352,
         "wr": 48.28532235939643
       },
-      "rank": 163
+      "rank": 176
     },
     {
       "candidate": {
@@ -13287,7 +14340,7 @@
         "wins": 186,
         "wr": 44.71153846153846
       },
-      "rank": 164
+      "rank": 177
     },
     {
       "candidate": {
@@ -13368,7 +14421,7 @@
         "wins": 332,
         "wr": 48.751835535976504
       },
-      "rank": 165
+      "rank": 178
     },
     {
       "candidate": {
@@ -13449,7 +14502,7 @@
         "wins": 325,
         "wr": 51.424050632911396
       },
-      "rank": 166
+      "rank": 179
     },
     {
       "candidate": {
@@ -13530,7 +14583,7 @@
         "wins": 304,
         "wr": 46.986089644513136
       },
-      "rank": 167
+      "rank": 180
     },
     {
       "candidate": {
@@ -13611,7 +14664,7 @@
         "wins": 290,
         "wr": 51.69340463458111
       },
-      "rank": 168
+      "rank": 181
     },
     {
       "candidate": {
@@ -13692,7 +14745,7 @@
         "wins": 317,
         "wr": 53.5472972972973
       },
-      "rank": 169
+      "rank": 182
     },
     {
       "candidate": {
@@ -13773,7 +14826,7 @@
         "wins": 329,
         "wr": 48.88558692421991
       },
-      "rank": 170
+      "rank": 183
     },
     {
       "candidate": {
@@ -13854,7 +14907,7 @@
         "wins": 432,
         "wr": 53.66459627329193
       },
-      "rank": 171
+      "rank": 184
     },
     {
       "candidate": {
@@ -13935,7 +14988,7 @@
         "wins": 153,
         "wr": 46.93251533742331
       },
-      "rank": 172
+      "rank": 185
     },
     {
       "candidate": {
@@ -14016,7 +15069,7 @@
         "wins": 493,
         "wr": 52.55863539445629
       },
-      "rank": 173
+      "rank": 186
     },
     {
       "candidate": {
@@ -14097,7 +15150,7 @@
         "wins": 334,
         "wr": 54.22077922077922
       },
-      "rank": 174
+      "rank": 187
     },
     {
       "candidate": {
@@ -14178,7 +15231,7 @@
         "wins": 400,
         "wr": 49.01960784313726
       },
-      "rank": 175
+      "rank": 188
     },
     {
       "candidate": {
@@ -14259,7 +15312,7 @@
         "wins": 238,
         "wr": 46.03481624758221
       },
-      "rank": 176
+      "rank": 189
     },
     {
       "candidate": {
@@ -14340,7 +15393,7 @@
         "wins": 193,
         "wr": 42.60485651214128
       },
-      "rank": 177
+      "rank": 190
     },
     {
       "candidate": {
@@ -14421,7 +15474,7 @@
         "wins": 272,
         "wr": 51.2241054613936
       },
-      "rank": 178
+      "rank": 191
     },
     {
       "candidate": {
@@ -14502,7 +15555,7 @@
         "wins": 172,
         "wr": 46.11260053619303
       },
-      "rank": 179
+      "rank": 192
     },
     {
       "candidate": {
@@ -14583,7 +15636,7 @@
         "wins": 151,
         "wr": 50.16611295681063
       },
-      "rank": 180
+      "rank": 193
     },
     {
       "candidate": {
@@ -14664,7 +15717,7 @@
         "wins": 158,
         "wr": 45.142857142857146
       },
-      "rank": 181
+      "rank": 194
     },
     {
       "candidate": {
@@ -14745,7 +15798,7 @@
         "wins": 135,
         "wr": 40.54054054054054
       },
-      "rank": 182
+      "rank": 195
     },
     {
       "candidate": {
@@ -14826,7 +15879,7 @@
         "wins": 303,
         "wr": 54.30107526881721
       },
-      "rank": 183
+      "rank": 196
     },
     {
       "candidate": {
@@ -14907,7 +15960,7 @@
         "wins": 180,
         "wr": 45.56962025316456
       },
-      "rank": 184
+      "rank": 197
     },
     {
       "candidate": {
@@ -14988,7 +16041,7 @@
         "wins": 279,
         "wr": 54.705882352941174
       },
-      "rank": 185
+      "rank": 198
     },
     {
       "candidate": {
@@ -15069,7 +16122,7 @@
         "wins": 173,
         "wr": 49.71264367816092
       },
-      "rank": 186
+      "rank": 199
     },
     {
       "candidate": {
@@ -15149,1059 +16202,6 @@
         "win_rate_pct": 49.43273905996759,
         "wins": 305,
         "wr": 49.43273905996759
-      },
-      "rank": 187
-    },
-    {
-      "candidate": {
-        "direction_mode": "BOTH",
-        "entry_method": "LIMIT",
-        "expiry": 5,
-        "family": "TREND_EMA",
-        "fast": 8,
-        "offset": 4.5,
-        "p1": 62.0,
-        "p2": 55.0,
-        "p3": 1.0,
-        "sl": 25.0,
-        "slow": 50,
-        "symbol": "GOLD",
-        "timeframe": "D1",
-        "tp": 25.0
-      },
-      "config_hash": "eda155eee127dea77b1d8edf8df4ab503af01b6de49e5e25f453ca3d14c9ac3b",
-      "execution_hash": "1d484507a948246d90c4f08029b9575e",
-      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=BOTH|SL=25.00|TP=25.00|OFF=4.50|EXP=5",
-      "metrics": {
-        "avg_win_loss": 0.6465604330951831,
-        "baseline_qualified_v11": false,
-        "calmar": -0.03738340909554236,
-        "exact_execution_duplicate": false,
-        "expectancy": -4.145021800554016,
-        "full_metrics_pass": false,
-        "goal_policy": "GOLD_CANONICAL_V11_20260828",
-        "h1_entry_hours_pass": true,
-        "history_years": 25.842573579739906,
-        "max_consec_loss": 8,
-        "max_dd_pct": 30.977712996236377,
-        "minimum_trades_required_v11": 300,
-        "multi_layer_count": 2,
-        "multi_layer_pass": true,
-        "net_expectancy": -4.145021800554016,
-        "net_profit": -2992.7057399999994,
-        "profit_factor": 0.7184004812168702,
-        "profit_factor_net": 0.7184004812168702,
-        "profitable_months_pct": 34.08360128617363,
-        "recovery": -0.951598293822859,
-        "sample_pass_v11": true,
-        "sharpe": -0.749287207983587,
-        "sortino": -0.608101058376742,
-        "sqn": -4.277047616253335,
-        "target_candidate_v11": false,
-        "target_pf_2_to_8": false,
-        "tier1_flags_v11": {
-          "full_trade_log": true,
-          "h1_profitable_months": true,
-          "h1_sqn": true,
-          "history": true,
-          "max_drawdown": false,
-          "net_ev_per_trade": false,
-          "profit_factor": false,
-          "sample": true,
-          "win_rate": true
-        },
-        "tier1_pass": false,
-        "tier1_pass_v11": false,
-        "tier2_flags_v11": {
-          "avg_win_loss": false,
-          "calmar": false,
-          "max_consecutive_losses": true,
-          "profitable_months": false,
-          "recovery": false,
-          "sharpe": false,
-          "sortino": false,
-          "sqn": false
-        },
-        "tier2_pass": false,
-        "tier2_pass_count": 1,
-        "tier2_pass_count_v11": 1,
-        "tier2_pass_v11": false,
-        "trades": 722,
-        "win_rate_pct": 52.63157894736842,
-        "wins": 380,
-        "wr": 52.63157894736842
-      },
-      "rank": 188
-    },
-    {
-      "candidate": {
-        "direction_mode": "LONG_ONLY",
-        "entry_method": "LIMIT",
-        "expiry": 2,
-        "family": "HYBRID",
-        "fast": 3,
-        "offset": 2.5,
-        "p1": 62.0,
-        "p2": 55.0,
-        "p3": 1.0,
-        "sl": 20.5,
-        "slow": 10,
-        "symbol": "GOLD",
-        "timeframe": "D1",
-        "tp": 25.0
-      },
-      "config_hash": "b5c23a70766697cdf2d3f4c3549b322b047e4d9c3871912b7c0ace5c5408169f",
-      "execution_hash": "e1eb9698fcdb5bcdf36d979370ce9447",
-      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=LONG_ONLY|SL=20.50|TP=25.00|OFF=2.50|EXP=2",
-      "metrics": {
-        "avg_win_loss": 0.7347772160330125,
-        "baseline_qualified_v11": false,
-        "calmar": -0.03328663623581763,
-        "exact_execution_duplicate": false,
-        "expectancy": -3.8053433977455717,
-        "full_metrics_pass": false,
-        "goal_policy": "GOLD_CANONICAL_V11_20260828",
-        "h1_entry_hours_pass": true,
-        "history_years": 25.842573579739906,
-        "max_consec_loss": 12,
-        "max_dd_pct": 27.471336125167596,
-        "minimum_trades_required_v11": 300,
-        "multi_layer_count": 4,
-        "multi_layer_pass": true,
-        "net_expectancy": -3.8053433977455717,
-        "net_profit": -2363.11825,
-        "profit_factor": 0.7183968322360982,
-        "profit_factor_net": 0.7183968322360982,
-        "profitable_months_pct": 30.225080385852092,
-        "recovery": -0.8169571581308742,
-        "sample_pass_v11": true,
-        "sharpe": -0.7190063098521904,
-        "sortino": -0.5781598038961447,
-        "sqn": -4.046251284485126,
-        "target_candidate_v11": false,
-        "target_pf_2_to_8": false,
-        "tier1_flags_v11": {
-          "full_trade_log": true,
-          "h1_profitable_months": true,
-          "h1_sqn": true,
-          "history": true,
-          "max_drawdown": false,
-          "net_ev_per_trade": false,
-          "profit_factor": false,
-          "sample": true,
-          "win_rate": false
-        },
-        "tier1_pass": false,
-        "tier1_pass_v11": false,
-        "tier2_flags_v11": {
-          "avg_win_loss": false,
-          "calmar": false,
-          "max_consecutive_losses": true,
-          "profitable_months": false,
-          "recovery": false,
-          "sharpe": false,
-          "sortino": false,
-          "sqn": false
-        },
-        "tier2_pass": false,
-        "tier2_pass_count": 1,
-        "tier2_pass_count_v11": 1,
-        "tier2_pass_v11": false,
-        "trades": 621,
-        "win_rate_pct": 49.43639291465379,
-        "wins": 307,
-        "wr": 49.43639291465379
-      },
-      "rank": 189
-    },
-    {
-      "candidate": {
-        "direction_mode": "LONG_ONLY",
-        "entry_method": "LIMIT",
-        "expiry": 5,
-        "family": "KELTNER_BREAKOUT",
-        "fast": 3,
-        "offset": 3.75,
-        "p1": 1.5,
-        "p2": 55.0,
-        "p3": 1.0,
-        "sl": 17.5,
-        "slow": 50,
-        "symbol": "GOLD",
-        "timeframe": "D1",
-        "tp": 24.0
-      },
-      "config_hash": "5cc5f8347629130720824c245c364cbbaa2324346d9f4f448cd6089f33a839f0",
-      "execution_hash": "26b10e2da33926c9b8824fcf20d3a2a6",
-      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=LONG_ONLY|SL=17.50|TP=24.00|OFF=3.75|EXP=5",
-      "metrics": {
-        "avg_win_loss": 0.7778262625644361,
-        "baseline_qualified_v11": false,
-        "calmar": -0.031874056652945924,
-        "exact_execution_duplicate": false,
-        "expectancy": -3.5517736589403985,
-        "full_metrics_pass": false,
-        "goal_policy": "GOLD_CANONICAL_V11_20260828",
-        "h1_entry_hours_pass": true,
-        "history_years": 25.842573579739906,
-        "max_consec_loss": 7,
-        "max_dd_pct": 26.04408589261779,
-        "minimum_trades_required_v11": 300,
-        "multi_layer_count": 2,
-        "multi_layer_pass": true,
-        "net_expectancy": -3.5517736589403985,
-        "net_profit": -2145.2712900000006,
-        "profit_factor": 0.7183745737060079,
-        "profit_factor_net": 0.7183745737060079,
-        "profitable_months_pct": 21.543408360128616,
-        "recovery": -0.775558963052402,
-        "sample_pass_v11": true,
-        "sharpe": -0.6293455351806058,
-        "sortino": -0.4131624500294055,
-        "sqn": -3.9661236194897427,
-        "target_candidate_v11": false,
-        "target_pf_2_to_8": false,
-        "tier1_flags_v11": {
-          "full_trade_log": true,
-          "h1_profitable_months": true,
-          "h1_sqn": true,
-          "history": true,
-          "max_drawdown": false,
-          "net_ev_per_trade": false,
-          "profit_factor": false,
-          "sample": true,
-          "win_rate": false
-        },
-        "tier1_pass": false,
-        "tier1_pass_v11": false,
-        "tier2_flags_v11": {
-          "avg_win_loss": false,
-          "calmar": false,
-          "max_consecutive_losses": true,
-          "profitable_months": false,
-          "recovery": false,
-          "sharpe": false,
-          "sortino": false,
-          "sqn": false
-        },
-        "tier2_pass": false,
-        "tier2_pass_count": 1,
-        "tier2_pass_count_v11": 1,
-        "tier2_pass_v11": false,
-        "trades": 604,
-        "win_rate_pct": 48.01324503311258,
-        "wins": 290,
-        "wr": 48.01324503311258
-      },
-      "rank": 190
-    },
-    {
-      "candidate": {
-        "direction_mode": "BOTH",
-        "entry_method": "LIMIT",
-        "expiry": 6,
-        "family": "PRICE_STRUCTURE",
-        "fast": 3,
-        "offset": 2.0,
-        "p1": 58.0,
-        "p2": 62.0,
-        "p3": 1.0,
-        "sl": 21.5,
-        "slow": 34,
-        "symbol": "GOLD",
-        "timeframe": "D1",
-        "tp": 22.5
-      },
-      "config_hash": "2c8a23397bfb359d6bbfc9f172440d3f1d099769ff127bb4bdd9826d877e227c",
-      "execution_hash": "307214ee6b23ad508649593d40d09980",
-      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=BOTH|SL=21.50|TP=22.50|OFF=2.00|EXP=6",
-      "metrics": {
-        "avg_win_loss": 0.6723546085903309,
-        "baseline_qualified_v11": false,
-        "calmar": -0.037083201550954965,
-        "exact_execution_duplicate": false,
-        "expectancy": -3.7164423423423396,
-        "full_metrics_pass": false,
-        "goal_policy": "GOLD_CANONICAL_V11_20260828",
-        "h1_entry_hours_pass": true,
-        "history_years": 25.842573579739906,
-        "max_consec_loss": 8,
-        "max_dd_pct": 12.913936598644337,
-        "minimum_trades_required_v11": 300,
-        "multi_layer_count": 2,
-        "multi_layer_pass": true,
-        "net_expectancy": -3.7164423423423396,
-        "net_profit": -1237.575299999999,
-        "profit_factor": 0.7182918799847015,
-        "profit_factor_net": 0.7182918799847015,
-        "profitable_months_pct": 22.508038585209004,
-        "recovery": -0.9524393797676557,
-        "sample_pass_v11": true,
-        "sharpe": -0.5403963700028296,
-        "sortino": -0.40233456096943726,
-        "sqn": -2.832323346584318,
-        "target_candidate_v11": false,
-        "target_pf_2_to_8": false,
-        "tier1_flags_v11": {
-          "full_trade_log": true,
-          "h1_profitable_months": true,
-          "h1_sqn": true,
-          "history": true,
-          "max_drawdown": true,
-          "net_ev_per_trade": false,
-          "profit_factor": false,
-          "sample": true,
-          "win_rate": true
-        },
-        "tier1_pass": false,
-        "tier1_pass_v11": false,
-        "tier2_flags_v11": {
-          "avg_win_loss": false,
-          "calmar": false,
-          "max_consecutive_losses": true,
-          "profitable_months": false,
-          "recovery": false,
-          "sharpe": false,
-          "sortino": false,
-          "sqn": false
-        },
-        "tier2_pass": false,
-        "tier2_pass_count": 1,
-        "tier2_pass_count_v11": 1,
-        "tier2_pass_v11": false,
-        "trades": 333,
-        "win_rate_pct": 51.651651651651655,
-        "wins": 172,
-        "wr": 51.651651651651655
-      },
-      "rank": 191
-    },
-    {
-      "candidate": {
-        "direction_mode": "LONG_ONLY",
-        "entry_method": "LIMIT",
-        "expiry": 6,
-        "family": "MOMENTUM_RSI_ROC",
-        "fast": 50,
-        "offset": 4.0,
-        "p1": 1.8,
-        "p2": 62.0,
-        "p3": 1.0,
-        "sl": 11.0,
-        "slow": 55,
-        "symbol": "GOLD",
-        "timeframe": "D1",
-        "tp": 23.0
-      },
-      "config_hash": "ba6f9d001e8e67d90370bb49b293779600b437a7b9b0453bdca217281d1e45dd",
-      "execution_hash": "429d19020e031ef6a051455c40679b0f",
-      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=LONG_ONLY|SL=11.00|TP=23.00|OFF=4.00|EXP=6",
-      "metrics": {
-        "avg_win_loss": 1.139323829938404,
-        "baseline_qualified_v11": false,
-        "calmar": -0.03167943925832011,
-        "exact_execution_duplicate": false,
-        "expectancy": -2.9667175290697685,
-        "full_metrics_pass": false,
-        "goal_policy": "GOLD_CANONICAL_V11_20260828",
-        "h1_entry_hours_pass": true,
-        "history_years": 25.842573579739906,
-        "max_consec_loss": 17,
-        "max_dd_pct": 12.465835540009534,
-        "minimum_trades_required_v11": 300,
-        "multi_layer_count": 2,
-        "multi_layer_pass": true,
-        "net_expectancy": -2.9667175290697685,
-        "net_profit": -1020.5508300000004,
-        "profit_factor": 0.7181519875915059,
-        "profit_factor_net": 0.7181519875915059,
-        "profitable_months_pct": 12.540192926045016,
-        "recovery": -0.7980702863069256,
-        "sample_pass_v11": true,
-        "sharpe": -0.5059733712754095,
-        "sortino": -0.24263333237189563,
-        "sqn": -2.8060208006857863,
-        "target_candidate_v11": false,
-        "target_pf_2_to_8": false,
-        "tier1_flags_v11": {
-          "full_trade_log": true,
-          "h1_profitable_months": true,
-          "h1_sqn": true,
-          "history": true,
-          "max_drawdown": true,
-          "net_ev_per_trade": false,
-          "profit_factor": false,
-          "sample": true,
-          "win_rate": false
-        },
-        "tier1_pass": false,
-        "tier1_pass_v11": false,
-        "tier2_flags_v11": {
-          "avg_win_loss": true,
-          "calmar": false,
-          "max_consecutive_losses": false,
-          "profitable_months": false,
-          "recovery": false,
-          "sharpe": false,
-          "sortino": false,
-          "sqn": false
-        },
-        "tier2_pass": false,
-        "tier2_pass_count": 1,
-        "tier2_pass_count_v11": 1,
-        "tier2_pass_v11": false,
-        "trades": 344,
-        "win_rate_pct": 38.66279069767442,
-        "wins": 133,
-        "wr": 38.66279069767442
-      },
-      "rank": 192
-    },
-    {
-      "candidate": {
-        "direction_mode": "LONG_ONLY",
-        "entry_method": "LIMIT",
-        "expiry": 2,
-        "family": "ATR_BREAKOUT",
-        "fast": 3,
-        "offset": 3.0,
-        "p1": 2.2,
-        "p2": 55.0,
-        "p3": 1.0,
-        "sl": 22.5,
-        "slow": 34,
-        "symbol": "GOLD",
-        "timeframe": "D1",
-        "tp": 25.0
-      },
-      "config_hash": "d6de7d4c030bd9ed6c3b989cdaffb5d52adc42db29419e2a073746c374b4a79d",
-      "execution_hash": "45294b1193822087c127425f94d85a08",
-      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=LONG_ONLY|SL=22.50|TP=25.00|OFF=3.00|EXP=2",
-      "metrics": {
-        "avg_win_loss": 0.6746625980431992,
-        "baseline_qualified_v11": false,
-        "calmar": -0.03279789258638515,
-        "exact_execution_duplicate": false,
-        "expectancy": -4.012793015463917,
-        "full_metrics_pass": false,
-        "goal_policy": "GOLD_CANONICAL_V11_20260828",
-        "h1_entry_hours_pass": true,
-        "history_years": 25.842573579739906,
-        "max_consec_loss": 7,
-        "max_dd_pct": 18.36947666885922,
-        "minimum_trades_required_v11": 300,
-        "multi_layer_count": 2,
-        "multi_layer_pass": true,
-        "net_expectancy": -4.012793015463917,
-        "net_profit": -1556.9636899999996,
-        "profit_factor": 0.7177261681310629,
-        "profit_factor_net": 0.7177261681310629,
-        "profitable_months_pct": 17.684887459807072,
-        "recovery": -0.8194748405909253,
-        "sample_pass_v11": true,
-        "sharpe": -0.5037668692296371,
-        "sortino": -0.29553372846767223,
-        "sqn": -3.092782590351385,
-        "target_candidate_v11": false,
-        "target_pf_2_to_8": false,
-        "tier1_flags_v11": {
-          "full_trade_log": true,
-          "h1_profitable_months": true,
-          "h1_sqn": true,
-          "history": true,
-          "max_drawdown": true,
-          "net_ev_per_trade": false,
-          "profit_factor": false,
-          "sample": true,
-          "win_rate": true
-        },
-        "tier1_pass": false,
-        "tier1_pass_v11": false,
-        "tier2_flags_v11": {
-          "avg_win_loss": false,
-          "calmar": false,
-          "max_consecutive_losses": true,
-          "profitable_months": false,
-          "recovery": false,
-          "sharpe": false,
-          "sortino": false,
-          "sqn": false
-        },
-        "tier2_pass": false,
-        "tier2_pass_count": 1,
-        "tier2_pass_count_v11": 1,
-        "tier2_pass_v11": false,
-        "trades": 388,
-        "win_rate_pct": 51.54639175257732,
-        "wins": 200,
-        "wr": 51.54639175257732
-      },
-      "rank": 193
-    },
-    {
-      "candidate": {
-        "direction_mode": "BOTH",
-        "entry_method": "LIMIT",
-        "expiry": 7,
-        "family": "MOMENTUM_RSI_ROC",
-        "fast": 26,
-        "offset": 3.25,
-        "p1": 0.8,
-        "p2": 66.0,
-        "p3": 1.0,
-        "sl": 17.0,
-        "slow": 144,
-        "symbol": "GOLD",
-        "timeframe": "D1",
-        "tp": 24.0
-      },
-      "config_hash": "a660393b29a4c9baf19eb01786152716501eb81f382c418ade09431286699c97",
-      "execution_hash": "37b3fcf12c5ba573d474fbf454377e1e",
-      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=BOTH|SL=17.00|TP=24.00|OFF=3.25|EXP=7",
-      "metrics": {
-        "avg_win_loss": 0.8971884939742809,
-        "baseline_qualified_v11": false,
-        "calmar": -0.036893371224542594,
-        "exact_execution_duplicate": false,
-        "expectancy": -3.5522378255813947,
-        "full_metrics_pass": false,
-        "goal_policy": "GOLD_CANONICAL_V11_20260828",
-        "h1_entry_hours_pass": true,
-        "history_years": 25.842573579739906,
-        "max_consec_loss": 7,
-        "max_dd_pct": 16.020880713107662,
-        "minimum_trades_required_v11": 300,
-        "multi_layer_count": 2,
-        "multi_layer_pass": true,
-        "net_expectancy": -3.5522378255813947,
-        "net_profit": -1527.4622649999997,
-        "profit_factor": 0.7170000098288187,
-        "profit_factor_net": 0.7170000098288187,
-        "profitable_months_pct": 20.90032154340836,
-        "recovery": -0.9450219745464503,
-        "sample_pass_v11": true,
-        "sharpe": -0.5907189955354276,
-        "sortino": -0.4102483381877815,
-        "sqn": -3.2435374877066816,
-        "target_candidate_v11": false,
-        "target_pf_2_to_8": false,
-        "tier1_flags_v11": {
-          "full_trade_log": true,
-          "h1_profitable_months": true,
-          "h1_sqn": true,
-          "history": true,
-          "max_drawdown": true,
-          "net_ev_per_trade": false,
-          "profit_factor": false,
-          "sample": true,
-          "win_rate": false
-        },
-        "tier1_pass": false,
-        "tier1_pass_v11": false,
-        "tier2_flags_v11": {
-          "avg_win_loss": false,
-          "calmar": false,
-          "max_consecutive_losses": true,
-          "profitable_months": false,
-          "recovery": false,
-          "sharpe": false,
-          "sortino": false,
-          "sqn": false
-        },
-        "tier2_pass": false,
-        "tier2_pass_count": 1,
-        "tier2_pass_count_v11": 1,
-        "tier2_pass_v11": false,
-        "trades": 430,
-        "win_rate_pct": 44.41860465116279,
-        "wins": 191,
-        "wr": 44.41860465116279
-      },
-      "rank": 194
-    },
-    {
-      "candidate": {
-        "direction_mode": "BOTH",
-        "entry_method": "LIMIT",
-        "expiry": 5,
-        "family": "DONCHIAN",
-        "fast": 13,
-        "offset": 3.75,
-        "p1": 66.0,
-        "p2": 55.0,
-        "p3": 1.0,
-        "sl": 22.5,
-        "slow": 14,
-        "symbol": "GOLD",
-        "timeframe": "D1",
-        "tp": 23.5
-      },
-      "config_hash": "3f1f8668995869d31a73cc28239177f0b34b9f0911db6d70c7d68af5ddcb2e11",
-      "execution_hash": "3cff1a70492e8ffec1ff964c2c1d3180",
-      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=BOTH|SL=22.50|TP=23.50|OFF=3.75|EXP=5",
-      "metrics": {
-        "avg_win_loss": 0.6808132037645096,
-        "baseline_qualified_v11": false,
-        "calmar": -0.03308721298849869,
-        "exact_execution_duplicate": false,
-        "expectancy": -3.904662584493039,
-        "full_metrics_pass": false,
-        "goal_policy": "GOLD_CANONICAL_V11_20260828",
-        "h1_entry_hours_pass": true,
-        "history_years": 25.842573579739906,
-        "max_consec_loss": 12,
-        "max_dd_pct": 22.969711867043813,
-        "minimum_trades_required_v11": 300,
-        "multi_layer_count": 2,
-        "multi_layer_pass": true,
-        "net_expectancy": -3.904662584493039,
-        "net_profit": -1964.0452799999987,
-        "profit_factor": 0.7169379860050754,
-        "profit_factor_net": 0.7169379860050754,
-        "profitable_months_pct": 34.08360128617363,
-        "recovery": -0.819634046175665,
-        "sample_pass_v11": true,
-        "sharpe": -0.6492907706702638,
-        "sortino": -0.5094056227908166,
-        "sqn": -3.555256608902049,
-        "target_candidate_v11": false,
-        "target_pf_2_to_8": false,
-        "tier1_flags_v11": {
-          "full_trade_log": true,
-          "h1_profitable_months": true,
-          "h1_sqn": true,
-          "history": true,
-          "max_drawdown": true,
-          "net_ev_per_trade": false,
-          "profit_factor": false,
-          "sample": true,
-          "win_rate": true
-        },
-        "tier1_pass": false,
-        "tier1_pass_v11": false,
-        "tier2_flags_v11": {
-          "avg_win_loss": false,
-          "calmar": false,
-          "max_consecutive_losses": true,
-          "profitable_months": false,
-          "recovery": false,
-          "sharpe": false,
-          "sortino": false,
-          "sqn": false
-        },
-        "tier2_pass": false,
-        "tier2_pass_count": 1,
-        "tier2_pass_count_v11": 1,
-        "tier2_pass_v11": false,
-        "trades": 503,
-        "win_rate_pct": 51.29224652087475,
-        "wins": 258,
-        "wr": 51.29224652087475
-      },
-      "rank": 195
-    },
-    {
-      "candidate": {
-        "direction_mode": "BOTH",
-        "entry_method": "LIMIT",
-        "expiry": 5,
-        "family": "KELTNER_BREAKOUT",
-        "fast": 13,
-        "offset": 4.25,
-        "p1": 1.8,
-        "p2": 55.0,
-        "p3": 1.0,
-        "sl": 23.5,
-        "slow": 100,
-        "symbol": "GOLD",
-        "timeframe": "D1",
-        "tp": 24.0
-      },
-      "config_hash": "34ba1b578332786374d71bc12e469b755b2985e7e84efa1e22e4d623db60e969",
-      "execution_hash": "7f432514a88933fd774d1046608a5dff",
-      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=BOTH|SL=23.50|TP=24.00|OFF=4.25|EXP=5",
-      "metrics": {
-        "avg_win_loss": 0.6196568112596659,
-        "baseline_qualified_v11": false,
-        "calmar": -0.036491852991565224,
-        "exact_execution_duplicate": false,
-        "expectancy": -3.94359234140715,
-        "full_metrics_pass": false,
-        "goal_policy": "GOLD_CANONICAL_V11_20260828",
-        "h1_entry_hours_pass": true,
-        "history_years": 25.842573579739906,
-        "max_consec_loss": 8,
-        "max_dd_pct": 36.25596207468737,
-        "minimum_trades_required_v11": 300,
-        "multi_layer_count": 2,
-        "multi_layer_pass": true,
-        "net_expectancy": -3.94359234140715,
-        "net_profit": -3419.094559999999,
-        "profit_factor": 0.7167672070540911,
-        "profit_factor_net": 0.7167672070540911,
-        "profitable_months_pct": 29.90353697749196,
-        "recovery": -0.9134517210075217,
-        "sample_pass_v11": true,
-        "sharpe": -0.7889948615462482,
-        "sortino": -0.6033465277726424,
-        "sqn": -4.69747012555508,
-        "target_candidate_v11": false,
-        "target_pf_2_to_8": false,
-        "tier1_flags_v11": {
-          "full_trade_log": true,
-          "h1_profitable_months": true,
-          "h1_sqn": true,
-          "history": true,
-          "max_drawdown": false,
-          "net_ev_per_trade": false,
-          "profit_factor": false,
-          "sample": true,
-          "win_rate": true
-        },
-        "tier1_pass": false,
-        "tier1_pass_v11": false,
-        "tier2_flags_v11": {
-          "avg_win_loss": false,
-          "calmar": false,
-          "max_consecutive_losses": true,
-          "profitable_months": false,
-          "recovery": false,
-          "sharpe": false,
-          "sortino": false,
-          "sqn": false
-        },
-        "tier2_pass": false,
-        "tier2_pass_count": 1,
-        "tier2_pass_count_v11": 1,
-        "tier2_pass_v11": false,
-        "trades": 867,
-        "win_rate_pct": 53.63321799307958,
-        "wins": 465,
-        "wr": 53.63321799307958
-      },
-      "rank": 196
-    },
-    {
-      "candidate": {
-        "direction_mode": "BOTH",
-        "entry_method": "LIMIT",
-        "expiry": 7,
-        "family": "DONCHIAN",
-        "fast": 13,
-        "offset": 1.5,
-        "p1": 52.0,
-        "p2": 52.0,
-        "p3": 1.0,
-        "sl": 16.0,
-        "slow": 26,
-        "symbol": "GOLD",
-        "timeframe": "D1",
-        "tp": 23.5
-      },
-      "config_hash": "10ad6997adfcf3f8663ba2ab88800975e6b77c0426749dfa6006e79f79ad1372",
-      "execution_hash": "a9bd93dc801ec53e9706c71473117bf3",
-      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=BOTH|SL=16.00|TP=23.50|OFF=1.50|EXP=7",
-      "metrics": {
-        "avg_win_loss": 0.9089092069900557,
-        "baseline_qualified_v11": false,
-        "calmar": -0.03530816213623228,
-        "exact_execution_duplicate": false,
-        "expectancy": -3.412018694581278,
-        "full_metrics_pass": false,
-        "goal_policy": "GOLD_CANONICAL_V11_20260828",
-        "h1_entry_hours_pass": true,
-        "history_years": 25.842573579739906,
-        "max_consec_loss": 10,
-        "max_dd_pct": 15.181915220740894,
-        "minimum_trades_required_v11": 300,
-        "multi_layer_count": 2,
-        "multi_layer_pass": true,
-        "net_expectancy": -3.412018694581278,
-        "net_profit": -1385.279589999999,
-        "profit_factor": 0.7167169517674888,
-        "profit_factor_net": 0.7167169517674888,
-        "profitable_months_pct": 26.688102893890676,
-        "recovery": -0.8983760147022221,
-        "sample_pass_v11": true,
-        "sharpe": -0.6166699502308086,
-        "sortino": -0.47383832867344483,
-        "sqn": -3.195472752119986,
-        "target_candidate_v11": false,
-        "target_pf_2_to_8": false,
-        "tier1_flags_v11": {
-          "full_trade_log": true,
-          "h1_profitable_months": true,
-          "h1_sqn": true,
-          "history": true,
-          "max_drawdown": true,
-          "net_ev_per_trade": false,
-          "profit_factor": false,
-          "sample": true,
-          "win_rate": false
-        },
-        "tier1_pass": false,
-        "tier1_pass_v11": false,
-        "tier2_flags_v11": {
-          "avg_win_loss": false,
-          "calmar": false,
-          "max_consecutive_losses": true,
-          "profitable_months": false,
-          "recovery": false,
-          "sharpe": false,
-          "sortino": false,
-          "sqn": false
-        },
-        "tier2_pass": false,
-        "tier2_pass_count": 1,
-        "tier2_pass_count_v11": 1,
-        "tier2_pass_v11": false,
-        "trades": 406,
-        "win_rate_pct": 44.08866995073892,
-        "wins": 179,
-        "wr": 44.08866995073892
-      },
-      "rank": 197
-    },
-    {
-      "candidate": {
-        "direction_mode": "BOTH",
-        "entry_method": "LIMIT",
-        "expiry": 6,
-        "family": "PRICE_STRUCTURE",
-        "fast": 20,
-        "offset": 1.25,
-        "p1": 66.0,
-        "p2": 66.0,
-        "p3": 1.0,
-        "sl": 12.0,
-        "slow": 34,
-        "symbol": "GOLD",
-        "timeframe": "D1",
-        "tp": 25.0
-      },
-      "config_hash": "92973399b79c154bd36af962ba534088fb909cd866f853bf1a3dada016ed3713",
-      "execution_hash": "e5238ee45213a2383395bc37ae289f80",
-      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=BOTH|SL=12.00|TP=25.00|OFF=1.25|EXP=6",
-      "metrics": {
-        "avg_win_loss": 1.2090425731796093,
-        "baseline_qualified_v11": false,
-        "calmar": -0.03380692975106712,
-        "exact_execution_duplicate": false,
-        "expectancy": -3.1232569345238077,
-        "full_metrics_pass": false,
-        "goal_policy": "GOLD_CANONICAL_V11_20260828",
-        "h1_entry_hours_pass": true,
-        "history_years": 25.842573579739906,
-        "max_consec_loss": 8,
-        "max_dd_pct": 12.011728232350807,
-        "minimum_trades_required_v11": 300,
-        "multi_layer_count": 2,
-        "multi_layer_pass": true,
-        "net_expectancy": -3.1232569345238077,
-        "net_profit": -1049.4143299999994,
-        "profit_factor": 0.7162574485661192,
-        "profit_factor_net": 0.7162574485661192,
-        "profitable_months_pct": 21.543408360128616,
-        "recovery": -0.858845068846819,
-        "sample_pass_v11": true,
-        "sharpe": -0.5450898626862017,
-        "sortino": -0.408092005107971,
-        "sqn": -2.8544991041716745,
-        "target_candidate_v11": false,
-        "target_pf_2_to_8": false,
-        "tier1_flags_v11": {
-          "full_trade_log": true,
-          "h1_profitable_months": true,
-          "h1_sqn": true,
-          "history": true,
-          "max_drawdown": true,
-          "net_ev_per_trade": false,
-          "profit_factor": false,
-          "sample": true,
-          "win_rate": false
-        },
-        "tier1_pass": false,
-        "tier1_pass_v11": false,
-        "tier2_flags_v11": {
-          "avg_win_loss": true,
-          "calmar": false,
-          "max_consecutive_losses": true,
-          "profitable_months": false,
-          "recovery": false,
-          "sharpe": false,
-          "sortino": false,
-          "sqn": false
-        },
-        "tier2_pass": false,
-        "tier2_pass_count": 2,
-        "tier2_pass_count_v11": 2,
-        "tier2_pass_v11": false,
-        "trades": 336,
-        "win_rate_pct": 37.20238095238095,
-        "wins": 125,
-        "wr": 37.20238095238095
-      },
-      "rank": 198
-    },
-    {
-      "candidate": {
-        "direction_mode": "LONG_ONLY",
-        "entry_method": "LIMIT",
-        "expiry": 6,
-        "family": "BOLLINGER_REVERSION",
-        "fast": 3,
-        "offset": 2.75,
-        "p1": 1.5,
-        "p2": 30.0,
-        "p3": 1.0,
-        "sl": 19.0,
-        "slow": 10,
-        "symbol": "GOLD",
-        "timeframe": "D1",
-        "tp": 19.5
-      },
-      "config_hash": "db91c10957423157d6e6c6dd5b9b5322646af5172683cb6ffb14443e63ba5e3d",
-      "execution_hash": "b50252ed7933792454e105d1d9f61bee",
-      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=LONG_ONLY|SL=19.00|TP=19.50|OFF=2.75|EXP=6",
-      "metrics": {
-        "avg_win_loss": 0.6283551144118016,
-        "baseline_qualified_v11": false,
-        "calmar": -0.030627186494820664,
-        "exact_execution_duplicate": false,
-        "expectancy": -3.240339052287581,
-        "full_metrics_pass": false,
-        "goal_policy": "GOLD_CANONICAL_V11_20260828",
-        "h1_entry_hours_pass": true,
-        "history_years": 25.842573579739906,
-        "max_consec_loss": 7,
-        "max_dd_pct": 12.527632847726137,
-        "minimum_trades_required_v11": 300,
-        "multi_layer_count": 2,
-        "multi_layer_pass": true,
-        "net_expectancy": -3.240339052287581,
-        "net_profit": -991.5437499999998,
-        "profit_factor": 0.7162369485952703,
-        "profit_factor_net": 0.7162369485952703,
-        "profitable_months_pct": 29.90353697749196,
-        "recovery": -0.7685345039365868,
-        "sample_pass_v11": true,
-        "sharpe": -0.46655002820992175,
-        "sortino": -0.2561960444265842,
-        "sqn": -2.8223251658973965,
-        "target_candidate_v11": false,
-        "target_pf_2_to_8": false,
-        "tier1_flags_v11": {
-          "full_trade_log": true,
-          "h1_profitable_months": true,
-          "h1_sqn": true,
-          "history": true,
-          "max_drawdown": true,
-          "net_ev_per_trade": false,
-          "profit_factor": false,
-          "sample": true,
-          "win_rate": true
-        },
-        "tier1_pass": false,
-        "tier1_pass_v11": false,
-        "tier2_flags_v11": {
-          "avg_win_loss": false,
-          "calmar": false,
-          "max_consecutive_losses": true,
-          "profitable_months": false,
-          "recovery": false,
-          "sharpe": false,
-          "sortino": false,
-          "sqn": false
-        },
-        "tier2_pass": false,
-        "tier2_pass_count": 1,
-        "tier2_pass_count_v11": 1,
-        "tier2_pass_v11": false,
-        "trades": 306,
-        "win_rate_pct": 53.26797385620915,
-        "wins": 163,
-        "wr": 53.26797385620915
-      },
-      "rank": 199
-    },
-    {
-      "candidate": {
-        "direction_mode": "LONG_ONLY",
-        "entry_method": "LIMIT",
-        "expiry": 3,
-        "family": "DONCHIAN",
-        "fast": 10,
-        "offset": 1.5,
-        "p1": 52.0,
-        "p2": 62.0,
-        "p3": 1.0,
-        "sl": 18.5,
-        "slow": 13,
-        "symbol": "GOLD",
-        "timeframe": "D1",
-        "tp": 22.5
-      },
-      "config_hash": "3c63bdfc0dd1e957ab65d3c49441d6550bb2ea5083ad4a9e9e1d525b58ab4137",
-      "execution_hash": "b4d90b837e5ac48f04a7490cf00ae068",
-      "execution_profile_v11": "GOLD|TF=D1|LIMIT|DIR=LONG_ONLY|SL=18.50|TP=22.50|OFF=1.50|EXP=3",
-      "metrics": {
-        "avg_win_loss": 0.7404073530510162,
-        "baseline_qualified_v11": false,
-        "calmar": -0.028770919524876804,
-        "exact_execution_duplicate": false,
-        "expectancy": -3.556115305555552,
-        "full_metrics_pass": false,
-        "goal_policy": "GOLD_CANONICAL_V11_20260828",
-        "h1_entry_hours_pass": true,
-        "history_years": 25.842573579739906,
-        "max_consec_loss": 8,
-        "max_dd_pct": 17.218242947380265,
-        "minimum_trades_required_v11": 300,
-        "multi_layer_count": 2,
-        "multi_layer_pass": true,
-        "net_expectancy": -3.556115305555552,
-        "net_profit": -1280.2015099999987,
-        "profit_factor": 0.7161317021313107,
-        "profit_factor_net": 0.7161317021313107,
-        "profitable_months_pct": 21.543408360128616,
-        "recovery": -0.7058585751543033,
-        "sample_pass_v11": true,
-        "sharpe": -0.5755205250468685,
-        "sortino": -0.4083526732046506,
-        "sqn": -2.990190940452197,
-        "target_candidate_v11": false,
-        "target_pf_2_to_8": false,
-        "tier1_flags_v11": {
-          "full_trade_log": true,
-          "h1_profitable_months": true,
-          "h1_sqn": true,
-          "history": true,
-          "max_drawdown": true,
-          "net_ev_per_trade": false,
-          "profit_factor": false,
-          "sample": true,
-          "win_rate": false
-        },
-        "tier1_pass": false,
-        "tier1_pass_v11": false,
-        "tier2_flags_v11": {
-          "avg_win_loss": false,
-          "calmar": false,
-          "max_consecutive_losses": true,
-          "profitable_months": false,
-          "recovery": false,
-          "sharpe": false,
-          "sortino": false,
-          "sqn": false
-        },
-        "tier2_pass": false,
-        "tier2_pass_count": 1,
-        "tier2_pass_count_v11": 1,
-        "tier2_pass_v11": false,
-        "trades": 360,
-        "win_rate_pct": 49.166666666666664,
-        "wins": 177,
-        "wr": 49.166666666666664
       },
       "rank": 200
     }
