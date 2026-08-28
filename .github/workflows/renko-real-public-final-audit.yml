@@ -1,0 +1,66 @@
+name: RENKO REAL Public Final Audit
+on:
+  push:
+    branches:
+      - audit/renko-real-public-final-20260828
+    paths:
+      - '.github/workflows/renko-real-public-final-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-real:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      EXPECTED_PUBLIC_SHA: c6b22ea5f57009bbab732255eae37e00b97047da
+      RWA_TEST_URL: https://copytolive.github.io/rwa
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Bind audit to exact public deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/renko-real-public-final
+          stamp=''
+          for i in $(seq 1 30); do
+            stamp=$(curl -fsS "https://copytolive.github.io/rwa/renko-deployment-sha.txt?ts=$(date +%s%N)" | tr -d '\r\n' || true)
+            echo "attempt=$i expected=$EXPECTED_PUBLIC_SHA public=$stamp"
+            [[ "$stamp" == "$EXPECTED_PUBLIC_SHA" ]] && break
+            sleep 2
+          done
+          [[ "$stamp" == "$EXPECTED_PUBLIC_SHA" ]]
+          main=$(git ls-remote https://github.com/copytolive/rwa.git refs/heads/main | awk '{print $1}')
+          printf 'expected_public_sha=%s\npublic_deployment_sha=%s\nmain_sha_at_audit_start=%s\npublic_url=%s/renko/?symbol=XAUT\n' "$EXPECTED_PUBLIC_SHA" "$stamp" "$main" "$RWA_TEST_URL" > artifacts/renko-real-public-final/deployment-proof.txt
+          cat artifacts/renko-real-public-final/deployment-proof.txt
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
+          npx playwright install --with-deps chromium
+      - name: PUBLIC desktop — 50/50 pair switches + 51 first-frame screenshots
+        run: RENKO_50PAIR_VIEWPORT=desktop RENKO_50PAIR_OUT=artifacts/renko-real-public-final/50pair-desktop node tools/renko-50pair-switch-report.mjs
+      - name: PUBLIC mobile — 50/50 pair switches + 51 first-frame screenshots
+        run: RENKO_50PAIR_VIEWPORT=mobile RENKO_50PAIR_OUT=artifacts/renko-real-public-final/50pair-mobile node tools/renko-50pair-switch-report.mjs
+      - name: PUBLIC XAUT fixed-1s provider — desktop + mobile
+        run: RENKO_XAUT_PROVIDER_OUT=artifacts/renko-real-public-final/xaut-provider node tools/renko-xaut-live-provider-report.mjs
+      - name: PUBLIC XAUT ATR 1..1,000,000 — desktop + mobile
+        run: RENKO_XAUT_MATRIX_OUT=artifacts/renko-real-public-final/xaut-atr-matrix node tools/renko-xaut-atr-matrix-report.mjs
+      - name: Final public receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          stamp=$(curl -fsS "https://copytolive.github.io/rwa/renko-deployment-sha.txt?ts=$(date +%s%N)" | tr -d '\r\n')
+          [[ "$stamp" == "$EXPECTED_PUBLIC_SHA" ]]
+          main=$(git ls-remote https://github.com/copytolive/rwa.git refs/heads/main | awk '{print $1}')
+          printf '\nmain_sha_at_audit_end=%s\npublic_deployment_sha_at_audit_end=%s\nstatus=PASS\n' "$main" "$stamp" >> artifacts/renko-real-public-final/deployment-proof.txt
+          node -e "const fs=require('fs'); for(const p of ['50pair-desktop/report.json','50pair-mobile/report.json','xaut-provider/report.json','xaut-atr-matrix/report.json']){const j=JSON.parse(fs.readFileSync('artifacts/renko-real-public-final/'+p)); if(j.status!=='PASS') throw new Error(p+' '+j.status); console.log(p,j.status)}"
+          cat artifacts/renko-real-public-final/deployment-proof.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-real-public-final-${{ env.EXPECTED_PUBLIC_SHA }}
+          path: artifacts/renko-real-public-final
+          retention-days: 30
