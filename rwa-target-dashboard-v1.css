@@ -1,0 +1,70 @@
+/* RWA_TARGET_DASHBOARD_V1 — visual convergence toward the approved RWA × Seablueprint target without changing fail-closed commerce truth. */
+:root{--rwa-target-bg:#030812;--rwa-target-panel:#07101d;--rwa-target-panel-2:#0a1321;--rwa-target-line:#1c2b41;--rwa-target-text:#edf4ff;--rwa-target-muted:#8ea0ba;--rwa-target-blue:#6f7dff;--rwa-target-green:#16d99b;--rwa-target-red:#ff536d}
+body.rwa-target-dashboard-v1{background:var(--rwa-target-bg)!important;color:var(--rwa-target-text)!important}
+body.rwa-target-dashboard-v1 .app{background:linear-gradient(180deg,#020710 0,#050b14 100%)!important}
+body.rwa-target-dashboard-v1 .topbar{height:62px!important;min-height:62px!important;padding:0 14px!important;background:rgba(3,8,18,.985)!important;border-bottom:1px solid var(--rwa-target-line)!important;box-shadow:0 8px 24px rgba(0,0,0,.24);gap:16px!important}
+body.rwa-target-dashboard-v1 .brand{min-width:max-content!important;gap:10px!important;color:#f4f7ff!important}
+body.rwa-target-dashboard-v1 .brandmark{width:32px!important;height:32px!important;border-radius:9px!important;background:linear-gradient(145deg,#4c5cff,#1a2f69)!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),0 0 24px rgba(81,98,255,.18)}
+body.rwa-target-dashboard-v1 .brandcopy{display:block!important}
+body.rwa-target-dashboard-v1 .brandcopy strong{font-size:15px!important;letter-spacing:.015em!important;font-weight:800!important;color:#f5f7ff!important}
+body.rwa-target-dashboard-v1 .brandcopy small{display:none!important}
+body.rwa-target-dashboard-v1 .topnav{height:100%!important;display:flex!important;align-items:center!important;gap:3px!important;min-width:0!important;overflow:hidden}
+body.rwa-target-dashboard-v1 .topnav button{position:relative;height:38px!important;padding:0 13px!important;border:0!important;border-radius:8px!important;background:transparent!important;color:#aab5c8!important;font-size:11px!important;font-weight:650!important;letter-spacing:0!important;white-space:nowrap!important}
+body.rwa-target-dashboard-v1 .topnav button:hover,body.rwa-target-dashboard-v1 .topnav button:focus-visible{background:#0c1627!important;color:#fff!important;outline:none!important}
+body.rwa-target-dashboard-v1 .topnav button.active{background:#101a33!important;color:#f5f7ff!important;box-shadow:inset 0 -2px 0 #7583ff!important}
+body.rwa-target-dashboard-v1 .rwa-target-new{display:inline-flex;align-items:center;justify-content:center;margin-left:5px;padding:2px 5px;border-radius:999px;background:#153968;color:#84c8ff;font-size:7px;font-weight:900;line-height:1}
+body.rwa-target-dashboard-v1 .rwa-target-inpage{display:inline-flex;align-items:center;justify-content:center;height:32px;padding:0 11px;border:1px solid #155f4d;border-radius:999px;background:#062119;color:#4ef0b8;font-size:8px;font-weight:850;letter-spacing:.04em;white-space:nowrap}
+body.rwa-target-dashboard-v1 .top-actions{gap:7px!important;margin-left:auto!important}
+body.rwa-target-dashboard-v1 .top-actions .status{height:32px!important;border:1px solid #174a3b!important;border-radius:999px!important;background:#061a16!important;color:#6ce8bb!important;padding:0 10px!important;font-size:8px!important;font-weight:800!important}
+body.rwa-target-dashboard-v1 .top-actions .signin{height:36px!important;padding:0 16px!important;border-radius:8px!important;background:linear-gradient(180deg,#5666e8,#3949bd)!important;border:1px solid #6877ef!important;color:white!important;font-weight:800!important}
+body.rwa-target-dashboard-v1 .top-actions .institutional{display:none!important}
+body.rwa-target-dashboard-v1 .rwa-seablueprint-commerce-launch{height:36px!important;padding:0 11px!important;border-color:#33415d!important;background:#0b1321!important;border-radius:8px!important;text-transform:none!important;letter-spacing:0!important;font-size:9px!important;font-weight:800!important}
+body.rwa-target-dashboard-v1 .rwa-seablueprint-commerce-label{text-transform:none!important}
+body.rwa-target-dashboard-v1 .rwa-seablueprint-commerce-mark{background:#5264ec!important;color:white!important}
+body.rwa-target-dashboard-v1 #rwaExperienceRail{background:#050b14!important;border-bottom:1px solid #18263a!important}
+body.rwa-target-dashboard-v1 .layout{box-sizing:border-box!important;grid-template-columns:286px minmax(0,1fr)!important;background:#040a13!important;transition:padding-right .18s ease!important}
+body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open .layout{padding-right:440px!important}
+body.rwa-target-dashboard-v1 .left{background:#06101c!important;border-right:1px solid #1b2a40!important;box-shadow:inset -1px 0 0 rgba(255,255,255,.01)}
+body.rwa-target-dashboard-v1 .aside-label{height:42px!important;padding:0 13px!important;border-bottom:1px solid #18263a!important}
+body.rwa-target-dashboard-v1 .aside-label span{font-size:10px!important;letter-spacing:.04em!important;color:#f3f6fb!important}
+body.rwa-target-dashboard-v1 .aside-label small{font-size:8px!important;color:#71839d!important}
+body.rwa-target-dashboard-v1 .market-head{padding:10px 11px 8px!important;background:#07111e!important;border-bottom:1px solid #17253a!important}
+body.rwa-target-dashboard-v1 .search{height:36px!important;background:#050d17!important;border:1px solid #1b2a40!important;border-radius:8px!important}
+body.rwa-target-dashboard-v1 .filters{gap:5px!important;margin-top:8px!important}
+body.rwa-target-dashboard-v1 .filter{height:28px!important;padding:0 9px!important;border-radius:7px!important;color:#8ea0ba!important}
+body.rwa-target-dashboard-v1 .filter.active{background:#15234b!important;color:#e9efff!important}
+body.rwa-target-dashboard-v1 .pairlist{background:#050c16!important}
+body.rwa-target-dashboard-v1 .pair{min-height:64px!important;border-bottom:1px solid #142135!important;padding:9px 10px!important}
+body.rwa-target-dashboard-v1 .pair:hover{background:#0a1524!important}
+body.rwa-target-dashboard-v1 .pair.active{background:linear-gradient(90deg,#111d38,#08111e)!important;box-shadow:inset 2px 0 0 #6979ff!important}
+body.rwa-target-dashboard-v1 .main{background:#050b14!important;min-width:0!important}
+body.rwa-target-dashboard-v1 .terminal-header{min-height:72px!important;padding:10px 14px!important;background:#07101c!important;border-bottom:1px solid #1b2a40!important}
+body.rwa-target-dashboard-v1 .instrument-line b{font-size:15px!important;color:#f6f8ff!important}
+body.rwa-target-dashboard-v1 .qstat small{color:#7789a2!important;font-size:7px!important;letter-spacing:.08em!important;text-transform:uppercase}
+body.rwa-target-dashboard-v1 .qstat b{font-size:11px!important;color:#eef4ff!important}
+body.rwa-target-dashboard-v1 .instrument-actions button{height:32px!important;border:1px solid #1f3048!important;background:#08111d!important;border-radius:8px!important;color:#aebbd0!important}
+body.rwa-target-dashboard-v1 .chart-wrap{background:#030812!important;border-bottom:1px solid #1b2a40!important;min-height:430px!important}
+body.rwa-target-dashboard-v1 .chart-watermark{opacity:.025!important}
+body.rwa-target-dashboard-v1 .bottom{background:#050b14!important;border-top:0!important}
+body.rwa-target-dashboard-v1 .bottom>section{background:#06101b!important;border-color:#18263a!important}
+body.rwa-target-dashboard-v1 .panel-title{background:#07111d!important;border-color:#18263a!important}
+body.rwa-target-dashboard-v1 .pulse-card{background:#050c16!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"]{background:#050b14!important;border-color:#223451!important;box-shadow:-28px 0 60px rgba(0,0,0,.56)!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-shop-shell{padding:0 12px 20px!important;background:#050b14!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-shop-head{min-height:58px!important;background:linear-gradient(180deg,#07111d 84%,rgba(7,17,29,.94))!important;border-bottom-color:#1d2d46!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-shop-brand b{font-size:12px!important;color:#f5f7ff!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-shop-brand small{font-size:7px!important;color:#6f829e!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-shop-mark{background:linear-gradient(145deg,#5364ed,#2e3d96)!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-seablueprint-source{background:#07111d!important;border-color:#20314c!important;margin:8px 0 10px!important;padding:9px 10px!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-seablueprint-source b{font-size:8px!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-seablueprint-source div span{font-size:8px!important;color:#7f91ab!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-shop-hero-main{background:linear-gradient(145deg,#0d1730,#09111e)!important;border:1px solid #213351!important;padding:14px!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-shop-hero h1{font-size:20px!important;line-height:1.12!important;color:#f4f7ff!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-shop-hero p{font-size:9px!important;color:#96a6bc!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-shop-tabs{border-bottom:1px solid #1e2d45!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] [data-shop-tab]{font-size:9px!important;color:#91a0b8!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] [data-shop-tab].active{color:#89a4ff!important;border-color:#6579ff!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-products{gap:8px!important}
+body.rwa-target-dashboard-v1 #rwaShopScreen[data-seablueprint-single-shell="1"] .rwa-product-card{background:#08111e!important;border-color:#1e2f48!important;border-radius:10px!important}
+@media(max-width:1450px){body.rwa-target-dashboard-v1 .topnav button{padding:0 9px!important;font-size:10px!important}body.rwa-target-dashboard-v1 .rwa-target-inpage{display:none!important}body.rwa-target-dashboard-v1 .layout{grid-template-columns:250px minmax(0,1fr)!important}}
+@media(max-width:900px){body.rwa-target-dashboard-v1 .topbar{height:56px!important;min-height:56px!important;padding:0 9px!important}body.rwa-target-dashboard-v1 .brandcopy strong{font-size:13px!important}body.rwa-target-dashboard-v1 .layout{display:block!important;padding-right:0!important}body.rwa-target-dashboard-v1.rwa-seablueprint-commerce-open .layout{padding-right:0!important}body.rwa-target-dashboard-v1 .rwa-target-inpage{display:none!important}}
