@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 if(window.RWASeablueprintCommerceBridge)return;
-const VERSION='1.1.0';
+const VERSION='1.2.0';
 const CONFIG='rwa-commerce-config.json';
 const state={rootPath:location.pathname,returnHash:'',config:null,opening:false,storefrontLoaded:false,liveLoaded:false};
 const $=s=>document.querySelector(s);
@@ -65,12 +65,10 @@ async function open(tab='stores'){
   catch(e){toast(e?.message||'Seablueprint ecommerce unavailable')}
   finally{state.opening=false}
 }
-function close(){try{window.RWAStorefront?.close?.()}catch{}document.body.classList.remove('rwa-seablueprint-commerce-open');restoreSingleShell();restoreReturnContext()}
-function internalTrade(anchor){
-  const raw=anchor.getAttribute('href')||'';if(!/^trade\//i.test(raw))return false;
-  const m=raw.match(/[?&]coin=([^&#]+)/i),coin=decodeURIComponent(m?.[1]||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
-  if(!coin)return false;
-  close();if(window.RWASuperApp?.navigate)window.RWASuperApp.navigate(`trade/${coin}`);else location.hash=`#trade/${coin}`;return true;
+function close({restore=true}={}){try{window.RWAStorefront?.close?.()}catch{}document.body.classList.remove('rwa-seablueprint-commerce-open');restoreSingleShell();if(restore)restoreReturnContext();else state.returnHash=''}
+function tradeCoin(anchor){
+  const raw=anchor.getAttribute('href')||'';if(!/^trade\//i.test(raw))return'';
+  const m=raw.match(/[?&]coin=([^&#]+)/i);return decodeURIComponent(m?.[1]||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
 }
 function externalCommerce(anchor){
   try{const u=new URL(anchor.href,location.href);return u.origin!==location.origin}catch{return false}
@@ -85,7 +83,7 @@ document.addEventListener('click',e=>{
   const launch=e.target.closest?.('[data-rwa-seablueprint-commerce]');if(launch){e.preventDefault();e.stopImmediatePropagation();open('stores');return}
   if(e.target.closest?.('#rwaShopClose')){e.preventDefault();e.stopImmediatePropagation();close();return}
   const a=e.target.closest?.('#rwaShopScreen a[href]');if(!a)return;
-  if(internalTrade(a)){e.preventDefault();e.stopImmediatePropagation();return}
+  const coin=tradeCoin(a);if(coin){e.preventDefault();e.stopImmediatePropagation();close({restore:false});if(window.RWASuperApp?.navigate)window.RWASuperApp.navigate(`trade/${coin}`);else location.hash=`#trade/${coin}`;return}
   if(externalCommerce(a)){e.preventDefault();e.stopImmediatePropagation();toast('External ecommerce navigation is disabled in single-shell mode.')}
 },true);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#rwaShopScreen')?.classList.contains('open')){e.preventDefault();e.stopImmediatePropagation();close()}},true);
