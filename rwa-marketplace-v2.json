@@ -1,0 +1,99 @@
+{
+  "schema": 2,
+  "version": "2.0.0",
+  "policy": "ONE_RWA_TOKEN_MULTI_SELLER_MARKETPLACE_V2",
+  "mode": "MARKETPLACE_ENGINE_READY_LIVE_CATALOG_EVIDENCE_GATED",
+  "currency": "USD",
+  "marketplace_token": {
+    "symbol": "RWA",
+    "name": "RWA Marketplace",
+    "status": "PENDING_VERIFIED_ASSET",
+    "trade_surface": "trade/?coin=RWA",
+    "marketplace_surface": "marketplace-v2.html"
+  },
+  "model": {
+    "one_marketplace_token": true,
+    "multi_seller": true,
+    "multi_store": true,
+    "multi_category": true,
+    "multi_product": true,
+    "seller_storefronts": true,
+    "catalog_search": true,
+    "product_variants": true,
+    "cart": true,
+    "shipping": true,
+    "local_pickup": true,
+    "refunds": true,
+    "order_tracking": true,
+    "inventory_reservation": true,
+    "checkout_backend_required": true,
+    "token_trading_separate_from_product_purchase": true
+  },
+  "verification": {
+    "verified_rwa_asset_required": true,
+    "seller_identity_required": true,
+    "seller_business_evidence_required": true,
+    "product_evidence_required": true,
+    "inventory_backend_required": true,
+    "payment_backend_required": true,
+    "shipping_or_pickup_terms_required": true,
+    "refund_terms_required": true,
+    "no_fake_inventory": true,
+    "no_fake_ratings": true,
+    "no_fake_sales": true,
+    "no_fake_prices": true
+  },
+  "seller_evidence_required": [
+    "seller_name",
+    "business_registration_url",
+    "merchant_identity_url",
+    "support_contact",
+    "fulfillment_origin"
+  ],
+  "product_evidence_required": [
+    "sku",
+    "name",
+    "description",
+    "price",
+    "currency",
+    "inventory_source",
+    "product_image_url",
+    "fulfillment_terms_url",
+    "refund_terms_url"
+  ],
+  "live_sellers": [],
+  "live_products": [],
+  "ui_blueprints": {
+    "label": "UI BLUEPRINT ONLY — NOT LIVE INVENTORY",
+    "categories": [
+      "Featured",
+      "Retail",
+      "Property Supplies",
+      "Industrial",
+      "Health & Lifestyle",
+      "Food & Agriculture",
+      "Mobility",
+      "Services"
+    ],
+    "storefront_modules": [
+      "hero",
+      "category_navigation",
+      "featured_products",
+      "seller_storefront",
+      "product_detail",
+      "variants",
+      "cart",
+      "shipping_pickup",
+      "checkout",
+      "orders_refunds"
+    ]
+  },
+  "integrations": {
+    "commerce_config": "rwa-commerce-config.json",
+    "asset_registry": "rwa-assets.json",
+    "legacy_store_registry": "rwa-commerce-registry.json",
+    "multichain_registry": "rwa-multichain-registry.json",
+    "market_universe": "rwa-market-universe.js",
+    "trade_protection": "rwa-trade-protection.js"
+  }
+}
