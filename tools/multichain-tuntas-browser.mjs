@@ -61,7 +61,12 @@ await page.route('**/*',async route=>{
     let b={};try{b=req.postDataJSON()||{}}catch{}rpcMethods.push(b.method);
     if(b.method==='simulateTransaction')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:b.id,result:{value:{err:null,logs:['ok'],unitsConsumed:12345}}})});
     if(b.method==='eth_call')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:b.id,result:'0x0'})});
-    if(b.method==='eth_getTransactionReceipt')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:b.id,result:{status:'0x1',transactionHash:b.params?.[0]}})});
+    if(b.method==='eth_getTransactionReceipt'){
+      const h=b.params?.[0];
+      if(h===APPROVAL)await page.evaluate(()=>{window.__approvalConfirmed=true;window.__mcEvents.push('receipt:approval:confirmed')});
+      if(h===ROUTE)await page.evaluate(()=>window.__mcEvents.push('receipt:route:confirmed'));
+      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:b.id,result:{status:'0x1',transactionHash:h}})});
+    }
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:b.id,result:'0x0'})});
   }
   if(u.pathname.includes('/exchange'))directWrites.push(req.url());
@@ -81,10 +86,10 @@ try{
   const sol=await page.evaluate(async({SOL,EVM})=>{const e=window.RWAMultiChainEngine,q={action:{fromChainId:1151111081099710,toChainId:8453,fromAddress:SOL,toAddress:EVM},estimate:{toAmountMin:'1'},transactionRequest:{data:btoa(String.fromCharCode(1,...new Array(64).fill(0),1,2,3))},__rwa:{createdAt:Date.now(),fromNetwork:'solana',toNetwork:'base',fromToken:{decimals:6,symbol:'USDC'},toToken:{decimals:6,symbol:'USDC'}}};return e.simulate(q)},{SOL,EVM});
   if(!sol.ok||sol.preflight!=='simulateTransaction'||!rpcMethods.includes('simulateTransaction'))throw Error('Solana preflight failed');report.checks.solana_rpc_preflight='PASS';
 
-  const exec=await page.evaluate(async({EVM,APPROVAL})=>{const e=window.RWAMultiChainEngine,q=await e.quote({fromNetwork:'base',toNetwork:'arbitrum',fromToken:'USDC',toToken:'USDC',amount:'10',fromAddress:EVM,toAddress:EVM});const old=e.waitEvmReceipt;e.waitEvmReceipt=async h=>{window.__mcEvents.push(`receipt:${h===APPROVAL?'approval':'route'}:pending`);await new Promise(r=>setTimeout(r,20));if(h===APPROVAL){window.__approvalConfirmed=true;window.__mcEvents.push('receipt:approval:confirmed')}else window.__mcEvents.push('receipt:route:confirmed');return{status:'0x1',transactionHash:h}};try{return await e.execute(q,{confirm:true})}finally{e.waitEvmReceipt=old}},{EVM,APPROVAL});
+  const exec=await page.evaluate(async({EVM})=>{const e=window.RWAMultiChainEngine,q=await e.quote({fromNetwork:'base',toNetwork:'arbitrum',fromToken:'USDC',toToken:'USDC',amount:'10',fromAddress:EVM,toAddress:EVM});return e.execute(q,{confirm:true})},{EVM});
   if(exec.hash!==ROUTE)throw Error('route hash mismatch');
-  const events=await page.evaluate(()=>window.__mcEvents.slice()),a=events.indexOf('send:approval'),b=events.indexOf('receipt:approval:confirmed'),c=events.indexOf('send:route');
-  if(!(a>=0&&b>a&&c>b))throw Error(`approval receipt order invalid: ${events.join(' > ')}`);report.checks.approval_receipt_barrier='PASS';
+  const events=await page.evaluate(()=>window.__mcEvents.slice()),a=events.indexOf('send:approval'),b=events.indexOf('receipt:approval:confirmed'),c=events.indexOf('send:route'),d=events.indexOf('receipt:route:confirmed');
+  if(!(a>=0&&b>a&&c>b&&d>c))throw Error(`approval/route receipt order invalid: ${events.join(' > ')}`);report.checks.approval_receipt_barrier='PASS';
 
   await page.waitForFunction(()=>window.RWAMultiChainEngine.lifecycleHistory().some(x=>x.status==='DONE'),null,{timeout:10000});
   const lifecycle=await page.evaluate(()=>window.RWAMultiChainEngine.lifecycleHistory());if(!lifecycle.some(x=>x.status==='DONE'))throw Error('lifecycle recovery missing');report.checks.persistent_lifecycle_recovery='PASS';
