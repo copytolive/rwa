@@ -19,6 +19,8 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      RENKO_FIXED_INTERVAL: '1s'
     steps:
       - uses: actions/checkout@v4
         with:
