@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import tempfile
+from dataclasses import replace
 from pathlib import Path
 
 import pandas as pd
@@ -44,11 +45,15 @@ def ledger(config_hash: str, net: float = 10.0) -> list[dict]:
 def main() -> None:
     base = candidate(10)
     too_close = candidate(11)   # 10% change: must fail novelty
-    enough = candidate(12)      # 20% change: must pass novelty
+    enough = candidate(12)      # exactly 20% change: must pass novelty
     other_family = candidate(10, "ATR_BREAKOUT")
+    sl_too_close = replace(base, sl=16.249)  # <30%: must fail novelty
+    sl_enough = replace(base, sl=16.25)      # exactly 30%: must pass novelty
     assert novelty_pass(too_close, base) is False
     assert novelty_pass(enough, base) is True
     assert novelty_pass(other_family, base) is True
+    assert novelty_pass(sl_too_close, base) is False
+    assert novelty_pass(sl_enough, base) is True
 
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
@@ -87,7 +92,7 @@ def main() -> None:
         assert store.exact_execution_duplicate(different) is False
         store.close()
 
-    print("pipeline_selftest: PASS — novelty>=20% and exact full-ledger duplicate authority verified")
+    print("pipeline_selftest: PASS — inclusive novelty >=20% / >=30% and exact full-ledger duplicate authority verified")
 
 
 if __name__ == "__main__":
