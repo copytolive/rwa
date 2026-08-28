@@ -1,0 +1,33 @@
+name: RENKO XAUT Gate Bulk Probe
+on:
+  push:
+    branches:
+      - fix/renko-xaut-atr-matrix-20260828
+    paths:
+      - '.github/workflows/renko-xaut-bulk-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Probe prior complete month
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://download.gatedata.org/spot/candlesticks_1m/202607/XAUT_USDT-202607.csv.gz'
+          echo "URL=$url"
+          curl -fL --retry 3 --retry-delay 1 -D /tmp/headers "$url" -o /tmp/xaut.csv.gz
+          echo '--- headers ---'
+          cat /tmp/headers
+          echo '--- compressed bytes ---'
+          wc -c /tmp/xaut.csv.gz
+          gzip -dc /tmp/xaut.csv.gz >/tmp/xaut.csv
+          echo '--- lines ---'
+          wc -l /tmp/xaut.csv
+          echo '--- first 5 ---'
+          head -n 5 /tmp/xaut.csv
+          echo '--- last 5 ---'
+          tail -n 5 /tmp/xaut.csv
