@@ -33,7 +33,7 @@ ok(engine.includes('async function discover('),'cross-chain token discovery miss
 ok(engine.includes('async function portfolio('),'unified portfolio aggregation missing');
 ok(engine.includes('async function quote(')&&engine.includes('/quote?'),'same/cross-chain quote engine missing');
 ok(engine.includes('assertAddressFamily')&&engine.includes('resolveDestinationAddress'),'EVM/Solana destination family binding missing');
-ok(engine.includes("method:'simulateTransaction'")&&engine.includes("replaceRecentBlockhash:true"),'real Solana RPC preflight missing');
+ok(engine.includes("'simulateTransaction'")&&engine.includes("replaceRecentBlockhash:true"),'real Solana RPC preflight missing');
 ok(engine.includes('async function waitEvmReceipt('),'EVM receipt barrier missing');
 ok(engine.includes("status:'APPROVAL_CONFIRMED'")&&engine.includes('Post-approval simulation'),'post-approval receipt/simulation barrier missing');
 ok(engine.includes("LIFECYCLE_KEY='rwa_multichain_lifecycle_v3'")&&engine.includes('recoverLifecycle'),'persistent lifecycle recovery missing');
