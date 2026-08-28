@@ -3,6 +3,7 @@ name: RWA Marketplace + MULTI CHAIN V7
 on:
   push:
     branches:
+      - main
       - feat/fomo-marketplace-parity-v7-20260828
   pull_request:
     branches: ["main"]
