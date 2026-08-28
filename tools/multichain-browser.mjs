@@ -65,6 +65,7 @@ async function runViewport(width,height,label){
     if(u.pathname==='/v1/chains')return route.fulfill({json:{chains:[...chainIds.map(chain),{id:1151111081099710,name:'Solana',key:'sol',chainType:'SVM',nativeToken:{symbol:'SOL',decimals:9,priceUSD:'150'},rpcUrls:['https://mock-rpc.local/solana']}]}});
     if(u.pathname==='/v1/token')return route.fulfill({json:usdc(Number(u.searchParams.get('chain')))});
     if(u.pathname==='/v1/quote'){
+      if(u.searchParams.has('fee'))throw Error(`${label}: disabled revenue config must not append an application fee`);
       const from=Number(u.searchParams.get('fromChain')),to=Number(u.searchParams.get('toChain')),fromAddress=u.searchParams.get('fromAddress'),toAddress=u.searchParams.get('toAddress'),amount=u.searchParams.get('fromAmount');
       return route.fulfill({json:{id:'test-route',type:'lifi',tool:'across',action:{fromChainId:from,toChainId:to,fromToken:usdc(from),toToken:usdc(to),fromAmount:amount,fromAddress,toAddress,slippage:.005},estimate:{fromAmount:amount,toAmount:'9990000',toAmountMin:'9950000',approvalAddress:'0x2222222222222222222222222222222222222222',executionDuration:42,feeCosts:[{amountUSD:'0.03'}],gasCosts:[{amountUSD:'0.12'}]},transactionRequest:{to:'0x3333333333333333333333333333333333333333',data:'0xabcdef',value:'0x0',gasLimit:'0x5208',chainId:from}}});
     }
