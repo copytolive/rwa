@@ -30,7 +30,9 @@ const superCssRef=html.match(/superapp-v5\.css\?v=\d+/)?.[0],superJsRef=html.mat
 need(legacy.includes("searchParams.get('embed')==='1'")&&legacy.includes('location.replace('),'legacy canonical/embed contract broken');
 for(const p of ['trade/index.html','asset/index.html','trader/index.html','backtest/index.html'])need(read(p).includes('legacy-canonical.js'),`legacy shim missing in ${p}`);
 const renko=read('renko/index.html');
-need(renko.includes('RENKO — TradingView Documented Model')&&renko.includes('renko-tv-engine.js')&&renko.includes('renko-tv-app.js'),'renko standalone canonical contract broken');
+const observableRenko=renko.includes('RENKO — TradingView Observable Model')&&renko.includes('renko-tv-engine.js')&&renko.includes('renko-tv-app.js')&&renko.includes('RENKO_PARITY_PROFILE')&&renko.includes('renko-tv-history-ladder.js')&&renko.includes('renko-tv-percentage-ltp-runtime.js')&&renko.includes('renko-tv-stable-chart-v2.js');
+const legacyRenko=renko.includes('RENKO — TradingView Documented Model')&&renko.includes('renko-tv-engine.js')&&renko.includes('renko-tv-app.js');
+need(observableRenko||legacyRenko,'renko standalone canonical contract broken');
 need(js.includes("canonical:'https://copytolive.github.io/rwa/'"),'canonical live URL missing');
 need(html.includes('RWA_LOCALE_FALLBACK_V2')&&legacy.includes('RWA_LOCALE_FALLBACK_V2'),'locale default fallback contract missing');
 console.log('LOCALE_DEFAULT_SAFETY=PASS');
