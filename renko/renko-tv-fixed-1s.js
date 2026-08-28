@@ -21,7 +21,7 @@ if(typeof NativeWS==='function'&&!window.__RENKO_OKX_WS_BUSINESS_GUARD__){
   window.WebSocket=GuardedWS;
   window.__RENKO_OKX_WS_BUSINESS_GUARD__={from:'wss://ws.okx.com:8443/ws/v5/public',to:'wss://ws.okx.com:8443/ws/v5/business'};
 }
-window.RWARenkoFixed1s={version:'1.2.0',interval:'1s',selectorAllowed:false,okxCandleWebSocket:'business'};
+window.RWARenkoFixed1s={version:'1.3.0',interval:'1s',selectorAllowed:false,okxCandleWebSocket:'business'};
 })();
 
 /* RENKO rendered-brick budget.
@@ -60,23 +60,24 @@ function processTail(s,p,out,opt={}){
   s.lastClose=reversal?lc+sign*(count+1)*box:lc+sign*count*box;s.direction=dir;s.lastSourceTime=tm||s.lastSourceTime;s.pendingHigh=s.lastClose;s.pendingLow=s.lastClose;return count;
 }
 function sourceFirst(src,source){for(const b of src||[]){const a=E.barPrices(b,source);if(a?.length&&Number.isFinite(num(a[0])))return num(a[0])}return NaN}
+function scheduleSync(){queueMicrotask(()=>window.RWARenkoBrickBudget?.syncUi?.())}
 function buildBudget(bars,settings={},tickSize=0){
   if(settings?._unboundedBricks===true)return originalBuild(bars,settings,tickSize);
   const src=(Array.isArray(bars)?bars:[]).filter(b=>finite(b?.close)).sort((a,b)=>(num(a.openTime||a.time)-num(b.openTime||b.time))),source=String(settings.source||'close').toLowerCase()==='ohlc'?'ohlc':'close',box=E.computeBox(src,settings,tickSize),exact=num(settings?._exactBox),rawAtr=Number.isFinite(exact)&&exact>0?exact:E.latestAtr(src,settings.atrLength||14),limit=limitOf(settings,false);
-  if(!src.length||!(box>0))return{bricks:[],box,atr:rawAtr,state:null,anchor:NaN,source,totalBricks:0,renderedBricks:0,truncated:false,renderLimit:limit};
+  if(!src.length||!(box>0)){const r={bricks:[],box,atr:rawAtr,state:null,anchor:NaN,source,totalBricks:0,renderedBricks:0,truncated:false,renderLimit:limit};scheduleSync();return r}
   const first=sourceFirst(src,source),anchor=E.floorGrid(first,box,tickSize),state=E.initState(anchor),bricks=[];let total=0;
   for(const bar of src){const tm=num(bar.closeTime||bar.time||bar.openTime)||0;for(const p of E.barPrices(bar,source))total+=processTail(state,p,bricks,{box,wicks:settings.wicks!==false,sourceTime:tm,sourceKind:'confirmed',tailLimit:limit})}
-  return{bricks,box,atr:rawAtr,state:E.cloneState(state),anchor,source,totalBricks:total,renderedBricks:bricks.length,truncated:total>bricks.length,renderLimit:limit};
+  const r={bricks,box,atr:rawAtr,state:E.cloneState(state),anchor,source,totalBricks:total,renderedBricks:bricks.length,truncated:total>bricks.length,renderLimit:limit};scheduleSync();return r;
 }
 function projectBudget(base,currentBar,settings={},tickSize=0){
   if(settings?._unboundedBricks===true)return originalProject(base,currentBar,settings,tickSize);if(!base?.state||!currentBar)return[];
   const state=E.cloneState(base.state),out=[],source=String(settings.source||base.source||'close').toLowerCase()==='ohlc'?'ohlc':'close',limit=limitOf(settings,true);let total=0;
   for(const p of E.barPrices(currentBar,source))total+=processTail(state,p,out,{box:base.box,wicks:settings.wicks!==false,sourceTime:num(currentBar.closeTime||currentBar.time||Date.now()),sourceKind:'projection',tailLimit:limit});
-  const mapped=out.map(b=>({...b,projection:true}));Object.defineProperty(mapped,'totalBricks',{value:total,writable:true,configurable:true});return mapped;
+  const mapped=out.map(b=>({...b,projection:true}));Object.defineProperty(mapped,'totalBricks',{value:total,writable:true,configurable:true});scheduleSync();return mapped;
 }
 E.build=buildBudget;E.project=projectBudget;
 function syncUi(){const T=window.RWARenkoTV,b=T?.state?.base;if(!T||!b)return;const total=Number(b.totalBricks??T.state.confirmed?.length??0),rendered=Number(T.state.confirmed?.length||0),projTotal=Number(T.state.projection?.totalBricks??T.state.projection?.length??0);T.state.confirmedTotal=total;T.state.renderedConfirmed=rendered;T.state.projectionTotal=projTotal;const d=document.documentElement.dataset;d.renkoBrickBudget='true';d.renkoConfirmedTotal=String(total);d.renkoRenderedBricks=String(rendered);d.renkoRenderLimit=String(b.renderLimit||DEFAULT_LIMIT);const c=document.getElementById('brickCount');if(c)c.textContent=total.toLocaleString();const m=document.getElementById('tvBrickMeta');if(m)m.textContent=`${total.toLocaleString()} confirmed · ${projTotal.toLocaleString()} projection · ${rendered.toLocaleString()} rendered`;}
 window.addEventListener('renko:tv-ready',()=>{syncUi();setInterval(syncUi,500)});
 window.addEventListener('renko:symbol-switch-end',syncUi);
-window.RWARenkoBrickBudget={version:'1.0.0',rule:'exact-box-exact-final-state-bounded-render-tail',defaultLimit:DEFAULT_LIMIT,projectionLimit:PROJECTION_LIMIT,processTail,buildBudget,projectBudget,originalBuild,originalProject,syncUi};
+window.RWARenkoBrickBudget={version:'1.1.0',rule:'exact-box-exact-final-state-bounded-render-tail-synchronous-total',defaultLimit:DEFAULT_LIMIT,projectionLimit:PROJECTION_LIMIT,processTail,buildBudget,projectBudget,originalBuild,originalProject,syncUi};
 })();
