@@ -4,9 +4,8 @@ on:
     branches: [main]
     paths:
       - 'renko/**'
-      - 'tools/renko-atr-zero-blocking-report.mjs'
-      - 'tools/renko-deep-v3-runtime-proof.mjs'
-      - 'tools/binance-1s-range-integrity.mjs'
+      - 'tools/renko-atr-control-all-pairs-report.mjs'
+      - 'tools/renko-xaut-live-provider-report.mjs'
       - '.github/workflows/renko-atr-zero-blocking.yml'
   workflow_dispatch:
 permissions:
@@ -14,32 +13,35 @@ permissions:
 jobs:
   production-zero-blocking:
     runs-on: ubuntu-latest
-    timeout-minutes: 22
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-      - name: Static deep ATR and stable-chart checks
+      - name: Static current fixed-1s lazy-worker contract
         run: |
           set -euo pipefail
           node --check renko/renko-tv-engine.js
-          node --check renko/renko-tv-stable-chart.js
-          node --check renko/renko-tv-atr-1s-million-cache-v3.js
-          node --check renko/renko-tv-atr-1s-million-cache.js
-          node --check tools/binance-1s-range-integrity.mjs
-          node --check tools/renko-deep-v3-runtime-proof.mjs
-          node --check tools/renko-atr-zero-blocking-report.mjs
-          grep -Fq 'renko-tv-atr-1s-million-cache-v3.js?v=180' renko/index.html
-          grep -Fq 'unique-nonoverlap-1s-history' renko/renko-tv-atr-1s-million-cache-v3.js
-          grep -Fq "_exactBox" renko/renko-tv-engine.js
-          grep -Fq "rule:'render-only-on-renko-geometry-change-fixed-1s-close'" renko/renko-tv-stable-chart.js
-          grep -Fq 'rawBoxPass' tools/renko-atr-zero-blocking-report.mjs
-          grep -Fq 'livePersistence' tools/renko-atr-zero-blocking-report.mjs
-      - name: Probe Binance fixed 1s historical window semantics
-        run: node tools/binance-1s-range-integrity.mjs
+          node --check renko/renko-tv-app.js
+          node --check renko/renko-tv-atr-control.js
+          node --check renko/renko-tv-atr-fixed1s.js
+          node --check renko/renko-tv-stable-chart-v2.js
+          node --check tools/renko-atr-control-all-pairs-report.mjs
+          node --check tools/renko-xaut-live-provider-report.mjs
+          grep -Fq 'renko-tv-atr-control.js?v=2' renko/index.html
+          grep -Fq 'renko-tv-atr-fixed1s.js?v=4' renko/index.html
+          grep -Fq 'renko-tv-stable-chart-v2.js?v=183' renko/index.html
+          grep -Fq 'renko-tv-app.js?v=187' renko/index.html
+          ! grep -Fq 'renko-tv-atr-1s-million-cache-v3.js' renko/index.html
+          ! grep -Fq 'renko-tv-atr-1s-million-cache.js?v=' renko/index.html
+          grep -Fq "rule:'xaut-deep-matrix-other-pairs-local-fixed1s-atr-snapshot-box-stable-between-closes-runtime-only-single-owner-display'" renko/renko-tv-atr-control.js
+          grep -Fq "version:'2.2.0-lazy'" renko/renko-tv-atr-fixed1s.js
+          grep -Fq "rule:'render-only-on-renko-geometry-change-any-source-interval'" renko/renko-tv-stable-chart-v2.js
+          grep -Fq 'workerActive' tools/renko-atr-control-all-pairs-report.mjs
+          grep -Fq 'entryCount' tools/renko-atr-control-all-pairs-report.mjs
       - name: Wait for exact deployed Pages SHA
         run: |
           set -euo pipefail
           for i in $(seq 1 100); do
-            live="$(curl -fsSL --max-time 8 "https://copytolive.github.io/rwa/renko-deployment-sha.txt?ts=$(date +%s)" || true)"
+            live="$(curl -fsSL --max-time 8 "https://copytolive.github.io/rwa/renko-deployment-sha.txt?ts=$(date +%s%N)" 2>/dev/null | tr -d '\r\n' || true)"
             if [ "$live" = "$GITHUB_SHA" ]; then exit 0; fi
             sleep 4
           done
@@ -47,12 +49,12 @@ jobs:
           exit 1
       - name: Install Playwright Chromium
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
           npx playwright install --with-deps chromium
-      - name: Prove unique-window v3 worker is the production runtime
-        run: RWA_TEST_URL=https://copytolive.github.io/rwa node tools/renko-deep-v3-runtime-proof.mjs
-      - name: Capture seven raw-Wilder ATR 0ms plus live 1s no-heartbeat persistence proof
-        run: RWA_TEST_URL=https://copytolive.github.io/rwa node tools/renko-atr-zero-blocking-report.mjs
+      - name: Prove all 50 normal pairs keep XAUT deep worker dormant and render positive ATR
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_ATR_VIEWPORT=desktop RENKO_ATR_CONTROL_OUT=artifacts/renko-atr-zero-blocking node tools/renko-atr-control-all-pairs-report.mjs
+      - name: Prove XAUT provider remains isolated to the on-demand fixed-1s path
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_XAUT_OUT=artifacts/renko-atr-zero-blocking/xaut-provider node tools/renko-xaut-live-provider-report.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
