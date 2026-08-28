@@ -71,3 +71,46 @@ jobs:
             artifacts/xaut-provider
             artifacts/xaut-atr-matrix
           retention-days: 30
+  public-production:
+    if: github.ref == 'refs/heads/main'
+    needs: exact-browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for exact GitHub Pages SHA
+        run: |
+          set -euo pipefail
+          url='https://copytolive.github.io/rwa/renko-deployment-sha.txt'
+          for i in $(seq 1 90); do
+            got=$(curl -fsS "$url?ts=$(date +%s%N)" 2>/dev/null | tr -d '\r\n' || true)
+            echo "attempt=$i expected=$GITHUB_SHA got=$got"
+            if [[ "$got" == "$GITHUB_SHA" ]]; then exit 0; fi
+            sleep 5
+          done
+          exit 1
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
+          npx playwright install --with-deps chromium
+      - name: PUBLIC desktop — ATR 100 Apply on all 50 launch pairs
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_ATR_VIEWPORT=desktop RENKO_ATR_CONTROL_OUT=artifacts/public-atr-control-desktop node tools/renko-atr-control-all-pairs-report.mjs
+      - name: PUBLIC mobile — ATR 100 Apply on all 50 launch pairs
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_ATR_VIEWPORT=mobile RENKO_ATR_CONTROL_OUT=artifacts/public-atr-control-mobile node tools/renko-atr-control-all-pairs-report.mjs
+      - name: PUBLIC desktop — no pulse across real 1s closes
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_ATR_STABILITY_VIEWPORT=desktop RENKO_ATR_STABILITY_OUT=artifacts/public-atr-stability-desktop node tools/renko-atr-stability-report.mjs
+      - name: PUBLIC mobile — no pulse across real 1s closes
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_ATR_STABILITY_VIEWPORT=mobile RENKO_ATR_STABILITY_OUT=artifacts/public-atr-stability-mobile node tools/renko-atr-stability-report.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-atr-stability-public-${{ github.sha }}
+          path: |
+            artifacts/public-atr-control-desktop
+            artifacts/public-atr-control-mobile
+            artifacts/public-atr-stability-desktop
+            artifacts/public-atr-stability-mobile
+          retention-days: 30
