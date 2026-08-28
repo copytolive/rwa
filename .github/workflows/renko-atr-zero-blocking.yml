@@ -26,6 +26,8 @@ jobs:
           node --check renko/renko-tv-stable-chart-v2.js
           node --check tools/renko-atr-control-all-pairs-report.mjs
           node --check tools/renko-xaut-live-provider-report.mjs
+          grep -Fq "version:'1.4.0-fixed-1s'" renko/renko-tv-engine.js
+          grep -Fq "contract:'tradingview-public-documentation-compatible-fixed-1s'" renko/renko-tv-engine.js
           grep -Fq 'renko-tv-atr-control.js?v=2' renko/index.html
           grep -Fq 'renko-tv-atr-fixed1s.js?v=4' renko/index.html
           grep -Fq 'renko-tv-stable-chart-v2.js?v=183' renko/index.html
