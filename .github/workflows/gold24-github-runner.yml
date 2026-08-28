@@ -1,4 +1,4 @@
-name: GOLD24 GitHub Temporary Runner
+name: GOLD24 Temporary DEV Diagnostic
 
 on:
   push:
@@ -7,14 +7,6 @@ on:
       - 'backtest/gold24/github_goal_rr12_runner.py'
       - 'backtest/gold24/RULES_GOAL_RR12_2026.md'
       - '.github/workflows/gold24-github-runner.yml'
-      - 'backtest/gold24/GITHUB_RUNNER_KICK'
-  schedule:
-    - cron: '7,22,37,52 * * * *'
-  workflow_run:
-    workflows:
-      - 'RWA 24x7 Monitor'
-    types:
-      - completed
   workflow_dispatch:
 
 permissions:
@@ -38,6 +30,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Governance guard
+        run: |
+          echo 'This workflow is DEV diagnostic only and is no longer scheduled automatically.'
+          echo 'Compliant strategy execution must use the canonical fail-closed worker after Gate A PASS.'
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -58,13 +55,13 @@ jobs:
               cp -a "$RUNNER_TEMP/gold24-restore/." "$GOLD24_STATE_DIR/"
               echo "Restored state from run $PREV"
             else
-              echo "Previous run has no downloadable state artifact; starting a fresh goal state."
+              echo "Previous run has no downloadable state artifact; starting a fresh DEV diagnostic state."
             fi
           else
-            echo "No previous successful run; starting first goal state."
+            echo "No previous successful DEV diagnostic run."
           fi
 
-      - name: Run RR1:2 WR50 weekly-entry DEV search
+      - name: Run RR1:2 WR50 weekly-entry DEV diagnostic
         working-directory: backtest/gold24
         run: python github_goal_rr12_runner.py
 
@@ -77,7 +74,7 @@ jobs:
             echo 'status.json missing'
           fi
 
-      - name: Upload resumable state
+      - name: Upload resumable DEV diagnostic state
         if: always()
         uses: actions/upload-artifact@v4
         with:
