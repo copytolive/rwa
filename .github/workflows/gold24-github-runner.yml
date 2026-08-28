@@ -19,6 +19,7 @@ concurrency:
 
 jobs:
   dev-backtest:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     timeout-minutes: 55
     env:
@@ -32,7 +33,7 @@ jobs:
 
       - name: Governance guard
         run: |
-          echo 'This workflow is DEV diagnostic only and is no longer scheduled automatically.'
+          echo 'This workflow is DEV diagnostic only, manual-only, and never counts as compliant.'
           echo 'Compliant strategy execution must use the canonical fail-closed worker after Gate A PASS.'
 
       - uses: actions/setup-python@v5
