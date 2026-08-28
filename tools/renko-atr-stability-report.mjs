@@ -20,13 +20,16 @@ const results=[];
 const near=(a,b)=>Math.abs(Number(a)-Number(b))<=Math.max(1e-12,Math.abs(Number(b))*1e-11);
 async function snap(){return page.evaluate(()=>{const T=window.RWARenkoTV;const b=T?.state?.base;return{symbol:T?.state?.symbol,status:T?.state?.status,method:T?.settings?.method,length:Number(T?.settings?.atrLength),box:Number(T?.state?.box),exact:Number(T?.settings?._exactBox),atr:Number(T?.state?.atr),anchor:Number(b?.anchor),total:Number(b?.totalBricks??T?.state?.confirmedTotal??0),rendered:Number(T?.state?.confirmed?.length||0),source:Number(T?.state?.closedBars?.length||0),lastSource:Number(b?.state?.lastSourceTime||0),stable:document.documentElement.dataset.renkoAtrStableBox,control:document.documentElement.dataset.atrControlStatus}})}
 
+await page.goto(`${root}/renko/?symbol=SOL&stability=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:60000});
+await page.waitForFunction(()=>window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoATRControl?.version&&window.RWARenkoTV?.launchPairs?.length===50,null,{timeout:90000});
+
 for(let i=0;i<pairs.length;i++){
-  const symbol=pairs[i],base=symbol.replace(/USDT$/,'');
-  await page.goto(`${root}/renko/?symbol=${encodeURIComponent(base)}&stability=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:30000});
-  await page.waitForFunction(s=>window.RWARenkoTV?.state?.symbol===s&&window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoATRControl,symbol,{timeout:30000});
+  const symbol=pairs[i];
+  await page.evaluate(async s=>{if(RWARenkoTV.state.symbol!==s)await RWARenkoTV.loadSymbol(s,{fit:false})},symbol);
+  await page.waitForFunction(s=>window.RWARenkoTV?.state?.symbol===s&&window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoTV?.state?.closedBars?.length>=100,symbol,{timeout:30000});
   await page.locator('#atrLength').fill('100');
   await page.locator('[data-apply-method="atr"]').click();
-  await page.waitForFunction(()=>document.documentElement.dataset.atrControlStatus==='active'&&Number(window.RWARenkoTV?.settings?._exactBox)>0,null,{timeout:15000});
+  await page.waitForFunction(s=>document.documentElement.dataset.atrControlStatus==='active'&&document.documentElement.dataset.atrControlSymbol===s&&Number(window.RWARenkoTV?.settings?._exactBox)>0,symbol,{timeout:15000});
   const first=await snap();
   const samples=[first];
   const deadline=Date.now()+12000;
@@ -49,7 +52,7 @@ for(let i=0;i<pairs.length;i++){
   console.log(symbol,pass?'PASS':'FAIL',`box=${first.box}`,`total=${first.total}->${last.total}`,`source=${first.source}->${last.source}`);
 }
 await browser.close();
-const report={schema:'renko-atr-stability-real-browser-v1',mode,viewport,url:root,pairs,pass:results.every(r=>r.pass)&&errors.length===0,errors,results,generatedAt:new Date().toISOString()};
+const report={schema:'renko-atr-stability-real-browser-v2-single-live-session',mode,viewport,url:root,pairs,pass:results.every(r=>r.pass)&&errors.length===0,errors,results,generatedAt:new Date().toISOString()};
 fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));
 if(!report.pass){console.error(JSON.stringify(report,null,2));process.exit(1)}
 console.log(`RENKO_ATR_STABILITY_${mode.toUpperCase()}_PASS ${results.length}/${results.length}`);
