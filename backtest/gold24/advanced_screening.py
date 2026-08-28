@@ -329,6 +329,9 @@ def run() -> None:
     out_top100 = root / "TOP100_COMPLIANT.json"
 
     d, gate_a = audit_dataset(dataset_path, receipt_path, timeframe)
+    # audit_dataset has its own engine compatibility hash; screening evidence must pin
+    # the actual canonical policy file that governed this run.
+    gate_a["rules_sha256"] = rules_sha256()
     if not db_path.exists():
         raise RuntimeError(f"screening database missing: {db_path}")
 
