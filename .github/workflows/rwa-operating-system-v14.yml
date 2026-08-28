@@ -56,7 +56,7 @@ jobs:
       - name: Solidity series and distribution tests
         working-directory: token
         run: |
-          npm ci
+          npm install --no-audit --no-fund
           npm run verify
       - name: Upload deterministic test logs
         if: always()
