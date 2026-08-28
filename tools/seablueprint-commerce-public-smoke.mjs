@@ -61,6 +61,7 @@ try {
   await page.locator('#rwaSeablueprintCommerceLaunch').click();
   await page.waitForFunction(() => document.querySelector('#rwaShopScreen')?.classList.contains('open'), { timeout: 20000 });
   await page.waitForSelector('[data-seablueprint-source]', { state: 'visible', timeout: 15000 });
+  await page.waitForSelector('#rwaShopScreen [data-rwa-shop-trade]', { state: 'visible', timeout: 20000 });
 
   const openedState = await page.evaluate(() => ({
     path: location.pathname,
@@ -77,7 +78,6 @@ try {
   if (openedState.overflow > 4) throw Error(`public desktop horizontal overflow: ${openedState.overflow}`);
 
   const trade = page.locator('#rwaShopScreen [data-rwa-shop-trade]').first();
-  if (!(await trade.count())) throw Error('public ecommerce has no canonical trade link');
   const tradeHref = await trade.getAttribute('href');
   if (!/^#trade\/[A-Za-z0-9]+$/.test(tradeHref || '')) throw Error(`public trade href is not canonical: ${tradeHref}`);
   await trade.click();
@@ -115,6 +115,7 @@ try {
   await mobile.waitForSelector('#rwaSeablueprintCommerceLaunch', { state: 'visible', timeout: 20000 });
   await mobile.locator('#rwaSeablueprintCommerceLaunch').click();
   await mobile.waitForFunction(() => document.querySelector('#rwaShopScreen')?.classList.contains('open'), { timeout: 20000 });
+  await mobile.waitForSelector('[data-seablueprint-source]', { state: 'visible', timeout: 15000 });
   const mobileState = await mobile.evaluate(() => ({
     path: location.pathname,
     audit: window.RWASeablueprintCommerceBridge.audit(),
@@ -135,6 +136,7 @@ try {
     version: '1.2.4',
     staticBytesVerified: true,
     configFailClosed: true,
+    storefrontRenderReadyVerified: true,
     singleShellInteractionVerified: true,
     canonicalTradeVerified: true,
     deterministicOverlayCloseVerified: true,
