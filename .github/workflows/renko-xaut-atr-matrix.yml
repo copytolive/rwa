@@ -62,9 +62,9 @@ jobs:
           cat /tmp/renko-xaut-http.log
           exit 1
       - name: Fixed 1s XAUT OKX desktop + mobile browser proof
-        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa node tools/renko-xaut-live-provider-report.mjs
+        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_XAUT_PROVIDER_OUT=artifacts/renko-xaut-provider node tools/renko-xaut-live-provider-report.mjs
       - name: Seven fixed-1s ATR lengths — desktop + mobile real browser proof
-        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa node tools/renko-xaut-atr-matrix-report.mjs
+        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_XAUT_MATRIX_OUT=artifacts/renko-xaut-atr-matrix node tools/renko-xaut-atr-matrix-report.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -72,4 +72,41 @@ jobs:
           path: |
             artifacts/renko-xaut-provider
             artifacts/renko-xaut-atr-matrix
+          retention-days: 14
+  public-production:
+    if: github.ref == 'refs/heads/main'
+    needs: xaut-fixed-1s
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for exact GitHub Pages SHA
+        run: |
+          set -euo pipefail
+          url='https://copytolive.github.io/rwa/renko-deployment-sha.txt'
+          for i in $(seq 1 90); do
+            got=$(curl -fsS "$url?ts=$(date +%s%N)" 2>/dev/null | tr -d '\r\n' || true)
+            echo "attempt=$i expected=$GITHUB_SHA got=$got"
+            if [[ "$got" == "$GITHUB_SHA" ]]; then exit 0; fi
+            sleep 5
+          done
+          exit 1
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
+          npx playwright install --with-deps chromium
+      - name: PUBLIC fixed 1s XAUT OKX desktop + mobile browser proof
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_XAUT_PROVIDER_OUT=artifacts/renko-xaut-provider-public node tools/renko-xaut-live-provider-report.mjs
+      - name: PUBLIC seven fixed-1s ATR lengths — desktop + mobile browser proof
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_XAUT_MATRIX_OUT=artifacts/renko-xaut-atr-matrix-public node tools/renko-xaut-atr-matrix-report.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-xaut-fixed-1s-atr-matrix-public-${{ github.sha }}
+          path: |
+            artifacts/renko-xaut-provider-public
+            artifacts/renko-xaut-atr-matrix-public
           retention-days: 14
