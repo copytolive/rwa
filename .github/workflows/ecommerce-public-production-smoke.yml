@@ -1,0 +1,79 @@
+name: Ecommerce Public Production Smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'chart-core.js'
+      - 'rwa-target-dashboard-v2.js'
+      - 'rwa-target-dashboard-v2.css'
+      - 'rwa-target-dashboard-v2-hardening.js'
+      - 'rwa-target-dashboard-v2-hardening.css'
+      - 'rwa-seablueprint-commerce-bridge.js'
+      - 'rwa-seablueprint-commerce-bridge.css'
+      - 'rwa-commerce-config.json'
+      - 'rwa-storefront.js'
+      - 'tools/launch-ui-final-browser.mjs'
+      - '.github/workflows/ecommerce-public-production-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for exact GitHub Pages SHA
+        shell: bash
+        run: |
+          set -euxo pipefail
+          url='https://copytolive.github.io/rwa/deployment-sha.txt'
+          for i in $(seq 1 60); do
+            deployed="$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "${url}?v=${GITHUB_SHA}-${i}" 2>/dev/null | tr -d '\r\n' || true)"
+            if [ "$deployed" = "$GITHUB_SHA" ]; then
+              echo "Exact Pages SHA is live: $deployed"
+              exit 0
+            fi
+            echo "Waiting for Pages. expected=$GITHUB_SHA actual=${deployed:-unavailable}"
+            sleep 10
+          done
+          echo 'Exact merged SHA did not reach GitHub Pages in time' >&2
+          exit 1
+
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run public desktop and mobile browser matrix
+        env:
+          RWA_UI_URL: https://copytolive.github.io/rwa/
+          RWA_UI_PROOF_DIR: proof/ecommerce-public-production
+        run: node tools/launch-ui-final-browser.mjs
+
+      - name: Verify public proof contract
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          p='proof/ecommerce-public-production/browser-result.json'
+          d=json.load(open(p))
+          assert d['ok'] is True, d
+          assert d['publicMode'] is True, d
+          assert d['bridgeVersion']=='1.5.0', d
+          assert not d['failures'], d
+          print('PUBLIC_ECOMMERCE_CONTEXT_PANEL_PASS')
+          PY
+
+      - name: Upload public browser proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ecommerce-public-production-${{ github.sha }}
+          path: proof/ecommerce-public-production/
+          if-no-files-found: error
+          retention-days: 30
