@@ -97,17 +97,21 @@ jobs:
 
           def compact(row,rank):
               c,m=row['candidate'],row['metrics']
+              sl=finite(c.get('sl',0)); tp=finite(c.get('tp',0))
+              net_profit=finite(m.get('net_profit',0.0))
+              net_expectancy=finite(m.get('net_expectancy',m.get('expectancy',0.0)))
               method=f"{c.get('family')} f{c.get('fast')}/s{c.get('slow')} p1={c.get('p1')} p2={c.get('p2')} p3={c.get('p3')} off={c.get('offset')} exp={c.get('expiry')}"
               return {
                   'rank':rank,'config_hash':row['config_hash'],'execution_hash':row['execution_hash'],
                   'method':method,'family':c.get('family'),'timeframe':c.get('timeframe'),
                   'entry_method':c.get('entry_method'),'direction_mode':c.get('direction_mode'),
-                  'sl_usd_price_distance':finite(c.get('sl',0)),'tp_usd_price_distance':finite(c.get('tp',0)),
+                  'sl':sl,'tp':tp,
+                  'sl_usd_price_distance':sl,'tp_usd_price_distance':tp,
                   'trades':int(m.get('trades',0) or 0),
                   'win_rate_pct':finite(m.get('win_rate_pct',m.get('wr',0.0))),
                   'profit_factor_net':finite(m.get('profit_factor_net',m.get('profit_factor',0.0))),
-                  'net_profit_usd_canonical':finite(m.get('net_profit',0.0)),
-                  'net_expectancy_usd_per_trade':finite(m.get('net_expectancy',m.get('expectancy',0.0))),
+                  'net_profit':net_profit,'net_profit_usd_canonical':net_profit,
+                  'net_expectancy':net_expectancy,'net_expectancy_usd_per_trade':net_expectancy,
                   'max_dd_pct':finite(m.get('max_dd_pct',0.0)),'sqn':finite(m.get('sqn',0.0)),
                   'history_years':finite(m.get('history_years',0.0)),
                   'sample_pass_v11':bool(m.get('sample_pass_v11',False)),
@@ -147,16 +151,16 @@ jobs:
           }
 
           (out_dir/'latest_positive_summary.json').write_text(json.dumps(summary,indent=2,sort_keys=True))
-          (out_dir/'latest_profit_top200.json').write_text(json.dumps({'schema':'gold-v11-profit-top200-positive-v3','source_run_id':source_run_id,'count':len(profit_top),'ranking':profit_top},indent=2,sort_keys=True))
-          (out_dir/'latest_entry_profit_top200.json').write_text(json.dumps({'schema':'gold-v11-entry-profit-top200-positive-v3','source_run_id':source_run_id,'count':len(entry_top),'ranking':entry_top},indent=2,sort_keys=True))
+          (out_dir/'latest_profit_top200.json').write_text(json.dumps({'schema':'gold-v11-profit-top200-positive-v2','source_run_id':source_run_id,'count':len(profit_top),'ranking':profit_top},indent=2,sort_keys=True))
+          (out_dir/'latest_entry_profit_top200.json').write_text(json.dumps({'schema':'gold-v11-entry-profit-top200-positive-v2','source_run_id':source_run_id,'count':len(entry_top),'ranking':entry_top},indent=2,sort_keys=True))
           (out_dir/'latest_entry100_net3000.json').write_text(json.dumps({'schema':'gold-v11-entry100-net3000-canonical-usd-v1','source_run_id':source_run_id,'count':len(strict_report),'minimum_trades':MIN_REPORT_TRADES,'minimum_net_profit_usd_canonical':MIN_REPORT_NET_PROFIT_USD,'correlation_rule':summary['correlation_rule'],'ranking':strict_report},indent=2,sort_keys=True))
 
           def write_csv(path, ranking):
               with path.open('w', newline='', encoding='utf-8') as f:
                   w=csv.writer(f)
-                  w.writerow(['source_rank','config_hash','method','family','timeframe','entry_method','direction_mode','sl_usd_price_distance','tp_usd_price_distance','trades','win_rate_pct','profit_factor_net','net_profit_usd_canonical','net_expectancy_usd_per_trade','max_dd_pct','sqn','history_years','sample_pass_v11','baseline_qualified_v11','target_candidate_v11','correlation_max','correlation_gate'])
+                  w.writerow(['source_rank','config_hash','method','family','timeframe','entry_method','direction_mode','sl','tp','trades','win_rate_pct','profit_factor_net','net_profit','net_expectancy','max_dd_pct','sqn','history_years','sample_pass_v11','baseline_qualified_v11','target_candidate_v11','correlation_max','correlation_gate'])
                   for x in ranking:
-                      w.writerow([x['rank'],x['config_hash'],x['method'],x['family'],x['timeframe'],x['entry_method'],x['direction_mode'],f"{x['sl_usd_price_distance']:.2f}",f"{x['tp_usd_price_distance']:.2f}",x['trades'],f"{x['win_rate_pct']:.8f}",f"{x['profit_factor_net']:.8f}",f"{x['net_profit_usd_canonical']:.8f}",f"{x['net_expectancy_usd_per_trade']:.8f}",f"{x['max_dd_pct']:.8f}",f"{x['sqn']:.8f}",f"{x['history_years']:.8f}",str(x['sample_pass_v11']).lower(),str(x['baseline_qualified_v11']).lower(),str(x['target_candidate_v11']).lower(),x['correlation_max'],x['correlation_gate']])
+                      w.writerow([x['rank'],x['config_hash'],x['method'],x['family'],x['timeframe'],x['entry_method'],x['direction_mode'],f"{x['sl']:.2f}",f"{x['tp']:.2f}",x['trades'],f"{x['win_rate_pct']:.8f}",f"{x['profit_factor_net']:.8f}",f"{x['net_profit']:.8f}",f"{x['net_expectancy']:.8f}",f"{x['max_dd_pct']:.8f}",f"{x['sqn']:.8f}",f"{x['history_years']:.8f}",str(x['sample_pass_v11']).lower(),str(x['baseline_qualified_v11']).lower(),str(x['target_candidate_v11']).lower(),x['correlation_max'],x['correlation_gate']])
 
           write_csv(out_dir/'latest_profit_top200.csv', profit_top)
           write_csv(out_dir/'latest_entry_profit_top200.csv', entry_top)
