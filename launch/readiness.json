@@ -30,67 +30,244 @@
     "checkout_ready": false
   },
   "checks": {
-    "browser_single_write": {"ok": true,"detail": "RWAExecutionAPI + mandatory risk + atomic normalTpsl"},
-    "browser_global_mainnet_lock": {"ok": true,"detail": "mainnet requires wallet E2E + global READY_FOR_MAINNET"},
-    "worker_single_write": {"ok": true,"detail": "worker writes only through RWAWorkerExecutionAPI"},
-    "worker_idempotency": {"ok": true,"detail": "deterministic CLOID + venue orderStatus + persisted source-fill ledger"},
-    "worker_no_fund_methods": {"ok": true,"detail": "no withdrawal/transfer API exposed"},
-    "tests_pipeline": {"ok": true,"detail": "copy lifecycle simulation + security + engineering gates are automated"},
-    "deployment_package": {"ok": true,"detail": "Docker + persistent volume + healthcheck + environment contract"},
-    "e2e_verifier_pipeline": {"ok": true,"detail": "wallet signature + session-bound Hyperliquid testnet verifier"},
-    "rwa_verifier_pipeline": {"ok": true,"detail": "reviewer signature + public-https-distinct-probed-v1"},
-    "beta_verifier_pipeline": {"ok": true,"detail": "wallet + exact worker session + venue beta verifier"},
-    "beta_infrastructure": {"ok": true,"detail": "machine beta thresholds 3/20/100"},
-    "security_ci_pipeline": {"ok": true,"detail": "repository-wide execution/fund/evidence security workflow"},
-    "monitoring_pipeline": {"ok": true,"detail": "health + readiness + metrics + five-minute fail-safe watchdog"},
-    "launch_automation": {"ok": true,"detail": "machine readiness auto-refresh + CI launch status"},
-    "product_rwa_pipeline": {"ok": true,"detail": "canonical Product RWA entitlement + inventory-gated mint + SoD + transfer OFF + delivery-only redemption burn automated in CI"},
-    "commerce_pipeline": {"ok": true,"detail": "authoritative inventory/quote/order/payment/refund commerce backend + integration tests + image build"},
-    "real_wallet_e2e": {"ok": true,"detail": "1 registered wallet proof(s)"},
-    "reviewer_registry": {"ok": true,"detail": "1 authorized reviewer(s)"},
-    "verified_rwa_asset": {"ok": false,"detail": "0 verified asset(s) · public-https-distinct-probed-v1"},
-    "product_rwa_testnet": {"ok": false,"detail": "NOT_DEPLOYED · real chain-998 receipts + public evidence required"},
-    "commerce_backend_configured": {"ok": false,"detail": "api_base blank; frontend stays preview-only"},
-    "commerce_backend_live": {"ok": false,"detail": "commerce api_base is not configured"},
-    "commerce_checkout_ready": {"ok": false,"detail": "commerce api_base is not configured"},
-    "worker_configured": {"ok": false,"detail": "disabled"},
-    "worker_live": {"ok": false,"detail": "public worker URL not activated"},
-    "worker_control": {"ok": false,"detail": "enabled=false kill=true production_ready=false readyz=false"},
-    "legal_terms": {"ok": false,"detail": "EXTERNAL_REQUIRED · Counsel-reviewed legal structure, Product RWA entitlement/Terms of Redemption, consumer protection, payments/PJP, tax/accounting/privacy applicability."},
-    "operating_economics": {"ok": false,"detail": "EXTERNAL_REQUIRED · Verified supplier/production/QC/packaging/fulfillment/payment economics; assumptions are not actual performance."},
-    "inventory_reconciliation": {"ok": false,"detail": "PILOT_REQUIRED · Real inventory-to-token reconciliation with over-mint prevention and exception handling evidence."},
-    "refund_shortage_remedy": {"ok": false,"detail": "PILOT_REQUIRED · Return/refund/replacement and physical-stock shortage remedy tested without double claim."},
-    "settlement_tieout": {"ok": false,"detail": "PILOT_REQUIRED · Gross-payment to tax/gateway/refund/logistics/platform fee/net-owner settlement tie-out."},
-    "incident_backup_recovery": {"ok": false,"detail": "PILOT_REQUIRED · Incident response plus backup/restore/recovery tested for operational systems."},
-    "evidence_repository": {"ok": false,"detail": "EXTERNAL_REQUIRED · Real evidence repository linked; no supplier quote, legal opinion, market proof, production result, customer demand or KPI may be fabricated."},
-    "beta_internal": {"ok": false,"detail": "0/3 verified wallet(s)"},
-    "beta_closed": {"ok": false,"detail": "0/20 verified wallet(s)"},
-    "beta_public": {"ok": false,"detail": "0/100 verified wallet(s)"},
-    "mainnet_control": {"ok": false,"detail": "mainnet_enabled=false"},
-    "revenue_deferred": {"ok": true,"detail": "builder/platform fee remains OFF until final revenue wallet approval"},
-    "multichain_mainnet": {"ok": false,"detail": "MULTI CHAIN BLOCKED; global mainnet remains locked"}
+    "browser_single_write": {
+      "ok": true,
+      "detail": "RWAExecutionAPI + mandatory risk + atomic normalTpsl"
+    },
+    "browser_global_mainnet_lock": {
+      "ok": true,
+      "detail": "mainnet requires wallet E2E + global READY_FOR_MAINNET"
+    },
+    "worker_single_write": {
+      "ok": true,
+      "detail": "worker writes only through RWAWorkerExecutionAPI"
+    },
+    "worker_idempotency": {
+      "ok": true,
+      "detail": "deterministic CLOID + venue orderStatus + persisted source-fill ledger"
+    },
+    "worker_no_fund_methods": {
+      "ok": true,
+      "detail": "no withdrawal/transfer API exposed"
+    },
+    "tests_pipeline": {
+      "ok": true,
+      "detail": "copy lifecycle simulation + security + engineering gates are automated"
+    },
+    "deployment_package": {
+      "ok": true,
+      "detail": "Docker + persistent volume + healthcheck + environment contract"
+    },
+    "e2e_verifier_pipeline": {
+      "ok": true,
+      "detail": "wallet signature + session-bound Hyperliquid testnet verifier"
+    },
+    "rwa_verifier_pipeline": {
+      "ok": true,
+      "detail": "reviewer signature + public-https-distinct-probed-v1"
+    },
+    "beta_verifier_pipeline": {
+      "ok": true,
+      "detail": "wallet + exact worker session + venue beta verifier"
+    },
+    "beta_infrastructure": {
+      "ok": true,
+      "detail": "machine beta thresholds 3/20/100"
+    },
+    "security_ci_pipeline": {
+      "ok": true,
+      "detail": "repository-wide execution/fund/evidence security workflow"
+    },
+    "monitoring_pipeline": {
+      "ok": true,
+      "detail": "health + readiness + metrics + five-minute fail-safe watchdog"
+    },
+    "launch_automation": {
+      "ok": true,
+      "detail": "machine readiness auto-refresh + CI launch status"
+    },
+    "product_rwa_pipeline": {
+      "ok": true,
+      "detail": "canonical Product RWA entitlement + inventory-gated mint + SoD + transfer OFF + delivery-only redemption burn automated in CI"
+    },
+    "commerce_pipeline": {
+      "ok": true,
+      "detail": "authoritative inventory/quote/order/payment/refund commerce backend + integration tests + image build"
+    },
+    "real_wallet_e2e": {
+      "ok": true,
+      "detail": "1 registered wallet proof(s)"
+    },
+    "reviewer_registry": {
+      "ok": true,
+      "detail": "1 authorized reviewer(s)"
+    },
+    "verified_rwa_asset": {
+      "ok": false,
+      "detail": "0 verified asset(s) · public-https-distinct-probed-v1"
+    },
+    "product_rwa_testnet": {
+      "ok": false,
+      "detail": "NOT_DEPLOYED · real chain-998 receipts + public evidence required"
+    },
+    "commerce_backend_configured": {
+      "ok": false,
+      "detail": "api_base blank; frontend stays preview-only"
+    },
+    "commerce_backend_live": {
+      "ok": false,
+      "detail": "commerce api_base is not configured"
+    },
+    "commerce_checkout_ready": {
+      "ok": false,
+      "detail": "commerce api_base is not configured"
+    },
+    "worker_configured": {
+      "ok": false,
+      "detail": "disabled"
+    },
+    "worker_live": {
+      "ok": false,
+      "detail": "public worker URL not activated"
+    },
+    "worker_control": {
+      "ok": false,
+      "detail": "enabled=false kill=true production_ready=false readyz=false"
+    },
+    "legal_terms": {
+      "ok": false,
+      "detail": "EXTERNAL_REQUIRED · Counsel-reviewed legal structure, Product RWA entitlement/Terms of Redemption, consumer protection, payments/PJP, tax/accounting/privacy applicability."
+    },
+    "operating_economics": {
+      "ok": false,
+      "detail": "EXTERNAL_REQUIRED · Verified supplier/production/QC/packaging/fulfillment/payment economics; assumptions are not actual performance."
+    },
+    "inventory_reconciliation": {
+      "ok": false,
+      "detail": "PILOT_REQUIRED · Real inventory-to-token reconciliation with over-mint prevention and exception handling evidence."
+    },
+    "refund_shortage_remedy": {
+      "ok": false,
+      "detail": "PILOT_REQUIRED · Return/refund/replacement and physical-stock shortage remedy tested without double claim."
+    },
+    "settlement_tieout": {
+      "ok": false,
+      "detail": "PILOT_REQUIRED · Gross-payment to tax/gateway/refund/logistics/platform fee/net-owner settlement tie-out."
+    },
+    "incident_backup_recovery": {
+      "ok": false,
+      "detail": "PILOT_REQUIRED · Incident response plus backup/restore/recovery tested for operational systems."
+    },
+    "evidence_repository": {
+      "ok": false,
+      "detail": "EXTERNAL_REQUIRED · Real evidence repository linked; no supplier quote, legal opinion, market proof, production result, customer demand or KPI may be fabricated."
+    },
+    "beta_internal": {
+      "ok": false,
+      "detail": "0/3 verified wallet(s)"
+    },
+    "beta_closed": {
+      "ok": false,
+      "detail": "0/20 verified wallet(s)"
+    },
+    "beta_public": {
+      "ok": false,
+      "detail": "0/100 verified wallet(s)"
+    },
+    "mainnet_control": {
+      "ok": false,
+      "detail": "mainnet_enabled=false"
+    },
+    "revenue_deferred": {
+      "ok": true,
+      "detail": "builder/platform fee remains OFF until final revenue wallet approval"
+    },
+    "multichain_mainnet": {
+      "ok": false,
+      "detail": "MULTI CHAIN BLOCKED; global mainnet remains locked"
+    }
   },
   "blockers": [
-    {"gate":"verified_rwa_asset","detail":"0 verified asset(s) · public-https-distinct-probed-v1"},
-    {"gate":"product_rwa_testnet","detail":"NOT_DEPLOYED · real chain-998 receipts + public evidence required"},
-    {"gate":"commerce_backend_configured","detail":"api_base blank; frontend stays preview-only"},
-    {"gate":"commerce_backend_live","detail":"commerce api_base is not configured"},
-    {"gate":"commerce_checkout_ready","detail":"commerce api_base is not configured"},
-    {"gate":"worker_configured","detail":"disabled"},
-    {"gate":"worker_live","detail":"public worker URL not activated"},
-    {"gate":"worker_control","detail":"enabled=false kill=true production_ready=false readyz=false"},
-    {"gate":"legal_terms","detail":"EXTERNAL_REQUIRED · Counsel-reviewed legal structure, Product RWA entitlement/Terms of Redemption, consumer protection, payments/PJP, tax/accounting/privacy applicability."},
-    {"gate":"operating_economics","detail":"EXTERNAL_REQUIRED · Verified supplier/production/QC/packaging/fulfillment/payment economics; assumptions are not actual performance."},
-    {"gate":"inventory_reconciliation","detail":"PILOT_REQUIRED · Real inventory-to-token reconciliation with over-mint prevention and exception handling evidence."},
-    {"gate":"refund_shortage_remedy","detail":"PILOT_REQUIRED · Return/refund/replacement and physical-stock shortage remedy tested without double claim."},
-    {"gate":"settlement_tieout","detail":"PILOT_REQUIRED · Gross-payment to tax/gateway/refund/logistics/platform fee/net-owner settlement tie-out."},
-    {"gate":"incident_backup_recovery","detail":"PILOT_REQUIRED · Incident response plus backup/restore/recovery tested for operational systems."},
-    {"gate":"evidence_repository","detail":"EXTERNAL_REQUIRED · Real evidence repository linked; no supplier quote, legal opinion, market proof, production result, customer demand or KPI may be fabricated."},
-    {"gate":"beta_internal","detail":"0/3 verified wallet(s)"},
-    {"gate":"beta_closed","detail":"0/20 verified wallet(s)"},
-    {"gate":"beta_public","detail":"0/100 verified wallet(s)"},
-    {"gate":"mainnet_control","detail":"mainnet_enabled=false"},
-    {"gate":"multichain_mainnet","detail":"MULTI CHAIN BLOCKED; global mainnet remains locked"}
+    {
+      "gate": "verified_rwa_asset",
+      "detail": "0 verified asset(s) · public-https-distinct-probed-v1"
+    },
+    {
+      "gate": "product_rwa_testnet",
+      "detail": "NOT_DEPLOYED · real chain-998 receipts + public evidence required"
+    },
+    {
+      "gate": "commerce_backend_configured",
+      "detail": "api_base blank; frontend stays preview-only"
+    },
+    {
+      "gate": "commerce_backend_live",
+      "detail": "commerce api_base is not configured"
+    },
+    {
+      "gate": "commerce_checkout_ready",
+      "detail": "commerce api_base is not configured"
+    },
+    {
+      "gate": "worker_configured",
+      "detail": "disabled"
+    },
+    {
+      "gate": "worker_live",
+      "detail": "public worker URL not activated"
+    },
+    {
+      "gate": "worker_control",
+      "detail": "enabled=false kill=true production_ready=false readyz=false"
+    },
+    {
+      "gate": "legal_terms",
+      "detail": "EXTERNAL_REQUIRED · Counsel-reviewed legal structure, Product RWA entitlement/Terms of Redemption, consumer protection, payments/PJP, tax/accounting/privacy applicability."
+    },
+    {
+      "gate": "operating_economics",
+      "detail": "EXTERNAL_REQUIRED · Verified supplier/production/QC/packaging/fulfillment/payment economics; assumptions are not actual performance."
+    },
+    {
+      "gate": "inventory_reconciliation",
+      "detail": "PILOT_REQUIRED · Real inventory-to-token reconciliation with over-mint prevention and exception handling evidence."
+    },
+    {
+      "gate": "refund_shortage_remedy",
+      "detail": "PILOT_REQUIRED · Return/refund/replacement and physical-stock shortage remedy tested without double claim."
+    },
+    {
+      "gate": "settlement_tieout",
+      "detail": "PILOT_REQUIRED · Gross-payment to tax/gateway/refund/logistics/platform fee/net-owner settlement tie-out."
+    },
+    {
+      "gate": "incident_backup_recovery",
+      "detail": "PILOT_REQUIRED · Incident response plus backup/restore/recovery tested for operational systems."
+    },
+    {
+      "gate": "evidence_repository",
+      "detail": "EXTERNAL_REQUIRED · Real evidence repository linked; no supplier quote, legal opinion, market proof, production result, customer demand or KPI may be fabricated."
+    },
+    {
+      "gate": "beta_internal",
+      "detail": "0/3 verified wallet(s)"
+    },
+    {
+      "gate": "beta_closed",
+      "detail": "0/20 verified wallet(s)"
+    },
+    {
+      "gate": "beta_public",
+      "detail": "0/100 verified wallet(s)"
+    },
+    {
+      "gate": "mainnet_control",
+      "detail": "mainnet_enabled=false"
+    },
+    {
+      "gate": "multichain_mainnet",
+      "detail": "MULTI CHAIN BLOCKED; global mainnet remains locked"
+    }
   ],
   "revenue": "DEFERRED",
   "token_tge": "DEFERRED",
@@ -98,9 +275,18 @@
     "status": "BLOCKED",
     "ready": false,
     "blockers": [
-      {"gate":"real_receipt_matrix","detail":"EVM_TO_EVM=PENDING · EVM_TO_SOLANA=PENDING · SOLANA_TO_EVM=PENDING · SAME_CHAIN=PENDING · FAILURE_OR_REFUND=PENDING"},
-      {"gate":"lifi_fee_setup","detail":"LI.FI Portal integrator verification and fee-wallet setup still required"},
-      {"gate":"hyperliquid_builder_setup","detail":"builder address, >=100 USDC perps account value, and user approval flow still required"}
+      {
+        "gate": "real_receipt_matrix",
+        "detail": "EVM_TO_EVM=PENDING · EVM_TO_SOLANA=PENDING · SOLANA_TO_EVM=PENDING · SAME_CHAIN=PENDING · FAILURE_OR_REFUND=PENDING"
+      },
+      {
+        "gate": "lifi_fee_setup",
+        "detail": "LI.FI Portal integrator verification and fee-wallet setup still required"
+      },
+      {
+        "gate": "hyperliquid_builder_setup",
+        "detail": "builder address, >=100 USDC perps account value, and user approval flow still required"
+      }
     ]
   }
 }
