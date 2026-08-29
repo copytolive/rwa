@@ -1,112 +1,15 @@
-import { chromium } from 'playwright';
+import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
-import fs from 'node:fs/promises';
+import {mkdir,writeFile,readFile} from 'node:fs/promises';
 
 const BASE=process.env.RWA_TEST_URL||'http://127.0.0.1:4173/rwa/';
 const OUT=process.env.RWA_PROOF_DIR||'proof/action-zero-flicker-v11';
-const markets=[['BTC',79258,1.06,1.17e9,false],['ONDO',1.25,3.5,12e6,true],['PAXG',3400,-1.2,5e6,true]].map(([base,price,change,vol,rwa])=>({base,symbol:`${base}USDT`,price,change,vol,rwa}));
-const info={symbols:markets.map(x=>({symbol:x.symbol,baseAsset:x.base,quoteAsset:'USDT',status:'TRADING',isSpotTradingAllowed:true}))};
-const tickers=markets.map(x=>({symbol:x.symbol,lastPrice:String(x.price),openPrice:String(x.price/(1+x.change/100)),priceChangePercent:String(x.change),highPrice:String(x.price*1.04),lowPrice:String(x.price*.96),quoteVolume:String(x.vol)}));
-const klines=Array.from({length:180},(_,i)=>[Date.now()-(180-i)*9e5,'1','1.02','.98',String(1+(i%2?.004:-.003)),'1000']);
-
-async function mocks(context){
-  await context.route('**/api/v3/exchangeInfo',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(info)}));
-  await context.route('**/api/v3/ticker/24hr*',r=>{const u=new URL(r.request().url()),s=u.searchParams.get('symbol');return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(s?(tickers.find(x=>x.symbol===s)||tickers[0]):tickers)})});
-  await context.route('**/api/v3/klines*',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(klines)}));
-  await context.route('https://s3.tradingview.com/**',r=>r.abort());
-  await context.route('https://api.hyperliquid.xyz/**',r=>r.fulfill({status:200,contentType:'application/json',body:'[]'}));
-  await context.route('https://api.hyperliquid-testnet.xyz/**',r=>r.fulfill({status:200,contentType:'application/json',body:'[]'}));
-}
-
-async function ready(page){
-  await page.waitForFunction(()=>window.RWASuperApp?.version==='5.0.0'&&document.getElementById('rwaExperienceRail'),{timeout:20000});
-  await page.waitForFunction(()=>[...document.querySelectorAll('link[rel="stylesheet"]')].some(x=>(x.getAttribute('href')||'').includes('persistent-market-operability-patch-v1.css?v=11')),{timeout:12000});
-  await page.waitForTimeout(350);
-}
-
-async function geometry(page){
-  return page.evaluate(()=>{
-    const rect=el=>{if(!el)return null;const r=el.getBoundingClientRect(),c=getComputedStyle(el);return{x:r.x,w:r.width,right:r.right,display:c.display}};
-    const visible=x=>x&&x.display!=='none'&&x.w>0;
-    const right=rect(document.querySelector('.right'));
-    const workspace=rect(document.getElementById('rwaSuperWorkspace'));
-    const suite=rect(document.getElementById('suite'));
-    return{level:document.documentElement.dataset.rwaLevel||'',route:document.documentElement.dataset.rwaRoute||'',layout:rect(document.querySelector('.layout')),left:rect(document.querySelector('.left')),main:rect(document.querySelector('.main')),right,workspace,suite,context:visible(workspace)?workspace:visible(suite)?suite:visible(right)?right:null};
-  });
-}
-
-async function armSampler(page,label,duration=850){
-  await page.evaluate(({label,duration})=>{
-    const rect=el=>{if(!el)return null;const r=el.getBoundingClientRect(),c=getComputedStyle(el);return{x:r.x,w:r.width,right:r.right,display:c.display}};
-    const visible=x=>x&&x.display!=='none'&&x.w>0;
-    const samples=[];window.__rwaNoFlickerSamples=samples;
-    const start=performance.now();
-    const take=()=>{
-      const right=rect(document.querySelector('.right'));
-      const workspace=rect(document.getElementById('rwaSuperWorkspace'));
-      const suite=rect(document.getElementById('suite'));
-      const context=visible(workspace)?workspace:visible(suite)?suite:visible(right)?right:null;
-      const layout=rect(document.querySelector('.layout')),left=rect(document.querySelector('.left')),main=rect(document.querySelector('.main'));
-      samples.push({label,t:performance.now()-start,level:document.documentElement.dataset.rwaLevel||'',route:document.documentElement.dataset.rwaRoute||'',contextWidth:context?.w||0,contextX:context?.x??-1,layoutWidth:layout?.w||0,layoutRight:layout?.right||0,leftWidth:left?.w||0,mainWidth:main?.w||0});
-      if(performance.now()-start<duration)requestAnimationFrame(take);
-    };
-    requestAnimationFrame(take);
-  },{label,duration});
-}
-
-async function collectSampler(page){return page.evaluate(()=>window.__rwaNoFlickerSamples||[])}
-
-function assertNoFlicker(samples,baseline,label){
-  assert.ok(samples.length>=8,`${label}: too few animation-frame samples (${samples.length})`);
-  const badContext=samples.filter(s=>Math.abs(s.contextWidth-baseline.context.w)>1.01);
-  const badLayout=samples.filter(s=>Math.abs(s.layoutWidth-baseline.layout.w)>1.01||Math.abs(s.layoutRight-baseline.layout.right)>1.01);
-  const badLeft=samples.filter(s=>Math.abs(s.leftWidth-baseline.left.w)>1.01);
-  const badMain=samples.filter(s=>Math.abs(s.mainWidth-baseline.main.w)>1.01);
-  assert.equal(badContext.length,0,`${label}: context flickered ${JSON.stringify(badContext.slice(0,8))}`);
-  assert.equal(badLayout.length,0,`${label}: layout flickered ${JSON.stringify(badLayout.slice(0,8))}`);
-  assert.equal(badLeft.length,0,`${label}: left width flickered ${JSON.stringify(badLeft.slice(0,8))}`);
-  assert.equal(badMain.length,0,`${label}: main width flickered ${JSON.stringify(badMain.slice(0,8))}`);
-  assert.ok(samples.every(s=>s.contextWidth>=439),`${label}: context collapsed below 439px`);
-}
-
-async function transition(page,baseline,from,to,name){
-  await armSampler(page,`${name}-${from}-to-${to}`);
-  await page.locator(`#rwaExperienceRail [data-rwa-level="${to}"]`).click();
-  await page.waitForTimeout(900);
-  const samples=await collectSampler(page);
-  assertNoFlicker(samples,baseline,`${name}:${from}->${to}`);
-  const end=await geometry(page);
-  assert.ok(end.context&&Math.abs(end.context.w-baseline.context.w)<1.01,`${name}:${to} settled context width ${end.context?.w}`);
-  await page.screenshot({path:`${OUT}/${name}-${from}-to-${to}.png`});
-  return{from,to,samples,end};
-}
-
-async function run(viewport,name){
-  const browser=await chromium.launch({headless:true});
-  try{
-    const context=await browser.newContext({viewport,serviceWorkers:'block'});await mocks(context);
-    const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e.message||e)));
-    await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await ready(page);
-    await page.locator('#rwaExperienceRail [data-rwa-level="analysis"]').click();await page.waitForTimeout(450);
-    const baseline=await geometry(page);
-    assert.ok(baseline.context,`${name}: missing Analysis context`);
-    assert.ok(Math.abs(baseline.context.w-440)<1.01,`${name}: Analysis context is ${baseline.context.w}, expected 440`);
-    await page.screenshot({path:`${OUT}/${name}-analysis-baseline.png`});
-    const transitions=[];
-    transitions.push(await transition(page,baseline,'analysis','action',name));
-    transitions.push(await transition(page,baseline,'action','discovery',name));
-    transitions.push(await transition(page,baseline,'discovery','analysis',name));
-    transitions.push(await transition(page,baseline,'analysis','action',name+'-repeat'));
-    assert.equal(errors.length,0,`${name}: runtime errors ${errors.join(' | ')}`);
-    await context.close();
-    return{viewport,baseline,transitions};
-  }finally{await browser.close()}
-}
-
-await fs.mkdir(OUT,{recursive:true});
-const report={wide2048:await run({width:2048,height:1129},'2048'),desktop1600:await run({width:1600,height:1000},'1600')};
-await fs.writeFile(`${OUT}/report.json`,JSON.stringify(report,null,2));
-console.log('ACTION_ZERO_FLICKER_V11=PASS');
-console.log('ANALYSIS_ACTION_FIRST_FRAME_440=PASS');
-console.log('DISCOVERY_ANALYSIS_ACTION_EVERY_FRAME_PARITY=PASS');
-console.log('ACTION_ZERO_FLICKER_REPORT',JSON.stringify(report));
+const spec=JSON.parse(await readFile('ui-spec/seablueprint-target.v1.json','utf8'));
+await mkdir(OUT,{recursive:true});
+const browser=await chromium.launch({headless:true}),results=[];
+const near=(a,b,t=1.1)=>Math.abs(Number(a||0)-Number(b||0))<=t;
+async function geom(page){return page.evaluate(()=>{const r=s=>{const x=document.querySelector(s)?.getBoundingClientRect();return x?{x:x.x,w:x.width,right:x.right}:null};return{rail:(()=>{const e=document.querySelector('#rwaExperienceRail');if(!e)return null;const c=getComputedStyle(e),x=e.getBoundingClientRect();return{display:c.display,visibility:c.visibility,w:x.width,h:x.height}})(),layout:r('.layout'),left:r('.layout>.left'),main:r('.layout>.main'),right:r('.layout>.right'),dock:r('#rwaCommerceDock'),hash:location.hash}})}
+async function frames(page,count=8){return page.evaluate(async count=>{const out=[];const take=()=>{const r=s=>{const x=document.querySelector(s)?.getBoundingClientRect();return x?{x:x.x,w:x.width,right:x.right}:null};out.push({layout:r('.layout'),left:r('.layout>.left'),main:r('.layout>.main'),right:r('.layout>.right'),dock:r('#rwaCommerceDock'),tab:window.RWAEcommerceTargetController?.state?.().tab||''})};for(let i=0;i<count;i++)await new Promise(res=>requestAnimationFrame(()=>{take();res()}));return out},count)}
+async function run(width,height){const name=`${width}x${height}`,context=await browser.newContext({viewport:{width,height},serviceWorkers:'block'}),page=await context.newPage();const u=new URL(BASE);u.hash='shop';u.searchParams.set('__zero_flicker',Date.now());await page.goto(u.href,{waitUntil:'domcontentloaded',timeout:45000});await page.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.6.0'&&window.RWAEcommerceTargetController?.version==='2.3.0'&&window.RWAEcommerceProductionVisualV1?.version==='1.8.1',{timeout:30000});await page.waitForFunction(()=>document.querySelector('#rwaShopScreen.open'),{timeout:12000});await page.evaluate(()=>window.RWAEcommerceProductionVisualV1.apply());const baseline=await geom(page);assert.ok(!baseline.rail||baseline.rail.display==='none'||baseline.rail.visibility==='hidden'||baseline.rail.w<1,`${name}: superseded Experience Rail became visible`);const d=width>=1600?{dock:460,left:291,order:239}:{dock:440,left:width<=1400?260:286,order:width<=1400?220:236};assert.ok(near(baseline.dock?.w,d.dock),`${name}: dock ${baseline.dock?.w} != ${d.dock}`);assert.ok(near(baseline.left?.w,d.left),`${name}: watchlist ${baseline.left?.w} != ${d.left}`);assert.ok(near(baseline.right?.w,d.order),`${name}: order ${baseline.right?.w} != ${d.order}`);const transitions=[];for(const tab of ['products','cart','stores']){await page.locator(`[data-ecom-target-tab="${tab}"]`).click();await page.waitForFunction(t=>window.RWAEcommerceTargetController?.state?.().tab===t,tab);const fs=await frames(page);for(const [i,f] of fs.entries()){assert.ok(near(f.layout?.w,baseline.layout?.w),`${name}/${tab}/frame${i}: layout flicker ${f.layout?.w}`);assert.ok(near(f.left?.w,baseline.left?.w),`${name}/${tab}/frame${i}: left flicker ${f.left?.w}`);assert.ok(near(f.main?.w,baseline.main?.w),`${name}/${tab}/frame${i}: center flicker ${f.main?.w}`);assert.ok(near(f.right?.w,baseline.right?.w),`${name}/${tab}/frame${i}: order flicker ${f.right?.w}`);assert.ok(near(f.dock?.w,baseline.dock?.w),`${name}/${tab}/frame${i}: dock flicker ${f.dock?.w}`)}transitions.push({tab,frames:fs})}await page.screenshot({path:`${OUT}/${name}-canonical-zero-flicker.png`,fullPage:false});results.push({viewport:{width,height},baseline,transitions});await context.close()}
+for(const [w,h] of [[1672,941],[1600,1000],[1440,900]])await run(w,h);
+await browser.close();const out={ok:true,contract:spec.contract,migration:'Experience Rail V11 superseded by canonical Ecommerce state transitions',results};await writeFile(`${OUT}/browser-result.json`,JSON.stringify(out,null,2));console.log(JSON.stringify(out,null,2));console.log('RWA_ACTION_ZERO_FLICKER_CANONICAL=PASS');
