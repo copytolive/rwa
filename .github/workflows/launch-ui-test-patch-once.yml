@@ -1,0 +1,37 @@
+name: Launch UI Root Auto Shop Test Patch Once
+on:
+  push:
+    branches: [fix/ecommerce-first-paint-0ms-20260829]
+    paths: ['.github/workflows/launch-ui-test-patch-once.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/ecommerce-first-paint-0ms-20260829
+      - name: Accept root Ecommerce already open
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tools/launch-ui-final-browser.mjs')
+          s=p.read_text()
+          old="await page.waitForSelector('#rwaSeablueprintCommerceLaunch',{state:'visible',timeout:10000});return{context,page,errors,popups,readyMs:Date.now()-t}}"
+          new="await page.waitForFunction(()=>document.querySelector('#rwaSeablueprintCommerceLaunch')||document.querySelector('#rwaShopScreen')?.classList.contains('open'),{timeout:10000});return{context,page,errors,popups,readyMs:Date.now()-t}}"
+          if old not in s: raise SystemExit('session launcher wait not found')
+          s=s.replace(old,new,1)
+          old2="if(!m.launcher)fail(label,'Ecommerce launcher not visible',m);"
+          new2="if(!m.launcher&&!m.shopOpen)fail(label,'Ecommerce is neither open nor launchable',m);"
+          if old2 not in s: raise SystemExit('root launcher assertion not found')
+          s=s.replace(old2,new2,1)
+          p.write_text(s)
+          PY
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/launch-ui-final-browser.mjs
+          git commit -m 'test: accept Ecommerce already open on canonical root'
+          git push origin HEAD:fix/ecommerce-first-paint-0ms-20260829
