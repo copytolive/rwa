@@ -28,7 +28,7 @@ async function run(label,width,height){
   try{
     const u=new URL(base);u.searchParams.set('__target_parity',`${label}-${Date.now()}`);
     await page.goto(u.href,{waitUntil:'domcontentloaded',timeout:publicMode?50000:30000});
-    await page.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.5.0'&&window.RWATargetDashboardV2?.version==='2.2.0'&&window.RWAEcommerceTargetController?.version==='2.3.0'&&window.RWAEcommerceProductionVisualV1?.version==='1.1.0',{timeout:publicMode?30000:20000});
+    await page.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.5.0'&&window.RWATargetDashboardV2?.version==='2.2.0'&&window.RWAEcommerceTargetController?.version==='2.3.0'&&window.RWAEcommerceProductionVisualV1?.version==='1.2.0',{timeout:publicMode?30000:20000});
     const before=await rect(page,'.layout');
     const launcher=page.locator('#rwaSeablueprintCommerceLaunch,[data-rwa-seablueprint-commerce="1"]').filter({visible:true}).first();
     if(!(await launcher.isVisible().catch(()=>false))) throw new Error('Ecommerce launcher not visible');
@@ -108,7 +108,7 @@ async function run(label,width,height){
 }
 for(const s of sizes)await run(...s);
 await browser.close();
-const out={ok:failures.length===0,contract:'ecommerce-target-parity-v2.4',base,publicMode,results,failures};
+const out={ok:failures.length===0,contract:'ecommerce-target-parity-v2.5',base,publicMode,results,failures};
 await writeFile(`${proof}/browser-result.json`,JSON.stringify(out,null,2));
 console.log(JSON.stringify(out,null,2));
 if(!out.ok)process.exit(1);
