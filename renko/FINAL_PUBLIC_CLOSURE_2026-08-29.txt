@@ -1,5 +1,8 @@
 RENKO FINAL PUBLIC CLOSURE
-Date: 2026-08-29
+Date: 2026-08-30
 Stable chart: 2.2.0 cross-domain series reset
+GOLD loader: 1.1.0 same-origin gzip dual-decode
+Scroll observer: recursion-safe canonical GOLD owner, cache v2
 Acceptance: exact 50 desktop + 50 mobile + revisit + GOLD 2003 + scroll; then exact public bytes + public Chromium gate.
 No timeframe substitution. No invalid-row drops allowed.
+Closure trigger: rerun all RENKO gates from current main after unrelated Ecommerce commit.
