@@ -1,0 +1,14 @@
+{
+  "configs_archived": 50091,
+  "correlation_rule": {
+    "action": ">0.50 remove lower-quality method from final selection",
+    "maximum": 0.5,
+    "metric": "abs Pearson correlation of log-return equity",
+    "selection": "per-symbol greedy filter"
+  },
+  "entry_profit_top200_count": 200,
+  "positive_unique_count": 349,
+  "profit_top200_count": 200,
+  "schema": "gold-v11-positive-ranking-summary-v1",
+  "source_run_id": "33231402281"
+}
