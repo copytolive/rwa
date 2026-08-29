@@ -73,7 +73,7 @@ try{
   {
     const context=await browser.newContext({locale:'en-US',viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:'block'});await mocks(context);const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e.message||e)));
     await page.goto(BASE+'#markets',{waitUntil:'domcontentloaded',timeout:30000});await waitV5(page);await page.waitForTimeout(900);await assertRoot(page,'mobile root');
-    for(const key of ['markets','search','trade','social','portfolio'])assert.ok(await page.locator(`[data-v5-mobile="${key}"]`).count(),`mobile ${key} missing`);
+    assert.equal(await page.locator('[data-v5-mobile]').count(),0,'legacy mobile navigation resurfaced');assert.ok(await page.locator('#rwaShopScreen').count(),'target commerce shell missing on mobile');
     await page.evaluate(()=>window.RWASuperApp.navigate('asset/ONDO'));await page.waitForTimeout(250);await assertRoot(page,'mobile asset');assert.equal(await page.locator('#rwaSuperWorkspace').isVisible(),true,'mobile asset internal sheet missing');
     const size=await page.evaluate(()=>({w:innerWidth,sw:document.documentElement.scrollWidth,workspace:getComputedStyle(document.getElementById('rwaSuperWorkspace')).position}));assert.ok(size.sw<=size.w+3,`mobile overflow ${size.sw}/${size.w}`);assert.equal(size.workspace,'fixed','mobile asset should be full-screen internal sheet');
     await page.evaluate(()=>window.RWASuperApp.navigate('trade/ONDO'));await page.waitForSelector('#exCoin',{timeout:12000});await page.waitForTimeout(250);assert.equal(await page.locator('#exCoin').inputValue(),'ONDO','mobile trade symbol not synced');await assertRoot(page,'mobile trade');
