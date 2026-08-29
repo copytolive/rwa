@@ -7,6 +7,8 @@ on:
       - 'chart-core.js'
       - 'rwa-target-dashboard-v2.js'
       - 'rwa-target-dashboard-v2.css'
+      - 'rwa-target-dashboard-v2-hardening.js'
+      - 'rwa-target-dashboard-v2-hardening.css'
       - 'rwa-seablueprint-commerce-bridge.js'
       - 'rwa-seablueprint-commerce-bridge.css'
       - 'rwa-commerce-config.json'
@@ -24,6 +26,8 @@ on:
       - 'chart-core.js'
       - 'rwa-target-dashboard-v2.js'
       - 'rwa-target-dashboard-v2.css'
+      - 'rwa-target-dashboard-v2-hardening.js'
+      - 'rwa-target-dashboard-v2-hardening.css'
       - 'rwa-seablueprint-commerce-bridge.js'
       - 'rwa-seablueprint-commerce-bridge.css'
       - 'rwa-commerce-config.json'
@@ -53,14 +57,15 @@ jobs:
           set -euxo pipefail
           node --check chart-core.js
           node --check rwa-target-dashboard-v2.js
+          node --check rwa-target-dashboard-v2-hardening.js
           node --check rwa-seablueprint-commerce-bridge.js
           node --check tools/launch-ui-final-browser.mjs
           node --check tools/seablueprint-commerce-single-shell-browser.mjs
-          grep -Fq "const VERSION='1.4.0'" rwa-seablueprint-commerce-bridge.js
-          grep -Fq "mode:'MARKET_INLINE_GRID'" rwa-seablueprint-commerce-bridge.js
+          grep -Fq "const VERSION='1.5.0',MODE='CONTEXT_PANEL'" rwa-seablueprint-commerce-bridge.js
+          grep -Fq "screen.dataset.seablueprintPlacement='context-right-panel'" rwa-seablueprint-commerce-bridge.js
           grep -Fq "window.addEventListener('click',captureClick,true)" rwa-seablueprint-commerce-bridge.js
-          grep -Fq "rwa-seablueprint-commerce-bridge.js?v=1.4.0" chart-core.js
-          grep -Fq "rwa-target-dashboard-v2.css?v=2.0.0" chart-core.js
+          grep -Fq "rwa-seablueprint-commerce-bridge.js?v=1.5.0" chart-core.js
+          grep -Fq "rwa-target-dashboard-v2-hardening.js?v=2.1.0" chart-core.js
           node - <<'NODE'
           const c=require('./rwa-commerce-config.json');
           if(c.shell_mode!=='SINGLE_MAIN_DOCUMENT') throw Error('shell_mode');
