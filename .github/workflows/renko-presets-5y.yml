@@ -9,14 +9,14 @@ on:
       - 'renko/renko-tv-presets-5y.js'
       - 'renko/renko-tv-presets-5y.css'
       - 'renko/renko-tv-atr-ui-sync.js'
-      - 'tools/renko-presets-5y-report.mjs'
+      - 'tools/renko-presets-5y-report-v6.mjs'
       - '.github/workflows/renko-presets-5y.yml'
   pull_request:
     paths:
       - 'renko/renko-tv-presets-5y.js'
       - 'renko/renko-tv-presets-5y.css'
       - 'renko/renko-tv-atr-ui-sync.js'
-      - 'tools/renko-presets-5y-report.mjs'
+      - 'tools/renko-presets-5y-report-v6.mjs'
       - '.github/workflows/renko-presets-5y.yml'
   workflow_dispatch:
 
@@ -39,7 +39,7 @@ jobs:
       - name: Syntax
         run: |
           node --check renko/renko-tv-presets-5y.js
-          node --check tools/renko-presets-5y-report.mjs
+          node --check tools/renko-presets-5y-report-v6.mjs
       - name: Chromium
         run: |
           npm install --no-save playwright@1.55.0
@@ -55,7 +55,7 @@ jobs:
           RWA_TEST_URL: http://127.0.0.1:8765
           RENKO_PRESET5Y_VIEWPORT: ${{ matrix.viewport }}
           RENKO_PRESET5Y_OUT: artifacts/renko-presets-5y-${{ matrix.viewport }}
-        run: node tools/renko-presets-5y-report.mjs
+        run: node tools/renko-presets-5y-report-v6.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -99,7 +99,7 @@ jobs:
           RWA_TEST_URL: https://copytolive.github.io/rwa
           RENKO_PRESET5Y_VIEWPORT: ${{ matrix.viewport }}
           RENKO_PRESET5Y_OUT: artifacts/renko-presets-5y-public-${{ matrix.viewport }}
-        run: node tools/renko-presets-5y-report.mjs
+        run: node tools/renko-presets-5y-report-v6.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
