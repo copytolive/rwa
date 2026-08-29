@@ -12,7 +12,7 @@ for(const[label,width,height]of viewports){
  context.on('page',p=>{if(p!==page)popups.push(p)});page.on('pageerror',e=>errors.push(String(e?.message||e)));
  try{
   stage='navigate';const u=new URL(base);u.searchParams.set('__commerce_panel',`${label}-${Date.now()}`);await page.goto(u.href,{waitUntil:'domcontentloaded',timeout:30000});
-  stage='runtime';await page.waitForFunction(v=>window.RWASeablueprintCommerceBridge?.version===v&&window.RWATargetDashboardV2?.version==='2.2.0'&&window.RWAEcommerceTargetController?.version==='2.3.0'&&window.RWAEcommerceParityFinishV2?.version==='2.3.0',VERSION,{timeout:20000});
+  stage='runtime';await page.waitForFunction(v=>window.RWASeablueprintCommerceBridge?.version===v&&window.RWATargetDashboardV2?.version==='2.2.1'&&window.RWAEcommerceTargetController?.version==='2.3.0'&&window.RWAEcommerceParityFinishV2?.version==='2.3.0',VERSION,{timeout:20000});
   stage='open';if(!(await page.locator('#rwaShopScreen.open').isVisible().catch(()=>false))){const launch=page.locator('#rwaSeablueprintCommerceLaunch,[data-rwa-seablueprint-commerce="1"]').filter({visible:true}).first();if(!(await launch.isVisible().catch(()=>false)))throw Error('Ecommerce neither open nor launchable');await launch.click({timeout:8000})}
   await page.waitForFunction(()=>document.querySelector('#rwaShopScreen')?.classList.contains('open'),null,{timeout:12000});
   stage='render';await page.evaluate(()=>{window.RWAEcommerceTargetController?.render?.();window.RWAEcommerceProductionVisualV1?.apply?.();window.RWAEcommerceParityFinishV2?.apply?.()});await page.waitForSelector('[data-seablueprint-source]',{state:'visible',timeout:10000});await page.waitForSelector('#rwaShopScreen .rwa-product-card',{state:'visible',timeout:10000});
