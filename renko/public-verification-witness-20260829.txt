@@ -1,0 +1,4 @@
+RENKO same-SHA public verification trigger.
+Purpose: trigger every renko/** GitHub Actions production gate after adding the public Current Production Browser Contract.
+Date: 2026-08-29.
+No runtime behavior is changed by this witness file.
