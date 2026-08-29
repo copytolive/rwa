@@ -1,0 +1,14 @@
+{
+  "correlation_rule": {
+    "action": ">0.50 remove lower-quality method from final selection",
+    "maximum": 0.5,
+    "metric": "abs Pearson correlation of log-return equity",
+    "selection": "per-symbol greedy filter"
+  },
+  "count": 0,
+  "minimum_net_profit_usd_canonical": 3000.0,
+  "minimum_trades": 100,
+  "ranking": [],
+  "schema": "gold-v11-entry100-net3000-canonical-usd-v1",
+  "source_run_id": "33277876965"
+}
