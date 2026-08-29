@@ -17,8 +17,8 @@ html body.rwa-target-dashboard-v2 #rwaMultiChainLaunch{
 html body.rwa-target-dashboard-v2 #rwaMarketplaceLaunch .rwa-marketplace-label{display:none!important}
 html body.rwa-target-dashboard-v2 #rwaMarketplaceLaunch .rwa-marketplace-mark{display:inline!important;font-size:13px!important}
 @media(min-width:1121px){
-  html body.rwa-target-dashboard-v2 .topbar,html[data-rwa-level] body.rwa-target-dashboard-v2 .topbar{top:0!important;height:49px!important;min-height:49px!important;max-height:49px!important}
-  html body.rwa-target-dashboard-v2 .app,html[data-rwa-level] body.rwa-target-dashboard-v2 .app{padding-top:49px!important}
+  html body.rwa-target-dashboard-v2 .topbar,html[data-rwa-level] body.rwa-target-dashboard-v2 .topbar{top:0!important;height:62px!important;min-height:62px!important;max-height:62px!important}
+  html body.rwa-target-dashboard-v2 .app,html[data-rwa-level] body.rwa-target-dashboard-v2 .app{padding-top:62px!important}
   html body.rwa-target-dashboard-v2 .app>#rwaExperienceRail~.layout,html[data-rwa-level] body.rwa-target-dashboard-v2 .app>#rwaExperienceRail~.layout{margin-top:0!important}
   html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-super-market-open .layout,html body.rwa-target-dashboard-v2.rwa-super-market-open .layout,
   html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout,html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout{
