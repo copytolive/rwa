@@ -7,7 +7,7 @@ on:
       - '.github/workflows/renko-gold-origin-snapshot.yml'
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   build-gold-origin:
     runs-on: ubuntu-latest
@@ -20,7 +20,7 @@ jobs:
           set -euo pipefail
           mkdir -p artifacts/gold-origin
           python3 - <<'PY'
-          import json, urllib.request, hashlib, datetime, math, os
+          import json, urllib.request, hashlib, math
           BASE='https://jetta.dukascopy.com/v1/ticks/XAU-USD/2003/5/5/{}'
           TARGET=6000
           EXPECTED=1052092863421
@@ -68,8 +68,27 @@ jobs:
           assert all(all(isinstance(b[k],(int,float)) for k in ('openTime','closeTime','open','high','low','close')) for b in p['bars'])
           print('GOLD_ORIGIN_SNAPSHOT_PASS',len(p['bars']),p['payloadSha256'])
           PY
+      - name: Publish deterministic same-origin gzip pack to branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p renko/history
+          gzip -n -9 -c artifacts/gold-origin/renko-gold-xauusd-origin.json > renko/history/renko-gold-xauusd-origin.json.gz
+          sha256sum renko/history/renko-gold-xauusd-origin.json.gz | tee artifacts/gold-origin/gzip.sha256
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add renko/history/renko-gold-xauusd-origin.json.gz
+          if git diff --cached --quiet; then
+            echo GOLD_ORIGIN_PACK_UNCHANGED
+          else
+            git commit -m 'RENKO: publish Dukascopy GOLD fixed-1s origin pack'
+            git push origin HEAD:fix/renko-total-history-origin-20260829
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: renko-gold-origin-snapshot-${{ github.sha }}
-          path: artifacts/gold-origin/renko-gold-xauusd-origin.json
+          path: |
+            artifacts/gold-origin/renko-gold-xauusd-origin.json
+            artifacts/gold-origin/gzip.sha256
+            renko/history/renko-gold-xauusd-origin.json.gz
           retention-days: 30
