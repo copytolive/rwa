@@ -23,6 +23,7 @@ on:
       - 'tools/ecommerce-target-parity-browser.mjs'
       - 'tools/screenshot-to-code-parity-browser.mjs'
       - 'tools/screenshot-parity-production-guard-browser.mjs'
+      - 'tools/visual-style-audit-browser.mjs'
       - '.github/workflows/ecommerce-target-parity.yml'
   push:
     branches: [main]
@@ -35,7 +36,7 @@ jobs:
   local-browser:
     if: github.event_name != 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 22
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - name: Install Chromium
@@ -58,6 +59,11 @@ jobs:
           RWA_UI_URL: http://127.0.0.1:4173/rwa/
           RWA_UI_PROOF_DIR: proof/ecommerce-target-parity-local
         run: node tools/ecommerce-target-parity-browser.mjs
+      - name: Run responsive computed-style visual audit
+        env:
+          RWA_UI_URL: http://127.0.0.1:4173/rwa/
+          RWA_UI_PROOF_DIR: proof/visual-style-audit-local
+        run: node tools/visual-style-audit-browser.mjs
       - name: Prove screenshot overlay is absent in normal mode
         env:
           RWA_UI_URL: http://127.0.0.1:4173/rwa/
@@ -75,6 +81,7 @@ jobs:
           path: |
             proof/ecommerce-first-paint-local/
             proof/ecommerce-target-parity-local/
+            proof/visual-style-audit-local/
             proof/screenshot-parity-production-guard-local/
             proof/screenshot-to-code-parity-local/
           if-no-files-found: error
@@ -83,7 +90,7 @@ jobs:
   public-browser:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 28
+    timeout-minutes: 32
     steps:
       - uses: actions/checkout@v4
       - name: Wait for exact GitHub Pages SHA
@@ -112,6 +119,11 @@ jobs:
           RWA_UI_URL: https://copytolive.github.io/rwa/
           RWA_UI_PROOF_DIR: proof/ecommerce-target-parity-public
         run: node tools/ecommerce-target-parity-browser.mjs
+      - name: Run public responsive computed-style visual audit
+        env:
+          RWA_UI_URL: https://copytolive.github.io/rwa/
+          RWA_UI_PROOF_DIR: proof/visual-style-audit-public
+        run: node tools/visual-style-audit-browser.mjs
       - name: Prove public production has no screenshot overlay
         env:
           RWA_UI_URL: https://copytolive.github.io/rwa/
@@ -135,13 +147,16 @@ jobs:
               assert r['audit']['target']['transitionMs'] == 0, r
               assert r['audit']['target']['animationMs'] == 0, r
               assert r['audit']['target']['backendLocked'] is True, r
+          v=json.load(open('proof/visual-style-audit-public/browser-result.json'))
+          assert v['ok'] is True and not v['failures'], v
+          assert all(x['status'] != 'FAIL' for x in v['interactions']), v['interactions']
           g=json.load(open('proof/screenshot-parity-production-guard-public/browser-result.json'))
           assert g['ok'] is True and not g['failures'], g
           assert g['audit']['parityApiLoaded'] is False and g['audit']['parityRootPresent'] is False, g
           assert g['audit']['canonicalTargetPresent'] is True and g['audit']['backendLocked'] is True, g
           s=json.load(open('proof/screenshot-to-code-parity-public/browser-result.json'))
           assert s['ok'] is True and not s['failures'], s
-          print('PUBLIC_ECOMMERCE_FIRST_PAINT_AND_PARITY_PASS')
+          print('PUBLIC_ECOMMERCE_FIRST_PAINT_STYLE_AND_PARITY_PASS')
           PY
       - uses: actions/upload-artifact@v4
         if: always()
@@ -150,6 +165,7 @@ jobs:
           path: |
             proof/ecommerce-first-paint-public/
             proof/ecommerce-target-parity-public/
+            proof/visual-style-audit-public/
             proof/screenshot-parity-production-guard-public/
             proof/screenshot-to-code-parity-public/
           if-no-files-found: error
