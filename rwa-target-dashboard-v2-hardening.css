@@ -247,3 +247,9 @@ html body.rwa-target-dashboard-v2 [role="button"]:focus-visible{outline:2px soli
   html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open #rwaCommerceDock,
   html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open #rwaShopScreen{left:0!important;right:0!important;top:var(--rwa-topbar-h)!important;bottom:0!important;width:100vw!important;min-width:100vw!important;max-width:100vw!important}
 }
+
+/* FINAL-CLOSURE-20260830: cart type floor + canonical single-shell ownership */
+html body.rwa-target-dashboard-v2 .rwa-ecom-cart-item>div>b{font-size:9.5px!important;line-height:1.25!important}
+html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open #rwaBusinessConsole,
+html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open #rwaBusinessConsoleLaunch,
+html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .rwa-business-console{display:none!important;visibility:hidden!important;pointer-events:none!important}
