@@ -12,7 +12,10 @@ async function geometryDebug(p,sel){return p.evaluate(sel=>{const el=document.qu
 async function assertDock(p,sel,label,expected=440){const d=await rect(p,sel);if(d.display==='none'||d.visibility==='hidden')throw Error(`${label}: dock hidden ${JSON.stringify(d)}`);if(!near(d.width,expected,2))throw Error(`${label}: width ${d.width} != ${expected}`);const vr=await p.evaluate(()=>{const b=document.body?.clientWidth||0,e=document.documentElement?.clientWidth||0;return b>0&&b<=e?b:e||innerWidth});if(!near(d.right,vr,2)){const dbg=await geometryDebug(p,sel);throw Error(`${label}: right edge ${d.right} != ${vr}; debug=${JSON.stringify(dbg)}`)}return d}
 async function loadFundamentals(p){await p.addStyleTag({url:new URL('rwa-fundamentals.css',base).href});await p.addScriptTag({url:new URL('rwa-fundamentals.js',base).href});await p.waitForFunction(()=>window.RWAFundamentals?.version,{timeout:10000});await p.evaluate(()=>window.RWAUILayoutIntegrity.reconcile());await p.waitForTimeout(100)}
 async function transitionParity(p,label){
-  await p.evaluate(()=>{try{window.RWASeablueprintCommerceBridge?.close?.({restore:false})}catch{};document.querySelector('#rwaShopScreen')?.classList.remove('open');document.body.classList.remove('rwa-shop-open','rwa-seablueprint-commerce-open');window.RWASuperApp.navigate('asset/PENDLE')});
+  await p.evaluate(()=>{try{window.RWASeablueprintCommerceBridge?.close?.({restore:false})}catch{};document.querySelector('#rwaShopScreen')?.classList.remove('open');document.body.classList.remove('rwa-shop-open','rwa-seablueprint-commerce-open')});
+  await p.waitForFunction(()=>!document.querySelector('#rwaShopScreen')?.classList.contains('open')&&!document.body.classList.contains('rwa-seablueprint-commerce-open'));
+  await p.waitForTimeout(150);
+  await p.evaluate(()=>window.RWASuperApp.navigate('asset/PENDLE'));
   await p.waitForFunction(()=>document.body.classList.contains('rwa-super-asset-workspace')&&!document.querySelector('#rwaSuperWorkspace')?.hidden);
   const asset=await assertDock(p,'#rwaSuperWorkspace',`${label} asset`);const layoutAsset=await rect(p,'.layout');
   await loadFundamentals(p);
