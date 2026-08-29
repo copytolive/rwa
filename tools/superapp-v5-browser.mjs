@@ -29,7 +29,7 @@ try{
     const context=await browser.newContext({locale:'en-US',viewport:{width:1440,height:960},serviceWorkers:'block'});await mocks(context);const page=await context.newPage();
     const errors=[];page.on('pageerror',e=>errors.push(String(e.message||e)));
     await page.goto(BASE+'#markets',{waitUntil:'domcontentloaded',timeout:30000});await waitV5(page);await page.waitForTimeout(1200);await assertRoot(page,'markets root');
-    assert.ok(await page.locator('[data-v5-route="markets"]').count(),'desktop nav missing');
+    assert.ok(await page.locator('[data-rwa-target-nav="markets"]').count(),'canonical target Markets nav missing');assert.equal(await page.locator('.topnav [data-v5-route]').count(),0,'legacy desktop nav resurfaced');
     assert.ok(await page.locator('#rwaGlobalTicker').count(),'global ticker missing');
     assert.ok(await page.locator('#rwaHealth').count(),'health indicator missing');
     const localeProbe=await page.evaluate(()=>{/* RWA_LOCALE_CI_PROBE_V2 */ const bad='en-US@posix';return{safe:window.__RWA_SAFE_LOCALE__,number:new Intl.NumberFormat(bad).format(1234.5),date:new Intl.DateTimeFormat(bad).format(new Date(0)),proto:(1234.5).toLocaleString(bad),canonical:Intl.getCanonicalLocales(bad)[0],locale:typeof Intl.Locale==='function'?new Intl.Locale(bad).toString():'en-US'}});assert.equal(localeProbe.safe,'en-US','safe locale not normalized');assert.ok(localeProbe.number&&localeProbe.date&&localeProbe.proto,'invalid locale runtime fallback failed');assert.equal(localeProbe.canonical,'en-US','invalid locale canonicalization failed');
