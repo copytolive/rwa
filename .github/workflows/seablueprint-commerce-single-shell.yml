@@ -9,6 +9,8 @@ on:
       - 'rwa-target-dashboard-v2.css'
       - 'rwa-target-dashboard-v2-hardening.js'
       - 'rwa-target-dashboard-v2-hardening.css'
+      - 'rwa-target-topbar-cleanup-v1.js'
+      - 'rwa-ecommerce-production-visual-v1.js'
       - 'rwa-seablueprint-commerce-bridge.js'
       - 'rwa-seablueprint-commerce-bridge.css'
       - 'rwa-commerce-config.json'
@@ -25,6 +27,8 @@ on:
       - 'rwa-target-dashboard-v2.css'
       - 'rwa-target-dashboard-v2-hardening.js'
       - 'rwa-target-dashboard-v2-hardening.css'
+      - 'rwa-target-topbar-cleanup-v1.js'
+      - 'rwa-ecommerce-production-visual-v1.js'
       - 'rwa-seablueprint-commerce-bridge.js'
       - 'rwa-seablueprint-commerce-bridge.css'
       - 'rwa-commerce-config.json'
@@ -50,12 +54,16 @@ jobs:
           node --check chart-core.js
           node --check rwa-target-dashboard-v2.js
           node --check rwa-target-dashboard-v2-hardening.js
+          node --check rwa-target-topbar-cleanup-v1.js
+          node --check rwa-ecommerce-production-visual-v1.js
           node --check rwa-seablueprint-commerce-bridge.js
           node --check tools/seablueprint-commerce-single-shell-browser.mjs
           grep -Fq "const VERSION='1.5.0',MODE='CONTEXT_PANEL'" rwa-seablueprint-commerce-bridge.js
           grep -Fq "screen.dataset.seablueprintPlacement='context-right-panel'" rwa-seablueprint-commerce-bridge.js
           grep -Fq "rwa-seablueprint-commerce-bridge.js?v=1.5.0" chart-core.js
           grep -Fq "rwa-target-dashboard-v2-hardening.js?v=2.1.0" chart-core.js
+          grep -Fq "rwa-target-topbar-cleanup-v1.js?v=1.6.0" chart-core.js
+          grep -Fq "rwa-ecommerce-production-visual-v1.js?v=1.7.0" chart-core.js
           grep -Fq "position:fixed!important" rwa-seablueprint-commerce-bridge.css
           node -e "const c=require('./rwa-commerce-config.json'); if(c.shell_mode!=='SINGLE_MAIN_DOCUMENT'||c.navigation_policy!=='NO_TOP_LEVEL_ECOMMERCE_NAVIGATION'||c.source!=='SEABLUEPRINT_COMMERCE'||c.api_base!=='') process.exit(1)"
       - name: Install Chromium
