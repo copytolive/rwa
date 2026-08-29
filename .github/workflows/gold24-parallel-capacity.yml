@@ -1,14 +1,12 @@
 name: GOLD v11 Parallel Capacity Proof
 
 on:
+  workflow_dispatch:
   push:
     branches:
-      - feat/gold24-v11-parallel-capacity-20260830
+      - main
     paths:
-      - 'backtest/gold24/parallel_capacity.py'
-      - 'backtest/gold24/PARALLEL_V11_ARCHITECTURE.md'
-      - '.github/workflows/gold24-parallel-capacity.yml'
-  workflow_dispatch:
+      - 'backtest/gold24/PARALLEL_CAPACITY_KICK'
 
 permissions:
   contents: read
