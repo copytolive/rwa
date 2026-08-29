@@ -1,10 +1,11 @@
 RENKO FINAL ZERO-SAFE CLOSURE TRIGGER — 2026-08-30
 
 Runtime-neutral path trigger only.
-Closure attempt: same-SHA public-production hard-gate matrix #2.
+Closure attempt: same-SHA public-production hard-gate matrix #3.
 
 Purpose:
-- force every current RENKO workflow with a renko/** path filter to execute against one exact main SHA after synchronizing stale workflow assertions with the current runtime and validating the current XAUT pack-v2 checksum contract;
+- force every current RENKO workflow with a renko/** path filter to execute against one exact main SHA after synchronizing stale workflow assertions, the current fixed1s v2.2.2 browser probe, and generic release scoping with the current runtime;
+- validate the current XAUT pack-v2 bytes and uncompressed CSV checksum without weakening native fixed-1s invariants;
 - prove the zero-safe ATR runtime, Traditional controls, fixed-1s behavior, 50-pair history/zero-ms gates, XAUT path, public Pages deployment, and browser acceptance together;
 - change no production JavaScript, CSS, data source, Renko math, UI behavior, or runtime semantics.
 
