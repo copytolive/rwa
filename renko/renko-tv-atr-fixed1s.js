@@ -25,7 +25,7 @@ const MATRIX=[1,10,100,1000,10000,100000,1000000];
 let state=new Map(),prev=NaN,count=0,from=0,to=0,packTo=0,active=0;
 function reset(){state=new Map(MATRIX.map(n=>[n,{n,seen:0,sum:0,atr:NaN}]));prev=NaN;count=0;from=0;to=0;packTo=0}
 function push(t,h,l,c){const tr=Number.isFinite(prev)?Math.max(h-l,Math.abs(h-prev),Math.abs(l-prev)):h-l;prev=c;if(!from)from=t;to=t+999;count++;for(const n of MATRIX){const s=state.get(n);s.seen++;if(s.seen<=n){s.sum+=tr;if(s.seen===n)s.atr=s.sum/n}else{s.atr=((s.atr*(n-1))+tr)/n}}}
-function output(){return MATRIX.map(n=>{const s=state.get(n),a=Number(s.atr);return{length:n,rawAtr:a,box:a,sourceCount:count,fromTime:from,toTime:to,satisfied:s.seen>=n&&Number.isFinite(a)&&a>0}})}
+function output(){return MATRIX.map(n=>{const s=state.get(n),a=Number(s.atr);return{length:n,rawAtr:a,box:a,sourceCount:count,fromTime:from,toTime:to,satisfied:s.seen>=n&&Number.isFinite(a)&&a>=0}})}
 async function getMeta(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error('meta HTTP '+r.status);const m=await r.json();if(m?.schema!=='renko-xaut-okx-1s-pack-v2'||m?.instrument!=='XAUT-USDT'||m?.interval!=='1s'||Number(m?.intervalMs)!==1000||Number(m?.rows)<1000000||m?.provenance?.sourceBar!=='1s'||Number(m?.provenance?.sourceIntervalMs)!==1000||m?.provenance?.upsampled!==false||m?.provenance?.synthetic1s!==false)throw new Error('invalid XAUT fixed-1s pack v2');return m}
 async function gunzipText(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error('pack HTTP '+r.status);if(typeof DecompressionStream!=='function')throw new Error('DecompressionStream gzip unavailable');return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).text()}
 function addBars(a){for(const b of a||[]){const t=Number(b.openTime),h=Number(b.high),l=Number(b.low),c=Number(b.close);if(![t,h,l,c].every(Number.isFinite)||t<=packTo)continue;push(t,h,l,c);packTo=t}}
@@ -58,7 +58,7 @@ function dispose(reason='dispose'){
   if(worker){try{worker.terminate()}catch{}worker=null}
   if(warmReject){try{warmReject(new Error(`ATR warm cancelled: ${reason}`))}catch{}warmReject=null}
   warmPromise=null;entries.clear();revision=0;warmMs=0;applying=false;
-  const d=document.documentElement.dataset;d.atrMatrixReady='idle';d.atrMatrixProgress='0';d.atrMatrixAvailable='0';d.atrMatrixRevision='0';d.atrMatrixWarmMs='0';d.atrMatrixError='';d.atrMatrixProvider='OKX Spot XAUT-USDT fixed 1s · on demand';
+  const d=document.documentElement.dataset;d.atrMatrixReady='idle';d.atrMatrixProgress='0';d.atrMatrixAvailable='0';d.atrMatrixRevision='0';d.atrMatrixWarmMs='0';d.atrMatrixError='';d.atrMatrixProvider='OKX Spot XAUT-USDT fixed 1s · on demand';d.atrZeroFallback='false';d.atrRawBoxPass='false';
   setMetric('ATR 1s MATRIX · ON DEMAND');
 }
 async function warm(T=tv()){
@@ -79,15 +79,17 @@ async function apply(length){
   if(!SET.has(n)){delete T.settings._exactBox;T.settings.atrLength=n;T.settings.method='atr';save(n);if(T.state.closedBars.length<n){badge(`NEEDS HISTORY · ${n}`);load(`ATR ${n.toLocaleString()} needs fixed-1s history`);return false}T.rebuild({fit:false});badge(`ACTIVE · ${n}`);return true}
   let e=entries.get(n);if(!e?.satisfied){badge(`PREPARING · ${n}`);load(`ATR ${n.toLocaleString()} · preparing fixed 1s OKX history on demand…`);if(!await warm(T))return false;e=entries.get(n)}
   if(!e?.satisfied)return false;
+  const raw=Number(e.rawAtr),tick=Number(T.state?.tickSize),zeroFallback=raw===0&&Number.isFinite(tick)&&tick>0,effectiveBox=raw>0?raw:(zeroFallback?tick:NaN);
+  if(!Number.isFinite(effectiveBox)||!(effectiveBox>0)){badge(`ERROR · ${n}`);load(`ATR ${n.toLocaleString()} could not produce a legal Wilder/min-tick box`);return false}
   const mark=performance.now();applying=true;
-  try{T.settings.atrLength=n;T.settings.method='atr';T.settings._exactBox=Number(e.rawAtr);save(n);T.rebuild({fit:false});Object.assign(T.state,{atr:Number(e.rawAtr),box:Number(e.rawAtr),atrRaw:Number(e.rawAtr),atrRequestedLength:n,atrAppliedLength:n,atrHistorySatisfied:true,atrHistorySourceCount:Number(e.sourceCount),atrHistoryFrom:Number(e.fromTime),atrHistoryTo:Number(e.toTime),atrHistoryGeneration:T.state.generation,atrMatrixPrepared:true,atrMatrixProvider:'OKX Spot XAUT-USDT fixed 1s'})}finally{applying=false}
-  const elapsed=performance.now()-mark,tbt=tbtSince(mark),pass=same(T.state.box,e.rawAtr);
-  Object.assign(document.documentElement.dataset,{atrLength:String(n),atrAppliedLength:String(n),atrHistorySatisfied:'true',atrRawBoxPass:pass?'true':'false',atrMatrixApplyMs:String(elapsed),atrMatrixTbtMs:String(tbt)});
+  try{T.settings.atrLength=n;T.settings.method='atr';T.settings._exactBox=effectiveBox;save(n);T.rebuild({fit:false});Object.assign(T.state,{atr:effectiveBox,box:effectiveBox,atrRaw:raw,atrRawPositive:raw>0,atrZeroFallback:zeroFallback,atrRequestedLength:n,atrAppliedLength:n,atrHistorySatisfied:true,atrHistorySourceCount:Number(e.sourceCount),atrHistoryFrom:Number(e.fromTime),atrHistoryTo:Number(e.toTime),atrHistoryGeneration:T.state.generation,atrMatrixPrepared:true,atrMatrixProvider:'OKX Spot XAUT-USDT fixed 1s'})}finally{applying=false}
+  const elapsed=performance.now()-mark,tbt=tbtSince(mark),positivePass=raw>0&&same(T.state.box,raw),zeroPass=zeroFallback&&same(T.state.box,tick),pass=positivePass||zeroPass;
+  Object.assign(document.documentElement.dataset,{atrLength:String(n),atrAppliedLength:String(n),atrHistorySatisfied:'true',atrRawBoxPass:positivePass?'true':'false',atrZeroFallback:zeroFallback?'true':'false',atrEffectiveBoxPass:pass?'true':'false',atrRawPositive:raw>0?'true':'false',atrMatrixApplyMs:String(elapsed),atrMatrixTbtMs:String(tbt)});
   const inp=document.getElementById('atrLength');if(inp){inp.value=String(n);inp.dataset.appliedLength=String(n)}
-  const a=document.getElementById('currentAtr');if(a)a.textContent=Number(e.rawAtr).toLocaleString(undefined,{maximumFractionDigits:10});
+  const a=document.getElementById('currentAtr');if(a)a.textContent=raw.toLocaleString(undefined,{maximumFractionDigits:10});
   const c=document.getElementById('sourceBarCount');if(c)c.textContent=Number(e.sourceCount).toLocaleString();
-  badge(`ACTIVE · ${n}`);load(`LIVE · fixed 1s · ATR ${n.toLocaleString()} · raw Wilder = box · TBT ${tbt.toFixed(1)} ms`,true);
-  T.state.atrLastApply={length:n,rawAtr:Number(e.rawAtr),box:Number(T.state.box),rawBoxPass:pass,sourceCount:Number(e.sourceCount),elapsedMs:elapsed,tbtMs:tbt,interval:'1s',at:Date.now()};
+  badge(`ACTIVE · ${n}`);load(zeroFallback?`LIVE · fixed 1s · ATR ${n.toLocaleString()} · raw 0 · min-tick fallback ${effectiveBox} · TBT ${tbt.toFixed(1)} ms`:`LIVE · fixed 1s · ATR ${n.toLocaleString()} · raw Wilder = box · TBT ${tbt.toFixed(1)} ms`,true);
+  T.state.atrLastApply={length:n,rawAtr:raw,box:Number(T.state.box),rawBoxPass:positivePass,zeroFallback,effectiveBoxPass:pass,sourceCount:Number(e.sourceCount),elapsedMs:elapsed,tbtMs:tbt,interval:'1s',at:Date.now()};
   return pass&&T.settings.interval==='1s';
 }
 async function fromInput(){return apply(parseLength(document.getElementById('atrLength')?.value))}
@@ -96,7 +98,7 @@ const input=document.getElementById('atrLength');if(input){input.addEventListene
 window.addEventListener('renko:tv-ready',()=>{const T=tv();lock(T);if(T?.state?.symbol===XAUT){document.documentElement.dataset.atrMatrixReady='idle';document.documentElement.dataset.atrMatrixProvider='OKX Spot XAUT-USDT fixed 1s · on demand';setMetric('ATR 1s MATRIX · ON DEMAND')}},{once:true});
 window.addEventListener('renko:symbol-switch-start',e=>{const d=e.detail||{};if(d.from===XAUT&&d.to!==XAUT)dispose('pair-switch')});
 setInterval(()=>{const T=tv();if(!T)return;lock(T);if(T.state?.symbol!==XAUT||T.state?.status!=='live'||!worker)return;const cur=currentRevision(T);if(revision&&cur>revision){const newer=(T.state.closedBars||[]).filter(b=>Number(b.closeTime)>revision);if(newer.length)worker.postMessage({type:'refresh',token,newBars:newer,revision:cur})}},1500);
-const api={version:'2.2.1-lazy-pack-v2',matrix:MATRIX,parseLength,warm,apply,dispose,get entries(){return entries},get revision(){return revision},get warmMs(){return warmMs},get applying(){return applying},get workerActive(){return !!worker},get entryCount(){return entries.size}};
+const api={version:'2.2.2-zero-safe-lazy-pack-v2',matrix:MATRIX,parseLength,warm,apply,dispose,get entries(){return entries},get revision(){return revision},get warmMs(){return warmMs},get applying(){return applying},get workerActive(){return !!worker},get entryCount(){return entries.size}};
 window.RWARenkoATRFixed1s=api;
-window.RWARenkoATRParity={version:'fixed-1s-2.2.1-lazy-pack-v2',rule:'fixed-1s-okx-deep-wilder-matrix-on-demand',matrix:MATRIX,parseLength,warmMatrix:warm,applyPreparedMatrix:apply,ensureAtrHistory:apply,applyAtrFromInput:fromInput,drainApplyQueue:apply,dispose,get applying(){return applying},get matrixReady(){return document.documentElement.dataset.atrMatrixReady},get matrixWarmMs(){return warmMs},get matrixEntries(){return entries},get workerActive(){return !!worker}};
+window.RWARenkoATRParity={version:'fixed-1s-2.2.2-zero-safe-lazy-pack-v2',rule:'fixed-1s-okx-deep-wilder-matrix-on-demand',matrix:MATRIX,parseLength,warmMatrix:warm,applyPreparedMatrix:apply,ensureAtrHistory:apply,applyAtrFromInput:fromInput,drainApplyQueue:apply,dispose,get applying(){return applying},get matrixReady(){return document.documentElement.dataset.atrMatrixReady},get matrixWarmMs(){return warmMs},get matrixEntries(){return entries},get workerActive(){return !!worker}};
 })();
