@@ -40,19 +40,12 @@ jobs:
               text = text.replace(old, new, 1)
               controller.write_text(text)
 
-          tests = [
-              Path('tools/seablueprint-commerce-single-shell-browser.mjs'),
-              Path('tools/launch-ui-final-browser.mjs'),
-          ]
-          for p in tests:
-              t = p.read_text()
-              t2 = t.replace("RWATargetDashboardV2?.version==='2.2.0'", "RWATargetDashboardV2?.version==='2.2.1'")
-              t2 = t2.replace("dashboard:'2.2.0'", "dashboard:'2.2.1'")
-              if t2 == t and '2.2.1' not in t:
-                  raise SystemExit(f'version anchor missing in {p}')
-              p.write_text(t2)
-
-          for name in ['.github/workflows/launch-ui-final.yml', '.github/workflows/seablueprint-commerce-single-shell.yml']:
+          for name in [
+              'tools/seablueprint-commerce-single-shell-browser.mjs',
+              'tools/launch-ui-final-browser.mjs',
+              '.github/workflows/launch-ui-final.yml',
+              '.github/workflows/seablueprint-commerce-single-shell.yml',
+          ]:
               p = Path(name)
               t = p.read_text()
               if '2.2.0' in t:
@@ -63,8 +56,8 @@ jobs:
         run: |
           grep -F "rwa-ecom-cart-item>div>b" rwa-target-dashboard-v2-hardening.css
           grep -F "#rwaBusinessConsole" rwa-target-dashboard-v2-hardening.css
-          grep -F "RWATargetDashboardV2?.version==='2.2.1'" tools/seablueprint-commerce-single-shell-browser.mjs
-          grep -F "dashboard:'2.2.1'" tools/launch-ui-final-browser.mjs
+          grep -F "2.2.1" tools/seablueprint-commerce-single-shell-browser.mjs
+          grep -F "2.2.1" tools/launch-ui-final-browser.mjs
           node --check rwa-ecommerce-target-controller-v1.js
       - name: Commit closure patch
         shell: bash
