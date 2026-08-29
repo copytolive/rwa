@@ -6,6 +6,7 @@ on:
       - fix/renko-history-total-50pair-10x-20260829
       - fix/renko-public-zero-total-acceptance-20260829
       - fix/renko-final-history-closure-20260829
+      - fix/renko-final-zero-safe-gates-20260829
     paths:
       - 'renko/**'
       - 'tools/renko-50pair-switch-report.mjs'
