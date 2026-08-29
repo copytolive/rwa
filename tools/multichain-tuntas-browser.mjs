@@ -12,7 +12,7 @@ const browser=await chromium.launch({headless:true});
 const context=await browser.newContext({viewport:{width:1600,height:1000},serviceWorkers:'block'});
 const page=await context.newPage();
 const directWrites=[],rpcMethods=[];
-const report={contract:'rwa-multichain-tuntas-browser-v4',url:TEST_URL,ok:false,checks:{},errors:[]};
+const report={contract:'rwa-multichain-tuntas-browser-v4.1-context-lifecycle',url:TEST_URL,ok:false,checks:{},errors:[]};
 
 await page.addInitScript(({EVM,APPROVAL,ROUTE,SOL})=>{
   window.__mcEvents=[];window.__approvalConfirmed=false;
@@ -75,7 +75,18 @@ await page.route('**/*',async route=>{
 
 try{
   await page.goto(TEST_URL,{waitUntil:'domcontentloaded'});
-  await page.waitForSelector('#rwaMultiChainLaunch',{timeout:10000});await page.click('#rwaMultiChainLaunch');
+  await page.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.6.0'||document.querySelector('#rwaMultiChainLaunch'),null,{timeout:15000});
+  const commerceRequested=await page.evaluate(()=>location.hash==='#shop'||document.body.classList.contains('rwa-seablueprint-commerce-open')||!!document.querySelector('#rwaShopScreen.open'));
+  if(commerceRequested){
+    await page.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.6.0',null,{timeout:15000});
+    await page.waitForSelector('#rwaShopScreen.open',{state:'visible',timeout:15000});
+    await page.waitForSelector('#rwaMultiChainLaunch',{state:'attached',timeout:15000});
+    await page.evaluate(()=>window.RWASeablueprintCommerceBridge.close({restore:false}));
+    await page.waitForFunction(()=>location.hash!=='#shop'&&!document.body.classList.contains('rwa-seablueprint-commerce-open')&&!document.querySelector('#rwaShopScreen')?.classList.contains('open'),null,{timeout:8000});
+    report.checks.ecommerce_peer_lifecycle='PASS';
+  }
+  await page.waitForSelector('#rwaMultiChainLaunch',{state:'visible',timeout:15000});
+  await page.click('#rwaMultiChainLaunch');
   await page.waitForFunction(()=>window.RWAMultiChainEngine?.revision==='3.0.0-tuntas',null,{timeout:10000});
   const gate=await page.evaluate(()=>window.RWAMultiChainEngine.executionReadiness());
   if(!gate.ready||!gate.global||!gate.multichain)throw Error(`dual readiness mock failed: ${JSON.stringify(gate)}`);report.checks.dual_mainnet_gate='PASS';
