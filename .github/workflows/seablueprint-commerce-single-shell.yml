@@ -59,7 +59,7 @@ jobs:
           grep -Fq "screen.dataset.seablueprintPlacement='context-right-panel'" rwa-seablueprint-commerce-bridge.js
           grep -Fq "rwa-seablueprint-commerce-bridge.js?v=1.5.0" chart-core.js
           grep -Fq "rwa-target-dashboard-v2-hardening.js?v=2.1.0" chart-core.js
-          grep -Fq "rwa-ecommerce-production-visual-v1.js?v=1.5.0" chart-core.js
+          grep -Fq "rwa-ecommerce-production-visual-v1.js?v=1.6.0" chart-core.js
           grep -Fq "position:fixed!important" rwa-seablueprint-commerce-bridge.css
           node -e "const c=require('./rwa-commerce-config.json'); if(c.shell_mode!=='SINGLE_MAIN_DOCUMENT'||c.navigation_policy!=='NO_TOP_LEVEL_ECOMMERCE_NAVIGATION'||c.source!=='SEABLUEPRINT_COMMERCE'||c.api_base!=='') process.exit(1)"
       - name: Install Chromium
