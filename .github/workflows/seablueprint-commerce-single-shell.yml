@@ -16,9 +16,6 @@ on:
       - 'rwa-seablueprint-commerce-bridge.js'
       - 'rwa-seablueprint-commerce-bridge.css'
       - 'rwa-commerce-config.json'
-      - 'rwa-storefront.js'
-      - 'rwa-commerce-api.js'
-      - 'rwa-commerce-live.js'
       - 'assets/ecommerce/**'
       - 'tools/seablueprint-commerce-single-shell-browser.mjs'
       - '.github/workflows/seablueprint-commerce-single-shell.yml'
@@ -37,9 +34,6 @@ on:
       - 'rwa-seablueprint-commerce-bridge.js'
       - 'rwa-seablueprint-commerce-bridge.css'
       - 'rwa-commerce-config.json'
-      - 'rwa-storefront.js'
-      - 'rwa-commerce-api.js'
-      - 'rwa-commerce-live.js'
       - 'assets/ecommerce/**'
       - 'tools/seablueprint-commerce-single-shell-browser.mjs'
       - '.github/workflows/seablueprint-commerce-single-shell.yml'
@@ -65,8 +59,10 @@ jobs:
           node --check rwa-ecommerce-target-controller-v1.js
           node --check rwa-seablueprint-commerce-bridge.js
           node --check tools/seablueprint-commerce-single-shell-browser.mjs
-          grep -Fq "const VERSION='1.5.0',MODE='CONTEXT_PANEL'" rwa-seablueprint-commerce-bridge.js
-          grep -Fq "screen.dataset.seablueprintPlacement='context-right-panel'" rwa-seablueprint-commerce-bridge.js
+          grep -Fq "const VERSION='1.6.0',MODE='CONTEXT_PANEL'" rwa-seablueprint-commerce-bridge.js
+          grep -Fq "contentOwner:'RWAEcommerceTargetController'" rwa-seablueprint-commerce-bridge.js
+          grep -Fq "commerceContentWriter:false" rwa-target-dashboard-v2.js
+          ! grep -Fq "rwa-storefront.js" rwa-seablueprint-commerce-bridge.js
           grep -Fq "rwa-seablueprint-commerce-bridge.js?v=" chart-core.js
           grep -Fq "rwa-target-dashboard-v2-hardening.js?v=" chart-core.js
           grep -Fq "rwa-target-topbar-cleanup-v1.js?v=" chart-core.js
