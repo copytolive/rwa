@@ -1,0 +1,142 @@
+name: Ecommerce Target Parity
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'chart-core.js'
+      - 'rwa-target-dashboard-v2.js'
+      - 'rwa-target-dashboard-v2.css'
+      - 'rwa-ecommerce-target-controller-v1.js'
+      - 'rwa-seablueprint-commerce-bridge.js'
+      - 'rwa-seablueprint-commerce-bridge.css'
+      - 'rwa-storefront.js'
+      - 'rwa-screenshot-parity-v1.js'
+      - 'rwa-screenshot-parity-v1.css'
+      - 'assets/ecommerce/**'
+      - 'tools/ecommerce-target-parity-browser.mjs'
+      - 'tools/screenshot-to-code-parity-browser.mjs'
+      - 'tools/screenshot-parity-production-guard-browser.mjs'
+      - '.github/workflows/ecommerce-target-parity.yml'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  local-browser:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start local RWA shell
+        run: |
+          python3 -m http.server 4173 --directory .. >/tmp/rwa-http.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/rwa-http.log
+          exit 1
+      - name: Run existing target interaction matrix
+        env:
+          RWA_UI_URL: http://127.0.0.1:4173/rwa/
+          RWA_UI_PROOF_DIR: proof/ecommerce-target-parity-local
+        run: node tools/ecommerce-target-parity-browser.mjs
+      - name: Prove screenshot overlay is absent in normal mode
+        env:
+          RWA_UI_URL: http://127.0.0.1:4173/rwa/
+          RWA_UI_PROOF_DIR: proof/screenshot-parity-production-guard-local
+        run: node tools/screenshot-parity-production-guard-browser.mjs
+      - name: Run screenshot-to-code exact 1672x941 render preview
+        env:
+          RWA_UI_URL: http://127.0.0.1:4173/rwa/
+          RWA_UI_PROOF_DIR: proof/screenshot-to-code-parity-local
+        run: node tools/screenshot-to-code-parity-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ecommerce-target-parity-local-${{ github.sha }}
+          path: |
+            proof/ecommerce-target-parity-local/
+            proof/screenshot-parity-production-guard-local/
+            proof/screenshot-to-code-parity-local/
+          if-no-files-found: error
+          retention-days: 30
+
+  public-browser:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for exact GitHub Pages SHA
+        shell: bash
+        run: |
+          set -euxo pipefail
+          url='https://copytolive.github.io/rwa/deployment-sha.txt'
+          for i in $(seq 1 60); do
+            deployed="$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "${url}?v=${GITHUB_SHA}-${i}" 2>/dev/null | tr -d '\r\n' || true)"
+            [ "$deployed" = "$GITHUB_SHA" ] && echo "Exact Pages SHA is live: $deployed" && exit 0
+            echo "Waiting for Pages. expected=$GITHUB_SHA actual=${deployed:-unavailable}"
+            sleep 10
+          done
+          exit 1
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Run real public target interaction matrix
+        env:
+          RWA_UI_URL: https://copytolive.github.io/rwa/
+          RWA_UI_PROOF_DIR: proof/ecommerce-target-parity-public
+        run: node tools/ecommerce-target-parity-browser.mjs
+      - name: Prove public production has no screenshot overlay
+        env:
+          RWA_UI_URL: https://copytolive.github.io/rwa/
+          RWA_UI_PROOF_DIR: proof/screenshot-parity-production-guard-public
+        run: node tools/screenshot-parity-production-guard-browser.mjs
+      - name: Run public screenshot-to-code exact render preview
+        env:
+          RWA_UI_URL: https://copytolive.github.io/rwa/
+          RWA_UI_PROOF_DIR: proof/screenshot-to-code-parity-public
+        run: node tools/screenshot-to-code-parity-browser.mjs
+      - name: Verify zero-duration and fail-closed contract
+        run: |
+          python3 - <<'PY'
+          import json
+          p='proof/ecommerce-target-parity-public/browser-result.json'
+          d=json.load(open(p))
+          assert d['ok'] is True, d
+          assert d['publicMode'] is True, d
+          assert not d['failures'], d
+          for r in d['results']:
+              assert r['openAudit']['target']['transitionMs'] == 0, r
+              assert r['openAudit']['target']['animationMs'] == 0, r
+              assert r['openAudit']['target']['backendLocked'] is True, r
+          g=json.load(open('proof/screenshot-parity-production-guard-public/browser-result.json'))
+          assert g['ok'] is True and not g['failures'], g
+          assert g['audit']['parityApiLoaded'] is False, g
+          assert g['audit']['parityRootPresent'] is False, g
+          assert g['audit']['canonicalTargetPresent'] is True, g
+          assert g['audit']['backendLocked'] is True, g
+          s=json.load(open('proof/screenshot-to-code-parity-public/browser-result.json'))
+          assert s['ok'] is True and not s['failures'], s
+          assert s['audit']['api']['transitionMs'] == 0, s
+          assert s['audit']['api']['animationMs'] == 0, s
+          print('PUBLIC_ECOMMERCE_SCREENSHOT_TO_CODE_PARITY_PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ecommerce-target-parity-public-${{ github.sha }}
+          path: |
+            proof/ecommerce-target-parity-public/
+            proof/screenshot-parity-production-guard-public/
+            proof/screenshot-to-code-parity-public/
+          if-no-files-found: error
+          retention-days: 30
