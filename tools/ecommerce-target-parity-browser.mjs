@@ -28,7 +28,7 @@ async function run(label,width,height){
   try{
     const u=new URL(base);u.searchParams.set('__target_parity',`${label}-${Date.now()}`);
     await page.goto(u.href,{waitUntil:'domcontentloaded',timeout:publicMode?50000:30000});
-    await page.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.5.0'&&window.RWATargetDashboardV2?.version==='2.2.0'&&window.RWAEcommerceTargetController?.version==='2.3.0',{timeout:publicMode?30000:20000});
+    await page.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.5.0'&&window.RWATargetDashboardV2?.version==='2.2.0'&&window.RWAEcommerceTargetController?.version==='2.3.0'&&window.RWAEcommerceProductionVisualV1?.version==='1.1.0',{timeout:publicMode?30000:20000});
     const before=await rect(page,'.layout');
     const launcher=page.locator('#rwaSeablueprintCommerceLaunch,[data-rwa-seablueprint-commerce="1"]').filter({visible:true}).first();
     if(!(await launcher.isVisible().catch(()=>false))) throw new Error('Ecommerce launcher not visible');
@@ -41,6 +41,7 @@ async function run(label,width,height){
     const openAudit=await page.evaluate(()=>({
       bridge:window.RWASeablueprintCommerceBridge.audit(),
       target:window.RWAEcommerceTargetController.audit(),
+      visual:window.RWAEcommerceProductionVisualV1.audit(),
       path:location.pathname,hash:location.hash,
       heading:document.querySelector('.rwa-ecom-head-title')?.innerText||'',
       tabs:[...document.querySelectorAll('[data-ecom-target-tab]')].map(x=>x.textContent.trim()),
@@ -54,11 +55,18 @@ async function run(label,width,height){
     if(!openAudit.target?.rendered||!openAudit.target?.backendLocked||openAudit.target?.tabCount!==3)fail(label,'target Ecommerce render/truth failed',openAudit.target);
     if(!/Seablueprint Ecommerce/.test(openAudit.heading)||openAudit.store!=='Seablue Estate Marketplace'||!/BACKEND LOCKED/i.test(openAudit.source))fail(label,'target visual copy missing',openAudit);
     if(openAudit.tabs.join('|')!=='Stores|Products|Cart (2)')fail(label,'target tabs mismatch',openAudit.tabs);
-    if(Math.abs((before?.width||0)-(after?.width||0))>2)fail(label,'opening Ecommerce reshaped .layout',{before,after});
+    if(Math.abs((before?.width||0)-(after?.width||0))>2)fail(label,'opening Ecommerce changed outer .layout width',{before,after});
     if(openAudit.transitions.some(x=>x.t!=='0s'||x.a!=='0s'))fail(label,'non-zero Ecommerce CSS transition detected',openAudit.transitions);
     if(width>680){
       if(!dock||dock.width<420||dock.width>442)fail(label,'desktop dock not ~440px',dock);
       if(Number(openAudit.bridge?.exposedChartWidth||0)<420)fail(label,'market/chart not visibly preserved',openAudit.bridge);
+      if(!openAudit.visual?.orderVisible||!openAudit.visual?.orderClearOfDock)fail(label,'Order Book is not visibly preserved beside Ecommerce',openAudit.visual);
+      if((openAudit.visual?.topActionExtras||[]).length)fail(label,'extra topbar controls remain visible while Ecommerce is open',openAudit.visual);
+      if(openAudit.visual?.marketplaceVisible||openAudit.visual?.multichainVisible)fail(label,'Marketplace/MultiChain controls should not crowd target Ecommerce header state',openAudit.visual);
+      if(width>1400&&Number(openAudit.visual?.left?.width||0)<280)fail(label,'watchlist is too narrow for target parity',openAudit.visual);
+      if(width<=1400&&Number(openAudit.visual?.left?.width||0)<250)fail(label,'compact watchlist is too narrow',openAudit.visual);
+      if(Number(openAudit.visual?.order?.width||0)<210)fail(label,'Order Book column is too narrow',openAudit.visual);
+      if(Number(openAudit.visual?.main?.width||0)<420)fail(label,'main market column is too narrow',openAudit.visual);
     }else if(!dock||Math.abs(dock.width-width)>2||dock.left!==0)fail(label,'mobile contextual panel not full width',dock);
 
     const sync=await page.evaluate(()=>{
@@ -88,7 +96,8 @@ async function run(label,width,height){
     const actions=await page.evaluate(()=>[...new Set([...document.querySelectorAll('[data-ecom-action]')].map(x=>x.dataset.ecomAction))].sort());
     for(const needed of ['cart-icon','favorite','product','review-cart','view-all','view-store'])if(!actions.includes(needed))fail(label,`missing first-party action ${needed}`,actions);
 
-    await page.screenshot({path:`${proof}/${label}-ecommerce.png`,fullPage:true});
+    await page.evaluate(()=>window.scrollTo(0,0));
+    await page.screenshot({path:`${proof}/${label}-ecommerce.png`,fullPage:false});
     await page.evaluate(()=>window.RWASeablueprintCommerceBridge?.close?.({restore:false}));
     await page.waitForFunction(()=>!document.querySelector('#rwaShopScreen')?.classList.contains('open'),{timeout:5000});
     if(errors.length)fail(label,'uncaught page errors',errors);
@@ -99,7 +108,7 @@ async function run(label,width,height){
 }
 for(const s of sizes)await run(...s);
 await browser.close();
-const out={ok:failures.length===0,contract:'ecommerce-target-parity-v2.3',base,publicMode,results,failures};
+const out={ok:failures.length===0,contract:'ecommerce-target-parity-v2.4',base,publicMode,results,failures};
 await writeFile(`${proof}/browser-result.json`,JSON.stringify(out,null,2));
 console.log(JSON.stringify(out,null,2));
 if(!out.ok)process.exit(1);
