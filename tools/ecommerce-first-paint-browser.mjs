@@ -11,15 +11,12 @@ const failures=[],results=[];
 for(const [label,width,height] of [['target-1672x941',1672,941],['mobile-390x844',390,844]]){
   const ctx=await browser.newContext({viewport:{width,height},serviceWorkers:'block'});
   const page=await ctx.newPage();
-  let release;
-  const hold=new Promise(r=>{release=r});
-  await page.route('**/chart-core.js*',async route=>{await hold;await route.continue()});
+  await page.route('**/chart-core.js*',route=>route.abort('blockedbyclient'));
   try{
     const u=new URL(base);
     u.searchParams.set('__first_paint_probe',String(Date.now()));
     u.hash='shop';
-    await page.goto(u.href,{waitUntil:'commit',timeout:publicMode?50000:30000});
-    await page.waitForSelector('.layout',{state:'attached',timeout:15000});
+    await page.goto(u.href,{waitUntil:'domcontentloaded',timeout:publicMode?50000:30000});
     const audit=await page.evaluate(()=>{
       const vis=el=>{if(!el)return false;const s=getComputedStyle(el),r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity||1)>0&&r.width>1&&r.height>1};
       const top=document.querySelector('.topbar')?.getBoundingClientRect();
@@ -46,17 +43,16 @@ for(const [label,width,height] of [['target-1672x941',1672,941],['mobile-390x844
     if(audit.legacyNav.length||audit.productbarVisible||audit.trustbarVisible||audit.marketDepthVisible)failures.push({label,reason:'legacy shell visible at first paint',audit});
     if(audit.leftLabel!=='WATCHLIST'||!audit.orderBookVisible)failures.push({label,reason:'target market chrome not visible at first paint',audit});
     if(width>680&&(Math.abs(audit.topbarHeight-62)>2||!audit.skeletonVisible||Math.abs(audit.skeletonWidth-440)>2||!/BACKEND LOCKED/i.test(audit.skeletonText)))failures.push({label,reason:'desktop #shop first-paint skeleton geometry/truth failed',audit});
-    if(audit.runtimeReady)failures.push({label,reason:'probe waited for target runtime instead of testing pre-runtime first paint',audit});
+    if(audit.runtimeReady)failures.push({label,reason:'probe accidentally loaded target runtime; 0ms first paint was not isolated',audit});
     results.push({label,width,height,captureDelayMs:0,audit});
   }catch(e){
     failures.push({label,reason:String(e?.stack||e)});
   }finally{
-    release();
     await ctx.close();
   }
 }
 await browser.close();
-const out={ok:failures.length===0,contract:'ecommerce-first-paint-0ms-v1',base,publicMode,results,failures};
+const out={ok:failures.length===0,contract:'ecommerce-first-paint-0ms-v1.1',base,publicMode,results,failures};
 await writeFile(`${proof}/browser-result.json`,JSON.stringify(out,null,2));
 console.log(JSON.stringify(out,null,2));
 if(!out.ok)process.exit(1);
