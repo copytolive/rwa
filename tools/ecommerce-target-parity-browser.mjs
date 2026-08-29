@@ -61,7 +61,7 @@ async function run(label,width,height){
       if(!dock||dock.width<420||dock.width>442)fail(label,'desktop dock not ~440px',dock);
       if(Number(openAudit.bridge?.exposedChartWidth||0)<420)fail(label,'market/chart not visibly preserved',openAudit.bridge);
       if(!openAudit.visual?.orderVisible||!openAudit.visual?.orderClearOfDock)fail(label,'Order Book is not visibly preserved beside Ecommerce',openAudit.visual);
-      if(Math.abs(Number(openAudit.visual?.orderDockGap||999))>2)fail(label,'Order Book does not end exactly at Ecommerce dock edge',openAudit.visual);
+      if(Math.abs(Number(openAudit.visual?.orderDockGap??999))>2)fail(label,'Order Book does not end exactly at Ecommerce dock edge',openAudit.visual);
       if(Math.abs(Number(openAudit.visual?.reservedDockWidth||0)-Number(openAudit.visual?.dock?.width||0))>2)fail(label,'desktop layout does not reserve the exact Ecommerce dock span',openAudit.visual);
       if(openAudit.visual?.orderPosition!=='sticky')fail(label,'Order Book did not return to sticky grid geometry',openAudit.visual);
       const ow=Number(openAudit.visual?.order?.width||0);if(ow<218||ow>238)fail(label,'Order Book width is not canonical 220/236px',openAudit.visual);
