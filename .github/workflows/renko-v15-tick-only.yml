@@ -56,7 +56,7 @@ jobs:
           grep -Fq "contract:'tradingview-public-documentation-compatible-fixed-1s'" renko/renko-tv-engine.js
           grep -Fq "version:'1.4.0-fixed-1s'" renko/renko-tv-engine.js
           grep -Fq '_exactBox' renko/renko-tv-engine.js
-          grep -Fq "rule:'render-only-on-renko-geometry-change-any-source-interval'" renko/renko-tv-stable-chart-v2.js
+          grep -Fq "rule:'render-only-on-renko-geometry-change-plus-finite-boundary-and-cross-domain-series-reset'" renko/renko-tv-stable-chart-v2.js
           grep -Fq "version:'1.4.0-zero-safe'" renko/renko-tv-atr-control.js
           grep -Fq 'positive-wilder-exact-box-zero-wilder-min-tick-fallback' renko/renko-tv-atr-control.js
           grep -Fq 'atrZeroFallback' renko/renko-tv-atr-control.js

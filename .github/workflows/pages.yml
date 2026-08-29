@@ -43,14 +43,14 @@ jobs:
             tools/multichain-contract.mjs tools/multichain-browser.mjs tools/multichain-tuntas-browser.mjs \
             tools/multichain-receipt-matrix.mjs tools/multichain-mainnet-gate.mjs tools/security-gate.mjs \
             renko/index.html renko/renko-tv.css renko/renko-tv-engine.js renko/renko-tv-app.js \
-            renko/renko-tv-atr-parity.js renko/renko-tv-locale-guard.js renko/renko-tv-fetch-guard.js \
+            renko/renko-tv-atr-control.js renko/renko-tv-atr-fixed1s.js renko/renko-tv-atr-ui-sync.js renko/renko-tv-locale-guard.js renko/renko-tv-fetch-guard.js \
             renko/renko-tv-ultrafast-ui.js; do test -s "$f"; done
 
           for f in superapp-v5.js rwa-sw-v5.js suite-nav.js execution-api.js execution-ops-bridge.js exchange-core.js market-performance.js \
             rwa-multichain.js rwa-multichain-engine.js tools/superapp-v5-audit.mjs tools/superapp-v5-browser.mjs \
             tools/superapp-p16-p20-audit.mjs tools/superapp-p16-p20-browser.mjs tools/multichain-contract.mjs tools/multichain-browser.mjs \
             tools/multichain-tuntas-browser.mjs tools/multichain-receipt-matrix.mjs tools/multichain-mainnet-gate.mjs \
-            tools/security-gate.mjs renko/renko-tv-engine.js renko/renko-tv-app.js renko/renko-tv-atr-parity.js \
+            tools/security-gate.mjs renko/renko-tv-engine.js renko/renko-tv-app.js renko/renko-tv-atr-control.js renko/renko-tv-atr-fixed1s.js renko/renko-tv-atr-ui-sync.js \
             renko/renko-tv-locale-guard.js renko/renko-tv-fetch-guard.js renko/renko-tv-ultrafast-ui.js; do node --check "$f"; done
 
           for f in rwa-execution-config.json token/config.json manifest.webmanifest rwa-discovery-catalog.json \
@@ -103,8 +103,15 @@ jobs:
 
           RENKO_ENGINE_REF="$(grep -oE 'renko-tv-engine\.js\?v=[0-9]+' renko/index.html | tail -1)"
           RENKO_APP_REF="$(grep -oE 'renko-tv-app\.js\?v=[0-9]+' renko/index.html | tail -1)"
-          RENKO_ATR_REF="$(grep -oE 'renko-tv-atr-parity\.js\?v=[0-9]+' renko/index.html | tail -1)"
-          test -n "$RENKO_ENGINE_REF"; test -n "$RENKO_APP_REF"; test -n "$RENKO_ATR_REF"
+          RENKO_ATR_CONTROL_REF="$(grep -oE 'renko-tv-atr-control\.js\?v=[0-9]+' renko/index.html | tail -1)"
+          RENKO_ATR_FIXED1S_REF="$(grep -oE 'renko-tv-atr-fixed1s\.js\?v=[0-9]+' renko/index.html | tail -1)"
+          RENKO_ATR_UI_SYNC_REF="$(grep -oE 'renko-tv-atr-ui-sync\.js\?v=[0-9]+' renko/index.html | tail -1)"
+          test -n "$RENKO_ENGINE_REF"; test -n "$RENKO_APP_REF"
+          test -n "$RENKO_ATR_CONTROL_REF"; test -n "$RENKO_ATR_FIXED1S_REF"; test -n "$RENKO_ATR_UI_SYNC_REF"
+          grep -Fq 'renko-tv-atr-control.js?v=3' renko/index.html
+          grep -Fq 'renko-tv-atr-fixed1s.js?v=6' renko/index.html
+          grep -Fq 'renko-tv-atr-ui-sync.js?v=1' renko/index.html
+          ! grep -Fq 'renko-tv-atr-parity.js?v=' renko/index.html
           grep -Fq 'ATR LENGTH' renko/index.html
 
           node tools/superapp-v5-audit.mjs
