@@ -2,7 +2,7 @@
  *
  * Guarantees for the normal launch-pair path:
  * - target acknowledgement is synchronous (0ms-class gate is <=1ms in CI),
- * - the existing chart is never blanked while the next 1s source is fetched,
+ * - the existing chart is never blanked while the next symbol's 1s source is fetched,
  * - accumulated fixed-1s history for visited launch pairs is retained in memory
  *   and merged back after refresh, so switching away/back does not discard the
  *   older pages the user already loaded,
@@ -56,8 +56,9 @@ function showTarget(symbol){const [base,quote]=split(symbol),pair=el('pairName')
 function finish(symbol,ok,id,start){if(id!==seq){stats.aborted++;return}const elapsed=performance.now()-start,wrap=el('chartWrap'),o=overlay();wrap?.classList.remove('switching');if(o)o.hidden=true;document.documentElement.dataset.pairSwitching='false';document.documentElement.dataset.pairSwitchCompleted=ok?'true':'false';document.documentElement.dataset.pairSwitchLoadMs=elapsed.toFixed(3);stats.lastLoadMs=elapsed;stats.maxLoadMs=Math.max(stats.maxLoadMs,elapsed);if(ok)stats.completed++;else stats.failed++;active=null;window.dispatchEvent(new CustomEvent('renko:symbol-switch-end',{detail:{symbol,ok,elapsedMs:elapsed,id,historyCacheBars:Number(document.documentElement.dataset.renkoHistoryCacheBars)||0}}))}
 async function load(symbol,opts={}){
   symbol=norm(symbol);if(!symbol)return false;if(active?.symbol===symbol)return active.promise;if(T.state?.symbol===symbol&&T.state?.status==='live'&&document.documentElement.dataset.pairSwitching!=='true')return true;
-  const id=++seq,start=performance.now(),from=T.state?.symbol||'';stats.switches++;snapshotCurrent('switch-away');showTarget(symbol);clearMethodOwnership(from,symbol);window.dispatchEvent(new CustomEvent('renko:symbol-switch-start',{detail:{from,to:symbol,id}}));
+  const id=++seq,start=performance.now(),from=T.state?.symbol||'';stats.switches++;showTarget(symbol);
   const first=performance.now()-start;stats.lastFirstFrameMs=first;stats.firstFrameMaxMs=Math.max(stats.firstFrameMaxMs,first);document.documentElement.dataset.pairSwitchFirstFrameMs=first.toFixed(3);document.documentElement.dataset.pairSwitchStartedAt=start.toFixed(3);document.documentElement.dataset.renkoHistoryCacheHit='false';document.documentElement.dataset.renkoHistoryCacheMerged='false';
+  snapshotCurrent('switch-away');clearMethodOwnership(from,symbol);window.dispatchEvent(new CustomEvent('renko:symbol-switch-start',{detail:{from,to:symbol,id}}));
   const prior=cached(symbol);if(prior)restoreCachedShell(symbol,opts);
   const p=(async()=>{try{const ok=await original(symbol,{...opts,fit:opts.fit!==false});if(ok&&prior)mergeCachedAfterRefresh(symbol,prior,opts);if(ok)snapshotCurrent('refresh-complete');finish(symbol,!!ok,id,start);return !!ok}catch(e){finish(symbol,false,id,start);console.error('[RENKO fast switch]',e);return false}})();active={id,symbol,promise:p};return p
 }
