@@ -1,0 +1,39 @@
+name: Ecommerce First Paint Header Lock Patch
+
+on:
+  push:
+    branches: [fix/ecommerce-first-paint-0ms-20260829]
+    paths:
+      - '.github/workflows/ecommerce-first-paint-header-lock-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/ecommerce-first-paint-0ms-20260829
+      - name: Install pre-runtime header lock
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html'); s=p.read_text()
+          old="<script id=\"rwaTargetFirstPaintBoot\">(()=>{const h=document.documentElement;h.classList.add('rwa-target-prepaint');if(location.hash==='#shop')h.classList.add('rwa-target-prepaint-shop')})();</script>"
+          new="""<script id=\"rwaTargetFirstPaintBoot\">(()=>{\n'use strict';\nconst h=document.documentElement;h.classList.add('rwa-target-prepaint');if(location.hash==='#shop')h.classList.add('rwa-target-prepaint-shop');\nconst navHtml='<button class=\"active\" data-rwa-target-nav=\"markets\">Markets</button><button id=\"rwaSeablueprintCommerceLaunch\" data-rwa-target-nav=\"ecommerce\" data-rwa-seablueprint-commerce=\"1\">Ecommerce <span class=\"rwa-target-new\">NEW</span></button><button data-rwa-target-nav=\"intelligence\">Intelligence</button><button data-rwa-target-nav=\"portfolio\">Portfolio</button><button data-rwa-target-nav=\"orders\">Orders</button><button data-rwa-target-nav=\"reports\">Reports</button>';\nconst guardStyle=document.createElement('style');guardStyle.id='rwaTargetFirstPaintHeaderGuardStyle';guardStyle.textContent='html.rwa-target-prepaint body.rwa-target-dashboard-v2 .top-actions>:not(.rwa-target-inpage):not(.rwa-target-icon-actions):not(.signin){display:none!important;visibility:hidden!important;pointer-events:none!important}html.rwa-target-prepaint body.rwa-target-dashboard-v2 .topnav>[data-v5-route]{display:none!important;visibility:hidden!important}';document.head.appendChild(guardStyle);\nlet obs;const restore=()=>{const brand=document.querySelector('.brandcopy strong');if(brand&&brand.textContent!=='RWA × Seablueprint')brand.textContent='RWA × Seablueprint';const nav=document.querySelector('.topnav');if(nav){const keys=[...nav.querySelectorAll(':scope>[data-rwa-target-nav]')].map(x=>x.dataset.rwaTargetNav).join('|');if(keys!=='markets|ecommerce|intelligence|portfolio|orders|reports')nav.innerHTML=navHtml}if(h.classList.contains('rwa-target-runtime-ready'))obs?.disconnect()};\nobs=new MutationObserver(restore);obs.observe(h,{subtree:true,childList:true});document.addEventListener('DOMContentLoaded',restore,{once:true});window.__RWA_FIRST_PAINT_HEADER_LOCK__={restore,disconnect:()=>obs.disconnect()};\n})();</script>"""
+          assert old in s
+          p.write_text(s.replace(old,new))
+          PY
+          git diff --check
+          grep -Fq '__RWA_FIRST_PAINT_HEADER_LOCK__' index.html
+      - name: Commit header lock
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'ecommerce: lock target header before first paint'
+          git push origin HEAD:fix/ecommerce-first-paint-0ms-20260829
