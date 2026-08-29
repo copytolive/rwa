@@ -1,0 +1,117 @@
+name: RENKO 50 Pair History Persist + Zero-ms Scroll
+
+on:
+  push:
+    branches:
+      - main
+      - fix/renko-50pair-history-persist-zero-scroll-20260829
+    paths:
+      - 'renko/**'
+      - 'tools/renko-50pair-history-persist-scroll-report.mjs'
+      - '.github/workflows/renko-50pair-history-persist-scroll.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'renko/**'
+      - 'tools/renko-50pair-history-persist-scroll-report.mjs'
+      - '.github/workflows/renko-50pair-history-persist-scroll.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: renko-history-persist-scroll-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  exact-checkout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Static history-persistence contract
+        shell: bash
+        run: |
+          set -euxo pipefail
+          node --check renko/renko-tv-stable-chart-v2.js
+          node --check renko/renko-tv-switch-fast.js
+          node --check tools/renko-50pair-history-persist-scroll-report.mjs
+          grep -Fq "version:'2.1.0'" renko/renko-tv-stable-chart-v2.js
+          grep -Fq "version:'1.2.0'" renko/renko-tv-switch-fast.js
+          grep -Fq 'historyViews' renko/renko-tv-switch-fast.js
+          grep -Fq 'restoreHistory' renko/renko-tv-switch-fast.js
+          grep -Fq 'renkoScrollHandlerMs' renko/renko-tv-stable-chart-v2.js
+          grep -Fq 'renko-tv-stable-chart-v2.js?v=184' renko/index.html
+          grep -Fq 'renko-tv-switch-fast.js?v=3' renko/index.html
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
+          npx playwright install --with-deps chromium
+      - name: Serve exact checkout
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf /tmp/renko-history-persist-site
+          mkdir -p /tmp/renko-history-persist-site/rwa
+          cp -a . /tmp/renko-history-persist-site/rwa/
+          cd /tmp/renko-history-persist-site
+          python3 -m http.server 8080 >/tmp/renko-history-persist-http.log 2>&1 &
+          echo $! >/tmp/renko-history-persist-http.pid
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/rwa/renko/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/renko-history-persist-http.log
+          exit 1
+      - name: Chromium — 50 distinct pairs, far history retained, 50 screenshots, <=1ms scroll ACK
+        env:
+          RWA_TEST_URL: http://127.0.0.1:8080/rwa
+          RENKO_HISTORY_PAGES: 4
+          RENKO_HISTORY_SCROLL_OUT: artifacts/renko-50pair-history-scroll-exact
+        run: node tools/renko-50pair-history-persist-scroll-report.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-50pair-history-scroll-exact-${{ github.sha }}
+          path: artifacts/renko-50pair-history-scroll-exact
+          retention-days: 14
+
+  public-production:
+    if: github.ref == 'refs/heads/main'
+    needs: exact-checkout
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for exact GitHub Pages SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://copytolive.github.io/rwa/renko-deployment-sha.txt'
+          for i in $(seq 1 100); do
+            got=$(curl -fsS "$url?ts=$(date +%s%N)" 2>/dev/null | tr -d '\r\n' || true)
+            echo "attempt=$i expected=$GITHUB_SHA got=$got"
+            if [[ "$got" == "$GITHUB_SHA" ]]; then exit 0; fi
+            sleep 5
+          done
+          exit 1
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
+          npx playwright install --with-deps chromium
+      - name: PUBLIC Chromium — 50 distinct pairs, far history retained, 50 screenshots, <=1ms scroll ACK
+        env:
+          RWA_TEST_URL: https://copytolive.github.io/rwa
+          RENKO_HISTORY_PAGES: 4
+          RENKO_HISTORY_SCROLL_OUT: artifacts/renko-50pair-history-scroll-public
+        run: node tools/renko-50pair-history-persist-scroll-report.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-50pair-history-scroll-public-${{ github.sha }}
+          path: artifacts/renko-50pair-history-scroll-public
+          retention-days: 14
