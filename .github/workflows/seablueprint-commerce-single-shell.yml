@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'index.html'
       - 'chart-core.js'
       - 'rwa-target-dashboard-v2.js'
       - 'rwa-target-dashboard-v2.css'
@@ -22,6 +23,7 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'index.html'
       - 'chart-core.js'
       - 'rwa-target-dashboard-v2.js'
       - 'rwa-target-dashboard-v2.css'
@@ -60,10 +62,11 @@ jobs:
           node --check tools/seablueprint-commerce-single-shell-browser.mjs
           grep -Fq "const VERSION='1.5.0',MODE='CONTEXT_PANEL'" rwa-seablueprint-commerce-bridge.js
           grep -Fq "screen.dataset.seablueprintPlacement='context-right-panel'" rwa-seablueprint-commerce-bridge.js
-          grep -Fq "rwa-seablueprint-commerce-bridge.js?v=1.5.0" chart-core.js
+          grep -Fq "rwa-seablueprint-commerce-bridge.js?v=1.5.1" chart-core.js
           grep -Fq "rwa-target-dashboard-v2-hardening.js?v=2.1.0" chart-core.js
           grep -Fq "rwa-target-topbar-cleanup-v1.js?v=1.6.0" chart-core.js
           grep -Fq "rwa-ecommerce-production-visual-v1.js?v=1.7.0" chart-core.js
+          grep -Fq "rwaTargetFirstPaintBoot" index.html
           grep -Fq "position:fixed!important" rwa-seablueprint-commerce-bridge.css
           node -e "const c=require('./rwa-commerce-config.json'); if(c.shell_mode!=='SINGLE_MAIN_DOCUMENT'||c.navigation_policy!=='NO_TOP_LEVEL_ECOMMERCE_NAVIGATION'||c.source!=='SEABLUEPRINT_COMMERCE'||c.api_base!=='') process.exit(1)"
       - name: Install Chromium
