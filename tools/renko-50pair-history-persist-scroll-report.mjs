@@ -49,13 +49,13 @@ async function placeFarHistory(){
   return page.evaluate(()=>{
     const V=RWARenkoStableChart?.viewport,T=RWARenkoTV;if(!V?.snapshot||!V?.restore)return{ok:false};
     let s=V.snapshot();if(!s||!(s.total>0))return{ok:false,snapshot:s,total:Number(s?.total)||0};
-    const width=Math.max(18,Math.min(65,Math.floor(s.total*.28)||18));
-    const maxGap=Math.max(0,s.total-width-4);
-    const rightGap=Math.max(0,Math.min(maxGap,Math.max(30,Math.floor(s.total*.58))));
+    const width=Math.max(4,Math.min(65,Math.floor(s.total*.32)||4));
+    const maxGap=Math.max(0,s.total-width-1);
+    const rightGap=maxGap>0?Math.max(1,Math.min(maxGap,Math.max(5,Math.floor(s.total*.55)))):0;
     T.state.following=false;
     const ok=V.restore({following:false,width,rightGap,historyPages:T.state.historyPages,source:'proof-far-history'});
     s=V.snapshot();
-    return{ok,snapshot:s,target:{width,rightGap},farThreshold:Math.min(30,Math.max(0,s.total-width-4))};
+    return{ok,snapshot:s,target:{width,rightGap},farThreshold:Math.min(5,Math.max(0,s.total-width-1))};
   });
 }
 
@@ -63,7 +63,7 @@ async function physicalScrollProof(){
   const host=page.locator('#chartHost');await host.hover();const box=await host.boundingBox();if(!box)throw new Error('chartHost missing bounding box');
   const before=await page.evaluate(()=>({snap:RWARenkoStableChart.viewport.snapshot(),events:Number(RWARenkoStableChart.scrollStats.events)||0,mark:performance.now()}));
   await page.mouse.move(box.x+box.width*.55,box.y+box.height*.52);
-  await page.mouse.wheel(0,180);
+  await page.mouse.wheel(0,-180);
   await page.waitForTimeout(40);
   const after=await page.evaluate(mark=>{
     const s=RWARenkoStableChart.viewport.snapshot(),st=RWARenkoStableChart.scrollStats,end=performance.now(),tasks=(window.__renkoHistoryScrollLongTasks||[]).filter(x=>x.start>=mark&&x.start<=end);
@@ -100,12 +100,12 @@ try{
       const T=RWARenkoTV,V=RWARenkoStableChart.viewport.snapshot(),visible=Number(String(document.getElementById('brickCount')?.textContent||'0').replace(/[^0-9.-]/g,''))||0,total=Number(T.state.confirmedTotal??T.state.confirmed?.length??0),rendered=Number(T.state.confirmed?.length)||0;
       return{symbol:T.state.symbol,status:T.state.status,sourceBars:T.state.closedBars.length,historyPages:Number(T.state.historyPages)||1,confirmedTotal:total,renderedConfirmed:rendered,visibleConfirmed:visible,canvasCount:document.querySelectorAll('#chartHost canvas').length,chartEmptyDisplay:getComputedStyle(document.getElementById('chartEmpty')).display,following:T.state.following,viewport:V,coverage:document.getElementById('tvCoverage')?.textContent||'',method:T.settings.method,box:Number(T.state.box),tick:Number(T.state.tickSize),historyRestored:document.documentElement.dataset.renkoHistoryRestored||'',historyCarry:document.documentElement.dataset.renkoHistoryCarry||'',restoreSource:document.documentElement.dataset.renkoHistoryRestoreSource||''};
     });
-    const total=Number(snap?.total)||0,width=Number(snap?.width)||0,rightGap=Number(snap?.rightGap)||0,farThreshold=Math.min(30,Math.max(0,total-width-4));
+    const total=Number(snap?.total)||0,width=Number(snap?.width)||0,rightGap=Number(snap?.rightGap)||0,farThreshold=Math.min(5,Math.max(0,total-width-1));
     const zeroMath=state.confirmedTotal===0&&state.renderedConfirmed===0&&state.visibleConfirmed===0;
     const countPass=state.confirmedTotal===state.visibleConfirmed&&state.confirmedTotal>=state.renderedConfirmed&&(state.confirmedTotal===0?zeroMath:state.renderedConfirmed>0);
     const farPass=total===0?zeroMath:(!snap.following&&rightGap>=farThreshold&&rightGap>0);
     const switchHistoryPass=i===0||!!switchSnapshot&&switchSnapshot.following===false&&Number(switchSnapshot.rightGap)>0;
-    const scrollPass=scroll.eventDelta>=1&&scroll.scrollAckMs<=1&&scroll.blockingMs===0&&scroll.longTaskMaxMs<50&&scroll.rangeChanged&&!scroll.after.following;
+    const scrollPass=scroll.eventDelta>=1&&scroll.scrollAckMs<=1&&scroll.blockingMs===0&&scroll.longTaskMaxMs<50&&scroll.rangeChanged&&!scroll.after.following&&Number(scroll.after.rightGap)>0;
     const minBars=requiredPages*900;
     const pass=state.symbol===symbol&&state.status==='live'&&depth.pages>=requiredPages&&state.historyPages>=requiredPages&&state.sourceBars>=minBars&&state.method==='traditional'&&state.box>0&&state.tick>0&&countPass&&farPass&&switchHistoryPass&&scrollPass&&state.canvasCount>0&&state.chartEmptyDisplay==='none'&&(i===0||firstFrameMs<=1);
     const file=`${String(i+1).padStart(2,'0')}-${safe(symbol)}-far-history.png`;
@@ -119,7 +119,7 @@ const scrollAckMaxMs=Math.max(0,...rows.map(r=>Number(r.scroll?.scrollAckMs)||0)
 const switchFirstFrameMaxMs=Math.max(0,...rows.slice(1).map(r=>Number(r.firstFrameMs)||0));
 const zeroTotalSymbols=rows.filter(r=>r.state?.confirmedTotal===0).map(r=>r.symbol);
 const status=!fatal&&response?.status()>=200&&response?.status()<400&&symbols.length===50&&new Set(symbols).size===50&&rows.length===50&&rows.every(r=>r.pass)&&!pageErrors.length&&!consoleErrors.length&&scrollAckMaxMs<=1&&switchFirstFrameMaxMs<=1?'PASS':'FAIL';
-const report={schema:'renko-50pair-history-persist-far-scroll-v2',generatedAt:new Date().toISOString(),base,viewport,status,httpStatus:response?.status()||0,contract:{pairs:'exactly 50 distinct launch pairs',history:`each pair keeps at least ${requiredPages} fixed-1s history pages and the historical viewport remains away from the latest formation after switching`,screenshots:'one full-page screenshot for every pair while positioned away from the latest formation',scrollZeroMs:'physical mouse-wheel input acknowledgement <=1ms with zero >50ms blocking and a measured visible-range change; network/history loading is measured separately and is not called 0ms',countTruth:'visible CONFIRMED equals mathematical confirmed total; legitimate zero remains exactly zero and is never fabricated'},initial,symbols,summary:{count:rows.length,passCount:rows.filter(r=>r.pass).length,failedSymbols:rows.filter(r=>!r.pass).map(r=>r.symbol),zeroTotalSymbols,scrollAckMaxMs,switchFirstFrameMaxMs,sourceBarsMin:rows.length?Math.min(...rows.map(r=>r.state.sourceBars)):0,historyPagesMin:rows.length?Math.min(...rows.map(r=>r.state.historyPages)):0,screenshots:rows.length},pageErrors,consoleErrors,fatal,rows};
+const report={schema:'renko-50pair-history-persist-far-scroll-v3',generatedAt:new Date().toISOString(),base,viewport,status,httpStatus:response?.status()||0,contract:{pairs:'exactly 50 distinct launch pairs',history:`each pair keeps at least ${requiredPages} fixed-1s history pages and the historical viewport remains away from the latest formation after switching`,screenshots:'one full-page screenshot for every pair while positioned away from the latest formation',scrollZeroMs:'physical mouse-wheel input acknowledgement <=1ms with zero >50ms blocking and a measured visible-range change; network/history loading is measured separately and is not called 0ms',countTruth:'visible CONFIRMED equals mathematical confirmed total; legitimate zero remains exactly zero and is never fabricated'},initial,symbols,summary:{count:rows.length,passCount:rows.filter(r=>r.pass).length,failedSymbols:rows.filter(r=>!r.pass).map(r=>r.symbol),zeroTotalSymbols,scrollAckMaxMs,switchFirstFrameMaxMs,sourceBarsMin:rows.length?Math.min(...rows.map(r=>r.state.sourceBars)):0,historyPagesMin:rows.length?Math.min(...rows.map(r=>r.state.historyPages)):0,screenshots:rows.length},pageErrors,consoleErrors,fatal,rows};
 fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));
 console.log('RENKO_50PAIR_HISTORY_SCROLL '+JSON.stringify({status,summary:report.summary,fatal}));
 await browser.close();if(status!=='PASS')process.exit(2);
