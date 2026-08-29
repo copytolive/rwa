@@ -1,0 +1,215 @@
+name: GOLD v11 Parallel Simulation Parity
+
+on:
+  push:
+    branches:
+      - feat/gold24-v11-parallel-parity-20260830
+    paths:
+      - 'backtest/gold24/parallel_v11_parity.py'
+      - '.github/workflows/gold24-v11-parallel-parity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: gold24-v11-parallel-parity-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FIXTURE_DIR: ${{ github.workspace }}/gold24-parity-fixture
+  STATE_DIR: ${{ github.workspace }}/gold24-parity-source-state
+  ACCEPTED_COUNT: '40'
+  SHARD_COUNT: '20'
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  planner:
+    name: Freeze canonical candidate plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install canonical dependencies
+        run: pip install -r backtest/gold24/requirements.txt
+      - name: Harness selftest
+        working-directory: backtest/gold24
+        run: python parallel_v11_parity.py selftest
+      - name: Restore exact published canonical source state
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$STATE_DIR" "$FIXTURE_DIR" "$RUNNER_TEMP/gold24-parity-restore"
+          mkdir -p "$STATE_DIR" "$FIXTURE_DIR" "$RUNNER_TEMP/gold24-parity-restore"
+          read -r SOURCE_RUN SOURCE_ATTEMPT SOURCE_ARCHIVED SOURCE_CURSOR SOURCE_BATCH < <(python - <<'PY'
+          import json,pathlib
+          x=json.loads(pathlib.Path('backtest/gold24/runtime_v11/latest_validation_summary.json').read_text())
+          print(x['github_run_id'], x.get('github_run_attempt','1'), x['cumulative_configs_archived'], x['candidate_cursor'], x['batch'])
+          PY
+          )
+          echo "source_run=$SOURCE_RUN attempt=$SOURCE_ATTEMPT archived=$SOURCE_ARCHIVED cursor=$SOURCE_CURSOR batch=$SOURCE_BATCH"
+          gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN/artifacts?per_page=100" > "$RUNNER_TEMP/gold24-parity-artifacts.json"
+          ARTIFACT_URL="$(python - "$RUNNER_TEMP/gold24-parity-artifacts.json" "$SOURCE_ATTEMPT" <<'PY'
+          import json,sys
+          x=json.load(open(sys.argv[1])); attempt=max(1,int(sys.argv[2]))
+          arts=sorted([a for a in x.get('artifacts',[]) if a.get('name')=='gold24-canonical-v11-state' and not a.get('expired')], key=lambda a:a.get('created_at',''))
+          if len(arts)<attempt: raise SystemExit(f'ARTIFACT_FAIL: need attempt {attempt}, found {len(arts)}')
+          print(arts[attempt-1]['archive_download_url'])
+          PY
+          )"
+          curl -L --fail --retry 3 -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" "$ARTIFACT_URL" -o "$RUNNER_TEMP/gold24-parity-state.zip"
+          unzip -q "$RUNNER_TEMP/gold24-parity-state.zip" -d "$RUNNER_TEMP/gold24-parity-restore"
+          cp -a "$RUNNER_TEMP/gold24-parity-restore/." "$STATE_DIR/"
+          test -s "$STATE_DIR/gold24-v11.db"
+          test -s "$STATE_DIR/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv"
+          test -s "$STATE_DIR/gate_a/gate_a_receipt.json"
+          python - "$STATE_DIR/gold24-v11.db" "$SOURCE_ARCHIVED" "$SOURCE_CURSOR" "$SOURCE_BATCH" <<'PY'
+          import json,sqlite3,sys
+          db=sqlite3.connect(sys.argv[1])
+          count=db.execute('SELECT COUNT(*) FROM configs').fetchone()[0]
+          state=dict(db.execute('SELECT k,v FROM state').fetchall())
+          db.close()
+          cursor=int(json.loads(state['candidate_cursor'])); batch=int(json.loads(state['batch']))
+          assert count==int(sys.argv[2]), (count,sys.argv[2])
+          assert cursor==int(sys.argv[3]), (cursor,sys.argv[3])
+          assert batch==int(sys.argv[4]), (batch,sys.argv[4])
+          print(f'canonical source exact: configs={count} cursor={cursor} batch={batch}')
+          PY
+      - name: Freeze next accepted candidates with exact v11 prefilter semantics
+        working-directory: backtest/gold24
+        run: |
+          set -euo pipefail
+          python parallel_v11_parity.py plan \
+            --state-dir "$STATE_DIR" \
+            --dataset "$STATE_DIR/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv" \
+            --receipt "$STATE_DIR/gate_a/gate_a_receipt.json" \
+            --accepted-count "$ACCEPTED_COUNT" \
+            --timeframe D1 \
+            --output "$FIXTURE_DIR/plan.json"
+          cp "$STATE_DIR/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv" "$FIXTURE_DIR/primary.csv"
+          cp "$STATE_DIR/gate_a/gate_a_receipt.json" "$FIXTURE_DIR/gate_a_receipt.json"
+      - name: Upload immutable parity fixture
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold24-v11-parity-fixture
+          path: ${{ env.FIXTURE_DIR }}/
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
+
+  serial:
+    name: Serial reference simulation
+    needs: planner
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install canonical dependencies
+        run: pip install -r backtest/gold24/requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: gold24-v11-parity-fixture
+          path: parity
+      - name: Simulate frozen plan serially
+        working-directory: backtest/gold24
+        run: |
+          python parallel_v11_parity.py simulate \
+            --plan "$GITHUB_WORKSPACE/parity/plan.json" \
+            --dataset "$GITHUB_WORKSPACE/parity/primary.csv" \
+            --receipt "$GITHUB_WORKSPACE/parity/gate_a_receipt.json" \
+            --shard-index 0 --shard-count 1 \
+            --output "$GITHUB_WORKSPACE/serial.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gold24-v11-parity-serial
+          path: serial.json
+          if-no-files-found: error
+          retention-days: 7
+
+  parallel:
+    name: Parallel shard ${{ matrix.shard }} / 20
+    needs: planner
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install canonical dependencies
+        run: pip install -r backtest/gold24/requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: gold24-v11-parity-fixture
+          path: parity
+      - name: Simulate assigned canonical candidates
+        working-directory: backtest/gold24
+        run: |
+          INDEX='${{ matrix.shard }}'
+          mkdir -p "$GITHUB_WORKSPACE/shard"
+          python parallel_v11_parity.py simulate \
+            --plan "$GITHUB_WORKSPACE/parity/plan.json" \
+            --dataset "$GITHUB_WORKSPACE/parity/primary.csv" \
+            --receipt "$GITHUB_WORKSPACE/parity/gate_a_receipt.json" \
+            --shard-index "$INDEX" --shard-count "$SHARD_COUNT" \
+            --output "$GITHUB_WORKSPACE/shard/shard_$(printf '%02d' "$INDEX").json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gold24-v11-parity-shard-${{ matrix.shard }}
+          path: shard/shard_*.json
+          if-no-files-found: error
+          retention-days: 7
+
+  aggregate:
+    name: Compare serial vs 20-worker results
+    needs: [serial, parallel]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install canonical dependencies
+        run: pip install -r backtest/gold24/requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: gold24-v11-parity-fixture
+          path: parity
+      - uses: actions/download-artifact@v4
+        with:
+          name: gold24-v11-parity-serial
+          path: parity
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: gold24-v11-parity-shard-*
+          path: parity/shards
+          merge-multiple: true
+      - name: Require bitwise-stable result/ledger parity
+        working-directory: backtest/gold24
+        run: |
+          python parallel_v11_parity.py aggregate \
+            --plan "$GITHUB_WORKSPACE/parity/plan.json" \
+            --serial "$GITHUB_WORKSPACE/parity/serial.json" \
+            --shard-dir "$GITHUB_WORKSPACE/parity/shards" \
+            --shard-count "$SHARD_COUNT" \
+            --output "$GITHUB_WORKSPACE/parity_proof.json"
+          cat "$GITHUB_WORKSPACE/parity_proof.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gold24-v11-parallel-parity-proof
+          path: parity_proof.json
+          if-no-files-found: error
+          retention-days: 14
