@@ -99,6 +99,16 @@ html.rwa-target-prepaint body.rwa-target-dashboard-v2 #rwaTickerStatus,
 html.rwa-target-prepaint body.rwa-target-dashboard-v2 .ticker small,
 html.rwa-target-prepaint body.rwa-target-dashboard-v2 .ticker span,
 html.rwa-target-prepaint body.rwa-target-dashboard-v2 .ticker b{font-size:8.5px!important;line-height:1.25!important}
+/* Painted first-load/order-book/footer controls: these exist before chart-core and must already meet the visual contract. */
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .rwa-firstload button,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .rwa-firstload small{font-size:9px!important;line-height:1.25!important}
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .right .book-head,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .right .book-head span{font-size:9px!important;line-height:1.25!important}
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .rwa-ticker-brand,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .rwa-ticker-brand *,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 :has(>.rwa-ticker-brand) button,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 :has(>.rwa-ticker-brand) button *{font-size:9px!important;line-height:1.2!important}
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .top-actions>.signin{font-size:10px!important;line-height:1.2!important}
 
 /* Canonical target chrome. */
 html body.rwa-target-dashboard-v2 .rwa-target-topbar{height:var(--rwa-topbar-h)!important;min-height:var(--rwa-topbar-h)!important;background:#030b15!important;border-bottom:1px solid var(--rwa-border)!important;box-shadow:none!important}
@@ -180,6 +190,12 @@ html body.rwa-target-dashboard-v2 .rwa-ecom-primary,
 html body.rwa-target-dashboard-v2 .rwa-ecom-locked-action,
 html body.rwa-target-dashboard-v2 .rwa-ecom-back{font-size:10px!important;font-weight:700!important}
 html body.rwa-target-dashboard-v2 .rwa-ecom-inpage{font-size:8.5px!important;font-weight:700!important;color:var(--rwa-green)!important;border-color:#116c52!important;background:#06251e!important}
+/* Header owns only its 58px hit area; actions must never cover the tab row below. */
+html body.rwa-target-dashboard-v2 .rwa-shop-head{position:relative!important;height:58px!important;min-height:58px!important;max-height:58px!important;overflow:hidden!important;z-index:9!important}
+html body.rwa-target-dashboard-v2 .rwa-ecom-head-actions{position:relative!important;inset:auto!important;height:auto!important;max-height:58px!important;align-self:center!important;flex:0 0 auto!important;pointer-events:none!important}
+html body.rwa-target-dashboard-v2 .rwa-ecom-head-actions>*{pointer-events:auto!important}
+html body.rwa-target-dashboard-v2 .rwa-ecom-tabs{position:sticky!important;top:58px!important;z-index:8!important;pointer-events:auto!important}
+html body.rwa-target-dashboard-v2 .rwa-ecom-tabs button{pointer-events:auto!important;position:relative!important;z-index:1!important}
 
 /* Canonical interaction colors. */
 html body.rwa-target-dashboard-v2 .up,
