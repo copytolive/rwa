@@ -1,7 +1,7 @@
 name: RENKO ATR Zero Blocking Gate
 on:
   push:
-    branches: [main, 'fix/renko-final-zero-safe-gates-*']
+    branches: [main, 'fix/renko-final-zero-safe-gates-*', 'fix/renko-gate-fingerprint-sync-*']
     paths:
       - 'renko/**'
       - 'tools/renko-atr-control-all-pairs-report.mjs'
@@ -30,7 +30,7 @@ jobs:
           grep -Fq "contract:'tradingview-public-documentation-compatible-fixed-1s'" renko/renko-tv-engine.js
           grep -Fq 'renko-tv-atr-control.js?v=3' renko/index.html
           grep -Fq 'renko-tv-atr-fixed1s.js?v=4' renko/index.html
-          grep -Fq 'renko-tv-stable-chart-v2.js?v=183' renko/index.html
+          grep -Fq 'renko-tv-stable-chart-v2.js?v=184' renko/index.html
           grep -Fq 'renko-tv-app.js?v=187' renko/index.html
           ! grep -Fq 'renko-tv-atr-1s-million-cache-v3.js' renko/index.html
           ! grep -Fq 'renko-tv-atr-1s-million-cache.js?v=' renko/index.html
@@ -38,7 +38,8 @@ jobs:
           grep -Fq 'zero-wilder-min-tick-fallback' renko/renko-tv-atr-control.js
           grep -Fq 'atrZeroFallback' renko/renko-tv-atr-control.js
           grep -Fq "version:'2.2.0-lazy'" renko/renko-tv-atr-fixed1s.js
-          grep -Fq "rule:'render-only-on-renko-geometry-change-any-source-interval'" renko/renko-tv-stable-chart-v2.js
+          grep -Fq "version:'2.1.0'" renko/renko-tv-stable-chart-v2.js
+          grep -Fq 'render-only-on-renko-geometry-change-any-source-interval-plus-finite-setdata-boundary' renko/renko-tv-stable-chart-v2.js
           grep -Fq 'workerActive' tools/renko-atr-control-all-pairs-report.mjs
           grep -Fq 'entryCount' tools/renko-atr-control-all-pairs-report.mjs
       - name: Wait for exact deployed Pages SHA
