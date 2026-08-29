@@ -5,6 +5,7 @@ on:
       - main
       - fix/renko-history-total-50pair-10x-20260829
       - fix/renko-public-zero-total-acceptance-20260829
+      - fix/renko-final-history-closure-20260829
     paths:
       - 'renko/**'
       - 'tools/renko-50pair-switch-report.mjs'
@@ -115,7 +116,7 @@ jobs:
             html=$(curl -fsS "$index?ts=$ts" 2>/dev/null || true)
             guardjs=$(curl -fsS "$guard?ts=$ts" 2>/dev/null || true)
             fixedjs=$(curl -fsS "$fixed?ts=$ts" 2>/dev/null || true)
-            if grep -q 'renko-tv-confirmed-count-guard.js?v=1' <<<"$html" && grep -q 'visible-confirmed-count-is-full-engine-total-never-render-cap' <<<"$guardjs" && grep -q 'o1-source-transition-safe-bounded-tail-materialization' <<<"$fixedjs"; then
+            if grep -q 'renko-tv-confirmed-count-guard.js?v=1' <<<"$html" && grep -q 'renko-tv-atr-control.js?v=3' <<<"$html" && grep -q 'visible-confirmed-count-is-full-engine-total-never-render-cap' <<<"$guardjs" && grep -q 'o1-source-transition-safe-bounded-tail-materialization' <<<"$fixedjs"; then
               echo PUBLIC_RENKO_HISTORY_RUNTIME_READY
               exit 0
             fi
