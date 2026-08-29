@@ -1,0 +1,6 @@
+RENKO final public-production closure witness.
+Purpose: trigger all RENKO path-scoped workflows on one current main SHA without changing runtime behavior.
+Source of truth: RENKO_NEW_CHAT_HANDOFF_FULL_2026-08-30(1).docx.
+Required final proofs on this exact SHA: PUBLIC_PRODUCTION_PASS; RENKO_TOTAL_AVAILABLE_HISTORY_50_GOLD_PASS; RENKO_XAUT_FIXED_1S_ATR_MATRIX_PASS.
+Acceptance: fixed 1s only; desktop and mobile browser proof; ATR physical Apply on all launch pairs; anti-pulse stability; Traditional control; 50-pair full history; GOLD Dukascopy XAU-USD 1s earliest 2003-05-05T00:01:03.421Z; XAUT OKX Spot XAUT-USDT 1s 1,005,000-row seven-length ATR matrix; exact deployed Pages SHA; artifact screenshot visual inspection.
+No runtime behavior is changed by this witness file.
