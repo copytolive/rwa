@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 if(window.RWAEcommerceProductionVisualV1)return;
-const VERSION='1.1.0',STYLE_ID='rwaEcommerceProductionVisualV1Style';
+const VERSION='1.2.0',STYLE_ID='rwaEcommerceProductionVisualV1Style';
 function install(){
   if(document.getElementById(STYLE_ID))return;
   const s=document.createElement('style');
@@ -14,16 +14,16 @@ function install(){
     padding-right:440px!important;box-sizing:border-box!important;
     grid-template-columns:286px minmax(0,1fr) 236px!important;
   }
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .left,
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .left{
+  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.left,
+  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.left{
     width:auto!important;min-width:286px!important;max-width:none!important;display:flex!important;visibility:visible!important;opacity:1!important;
   }
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .main,
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .main{
+  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.main,
+  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.main{
     min-width:0!important;width:auto!important;max-width:none!important;
   }
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .right,
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .right{
+  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right,
+  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right{
     width:auto!important;min-width:236px!important;max-width:none!important;display:block!important;visibility:visible!important;opacity:1!important;
   }
   html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open #rwaMarketplaceLaunch,
@@ -48,10 +48,10 @@ function install(){
   html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout{
     grid-template-columns:260px minmax(0,1fr) 220px!important;
   }
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .left,
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .left{min-width:260px!important}
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .right,
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .right{min-width:220px!important}
+  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.left,
+  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.left{min-width:260px!important}
+  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right,
+  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right{min-width:220px!important}
 }
 `;
   document.head.appendChild(s);
@@ -61,7 +61,7 @@ function rect(sel){const r=document.querySelector(sel)?.getBoundingClientRect();
 function audit(){
   const expected=new Set(['rwa-target-inpage','rwa-target-icon-actions','signin']);
   const extras=[...document.querySelectorAll('.top-actions > *')].filter(x=>visible(x)&&![...expected].some(c=>x.classList.contains(c))).map(x=>x.id||x.className||x.tagName);
-  const layout=rect('.layout'),left=rect('.left'),main=rect('.main'),order=rect('.right'),dock=rect('#rwaCommerceDock');
+  const layout=rect('.layout'),left=rect('.layout>.left'),main=rect('.layout>.main'),order=rect('.layout>.right'),dock=rect('#rwaCommerceDock');
   return{version:VERSION,open:document.body.classList.contains('rwa-seablueprint-commerce-open'),layout,left,main,order,dock,orderVisible:!!order&&order.width>=210,orderClearOfDock:!!order&&!!dock&&order.right<=dock.left+2,topActionExtras:extras,marketplaceVisible:visible(document.querySelector('#rwaMarketplaceLaunch')),multichainVisible:visible(document.querySelector('#rwaMultiChainLaunch'))};
 }
 install();
