@@ -27,7 +27,7 @@ async function runViewport(label,viewport){
   const httpStatus=response?.status()||0;
   await page.waitForFunction(()=>{
     const T=window.RWARenkoTV;
-    return !!T&&window.RWARenkoATRControl?.version==='1.3.2'&&window.RWARenkoTraditionalControl?.version==='2.1.0-first-frame'&&window.RWARenkoPercentageLTP?.version==='1.0.0'&&window.RWARenkoConfirmedCountGuard?.version==='1.0.0'&&T.state?.symbol==='SOLUSDT'&&T.state?.status==='live'&&Number(T.state?.tickSize)>0&&Number(T.state?.lastPrice)>0&&(T.state?.closedBars?.length||0)>0;
+    return !!T&&window.RWARenkoATRControl?.version==='1.4.0-zero-safe'&&window.RWARenkoTraditionalControl?.version==='2.1.0-first-frame'&&window.RWARenkoPercentageLTP?.version==='1.0.0'&&window.RWARenkoConfirmedCountGuard?.version==='1.0.0'&&T.state?.symbol==='SOLUSDT'&&T.state?.status==='live'&&Number(T.state?.tickSize)>0&&Number(T.state?.lastPrice)>0&&(T.state?.closedBars?.length||0)>0;
   },null,{timeout:90000});
 
   const snapshot=async(method,wallMs=null,extra={})=>page.evaluate(({method,wallMs,limit,target})=>{
@@ -42,7 +42,7 @@ async function runViewport(label,viewport){
     const exactBox=Number(set._exactBox);
     const workerActive=!!window.RWARenkoATRFixed1s?.workerActive;
     const basic=Number(s.tickSize)>0&&Number(s.lastPrice)>0&&Number(s.box)>0&&set.interval==='1s'&&noTimeframeSelector&&layoutNoOverlap&&s.status==='live'&&Number.isFinite(total)&&total>=0&&Number.isFinite(visible)&&visible===total&&(total===0?rendered===0:rendered>0)&&chartEmptyHidden&&!/loading|queued/i.test(liveLabel);
-    return {method,wallMs,applyWithinLimit:wallMs===null||Number(wallMs)<=limit,httpState:s.status,symbol:s.symbol,interval:set.interval,source:set.source,currentMethod:set.method,atrLength:Number(set.atrLength),box:Number(s.box),atr:Number(s.atr),tickSize:Number(s.tickSize),lastPrice:Number(s.lastPrice),percentageLtpSnapshot:Number(s.percentageLtpSnapshot),confirmedTotal:total,confirmedRendered:rendered,confirmedVisible:visible,projection:Number(s.projection?.length||0),sourceBars:Number(s.closedBars?.length||0),historyPages:Number(s.historyPages||0),exactOwned,exactBox,workerActive,layoutNoOverlap,chartEmptyHidden,noTimeframeSelector,liveLabel,basicPass:basic,target};
+    return {method,wallMs,applyWithinLimit:wallMs===null||Number(wallMs)<=limit,httpState:s.status,symbol:s.symbol,interval:set.interval,source:set.source,currentMethod:set.method,atrLength:Number(set.atrLength),box:Number(s.box),atr:Number(s.atr),atrRaw:Number(s.atrRaw),atrZeroFallback:!!s.atrZeroFallback,tickSize:Number(s.tickSize),lastPrice:Number(s.lastPrice),percentageLtpSnapshot:Number(s.percentageLtpSnapshot),confirmedTotal:total,confirmedRendered:rendered,confirmedVisible:visible,projection:Number(s.projection?.length||0),sourceBars:Number(s.closedBars?.length||0),historyPages:Number(s.historyPages||0),exactOwned,exactBox,workerActive,layoutNoOverlap,chartEmptyHidden,noTimeframeSelector,liveLabel,basicPass:basic,target};
   },{method,wallMs,limit:APPLY_LIMIT_MS,target:TARGET_VISIBLE}).then(x=>({...x,...extra}));
 
   const screenshot=async name=>{await page.waitForTimeout(60);await page.screenshot({path:path.join(OUT,`${label}-${name}.png`),fullPage:true})};
@@ -55,10 +55,12 @@ async function runViewport(label,viewport){
     const ok=await page.evaluate(n=>window.RWARenkoATRControl.applyLocal(n,'production-report'),length);
     const wallMs=await page.evaluate(started=>performance.now()-started,start);
     const snap=await snapshot(`atr-${length}`,wallMs,{controllerOk:ok});
-    const rawEqBox=Number(snap.atr)>0&&Number(snap.box)>0&&closeEnough(snap.atr,snap.box,snap.tickSize*1e-6);
+    const raw=Number.isFinite(Number(snap.atrRaw))?Number(snap.atrRaw):Number(snap.atr);
+    const rawEqBox=raw>0&&Number(snap.box)>0&&closeEnough(raw,snap.box,snap.tickSize*1e-6);
+    const zeroFallback=raw===0&&snap.atrZeroFallback===true&&Number(snap.tickSize)>0&&closeEnough(snap.box,snap.tickSize,snap.tickSize*1e-6);
     const stableExact=snap.exactOwned&&Number(snap.exactBox)>0&&closeEnough(snap.exactBox,snap.box,snap.tickSize*1e-6);
-    snap.pass=ok===true&&snap.basicPass&&snap.currentMethod==='atr'&&snap.atrLength===length&&rawEqBox&&stableExact&&!snap.workerActive&&snap.applyWithinLimit;
-    snap.rawAtrEqualsBox=rawEqBox;snap.stableExactBox=stableExact;
+    snap.pass=ok===true&&snap.basicPass&&snap.currentMethod==='atr'&&snap.atrLength===length&&(rawEqBox||zeroFallback)&&stableExact&&!snap.workerActive&&snap.applyWithinLimit;
+    snap.rawAtr=raw;snap.rawAtrEqualsBox=rawEqBox;snap.zeroAtrMinTickFallback=zeroFallback;snap.stableExactBox=stableExact;
     return snap;
   }
 
@@ -125,12 +127,12 @@ try{
 }
 
 const report={
-  schema:'renko-current-production-browser-v2',
+  schema:'renko-current-production-browser-v3-zero-safe',
   generatedAt:new Date().toISOString(),
   url:`${BASE}/renko/`,
   targetVisible:TARGET_VISIBLE,
   applyLimitMs:APPLY_LIMIT_MS,
-  contract:{runtime:'RWARenkoTV 3.1 current production API',fixedInterval:'1s',atr:'positive raw Wilder ATR equals box; runtime-only stable exact lock',traditional:'fixed absolute min-tick-normalized box; >=46 first-frame when attainable, otherwise exactly one min tick/no fake sub-tick',percentage:'internal LTP x percentage regression, rounded to exchange tick; hidden UI remains hidden',wicks:'real production toggle, verified off=0 excursions and on restores excursions',layout:'instrument/stats do not overlap',legacyV15HarnessRequired:false},
+  contract:{runtime:'RWARenkoTV 3.1 current production API',fixedInterval:'1s',atr:'positive raw Wilder ATR equals box; mathematically zero Wilder ATR falls back to exchange minimum tick; runtime-only stable exact lock',traditional:'fixed absolute min-tick-normalized box; >=46 first-frame when attainable, otherwise exactly one min tick/no fake sub-tick',percentage:'internal LTP x percentage regression, rounded to exchange tick; hidden UI remains hidden',wicks:'real production toggle, verified off=0 excursions and on restores excursions',layout:'instrument/stats do not overlap',legacyV15HarnessRequired:false},
   status:results.every(r=>r.pass)?'PASS':'FAIL',
   results
 };
