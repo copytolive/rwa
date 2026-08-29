@@ -1,0 +1,163 @@
+name: GOLD v11 Compact Rankings Publisher
+
+on:
+  workflow_run:
+    workflows: ["GOLD Canonical v11 Auto Backtest"]
+    types: [completed]
+  workflow_dispatch:
+  push:
+    paths:
+      - 'backtest/gold24/GOLD24_RANKING_REFRESH_KICK'
+      - '.github/workflows/gold24-ranking-publish.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: gold24-v11-compact-rankings
+  cancel-in-progress: true
+
+jobs:
+  publish-rankings:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Resolve canonical source run
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            RID="${{ github.event.workflow_run.id }}"
+          else
+            RID="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow gold24-canonical-auto.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId')"
+          fi
+          test -n "$RID"
+          echo "run_id=$RID" >> "$GITHUB_OUTPUT"
+          echo "source run: $RID"
+
+      - name: Download latest canonical state
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$RUNNER_TEMP/gold24-ranking-state"
+          mkdir -p "$RUNNER_TEMP/gold24-ranking-state"
+          gh run download "${{ steps.source.outputs.run_id }}" --repo "$GITHUB_REPOSITORY" -n gold24-canonical-v11-state -D "$RUNNER_TEMP/gold24-ranking-state"
+          test -s "$RUNNER_TEMP/gold24-ranking-state/gold24-v11.db"
+
+      - name: Build compact positive rankings
+        shell: bash
+        env:
+          SOURCE_RUN_ID: ${{ steps.source.outputs.run_id }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, pathlib, sqlite3
+
+          db_path = pathlib.Path(os.environ['RUNNER_TEMP']) / 'gold24-ranking-state' / 'gold24-v11.db'
+          out_dir = pathlib.Path('backtest/gold24/runtime_v11')
+          out_dir.mkdir(parents=True, exist_ok=True)
+          source_run_id = os.environ['SOURCE_RUN_ID']
+
+          db = sqlite3.connect(f'file:{db_path}?mode=ro', uri=True)
+          rows = db.execute('SELECT config_hash,canonical_json,execution_hash,metrics_json FROM configs').fetchall()
+          db.close()
+
+          parsed = []
+          for config_hash, canonical_raw, execution_hash, metrics_raw in rows:
+              c = json.loads(canonical_raw)
+              m = json.loads(metrics_raw) if metrics_raw else {}
+              trades = int(m.get('trades', 0) or 0)
+              net_profit = float(m.get('net_profit', 0.0) or 0.0)
+              if trades <= 0 or net_profit <= 0:
+                  continue
+              if bool(m.get('exact_execution_duplicate', False)):
+                  continue
+              parsed.append({
+                  'config_hash': config_hash,
+                  'execution_hash': execution_hash,
+                  'candidate': c,
+                  'metrics': m,
+              })
+
+          def compact(row, rank):
+              c, m = row['candidate'], row['metrics']
+              method = (
+                  f"{c.get('family')} f{c.get('fast')}/s{c.get('slow')} "
+                  f"p1={c.get('p1')} p2={c.get('p2')} p3={c.get('p3')} "
+                  f"off={c.get('offset')} exp={c.get('expiry')}"
+              )
+              return {
+                  'rank': rank,
+                  'config_hash': row['config_hash'],
+                  'execution_hash': row['execution_hash'],
+                  'method': method,
+                  'family': c.get('family'),
+                  'timeframe': c.get('timeframe'),
+                  'entry_method': c.get('entry_method'),
+                  'direction_mode': c.get('direction_mode'),
+                  'sl': float(c.get('sl', 0) or 0),
+                  'tp': float(c.get('tp', 0) or 0),
+                  'trades': int(m.get('trades', 0) or 0),
+                  'win_rate_pct': float(m.get('win_rate_pct', m.get('wr', 0.0)) or 0.0),
+                  'profit_factor_net': float(m.get('profit_factor_net', m.get('profit_factor', 0.0)) or 0.0),
+                  'net_profit': float(m.get('net_profit', 0.0) or 0.0),
+                  'net_expectancy': float(m.get('net_expectancy', m.get('expectancy', 0.0)) or 0.0),
+                  'max_dd_pct': float(m.get('max_dd_pct', 0.0) or 0.0),
+                  'sqn': float(m.get('sqn', 0.0) or 0.0),
+                  'sample_pass_v11': bool(m.get('sample_pass_v11', False)),
+                  'baseline_qualified_v11': bool(m.get('baseline_qualified_v11', False)),
+                  'correlation_max': None,
+                  'correlation_gate': 'N/A — belum pre-portfolio',
+              }
+
+          profit_sorted = sorted(parsed, key=lambda r: (float(r['metrics'].get('net_profit', 0) or 0), int(r['metrics'].get('trades', 0) or 0)), reverse=True)
+          entry_sorted = sorted(parsed, key=lambda r: (int(r['metrics'].get('trades', 0) or 0), float(r['metrics'].get('net_profit', 0) or 0)), reverse=True)
+
+          profit_top = [compact(r, i) for i, r in enumerate(profit_sorted[:200], 1)]
+          entry_top = [compact(r, i) for i, r in enumerate(entry_sorted[:200], 1)]
+
+          summary = {
+              'schema': 'gold-v11-positive-ranking-summary-v1',
+              'source_run_id': source_run_id,
+              'configs_archived': len(rows),
+              'positive_unique_count': len(parsed),
+              'profit_top200_count': len(profit_top),
+              'entry_profit_top200_count': len(entry_top),
+              'correlation_rule': {
+                  'metric': 'abs Pearson correlation of log-return equity',
+                  'maximum': 0.50,
+                  'selection': 'per-symbol greedy filter',
+                  'action': '>0.50 remove lower-quality method from final selection',
+              },
+          }
+          (out_dir/'latest_positive_summary.json').write_text(json.dumps(summary, indent=2, sort_keys=True))
+          (out_dir/'latest_profit_top200.json').write_text(json.dumps({'schema':'gold-v11-profit-top200-positive-v1','source_run_id':source_run_id,'count':len(profit_top),'ranking':profit_top}, indent=2, sort_keys=True))
+          (out_dir/'latest_entry_profit_top200.json').write_text(json.dumps({'schema':'gold-v11-entry-profit-top200-positive-v1','source_run_id':source_run_id,'count':len(entry_top),'ranking':entry_top}, indent=2, sort_keys=True))
+          print(json.dumps(summary, indent=2, sort_keys=True))
+          PY
+
+      - name: Publish compact rankings
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gold24-bot'
+          git config user.email 'gold24-bot@users.noreply.github.com'
+          git add backtest/gold24/runtime_v11/latest_positive_summary.json \
+                  backtest/gold24/runtime_v11/latest_profit_top200.json \
+                  backtest/gold24/runtime_v11/latest_entry_profit_top200.json
+          if git diff --cached --quiet; then
+            echo 'No ranking changes.'
+            exit 0
+          fi
+          git commit -m 'chore(gold24): publish compact v11 positive rankings [skip ci]'
+          git pull --rebase origin main
+          git push origin HEAD:main
