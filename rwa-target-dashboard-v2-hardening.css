@@ -64,6 +64,41 @@ html body.rwa-target-dashboard-v2 .aside-label small,
 html body.rwa-target-dashboard-v2 .paircount{font-size:8.5px!important}
 html body.rwa-target-dashboard-v2 .tokenicon{font-size:9px!important}
 html body.rwa-target-dashboard-v2 .search-icon{font-size:0!important;width:14px!important;height:14px!important;display:inline-block!important;background-repeat:no-repeat!important;background-position:center!important;background-size:14px 14px!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238292a5' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6'/%3E%3Cpath d='m16 16 4 4'/%3E%3C/svg%3E")!important;color:transparent!important}
+/* Static pre-runtime source layer: remove visible Unicode placeholders and enforce the same readable floor before any JS module can run. */
+html.rwa-target-prepaint:not(.rwa-target-runtime-ready) body.rwa-target-dashboard-v2 .rwa-target-icon-actions{width:96px!important;height:30px!important;display:block!important;background-repeat:no-repeat!important;background-size:16px 16px!important;background-position:7px center,40px center,73px center!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23aab6c9' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 9a5.5 5.5 0 0 1 11 0c0 6 2.5 6.5 2.5 6.5H4S6.5 15 6.5 9Z'/%3E%3Cpath d='M10 19h4'/%3E%3C/svg%3E"),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23aab6c9' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M9.7 9a2.5 2.5 0 1 1 3.2 2.4c-.9.35-.9 1.1-.9 1.6M12 17h.01'/%3E%3C/svg%3E"),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23aab6c9' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 15.7A8 8 0 0 1 8.3 5a7 7 0 1 0 10.7 10.7Z'/%3E%3C/svg%3E")!important}
+html.rwa-target-prepaint:not(.rwa-target-runtime-ready) body.rwa-target-dashboard-v2 .rwa-target-icon-actions>button{display:none!important;visibility:hidden!important;pointer-events:none!important}
+html.rwa-target-prepaint:not(.rwa-target-runtime-ready) body.rwa-target-dashboard-v2 .search-icon{display:none!important;visibility:hidden!important}
+html.rwa-target-prepaint:not(.rwa-target-runtime-ready) body.rwa-target-dashboard-v2 .search{position:relative!important;padding-left:28px!important}
+html.rwa-target-prepaint:not(.rwa-target-runtime-ready) body.rwa-target-dashboard-v2 .search:before{content:'';position:absolute;left:9px;top:50%;width:14px;height:14px;transform:translateY(-50%);background-repeat:no-repeat;background-position:center;background-size:14px 14px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238292a5' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6'/%3E%3Cpath d='m16 16 4 4'/%3E%3C/svg%3E")}
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .pairmeta small,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .pairprice small,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .chg,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .stats small,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .stats span,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .quickstats small,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .quickstats span,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 #rwaFirstLoadSub,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 #rwaFirstLoadOverlay small,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 #rwaFirstLoadOverlay button,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .loading-overlay small,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .loading-overlay button,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .bookhead,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .bookhead span,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .bookrow,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .bookrow span,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .trade,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .trade span,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .trade b,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .instrument small,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .instrument span,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .instrument-actions button,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .instrument-actions span,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .watch-actions button,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .watch-actions span,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 #rwaTickerStatus,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .ticker small,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .ticker span,
+html.rwa-target-prepaint body.rwa-target-dashboard-v2 .ticker b{font-size:8.5px!important;line-height:1.25!important}
 
 /* Canonical target chrome. */
 html body.rwa-target-dashboard-v2 .rwa-target-topbar{height:var(--rwa-topbar-h)!important;min-height:var(--rwa-topbar-h)!important;background:#030b15!important;border-bottom:1px solid var(--rwa-border)!important;box-shadow:none!important}
