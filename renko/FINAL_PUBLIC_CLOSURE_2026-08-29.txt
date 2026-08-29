@@ -1,0 +1,5 @@
+RENKO FINAL PUBLIC CLOSURE
+Date: 2026-08-29
+Stable chart: 2.2.0 cross-domain series reset
+Acceptance: exact 50 desktop + 50 mobile + revisit + GOLD 2003 + scroll; then exact public bytes + public Chromium gate.
+No timeframe substitution. No invalid-row drops allowed.
