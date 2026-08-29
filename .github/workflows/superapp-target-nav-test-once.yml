@@ -1,0 +1,32 @@
+name: Superapp Target Nav Test Once
+on:
+  push:
+    branches: [fix/ecommerce-first-paint-0ms-20260829]
+    paths: ['.github/workflows/superapp-target-nav-test-once.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/ecommerce-first-paint-0ms-20260829
+      - name: Align Super App browser contract with canonical target chrome
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tools/superapp-v5-browser.mjs')
+          s=p.read_text()
+          old="assert.ok(await page.locator('[data-v5-route=\"markets\"]').count(),'desktop nav missing');"
+          new="assert.ok(await page.locator('[data-rwa-target-nav=\"markets\"]').count(),'canonical target Markets nav missing');assert.equal(await page.locator('.topnav [data-v5-route]').count(),0,'legacy desktop nav resurfaced');"
+          if old not in s: raise SystemExit('legacy desktop nav assertion not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/superapp-v5-browser.mjs
+          git commit -m 'test: require target chrome in Super App regression'
+          git push origin HEAD:fix/ecommerce-first-paint-0ms-20260829
