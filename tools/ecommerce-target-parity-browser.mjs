@@ -15,7 +15,7 @@ async function run(label,width,height){
  page.on('pageerror',e=>errors.push(String(e?.message||e)));ctx.on('page',p=>{if(p!==page)popups.push(p)});
  try{
   const u=new URL(base);u.searchParams.set('__target_parity',`${label}-${Date.now()}`);await page.goto(u.href,{waitUntil:'domcontentloaded',timeout:publicMode?50000:30000});
-  await wait(page,()=>window.RWASeablueprintCommerceBridge?.version==='1.6.0'&&window.RWATargetDashboardV2?.version==='2.2.0'&&window.RWAEcommerceTargetController?.version==='2.3.0'&&window.RWATargetTopbarCleanup?.version==='1.6.0'&&window.RWAEcommerceProductionVisualV1?.version==='1.8.1'&&window.RWAEcommerceParityFinishV2?.version==='2.3.0',publicMode?30000:20000);
+  await wait(page,()=>window.RWASeablueprintCommerceBridge?.version==='1.6.0'&&window.RWATargetDashboardV2?.version==='2.2.1'&&window.RWAEcommerceTargetController?.version==='2.3.0'&&window.RWATargetTopbarCleanup?.version==='1.6.0'&&window.RWAEcommerceProductionVisualV1?.version==='1.8.1'&&window.RWAEcommerceParityFinishV2?.version==='2.3.0',publicMode?30000:20000);
   await wait(page,()=>document.querySelector('#rwaShopScreen')?.classList.contains('open'),12000);
   await page.evaluate(()=>{window.RWAEcommerceTargetController?.render?.();window.RWAEcommerceProductionVisualV1?.apply?.();window.RWAEcommerceParityFinishV2?.apply?.();window.RWATargetTopbarCleanup?.apply?.()});
   await wait(page,()=>{const a=window.RWAEcommerceTargetController?.audit?.();return a?.rendered&&a?.backendLocked&&a?.tabCount===3&&a?.productCards>=4},12000);
