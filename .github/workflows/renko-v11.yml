@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - fix/renko-canonical-atr-cache-v3-20260829
+      - fix/renko-final-history-closure-20260829
     paths:
       - "renko/index.html"
       - "renko/renko-tv-engine.js"
