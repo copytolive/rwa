@@ -1,0 +1,25 @@
+RENKO authoritative final public-production closure witness — zero-safe ATR matrix.
+
+Source of truth: RENKO_NEW_CHAT_HANDOFF_FULL_2026-08-30(1).docx.
+This file changes no runtime behavior. Its only purpose is to trigger every RENKO path-scoped validation workflow on one exact main SHA after the XAUT deep fixed-1s ATR matrix was aligned with the canonical zero-safe ATR contract.
+
+Required same-SHA proofs:
+- RENKO Verified Pages Release
+- RENKO Total Available History 50 + GOLD
+- RENKO 50 Pair Full History 10x Browser Gate
+- RENKO Current Production Browser Contract
+- RENKO ATR Control All Pairs Gate
+- RENKO Traditional Control All Pairs Gate
+- RENKO Observable Parity
+- RENKO TradingView Official Contract Gate
+- RENKO XAUT Fixed 1s ATR Matrix Gate
+
+Hard acceptance:
+- production fixed to 1-second source only; no timeframe selector, higher-timeframe fallback, synthetic 1s, or upsampling;
+- 50 Binance Spot launch pairs total-history evidence;
+- GOLD Dukascopy XAU-USD fixed 1s, documented earliest 2003-05-05T00:01:03.421Z;
+- XAUT OKX Spot XAUT-USDT fixed 1s pack, 1,005,000 rows, seven ATR lengths 1/10/100/1000/10000/100000/1000000;
+- positive raw Wilder ATR is the exact Renko box; mathematically zero raw Wilder ATR uses only the legal exchange minimum tick, with no timeframe/data substitution;
+- ATR physical Apply, anti-pulse persistence, Traditional control, desktop and mobile browser proof;
+- exact deployed GitHub Pages SHA must equal this witness commit SHA;
+- screenshot/report artifacts must be visually inspected before final closure.
