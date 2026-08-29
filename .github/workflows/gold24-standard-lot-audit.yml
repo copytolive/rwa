@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 20
     env:
       STATE_DIR: ${{ github.workspace }}/.gold24-canonical-v11
-      OUT_DIR: ${{ github.workspace }}/.gold24-standard-lot-audit-out
+      OUT_DIR: ${{ github.workspace }}/gold24-standard-lot-audit-out
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
