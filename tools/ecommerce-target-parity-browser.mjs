@@ -28,7 +28,7 @@ async function run(label,width,height){
   try{
     const u=new URL(base);u.searchParams.set('__target_parity',`${label}-${Date.now()}`);
     await page.goto(u.href,{waitUntil:'domcontentloaded',timeout:publicMode?50000:30000});
-    await page.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.5.0'&&window.RWATargetDashboardV2?.version==='2.2.0'&&window.RWAEcommerceTargetController?.version==='2.3.0'&&window.RWAEcommerceProductionVisualV1?.version==='1.4.0',{timeout:publicMode?30000:20000});
+    await page.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.5.0'&&window.RWATargetDashboardV2?.version==='2.2.0'&&window.RWAEcommerceTargetController?.version==='2.3.0'&&window.RWAEcommerceProductionVisualV1?.version==='1.5.0',{timeout:publicMode?30000:20000});
     const before=await rect(page,'.layout');
     const launcher=page.locator('#rwaSeablueprintCommerceLaunch,[data-rwa-seablueprint-commerce="1"]').filter({visible:true}).first();
     if(!(await launcher.isVisible().catch(()=>false))) throw new Error('Ecommerce launcher not visible');
@@ -61,6 +61,8 @@ async function run(label,width,height){
       if(!dock||dock.width<420||dock.width>442)fail(label,'desktop dock not ~440px',dock);
       if(Number(openAudit.bridge?.exposedChartWidth||0)<420)fail(label,'market/chart not visibly preserved',openAudit.bridge);
       if(!openAudit.visual?.orderVisible||!openAudit.visual?.orderClearOfDock)fail(label,'Order Book is not visibly preserved beside Ecommerce',openAudit.visual);
+      if(Math.abs(Number(openAudit.visual?.orderDockGap||999))>2)fail(label,'Order Book does not end exactly at Ecommerce dock edge',openAudit.visual);
+      if(Math.abs(Number(openAudit.visual?.reservedDockWidth||0)-Number(openAudit.visual?.dock?.width||0))>2)fail(label,'desktop layout does not reserve the exact Ecommerce dock span',openAudit.visual);
       if(openAudit.visual?.orderPosition!=='sticky')fail(label,'Order Book did not return to sticky grid geometry',openAudit.visual);
       const ow=Number(openAudit.visual?.order?.width||0);if(ow<218||ow>238)fail(label,'Order Book width is not canonical 220/236px',openAudit.visual);
       if(!openAudit.visual?.contextSuppressed||(openAudit.visual?.contextVisible||[]).length)fail(label,'persistent Context / AI Insight workspace is still visible behind Ecommerce',openAudit.visual);
@@ -110,7 +112,7 @@ async function run(label,width,height){
 }
 for(const s of sizes)await run(...s);
 await browser.close();
-const out={ok:failures.length===0,contract:'ecommerce-target-parity-v2.7',base,publicMode,results,failures};
+const out={ok:failures.length===0,contract:'ecommerce-target-parity-v2.8',base,publicMode,results,failures};
 await writeFile(`${proof}/browser-result.json`,JSON.stringify(out,null,2));
 console.log(JSON.stringify(out,null,2));
 if(!out.ok)process.exit(1);
