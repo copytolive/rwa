@@ -65,7 +65,7 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json, os, pathlib, sqlite3
+          import csv, json, math, os, pathlib, sqlite3
           db_path = pathlib.Path(os.environ['RUNNER_TEMP']) / 'gold24-ranking-state' / 'gold24-v11.db'
           out_dir = pathlib.Path('backtest/gold24/runtime_v11')
           out_dir.mkdir(parents=True, exist_ok=True)
@@ -79,10 +79,16 @@ jobs:
               trades=int(m.get('trades',0) or 0); net_profit=float(m.get('net_profit',0.0) or 0.0)
               if trades<=0 or net_profit<=0 or bool(m.get('exact_execution_duplicate',False)): continue
               parsed.append({'config_hash':config_hash,'execution_hash':execution_hash,'candidate':c,'metrics':m})
+          def finite(v, default=0.0):
+              try:
+                  x=float(v)
+                  return x if math.isfinite(x) else default
+              except Exception:
+                  return default
           def compact(row,rank):
               c,m=row['candidate'],row['metrics']
               method=f"{c.get('family')} f{c.get('fast')}/s{c.get('slow')} p1={c.get('p1')} p2={c.get('p2')} p3={c.get('p3')} off={c.get('offset')} exp={c.get('expiry')}"
-              return {'rank':rank,'config_hash':row['config_hash'],'execution_hash':row['execution_hash'],'method':method,'family':c.get('family'),'timeframe':c.get('timeframe'),'entry_method':c.get('entry_method'),'direction_mode':c.get('direction_mode'),'sl':float(c.get('sl',0) or 0),'tp':float(c.get('tp',0) or 0),'trades':int(m.get('trades',0) or 0),'win_rate_pct':float(m.get('win_rate_pct',m.get('wr',0.0)) or 0.0),'profit_factor_net':float(m.get('profit_factor_net',m.get('profit_factor',0.0)) or 0.0),'net_profit':float(m.get('net_profit',0.0) or 0.0),'net_expectancy':float(m.get('net_expectancy',m.get('expectancy',0.0)) or 0.0),'max_dd_pct':float(m.get('max_dd_pct',0.0) or 0.0),'sqn':float(m.get('sqn',0.0) or 0.0),'sample_pass_v11':bool(m.get('sample_pass_v11',False)),'baseline_qualified_v11':bool(m.get('baseline_qualified_v11',False)),'correlation_max':None,'correlation_gate':'N/A — belum pre-portfolio'}
+              return {'rank':rank,'config_hash':row['config_hash'],'execution_hash':row['execution_hash'],'method':method,'family':c.get('family'),'timeframe':c.get('timeframe'),'entry_method':c.get('entry_method'),'direction_mode':c.get('direction_mode'),'sl':finite(c.get('sl',0)),'tp':finite(c.get('tp',0)),'trades':int(m.get('trades',0) or 0),'win_rate_pct':finite(m.get('win_rate_pct',m.get('wr',0.0))),'profit_factor_net':finite(m.get('profit_factor_net',m.get('profit_factor',0.0))),'net_profit':finite(m.get('net_profit',0.0)),'net_expectancy':finite(m.get('net_expectancy',m.get('expectancy',0.0))),'max_dd_pct':finite(m.get('max_dd_pct',0.0)),'sqn':finite(m.get('sqn',0.0)),'sample_pass_v11':bool(m.get('sample_pass_v11',False)),'baseline_qualified_v11':bool(m.get('baseline_qualified_v11',False)),'correlation_max':None,'correlation_gate':'N/A — belum pre-portfolio'}
           profit_sorted=sorted(parsed,key=lambda r:(float(r['metrics'].get('net_profit',0) or 0),int(r['metrics'].get('trades',0) or 0)),reverse=True)
           entry_sorted=sorted(parsed,key=lambda r:(int(r['metrics'].get('trades',0) or 0),float(r['metrics'].get('net_profit',0) or 0)),reverse=True)
           profit_top=[compact(r,i) for i,r in enumerate(profit_sorted[:200],1)]
@@ -91,6 +97,19 @@ jobs:
           (out_dir/'latest_positive_summary.json').write_text(json.dumps(summary,indent=2,sort_keys=True))
           (out_dir/'latest_profit_top200.json').write_text(json.dumps({'schema':'gold-v11-profit-top200-positive-v1','source_run_id':source_run_id,'count':len(profit_top),'ranking':profit_top},indent=2,sort_keys=True))
           (out_dir/'latest_entry_profit_top200.json').write_text(json.dumps({'schema':'gold-v11-entry-profit-top200-positive-v1','source_run_id':source_run_id,'count':len(entry_top),'ranking':entry_top},indent=2,sort_keys=True))
+          def write_csv(path, ranking):
+              with path.open('w', newline='', encoding='utf-8') as f:
+                  w=csv.writer(f)
+                  for x in ranking:
+                      w.writerow([
+                          x['rank'],x['method'],x['family'],x['timeframe'],x['entry_method'],x['direction_mode'],
+                          f"{x['sl']:.2f}",f"{x['tp']:.2f}",x['trades'],f"{x['win_rate_pct']:.2f}",f"{x['profit_factor_net']:.2f}",
+                          f"{x['net_profit']:.2f}",f"{x['net_expectancy']:.2f}",f"{x['max_dd_pct']:.2f}",f"{x['sqn']:.2f}",
+                          'YA' if x['sample_pass_v11'] else 'TIDAK','',x['correlation_gate'],
+                          'POSITIF — BELUM LOLOS v11' if not x['baseline_qualified_v11'] else 'QUALIFIED v11'
+                      ])
+          write_csv(out_dir/'latest_profit_top200.csv', profit_top)
+          write_csv(out_dir/'latest_entry_profit_top200.csv', entry_top)
           print(json.dumps(summary,indent=2,sort_keys=True))
           PY
 
@@ -100,7 +119,7 @@ jobs:
           set -euo pipefail
           git config user.name 'gold24-bot'
           git config user.email 'gold24-bot@users.noreply.github.com'
-          git add backtest/gold24/runtime_v11/latest_positive_summary.json backtest/gold24/runtime_v11/latest_profit_top200.json backtest/gold24/runtime_v11/latest_entry_profit_top200.json
+          git add backtest/gold24/runtime_v11/latest_positive_summary.json backtest/gold24/runtime_v11/latest_profit_top200.json backtest/gold24/runtime_v11/latest_entry_profit_top200.json backtest/gold24/runtime_v11/latest_profit_top200.csv backtest/gold24/runtime_v11/latest_entry_profit_top200.csv
           if git diff --cached --quiet; then
             echo 'No ranking changes.'
             exit 0
