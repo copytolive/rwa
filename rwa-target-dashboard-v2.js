@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 if(window.RWATargetDashboardV2)return;
-const VERSION='2.2.0',$=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)];
+const VERSION='2.2.1',$=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)];
 const NAV=[['markets','Markets'],['ecommerce','Ecommerce'],['intelligence','Intelligence'],['portfolio','Portfolio'],['orders','Orders'],['reports','Reports']];
 const TOP_ICONS={alerts:'<path d="M6.5 9a5.5 5.5 0 0 1 11 0c0 6 2.5 6.5 2.5 6.5H4S6.5 15 6.5 9Z"/><path d="M10 19h4"/>',help:'<circle cx="12" cy="12" r="9"/><path d="M9.7 9a2.5 2.5 0 1 1 3.2 2.4c-.9.35-.9 1.1-.9 1.6M12 17h.01"/>',theme:'<path d="M19 15.7A8 8 0 0 1 8.3 5a7 7 0 1 0 10.7 10.7Z"/>'};
 function toastSafe(msg){try{typeof window.toast==='function'?window.toast(msg):console.info(msg)}catch{}}
@@ -11,6 +11,14 @@ body.rwa-target-dashboard-v2 .rwa-target-icon-actions{display:flex;align-items:c
 body.rwa-target-dashboard-v2 .rwa-target-market-card b[data-rwa-source-gated]{font-size:13px!important;color:#d8e2ef!important;letter-spacing:.02em!important}.rwa-target-order-ticket button{transition:none!important;animation:none!important}
 body.rwa-target-dashboard-v2 .rwa-depth-bar{font-size:9.5px!important;line-height:1!important}
 body.rwa-target-dashboard-v2 .pairmeta small,body.rwa-target-dashboard-v2 .pairprice small,body.rwa-target-dashboard-v2 .chg,body.rwa-target-dashboard-v2 .stats small,body.rwa-target-dashboard-v2 .stats span,body.rwa-target-dashboard-v2 .quickstats small,body.rwa-target-dashboard-v2 .quickstats span,body.rwa-target-dashboard-v2 #rwaFirstLoadSub,body.rwa-target-dashboard-v2 #rwaFirstLoadOverlay small,body.rwa-target-dashboard-v2 #rwaFirstLoadOverlay button,body.rwa-target-dashboard-v2 .loading-overlay small,body.rwa-target-dashboard-v2 .loading-overlay button,body.rwa-target-dashboard-v2 .bookhead,body.rwa-target-dashboard-v2 .bookhead span,body.rwa-target-dashboard-v2 .bookrow,body.rwa-target-dashboard-v2 .bookrow span,body.rwa-target-dashboard-v2 .trade,body.rwa-target-dashboard-v2 .trade span,body.rwa-target-dashboard-v2 .trade b,body.rwa-target-dashboard-v2 .instrument small,body.rwa-target-dashboard-v2 .instrument span,body.rwa-target-dashboard-v2 .instrument-actions button,body.rwa-target-dashboard-v2 .instrument-actions span,body.rwa-target-dashboard-v2 .watch-actions button,body.rwa-target-dashboard-v2 .watch-actions span,body.rwa-target-dashboard-v2 #rwaTickerStatus,body.rwa-target-dashboard-v2 .ticker small,body.rwa-target-dashboard-v2 .ticker span,body.rwa-target-dashboard-v2 .ticker b{font-size:8.5px!important;line-height:1.25!important}
+body.rwa-target-dashboard-v2 .rwa-firstload button,body.rwa-target-dashboard-v2 .rwa-firstload small{font-size:9px!important;line-height:1.25!important}
+body.rwa-target-dashboard-v2 .book-head,body.rwa-target-dashboard-v2 .book-head span{font-size:9px!important;line-height:1.25!important}
+body.rwa-target-dashboard-v2 .rwa-ticker-brand,body.rwa-target-dashboard-v2 .rwa-ticker-brand b,body.rwa-target-dashboard-v2 .rwa-ticker-brand~button,body.rwa-target-dashboard-v2 .rwa-ticker-brand~button b,body.rwa-target-dashboard-v2 .rwa-ticker-brand~button span,body.rwa-target-dashboard-v2 .rwa-ticker-brand~button i{font-size:9px!important;line-height:1.2!important}
+body.rwa-target-dashboard-v2 .top-actions>.signin{font-size:10px!important;line-height:1.2!important}
+body.rwa-target-dashboard-v2 #rwaTargetMarketCard small,body.rwa-target-dashboard-v2 #rwaTargetMarketCard em{font-size:8.5px!important;line-height:1.3!important}
+body.rwa-target-dashboard-v2 #rwaTargetOrderTicket button{font-size:9px!important;line-height:1.2!important}
+body.rwa-target-dashboard-v2 #rwaTargetOrderTicket small,body.rwa-target-dashboard-v2 #rwaTargetOrderTicket span,body.rwa-target-dashboard-v2 #rwaTargetOrderTicket i,body.rwa-target-dashboard-v2 #rwaTargetOrderTicket label,body.rwa-target-dashboard-v2 #rwaTargetOrderTicket p{font-size:8.5px!important;line-height:1.3!important}
+body.rwa-target-dashboard-v2 #rwaTargetOrderTicket b{font-size:9px!important;line-height:1.25!important}
 body.rwa-target-dashboard-v2 .instrument b{font-size:max(8.5px,1em)!important}body.rwa-target-dashboard-v2 .pairprice b{font-size:max(8.5px,1em)!important}
 body.rwa-target-dashboard-v2 .search-icon{font-size:0!important;color:transparent!important}
 `;document.head.appendChild(s)}
