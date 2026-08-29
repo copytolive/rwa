@@ -28,7 +28,7 @@ async function run(label,width,height){
   try{
     const u=new URL(base);u.searchParams.set('__target_parity',`${label}-${Date.now()}`);
     await page.goto(u.href,{waitUntil:'domcontentloaded',timeout:publicMode?50000:30000});
-    await page.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.5.0'&&window.RWATargetDashboardV2?.version==='2.2.0'&&window.RWAEcommerceTargetController?.version==='2.3.0'&&window.RWAEcommerceProductionVisualV1?.version==='1.2.0',{timeout:publicMode?30000:20000});
+    await page.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.5.0'&&window.RWATargetDashboardV2?.version==='2.2.0'&&window.RWAEcommerceTargetController?.version==='2.3.0'&&window.RWAEcommerceProductionVisualV1?.version==='1.3.0',{timeout:publicMode?30000:20000});
     const before=await rect(page,'.layout');
     const launcher=page.locator('#rwaSeablueprintCommerceLaunch,[data-rwa-seablueprint-commerce="1"]').filter({visible:true}).first();
     if(!(await launcher.isVisible().catch(()=>false))) throw new Error('Ecommerce launcher not visible');
@@ -61,6 +61,7 @@ async function run(label,width,height){
       if(!dock||dock.width<420||dock.width>442)fail(label,'desktop dock not ~440px',dock);
       if(Number(openAudit.bridge?.exposedChartWidth||0)<420)fail(label,'market/chart not visibly preserved',openAudit.bridge);
       if(!openAudit.visual?.orderVisible||!openAudit.visual?.orderClearOfDock)fail(label,'Order Book is not visibly preserved beside Ecommerce',openAudit.visual);
+      if(!openAudit.visual?.contextSuppressed||(openAudit.visual?.contextVisible||[]).length)fail(label,'persistent Context / AI Insight workspace is still visible behind Ecommerce',openAudit.visual);
       if((openAudit.visual?.topActionExtras||[]).length)fail(label,'extra topbar controls remain visible while Ecommerce is open',openAudit.visual);
       if(openAudit.visual?.marketplaceVisible||openAudit.visual?.multichainVisible)fail(label,'Marketplace/MultiChain controls should not crowd target Ecommerce header state',openAudit.visual);
       if(width>1400&&Number(openAudit.visual?.left?.width||0)<280)fail(label,'watchlist is too narrow for target parity',openAudit.visual);
@@ -108,7 +109,7 @@ async function run(label,width,height){
 }
 for(const s of sizes)await run(...s);
 await browser.close();
-const out={ok:failures.length===0,contract:'ecommerce-target-parity-v2.5',base,publicMode,results,failures};
+const out={ok:failures.length===0,contract:'ecommerce-target-parity-v2.6',base,publicMode,results,failures};
 await writeFile(`${proof}/browser-result.json`,JSON.stringify(out,null,2));
 console.log(JSON.stringify(out,null,2));
 if(!out.ok)process.exit(1);
