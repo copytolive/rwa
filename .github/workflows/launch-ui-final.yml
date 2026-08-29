@@ -4,6 +4,7 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'index.html'
       - 'chart-core.js'
       - 'rwa-target-dashboard-v2.js'
       - 'rwa-target-dashboard-v2.css'
@@ -11,6 +12,7 @@ on:
       - 'rwa-target-dashboard-v2-hardening.css'
       - 'rwa-seablueprint-commerce-bridge.js'
       - 'rwa-seablueprint-commerce-bridge.css'
+      - 'rwa-ecommerce-production-visual-v1.js'
       - 'rwa-commerce-config.json'
       - 'rwa-storefront.js'
       - 'superapp-v5.js'
@@ -19,10 +21,12 @@ on:
       - 'ui-layout-integrity-v15.css'
       - 'tools/launch-ui-final-browser.mjs'
       - 'tools/seablueprint-commerce-single-shell-browser.mjs'
+      - 'tools/ecommerce-first-paint-browser.mjs'
       - '.github/workflows/launch-ui-final.yml'
   push:
     branches: [main]
     paths:
+      - 'index.html'
       - 'chart-core.js'
       - 'rwa-target-dashboard-v2.js'
       - 'rwa-target-dashboard-v2.css'
@@ -30,6 +34,7 @@ on:
       - 'rwa-target-dashboard-v2-hardening.css'
       - 'rwa-seablueprint-commerce-bridge.js'
       - 'rwa-seablueprint-commerce-bridge.css'
+      - 'rwa-ecommerce-production-visual-v1.js'
       - 'rwa-commerce-config.json'
       - 'rwa-storefront.js'
       - 'superapp-v5.js'
@@ -38,6 +43,7 @@ on:
       - 'ui-layout-integrity-v15.css'
       - 'tools/launch-ui-final-browser.mjs'
       - 'tools/seablueprint-commerce-single-shell-browser.mjs'
+      - 'tools/ecommerce-first-paint-browser.mjs'
       - '.github/workflows/launch-ui-final.yml'
   workflow_dispatch:
 
@@ -59,13 +65,18 @@ jobs:
           node --check rwa-target-dashboard-v2.js
           node --check rwa-target-dashboard-v2-hardening.js
           node --check rwa-seablueprint-commerce-bridge.js
+          node --check superapp-v5.js
           node --check tools/launch-ui-final-browser.mjs
           node --check tools/seablueprint-commerce-single-shell-browser.mjs
+          node --check tools/ecommerce-first-paint-browser.mjs
           grep -Fq "const VERSION='1.5.0',MODE='CONTEXT_PANEL'" rwa-seablueprint-commerce-bridge.js
           grep -Fq "screen.dataset.seablueprintPlacement='context-right-panel'" rwa-seablueprint-commerce-bridge.js
           grep -Fq "window.addEventListener('click',captureClick,true)" rwa-seablueprint-commerce-bridge.js
-          grep -Fq "rwa-seablueprint-commerce-bridge.js?v=1.5.0" chart-core.js
+          grep -Fq "rwa-seablueprint-commerce-bridge.js?v=1.5.1" chart-core.js
           grep -Fq "rwa-target-dashboard-v2-hardening.js?v=2.1.0" chart-core.js
+          grep -Fq "rwa-target-prepaint-shop" index.html
+          grep -Fq "history.replaceState(history.state,'',location.pathname+location.search+'#shop')" index.html
+          grep -Fq "document.body?.classList.contains('rwa-target-dashboard-v2')" superapp-v5.js
           node - <<'NODE'
           const c=require('./rwa-commerce-config.json');
           if(c.shell_mode!=='SINGLE_MAIN_DOCUMENT') throw Error('shell_mode');
@@ -92,6 +103,12 @@ jobs:
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && exit 0; sleep 1; done
           exit 1
 
+      - name: Prove root first paint has no legacy shell
+        env:
+          RWA_UI_URL: http://127.0.0.1:4173/rwa/
+          RWA_UI_PROOF_DIR: proof/launch-ui-first-paint
+        run: node tools/ecommerce-first-paint-browser.mjs
+
       - name: Run full desktop mobile stress startup matrix
         env:
           RWA_UI_URL: http://127.0.0.1:4173/rwa/
@@ -107,6 +124,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: launch-ui-final-${{ github.sha }}
-          path: proof/launch-ui-final/
+          path: |
+            proof/launch-ui-first-paint/
+            proof/launch-ui-final/
           if-no-files-found: error
           retention-days: 30
