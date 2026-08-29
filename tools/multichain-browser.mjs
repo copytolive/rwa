@@ -9,7 +9,7 @@ const SOL='11111111111111111111111111111111';
 const chainIds=[1,42161,8453,56,137,43114,143];
 await mkdir(OUT,{recursive:true});
 const browser=await chromium.launch({headless:true});
-const report={contract:'rwa-multichain-browser-v2.1-context-lifecycle',url:URL,ok:true,viewports:[],errors:[]};
+const report={contract:'rwa-multichain-browser-v2.2-context-lifecycle',url:URL,ok:true,viewports:[],errors:[]};
 
 function chain(id){
   const symbol=id===56?'BNB':id===137?'POL':id===43114?'AVAX':id===143?'MON':'ETH';
@@ -28,6 +28,7 @@ async function diagnostics(page,label){
     engine:window.RWAMultiChainEngine?.version||null,
     status:window.RWAMultiChain?.status?.()||null,
     lazy:[...document.querySelectorAll('script[data-rwa-lazy]')].map(x=>({kind:x.dataset.rwaLazy,src:x.src})),
+    launcher:document.getElementById('rwaMultiChainLaunch')?{parent:document.getElementById('rwaMultiChainLaunch').parentElement?.className||document.getElementById('rwaMultiChainLaunch').parentElement?.tagName,display:getComputedStyle(document.getElementById('rwaMultiChainLaunch')).display,visibility:getComputedStyle(document.getElementById('rwaMultiChainLaunch')).visibility}:null,
     panel:document.getElementById('rwaMultiChainPanel')?{hidden:document.getElementById('rwaMultiChainPanel').hidden,text:document.getElementById('rwaMultiChainPanel').innerText.slice(0,500)}:null
   }),label);
 }
@@ -85,15 +86,20 @@ async function runViewport(width,height,label){
 
   await page.goto(URL,{waitUntil:'domcontentloaded',timeout:45000});
   await page.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.6.0'||document.querySelector('#rwaMultiChainLaunch'),null,{timeout:15000});
-  /* Context panels are mutually exclusive by design. If Ecommerce owns the right dock on first paint,
-     close it before testing the lazy Multi Chain launcher. This proves peer-panel lifecycle rather than
-     incorrectly requiring both contextual panels to be visible at the same time. */
-  const commerceWasOpen=await page.locator('#rwaShopScreen.open').isVisible().catch(()=>false);
-  if(commerceWasOpen){
-    await page.evaluate(()=>window.RWASeablueprintCommerceBridge?.close?.({restore:false}));
-    await page.waitForFunction(()=>location.hash!=='#shop'&&!document.querySelector('#rwaShopScreen')?.classList.contains('open'),null,{timeout:8000});
+  /* Context panels are mutually exclusive. The canonical root intentionally requests #shop on first paint.
+     Wait for that Ecommerce lifecycle to settle before closing it; this mirrors a user-visible Close action
+     and prevents testing a pre-paint race that no user can click through. */
+  const commerceRequested=await page.evaluate(()=>location.hash==='#shop'||document.body.classList.contains('rwa-seablueprint-commerce-open')||!!document.querySelector('#rwaShopScreen.open'));
+  let commerceWasOpen=false;
+  if(commerceRequested){
+    await page.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.6.0',null,{timeout:15000});
+    await page.waitForSelector('#rwaShopScreen.open',{state:'visible',timeout:15000});
+    commerceWasOpen=true;
+    await page.waitForSelector('#rwaMultiChainLaunch',{state:'attached',timeout:15000});
+    await page.evaluate(()=>window.RWASeablueprintCommerceBridge.close({restore:false}));
+    await page.waitForFunction(()=>location.hash!=='#shop'&&!document.body.classList.contains('rwa-seablueprint-commerce-open')&&!document.querySelector('#rwaShopScreen')?.classList.contains('open'),null,{timeout:8000});
   }
-  await page.waitForSelector('#rwaMultiChainLaunch',{state:'visible',timeout:15000});
+  try{await page.waitForSelector('#rwaMultiChainLaunch',{state:'visible',timeout:15000})}catch(e){throw Error(`${label}: peer launcher did not return after Ecommerce close: ${JSON.stringify(await diagnostics(page,label))}`)}
   const before=await page.evaluate(()=>({runtime:window.RWAMultiChain?.version||null,staticScripts:document.querySelectorAll('body > script[src]').length}));
   if(before.runtime)throw Error(`${label}: runtime must be lazy before first click`);
   if(before.staticScripts!==6)throw Error(`${label}: first-paint external script budget changed: ${before.staticScripts}`);
