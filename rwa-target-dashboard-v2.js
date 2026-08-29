@@ -8,6 +8,7 @@ function selectedBase(){const raw=$('#selName')?.textContent||'BTC';return Strin
 function installStyle(){if($('#rwaTargetV22RuntimeStyle'))return;const s=document.createElement('style');s.id='rwaTargetV22RuntimeStyle';s.textContent=`
 body.rwa-target-dashboard-v2 .rwa-target-icon-actions{display:flex;align-items:center;gap:5px}body.rwa-target-dashboard-v2 .rwa-target-icon-actions button{width:30px;height:30px;padding:0;border:1px solid transparent;border-radius:8px;background:transparent;color:#aab6c9;display:grid;place-items:center;transition:none!important;animation:none!important}
 body.rwa-target-dashboard-v2 .rwa-target-market-card b[data-rwa-source-gated]{font-size:13px!important;color:#d8e2ef!important;letter-spacing:.02em!important}.rwa-target-order-ticket button{transition:none!important;animation:none!important}
+body.rwa-target-dashboard-v2 .rwa-depth-bar{font-size:9.5px!important;line-height:1!important}
 `;document.head.appendChild(s)}
 function setBrand(){const strong=$('.brandcopy strong');if(strong)strong.textContent='RWA × Seablueprint';const brand=$('.brand');if(brand)brand.setAttribute('aria-label','RWA × Seablueprint market home')}
 function routeKey(){const h=location.hash.replace(/^#/,'').split('/')[0].toLowerCase();if(document.body.classList.contains('rwa-target-utility-open')&&(h==='orders'||h==='reports'))return h;if(document.body.classList.contains('rwa-seablueprint-commerce-open')||h==='shop')return'ecommerce';if(h==='intelligence'||h==='portfolio'||h==='orders'||h==='reports')return h;return'markets'}
