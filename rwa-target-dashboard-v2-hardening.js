@@ -31,8 +31,8 @@ function hideStageRail(){
 function normalizeChrome(){
   const app=$('.app'),top=$('.topbar'),layout=$('.layout');
   if(innerWidth>1120){
-    for(const[p,v]of[['top','0px'],['height','62px'],['min-height','62px'],['max-height','62px']])imp(top,p,v);
-    imp(app,'padding-top','62px');
+    for(const[p,v]of[['top','0px'],['height','49px'],['min-height','49px'],['max-height','49px']])imp(top,p,v);
+    imp(app,'padding-top','49px');
     if(layout){imp(layout,'width','100%');imp(layout,'max-width','none');imp(layout,'min-width','0');imp(layout,'margin-top','0px');imp(layout,'margin-right','0px');imp(layout,'padding-right','0px')}
   }
 }
@@ -42,10 +42,10 @@ function forceCommerceGeometry(){
   const cols=innerWidth>=1701?'286px minmax(0,1fr) 240px 440px':innerWidth>=1451?'286px minmax(0,1fr) 236px 410px':'220px minmax(0,1fr) 210px 360px';
   for(const[p,v]of[['display','grid'],['grid-template-columns',cols],['grid-auto-flow','row'],['width','100%'],['max-width','none'],['min-width','0'],['margin','0px'],['padding-right','0px'],['align-items','start']])imp(layout,p,v);
   for(const[el,col]of[[left,'1'],[main,'2'],[right,'3'],[dock,'4']]){if(!el)continue;imp(el,'grid-column',col);imp(el,'grid-row','1');imp(el,'min-width','0')}
-  if(left){imp(left,'position','sticky');imp(left,'top','62px')}
+  if(left){imp(left,'position','sticky');imp(left,'top','56px')}
   if(main){imp(main,'position','relative');imp(main,'left','auto');imp(main,'right','auto');imp(main,'width','auto');imp(main,'max-width','none');imp(main,'transform','none')}
-  if(right){for(const[p,v]of[['display','block'],['position','sticky'],['top','62px'],['left','auto'],['right','auto'],['bottom','auto'],['width','auto'],['min-width','0'],['max-width','none'],['height','calc(100vh - 62px)'],['transform','none'],['translate','none'],['margin','0px'],['visibility','visible'],['pointer-events','auto']])imp(right,p,v)}
-  for(const[p,v]of[['display','block'],['position','sticky'],['top','62px'],['left','auto'],['right','auto'],['bottom','auto'],['width','auto'],['min-width','0'],['max-width','none'],['height','calc(100vh - 62px)'],['transform','none'],['translate','none'],['margin','0px'],['align-self','start']])imp(dock,p,v);
+  if(right){for(const[p,v]of[['display','block'],['position','sticky'],['top','56px'],['left','auto'],['right','auto'],['bottom','auto'],['width','auto'],['min-width','0'],['max-width','none'],['height','calc(100vh - 56px)'],['transform','none'],['translate','none'],['margin','0px'],['visibility','visible'],['pointer-events','auto']])imp(right,p,v)}
+  for(const[p,v]of[['display','block'],['position','sticky'],['top','56px'],['left','auto'],['right','auto'],['bottom','auto'],['width','auto'],['min-width','0'],['max-width','none'],['height','calc(100vh - 56px)'],['transform','none'],['translate','none'],['margin','0px'],['align-self','start']])imp(dock,p,v);
   return true;
 }
 function normalizeMobileLaunchers(){
