@@ -1,0 +1,108 @@
+name: RENKO ATR Traditional Presets 5Y Gate
+
+on:
+  push:
+    branches:
+      - main
+      - 'fix/renko-presets-5y-zero-blocking-*'
+    paths:
+      - 'renko/renko-tv-presets-5y.js'
+      - 'renko/renko-tv-presets-5y.css'
+      - 'renko/renko-tv-atr-ui-sync.js'
+      - 'tools/renko-presets-5y-report.mjs'
+      - '.github/workflows/renko-presets-5y.yml'
+  pull_request:
+    paths:
+      - 'renko/renko-tv-presets-5y.js'
+      - 'renko/renko-tv-presets-5y.css'
+      - 'renko/renko-tv-atr-ui-sync.js'
+      - 'tools/renko-presets-5y-report.mjs'
+      - '.github/workflows/renko-presets-5y.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        viewport: [desktop, mobile]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax
+        run: |
+          node --check renko/renko-tv-presets-5y.js
+          node --check tools/renko-presets-5y-report.mjs
+      - name: Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Serve exact checkout
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/renko-preset5y-http.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8765/renko/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/renko-preset5y-http.log
+          exit 1
+      - name: Browser preset + 5Y acceptance
+        env:
+          RWA_TEST_URL: http://127.0.0.1:8765
+          RENKO_PRESET5Y_VIEWPORT: ${{ matrix.viewport }}
+          RENKO_PRESET5Y_OUT: artifacts/renko-presets-5y-${{ matrix.viewport }}
+        run: node tools/renko-presets-5y-report.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-presets-5y-${{ matrix.viewport }}-${{ github.sha }}
+          path: artifacts/renko-presets-5y-${{ matrix.viewport }}
+          retention-days: 30
+
+  public-production:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: exact-browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        viewport: [desktop, mobile]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for exact GitHub Pages SHA
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          ok=0
+          for i in $(seq 1 90); do
+            live_sha="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/deployment-sha.txt?v=${GITHUB_RUN_ID}-${i}" 2>/dev/null | tr -d '\r\n' || true)"
+            if [ "$live_sha" = "$EXPECTED_SHA" ]; then ok=1; break; fi
+            sleep 5
+          done
+          test "$ok" = "1"
+          echo "RENKO_PRESET5Y_PUBLIC_EXACT_SHA=PASS:$EXPECTED_SHA"
+      - name: Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Public browser preset + physical 5Y acceptance
+        env:
+          RWA_TEST_URL: https://copytolive.github.io/rwa
+          RENKO_PRESET5Y_VIEWPORT: ${{ matrix.viewport }}
+          RENKO_PRESET5Y_OUT: artifacts/renko-presets-5y-public-${{ matrix.viewport }}
+        run: node tools/renko-presets-5y-report.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-presets-5y-public-${{ matrix.viewport }}-${{ github.sha }}
+          path: artifacts/renko-presets-5y-public-${{ matrix.viewport }}
+          retention-days: 30

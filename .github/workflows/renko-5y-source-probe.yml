@@ -1,0 +1,33 @@
+name: RENKO 5Y Fixed 1s Source Probe
+
+on:
+  push:
+    branches:
+      - 'fix/renko-presets-5y-zero-blocking-*'
+    paths:
+      - 'tools/renko-5y-source-probe.mjs'
+      - '.github/workflows/renko-5y-source-probe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Probe archive and browser CORS
+        run: node tools/renko-5y-source-probe.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-5y-source-probe-${{ github.sha }}
+          path: artifacts/renko-5y-source-probe
+          retention-days: 14
