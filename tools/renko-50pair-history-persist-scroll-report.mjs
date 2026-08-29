@@ -22,15 +22,17 @@ await page.addInitScript(()=>{
   try{const po=new PerformanceObserver(list=>{for(const e of list.getEntries())window.__renkoHistoryScrollLongTasks.push({start:e.startTime,duration:e.duration});while(window.__renkoHistoryScrollLongTasks.length>1000)window.__renkoHistoryScrollLongTasks.shift()});po.observe({type:'longtask',buffered:true})}catch{}
 });
 
+async function readDepth(){return page.evaluate(()=>({pages:Number(RWARenkoTV?.state?.historyPages)||1,bars:Number(RWARenkoTV?.state?.closedBars?.length)||0,status:String(RWARenkoTV?.state?.status||'')}))}
 async function ensureDepth(){
-  for(let i=0;i<6;i++){
-    const pages=await page.evaluate(()=>Number(RWARenkoTV?.state?.historyPages)||1);
-    if(pages>=requiredPages)break;
-    const ok=await page.evaluate(()=>RWARenkoTV.loadOlderPage());
-    if(!ok)break;
-    await page.waitForTimeout(35);
+  let cur=await readDepth();
+  for(let i=0;i<30&&cur.pages<requiredPages;i++){
+    const before=cur;
+    void page.evaluate(()=>RWARenkoTV.loadOlderPage()).catch(()=>{});
+    try{await page.waitForFunction(({pages,bars})=>Number(RWARenkoTV?.state?.historyPages)>pages||Number(RWARenkoTV?.state?.closedBars?.length)>bars,{pages:before.pages,bars:before.bars},{timeout:3500})}catch{}
+    await page.waitForTimeout(75);
+    cur=await readDepth();
   }
-  return page.evaluate(()=>({pages:Number(RWARenkoTV.state.historyPages)||1,bars:RWARenkoTV.state.closedBars.length}));
+  return cur;
 }
 
 async function maximizeRealBricksIfNeeded(){
@@ -82,13 +84,14 @@ try{
   if(!placed.ok&&Number(placed.total)===0)await page.waitForTimeout(100);
 
   for(let i=0;i<symbols.length;i++){
-    const symbol=symbols[i];let firstFrameMs=0,switchLoadMs=0;
+    const symbol=symbols[i];let firstFrameMs=0,switchLoadMs=0,switchSnapshot=null;
     if(i>0){
       const locator=page.locator(`.pair-row[data-symbol="${symbol}"]`);if(await locator.count()!==1)throw new Error(`pair row missing ${symbol}`);
       await locator.click({force:true});
       firstFrameMs=await page.evaluate(()=>Number(document.documentElement.dataset.pairSwitchFirstFrameMs)||0);
       await page.waitForFunction(sym=>document.documentElement.dataset.pairSwitching==='false'&&document.documentElement.dataset.pairSwitchCompleted==='true'&&RWARenkoTV?.state?.status==='live'&&RWARenkoTV?.state?.symbol===sym,symbol,{timeout:30000});
       switchLoadMs=await page.evaluate(()=>Number(document.documentElement.dataset.pairSwitchLoadMs)||0);
+      switchSnapshot=await page.evaluate(()=>RWARenkoStableChart.viewport.snapshot());
     }
     const depth=await ensureDepth();const brickBoost=await maximizeRealBricksIfNeeded();placed=await placeFarHistory();
     const scroll=await physicalScrollProof();
@@ -101,11 +104,13 @@ try{
     const zeroMath=state.confirmedTotal===0&&state.renderedConfirmed===0&&state.visibleConfirmed===0;
     const countPass=state.confirmedTotal===state.visibleConfirmed&&state.confirmedTotal>=state.renderedConfirmed&&(state.confirmedTotal===0?zeroMath:state.renderedConfirmed>0);
     const farPass=total===0?zeroMath:(!snap.following&&rightGap>=farThreshold&&rightGap>0);
+    const switchHistoryPass=i===0||!!switchSnapshot&&switchSnapshot.following===false&&Number(switchSnapshot.rightGap)>0;
     const scrollPass=scroll.eventDelta>=1&&scroll.scrollAckMs<=1&&scroll.blockingMs===0&&scroll.longTaskMaxMs<50&&scroll.rangeChanged&&!scroll.after.following;
-    const pass=state.symbol===symbol&&state.status==='live'&&depth.pages>=requiredPages&&state.sourceBars>=2000&&state.method==='traditional'&&state.box>0&&state.tick>0&&countPass&&farPass&&scrollPass&&state.canvasCount>0&&state.chartEmptyDisplay==='none'&&(i===0||firstFrameMs<=1);
+    const minBars=requiredPages*900;
+    const pass=state.symbol===symbol&&state.status==='live'&&depth.pages>=requiredPages&&state.historyPages>=requiredPages&&state.sourceBars>=minBars&&state.method==='traditional'&&state.box>0&&state.tick>0&&countPass&&farPass&&switchHistoryPass&&scrollPass&&state.canvasCount>0&&state.chartEmptyDisplay==='none'&&(i===0||firstFrameMs<=1);
     const file=`${String(i+1).padStart(2,'0')}-${safe(symbol)}-far-history.png`;
     await page.screenshot({path:path.join(out,'screenshots',file),fullPage:true});
-    rows.push({index:i+1,symbol,firstFrameMs,switchLoadMs,depth,brickBoost,state,far:{snapshot:snap,farThreshold,pass:farPass},scroll,screenshot:file,pass});
+    rows.push({index:i+1,symbol,firstFrameMs,switchLoadMs,switchSnapshot,switchHistoryPass,depth,brickBoost,state,far:{snapshot:snap,farThreshold,pass:farPass},scroll,screenshot:file,pass});
     if(!pass)throw new Error(`pair failed ${symbol}: ${JSON.stringify(rows.at(-1))}`);
   }
 }catch(e){fatal=String(e?.stack||e);try{await page.screenshot({path:path.join(out,'FAIL.png'),fullPage:true})}catch{}}
@@ -114,7 +119,7 @@ const scrollAckMaxMs=Math.max(0,...rows.map(r=>Number(r.scroll?.scrollAckMs)||0)
 const switchFirstFrameMaxMs=Math.max(0,...rows.slice(1).map(r=>Number(r.firstFrameMs)||0));
 const zeroTotalSymbols=rows.filter(r=>r.state?.confirmedTotal===0).map(r=>r.symbol);
 const status=!fatal&&response?.status()>=200&&response?.status()<400&&symbols.length===50&&new Set(symbols).size===50&&rows.length===50&&rows.every(r=>r.pass)&&!pageErrors.length&&!consoleErrors.length&&scrollAckMaxMs<=1&&switchFirstFrameMaxMs<=1?'PASS':'FAIL';
-const report={schema:'renko-50pair-history-persist-far-scroll-v1',generatedAt:new Date().toISOString(),base,viewport,status,httpStatus:response?.status()||0,contract:{pairs:'exactly 50 distinct launch pairs',history:`each pair keeps at least ${requiredPages} fixed-1s history pages and the historical viewport remains away from the latest formation after switching`,screenshots:'one full-page screenshot for every pair while positioned away from the latest formation',scrollZeroMs:'physical mouse-wheel input acknowledgement <=1ms with zero >50ms blocking and a measured visible-range change; network/history loading is measured separately and is not called 0ms',countTruth:'visible CONFIRMED equals mathematical confirmed total; legitimate zero remains exactly zero and is never fabricated'},initial,symbols,summary:{count:rows.length,passCount:rows.filter(r=>r.pass).length,failedSymbols:rows.filter(r=>!r.pass).map(r=>r.symbol),zeroTotalSymbols,scrollAckMaxMs,switchFirstFrameMaxMs,sourceBarsMin:rows.length?Math.min(...rows.map(r=>r.state.sourceBars)):0,historyPagesMin:rows.length?Math.min(...rows.map(r=>r.state.historyPages)):0,screenshots:rows.length},pageErrors,consoleErrors,fatal,rows};
+const report={schema:'renko-50pair-history-persist-far-scroll-v2',generatedAt:new Date().toISOString(),base,viewport,status,httpStatus:response?.status()||0,contract:{pairs:'exactly 50 distinct launch pairs',history:`each pair keeps at least ${requiredPages} fixed-1s history pages and the historical viewport remains away from the latest formation after switching`,screenshots:'one full-page screenshot for every pair while positioned away from the latest formation',scrollZeroMs:'physical mouse-wheel input acknowledgement <=1ms with zero >50ms blocking and a measured visible-range change; network/history loading is measured separately and is not called 0ms',countTruth:'visible CONFIRMED equals mathematical confirmed total; legitimate zero remains exactly zero and is never fabricated'},initial,symbols,summary:{count:rows.length,passCount:rows.filter(r=>r.pass).length,failedSymbols:rows.filter(r=>!r.pass).map(r=>r.symbol),zeroTotalSymbols,scrollAckMaxMs,switchFirstFrameMaxMs,sourceBarsMin:rows.length?Math.min(...rows.map(r=>r.state.sourceBars)):0,historyPagesMin:rows.length?Math.min(...rows.map(r=>r.state.historyPages)):0,screenshots:rows.length},pageErrors,consoleErrors,fatal,rows};
 fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));
 console.log('RENKO_50PAIR_HISTORY_SCROLL '+JSON.stringify({status,summary:report.summary,fatal}));
 await browser.close();if(status!=='PASS')process.exit(2);
