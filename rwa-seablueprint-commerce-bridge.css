@@ -20,3 +20,12 @@ html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open #rwaShopScreen,
 html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open #rwaShopScreen *{
   transition:none!important;transition-duration:0s!important;transition-delay:0s!important;animation:none!important;animation-duration:0s!important;animation-delay:0s!important;
 }
+/* Peer contextual launchers are hidden by the target-v2 legacy chrome. Once Ecommerce is closed,
+   Multi Chain must return on mobile. State exclusions keep it hidden while either contextual panel owns the screen. */
+@media(max-width:680px){
+  html body.rwa-target-dashboard-v2:not(.rwa-seablueprint-commerce-open):not(.rwa-multichain-open) #rwaMultiChainLaunch.rwa-multichain-launch{
+    display:inline-flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+    position:fixed!important;left:104px!important;right:auto!important;bottom:72px!important;z-index:12050!important;
+    width:36px!important;min-width:36px!important;height:36px!important;padding:0!important;border-radius:18px!important;
+  }
+}
