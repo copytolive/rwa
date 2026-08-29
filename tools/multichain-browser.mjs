@@ -9,7 +9,7 @@ const SOL='11111111111111111111111111111111';
 const chainIds=[1,42161,8453,56,137,43114,143];
 await mkdir(OUT,{recursive:true});
 const browser=await chromium.launch({headless:true});
-const report={contract:'rwa-multichain-browser-v2',url:URL,ok:true,viewports:[],errors:[]};
+const report={contract:'rwa-multichain-browser-v2.1-context-lifecycle',url:URL,ok:true,viewports:[],errors:[]};
 
 function chain(id){
   const symbol=id===56?'BNB':id===137?'POL':id===43114?'AVAX':id===143?'MON':'ETH';
@@ -23,6 +23,7 @@ async function diagnostics(page,label){
   return page.evaluate(label=>({
     label,
     hash:location.hash,
+    commerceOpen:!!document.querySelector('#rwaShopScreen.open'),
     runtime:window.RWAMultiChain?.version||null,
     engine:window.RWAMultiChainEngine?.version||null,
     status:window.RWAMultiChain?.status?.()||null,
@@ -83,6 +84,15 @@ async function runViewport(width,height,label){
   await page.route('**/launch/readiness.json',r=>r.fulfill({json:{status:'BLOCKED',mainnet_ready:false}}));
 
   await page.goto(URL,{waitUntil:'domcontentloaded',timeout:45000});
+  await page.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.6.0'||document.querySelector('#rwaMultiChainLaunch'),null,{timeout:15000});
+  /* Context panels are mutually exclusive by design. If Ecommerce owns the right dock on first paint,
+     close it before testing the lazy Multi Chain launcher. This proves peer-panel lifecycle rather than
+     incorrectly requiring both contextual panels to be visible at the same time. */
+  const commerceWasOpen=await page.locator('#rwaShopScreen.open').isVisible().catch(()=>false);
+  if(commerceWasOpen){
+    await page.evaluate(()=>window.RWASeablueprintCommerceBridge?.close?.({restore:false}));
+    await page.waitForFunction(()=>location.hash!=='#shop'&&!document.querySelector('#rwaShopScreen')?.classList.contains('open'),null,{timeout:8000});
+  }
   await page.waitForSelector('#rwaMultiChainLaunch',{state:'visible',timeout:15000});
   const before=await page.evaluate(()=>({runtime:window.RWAMultiChain?.version||null,staticScripts:document.querySelectorAll('body > script[src]').length}));
   if(before.runtime)throw Error(`${label}: runtime must be lazy before first click`);
@@ -140,7 +150,7 @@ async function runViewport(width,height,label){
   const closedChart=await page.evaluate(token=>document.querySelector('.chart-wrap')?.dataset.multichainProof===token,chartToken);
   if(!closedChart)throw Error(`${label}: chart changed after close`);
   if(width<=680&&!(await page.locator('#rwaMultiChainLaunch').isVisible()))throw Error(`${label}: mobile launcher must return after close`);
-  report.viewports.push({label,width,height,cards,panelWidth:panelBox.width,policy:status.policy,engine:status.engine,quote:'Base→Solana USDC',mainnetLocked:true,firstPaintStaticScripts:before.staticScripts,pageErrors,consoleErrors,directWrites,chartSurvived:true});
+  report.viewports.push({label,width,height,cards,panelWidth:panelBox.width,policy:status.policy,engine:status.engine,quote:'Base→Solana USDC',mainnetLocked:true,firstPaintStaticScripts:before.staticScripts,commerceWasOpen,pageErrors,consoleErrors,directWrites,chartSurvived:true});
   if(pageErrors.length)report.errors.push(...pageErrors.map(x=>`${label}: ${x}`));
   const benignConsole=/Failed to load resource|Cannot listen to the event from the provided iframe, contentWindow is not available/;
   if(consoleErrors.length)report.errors.push(...consoleErrors.filter(x=>!benignConsole.test(x)).map(x=>`${label} console: ${x}`));
