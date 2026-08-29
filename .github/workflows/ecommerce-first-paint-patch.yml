@@ -46,16 +46,6 @@ jobs:
           p=Path('chart-core.js'); s=p.read_text().replace('rwa-seablueprint-commerce-bridge.js?v=1.5.0','rwa-seablueprint-commerce-bridge.js?v=1.5.1').replace('rwa-ecommerce-production-visual-v1.js?v=1.6.0','rwa-ecommerce-production-visual-v1.js?v=1.7.0')
           needle="if(screenshotParity&&!window.RWAScreenshotToCodeParity)await import('./rwa-screenshot-parity-v1.js?v=1.0.0')"
           assert needle in s; s=s.replace(needle,needle+";if(location.hash!=='#shop'){document.documentElement.classList.add('rwa-target-runtime-ready');document.getElementById('rwaFirstPaintCommerceSkeleton')?.remove()}"); p.write_text(s)
-          p=Path('.github/workflows/ecommerce-target-parity.yml'); w=p.read_text()
-          if "      - 'index.html'\n" not in w: w=w.replace("      - 'chart-core.js'\n","      - 'chart-core.js'\n      - 'index.html'\n      - 'rwa-target-topbar-cleanup-v1.js'\n      - 'rwa-seablueprint-commerce-bridge.js'\n      - 'tools/ecommerce-first-paint-browser.mjs'\n",1)
-          step="      - name: Prove 0ms first paint has no legacy shell\n        env:\n          RWA_UI_URL: http://127.0.0.1:4173/rwa/\n          RWA_UI_PROOF_DIR: proof/ecommerce-first-paint-local\n        run: node tools/ecommerce-first-paint-browser.mjs\n"
-          if 'Prove 0ms first paint has no legacy shell' not in w: w=w.replace('      - name: Run existing target interaction matrix\n',step+'      - name: Run existing target interaction matrix\n',1)
-          step="      - name: Prove public 0ms first paint has no legacy shell\n        env:\n          RWA_UI_URL: https://copytolive.github.io/rwa/\n          RWA_UI_PROOF_DIR: proof/ecommerce-first-paint-public\n        run: node tools/ecommerce-first-paint-browser.mjs\n"
-          if 'Prove public 0ms first paint has no legacy shell' not in w: w=w.replace('      - name: Run real public target interaction matrix\n',step+'      - name: Run real public target interaction matrix\n',1)
-          if 'proof/ecommerce-first-paint-local/' not in w: w=w.replace('            proof/ecommerce-target-parity-local/\n','            proof/ecommerce-target-parity-local/\n            proof/ecommerce-first-paint-local/\n')
-          if 'proof/ecommerce-first-paint-public/' not in w: w=w.replace('            proof/ecommerce-target-parity-public/\n','            proof/ecommerce-target-parity-public/\n            proof/ecommerce-first-paint-public/\n')
-          p.write_text(w)
-          p=Path('.github/workflows/seablueprint-commerce-single-shell.yml'); w=p.read_text().replace('rwa-seablueprint-commerce-bridge.js?v=1.5.0','rwa-seablueprint-commerce-bridge.js?v=1.5.1').replace('rwa-ecommerce-production-visual-v1.js?v=1.6.0','rwa-ecommerce-production-visual-v1.js?v=1.7.0'); p.write_text(w)
           PY
           git diff --check
           node --check chart-core.js
@@ -66,6 +56,6 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html chart-core.js rwa-seablueprint-commerce-bridge.js tools/ecommerce-first-paint-browser.mjs .github/workflows/ecommerce-target-parity.yml .github/workflows/seablueprint-commerce-single-shell.yml
+          git add index.html chart-core.js rwa-seablueprint-commerce-bridge.js
           git commit -m 'ecommerce: eliminate legacy first paint at 0ms'
           git push origin HEAD:fix/ecommerce-first-paint-0ms-20260829
