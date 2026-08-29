@@ -45,7 +45,7 @@ jobs:
           grep -Fq 'historyViews' renko/renko-tv-switch-fast.js
           grep -Fq 'restoreHistory' renko/renko-tv-switch-fast.js
           grep -Fq 'renkoScrollHandlerMs' renko/renko-tv-stable-chart-v2.js
-          grep -Fq 'renko-tv-stable-chart-v2.js?v=184' renko/index.html
+          grep -Fq 'renko-tv-stable-chart-v2.js?v=185' renko/index.html
           grep -Fq 'renko-tv-switch-fast.js?v=3' renko/index.html
       - name: Install Chromium
         run: |
