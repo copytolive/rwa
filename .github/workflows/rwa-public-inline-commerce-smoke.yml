@@ -1,0 +1,58 @@
+name: RWA Public Inline Commerce Smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'chart-core.js'
+      - 'rwa-target-dashboard-v2.js'
+      - 'rwa-target-dashboard-v2.css'
+      - 'rwa-target-dashboard-v2-hardening.js'
+      - 'rwa-target-dashboard-v2-hardening.css'
+      - 'rwa-seablueprint-commerce-bridge.js'
+      - 'rwa-seablueprint-commerce-bridge.css'
+      - 'tools/launch-ui-final-browser.mjs'
+      - '.github/workflows/rwa-public-inline-commerce-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Wait for exact Pages deployment
+        shell: bash
+        run: |
+          set -euxo pipefail
+          url='https://copytolive.github.io/rwa/chart-core.js'
+          for i in $(seq 1 60); do
+            body="$(curl -fsSL --max-time 20 "${url}?sha=${GITHUB_SHA}&n=${i}" || true)"
+            if grep -Fq "rwa-seablueprint-commerce-bridge.js?v=1.4.0" <<<"$body" && grep -Fq "rwa-target-dashboard-v2-hardening.js?v=2.0.2" <<<"$body"; then
+              echo "Exact inline-commerce assets are public"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo 'Pages did not publish the expected inline-commerce assets in time' >&2
+          exit 1
+      - name: Run public desktop mobile browser matrix
+        env:
+          RWA_UI_URL: https://copytolive.github.io/rwa/
+          RWA_UI_PROOF_DIR: proof/public-inline-commerce
+        run: node tools/launch-ui-final-browser.mjs
+      - name: Upload public browser proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-inline-commerce-${{ github.sha }}
+          path: proof/public-inline-commerce/
+          if-no-files-found: error
+          retention-days: 30
