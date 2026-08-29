@@ -1,0 +1,47 @@
+name: Cleanup Legacy Root Once
+on:
+  push:
+    branches: [fix/ecommerce-first-paint-0ms-20260829]
+    paths:
+      - '.github/workflows/cleanup-legacy-root-once.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/ecommerce-first-paint-0ms-20260829
+      - name: Remove legacy root startup path
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p=Path('index.html')
+          s=p.read_text()
+          old="const h=document.documentElement;h.classList.add('rwa-target-prepaint');if(location.hash==='#shop')h.classList.add('rwa-target-prepaint-shop');"
+          new="const h=document.documentElement;if(!location.hash){try{history.replaceState(history.state,'',location.pathname+location.search+'#shop')}catch{location.hash='#shop'}}h.classList.add('rwa-target-prepaint');if(location.hash==='#shop')h.classList.add('rwa-target-prepaint-shop');"
+          if old not in s: raise SystemExit('index prepaint marker not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+
+          p=Path('superapp-v5.js')
+          s=p.read_text()
+          old="function installShell(){\n  const top=document.querySelector('.topnav');"
+          new="function installShell(){\n  if(document.body?.classList.contains('rwa-target-dashboard-v2')){installWorkspace();installQuickDock();installTicker();return}\n  const top=document.querySelector('.topnav');"
+          if old not in s: raise SystemExit('installShell marker not found')
+          s=s.replace(old,new,1)
+          old="  if(name==='markets'){showMarketShell();scrollToTerminal();return}"
+          new="  if(name==='shop'){showMarketShell();setActive('markets');return}\n  if(name==='markets'){showMarketShell();scrollToTerminal();return}"
+          if old not in s: raise SystemExit('applyRoute marker not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Commit cleanup
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html superapp-v5.js
+          git commit -m 'ecommerce: make new shell the root first paint'
+          git push origin HEAD:fix/ecommerce-first-paint-0ms-20260829
