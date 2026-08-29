@@ -1,4 +1,6 @@
-RENKO same-SHA public verification trigger.
-Purpose: trigger every renko/** GitHub Actions production gate after adding the public Current Production Browser Contract.
-Date: 2026-08-29.
+RENKO final same-SHA public production closure trigger.
+Purpose: trigger every renko/** GitHub Actions gate against one exact main commit after the visible ATR single-owner, tiny-price precision, zero-ATR fallback, Traditional, total-history, XAUT fixed-1s, and public browser contracts are present.
+Source of truth: RENKO_NEW_CHAT_HANDOFF_FULL_2026-08-28(1).docx.
+Acceptance: fixed 1s only; desktop + mobile; ATR all launch pairs; anti-pulse stability; Traditional all launch pairs; 50-pair full history; GOLD total history; XAUT OKX fixed-1s seven ATR lengths; exact GitHub Pages SHA; public browser evidence.
+Final closure trigger: 2026-08-30.
 No runtime behavior is changed by this witness file.
