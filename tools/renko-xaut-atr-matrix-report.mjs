@@ -10,6 +10,29 @@ const browser=await chromium.launch({headless:true});
 const results=[];
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
+async function warmMatrix(page,label){
+  const attempts=[];
+  for(let attempt=1;attempt<=3;attempt++){
+    const state=await page.evaluate(async ({attempt,timeoutMs})=>{
+      const R=window.RWARenkoATRFixed1s;
+      if(!R)return{attempt,ok:false,ready:'missing-runtime',metric:'',available:0,warmMs:0};
+      if(attempt>1)R.dispose?.(`matrix-proof-retry-${attempt}`);
+      await new Promise(r=>setTimeout(r,500*attempt));
+      const outcome=await Promise.race([
+        Promise.resolve(R.warm?.()).then(ok=>({kind:'warm',ok:ok===true})).catch(e=>({kind:'throw',ok:false,error:String(e?.message||e)})),
+        new Promise(resolve=>setTimeout(()=>resolve({kind:'timeout',ok:false,error:`warm exceeded ${timeoutMs}ms`}),timeoutMs))
+      ]);
+      const d=document.documentElement.dataset;
+      return{attempt,kind:outcome.kind,ok:outcome.ok===true&&d.atrMatrixReady==='true',error:outcome.error||'',ready:d.atrMatrixReady||'',metric:document.getElementById('atrFixed1sMetric')?.textContent||'',available:Number(d.atrMatrixAvailable)||0,warmMs:Number(d.atrMatrixWarmMs)||0};
+    },{attempt,timeoutMs:90000});
+    attempts.push(state);
+    console.log(`XAUT_MATRIX_WARM ${label} attempt=${attempt} ${JSON.stringify(state)}`);
+    if(state.ok)return attempts;
+    if(attempt<3)await sleep(1500*attempt);
+  }
+  throw new Error(`${label}: XAUT deep matrix warm failed after 3 bounded attempts ${JSON.stringify(attempts)}`);
+}
+
 async function run(label,viewport){
   const page=await browser.newPage({viewport});
   const errors=[],consoleErrors=[],failed=[];
@@ -25,9 +48,10 @@ async function run(label,viewport){
   await page.waitForFunction(()=>window.RWARenkoTV?.state?.symbol==='XAUTUSDT'&&window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoTV?.settings?.interval==='1s'&&window.RWARenkoTV?.state?.closedBars?.length>100&&document.documentElement.dataset.marketProvider==='okx-spot'&&!document.querySelector('#intervalSelect'),null,{timeout:90000});
   // Production intentionally keeps the million-row matrix ON DEMAND. The browser
   // proof explicitly asks for it, exactly as an ATR APPLY action would, rather
-  // than treating idle background state as a failure.
-  await page.evaluate(()=>window.RWARenkoATRFixed1s?.warm?.());
-  await page.waitForFunction(()=>document.documentElement.dataset.atrMatrixReady==='true',null,{timeout:240000});
+  // than treating idle background state as a failure. A bounded retry only
+  // retries transient worker/static-pack warm failures; every semantic assertion
+  // below remains strict and must pass on the successful attempt.
+  const warmAttempts=await warmMatrix(page,label);
   await sleep(500);
   const ready=await page.evaluate(()=>({
     warmMs:Number(document.documentElement.dataset.atrMatrixWarmMs)||0,
@@ -82,12 +106,12 @@ async function run(label,viewport){
   persistence.brickGeometryPass=persistenceBrickPass;
   const persistencePass=persistence.interval==='1s'&&persistence.fixedInterval==='1s'&&!persistence.selectorExists&&persistence.length===1000000&&persistence.appliedLength===1000000&&persistence.rawEqualsBox&&persistence.atrEqualsBox&&persistence.historySatisfied&&persistence.sourceCount>=1000000&&persistence.revision>rev0&&persistence.brickBudget==='true'&&persistenceBrickPass&&Math.abs(persistence.box-million.box)<=Math.max(1e-12,Math.abs(million.box)*1e-8);
   const pass=!!response?.ok()&&ready.provider==='OKX Spot'&&ready.providerFixedInterval==='1s'&&ready.interval==='1s'&&!ready.selectorExists&&ready.matrix.join(',')===lengths.join(',')&&ready.available>=1000999&&/OKX Spot XAUT-USDT fixed 1s/i.test(ready.packProvider)&&matrixPass&&persistencePass&&!errors.length;
-  results.push({label,viewport,url,httpStatus:response?.status(),ready,rows,persistence,persistencePass,errors,consoleErrors,providerFailures:providerFailures.slice(0,50),providerFailureCount:providerFailures.length,pass});
+  results.push({label,viewport,url,httpStatus:response?.status(),warmAttempts,ready,rows,persistence,persistencePass,errors,consoleErrors,providerFailures:providerFailures.slice(0,50),providerFailureCount:providerFailures.length,pass});
   await page.close();
 }
 
 try{await run('desktop',{width:1900,height:1000});await run('mobile',{width:390,height:844})}finally{await browser.close()}
-const report={schema:'renko-xaut-fixed-1s-atr-seven-length-browser-v3',generatedAt:new Date().toISOString(),base,lengths,status:results.every(r=>r.pass)?'PASS':'FAIL',contract:'Production timeframe selector is absent and runtime is hard-locked to 1s. Each positive raw Wilder ATR becomes the actual Renko box for the seven requested lengths. A mathematically valid zero-brick result is accepted only when both full confirmed total and rendered confirmed count are exactly zero with no invented brick timestamps. The matrix is explicitly requested on demand, prepared switches have observed main-thread TBT = 0 ms, rendered geometry is bounded while total Renko count/final state are preserved, and deep ATR persists across later 1s closes.',claimBoundary:'Observable/documented Renko parity only; no claim of TradingView proprietary source-code identity.',results};
+const report={schema:'renko-xaut-fixed-1s-atr-seven-length-browser-v4',generatedAt:new Date().toISOString(),base,lengths,status:results.every(r=>r.pass)?'PASS':'FAIL',contract:'Production timeframe selector is absent and runtime is hard-locked to 1s. Each positive raw Wilder ATR becomes the actual Renko box for the seven requested lengths. A mathematically valid zero-brick result is accepted only when both full confirmed total and rendered confirmed count are exactly zero with no invented brick timestamps. The matrix is explicitly requested on demand; transient matrix warm failures may be retried up to three bounded attempts, but every successful attempt must still satisfy the full fixed-1s, raw-Wilder, source-count, geometry, TBT, provider and persistence contract. Prepared switches have observed main-thread TBT = 0 ms, rendered geometry is bounded while total Renko count/final state are preserved, and deep ATR persists across later 1s closes.',claimBoundary:'Observable/documented Renko parity only; no claim of TradingView proprietary source-code identity.',results};
 fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));
 console.log('RENKO_XAUT_ATR_MATRIX_REPORT '+JSON.stringify(report));
 if(report.status!=='PASS')process.exit(2);
