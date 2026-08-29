@@ -16,7 +16,7 @@ if(window.RWARenkoATRControl)return;
 const XAUT='XAUTUSDT';
 const STORE='rwa_renko_tradingview_settings_v1';
 const tv=()=>window.RWARenkoTV||null;
-const stats={autoLocks:0,explicitLocks:0,clears:0,lastSymbol:'',lastLength:0,lastBox:NaN,lastAt:0};
+const stats={autoLocks:0,explicitLocks:0,clears:0,deepHistoryRetries:0,lastSymbol:'',lastLength:0,lastBox:NaN,lastAt:0};
 const parse=v=>{const n=Math.floor(Number(v));return Number.isFinite(n)&&n>=1?n:14};
 const same=(a,b)=>Math.abs(Number(a)-Number(b))<=Math.max(1e-12,Math.abs(Number(b))*1e-10);
 function isLocal(){const T=tv();return !!T&&!!T.state?.symbol&&T.state.symbol!==XAUT}
@@ -39,7 +39,7 @@ function markStable(T,box,reason='auto'){
 function autoLock(reason='symbol-ready'){
   const T=tv();if(!T||T.state?.status!=='live'||T.settings?.method!=='atr'||T.state?.symbol===XAUT)return false;
   const existing=Number(T.settings._exactBox);if(Number.isFinite(existing)&&existing>0)return true;
-  const box=Number(T.state?.box),atr=Number(T.state?.atr),next=Number.isFinite(box)&&box>0?box:atr;
+  const box=Number(T.state?.box),atr=Number(T.state?.atr),next=Number.isFinite(atr)&&atr>0?atr:Number.isFinite(box)&&box>0?box:NaN;
   return markStable(T,next,reason);
 }
 async function ensureHistory(T,n){
@@ -47,6 +47,11 @@ async function ensureHistory(T,n){
   let guard=0;
   while((T.state?.closedBars?.length||0)<n&&Number(T.state?.historyPages||0)<5&&guard++<5){const before=T.state.closedBars.length,ok=await T.loadOlderPage?.();if(!ok||T.state.closedBars.length<=before)break}
   return (T.state?.closedBars?.length||0)>=n;
+}
+function sample(T){
+  T.rebuild({fit:false});
+  const raw=Number(T.state.atr),box=Number(T.state.box),available=Number(T.state.closedBars.length||0),pass=Number.isFinite(raw)&&raw>0&&Number.isFinite(box)&&box>0&&same(raw,box);
+  return{raw,box,available,pass};
 }
 async function applyLocal(value,source='control'){
   const T=tv();if(!T||T.state?.symbol===XAUT)return false;
@@ -57,14 +62,25 @@ async function applyLocal(value,source='control'){
   }
   window.dispatchEvent(new CustomEvent('renko:atr-control-before-apply',{detail:{symbol,length:n,source}}));clearStable('explicit-apply-refresh');
   delete T.state.atrMatrixPrepared;delete T.state.atrRaw;delete T.state.atrHistorySatisfied;delete T.state.atrAppliedLength;
-  save(T,n);T.rebuild({fit:false});
-  const raw=Number(T.state.atr),box=Number(T.state.box),available=Number(T.state.closedBars.length||0),pass=Number.isFinite(raw)&&raw>0&&Number.isFinite(box)&&box>0&&same(raw,box);
+  save(T,n);
+  let sampled=sample(T),deepenedPages=0;
+  // A liquid symbol can occasionally return a latest 1000×1s window with no
+  // price movement at all. Wilder ATR for that isolated window is exactly zero.
+  // That is not a valid positive raw ATR box, so extend the SAME fixed-1s source
+  // backward (never change timeframe/provider) and recompute until a positive
+  // Wilder seed exists or the normal five-page history budget is exhausted.
+  while(!sampled.pass&&Number(T.state?.historyPages||0)<5){
+    const before=Number(T.state?.closedBars?.length||0),ok=await T.loadOlderPage?.();
+    if(!ok||Number(T.state?.closedBars?.length||0)<=before)break;
+    deepenedPages++;stats.deepHistoryRetries++;sampled=sample(T);
+  }
+  const raw=sampled.raw,box=sampled.box,available=sampled.available,pass=sampled.pass;
   if(pass)markStable(T,raw,'explicit-apply');
-  Object.assign(T.state,{atrRaw:raw,atrRequestedLength:n,atrAppliedLength:n,atrHistorySatisfied:pass,atrHistorySourceCount:available,atrHistoryFrom:Number(T.state.closedBars[0]?.openTime)||0,atrHistoryTo:Number(T.state.closedBars.at(-1)?.closeTime)||0,atrHistoryGeneration:T.state.generation,atrMatrixPrepared:false,atrMatrixProvider:'Binance spot fixed 1s',atrBoxFrozen:pass,atrBoxFrozenAt:pass?Date.now():0});
-  Object.assign(document.documentElement.dataset,{atrControlStatus:pass?'active':'error',atrControlLength:String(n),atrControlAvailable:String(available),atrControlSymbol:symbol,atrLength:String(n),atrAppliedLength:String(n),atrHistorySatisfied:pass?'true':'false',atrRawBoxPass:pass?'true':'false',atrDisplayOwner:'app-updateMeta'});
+  Object.assign(T.state,{atrRaw:raw,atrRequestedLength:n,atrAppliedLength:n,atrHistorySatisfied:pass,atrHistorySourceCount:available,atrHistoryFrom:Number(T.state.closedBars[0]?.openTime)||0,atrHistoryTo:Number(T.state.closedBars.at(-1)?.closeTime)||0,atrHistoryGeneration:T.state.generation,atrMatrixPrepared:false,atrMatrixProvider:'Binance spot fixed 1s',atrHistoryDeepenedPages:deepenedPages,atrBoxFrozen:pass,atrBoxFrozenAt:pass?Date.now():0});
+  Object.assign(document.documentElement.dataset,{atrControlStatus:pass?'active':'error',atrControlLength:String(n),atrControlAvailable:String(available),atrControlSymbol:symbol,atrLength:String(n),atrAppliedLength:String(n),atrHistorySatisfied:pass?'true':'false',atrRawBoxPass:pass?'true':'false',atrDeepenedPages:String(deepenedPages),atrDisplayOwner:'app-updateMeta'});
   const inp=document.getElementById('atrLength');if(inp){inp.value=String(n);inp.dataset.appliedLength=String(n)}const src=document.getElementById('sourceBarCount');if(src)src.textContent=available.toLocaleString();
-  badge(pass?`ACTIVE · ${n}`:`ERROR · ${n}`);load(pass?`LIVE · fixed 1s · ATR ${n.toLocaleString()} · ${available.toLocaleString()} Binance 1s bars · stable box`:`ATR ${n.toLocaleString()} could not produce a valid box`,pass);
-  window.dispatchEvent(new CustomEvent('renko:atr-control-applied',{detail:{symbol,length:n,pass,rawAtr:raw,box,available,source,stableBox:pass}}));return pass;
+  badge(pass?`ACTIVE · ${n}`:`ERROR · ${n}`);load(pass?`LIVE · fixed 1s · ATR ${n.toLocaleString()} · ${available.toLocaleString()} Binance 1s bars · stable box`:`ATR ${n.toLocaleString()} could not produce a positive raw Wilder box from ${available.toLocaleString()} fixed-1s bars`,pass);
+  window.dispatchEvent(new CustomEvent('renko:atr-control-applied',{detail:{symbol,length:n,pass,rawAtr:raw,box,available,deepenedPages,source,stableBox:pass}}));return pass;
 }
 function fromInput(source){return applyLocal(document.getElementById('atrLength')?.value,source)}
 // The exact ATR box is ephemeral. Discard any value restored from localStorage
@@ -76,5 +92,5 @@ document.addEventListener('click',e=>{const b=e.target?.closest?.('[data-apply-m
 document.addEventListener('click',e=>{const b=e.target?.closest?.('[data-apply-method="atr"]');if(!b||!isLocal())return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();void fromInput('click')},true);
 const input=document.getElementById('atrLength');if(input){input.addEventListener('keydown',e=>{if(e.key!=='Enter'||!isLocal())return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();void fromInput('enter')},true);input.addEventListener('change',e=>{if(!isLocal())return;e.stopPropagation();e.stopImmediatePropagation();void fromInput('change')},true)}
 window.addEventListener('renko:tv-ready',()=>queueMicrotask(()=>autoLock('tv-ready')));window.addEventListener('renko:symbol-switch-end',e=>{if(e.detail?.ok!==false)queueMicrotask(()=>autoLock('symbol-ready'))});
-window.RWARenkoATRControl={version:'1.3.1',rule:'xaut-deep-matrix-other-pairs-local-fixed1s-atr-snapshot-box-stable-between-closes-runtime-only-single-owner-display',applyLocal,ensureHistory,isLocal,autoLock,markStable,clearStable,stats};
+window.RWARenkoATRControl={version:'1.3.2',rule:'xaut-deep-matrix-other-pairs-local-fixed1s-positive-wilder-deepen-same-source-atr-snapshot-box-stable-between-closes-runtime-only-single-owner-display',applyLocal,ensureHistory,isLocal,autoLock,markStable,clearStable,stats};
 })();
