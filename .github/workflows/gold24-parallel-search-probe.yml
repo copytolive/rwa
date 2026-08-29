@@ -1,0 +1,217 @@
+name: GOLD v11 Parallel Search Simulation Probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backtest/gold24/PARALLEL_SEARCH_PROBE_KICK'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: gold24-v11-parallel-search-probe-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  SHARD_COUNT: '20'
+  RAW_CURSOR_COUNT: '200000'
+  MAX_SIMULATIONS_PER_SHARD: '8'
+
+jobs:
+  preflight:
+    name: Freeze canonical source + probe input
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      source_run_id: ${{ steps.source.outputs.run_id }}
+      source_batch: ${{ steps.source.outputs.batch }}
+      source_cursor: ${{ steps.source.outputs.cursor }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install probe dependencies
+        run: pip install -r backtest/gold24/requirements.txt
+
+      - name: Selftest probe
+        run: python backtest/gold24/parallel_search_probe.py selftest
+
+      - name: Resolve frozen canonical source
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY' > "$RUNNER_TEMP/source.env"
+          import json, pathlib
+          x=json.loads(pathlib.Path('backtest/gold24/runtime_v11/latest_validation_summary.json').read_text())
+          assert x.get('validation') == 'PASS'
+          assert x.get('restored_previous_state') is True
+          assert x.get('gate_a_strict',{}).get('gate_a') == 'PASS'
+          assert x.get('simulation_executed') is True
+          assert x.get('strategy_engine') == 'RUNNING'
+          print('RUN_ID=' + str(x['github_run_id']))
+          print('BATCH=' + str(x['batch']))
+          print('CURSOR=' + str(x['candidate_cursor']))
+          PY
+          source "$RUNNER_TEMP/source.env"
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "batch=$BATCH" >> "$GITHUB_OUTPUT"
+          echo "cursor=$CURSOR" >> "$GITHUB_OUTPUT"
+          echo "source_run_id=$RUN_ID source_batch=$BATCH source_cursor=$CURSOR"
+
+      - name: Download canonical artifact once and build compact probe input
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$RUNNER_TEMP/canonical-source" "$RUNNER_TEMP/probe-input"
+          mkdir -p "$RUNNER_TEMP/canonical-source" "$RUNNER_TEMP/probe-input/gate_a"
+          gh run download "${{ steps.source.outputs.run_id }}" --repo "$GITHUB_REPOSITORY" \
+            -n gold24-canonical-v11-state -D "$RUNNER_TEMP/canonical-source"
+          test -s "$RUNNER_TEMP/canonical-source/gold24-v11.db"
+          test -s "$RUNNER_TEMP/canonical-source/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv"
+          test -s "$RUNNER_TEMP/canonical-source/gate_a/gate_a_receipt.json"
+          cp "$RUNNER_TEMP/canonical-source/gold24-v11.db" "$RUNNER_TEMP/probe-input/gold24-v11.db"
+          cp "$RUNNER_TEMP/canonical-source/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv" "$RUNNER_TEMP/probe-input/gate_a/"
+          cp "$RUNNER_TEMP/canonical-source/gate_a/gate_a_receipt.json" "$RUNNER_TEMP/probe-input/gate_a/"
+          python - "$RUNNER_TEMP/probe-input/gold24-v11.db" "${{ steps.source.outputs.cursor }}" <<'PY'
+          import sqlite3,sys
+          db=sqlite3.connect(sys.argv[1])
+          configs=db.execute('SELECT COUNT(*) FROM configs').fetchone()[0]
+          cursor=int(db.execute("SELECT v FROM state WHERE k='candidate_cursor'").fetchone()[0])
+          db.close()
+          expected=int(sys.argv[2])
+          assert cursor == expected, f'candidate cursor mismatch: db={cursor}, validation={expected}'
+          print(f'compact probe input: configs={configs} cursor={cursor}')
+          PY
+
+      - name: Upload compact frozen probe input
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold24-v11-parallel-probe-input
+          path: ${{ runner.temp }}/probe-input/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 2
+          compression-level: 6
+
+  shard:
+    name: Simulation shard ${{ matrix.shard }} / 20
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install probe dependencies
+        run: pip install -r backtest/gold24/requirements.txt
+
+      - name: Download frozen compact input
+        uses: actions/download-artifact@v4
+        with:
+          name: gold24-v11-parallel-probe-input
+          path: probe-input
+
+      - name: Run isolated canonical-semantics simulation probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p probe-output
+          INDEX='${{ matrix.shard }}'
+          OUT="probe-output/shard_$(printf '%02d' "$INDEX").json"
+          python backtest/gold24/parallel_search_probe.py shard \
+            --baseline-db probe-input/gold24-v11.db \
+            --dataset probe-input/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv \
+            --crosscheck probe-input/gate_a/gate_a_receipt.json \
+            --timeframe D1 \
+            --flat-lot 1.0 \
+            --start-cursor '${{ needs.preflight.outputs.source_cursor }}' \
+            --raw-count "$RAW_CURSOR_COUNT" \
+            --shard-index "$INDEX" \
+            --shard-count "$SHARD_COUNT" \
+            --max-simulations "$MAX_SIMULATIONS_PER_SHARD" \
+            --source-run-id '${{ needs.preflight.outputs.source_run_id }}' \
+            --source-batch '${{ needs.preflight.outputs.source_batch }}' \
+            --source-candidate-cursor '${{ needs.preflight.outputs.source_cursor }}' \
+            --out "$OUT"
+
+      - name: Upload immutable shard evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold24-v11-search-probe-shard-${{ matrix.shard }}
+          path: probe-output/shard_*.json
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 6
+
+  aggregate:
+    name: Central novelty + exact-ledger aggregate
+    needs: [preflight, shard]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install aggregate dependencies
+        run: pip install -r backtest/gold24/requirements.txt
+
+      - name: Download all shard evidence
+        uses: actions/download-artifact@v4
+        with:
+          pattern: gold24-v11-search-probe-shard-*
+          path: probe-all
+          merge-multiple: true
+
+      - name: Restore full frozen baseline locally for exact-ledger authority
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$GITHUB_WORKSPACE/.gold24-canonical-v11"
+          mkdir -p "$GITHUB_WORKSPACE/.gold24-canonical-v11"
+          gh run download '${{ needs.preflight.outputs.source_run_id }}' --repo "$GITHUB_REPOSITORY" \
+            -n gold24-canonical-v11-state -D "$GITHUB_WORKSPACE/.gold24-canonical-v11"
+          test -s "$GITHUB_WORKSPACE/.gold24-canonical-v11/gold24-v11.db"
+          test -d "$GITHUB_WORKSPACE/.gold24-canonical-v11/ledgers_v11"
+
+      - name: Aggregate without canonical mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python backtest/gold24/parallel_search_probe.py aggregate \
+            --input-root probe-all \
+            --baseline-db "$GITHUB_WORKSPACE/.gold24-canonical-v11/gold24-v11.db" \
+            --expected-shards "$SHARD_COUNT" \
+            --out probe-proof.json
+          cat probe-proof.json
+
+      - name: Upload aggregate simulation proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold24-v11-parallel-search-probe-proof
+          path: probe-proof.json
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
