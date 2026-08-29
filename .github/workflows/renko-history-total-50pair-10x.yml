@@ -1,0 +1,136 @@
+name: RENKO 50 Pair Full History 10x Zero-ms Gate
+on:
+  push:
+    branches:
+      - main
+      - fix/renko-history-total-50pair-10x-20260829
+    paths:
+      - 'renko/**'
+      - 'tools/renko-50pair-switch-report.mjs'
+      - 'tools/renko-history-total-50pair-10x-report.mjs'
+      - '.github/workflows/renko-history-total-50pair-10x.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Static full-total + fixed-1s contract
+        run: |
+          set -euo pipefail
+          node --check tools/renko-history-total-50pair-10x-report.mjs
+          node --check tools/renko-50pair-switch-report.mjs
+          node --check renko/renko-tv-fixed-1s.js
+          node --check renko/renko-tv-confirmed-count-guard.js
+          grep -q 'visible-confirmed-count-is-full-engine-total-never-render-cap' renko/renko-tv-confirmed-count-guard.js
+          grep -q 'exact-box-exact-final-state-o1-source-transition-safe-bounded-tail-materialization' renko/renko-tv-fixed-1s.js
+          grep -q "interval:'1s'" renko/renko-tv-fixed-1s.js
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
+          npx playwright install --with-deps chromium
+      - name: Serve exact checkout
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/renko-history10x-site
+          mkdir -p /tmp/renko-history10x-site/rwa
+          cp -a . /tmp/renko-history10x-site/rwa/
+          cd /tmp/renko-history10x-site
+          python3 -m http.server 8080 >/tmp/renko-history10x-http.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/rwa/renko/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/renko-history10x-http.log
+          exit 1
+      - name: Desktop — 50-pair zero-ms first-frame proof
+        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_50PAIR_VIEWPORT=desktop RENKO_50PAIR_OUT=artifacts/zero-ms-desktop node tools/renko-50pair-switch-report.mjs
+      - name: Mobile — 50-pair zero-ms first-frame proof
+        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_50PAIR_VIEWPORT=mobile RENKO_50PAIR_OUT=artifacts/zero-ms-mobile node tools/renko-50pair-switch-report.mjs
+      - name: Enforce strict zero-ms-class <= 1ms
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          for(const f of ['artifacts/zero-ms-desktop/report.json','artifacts/zero-ms-mobile/report.json']){
+            const r=JSON.parse(fs.readFileSync(f,'utf8'));
+            if(r.status!=='PASS'||Number(r.summary?.firstFrameMaxMs)>1) throw new Error(`${f}: firstFrameMaxMs=${r.summary?.firstFrameMaxMs}`);
+            console.log(`ZERO_MS_CLASS_PASS ${f} firstFrameMaxMs=${r.summary.firstFrameMaxMs}`);
+          }
+          NODE
+      - name: Desktop — 50 pairs × ATR10 + Traditional10 full-total history
+        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_HISTORY10X_VIEWPORT=desktop RENKO_HISTORY10X_OUT=artifacts/history10x-desktop node tools/renko-history-total-50pair-10x-report.mjs
+      - name: Mobile — 50 pairs × ATR10 + Traditional10 full-total history
+        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_HISTORY10X_VIEWPORT=mobile RENKO_HISTORY10X_OUT=artifacts/history10x-mobile node tools/renko-history-total-50pair-10x-report.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-history-total-50pair-10x-exact-${{ github.sha }}
+          path: |
+            artifacts/zero-ms-desktop
+            artifacts/zero-ms-mobile
+            artifacts/history10x-desktop
+            artifacts/history10x-mobile
+          retention-days: 30
+  public-production:
+    if: github.ref == 'refs/heads/main'
+    needs: exact-browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for required public RENKO runtime
+        run: |
+          set -euo pipefail
+          index='https://copytolive.github.io/rwa/renko/'
+          guard='https://copytolive.github.io/rwa/renko/renko-tv-confirmed-count-guard.js'
+          fixed='https://copytolive.github.io/rwa/renko/renko-tv-fixed-1s.js'
+          for i in $(seq 1 60); do
+            ts=$(date +%s%N)
+            html=$(curl -fsS "$index?ts=$ts" 2>/dev/null || true)
+            guardjs=$(curl -fsS "$guard?ts=$ts" 2>/dev/null || true)
+            fixedjs=$(curl -fsS "$fixed?ts=$ts" 2>/dev/null || true)
+            if grep -q 'renko-tv-confirmed-count-guard.js?v=1' <<<"$html" && grep -q 'visible-confirmed-count-is-full-engine-total-never-render-cap' <<<"$guardjs" && grep -q 'o1-source-transition-safe-bounded-tail-materialization' <<<"$fixedjs"; then
+              echo PUBLIC_RENKO_HISTORY_RUNTIME_READY
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
+          npx playwright install --with-deps chromium
+      - name: PUBLIC desktop — 50-pair zero-ms first-frame proof
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_50PAIR_VIEWPORT=desktop RENKO_50PAIR_OUT=artifacts/public-zero-ms-desktop node tools/renko-50pair-switch-report.mjs
+      - name: PUBLIC mobile — 50-pair zero-ms first-frame proof
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_50PAIR_VIEWPORT=mobile RENKO_50PAIR_OUT=artifacts/public-zero-ms-mobile node tools/renko-50pair-switch-report.mjs
+      - name: PUBLIC enforce strict zero-ms-class <= 1ms
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          for(const f of ['artifacts/public-zero-ms-desktop/report.json','artifacts/public-zero-ms-mobile/report.json']){
+            const r=JSON.parse(fs.readFileSync(f,'utf8'));
+            if(r.status!=='PASS'||Number(r.summary?.firstFrameMaxMs)>1) throw new Error(`${f}: firstFrameMaxMs=${r.summary?.firstFrameMaxMs}`);
+            console.log(`PUBLIC_ZERO_MS_CLASS_PASS ${f} firstFrameMaxMs=${r.summary.firstFrameMaxMs}`);
+          }
+          NODE
+      - name: PUBLIC desktop — 50 pairs × ATR10 + Traditional10 full-total history
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_HISTORY10X_VIEWPORT=desktop RENKO_HISTORY10X_OUT=artifacts/public-history10x-desktop node tools/renko-history-total-50pair-10x-report.mjs
+      - name: PUBLIC mobile — 50 pairs × ATR10 + Traditional10 full-total history
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_HISTORY10X_VIEWPORT=mobile RENKO_HISTORY10X_OUT=artifacts/public-history10x-mobile node tools/renko-history-total-50pair-10x-report.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-history-total-50pair-10x-public-${{ github.sha }}
+          path: |
+            artifacts/public-zero-ms-desktop
+            artifacts/public-zero-ms-mobile
+            artifacts/public-history10x-desktop
+            artifacts/public-history10x-mobile
+          retention-days: 30
