@@ -26,7 +26,7 @@ let state=new Map(),prev=NaN,count=0,from=0,to=0,packTo=0,active=0;
 function reset(){state=new Map(MATRIX.map(n=>[n,{n,seen:0,sum:0,atr:NaN}]));prev=NaN;count=0;from=0;to=0;packTo=0}
 function push(t,h,l,c){const tr=Number.isFinite(prev)?Math.max(h-l,Math.abs(h-prev),Math.abs(l-prev)):h-l;prev=c;if(!from)from=t;to=t+999;count++;for(const n of MATRIX){const s=state.get(n);s.seen++;if(s.seen<=n){s.sum+=tr;if(s.seen===n)s.atr=s.sum/n}else{s.atr=((s.atr*(n-1))+tr)/n}}}
 function output(){return MATRIX.map(n=>{const s=state.get(n),a=Number(s.atr);return{length:n,rawAtr:a,box:a,sourceCount:count,fromTime:from,toTime:to,satisfied:s.seen>=n&&Number.isFinite(a)&&a>0}})}
-async function getMeta(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error('meta HTTP '+r.status);const m=await r.json();if(m?.schema!=='renko-xaut-okx-1s-pack-v1'||m?.instrument!=='XAUT-USDT'||m?.interval!=='1s'||Number(m?.rows)<1000999)throw new Error('invalid XAUT fixed-1s pack');return m}
+async function getMeta(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error('meta HTTP '+r.status);const m=await r.json();if(m?.schema!=='renko-xaut-okx-1s-pack-v2'||m?.instrument!=='XAUT-USDT'||m?.interval!=='1s'||Number(m?.intervalMs)!==1000||Number(m?.rows)<1000000||m?.provenance?.sourceBar!=='1s'||Number(m?.provenance?.sourceIntervalMs)!==1000||m?.provenance?.upsampled!==false||m?.provenance?.synthetic1s!==false)throw new Error('invalid XAUT fixed-1s pack v2');return m}
 async function gunzipText(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error('pack HTTP '+r.status);if(typeof DecompressionStream!=='function')throw new Error('DecompressionStream gzip unavailable');return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).text()}
 function addBars(a){for(const b of a||[]){const t=Number(b.openTime),h=Number(b.high),l=Number(b.low),c=Number(b.close);if(![t,h,l,c].every(Number.isFinite)||t<=packTo)continue;push(t,h,l,c);packTo=t}}
 async function warm(d){active=d.token;reset();const start=Date.now();postMessage({type:'progress',token:d.token,pct:1,stage:'metadata'});const m=await getMeta(d.metaUrl);postMessage({type:'progress',token:d.token,pct:5,stage:'download'});const text=await gunzipText(d.packUrl);postMessage({type:'progress',token:d.token,pct:20,stage:'atr'});let last=0,i=0,pos=0;while(pos<text.length){let end=text.indexOf('\n',pos);if(end<0)end=text.length;const line=text.slice(pos,end);pos=end+1;if(!line)continue;const p=line.split(',');if(p.length<6)continue;const t=Number(p[0]),h=Number(p[2]),l=Number(p[3]),c=Number(p[4]);if(![t,h,l,c].every(Number.isFinite))continue;if(last&&t-last!==1000)throw new Error('1s pack discontinuity at '+t);push(t,h,l,c);last=t;i++;if(i%100000===0)postMessage({type:'progress',token:d.token,pct:20+Math.min(70,Math.round(i/Number(m.rows)*70)),stage:'atr',available:i})}
@@ -40,11 +40,12 @@ onmessage=e=>{const d=e.data||{};if(d.type==='warm')warm(d).catch(err=>postMessa
 function accept(d,T,resolve,reject){
   if(d.token!==token||!T)return;
   if(d.type==='progress'){document.documentElement.dataset.atrMatrixProgress=String(d.pct||0);setMetric(`ATR 1s MATRIX · ${d.pct||0}% · ${d.stage||'working'}${d.available?` · ${Number(d.available).toLocaleString()} bars`:''}`);return}
-  if(d.type==='error'){document.documentElement.dataset.atrMatrixReady='error';setMetric(`ATR 1s MATRIX · ERROR · ${d.error}`);reject?.(new Error(d.error));return}
+  if(d.type==='error'){document.documentElement.dataset.atrMatrixReady='error';document.documentElement.dataset.atrMatrixError=String(d.error||'unknown').slice(0,500);setMetric(`ATR 1s MATRIX · ERROR · ${d.error}`);reject?.(new Error(d.error));return}
   if(d.type!=='ready')return;
   entries=new Map((d.entries||[]).map(x=>[Number(x.length),x]));revision=Number(d.revision)||0;warmMs=Number(d.warmMs)||warmMs;
   const ok=MATRIX.every(n=>entries.get(n)?.satisfied);
   document.documentElement.dataset.atrMatrixReady=ok?'true':'partial';
+  document.documentElement.dataset.atrMatrixError='';
   document.documentElement.dataset.atrMatrixAvailable=String(d.available||0);
   document.documentElement.dataset.atrMatrixRevision=String(revision);
   document.documentElement.dataset.atrMatrixWarmMs=String(warmMs);
@@ -57,7 +58,7 @@ function dispose(reason='dispose'){
   if(worker){try{worker.terminate()}catch{}worker=null}
   if(warmReject){try{warmReject(new Error(`ATR warm cancelled: ${reason}`))}catch{}warmReject=null}
   warmPromise=null;entries.clear();revision=0;warmMs=0;applying=false;
-  const d=document.documentElement.dataset;d.atrMatrixReady='idle';d.atrMatrixProgress='0';d.atrMatrixAvailable='0';d.atrMatrixRevision='0';d.atrMatrixWarmMs='0';d.atrMatrixProvider='OKX Spot XAUT-USDT fixed 1s · on demand';
+  const d=document.documentElement.dataset;d.atrMatrixReady='idle';d.atrMatrixProgress='0';d.atrMatrixAvailable='0';d.atrMatrixRevision='0';d.atrMatrixWarmMs='0';d.atrMatrixError='';d.atrMatrixProvider='OKX Spot XAUT-USDT fixed 1s · on demand';
   setMetric('ATR 1s MATRIX · ON DEMAND');
 }
 async function warm(T=tv()){
@@ -66,11 +67,11 @@ async function warm(T=tv()){
   if(entries.size===MATRIX.length&&document.documentElement.dataset.atrMatrixReady==='true')return true;
   if(warmPromise&&document.documentElement.dataset.atrMatrixReady==='warming')return warmPromise;
   if(worker){try{worker.terminate()}catch{}worker=null}
-  entries.clear();document.documentElement.dataset.atrMatrixReady='warming';setMetric('ATR 1s MATRIX · preparing on demand 0%');
+  entries.clear();document.documentElement.dataset.atrMatrixReady='warming';document.documentElement.dataset.atrMatrixError='';setMetric('ATR 1s MATRIX · preparing on demand 0%');
   const w=makeWorker(),my=++token;
   warmPromise=new Promise((resolve,reject)=>{warmReject=reject;w.onmessage=e=>accept(e.data||{},T,resolve,reject);w.onerror=e=>reject(new Error(e.message||'ATR worker failed'))});
   w.postMessage({type:'warm',token:my,packUrl:new URL(PACK,location.href).href,metaUrl:new URL(META,location.href).href,displayBars:T.state.closedBars,revision:rev});
-  try{return await warmPromise}catch(e){if(!/cancelled/.test(String(e?.message||e)))console.warn('[RENKO fixed 1s ATR]',e);if(document.documentElement.dataset.atrMatrixReady==='warming')document.documentElement.dataset.atrMatrixReady='idle';return false}finally{warmPromise=null;warmReject=null}
+  try{return await warmPromise}catch(e){const msg=String(e?.message||e);if(!/cancelled/.test(msg))console.warn('[RENKO fixed 1s ATR]',e);document.documentElement.dataset.atrMatrixReady='error';document.documentElement.dataset.atrMatrixError=msg.slice(0,500);setMetric(`ATR 1s MATRIX · ERROR · ${msg}`);return false}finally{warmPromise=null;warmReject=null}
 }
 function tbtSince(mark){return longTasks.filter(x=>x.start>=mark).reduce((a,x)=>a+Math.max(0,x.duration-50),0)}
 async function apply(length){
@@ -95,7 +96,7 @@ const input=document.getElementById('atrLength');if(input){input.addEventListene
 window.addEventListener('renko:tv-ready',()=>{const T=tv();lock(T);if(T?.state?.symbol===XAUT){document.documentElement.dataset.atrMatrixReady='idle';document.documentElement.dataset.atrMatrixProvider='OKX Spot XAUT-USDT fixed 1s · on demand';setMetric('ATR 1s MATRIX · ON DEMAND')}},{once:true});
 window.addEventListener('renko:symbol-switch-start',e=>{const d=e.detail||{};if(d.from===XAUT&&d.to!==XAUT)dispose('pair-switch')});
 setInterval(()=>{const T=tv();if(!T)return;lock(T);if(T.state?.symbol!==XAUT||T.state?.status!=='live'||!worker)return;const cur=currentRevision(T);if(revision&&cur>revision){const newer=(T.state.closedBars||[]).filter(b=>Number(b.closeTime)>revision);if(newer.length)worker.postMessage({type:'refresh',token,newBars:newer,revision:cur})}},1500);
-const api={version:'2.2.0-lazy',matrix:MATRIX,parseLength,warm,apply,dispose,get entries(){return entries},get revision(){return revision},get warmMs(){return warmMs},get applying(){return applying},get workerActive(){return !!worker},get entryCount(){return entries.size}};
+const api={version:'2.2.1-lazy-pack-v2',matrix:MATRIX,parseLength,warm,apply,dispose,get entries(){return entries},get revision(){return revision},get warmMs(){return warmMs},get applying(){return applying},get workerActive(){return !!worker},get entryCount(){return entries.size}};
 window.RWARenkoATRFixed1s=api;
-window.RWARenkoATRParity={version:'fixed-1s-2.2.0-lazy',rule:'fixed-1s-okx-deep-wilder-matrix-on-demand',matrix:MATRIX,parseLength,warmMatrix:warm,applyPreparedMatrix:apply,ensureAtrHistory:apply,applyAtrFromInput:fromInput,drainApplyQueue:apply,dispose,get applying(){return applying},get matrixReady(){return document.documentElement.dataset.atrMatrixReady},get matrixWarmMs(){return warmMs},get matrixEntries(){return entries},get workerActive(){return !!worker}};
+window.RWARenkoATRParity={version:'fixed-1s-2.2.1-lazy-pack-v2',rule:'fixed-1s-okx-deep-wilder-matrix-on-demand',matrix:MATRIX,parseLength,warmMatrix:warm,applyPreparedMatrix:apply,ensureAtrHistory:apply,applyAtrFromInput:fromInput,drainApplyQueue:apply,dispose,get applying(){return applying},get matrixReady(){return document.documentElement.dataset.atrMatrixReady},get matrixWarmMs(){return warmMs},get matrixEntries(){return entries},get workerActive(){return !!worker}};
 })();

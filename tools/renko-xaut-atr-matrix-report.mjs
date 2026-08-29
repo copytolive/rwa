@@ -26,8 +26,13 @@ async function run(label,viewport){
   // Production intentionally keeps the million-row matrix ON DEMAND. The browser
   // proof explicitly asks for it, exactly as an ATR APPLY action would, rather
   // than treating idle background state as a failure.
-  await page.evaluate(()=>window.RWARenkoATRFixed1s?.warm?.());
-  await page.waitForFunction(()=>document.documentElement.dataset.atrMatrixReady==='true',null,{timeout:240000});
+  const warm=await page.evaluate(async()=>{
+    const ok=await window.RWARenkoATRFixed1s?.warm?.();
+    return {ok:!!ok,ready:document.documentElement.dataset.atrMatrixReady||'',error:document.documentElement.dataset.atrMatrixError||'',progress:document.documentElement.dataset.atrMatrixProgress||''};
+  });
+  console.log('XAUT warm result',JSON.stringify(warm));
+  if(!warm.ok)throw new Error(`XAUT warm failed: ${JSON.stringify(warm)}`);
+  await page.waitForFunction(()=>document.documentElement.dataset.atrMatrixReady==='true',null,{timeout:30000});
   await sleep(500);
   const ready=await page.evaluate(()=>({
     warmMs:Number(document.documentElement.dataset.atrMatrixWarmMs)||0,
@@ -76,7 +81,7 @@ async function run(label,viewport){
 }
 
 try{await run('desktop',{width:1900,height:1000});await run('mobile',{width:390,height:844})}finally{await browser.close()}
-const report={schema:'renko-xaut-fixed-1s-atr-seven-length-browser-v2',generatedAt:new Date().toISOString(),base,lengths,status:results.every(r=>r.pass)?'PASS':'FAIL',contract:'Production timeframe selector is absent and runtime is hard-locked to 1s. Each positive raw Wilder ATR becomes the actual Renko box for the seven requested lengths. The matrix is explicitly requested on demand, prepared switches have observed main-thread TBT = 0 ms, rendered geometry is bounded while total Renko count/final state are preserved, and deep ATR persists across later 1s closes.',claimBoundary:'Observable/documented Renko parity only; no claim of TradingView proprietary source-code identity.',results};
+const report={schema:'renko-xaut-fixed-1s-atr-seven-length-browser-v3',generatedAt:new Date().toISOString(),base,lengths,status:results.every(r=>r.pass)?'PASS':'FAIL',contract:'Production timeframe selector is absent and runtime is hard-locked to 1s. Each positive raw Wilder ATR becomes the actual Renko box for the seven requested lengths. The matrix is explicitly requested on demand, prepared switches have observed main-thread TBT = 0 ms, rendered geometry is bounded while total Renko count/final state are preserved, and deep ATR persists across later 1s closes.',claimBoundary:'Observable/documented Renko parity only; no claim of TradingView proprietary source-code identity.',results};
 fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));
 console.log('RENKO_XAUT_ATR_MATRIX_REPORT '+JSON.stringify(report));
 if(report.status!=='PASS')process.exit(2);

@@ -53,12 +53,13 @@ jobs:
           grep -Fq 'renko-tv-stable-chart-v2.js?v=185' renko/index.html
           grep -Fq 'renko-tv-total-history.js?v=3' renko/index.html
           grep -Fq 'renko-gold-origin-pack.js?v=3' renko/index.html
-          grep -Fq 'renko-tv-atr-fixed1s.js?v=4' renko/index.html
+          grep -Fq 'renko-tv-atr-fixed1s.js?v=5' renko/index.html
           grep -Fq "version:'2.2.0'" renko/renko-tv-stable-chart-v2.js
           grep -Fq 'cross-domain-series-reset' renko/renko-tv-stable-chart-v2.js
           grep -Fq 'authoritative-earliest-fixed-1s-rest' renko/renko-tv-total-history.js
           grep -Fq 'dukascopy-verified-fixed-s1-same-origin-gzip-transport' renko/renko-gold-origin-pack.js
           grep -Fq "version:'1.1.0'" renko/renko-gold-origin-pack.js
+          grep -Fq "renko-xaut-okx-1s-pack-v2" renko/renko-tv-atr-fixed1s.js
           echo RENKO_RELEASE_PAYLOAD_PASS
 
   deploy:
