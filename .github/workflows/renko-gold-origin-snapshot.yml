@@ -68,20 +68,32 @@ jobs:
           assert all(all(isinstance(b[k],(int,float)) for k in ('openTime','closeTime','open','high','low','close')) for b in p['bars'])
           print('GOLD_ORIGIN_SNAPSHOT_PASS',len(p['bars']),p['payloadSha256'])
           PY
-      - name: Publish deterministic same-origin gzip pack to branch
+      - name: Publish deterministic same-origin gzip pack and browser adapter wiring
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p renko/history
           gzip -n -9 -c artifacts/gold-origin/renko-gold-xauusd-origin.json > renko/history/renko-gold-xauusd-origin.json.gz
           sha256sum renko/history/renko-gold-xauusd-origin.json.gz | tee artifacts/gold-origin/gzip.sha256
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('renko/index.html')
+          s=p.read_text()
+          tag='<script src="renko-gold-origin-pack.js?v=1"></script>'
+          if tag not in s:
+              needle='<script src="renko-tv-total-history.js?v=3"></script>'
+              if needle not in s: raise SystemExit('total-history script tag not found')
+              s=s.replace(needle,needle+tag)
+              p.write_text(s)
+          print('GOLD_ORIGIN_ADAPTER_WIRED',tag in p.read_text())
+          PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add renko/history/renko-gold-xauusd-origin.json.gz
+          git add renko/history/renko-gold-xauusd-origin.json.gz renko/index.html
           if git diff --cached --quiet; then
-            echo GOLD_ORIGIN_PACK_UNCHANGED
+            echo GOLD_ORIGIN_PACK_AND_WIRING_UNCHANGED
           else
-            git commit -m 'RENKO: publish Dukascopy GOLD fixed-1s origin pack'
+            git commit -m 'RENKO: wire verified Dukascopy GOLD origin pack'
             git push origin HEAD:fix/renko-total-history-origin-20260829
           fi
       - uses: actions/upload-artifact@v4
