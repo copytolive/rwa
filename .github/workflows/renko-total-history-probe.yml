@@ -1,0 +1,47 @@
+name: RENKO Total History Source Probe
+on:
+  push:
+    branches:
+      - fix/renko-total-history-origin-20260829
+    paths:
+      - '.github/workflows/renko-total-history-probe.yml'
+      - 'renko/renko-tv-total-history.js'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe Binance official 1s archive and historical REST
+        shell: bash
+        run: |
+          set -euo pipefail
+          checksum='https://data.binance.vision/data/spot/monthly/klines/BTCUSDT/1s/BTCUSDT-1s-2017-08.zip.CHECKSUM'
+          echo '--- Binance archive checksum ---'
+          curl -fLsS --retry 3 --retry-delay 2 "$checksum" | tee /tmp/btc.checksum
+          test -s /tmp/btc.checksum
+          echo '--- Binance historical 1s REST ---'
+          url='https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1s&limit=2&startTime=1502942460000'
+          curl -fLsS --retry 3 --retry-delay 2 "$url" | tee /tmp/btc.json
+          python3 - <<'PY'
+          import json
+          rows=json.load(open('/tmp/btc.json'))
+          assert isinstance(rows,list) and len(rows)>0, rows
+          print('BINANCE_OLD_1S_REST_PASS', rows[0][0], rows[-1][0])
+          PY
+      - name: Probe Dukascopy GOLD origin tick bucket
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://jetta.dukascopy.com/v1/ticks/XAU-USD/2003/5/5/0'
+          curl -fLsS --retry 3 --retry-delay 2 "$url" | tee /tmp/xau.json
+          python3 - <<'PY'
+          import json
+          j=json.load(open('/tmp/xau.json'))
+          assert isinstance(j.get('times'),list) and len(j['times'])>0, j.keys()
+          assert isinstance(j.get('bids'),list) and len(j['bids'])==len(j['times'])
+          print('DUKASCOPY_XAU_ORIGIN_PASS', j['timestamp'], len(j['times']), j.get('multiplier'))
+          PY
