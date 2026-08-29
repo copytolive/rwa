@@ -8,8 +8,10 @@ on:
       - 'chart-core.js'
       - 'rwa-target-dashboard-v2.js'
       - 'rwa-target-dashboard-v2.css'
+      - 'rwa-target-dashboard-v2-hardening.css'
       - 'rwa-ecommerce-target-controller-v1.js'
       - 'rwa-ecommerce-production-visual-v1.js'
+      - 'rwa-ecommerce-parity-finish-v2.js'
       - 'rwa-target-topbar-cleanup-v1.js'
       - 'rwa-seablueprint-commerce-bridge.js'
       - 'rwa-seablueprint-commerce-bridge.css'
@@ -130,9 +132,9 @@ jobs:
           p=json.load(open('proof/ecommerce-target-parity-public/browser-result.json'))
           assert p['ok'] is True and p['publicMode'] is True and not p['failures'], p
           for r in p['results']:
-              assert r['openAudit']['target']['transitionMs'] == 0, r
-              assert r['openAudit']['target']['animationMs'] == 0, r
-              assert r['openAudit']['target']['backendLocked'] is True, r
+              assert r['audit']['target']['transitionMs'] == 0, r
+              assert r['audit']['target']['animationMs'] == 0, r
+              assert r['audit']['target']['backendLocked'] is True, r
           g=json.load(open('proof/screenshot-parity-production-guard-public/browser-result.json'))
           assert g['ok'] is True and not g['failures'], g
           assert g['audit']['parityApiLoaded'] is False and g['audit']['parityRootPresent'] is False, g
