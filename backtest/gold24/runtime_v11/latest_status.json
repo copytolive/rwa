@@ -1,9 +1,9 @@
 {
-  "batch": 223,
-  "candidate_cursor": 22079961,
+  "batch": 225,
+  "candidate_cursor": 22152069,
   "cumulative_baseline_qualified": 0,
-  "cumulative_configs_archived": 55093,
-  "cumulative_sample_rankable": 33678,
+  "cumulative_configs_archived": 55360,
+  "cumulative_sample_rankable": 33845,
   "cumulative_target_pf_2_to_8": 0,
   "gate_a": "PASS",
   "minimum_trades": 300,
@@ -13,11 +13,11 @@
   "ranking_rule": "minimum trades first; then NET Profit Factor descending",
   "rules_sha256": "a3aadd7dd1f68fc751b8b8b1d51555c63a894e02273b5636cecb60d1d0dfba4f",
   "schema": "gold-v11-status",
-  "seconds": 148.5685498714447,
-  "simulated_this_batch": 22,
+  "seconds": 162.94081807136536,
+  "simulated_this_batch": 11,
   "simulation_executed": true,
   "strategy_engine": "RUNNING",
   "timeframe": "D1",
-  "updated_at": "2026-08-29T19:17:59.875525+00:00",
+  "updated_at": "2026-08-29T20:05:00.399069+00:00",
   "worker": "GOLD_V11_SAMPLE_PF"
 }
