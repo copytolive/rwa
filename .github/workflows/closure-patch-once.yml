@@ -1,0 +1,80 @@
+name: RWA Final Closure Patch Once
+
+on:
+  push:
+    branches:
+      - fix/total-ui-audit-seablueprint-20260830
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/total-ui-audit-seablueprint-20260830
+          fetch-depth: 0
+      - name: Apply deterministic closure patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          css = Path('rwa-target-dashboard-v2-hardening.css')
+          text = css.read_text()
+          marker = '/* FINAL-CLOSURE-20260830: cart type floor + canonical single-shell ownership */'
+          if marker not in text:
+              text += '''\n\n/* FINAL-CLOSURE-20260830: cart type floor + canonical single-shell ownership */\nhtml body.rwa-target-dashboard-v2 .rwa-ecom-cart-item>div>b{font-size:9.5px!important;line-height:1.25!important}\nhtml body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open #rwaBusinessConsole,\nhtml body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open #rwaBusinessConsoleLaunch,\nhtml body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .rwa-business-console{display:none!important;visibility:hidden!important;pointer-events:none!important}\n'''
+              css.write_text(text)
+
+          controller = Path('rwa-ecommerce-target-controller-v1.js')
+          text = controller.read_text()
+          old = "function render(){if(rendering)return false;const screen="
+          new = "function render(){if(rendering)return false;qa('#rwaBusinessConsole,#rwaBusinessConsoleLaunch,.rwa-business-console').forEach(n=>n.remove());const screen="
+          if new not in text:
+              if old not in text:
+                  raise SystemExit('controller render anchor missing')
+              text = text.replace(old, new, 1)
+              controller.write_text(text)
+
+          tests = [
+              Path('tools/seablueprint-commerce-single-shell-browser.mjs'),
+              Path('tools/launch-ui-final-browser.mjs'),
+          ]
+          for p in tests:
+              t = p.read_text()
+              t2 = t.replace("RWATargetDashboardV2?.version==='2.2.0'", "RWATargetDashboardV2?.version==='2.2.1'")
+              t2 = t2.replace("dashboard:'2.2.0'", "dashboard:'2.2.1'")
+              if t2 == t and '2.2.1' not in t:
+                  raise SystemExit(f'version anchor missing in {p}')
+              p.write_text(t2)
+
+          for name in ['.github/workflows/launch-ui-final.yml', '.github/workflows/seablueprint-commerce-single-shell.yml']:
+              p = Path(name)
+              t = p.read_text()
+              if '2.2.0' in t:
+                  p.write_text(t.replace('2.2.0','2.2.1'))
+          PY
+      - name: Verify closure invariants
+        shell: bash
+        run: |
+          grep -F "rwa-ecom-cart-item>div>b" rwa-target-dashboard-v2-hardening.css
+          grep -F "#rwaBusinessConsole" rwa-target-dashboard-v2-hardening.css
+          grep -F "RWATargetDashboardV2?.version==='2.2.1'" tools/seablueprint-commerce-single-shell-browser.mjs
+          grep -F "dashboard:'2.2.1'" tools/launch-ui-final-browser.mjs
+          node --check rwa-ecommerce-target-controller-v1.js
+      - name: Commit closure patch
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add rwa-target-dashboard-v2-hardening.css rwa-ecommerce-target-controller-v1.js tools/seablueprint-commerce-single-shell-browser.mjs tools/launch-ui-final-browser.mjs .github/workflows/launch-ui-final.yml .github/workflows/seablueprint-commerce-single-shell.yml
+          git commit -m "fix: close final ecommerce parity and single-shell blockers"
+          git push origin HEAD:fix/total-ui-audit-seablueprint-20260830
