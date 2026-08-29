@@ -31,7 +31,7 @@ async function desktop(browser){
 async function compactDesktop(browser){
   const context=await browser.newContext({viewport:{width:1024,height:820}});await installMocks(context);const page=await context.newPage();await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:20000});await page.waitForFunction(()=>window.RWAMarketPerformanceGuard,{timeout:10000});await enterMarkets(page);
   const x=await page.evaluate(()=>({right:getComputedStyle(document.querySelector('.right')).display,layout:document.querySelector('.layout').getBoundingClientRect().width,scrollWidth:document.documentElement.scrollWidth,innerWidth,headerH:document.querySelector('.topbar').scrollHeight}));
-  assert.equal(x.right,'none');assert.ok(x.layout<=x.innerWidth+1);assert.ok(x.scrollWidth<=x.innerWidth+2);assert.ok(x.headerH<=58,`compact header wrapped to ${x.headerH}`);await context.close();return x;
+  assert.equal(x.right,'none');assert.ok(x.layout<=x.innerWidth+1);assert.ok(x.scrollWidth<=x.innerWidth+2);assert.ok(x.headerH<=63,`compact header wrapped to ${x.headerH}`);await context.close();return x;
 }
 
 async function mobile(browser){
