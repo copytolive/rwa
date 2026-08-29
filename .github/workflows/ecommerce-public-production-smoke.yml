@@ -46,6 +46,44 @@ jobs:
           RWA_UI_PROOF_DIR: proof/ecommerce-public-production
         run: node tools/launch-ui-final-browser.mjs
 
+      - name: Capture 1440x900 public Ecommerce visual proof
+        shell: bash
+        run: |
+          node --input-type=module <<'JS'
+          import { chromium } from 'playwright';
+          const browser = await chromium.launch({ headless: true });
+          const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: 'block' });
+          const page = await context.newPage();
+          await page.goto(`https://copytolive.github.io/rwa/?__ecommerce_1440_proof=${Date.now()}`, { waitUntil: 'domcontentloaded', timeout: 50000 });
+          await page.waitForFunction(() => window.RWASeablueprintCommerceBridge?.version === '1.5.0', { timeout: 30000 });
+          await page.locator('#rwaSeablueprintCommerceLaunch').click();
+          await page.waitForFunction(() => document.querySelector('#rwaShopScreen')?.classList.contains('open'), { timeout: 12000 });
+          await page.waitForSelector('#rwaShopScreen .rwa-product-card', { state: 'visible', timeout: 8000 });
+          const proof = await page.evaluate(() => {
+            const rect = (selector) => {
+              const r = document.querySelector(selector)?.getBoundingClientRect();
+              return r ? { left: Math.round(r.left), right: Math.round(r.right), top: Math.round(r.top), bottom: Math.round(r.bottom), width: Math.round(r.width), height: Math.round(r.height) } : null;
+            };
+            return {
+              path: location.pathname,
+              hash: location.hash,
+              dock: rect('#rwaCommerceDock'),
+              layout: rect('.layout'),
+              commerce: window.RWASeablueprintCommerceBridge?.audit?.(),
+              backendLocked: /BACKEND LOCKED/.test(document.querySelector('[data-seablueprint-source]')?.textContent || ''),
+              screenParent: document.querySelector('#rwaShopScreen')?.parentElement?.id || ''
+            };
+          });
+          if (proof.path !== '/rwa/' || proof.hash !== '#shop') throw new Error(`unexpected route ${JSON.stringify(proof)}`);
+          if (!proof.dock || proof.dock.width < 420 || proof.dock.width > 442) throw new Error(`invalid contextual dock ${JSON.stringify(proof)}`);
+          if (!proof.commerce?.ok || proof.commerce?.mode !== 'CONTEXT_PANEL' || proof.commerce?.apiBaseConfigured) throw new Error(`invalid commerce audit ${JSON.stringify(proof)}`);
+          if (Number(proof.commerce?.panelCoverage || 1) > 0.38 || Number(proof.commerce?.exposedChartWidth || 0) < 420) throw new Error(`market context not preserved ${JSON.stringify(proof)}`);
+          if (!proof.backendLocked || proof.screenParent !== 'rwaCommerceDock') throw new Error(`truth/placement failed ${JSON.stringify(proof)}`);
+          await page.screenshot({ path: 'proof/ecommerce-public-production/desktop-1440x900-ecommerce.png', fullPage: true });
+          console.log(JSON.stringify(proof, null, 2));
+          await browser.close();
+          JS
+
       - name: Verify public proof contract
         shell: bash
         run: |
