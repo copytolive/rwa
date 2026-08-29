@@ -52,12 +52,13 @@ jobs:
             renko/renko-tv-scroll-zero-lock.js; do node --check "$f"; done
           grep -Fq 'renko-tv-stable-chart-v2.js?v=185' renko/index.html
           grep -Fq 'renko-tv-total-history.js?v=3' renko/index.html
-          grep -Fq 'renko-gold-origin-pack.js?v=2' renko/index.html
+          grep -Fq 'renko-gold-origin-pack.js?v=3' renko/index.html
           grep -Fq 'renko-tv-atr-fixed1s.js?v=4' renko/index.html
           grep -Fq "version:'2.2.0'" renko/renko-tv-stable-chart-v2.js
           grep -Fq 'cross-domain-series-reset' renko/renko-tv-stable-chart-v2.js
           grep -Fq 'authoritative-earliest-fixed-1s-rest' renko/renko-tv-total-history.js
           grep -Fq 'dukascopy-verified-fixed-s1-same-origin-gzip-transport' renko/renko-gold-origin-pack.js
+          grep -Fq "version:'1.1.0'" renko/renko-gold-origin-pack.js
           echo RENKO_RELEASE_PAYLOAD_PASS
 
   deploy:
@@ -131,15 +132,17 @@ jobs:
             await page.addInitScript(()=>localStorage.setItem('rwa_renko_tradingview_settings_v1',JSON.stringify({source:'close',method:'traditional',boxSize:1,atrLength:14,wicks:true})));
             const resp=await page.goto(base+'?symbol=ZEC&publicRelease=1&ts='+Date.now(),{waitUntil:'domcontentloaded',timeout:60000});
             if(!resp||resp.status()<200||resp.status()>=400)throw Error(mode.name+' HTTP '+(resp?.status()||0));
-            await page.waitForFunction(()=>window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoTotalHistory?.jumpOrigin&&window.RWARenkoStableChart?.version==='2.2.0'&&window.RWARenkoGoldOriginPack?.version==='1.0.0',null,{timeout:90000});
+            await page.waitForFunction(()=>window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoTotalHistory?.jumpOrigin&&window.RWARenkoStableChart?.version==='2.2.0'&&window.RWARenkoGoldOriginPack?.version==='1.1.0',null,{timeout:90000});
+            await page.evaluate(()=>window.RWARenkoGoldOriginPack.attach('public-gate-before-zec'));
             await page.evaluate(()=>window.RWARenkoTotalHistory.jumpOrigin('ZECUSDT'));
             await page.waitForFunction(()=>window.RWARenkoTV.state.symbol==='ZECUSDT'&&window.RWARenkoTV.state.status==='history-origin',null,{timeout:45000});
             const zec=await page.evaluate(()=>({bars:RWARenkoTV.state.closedBars.length,provider:RWARenkoTV.state.historyMeta?.provider,interval:RWARenkoTV.state.historyMeta?.interval,dropped:Number(document.documentElement.dataset.renkoStableDataRowsDropped||0),domainResets:Number(document.documentElement.dataset.renkoStableDomainResets||0),recoveries:Number(document.documentElement.dataset.renkoStableWriteRecoveries||0),canvas:document.querySelectorAll('#chartHost canvas').length}));
             if(zec.bars<900||zec.provider!=='Binance Spot'||zec.interval!=='1s'||zec.dropped!==0||zec.canvas<1)throw Error(mode.name+' ZEC '+JSON.stringify(zec));
+            await page.evaluate(()=>window.RWARenkoGoldOriginPack.attach('public-gate-before-gold'));
             await page.evaluate(()=>window.RWARenkoTotalHistory.jumpOrigin('XAUUSD'));
             await page.waitForFunction(()=>window.RWARenkoTV.state.symbol==='XAUUSD'&&window.RWARenkoTV.state.status==='history-origin',null,{timeout:45000});
-            const gold=await page.evaluate(()=>({bars:RWARenkoTV.state.closedBars.length,provider:RWARenkoTV.state.historyMeta?.provider,instrument:RWARenkoTV.state.historyMeta?.instrumentCode,interval:RWARenkoTV.state.historyMeta?.interval,earliest:Number(RWARenkoTV.state.historyMeta?.earliestAvailableMs),documented:Number(RWARenkoTV.state.historyMeta?.documentedEarliestS1Ms),transport:document.documentElement.dataset.renkoGoldOriginTransport||'',packLoads:Number(window.RWARenkoGoldOriginPack?.stats?.loads||0),dropped:Number(document.documentElement.dataset.renkoStableDataRowsDropped||0),domainResets:Number(document.documentElement.dataset.renkoStableDomainResets||0),recoveries:Number(document.documentElement.dataset.renkoStableWriteRecoveries||0),canvas:document.querySelectorAll('#chartHost canvas').length}));
-            if(gold.bars<100||gold.provider!=='Dukascopy'||gold.instrument!=='XAU-USD'||gold.interval!=='1s'||gold.documented!==Date.UTC(2003,4,5,0,1,3,421)||gold.earliest>Date.UTC(2003,4,5,0,5)||gold.transport!=='same-origin-gzip-pack'||gold.packLoads<1||gold.dropped!==0||gold.canvas<1)throw Error(mode.name+' GOLD '+JSON.stringify(gold));
+            const gold=await page.evaluate(()=>({bars:RWARenkoTV.state.closedBars.length,provider:RWARenkoTV.state.historyMeta?.provider,instrument:RWARenkoTV.state.historyMeta?.instrumentCode,interval:RWARenkoTV.state.historyMeta?.interval,earliest:Number(RWARenkoTV.state.historyMeta?.earliestAvailableMs),documented:Number(RWARenkoTV.state.historyMeta?.documentedEarliestS1Ms),transport:document.documentElement.dataset.renkoGoldOriginTransport||'',packLoads:Number(window.RWARenkoGoldOriginPack?.stats?.loads||0),packFailures:Number(window.RWARenkoGoldOriginPack?.stats?.failures||0),packLastError:String(window.RWARenkoGoldOriginPack?.stats?.lastError||''),packAttachments:Number(window.RWARenkoGoldOriginPack?.stats?.attachments||0),packCompressed:Number(window.RWARenkoGoldOriginPack?.stats?.compressedLoads||0),packPredecoded:Number(window.RWARenkoGoldOriginPack?.stats?.predecodedLoads||0),dropped:Number(document.documentElement.dataset.renkoStableDataRowsDropped||0),domainResets:Number(document.documentElement.dataset.renkoStableDomainResets||0),recoveries:Number(document.documentElement.dataset.renkoStableWriteRecoveries||0),canvas:document.querySelectorAll('#chartHost canvas').length}));
+            if(gold.bars<100||gold.provider!=='Dukascopy'||gold.instrument!=='XAU-USD'||gold.interval!=='1s'||gold.documented!==Date.UTC(2003,4,5,0,1,3,421)||gold.earliest>Date.UTC(2003,4,5,0,5)||gold.transport!=='same-origin-gzip-pack'||gold.packLoads<1||gold.packFailures!==0||gold.dropped!==0||gold.canvas<1)throw Error(mode.name+' GOLD '+JSON.stringify(gold));
             if(errors.length)throw Error(mode.name+' browser errors '+JSON.stringify(errors.slice(0,10)));
             const shot=`artifacts/renko-public/${mode.name}-gold-2003.png`;
             await page.screenshot({path:shot,fullPage:true});
