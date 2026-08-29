@@ -1,0 +1,54 @@
+name: RENKO Current Production Browser Contract
+
+on:
+  push:
+    branches:
+      - main
+      - 'fix/renko-*'
+    paths:
+      - 'renko/**'
+      - 'tools/renko-production-report.mjs'
+      - '.github/workflows/renko-current-production-browser.yml'
+  pull_request:
+    paths:
+      - 'renko/**'
+      - 'tools/renko-production-report.mjs'
+      - '.github/workflows/renko-current-production-browser.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  exact-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate current harness syntax
+        run: node --check tools/renko-production-report.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Serve exact checkout
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/renko-current-browser-http.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8765/renko/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/renko-current-browser-http.log
+          exit 1
+      - name: Chromium desktop + mobile current-runtime contract
+        env:
+          RWA_TEST_URL: http://127.0.0.1:8765
+          RENKO_PRODUCTION_OUT: artifacts/renko-current-production-browser
+        run: node tools/renko-production-report.mjs
+      - name: Upload exact browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: renko-current-production-browser-${{ github.sha }}
+          path: artifacts/renko-current-production-browser
+          if-no-files-found: warn
+          retention-days: 30

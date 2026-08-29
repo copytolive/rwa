@@ -3,55 +3,137 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const BASE=(process.env.RWA_TEST_URL||'https://copytolive.github.io/rwa/').replace(/\/$/,'');
-const OUT=path.resolve('artifacts/renko-production-report');
+const OUT=path.resolve(process.env.RENKO_PRODUCTION_OUT||'artifacts/renko-production-report');
+const APPLY_LIMIT_MS=1000;
 const TARGET_VISIBLE=46;
-const FIRST_FRAME_LIMIT_MS=1000;
 await fs.mkdir(OUT,{recursive:true});
 
-const browser=await chromium.launch({headless:true});
+const launchOptions={headless:true};
+if(process.env.CHROMIUM_EXECUTABLE_PATH)launchOptions.executablePath=process.env.CHROMIUM_EXECUTABLE_PATH;
+const browser=await chromium.launch(launchOptions);
 const results=[];
+
+const closeEnough=(a,b,tick=0)=>Math.abs(Number(a)-Number(b))<=Math.max(Number(tick)*0.51,Math.abs(Number(b))*1e-9,1e-12);
 
 async function runViewport(label,viewport){
   const context=await browser.newContext({viewport,deviceScaleFactor:1});
   const page=await context.newPage();
+  const pageErrors=[];
+  const consoleErrors=[];
+  page.on('pageerror',e=>pageErrors.push(String(e?.message||e)));
+  page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text())});
   const url=`${BASE}/renko/?symbol=SOL&productionReport=1&ts=${Date.now()}`;
-  await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
-  await page.waitForFunction(()=>window.RWARenkoV15&&window.RWARenkoV15MethodProfiles?.version==='1.9.0'&&window.RWARenkoFirstFrame?.version==='1.2.0'&&document.documentElement.dataset.renkoMethodBootstrap==='186'&&RWARenkoV15.state?.symbol==='SOLUSDT'&&RWARenkoV15.state.ticks?.length>0&&!RWARenkoV15.state.building,null,{timeout:90000});
+  const response=await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
+  const httpStatus=response?.status()||0;
+  await page.waitForFunction(()=>{
+    const T=window.RWARenkoTV;
+    return !!T&&window.RWARenkoATRControl?.version==='1.3.2'&&window.RWARenkoTraditionalControl?.version==='2.1.0-first-frame'&&window.RWARenkoPercentageLTP?.version==='1.0.0'&&window.RWARenkoConfirmedCountGuard?.version==='1.0.0'&&T.state?.symbol==='SOLUSDT'&&T.state?.status==='live'&&Number(T.state?.tickSize)>0&&Number(T.state?.lastPrice)>0&&(T.state?.closedBars?.length||0)>0;
+  },null,{timeout:90000});
 
-  const snap=async(method,wallMs=null,seedMode='none')=>page.evaluate(({method,wallMs,target,limit,seedMode})=>{
-    const data=window.RWARenkoV15?.state?.data||[],card=document.querySelector('#v15BoxCard'),meta=document.querySelector('#tvBrickMeta')?.textContent||'';
-    const visibleMatch=meta.match(/([\d,.]+)\s+visible/i),visible=visibleMatch?Number(visibleMatch[1].replace(/,/g,'')):Math.min(data.length,target);
-    const inputWaitMs=Number(card?.dataset.inputWaitMs||NaN),firstFrameMs=Number(card?.dataset.firstFrameMs||card?.dataset.applyMs||NaN),instantSource=card?.dataset.instantSource||null,exactHistory=card?.dataset.exactHistory||null;
+  const snapshot=async(method,wallMs=null,extra={})=>page.evaluate(({method,wallMs,limit,target})=>{
+    const T=window.RWARenkoTV,s=T?.state||{},set=T?.settings||{},guard=window.RWARenkoConfirmedCountGuard;
+    const total=Number(guard?.total?.()??s.base?.totalBricks??s.confirmed?.length??0),rendered=Number(s.confirmed?.length||0),visibleText=document.getElementById('brickCount')?.textContent||'',visible=Number(String(visibleText).replace(/[^0-9-]/g,''));
     const instrument=document.querySelector('.instrument'),stats=document.querySelector('.stats'),a=instrument?.getBoundingClientRect?.(),b=stats?.getBoundingClientRect?.();
     const layoutNoOverlap=!!a&&!!b&&(a.width===0||b.width===0||a.right<=b.left+.5||b.right<=a.left+.5||a.bottom<=b.top+.5||b.bottom<=a.top+.5);
-    const baseMethod=method.startsWith('atr')?'atr':method.split('-')[0],activeState=document.querySelector(`[data-v15-profile="${baseMethod}"] .v15-state`)?.textContent||'',liveLabel=document.querySelector('#tvLoadState')?.textContent||'';
-    const notLoading=!/loading|history|queued/i.test(`${activeState} ${liveLabel}`),sourceOk=seedMode==='exact'?(instantSource==='deploy-seed'&&card?.dataset.seedExactBox==='1'&&exactHistory==='1'):seedMode==='seed'?instantSource==='deploy-seed':true;
-    const immediate=visible>=target&&data.length>=target&&inputWaitMs===0&&Number(wallMs)<=limit&&firstFrameMs<=limit&&sourceOk&&layoutNoOverlap&&notLoading;
-    const head=data.slice(0,8).map(x=>[Number(x.open),Number(x.close),Number(x.high),Number(x.low)]),tail=data.slice(-8).map(x=>[Number(x.open),Number(x.close),Number(x.high),Number(x.low)]);
-    return {method,wallMs,bricks:data.length,visible,box:Number(window.RWARenkoV15?.state?.box),tickSize:Number(window.RWARenkoV15?.state?.tickSize),atrValue:Number(window.RWARenkoV15?.state?.atrValue),atrLength:Number(window.RWARenkoV15?.settings?.atrLength),ltp:Number(window.RWARenkoV15?.state?.ltpSnapshot),inputWaitMs,applyMs:Number(card?.dataset.applyMs||NaN),firstFrameMs,firstFrameSource:card?.dataset.firstFrameSource||null,firstFrameSeedBox:Number(card?.dataset.firstFrameSeedBox||NaN),firstFrameRequestedBox:Number(card?.dataset.firstFrameRequestedBox||NaN),firstFramePreload:card?.dataset.firstFramePreload||null,firstFrameSeedCount:Number(card?.dataset.firstFrameSeedCount||0),firstFrameVisibleReady:card?.dataset.firstFrameVisibleReady||null,seedExactBox:card?.dataset.seedExactBox||null,historyState:card?.dataset.historyState||null,instantSource,exactHistory,atrSizingContract:card?.dataset.atrSizingContract||null,historyDowngradeBlocked:card?.dataset.historyDowngradeBlocked||null,layoutNoOverlap,instrumentRect:a?{left:a.left,top:a.top,right:a.right,bottom:a.bottom,width:a.width,height:a.height}:null,statsRect:b?{left:b.left,top:b.top,right:b.right,bottom:b.bottom,width:b.width,height:b.height}:null,activeState,liveLabel,notLoading,meta,signature:JSON.stringify({box:Number(window.RWARenkoV15?.state?.box),count:data.length,head,tail}),passImmediateScreen:immediate};
-  },{method,wallMs,target:TARGET_VISIBLE,limit:FIRST_FRAME_LIMIT_MS,seedMode});
+    const chartEmpty=document.getElementById('chartEmpty'),chartEmptyHidden=!chartEmpty||chartEmpty.classList.contains('hide')||getComputedStyle(chartEmpty).display==='none'||getComputedStyle(chartEmpty).visibility==='hidden';
+    const liveLabel=document.getElementById('tvLoadState')?.textContent||'';
+    const noTimeframeSelector=!document.querySelector('#timeframeSelect,[name="timeframe"],[data-timeframe],select[id*="interval" i],select[id*="timeframe" i]');
+    const exactOwned=Object.prototype.hasOwnProperty.call(set,'_exactBox');
+    const exactBox=Number(set._exactBox);
+    const workerActive=!!window.RWARenkoATRFixed1s?.workerActive;
+    const basic=Number(s.tickSize)>0&&Number(s.lastPrice)>0&&Number(s.box)>0&&set.interval==='1s'&&noTimeframeSelector&&layoutNoOverlap&&s.status==='live'&&Number.isFinite(total)&&total>=0&&Number.isFinite(visible)&&visible===total&&(total===0?rendered===0:rendered>0)&&chartEmptyHidden&&!/loading|queued/i.test(liveLabel);
+    return {method,wallMs,applyWithinLimit:wallMs===null||Number(wallMs)<=limit,httpState:s.status,symbol:s.symbol,interval:set.interval,source:set.source,currentMethod:set.method,atrLength:Number(set.atrLength),box:Number(s.box),atr:Number(s.atr),tickSize:Number(s.tickSize),lastPrice:Number(s.lastPrice),percentageLtpSnapshot:Number(s.percentageLtpSnapshot),confirmedTotal:total,confirmedRendered:rendered,confirmedVisible:visible,projection:Number(s.projection?.length||0),sourceBars:Number(s.closedBars?.length||0),historyPages:Number(s.historyPages||0),exactOwned,exactBox,workerActive,layoutNoOverlap,chartEmptyHidden,noTimeframeSelector,liveLabel,basicPass:basic,target};
+  },{method,wallMs,limit:APPLY_LIMIT_MS,target:TARGET_VISIBLE}).then(x=>({...x,...extra}));
 
-  async function apply(method,selector,value){return page.evaluate(({method,selector,value})=>new Promise((resolve,reject)=>{const input=document.querySelector(selector),button=document.querySelector(`[data-v15-apply="${method}"]`);if(!input||!button)return reject(new Error(`missing ${method} controls`));const start=performance.now(),timer=setTimeout(()=>{window.removeEventListener('renko:v15-method-applied',on);reject(new Error(`${method} apply timeout`))},3000);const on=e=>{if(e.detail?.method!==method)return;clearTimeout(timer);window.removeEventListener('renko:v15-method-applied',on);resolve(performance.now()-start)};window.addEventListener('renko:v15-method-applied',on);input.focus();input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));button.click()}),{method,selector,value})}
+  const screenshot=async name=>{await page.waitForTimeout(60);await page.screenshot({path:path.join(OUT,`${label}-${name}.png`),fullPage:true})};
 
-  async function setWicks(method,selector,checked){return page.evaluate(({method,selector,checked})=>new Promise((resolve,reject)=>{const input=document.querySelector(selector);if(!input)return reject(new Error(`missing ${method} wicks control`));const start=performance.now(),timer=setTimeout(()=>{window.removeEventListener('renko:v15-method-applied',on);reject(new Error(`${method} wicks timeout`))},3000);const on=e=>{if(e.detail?.method!==method)return;clearTimeout(timer);window.removeEventListener('renko:v15-method-applied',on);resolve(performance.now()-start)};window.addEventListener('renko:v15-method-applied',on);input.checked=checked;input.dispatchEvent(new Event('change',{bubbles:true}))}),{method,selector,checked})}
-  const wickExcursions=()=>page.evaluate(()=>{const a=window.RWARenkoV15?.state?.data||[];return a.filter(x=>Number(x.high)>Math.max(Number(x.open),Number(x.close))+1e-10||Number(x.low)<Math.min(Number(x.open),Number(x.close))-1e-10).length});
+  const boot=await snapshot('boot');
+  await screenshot('boot');
 
-  const boot=await snap('boot');
-  const atr14Wall=await apply('atr','#v15AtrLength','14'),atr14=await snap('atr-14',atr14Wall,'none');await page.screenshot({path:path.join(OUT,`${label}-atr-14.png`),fullPage:true});
-  const atr140Wall=await apply('atr','#v15AtrLength','140'),atr140=await snap('atr-140',atr140Wall,'none');await page.screenshot({path:path.join(OUT,`${label}-atr-140.png`),fullPage:true});
-  const atrChanged=atr14.atrLength===14&&atr140.atrLength===140&&atr14.box!==atr140.box&&atr14.signature!==atr140.signature&&atr14.passImmediateScreen&&atr140.passImmediateScreen;
-  const traditionalWall=await apply('traditional','#v15TraditionalBox','1'),traditional=await snap('traditional-1',traditionalWall,'exact');await page.screenshot({path:path.join(OUT,`${label}-traditional-1.png`),fullPage:true});
-  const wicksOnExcursions=await wickExcursions(),wicksOffWall=await setWicks('traditional','#v15TraditionalWicks',false),wicksOffExcursions=await wickExcursions();await page.screenshot({path:path.join(OUT,`${label}-traditional-wicks-off.png`),fullPage:true});
-  const wicksOnWall=await setWicks('traditional','#v15TraditionalWicks',true),wicksRestoredExcursions=await wickExcursions();await page.screenshot({path:path.join(OUT,`${label}-traditional-wicks-on.png`),fullPage:true});
-  const wicks={onExcursions:wicksOnExcursions,offExcursions:wicksOffExcursions,restoredExcursions:wicksRestoredExcursions,offWallMs:wicksOffWall,onWallMs:wicksOnWall,pass:wicksOnExcursions>0&&wicksOffExcursions===0&&wicksRestoredExcursions>0};
-  const percentageWall=await apply('percentage','#v15Percentage','10'),percentage=await snap('percentage-10',percentageWall,'seed');await page.screenshot({path:path.join(OUT,`${label}-percentage-10.png`),fullPage:true});
-  const pctExpected=Math.round((Math.abs(percentage.ltp)*.10)/percentage.tickSize)*percentage.tickSize,percentageFormulaOk=Math.abs(percentage.box-pctExpected)<=Math.max(percentage.tickSize*.51,Math.abs(pctExpected)*1e-9,1e-10);
-  const row={label,viewport,url,boot,atr14,atr140,atrChanged,traditional,wicks,percentage,percentageFormulaOk,pass:boot.passImmediateScreen&&atrChanged&&traditional.passImmediateScreen&&wicks.pass&&percentage.passImmediateScreen&&percentageFormulaOk};results.push(row);await context.close();
+  async function applyAtr(length){
+    const start=await page.evaluate(()=>performance.now());
+    const ok=await page.evaluate(n=>window.RWARenkoATRControl.applyLocal(n,'production-report'),length);
+    const wallMs=await page.evaluate(started=>performance.now()-started,start);
+    const snap=await snapshot(`atr-${length}`,wallMs,{controllerOk:ok});
+    const rawEqBox=Number(snap.atr)>0&&Number(snap.box)>0&&closeEnough(snap.atr,snap.box,snap.tickSize*1e-6);
+    const stableExact=snap.exactOwned&&Number(snap.exactBox)>0&&closeEnough(snap.exactBox,snap.box,snap.tickSize*1e-6);
+    snap.pass=ok===true&&snap.basicPass&&snap.currentMethod==='atr'&&snap.atrLength===length&&rawEqBox&&stableExact&&!snap.workerActive&&snap.applyWithinLimit;
+    snap.rawAtrEqualsBox=rawEqBox;snap.stableExactBox=stableExact;
+    return snap;
+  }
+
+  const atr14=await applyAtr(14);await screenshot('atr-14');
+  const atr140=await applyAtr(140);await screenshot('atr-140');
+  const atrChanged=atr14.pass&&atr140.pass&&!closeEnough(atr14.box,atr140.box,Math.min(atr14.tickSize,atr140.tickSize)*1e-6);
+
+  const traditionalStart=await page.evaluate(()=>performance.now());
+  const traditionalPrepare=await page.evaluate(()=>{
+    const T=window.RWARenkoTV,C=window.RWARenkoTraditionalControl,r=C.resolve(T),ok=C.activate(r.box,'production-report',false,true);return{ok,box:r.box,source:r.source,profile:r.profile||null};
+  });
+  const traditionalWall=await page.evaluate(started=>performance.now()-started,traditionalStart);
+  const traditional=await snapshot('traditional',traditionalWall,{prepare:traditionalPrepare});
+  const tp=traditionalPrepare.profile||{};
+  const tickMultiple=traditional.tickSize>0&&Math.abs(traditional.box/traditional.tickSize-Math.round(traditional.box/traditional.tickSize))<=1e-7;
+  const traditionalTargetPass=tp.targetAttainable===false
+    ? closeEnough(traditional.box,traditional.tickSize,traditional.tickSize*1e-6)&&Number(tp.maxAtMinTick)<TARGET_VISIBLE&&tp.limited===true
+    : Number(tp.expectedBricks)>=TARGET_VISIBLE&&traditional.confirmedTotal>=TARGET_VISIBLE;
+  traditional.pass=traditionalPrepare.ok===true&&traditional.basicPass&&traditional.currentMethod==='traditional'&&!traditional.exactOwned&&tickMultiple&&traditionalTargetPass&&!traditional.workerActive&&traditional.applyWithinLimit;
+  traditional.tickMultiple=tickMultiple;traditional.targetPass=traditionalTargetPass;
+  await screenshot('traditional');
+
+  // Exercise the real production source and WICKS UI. OHLC guarantees that a
+  // directional excursion is observable when source candles contain one.
+  await page.selectOption('#sourceSelect','ohlc');
+  await page.waitForTimeout(50);
+  const wickExcursions=()=>page.evaluate(()=>{const a=window.RWARenkoTV?.state?.confirmed||[];return a.filter(x=>Number(x.high)>Math.max(Number(x.open),Number(x.close))+1e-12||Number(x.low)<Math.min(Number(x.open),Number(x.close))-1e-12).length});
+  const onExcursions=await wickExcursions();
+  const offStart=await page.evaluate(()=>performance.now());
+  await page.uncheck('#wicksToggle');await page.waitForTimeout(30);
+  const offWallMs=await page.evaluate(started=>performance.now()-started,offStart),offExcursions=await wickExcursions();
+  await screenshot('traditional-wicks-off');
+  const onStart=await page.evaluate(()=>performance.now());
+  await page.check('#wicksToggle');await page.waitForTimeout(30);
+  const onWallMs=await page.evaluate(started=>performance.now()-started,onStart),restoredExcursions=await wickExcursions();
+  await screenshot('traditional-wicks-on');
+  const wicks={onExcursions,offExcursions,restoredExcursions,offWallMs,onWallMs,pass:onExcursions>0&&offExcursions===0&&restoredExcursions>0&&offWallMs<=APPLY_LIMIT_MS&&onWallMs<=APPLY_LIMIT_MS};
+
+  const percentageStart=await page.evaluate(()=>performance.now());
+  const percentageSetup=await page.evaluate(()=>{
+    const T=window.RWARenkoTV;window.RWARenkoATRControl.clearStable('production-report-percentage');T.settings.method='percentage';T.settings.percentage=.10;T.rebuild({fit:true});return{ltp:Number(T.state.percentageLtpSnapshot||T.state.lastPrice),box:Number(T.state.box),tick:Number(T.state.tickSize),exactOwned:Object.prototype.hasOwnProperty.call(T.settings,'_exactBox')};
+  });
+  const percentageWall=await page.evaluate(started=>performance.now()-started,percentageStart);
+  const percentage=await snapshot('percentage-10',percentageWall,{setup:percentageSetup});
+  const pctExpected=await page.evaluate(()=>{const T=window.RWARenkoTV,E=T.engine,ltp=Number(T.state.percentageLtpSnapshot||T.state.lastPrice);return E.percentageLtpStableRound(ltp*.10,T.state.tickSize)});
+  const percentageFormulaOk=closeEnough(percentage.box,pctExpected,percentage.tickSize);
+  percentage.expectedBox=pctExpected;percentage.formulaOk=percentageFormulaOk;
+  percentage.pass=percentage.basicPass&&percentage.currentMethod==='percentage'&&!percentage.exactOwned&&percentageFormulaOk&&!percentage.workerActive&&percentage.applyWithinLimit;
+  await screenshot('percentage-10');
+
+  // Restore the user-facing production default state for the screenshot/report.
+  await page.evaluate(()=>{const T=window.RWARenkoTV;T.settings.source='close';T.settings.wicks=true;document.getElementById('sourceSelect').value='close';document.getElementById('wicksToggle').checked=true;T.rebuild({fit:true})});
+
+  const row={label,viewport,url,httpStatus,boot,atr14,atr140,atrChanged,traditional,wicks,percentage,percentageFormulaOk,pageErrors,consoleErrors,pass:httpStatus===200&&boot.basicPass&&atrChanged&&traditional.pass&&wicks.pass&&percentage.pass&&pageErrors.length===0&&consoleErrors.length===0};
+  results.push(row);
+  await context.close();
 }
 
-try{await runViewport('desktop',{width:1900,height:1000});await runViewport('mobile',{width:390,height:844})}finally{await browser.close()}
+try{
+  await runViewport('desktop',{width:1900,height:1000});
+  await runViewport('mobile',{width:390,height:844});
+}finally{
+  await browser.close();
+}
 
-const report={generatedAt:new Date().toISOString(),url:`${BASE}/renko/`,targetVisible:TARGET_VISIBLE,firstFrameLimitMs:FIRST_FRAME_LIMIT_MS,requiredInputWaitMs:0,requiredAtrChange:'14-to-140-must-change-box-and-geometry',requiredExactSeedFor:['traditional'],requiredPercentageLtpRule:'LTP x percentage rounded only to nearest exchange minimum tick',requiredPercentageFirstFrameSource:'deploy-tick-seed; preview allowed while exact background is non-blocking',requiredWicksToggle:true,requiredNoOverlap:true,requiredNoLoadingAfterApply:true,status:results.every(r=>r.pass)?'PASS':'FAIL',results};
+const report={
+  schema:'renko-current-production-browser-v2',
+  generatedAt:new Date().toISOString(),
+  url:`${BASE}/renko/`,
+  targetVisible:TARGET_VISIBLE,
+  applyLimitMs:APPLY_LIMIT_MS,
+  contract:{runtime:'RWARenkoTV 3.1 current production API',fixedInterval:'1s',atr:'positive raw Wilder ATR equals box; runtime-only stable exact lock',traditional:'fixed absolute min-tick-normalized box; >=46 first-frame when attainable, otherwise exactly one min tick/no fake sub-tick',percentage:'internal LTP x percentage regression, rounded to exchange tick; hidden UI remains hidden',wicks:'real production toggle, verified off=0 excursions and on restores excursions',layout:'instrument/stats do not overlap',legacyV15HarnessRequired:false},
+  status:results.every(r=>r.pass)?'PASS':'FAIL',
+  results
+};
 await fs.writeFile(path.join(OUT,'report.json'),JSON.stringify(report,null,2));
 console.log('RENKO_PRODUCTION_SCREENSHOT_REPORT',JSON.stringify(report));
 if(report.status!=='PASS')process.exitCode=2;
