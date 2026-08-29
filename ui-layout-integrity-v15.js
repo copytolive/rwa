@@ -21,6 +21,7 @@ function mountMarketplace(){
 }
 function suspendWorkspace(){const w=$('#rwaSuperWorkspace');if(!w)return;w.hidden=true;w.style.setProperty('display','none','important');w.style.setProperty('visibility','hidden','important');w.style.setProperty('pointer-events','none','important');document.body.classList.remove('rwa-super-workspace-open','rwa-super-asset-workspace')}
 function releaseWorkspaceStyles(){const w=$('#rwaSuperWorkspace');if(!w)return;w.style.removeProperty('display');w.style.removeProperty('visibility');w.style.removeProperty('pointer-events')}
+function releaseStaleWorkspaceSuspend(){const w=$('#rwaSuperWorkspace');if(!w||w.hidden||isFundOpen())return false;if(!document.body.classList.contains('rwa-super-workspace-open')||!isWorkspaceRoute())return false;const display=w.style.getPropertyValue('display'),visibility=w.style.getPropertyValue('visibility'),pointer=w.style.getPropertyValue('pointer-events');if(display==='none'||visibility==='hidden'||pointer==='none'){releaseWorkspaceStyles();return true}return false}
 function clearFundGeometry(f){for(const p of ['position','left','right','top','bottom','width','min-width','max-width','height','margin','transform','translate'])f.style.removeProperty(p)}
 function pinFundToCanonicalRail(f){
   if(innerWidth<=680){clearFundGeometry(f);return}
@@ -48,7 +49,7 @@ function restoreContext(){const r=returnRoute;returnRoute='';releaseWorkspaceSty
 function closeForNavigation(){if(!isFundOpen())return;const prev=suppressRestore;suppressRestore=true;returnRoute='';try{window.RWAFundamentals?.close?.()}catch{}finally{suppressRestore=prev}releaseWorkspaceStyles()}
 function patchSuper(){
   const api=window.RWASuperApp;if(!api||patchedSuper)return false;const nav=api.navigate?.bind(api);if(typeof nav!=='function')return false;
-  api.navigate=(next,...rest)=>{closeForNavigation();const out=nav(next,...rest);queueMicrotask(()=>{mountMarketplace();syncFundVisual();syncLegacyRight()});return out};patchedSuper=true;mountMarketplace();return true
+  api.navigate=(next,...rest)=>{closeForNavigation();const out=nav(next,...rest);queueMicrotask(()=>{releaseStaleWorkspaceSuspend();mountMarketplace();syncFundVisual();syncLegacyRight()});return out};patchedSuper=true;mountMarketplace();return true
 }
 function wrapFundOpen(fn){return async(...args)=>{fundOpening++;try{prepareFundamentals();const out=await fn(...args);suspendWorkspace();syncFundVisual();syncLegacyRight();return out}finally{fundOpening=Math.max(0,fundOpening-1);queueMicrotask(reconcile)}}}
 function patchFundamentals(){
@@ -59,7 +60,7 @@ function patchFundamentals(){
   patchedFund=true;return true
 }
 function reconcile(){
-  if(reconciling)return;reconciling=true;try{mountMarketplace();patchSuper();patchFundamentals();const fundOpen=isFundOpen();if(fundOpen)suspendWorkspace();syncFundVisual();syncLegacyRight();if(!fundOpen&&returnRoute&&!suppressRestore&&fundOpening===0)restoreContext()}finally{reconciling=false}
+  if(reconciling)return;reconciling=true;try{mountMarketplace();patchSuper();patchFundamentals();const fundOpen=isFundOpen();if(fundOpen)suspendWorkspace();else releaseStaleWorkspaceSuspend();syncFundVisual();syncLegacyRight();if(!fundOpen&&returnRoute&&!suppressRestore&&fundOpening===0)restoreContext()}finally{reconciling=false}
 }
 function visible(el){if(!el)return false;const s=getComputedStyle(el),r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity||1)>0&&r.width>1&&r.height>1}
 function intersection(a,b){if(!a||!b)return 0;const x=Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left)),y=Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));return x*y}
