@@ -18,7 +18,14 @@
 <link rel="stylesheet" href="stable-shell.css?v=3">
 <link rel="stylesheet" href="superapp-v5.css?v=13">
 <link rel="stylesheet" href="renko-shell-fullscreen.css?v=1">
-<script id="rwaTargetFirstPaintBoot">(()=>{const h=document.documentElement;h.classList.add('rwa-target-prepaint');if(location.hash==='#shop')h.classList.add('rwa-target-prepaint-shop')})();</script>
+<script id="rwaTargetFirstPaintBoot">(()=>{
+'use strict';
+const h=document.documentElement;h.classList.add('rwa-target-prepaint');if(location.hash==='#shop')h.classList.add('rwa-target-prepaint-shop');
+const navHtml='<button class="active" data-rwa-target-nav="markets">Markets</button><button id="rwaSeablueprintCommerceLaunch" data-rwa-target-nav="ecommerce" data-rwa-seablueprint-commerce="1">Ecommerce <span class="rwa-target-new">NEW</span></button><button data-rwa-target-nav="intelligence">Intelligence</button><button data-rwa-target-nav="portfolio">Portfolio</button><button data-rwa-target-nav="orders">Orders</button><button data-rwa-target-nav="reports">Reports</button>';
+const guardStyle=document.createElement('style');guardStyle.id='rwaTargetFirstPaintHeaderGuardStyle';guardStyle.textContent='html.rwa-target-prepaint body.rwa-target-dashboard-v2 .top-actions>:not(.rwa-target-inpage):not(.rwa-target-icon-actions):not(.signin){display:none!important;visibility:hidden!important;pointer-events:none!important}html.rwa-target-prepaint body.rwa-target-dashboard-v2 .topnav>[data-v5-route]{display:none!important;visibility:hidden!important}';document.head.appendChild(guardStyle);
+let obs;const restore=()=>{const brand=document.querySelector('.brandcopy strong');if(brand&&brand.textContent!=='RWA × Seablueprint')brand.textContent='RWA × Seablueprint';const nav=document.querySelector('.topnav');if(nav){const keys=[...nav.querySelectorAll(':scope>[data-rwa-target-nav]')].map(x=>x.dataset.rwaTargetNav).join('|');if(keys!=='markets|ecommerce|intelligence|portfolio|orders|reports')nav.innerHTML=navHtml}if(h.classList.contains('rwa-target-runtime-ready'))obs?.disconnect()};
+obs=new MutationObserver(restore);obs.observe(h,{subtree:true,childList:true});document.addEventListener('DOMContentLoaded',restore,{once:true});window.__RWA_FIRST_PAINT_HEADER_LOCK__={restore,disconnect:()=>obs.disconnect()};
+})();</script>
 <link rel="stylesheet" href="rwa-target-dashboard-v2.css?v=2.0.0" data-rwa-target-v2="1">
 <link rel="stylesheet" href="rwa-target-dashboard-v2-hardening.css?v=2.1.0" data-rwa-target-hardening="1">
 <style id="rwaTargetFirstPaintCritical">
