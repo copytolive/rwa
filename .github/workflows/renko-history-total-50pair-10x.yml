@@ -83,9 +83,29 @@ jobs:
           }
           NODE
       - name: Desktop — 50 pairs × ATR10 + Traditional10 full-total history
-        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_HISTORY10X_VIEWPORT=desktop RENKO_HISTORY10X_OUT=artifacts/history10x-desktop node tools/renko-history-total-50pair-10x-report.mjs
+        run: |
+          set -euo pipefail
+          rc=1
+          for attempt in 1 2 3; do
+            echo "HISTORY10X_DESKTOP_ATTEMPT=$attempt"
+            rm -rf artifacts/history10x-desktop
+            if RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_HISTORY10X_VIEWPORT=desktop RENKO_HISTORY10X_OUT=artifacts/history10x-desktop node tools/renko-history-total-50pair-10x-report.mjs; then exit 0; fi
+            rc=$?
+            sleep 2
+          done
+          exit "$rc"
       - name: Mobile — 50 pairs × ATR10 + Traditional10 full-total history
-        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_HISTORY10X_VIEWPORT=mobile RENKO_HISTORY10X_OUT=artifacts/history10x-mobile node tools/renko-history-total-50pair-10x-report.mjs
+        run: |
+          set -euo pipefail
+          rc=1
+          for attempt in 1 2 3; do
+            echo "HISTORY10X_MOBILE_ATTEMPT=$attempt"
+            rm -rf artifacts/history10x-mobile
+            if RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_HISTORY10X_VIEWPORT=mobile RENKO_HISTORY10X_OUT=artifacts/history10x-mobile node tools/renko-history-total-50pair-10x-report.mjs; then exit 0; fi
+            rc=$?
+            sleep 2
+          done
+          exit "$rc"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -162,9 +182,29 @@ jobs:
           }
           NODE
       - name: PUBLIC desktop — 50 pairs × ATR10 + Traditional10 full-total history
-        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_HISTORY10X_VIEWPORT=desktop RENKO_HISTORY10X_OUT=artifacts/public-history10x-desktop node tools/renko-history-total-50pair-10x-report.mjs
+        run: |
+          set -euo pipefail
+          rc=1
+          for attempt in 1 2 3; do
+            echo "PUBLIC_HISTORY10X_DESKTOP_ATTEMPT=$attempt"
+            rm -rf artifacts/public-history10x-desktop
+            if RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_HISTORY10X_VIEWPORT=desktop RENKO_HISTORY10X_OUT=artifacts/public-history10x-desktop node tools/renko-history-total-50pair-10x-report.mjs; then exit 0; fi
+            rc=$?
+            sleep 2
+          done
+          exit "$rc"
       - name: PUBLIC mobile — 50 pairs × ATR10 + Traditional10 full-total history
-        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_HISTORY10X_VIEWPORT=mobile RENKO_HISTORY10X_OUT=artifacts/public-history10x-mobile node tools/renko-history-total-50pair-10x-report.mjs
+        run: |
+          set -euo pipefail
+          rc=1
+          for attempt in 1 2 3; do
+            echo "PUBLIC_HISTORY10X_MOBILE_ATTEMPT=$attempt"
+            rm -rf artifacts/public-history10x-mobile
+            if RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_HISTORY10X_VIEWPORT=mobile RENKO_HISTORY10X_OUT=artifacts/public-history10x-mobile node tools/renko-history-total-50pair-10x-report.mjs; then exit 0; fi
+            rc=$?
+            sleep 2
+          done
+          exit "$rc"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
