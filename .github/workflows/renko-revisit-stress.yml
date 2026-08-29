@@ -46,7 +46,8 @@ jobs:
           await page.waitForFunction(()=>RWARenkoTV?.state?.status==='live'&&RWARenkoTotalHistory?.jumpOrigin&&RWARenkoStableChart?.version==='2.1.0',null,{timeout:90000});
           for(let i=0;i<30;i++){
             for(const s of ['COMPUSDT','ZECUSDT']){
-              if(!(RWARenkoTV.state.symbol===s&&RWARenkoTV.state.status==='live')){await page.evaluate(s=>RWARenkoSwitchFast.load(s,{fit:true}),s);await page.waitForFunction(s=>RWARenkoTV.state.symbol===s&&RWARenkoTV.state.status==='live',s,{timeout:45000})}
+              const live=await page.evaluate(s=>RWARenkoTV.state.symbol===s&&RWARenkoTV.state.status==='live',s);
+              if(!live){await page.evaluate(s=>RWARenkoSwitchFast.load(s,{fit:true}),s);await page.waitForFunction(s=>RWARenkoTV.state.symbol===s&&RWARenkoTV.state.status==='live',s,{timeout:45000})}
               await page.evaluate(s=>RWARenkoTotalHistory.jumpOrigin(s),s);
               await page.waitForFunction(s=>RWARenkoTV.state.symbol===s&&RWARenkoTV.state.status==='history-origin',s,{timeout:45000});
               const st=await page.evaluate(()=>({bars:RWARenkoTV.state.closedBars.length,canvas:document.querySelectorAll('#chartHost canvas').length,dropped:Number(document.documentElement.dataset.renkoStableDataRowsDropped||0),invalidC:Number(document.documentElement.dataset.renkoInvalidConfirmedDropped||0),invalidP:Number(document.documentElement.dataset.renkoInvalidProjectionDropped||0)}));
