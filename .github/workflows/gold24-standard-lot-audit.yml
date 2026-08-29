@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 20
     env:
       STATE_DIR: ${{ github.workspace }}/.gold24-canonical-v11
-      OUT_DIR: ${{ github.workspace }}/.gold24-standard-lot-audit
+      OUT_DIR: ${{ runner.temp }}/gold24-standard-lot-audit
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
@@ -129,17 +129,19 @@ jobs:
             git add backtest/gold24/runtime_mt5_lot
             if git diff --cached --quiet; then
               echo 'standard-lot runtime already current'
-              exit 0
+              break
             fi
             git commit -m 'chore(gold24): publish 1-standard-lot audit [skip ci]'
             if git push origin HEAD:main; then
               echo 'standard-lot audit publish: PASS'
-              exit 0
+              break
+            fi
+            if [ "$TRY" -eq 5 ]; then
+              echo 'standard-lot audit publish failed after retries' >&2
+              exit 1
             fi
             sleep $((TRY * 2))
           done
-          echo 'standard-lot audit publish failed after retries' >&2
-          exit 1
 
       - name: Upload audit artifact
         if: always()
