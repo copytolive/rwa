@@ -1,7 +1,7 @@
 name: RENKO ATR Zero Blocking Gate
 on:
   push:
-    branches: [main]
+    branches: [main, 'fix/renko-final-zero-safe-gates-*']
     paths:
       - 'renko/**'
       - 'tools/renko-atr-control-all-pairs-report.mjs'
@@ -28,18 +28,21 @@ jobs:
           node --check tools/renko-xaut-live-provider-report.mjs
           grep -Fq "version:'1.4.0-fixed-1s'" renko/renko-tv-engine.js
           grep -Fq "contract:'tradingview-public-documentation-compatible-fixed-1s'" renko/renko-tv-engine.js
-          grep -Fq 'renko-tv-atr-control.js?v=2' renko/index.html
+          grep -Fq 'renko-tv-atr-control.js?v=3' renko/index.html
           grep -Fq 'renko-tv-atr-fixed1s.js?v=4' renko/index.html
           grep -Fq 'renko-tv-stable-chart-v2.js?v=183' renko/index.html
           grep -Fq 'renko-tv-app.js?v=187' renko/index.html
           ! grep -Fq 'renko-tv-atr-1s-million-cache-v3.js' renko/index.html
           ! grep -Fq 'renko-tv-atr-1s-million-cache.js?v=' renko/index.html
-          grep -Fq "rule:'xaut-deep-matrix-other-pairs-local-fixed1s-atr-snapshot-box-stable-between-closes-runtime-only-single-owner-display'" renko/renko-tv-atr-control.js
+          grep -Fq "version:'1.4.0-zero-safe'" renko/renko-tv-atr-control.js
+          grep -Fq 'zero-wilder-min-tick-fallback' renko/renko-tv-atr-control.js
+          grep -Fq 'atrZeroFallback' renko/renko-tv-atr-control.js
           grep -Fq "version:'2.2.0-lazy'" renko/renko-tv-atr-fixed1s.js
           grep -Fq "rule:'render-only-on-renko-geometry-change-any-source-interval'" renko/renko-tv-stable-chart-v2.js
           grep -Fq 'workerActive' tools/renko-atr-control-all-pairs-report.mjs
           grep -Fq 'entryCount' tools/renko-atr-control-all-pairs-report.mjs
       - name: Wait for exact deployed Pages SHA
+        if: github.ref == 'refs/heads/main'
         run: |
           set -euo pipefail
           for i in $(seq 1 100); do
@@ -53,10 +56,19 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
           npx playwright install --with-deps chromium
-      - name: Prove all 50 normal pairs keep XAUT deep worker dormant and render positive ATR
-        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_ATR_VIEWPORT=desktop RENKO_ATR_CONTROL_OUT=artifacts/renko-atr-zero-blocking node tools/renko-atr-control-all-pairs-report.mjs
+      - name: Prove all 50 normal pairs keep XAUT deep worker dormant and render legal ATR
+        env:
+          RWA_TEST_URL: ${{ github.ref == 'refs/heads/main' && 'https://copytolive.github.io/rwa' || 'http://127.0.0.1:8080/rwa' }}
+        run: |
+          if [ "$GITHUB_REF" != 'refs/heads/main' ]; then
+            rm -rf /tmp/renko-zero-site; mkdir -p /tmp/renko-zero-site/rwa; cp -a . /tmp/renko-zero-site/rwa/; (cd /tmp/renko-zero-site && python3 -m http.server 8080 >/tmp/renko-zero-http.log 2>&1 &) ;
+            for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/rwa/renko/ >/dev/null && break; sleep 1; done
+          fi
+          RENKO_ATR_VIEWPORT=desktop RENKO_ATR_CONTROL_OUT=artifacts/renko-atr-zero-blocking node tools/renko-atr-control-all-pairs-report.mjs
       - name: Prove XAUT provider remains isolated to the on-demand fixed-1s path
-        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_XAUT_OUT=artifacts/renko-atr-zero-blocking/xaut-provider node tools/renko-xaut-live-provider-report.mjs
+        env:
+          RWA_TEST_URL: ${{ github.ref == 'refs/heads/main' && 'https://copytolive.github.io/rwa' || 'http://127.0.0.1:8080/rwa' }}
+        run: RENKO_XAUT_OUT=artifacts/renko-atr-zero-blocking/xaut-provider node tools/renko-xaut-live-provider-report.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

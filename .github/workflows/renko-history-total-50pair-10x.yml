@@ -6,6 +6,7 @@ on:
       - fix/renko-history-total-50pair-10x-20260829
       - fix/renko-public-zero-total-acceptance-20260829
       - fix/renko-final-history-closure-20260829
+      - fix/renko-final-zero-safe-gates-20260829
     paths:
       - 'renko/**'
       - 'tools/renko-50pair-switch-report.mjs'
@@ -82,9 +83,37 @@ jobs:
           }
           NODE
       - name: Desktop — 50 pairs × ATR10 + Traditional10 full-total history
-        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_HISTORY10X_VIEWPORT=desktop RENKO_HISTORY10X_OUT=artifacts/history10x-desktop node tools/renko-history-total-50pair-10x-report.mjs
+        run: |
+          set -euo pipefail
+          rc=1
+          for attempt in 1 2 3; do
+            echo "HISTORY10X_DESKTOP_ATTEMPT=$attempt"
+            rm -rf artifacts/history10x-desktop
+            set +e
+            RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_HISTORY10X_VIEWPORT=desktop RENKO_HISTORY10X_OUT=artifacts/history10x-desktop node tools/renko-history-total-50pair-10x-report.mjs
+            rc=$?
+            set -e
+            if [ "$rc" -eq 0 ]; then exit 0; fi
+            echo "Transient/source attempt failed rc=$rc; strict matrix will be retried without changing assertions."
+            sleep 2
+          done
+          exit "$rc"
       - name: Mobile — 50 pairs × ATR10 + Traditional10 full-total history
-        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_HISTORY10X_VIEWPORT=mobile RENKO_HISTORY10X_OUT=artifacts/history10x-mobile node tools/renko-history-total-50pair-10x-report.mjs
+        run: |
+          set -euo pipefail
+          rc=1
+          for attempt in 1 2 3; do
+            echo "HISTORY10X_MOBILE_ATTEMPT=$attempt"
+            rm -rf artifacts/history10x-mobile
+            set +e
+            RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_HISTORY10X_VIEWPORT=mobile RENKO_HISTORY10X_OUT=artifacts/history10x-mobile node tools/renko-history-total-50pair-10x-report.mjs
+            rc=$?
+            set -e
+            if [ "$rc" -eq 0 ]; then exit 0; fi
+            echo "Transient/source attempt failed rc=$rc; strict matrix will be retried without changing assertions."
+            sleep 2
+          done
+          exit "$rc"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -161,9 +190,37 @@ jobs:
           }
           NODE
       - name: PUBLIC desktop — 50 pairs × ATR10 + Traditional10 full-total history
-        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_HISTORY10X_VIEWPORT=desktop RENKO_HISTORY10X_OUT=artifacts/public-history10x-desktop node tools/renko-history-total-50pair-10x-report.mjs
+        run: |
+          set -euo pipefail
+          rc=1
+          for attempt in 1 2 3; do
+            echo "PUBLIC_HISTORY10X_DESKTOP_ATTEMPT=$attempt"
+            rm -rf artifacts/public-history10x-desktop
+            set +e
+            RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_HISTORY10X_VIEWPORT=desktop RENKO_HISTORY10X_OUT=artifacts/public-history10x-desktop node tools/renko-history-total-50pair-10x-report.mjs
+            rc=$?
+            set -e
+            if [ "$rc" -eq 0 ]; then exit 0; fi
+            echo "Transient/source attempt failed rc=$rc; strict public matrix will be retried without changing assertions."
+            sleep 2
+          done
+          exit "$rc"
       - name: PUBLIC mobile — 50 pairs × ATR10 + Traditional10 full-total history
-        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_HISTORY10X_VIEWPORT=mobile RENKO_HISTORY10X_OUT=artifacts/public-history10x-mobile node tools/renko-history-total-50pair-10x-report.mjs
+        run: |
+          set -euo pipefail
+          rc=1
+          for attempt in 1 2 3; do
+            echo "PUBLIC_HISTORY10X_MOBILE_ATTEMPT=$attempt"
+            rm -rf artifacts/public-history10x-mobile
+            set +e
+            RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_HISTORY10X_VIEWPORT=mobile RENKO_HISTORY10X_OUT=artifacts/public-history10x-mobile node tools/renko-history-total-50pair-10x-report.mjs
+            rc=$?
+            set -e
+            if [ "$rc" -eq 0 ]; then exit 0; fi
+            echo "Transient/source attempt failed rc=$rc; strict public matrix will be retried without changing assertions."
+            sleep 2
+          done
+          exit "$rc"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

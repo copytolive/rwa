@@ -2,7 +2,7 @@ name: RENKO TradingView Official Contract Gate
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "fix/renko-final-zero-safe-gates-20260829"]
     paths:
       - "renko/**"
       - "tools/renko-tradingview-official-report.mjs"
@@ -44,7 +44,7 @@ jobs:
           grep -Fq 'renko-tv-app.js?v=187' renko/index.html
           grep -Fq 'renko-tv-stable-chart-v2.js?v=183' renko/index.html
           grep -Fq 'renko-tv-ultrafast-ui.js?v=171' renko/index.html
-          grep -Fq 'renko-tv-atr-control.js?v=2' renko/index.html
+          grep -Fq 'renko-tv-atr-control.js?v=3' renko/index.html
           grep -Fq 'renko-tv-atr-fixed1s.js?v=4' renko/index.html
           ! grep -Fq 'id="intervalSelect"' renko/index.html
           ! grep -Fq 'renko-v12.js?v=' renko/index.html
@@ -57,7 +57,9 @@ jobs:
           grep -Fq "version:'1.4.0-fixed-1s'" renko/renko-tv-engine.js
           grep -Fq '_exactBox' renko/renko-tv-engine.js
           grep -Fq "rule:'render-only-on-renko-geometry-change-any-source-interval'" renko/renko-tv-stable-chart-v2.js
-          grep -Fq "rule:'xaut-deep-matrix-other-pairs-local-fixed1s-atr-snapshot-box-stable-between-closes-runtime-only-single-owner-display'" renko/renko-tv-atr-control.js
+          grep -Fq "version:'1.4.0-zero-safe'" renko/renko-tv-atr-control.js
+          grep -Fq 'positive-wilder-exact-box-zero-wilder-min-tick-fallback' renko/renko-tv-atr-control.js
+          grep -Fq 'atrZeroFallback' renko/renko-tv-atr-control.js
           grep -Fq "rule:'fixed-1s-okx-deep-wilder-matrix-on-demand'" renko/renko-tv-atr-fixed1s.js
           grep -Fq "version:'1.1.1'" renko/renko-tv-ultrafast-ui.js
           grep -Fq "rule:'search-only-universe-plus-fast50-launch-list-plus-manual-zoom-lock'" renko/renko-tv-ultrafast-ui.js
@@ -79,6 +81,9 @@ jobs:
           const atrBars=[{open:10,high:10.017,low:10,close:10.011},{open:10.011,high:10.028,low:10.006,close:10.02},{open:10.02,high:10.039,low:10.014,close:10.03}];
           const atr=E.latestAtr(atrBars,3,.01),atrBox=E.computeBox(atrBars,{method:'atr',atrLength:3},.01);
           if(!(atr>0)||Math.abs(atrBox-atr)>1e-15||Math.abs(atrBox-E.roundTick(atrBox,.01))<1e-9)throw Error('ATR was rounded to minimum tick instead of using raw Wilder value');
+          const flat=[{open:10,high:10,low:10,close:10}];
+          const flatRaw=E.latestAtr(flat,1,.01),flatBox=E.computeBox(flat,{method:'atr',atrLength:1},.01);
+          if(flatRaw!==0||Math.abs(flatBox-.01)>1e-12)throw Error('Zero Wilder ATR must fall back to legal minimum tick');
           const override=.01759154004858781,exact=E.computeBox(atrBars,{method:'atr',atrLength:3,_exactBox:override},.01);
           if(Math.abs(exact-override)>1e-15)throw Error('ATR exact-box override was rounded');
           const base=E.build(bars([100,110]),{method:'traditional',boxSize:10,source:'close',wicks:false},1);
@@ -116,12 +121,15 @@ jobs:
         run: rm -rf node_modules package-lock.json
 
       - name: Stamp exact deployed SHA
+        if: github.ref == 'refs/heads/main'
         run: printf '%s\n' "$GITHUB_SHA" > renko-deployment-sha.txt
 
       - name: Configure Pages
+        if: github.ref == 'refs/heads/main'
         uses: actions/configure-pages@v5
 
       - name: Upload verified site
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
@@ -136,6 +144,7 @@ jobs:
           retention-days: 7
 
   deploy:
+    if: github.ref == 'refs/heads/main'
     needs: verify-renko-official-contract
     environment:
       name: github-pages
@@ -150,6 +159,7 @@ jobs:
         uses: actions/deploy-pages@v4
 
   production-browser-report:
+    if: github.ref == 'refs/heads/main'
     needs: deploy
     runs-on: ubuntu-latest
     timeout-minutes: 15
