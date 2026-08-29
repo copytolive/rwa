@@ -1,19 +1,267 @@
-name: GOLD Canonical v11 Recovery Continuation (PAUSED BY V2 GATE A)
+name: GOLD Canonical v11 Recovery Continuation
 
 on:
+  schedule:
+    - cron: '25 * * * *'
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/gold24-canonical-recovery.yml'
+      - 'backtest/gold24/GITHUB_RUNNER_KICK'
 
 permissions:
-  contents: read
+  contents: write
+  actions: read
+
+concurrency:
+  group: gold24-canonical-v11
+  cancel-in-progress: true
 
 jobs:
-  gate-a-fail-closed:
+  canonical-recovery-v11:
     runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      GOLD24_STATE_DIR: ${{ github.workspace }}/.gold24-canonical-v11
+      GOLD24_TIMEFRAME: D1
+      GOLD24_BATCH_SIZE: '256'
+      GOLD24_FLAT_LOT: '1.0'
+      GOLD24_SEED: '20260828'
+      GH_TOKEN: ${{ github.token }}
     steps:
-      - name: V2 governance guard
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned dependencies
         run: |
-          echo 'strategy_engine=PAUSED'
-          echo 'policy=GOLD24_WEEKLY_PROFIT_RR12_V2_20260828'
-          echo 'gate_a=BLOCKED_DRIVE_APPROVED_CROSSCHECK_BYTES_RECEIPT_MISSING'
-          echo 'Legacy v11 simulation is disabled until the canonical V2 Gate A passes.'
-          echo 'No strategy simulation, counter increment, TOP200 change, or TOP100_COMPLIANT change is permitted.'
+          set -euo pipefail
+          pip install -r backtest/gold24/requirements.txt
+          pip install 'websocket-client>=1.8,<2' 'requests>=2.32,<3'
+          pip install 'git+https://github.com/rongardF/tvdatafeed.git@e6f6aaa7de439ac6e454d9b26d2760ded8dc4923'
+
+      - name: Restore exact latest published canonical state
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$GOLD24_STATE_DIR" "$RUNNER_TEMP/gold24-v11-prev"
+          mkdir -p "$GOLD24_STATE_DIR" "$RUNNER_TEMP/gold24-v11-prev"
+
+          read -r SOURCE_RUN SOURCE_ATTEMPT SOURCE_ARCHIVED < <(python - <<'PY'
+          import json, pathlib
+          x=json.loads(pathlib.Path('backtest/gold24/runtime_v11/latest_validation_summary.json').read_text())
+          print(x.get('github_run_id',''), x.get('github_run_attempt','1'), x.get('cumulative_configs_archived',''))
+          PY
+          )
+          test -n "$SOURCE_RUN"
+          test -n "$SOURCE_ATTEMPT"
+          test -n "$SOURCE_ARCHIVED"
+          echo "restoring published canonical source run=$SOURCE_RUN attempt=$SOURCE_ATTEMPT archived=$SOURCE_ARCHIVED"
+
+          gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN/artifacts?per_page=100" > "$RUNNER_TEMP/gold24-artifacts.json"
+          ARTIFACT_URL="$(python - "$RUNNER_TEMP/gold24-artifacts.json" "$SOURCE_ATTEMPT" <<'PY'
+          import json,sys
+          p=sys.argv[1]; attempt=max(1,int(sys.argv[2]))
+          x=json.load(open(p))
+          arts=sorted([a for a in x.get('artifacts',[]) if a.get('name')=='gold24-canonical-v11-state' and not a.get('expired')], key=lambda a:a.get('created_at',''))
+          if len(arts) < attempt:
+              raise SystemExit(f'ARTIFACT_FAIL: need attempt {attempt}, only {len(arts)} matching artifacts')
+          print(arts[attempt-1]['archive_download_url'])
+          PY
+          )"
+          test -n "$ARTIFACT_URL"
+          curl -L --fail --retry 3 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "$ARTIFACT_URL" -o "$RUNNER_TEMP/gold24-v11-state.zip"
+          unzip -q "$RUNNER_TEMP/gold24-v11-state.zip" -d "$RUNNER_TEMP/gold24-v11-prev"
+
+          test -s "$RUNNER_TEMP/gold24-v11-prev/gold24-v11.db"
+          test -s "$RUNNER_TEMP/gold24-v11-prev/gate_a/gate_a_receipt.json"
+          python - "$RUNNER_TEMP/gold24-v11-prev/gold24-v11.db" "$SOURCE_ARCHIVED" <<'PY'
+          import sqlite3,sys
+          db=sqlite3.connect(sys.argv[1])
+          n=db.execute('SELECT COUNT(*) FROM configs').fetchone()[0]
+          db.close()
+          expected=int(sys.argv[2])
+          assert n==expected, f'RESTORE_REGRESSION: artifact has {n}, published checkpoint requires {expected}'
+          print(f'published canonical DB count exact: {n}')
+          PY
+          python - "$RUNNER_TEMP/gold24-v11-prev/gate_a/gate_a_receipt.json" <<'PY'
+          import json,sys
+          x=json.load(open(sys.argv[1]))
+          assert x.get('crosscheck_pass') is True
+          assert str(x.get('primary_end_utc',''))[:4] >= '2026'
+          assert x.get('timeframe') == 'D1'
+          print('published canonical artifact Gate A: PASS')
+          PY
+          cp -a "$RUNNER_TEMP/gold24-v11-prev/." "$GOLD24_STATE_DIR/"
+          printf '%s\n' "$SOURCE_RUN" > "$GOLD24_STATE_DIR/previous_successful_run_id.txt"
+          printf 'true\n' > "$GOLD24_STATE_DIR/restored_previous_state.txt"
+
+      - name: Strict Gate A — true-source D1, cross-check, integrity
+        run: |
+          set -euo pipefail
+          python backtest/gold24/strict_gate_a.py --self-test
+          python backtest/gold24/strict_gate_a.py \
+            --dataset "$GOLD24_STATE_DIR/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv" \
+            --receipt "$GOLD24_STATE_DIR/gate_a/gate_a_receipt.json" \
+            --timeframe "$GOLD24_TIMEFRAME" \
+            --out "$GOLD24_STATE_DIR/STRICT_GATE_A_AUDIT.json"
+
+      - name: Prove v11 semantics and duplicate authority
+        working-directory: backtest/gold24
+        run: |
+          set -euo pipefail
+          python pipeline_selftest.py
+          python v11_runner.py --self-test
+          python v11_screening.py --self-test
+
+      - name: Continue GOLD v11 canonical search for 35 minutes
+        working-directory: backtest/gold24
+        env:
+          GOLD24_DATASET: ${{ github.workspace }}/.gold24-canonical-v11/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv
+          GOLD24_CROSSCHECK: ${{ github.workspace }}/.gold24-canonical-v11/gate_a/gate_a_receipt.json
+        run: |
+          set -euo pipefail
+          timeout --preserve-status --signal=INT --kill-after=300s 2100s python v11_runner.py
+
+      - name: Run v11 target robustness screening
+        working-directory: backtest/gold24
+        env:
+          GOLD24_DATASET: ${{ github.workspace }}/.gold24-canonical-v11/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv
+          GOLD24_CROSSCHECK: ${{ github.workspace }}/.gold24-canonical-v11/gate_a/gate_a_receipt.json
+        run: |
+          set -euo pipefail
+          python v11_screening.py
+
+      - name: Build and verify public validation summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json,pathlib,sqlite3
+          root=pathlib.Path('.gold24-canonical-v11')
+          strict=json.loads((root/'STRICT_GATE_A_AUDIT.json').read_text())
+          status=json.loads((root/'status_v11.json').read_text())
+          screening=json.loads((root/'SCREENING_V11.json').read_text())
+          top200=json.loads((root/'TOP200_SAMPLE_PF_V11.json').read_text())
+          qualified=json.loads((root/'TOP100_QUALIFIED_V11.json').read_text())
+          final=json.loads((root/'TOP100_COMPLIANT_V11.json').read_text())
+          rules=pathlib.Path('backtest/gold24/RULES_GOLD_V11_2026.md')
+          rules_sha=hashlib.sha256(rules.read_bytes()).hexdigest()
+          db=sqlite3.connect(root/'gold24-v11.db'); db.row_factory=sqlite3.Row
+          rows=db.execute('SELECT execution_hash,metrics_json FROM configs').fetchall(); db.close()
+          metrics=[json.loads(r['metrics_json']) if r['metrics_json'] else {} for r in rows]
+          hashes=[r['execution_hash'] for r in rows if r['execution_hash']]
+          prev=(root/'previous_successful_run_id.txt').read_text().strip()
+          summary={
+            'schema':'gold-v11-public-validation-v1','validation':'PASS',
+            'workflow':'GOLD Canonical v11 Recovery Continuation',
+            'policy':'GOLD_CANONICAL_V11_20260828',
+            'ranking_rule':'minimum trades first; then NET Profit Factor descending',
+            'github_run_id':'${{ github.run_id }}','github_run_attempt':'${{ github.run_attempt }}',
+            'github_event':'${{ github.event_name }}','github_sha':'${{ github.sha }}',
+            'previous_successful_run_id':prev,'restored_previous_state':True,
+            'rules_sha256':rules_sha,'gate_a_strict':strict,
+            'timeframe':status.get('timeframe'),'minimum_trades':status.get('minimum_trades'),
+            'pf_target_min':status.get('pf_target_min'),'pf_max':status.get('pf_max'),
+            'batch':status.get('batch'),'candidate_cursor':status.get('candidate_cursor'),
+            'simulation_executed':status.get('simulation_executed'),'strategy_engine':status.get('strategy_engine'),
+            'cumulative_configs_archived':len(rows),
+            'cumulative_configs_with_trades':sum(int(int(m.get('trades',0) or 0)>0) for m in metrics),
+            'cumulative_sample_rankable':sum(int(bool(m.get('sample_pass_v11')) and not bool(m.get('exact_execution_duplicate'))) for m in metrics),
+            'cumulative_baseline_qualified':sum(int(bool(m.get('baseline_qualified_v11')) and not bool(m.get('exact_execution_duplicate'))) for m in metrics),
+            'cumulative_target_pf_2_to_8':sum(int(bool(m.get('target_candidate_v11')) and not bool(m.get('exact_execution_duplicate'))) for m in metrics),
+            'cumulative_exact_execution_duplicates':sum(int(bool(m.get('exact_execution_duplicate'))) for m in metrics),
+            'execution_hash_nonzero':len(hashes),'execution_hash_unique':len(set(hashes)),
+            'top200_sample_pf_count':top200.get('count',0),'top100_qualified_count':qualified.get('count',0),
+            'screening':{'target_pf_candidates_screened':screening.get('target_pf_candidates_screened',0),'preportfolio_pass':screening.get('preportfolio_pass_count',0),'portfolio_draft':screening.get('portfolio_draft_count',0),'top100_compliant':final.get('count',0)},
+            'portfolio':final.get('portfolio',{})}
+          assert strict.get('gate_a')=='PASS' and strict.get('crosscheck_bytes_verified') is True
+          assert strict.get('no_resampling_attested') is True and strict.get('timeframe')=='D1'
+          assert str(strict.get('primary_end_utc',''))[:4] >= '2026'
+          assert status.get('gate_a')=='PASS' and status.get('simulation_executed') is True
+          assert status.get('strategy_engine')=='RUNNING' and status.get('rules_sha256')==rules_sha
+          assert int(status.get('minimum_trades'))==300 and float(status.get('pf_target_min'))==2.0
+          if final.get('count',0):
+            assert final.get('portfolio',{}).get('required_coverage_complete') is True
+            assert final.get('portfolio',{}).get('family_cap_complete') is True
+            assert all(float(x.get('correlation_max',0))<=0.50 for x in final.get('ranking',[]))
+          (root/'VALIDATION_SUMMARY_V11.json').write_text(json.dumps(summary,indent=2,sort_keys=True))
+          print(json.dumps(summary,indent=2,sort_keys=True))
+          PY
+
+      - name: Publish compact v11 runtime proof race-safe
+        shell: bash
+        run: |
+          set -euo pipefail
+          PAYLOAD="$RUNNER_TEMP/gold24-runtime-publish"
+          rm -rf "$PAYLOAD"
+          mkdir -p "$PAYLOAD"
+          cp "$GOLD24_STATE_DIR/status_v11.json" "$PAYLOAD/latest_status.json"
+          cp "$GOLD24_STATE_DIR/gate_a/gate_a_receipt.json" "$PAYLOAD/latest_gate_a_receipt.json"
+          cp "$GOLD24_STATE_DIR/STRICT_GATE_A_AUDIT.json" "$PAYLOAD/latest_strict_gate_a.json"
+          cp "$GOLD24_STATE_DIR/TOP200_SAMPLE_PF_V11.json" "$PAYLOAD/latest_top200_sample_pf.json"
+          cp "$GOLD24_STATE_DIR/TOP100_QUALIFIED_V11.json" "$PAYLOAD/latest_top100_qualified.json"
+          cp "$GOLD24_STATE_DIR/SCREENING_V11.json" "$PAYLOAD/latest_screening.json"
+          cp "$GOLD24_STATE_DIR/TOP100_COMPLIANT_V11.json" "$PAYLOAD/latest_top100_compliant.json"
+          cp "$GOLD24_STATE_DIR/VALIDATION_SUMMARY_V11.json" "$PAYLOAD/latest_validation_summary.json"
+          LATEST="$(find "$GOLD24_STATE_DIR/receipts_v11" -name 'batch_*.json' -type f | sort | tail -1)"
+          test -n "$LATEST"
+          cp "$LATEST" "$PAYLOAD/latest_batch_receipt.json"
+
+          git config user.name 'gold24-bot'
+          git config user.email 'gold24-bot@users.noreply.github.com'
+          for TRY in 1 2 3 4 5; do
+            echo "publish attempt $TRY/5"
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p backtest/gold24/runtime_v11
+            cp -a "$PAYLOAD/." backtest/gold24/runtime_v11/
+            git add backtest/gold24/runtime_v11
+            if git diff --cached --quiet; then
+              echo 'runtime proof already current; nothing to publish'
+              exit 0
+            fi
+            git commit -m 'chore(gold24): publish recovery v11 runtime proof [skip ci]'
+            if git push origin HEAD:main; then
+              echo 'runtime proof publish: PASS'
+              exit 0
+            fi
+            echo 'remote advanced during publish; rebasing by reset-and-reapply payload'
+            sleep $((TRY * 2))
+          done
+          echo 'runtime proof publish failed after 5 race-safe attempts' >&2
+          exit 1
+
+      - name: Verify v11 runtime proof read-back
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout origin/main -- backtest/gold24/runtime_v11/latest_validation_summary.json
+          python - <<'PY'
+          import json
+          x=json.load(open('backtest/gold24/runtime_v11/latest_validation_summary.json'))
+          assert x['validation']=='PASS'
+          assert x['policy']=='GOLD_CANONICAL_V11_20260828'
+          assert x['restored_previous_state'] is True
+          assert str(x['github_run_id'])=='${{ github.run_id }}'
+          assert str(x['github_run_attempt'])=='${{ github.run_attempt }}'
+          print('v11 recovery runtime proof readback: PASS')
+          PY
+
+      - name: Upload isolated resumable v11 state
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold24-canonical-v11-state
+          path: ${{ env.GOLD24_STATE_DIR }}/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
