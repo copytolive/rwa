@@ -34,7 +34,7 @@ jobs:
           node --check renko/renko-tv-scroll-zero-lock.js
           node --check renko/renko-scroll-blocking-observer.js
           node --check tools/renko-total-history-report.mjs
-          grep -q "version:'2.0.0-origin-chunks'" renko/renko-tv-total-history.js
+          grep -q "version:'2.1.0-origin-chunks'" renko/renko-tv-total-history.js
           grep -q "version:'1.3.0-total-history'" renko/renko-tv-switch-fast.js
           grep -q "version:'1.1.0-total-history'" renko/renko-tv-scroll-zero-lock.js
           grep -q 'renko-tv-total-history.js?v=1' renko/index.html
@@ -62,7 +62,7 @@ jobs:
         run: |
           node - <<'NODE'
           const r=require('./artifacts/exact-total-history/report.json'),s=r.summary;
-          if(r.status!=='PASS'||s.pairs!==50||s.desktopPass!==50||s.mobilePass!==50||s.screenshotCount<101||!s.goldPass||s.goldCoverageYears<23||s.firstFrameMaxMs>1||s.scrollAckMaxMs>1||s.scrollBlockingMaxMs!==0||s.scrollLosses!==0)throw Error(JSON.stringify(s));
+          if(r.status!=='PASS'||s.pairs!==50||s.desktopPass!==50||s.mobilePass!==50||s.screenshotCount<101||!s.goldPass||s.goldCoverageYears<23||s.firstFrameMaxMs>1||s.scrollAckMaxMs>1||s.scrollBlockingMeasured!==true||s.scrollBlockingMaxMs!==0||s.scrollLosses!==0)throw Error(JSON.stringify(s));
           console.log('EXACT_TOTAL_HISTORY_PASS '+JSON.stringify(s));
           NODE
       - uses: actions/upload-artifact@v4
@@ -90,7 +90,7 @@ jobs:
             ts=$(date +%s%N)
             html=$(curl -fsS "$index?ts=$ts" 2>/dev/null || true)
             js=$(curl -fsS "$total?ts=$ts" 2>/dev/null || true)
-            if grep -q 'renko-tv-total-history.js?v=1' <<<"$html" && grep -q "version:'2.0.0-origin-chunks'" <<<"$js"; then echo PUBLIC_TOTAL_HISTORY_RUNTIME_READY; exit 0; fi
+            if grep -q 'renko-tv-total-history.js?v=1' <<<"$html" && grep -q "version:'2.1.0-origin-chunks'" <<<"$js"; then echo PUBLIC_TOTAL_HISTORY_RUNTIME_READY; exit 0; fi
             sleep 5
           done
           echo 'GitHub Pages did not reach total-history runtime'; exit 1
@@ -106,7 +106,7 @@ jobs:
         run: |
           node - <<'NODE'
           const r=require('./artifacts/public-total-history/report.json'),s=r.summary;
-          if(r.status!=='PASS'||s.pairs!==50||s.desktopPass!==50||s.mobilePass!==50||s.screenshotCount<101||!s.goldPass||s.goldCoverageYears<23||s.firstFrameMaxMs>1||s.scrollAckMaxMs>1||s.scrollBlockingMaxMs!==0||s.scrollLosses!==0)throw Error(JSON.stringify(s));
+          if(r.status!=='PASS'||s.pairs!==50||s.desktopPass!==50||s.mobilePass!==50||s.screenshotCount<101||!s.goldPass||s.goldCoverageYears<23||s.firstFrameMaxMs>1||s.scrollAckMaxMs>1||s.scrollBlockingMeasured!==true||s.scrollBlockingMaxMs!==0||s.scrollLosses!==0)throw Error(JSON.stringify(s));
           console.log('PUBLIC_TOTAL_HISTORY_PASS '+JSON.stringify(s));
           NODE
       - uses: actions/upload-artifact@v4
