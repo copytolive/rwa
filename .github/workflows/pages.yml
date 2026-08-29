@@ -26,6 +26,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect RENKO-only release scope
+        id: release_scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          renko_only=false
+          if [ "${{ github.event_name }}" = "push" ] && git rev-parse HEAD^ >/dev/null 2>&1; then
+            renko_only=true
+            while IFS= read -r f; do
+              case "$f" in
+                renko/*|tools/renko*|.github/workflows/renko*|.github/workflows/pages.yml) ;;
+                *) renko_only=false ;;
+              esac
+            done < <(git diff --name-only HEAD^ HEAD)
+          fi
+          echo "renko_only=$renko_only" >> "$GITHUB_OUTPUT"
+          echo "RENKO_ONLY_RELEASE_SCOPE=$renko_only"
 
       - name: Validate current Super App, MULTI CHAIN Tuntas and safety contracts
         shell: bash
@@ -122,11 +142,13 @@ jobs:
           node tools/security-gate.mjs
 
       - name: Install browser runtime
+        if: steps.release_scope.outputs.renko_only != 'true'
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
       - name: Run current Super App and MULTI CHAIN browser regressions locally
+        if: steps.release_scope.outputs.renko_only != 'true'
         env:
           RWA_TEST_URL: http://127.0.0.1:4173/rwa/
         shell: bash
