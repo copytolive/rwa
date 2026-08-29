@@ -1,9 +1,12 @@
-/* Measure main-thread long-task blocking around chart wheel gestures. */
+/* Measure main-thread long-task blocking around chart wheel gestures and harden repeated chart rebuilds. */
 (()=>{
 'use strict';if(window.RWARenkoScrollBlocking)return;
-const stats={events:0,longTasks:0,maxBlockingMs:0,totalBlockingMs:0,supported:false};const windows=[];
+const stats={events:0,longTasks:0,maxBlockingMs:0,totalBlockingMs:0,supported:false,invalidConfirmedDropped:0,invalidProjectionDropped:0};const windows=[];
+const finiteBrick=b=>!!b&&[b.open,b.high,b.low,b.close].every(v=>Number.isFinite(Number(v)));
+function installRenderSanitizer(){const E=window.RWARenkoTVEngine;if(!E||E.__renkoRenderSanitized)return false;const build=E.build?.bind(E),project=E.project?.bind(E);if(typeof build!=='function'||typeof project!=='function')return false;E.build=(...a)=>{const r=build(...a);if(!r||!Array.isArray(r.bricks))return r;const clean=r.bricks.filter(finiteBrick),d=r.bricks.length-clean.length;if(d){stats.invalidConfirmedDropped+=d;document.documentElement.dataset.renkoInvalidConfirmedDropped=String(stats.invalidConfirmedDropped)}return d?{...r,bricks:clean}:r};E.project=(...a)=>{const rows=project(...a);if(!Array.isArray(rows))return rows;const clean=rows.filter(finiteBrick),d=rows.length-clean.length;if(d){stats.invalidProjectionDropped+=d;document.documentElement.dataset.renkoInvalidProjectionDropped=String(stats.invalidProjectionDropped)}return clean};E.__renkoRenderSanitized=true;document.documentElement.dataset.renkoRenderSanitizer='true';return true}
+installRenderSanitizer();
 function wheel(e){if(!e.target?.closest?.('#chartWrap,#chartHost'))return;const s=performance.now();stats.events++;windows.push({start:s,end:s+75});while(windows.length>64)windows.shift();document.documentElement.dataset.renkoScrollBlockingMs=String(stats.maxBlockingMs)}
 document.addEventListener('wheel',wheel,{capture:true,passive:true});
 try{if(typeof PerformanceObserver==='function'&&PerformanceObserver.supportedEntryTypes?.includes('longtask')){stats.supported=true;const po=new PerformanceObserver(list=>{for(const x of list.getEntries()){const a=x.startTime,b=a+x.duration;if(windows.some(w=>a<=w.end&&b>=w.start)){stats.longTasks++;stats.totalBlockingMs+=x.duration;stats.maxBlockingMs=Math.max(stats.maxBlockingMs,x.duration);document.documentElement.dataset.renkoScrollBlockingMs=String(stats.maxBlockingMs)}}});po.observe({type:'longtask',buffered:true})}}catch(e){console.warn('[RENKO scroll blocking observer]',e)}
-window.RWARenkoScrollBlocking={version:'1.0.0',rule:'performance-longtask-observer-75ms-wheel-window',stats};
+window.RWARenkoScrollBlocking={version:'1.1.0-render-safe',rule:'performance-longtask-observer-75ms-wheel-window-plus-finite-brick-render-boundary',stats,installRenderSanitizer};
 })();
