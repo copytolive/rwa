@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -50,18 +50,47 @@ jobs:
           set -euo pipefail
           rm -rf "$GOLD24_STATE_DIR" "$RUNNER_TEMP/gold24-v11-prev"
           mkdir -p "$GOLD24_STATE_DIR" "$RUNNER_TEMP/gold24-v11-prev"
-          SOURCE_RUN="$(python - <<'PY'
+
+          read -r SOURCE_RUN SOURCE_ATTEMPT SOURCE_ARCHIVED < <(python - <<'PY'
           import json, pathlib
-          p=pathlib.Path('backtest/gold24/runtime_v11/latest_validation_summary.json')
-          x=json.loads(p.read_text())
-          print(x.get('github_run_id',''))
+          x=json.loads(pathlib.Path('backtest/gold24/runtime_v11/latest_validation_summary.json').read_text())
+          print(x.get('github_run_id',''), x.get('github_run_attempt','1'), x.get('cumulative_configs_archived',''))
+          PY
+          )
+          test -n "$SOURCE_RUN"
+          test -n "$SOURCE_ATTEMPT"
+          test -n "$SOURCE_ARCHIVED"
+          echo "restoring published canonical source run=$SOURCE_RUN attempt=$SOURCE_ATTEMPT archived=$SOURCE_ARCHIVED"
+
+          gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN/artifacts?per_page=100" > "$RUNNER_TEMP/gold24-artifacts.json"
+          ARTIFACT_URL="$(python - "$RUNNER_TEMP/gold24-artifacts.json" "$SOURCE_ATTEMPT" <<'PY'
+          import json,sys
+          p=sys.argv[1]; attempt=max(1,int(sys.argv[2]))
+          x=json.load(open(p))
+          arts=sorted([a for a in x.get('artifacts',[]) if a.get('name')=='gold24-canonical-v11-state' and not a.get('expired')], key=lambda a:a.get('created_at',''))
+          if len(arts) < attempt:
+              raise SystemExit(f'ARTIFACT_FAIL: need attempt {attempt}, only {len(arts)} matching artifacts')
+          print(arts[attempt-1]['archive_download_url'])
           PY
           )"
-          test -n "$SOURCE_RUN"
-          echo "restoring published canonical source run=$SOURCE_RUN"
-          gh run download "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" -n gold24-canonical-v11-state -D "$RUNNER_TEMP/gold24-v11-prev"
+          test -n "$ARTIFACT_URL"
+          curl -L --fail --retry 3 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "$ARTIFACT_URL" -o "$RUNNER_TEMP/gold24-v11-state.zip"
+          unzip -q "$RUNNER_TEMP/gold24-v11-state.zip" -d "$RUNNER_TEMP/gold24-v11-prev"
+
           test -s "$RUNNER_TEMP/gold24-v11-prev/gold24-v11.db"
           test -s "$RUNNER_TEMP/gold24-v11-prev/gate_a/gate_a_receipt.json"
+          python - "$RUNNER_TEMP/gold24-v11-prev/gold24-v11.db" "$SOURCE_ARCHIVED" <<'PY'
+          import sqlite3,sys
+          db=sqlite3.connect(sys.argv[1])
+          n=db.execute('SELECT COUNT(*) FROM configs').fetchone()[0]
+          db.close()
+          expected=int(sys.argv[2])
+          assert n==expected, f'RESTORE_REGRESSION: artifact has {n}, published checkpoint requires {expected}'
+          print(f'published canonical DB count exact: {n}')
+          PY
           python - "$RUNNER_TEMP/gold24-v11-prev/gate_a/gate_a_receipt.json" <<'PY'
           import json,sys
           x=json.load(open(sys.argv[1]))
@@ -167,38 +196,62 @@ jobs:
           print(json.dumps(summary,indent=2,sort_keys=True))
           PY
 
-      - name: Publish compact v11 runtime proof
+      - name: Publish compact v11 runtime proof race-safe
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p backtest/gold24/runtime_v11
-          cp "$GOLD24_STATE_DIR/status_v11.json" backtest/gold24/runtime_v11/latest_status.json
-          cp "$GOLD24_STATE_DIR/gate_a/gate_a_receipt.json" backtest/gold24/runtime_v11/latest_gate_a_receipt.json
-          cp "$GOLD24_STATE_DIR/STRICT_GATE_A_AUDIT.json" backtest/gold24/runtime_v11/latest_strict_gate_a.json
-          cp "$GOLD24_STATE_DIR/TOP200_SAMPLE_PF_V11.json" backtest/gold24/runtime_v11/latest_top200_sample_pf.json
-          cp "$GOLD24_STATE_DIR/TOP100_QUALIFIED_V11.json" backtest/gold24/runtime_v11/latest_top100_qualified.json
-          cp "$GOLD24_STATE_DIR/SCREENING_V11.json" backtest/gold24/runtime_v11/latest_screening.json
-          cp "$GOLD24_STATE_DIR/TOP100_COMPLIANT_V11.json" backtest/gold24/runtime_v11/latest_top100_compliant.json
-          cp "$GOLD24_STATE_DIR/VALIDATION_SUMMARY_V11.json" backtest/gold24/runtime_v11/latest_validation_summary.json
+          PAYLOAD="$RUNNER_TEMP/gold24-runtime-publish"
+          rm -rf "$PAYLOAD"
+          mkdir -p "$PAYLOAD"
+          cp "$GOLD24_STATE_DIR/status_v11.json" "$PAYLOAD/latest_status.json"
+          cp "$GOLD24_STATE_DIR/gate_a/gate_a_receipt.json" "$PAYLOAD/latest_gate_a_receipt.json"
+          cp "$GOLD24_STATE_DIR/STRICT_GATE_A_AUDIT.json" "$PAYLOAD/latest_strict_gate_a.json"
+          cp "$GOLD24_STATE_DIR/TOP200_SAMPLE_PF_V11.json" "$PAYLOAD/latest_top200_sample_pf.json"
+          cp "$GOLD24_STATE_DIR/TOP100_QUALIFIED_V11.json" "$PAYLOAD/latest_top100_qualified.json"
+          cp "$GOLD24_STATE_DIR/SCREENING_V11.json" "$PAYLOAD/latest_screening.json"
+          cp "$GOLD24_STATE_DIR/TOP100_COMPLIANT_V11.json" "$PAYLOAD/latest_top100_compliant.json"
+          cp "$GOLD24_STATE_DIR/VALIDATION_SUMMARY_V11.json" "$PAYLOAD/latest_validation_summary.json"
           LATEST="$(find "$GOLD24_STATE_DIR/receipts_v11" -name 'batch_*.json' -type f | sort | tail -1)"
-          test -n "$LATEST"; cp "$LATEST" backtest/gold24/runtime_v11/latest_batch_receipt.json
-          git config user.name 'gold24-bot'; git config user.email 'gold24-bot@users.noreply.github.com'
-          git add backtest/gold24/runtime_v11
-          if ! git diff --cached --quiet; then
+          test -n "$LATEST"
+          cp "$LATEST" "$PAYLOAD/latest_batch_receipt.json"
+
+          git config user.name 'gold24-bot'
+          git config user.email 'gold24-bot@users.noreply.github.com'
+          for TRY in 1 2 3 4 5; do
+            echo "publish attempt $TRY/5"
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p backtest/gold24/runtime_v11
+            cp -a "$PAYLOAD/." backtest/gold24/runtime_v11/
+            git add backtest/gold24/runtime_v11
+            if git diff --cached --quiet; then
+              echo 'runtime proof already current; nothing to publish'
+              exit 0
+            fi
             git commit -m 'chore(gold24): publish recovery v11 runtime proof [skip ci]'
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
+            if git push origin HEAD:main; then
+              echo 'runtime proof publish: PASS'
+              exit 0
+            fi
+            echo 'remote advanced during publish; rebasing by reset-and-reapply payload'
+            sleep $((TRY * 2))
+          done
+          echo 'runtime proof publish failed after 5 race-safe attempts' >&2
+          exit 1
 
       - name: Verify v11 runtime proof read-back
         run: |
           set -euo pipefail
+          git fetch origin main
+          git checkout origin/main -- backtest/gold24/runtime_v11/latest_validation_summary.json
           python - <<'PY'
           import json
           x=json.load(open('backtest/gold24/runtime_v11/latest_validation_summary.json'))
           assert x['validation']=='PASS'
           assert x['policy']=='GOLD_CANONICAL_V11_20260828'
           assert x['restored_previous_state'] is True
+          assert str(x['github_run_id'])=='${{ github.run_id }}'
+          assert str(x['github_run_attempt'])=='${{ github.run_attempt }}'
           print('v11 recovery runtime proof readback: PASS')
           PY
 
