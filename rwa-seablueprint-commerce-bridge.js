@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 if(window.RWASeablueprintCommerceBridge)return;
-const VERSION='1.6.1',MODE='CONTEXT_PANEL',CONFIG='rwa-commerce-config.json';
+const VERSION='1.6.0',MODE='CONTEXT_PANEL',CONFIG='rwa-commerce-config.json';
 const state={rootPath:location.pathname,returnHash:'',config:null,opening:false};
 const $=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)];
 function toast(msg){try{typeof window.toast==='function'?window.toast(msg):console.info(msg)}catch{}}
