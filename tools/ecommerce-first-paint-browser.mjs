@@ -24,7 +24,7 @@ for(const [label,width,height] of [['target-1672x941',1672,941],['mobile-390x844
       return{
         brand:document.querySelector('.brandcopy strong')?.textContent||'',
         nav:[...document.querySelectorAll('.topnav>[data-rwa-target-nav]')].filter(vis).map(x=>x.dataset.rwaTargetNav),
-        legacyNav:[...document.querySelectorAll('.topnav>button')].filter(vis).map(x=>x.textContent.trim()).filter(x=>/^(Assets|Research|Company)$/.test(x)),
+        legacyNav:[...document.querySelectorAll('.topnav>[data-v5-route],.topnav>button')].filter(vis).map(x=>x.textContent.trim()).filter(x=>/^(Assets|Research|Company|Institutional)$/.test(x)),
         productbarVisible:vis(document.querySelector('.productbar')),
         trustbarVisible:vis(document.querySelector('.trustbar')),
         leftLabel:document.querySelector('.left .aside-label span')?.textContent?.trim()||'',
@@ -41,8 +41,10 @@ for(const [label,width,height] of [['target-1672x941',1672,941],['mobile-390x844
     if(!/Seablueprint/.test(audit.brand))failures.push({label,reason:'legacy brand at first paint',audit});
     if(width>680&&audit.nav.join('|')!=='markets|ecommerce|intelligence|portfolio|orders|reports')failures.push({label,reason:'canonical six-item nav missing at first paint',audit});
     if(audit.legacyNav.length||audit.productbarVisible||audit.trustbarVisible||audit.marketDepthVisible)failures.push({label,reason:'legacy shell visible at first paint',audit});
-    if(audit.leftLabel!=='WATCHLIST'||!audit.orderBookVisible)failures.push({label,reason:'target market chrome not visible at first paint',audit});
+    if(audit.leftLabel!=='WATCHLIST')failures.push({label,reason:'WATCHLIST target chrome missing at first paint',audit});
+    if(width>680&&!audit.orderBookVisible)failures.push({label,reason:'desktop Order Book missing at first paint',audit});
     if(width>680&&(Math.abs(audit.topbarHeight-62)>2||!audit.skeletonVisible||Math.abs(audit.skeletonWidth-440)>2||!/BACKEND LOCKED/i.test(audit.skeletonText)))failures.push({label,reason:'desktop #shop first-paint skeleton geometry/truth failed',audit});
+    if(width<=680&&(!audit.skeletonVisible||Math.abs(audit.skeletonWidth-width)>2||!/BACKEND LOCKED/i.test(audit.skeletonText)))failures.push({label,reason:'mobile #shop first-paint contextual shell failed',audit});
     if(audit.runtimeReady)failures.push({label,reason:'probe accidentally loaded target runtime; 0ms first paint was not isolated',audit});
     results.push({label,width,height,captureDelayMs:0,audit});
   }catch(e){
@@ -52,7 +54,7 @@ for(const [label,width,height] of [['target-1672x941',1672,941],['mobile-390x844
   }
 }
 await browser.close();
-const out={ok:failures.length===0,contract:'ecommerce-first-paint-0ms-v1.1',base,publicMode,results,failures};
+const out={ok:failures.length===0,contract:'ecommerce-first-paint-0ms-v1.2',base,publicMode,results,failures};
 await writeFile(`${proof}/browser-result.json`,JSON.stringify(out,null,2));
 console.log(JSON.stringify(out,null,2));
 if(!out.ok)process.exit(1);
