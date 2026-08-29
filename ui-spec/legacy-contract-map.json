@@ -1,0 +1,25 @@
+{
+  "contract": "rwa-ui-legacy-migration-v1",
+  "entries": {
+    "Action Zero Flicker V11": {
+      "classification": "SPEC_CONFLICT",
+      "status": "SUPERSEDED",
+      "oldRequirement": "visible Experience Rail and Analysis/Action level buttons",
+      "canonicalRequirement": "Experience Rail hidden; canonical shell must remain geometrically stable with zero transition flicker",
+      "replacementCoverage": ["legacy rail hidden", "canonical four-column geometry", "zero CSS transition/animation", "no horizontal overflow"]
+    },
+    "Enterprise UI V12 Experience Rail": {
+      "classification": "SPEC_CONFLICT",
+      "status": "SUPERSEDED",
+      "oldRequirement": "440px level workspace controlled by Experience Rail",
+      "canonicalRequirement": "Seablueprint Ecommerce is the contextual dock; Experience Rail is not a visible production control",
+      "replacementCoverage": ["canonical Ecommerce dock", "responsive geometry", "navigation", "typography", "mobile touch targets", "no horizontal overflow"]
+    },
+    "Legacy five-item mobile V5 rail": {
+      "classification": "SPEC_CONFLICT",
+      "status": "SUPERSEDED",
+      "canonicalRequirement": "current canonical mobile navigation and Ecommerce full-viewport state",
+      "replacementCoverage": ["touch target >=44px", "no clipping", "no horizontal overflow", "mobile Ecommerce full viewport"]
+    }
+  }
+}
