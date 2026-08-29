@@ -52,7 +52,7 @@ jobs:
             renko/renko-tv-scroll-zero-lock.js; do node --check "$f"; done
           grep -Fq 'renko-tv-stable-chart-v2.js?v=185' renko/index.html
           grep -Fq 'renko-tv-total-history.js?v=3' renko/index.html
-          grep -Fq 'renko-gold-origin-pack.js?v=1' renko/index.html
+          grep -Fq 'renko-gold-origin-pack.js?v=2' renko/index.html
           grep -Fq 'renko-tv-atr-fixed1s.js?v=4' renko/index.html
           grep -Fq "version:'2.2.0'" renko/renko-tv-stable-chart-v2.js
           grep -Fq 'cross-domain-series-reset' renko/renko-tv-stable-chart-v2.js
