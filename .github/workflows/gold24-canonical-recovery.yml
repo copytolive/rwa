@@ -6,7 +6,6 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/gold24-canonical-recovery.yml'
       - 'backtest/gold24/GITHUB_RUNNER_KICK'
 
 permissions:
@@ -15,7 +14,7 @@ permissions:
 
 concurrency:
   group: gold24-canonical-v11
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   canonical-recovery-v11:
