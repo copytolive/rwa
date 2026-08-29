@@ -43,14 +43,14 @@ jobs:
             tools/multichain-contract.mjs tools/multichain-browser.mjs tools/multichain-tuntas-browser.mjs \
             tools/multichain-receipt-matrix.mjs tools/multichain-mainnet-gate.mjs tools/security-gate.mjs \
             renko/index.html renko/renko-tv.css renko/renko-tv-engine.js renko/renko-tv-app.js \
-            renko/renko-tv-atr-fixed1s.js renko/renko-tv-parity-fixture.js renko/renko-tv-locale-guard.js renko/renko-tv-fetch-guard.js \
+            renko/renko-tv-atr-parity.js renko/renko-tv-locale-guard.js renko/renko-tv-fetch-guard.js \
             renko/renko-tv-ultrafast-ui.js; do test -s "$f"; done
 
           for f in superapp-v5.js rwa-sw-v5.js suite-nav.js execution-api.js execution-ops-bridge.js exchange-core.js market-performance.js \
             rwa-multichain.js rwa-multichain-engine.js tools/superapp-v5-audit.mjs tools/superapp-v5-browser.mjs \
             tools/superapp-p16-p20-audit.mjs tools/superapp-p16-p20-browser.mjs tools/multichain-contract.mjs tools/multichain-browser.mjs \
             tools/multichain-tuntas-browser.mjs tools/multichain-receipt-matrix.mjs tools/multichain-mainnet-gate.mjs \
-            tools/security-gate.mjs renko/renko-tv-engine.js renko/renko-tv-app.js renko/renko-tv-atr-fixed1s.js renko/renko-tv-parity-fixture.js \
+            tools/security-gate.mjs renko/renko-tv-engine.js renko/renko-tv-app.js renko/renko-tv-atr-parity.js \
             renko/renko-tv-locale-guard.js renko/renko-tv-fetch-guard.js renko/renko-tv-ultrafast-ui.js; do node --check "$f"; done
 
           for f in rwa-execution-config.json token/config.json manifest.webmanifest rwa-discovery-catalog.json \
@@ -103,9 +103,8 @@ jobs:
 
           RENKO_ENGINE_REF="$(grep -oE 'renko-tv-engine\.js\?v=[0-9]+' renko/index.html | tail -1)"
           RENKO_APP_REF="$(grep -oE 'renko-tv-app\.js\?v=[0-9]+' renko/index.html | tail -1)"
-          RENKO_ATR_REF="$(grep -oE 'renko-tv-atr-fixed1s\.js\?v=[0-9]+' renko/index.html | tail -1)"
-          RENKO_PARITY_REF="$(grep -oE 'renko-tv-parity-fixture\.js\?v=[0-9]+' renko/index.html | tail -1)"
-          test -n "$RENKO_ENGINE_REF"; test -n "$RENKO_APP_REF"; test -n "$RENKO_ATR_REF"; test -n "$RENKO_PARITY_REF"
+          RENKO_ATR_REF="$(grep -oE 'renko-tv-atr-parity\.js\?v=[0-9]+' renko/index.html | tail -1)"
+          test -n "$RENKO_ENGINE_REF"; test -n "$RENKO_APP_REF"; test -n "$RENKO_ATR_REF"
           grep -Fq 'ATR LENGTH' renko/index.html
 
           node tools/superapp-v5-audit.mjs
@@ -174,8 +173,6 @@ jobs:
           node tools/multichain-mainnet-gate.mjs --write
           test -n "$(grep -oE 'renko-tv-engine\.js\?v=[0-9]+' renko/index.html | tail -1)"
           test -n "$(grep -oE 'renko-tv-app\.js\?v=[0-9]+' renko/index.html | tail -1)"
-          test -n "$(grep -oE 'renko-tv-atr-fixed1s\.js\?v=[0-9]+' renko/index.html | tail -1)"
-          test -n "$(grep -oE 'renko-tv-parity-fixture\.js\?v=[0-9]+' renko/index.html | tail -1)"
 
       - name: Stamp exact deployed SHA
         run: |
@@ -205,7 +202,6 @@ jobs:
           receipt={"name":"RWA-LIVE-SYNC","version":"15.0-multichain-tuntas-v3","timestamp":datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d-%H%M%S'),"sha":os.environ['GITHUB_SHA'],"remote":"https://github.com/copytolive/rwa.git","pages":"https://copytolive.github.io/rwa/","gate":"pages-deploy-success+multichain-tuntas-v3"}
           open('backup/receipt.json','w').write(json.dumps(receipt,separators=(',',':'))+'\n')
           PY
-          (cd backup && sha256sum repo.zip repo.bundle refs.txt receipt.json > backup/SHA256SUMS.txt || true)
           (cd backup && sha256sum repo.zip repo.bundle refs.txt receipt.json > SHA256SUMS.txt)
           git bundle verify backup/repo.bundle
 
