@@ -15,14 +15,12 @@ function applyGrid(openNow){const layout=$('.layout'),dock=ensureDock();if(!layo
 function targetNavLauncher(){return innerWidth>680?$('.topnav [data-rwa-target-nav="ecommerce"]'):null}
 function buildLauncher(){const b=document.createElement('button');b.type='button';b.className='rwa-seablueprint-commerce-launch';b.dataset.rwaSeablueprintCommerce='1';b.setAttribute('aria-label','Open Ecommerce production inside live market workspace');b.setAttribute('aria-haspopup','region');b.innerHTML='<span class="rwa-seablueprint-commerce-mark">S</span><span class="rwa-seablueprint-commerce-label">Ecommerce production</span>';return b}
 function mountLauncher(){
-  let b=$('#rwaSeablueprintCommerceLaunch'),nav=targetNavLauncher();
-  if(nav){if(b&&b!==nav)b.remove();b=nav;b.id='rwaSeablueprintCommerceLaunch';b.dataset.rwaSeablueprintCommerce='1';b.setAttribute('aria-label','Open Ecommerce production inside live market workspace');b.setAttribute('aria-haspopup','region');return true}
-  if(b?.closest('.topnav')){b.removeAttribute('id');b=null}
+  const nav=targetNavLauncher();
+  if(nav){for(const x of qa('#rwaSeablueprintCommerceLaunch'))if(x!==nav)x.remove();for(const x of qa('body > .rwa-seablueprint-floating-launcher'))x.remove();nav.id='rwaSeablueprintCommerceLaunch';nav.dataset.rwaSeablueprintCommerce='1';nav.setAttribute('aria-label','Open Ecommerce production inside live market workspace');nav.setAttribute('aria-haspopup','region');return true}
+  for(const x of qa('.topnav #rwaSeablueprintCommerceLaunch'))x.removeAttribute('id');
   const mobile=innerWidth<=680,host=mobile?document.body:$('.top-actions');if(!host)return false;
-  if(b&&mobile&&b.parentElement!==document.body){b.remove();b=null}
-  if(!b){b=buildLauncher();b.id='rwaSeablueprintCommerceLaunch';if(mobile){b.classList.add('rwa-seablueprint-floating-launcher');document.body.appendChild(b)}else{const anchor=$('#rwaMultiChainLaunch')||host.querySelector('.signin');host.insertBefore(b,anchor||null)}}
-  else if(mobile){b.classList.add('rwa-seablueprint-floating-launcher');if(b.parentElement!==document.body)document.body.appendChild(b)}
-  return true
+  if(mobile){const floats=qa('body > .rwa-seablueprint-floating-launcher[data-rwa-seablueprint-commerce]');let b=floats[0]||null;for(const x of floats.slice(1))x.remove();for(const x of qa('#rwaSeablueprintCommerceLaunch'))if(x!==b&&!x.closest('.topnav'))x.remove();if(!b){b=buildLauncher();b.classList.add('rwa-seablueprint-floating-launcher');document.body.appendChild(b)}b.id='rwaSeablueprintCommerceLaunch';return true}
+  let b=$('#rwaSeablueprintCommerceLaunch');if(!b){b=buildLauncher();b.id='rwaSeablueprintCommerceLaunch';const anchor=$('#rwaMultiChainLaunch')||host.querySelector('.signin');host.insertBefore(b,anchor||null)}return true
 }
 function restoreSingleShell(){if(samePath())return;try{history.replaceState(history.state,'',`${state.rootPath}${location.search}${location.hash||''}`)}catch{}}
 function writeRoute(route){const href=`${state.rootPath}${location.search}#${route}`;try{history.replaceState(history.state,'',href)}catch{location.hash=`#${route}`}}
