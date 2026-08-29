@@ -1,20 +1,11 @@
 name: Ecommerce Public Production Smoke
 
 on:
+  # The Ecommerce drawer lives in the shared /rwa/ shell. A change outside the
+  # commerce files can still regress its production geometry, so every main
+  # deployment must re-prove the public HTTPS contextual-panel contract.
   push:
     branches: [main]
-    paths:
-      - 'chart-core.js'
-      - 'rwa-target-dashboard-v2.js'
-      - 'rwa-target-dashboard-v2.css'
-      - 'rwa-target-dashboard-v2-hardening.js'
-      - 'rwa-target-dashboard-v2-hardening.css'
-      - 'rwa-seablueprint-commerce-bridge.js'
-      - 'rwa-seablueprint-commerce-bridge.css'
-      - 'rwa-commerce-config.json'
-      - 'rwa-storefront.js'
-      - 'tools/launch-ui-final-browser.mjs'
-      - '.github/workflows/ecommerce-public-production-smoke.yml'
   workflow_dispatch:
 
 permissions:
