@@ -4,8 +4,9 @@ on:
   push:
     branches:
       - main
-      - 'fix/renko-presets-5y-zero-blocking-*'
+      - 'fix/renko-*'
     paths:
+      - 'renko/renko-tv-engine.js'
       - 'renko/renko-tv-presets-5y.js'
       - 'renko/renko-tv-presets-5y.css'
       - 'renko/renko-tv-atr-ui-sync.js'
@@ -13,6 +14,7 @@ on:
       - '.github/workflows/renko-presets-5y.yml'
   pull_request:
     paths:
+      - 'renko/renko-tv-engine.js'
       - 'renko/renko-tv-presets-5y.js'
       - 'renko/renko-tv-presets-5y.css'
       - 'renko/renko-tv-atr-ui-sync.js'
@@ -36,10 +38,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Syntax
+      - name: Syntax + deterministic ATR1 zero-TR regression
         run: |
+          node --check renko/renko-tv-engine.js
           node --check renko/renko-tv-presets-5y.js
           node --check tools/renko-presets-5y-report-v6.mjs
+          node - <<'NODE'
+          require('./renko/renko-tv-engine.js');
+          const E=globalThis.RWARenkoTVEngine;
+          const bars=[
+            {openTime:1000,open:100,high:101,low:99,close:100,closeTime:1999},
+            {openTime:2000,open:100,high:100,low:100,close:100,closeTime:2999}
+          ];
+          const raw=E.latestAtr(bars,1),built=E.build(bars,{method:'atr',atrLength:1,source:'close'},0.01);
+          if(!(raw===2&&built.atr===2&&built.box===2))throw new Error(`ATR1 latest-positive regression failed raw=${raw} atr=${built.atr} box=${built.box}`);
+          console.log('RENKO_ATR1_ZERO_TR_LATEST_POSITIVE=PASS raw='+raw+' box='+built.box);
+          NODE
       - name: Chromium
         run: |
           npm install --no-save playwright@1.55.0
