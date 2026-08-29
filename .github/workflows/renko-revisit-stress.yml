@@ -1,4 +1,5 @@
 name: RENKO Revisit Stress
+# harness v2: all RENKO runtime reads execute inside the Chromium page context.
 on:
   push:
     branches:
@@ -40,17 +41,22 @@ jobs:
           import { chromium } from 'playwright';
           const browser=await chromium.launch({headless:true});
           const page=await browser.newPage({viewport:{width:430,height:932}});
-          const errors=[];page.on('pageerror',e=>errors.push(String(e.message||e)));page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
+          const errors=[];
+          page.on('pageerror',e=>errors.push(String(e.message||e)));
+          page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
           await page.addInitScript(()=>localStorage.setItem('rwa_renko_tradingview_settings_v1',JSON.stringify({source:'close',method:'traditional',boxSize:1,atrLength:14,wicks:true})));
           await page.goto('http://127.0.0.1:8080/rwa/renko/?symbol=COMP',{waitUntil:'domcontentloaded',timeout:60000});
-          await page.waitForFunction(()=>RWARenkoTV?.state?.status==='live'&&RWARenkoTotalHistory?.jumpOrigin&&RWARenkoStableChart?.version==='2.1.0',null,{timeout:90000});
+          await page.waitForFunction(()=>window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoTotalHistory?.jumpOrigin&&window.RWARenkoStableChart?.version==='2.1.0',null,{timeout:90000});
           for(let i=0;i<30;i++){
             for(const s of ['COMPUSDT','ZECUSDT']){
-              const live=await page.evaluate(s=>RWARenkoTV.state.symbol===s&&RWARenkoTV.state.status==='live',s);
-              if(!live){await page.evaluate(s=>RWARenkoSwitchFast.load(s,{fit:true}),s);await page.waitForFunction(s=>RWARenkoTV.state.symbol===s&&RWARenkoTV.state.status==='live',s,{timeout:45000})}
-              await page.evaluate(s=>RWARenkoTotalHistory.jumpOrigin(s),s);
-              await page.waitForFunction(s=>RWARenkoTV.state.symbol===s&&RWARenkoTV.state.status==='history-origin',s,{timeout:45000});
-              const st=await page.evaluate(()=>({bars:RWARenkoTV.state.closedBars.length,canvas:document.querySelectorAll('#chartHost canvas').length,dropped:Number(document.documentElement.dataset.renkoStableDataRowsDropped||0),invalidC:Number(document.documentElement.dataset.renkoInvalidConfirmedDropped||0),invalidP:Number(document.documentElement.dataset.renkoInvalidProjectionDropped||0)}));
+              const live=await page.evaluate(s=>window.RWARenkoTV.state.symbol===s&&window.RWARenkoTV.state.status==='live',s);
+              if(!live){
+                await page.evaluate(s=>window.RWARenkoSwitchFast.load(s,{fit:true}),s);
+                await page.waitForFunction(s=>window.RWARenkoTV.state.symbol===s&&window.RWARenkoTV.state.status==='live',s,{timeout:45000});
+              }
+              await page.evaluate(s=>window.RWARenkoTotalHistory.jumpOrigin(s),s);
+              await page.waitForFunction(s=>window.RWARenkoTV.state.symbol===s&&window.RWARenkoTV.state.status==='history-origin',s,{timeout:45000});
+              const st=await page.evaluate(()=>({bars:window.RWARenkoTV.state.closedBars.length,canvas:document.querySelectorAll('#chartHost canvas').length,dropped:Number(document.documentElement.dataset.renkoStableDataRowsDropped||0),invalidC:Number(document.documentElement.dataset.renkoInvalidConfirmedDropped||0),invalidP:Number(document.documentElement.dataset.renkoInvalidProjectionDropped||0)}));
               if(st.bars<900||st.canvas<1||st.dropped||st.invalidC||st.invalidP)throw Error(JSON.stringify({s,i,st}));
             }
           }
