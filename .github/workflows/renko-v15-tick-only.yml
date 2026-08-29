@@ -42,10 +42,10 @@ jobs:
           grep -Fq 'PROJECTION' renko/index.html
           grep -Fq 'PERCENTAGE (LTP)' renko/index.html
           grep -Fq 'renko-tv-app.js?v=187' renko/index.html
-          grep -Fq 'renko-tv-stable-chart-v2.js?v=183' renko/index.html
+          grep -Fq 'renko-tv-stable-chart-v2.js?v=185' renko/index.html
           grep -Fq 'renko-tv-ultrafast-ui.js?v=171' renko/index.html
           grep -Fq 'renko-tv-atr-control.js?v=3' renko/index.html
-          grep -Fq 'renko-tv-atr-fixed1s.js?v=4' renko/index.html
+          grep -Fq 'renko-tv-atr-fixed1s.js?v=6' renko/index.html
           ! grep -Fq 'id="intervalSelect"' renko/index.html
           ! grep -Fq 'renko-v12.js?v=' renko/index.html
           ! grep -Fq 'renko-v12-worker.js?v=' renko/index.html
