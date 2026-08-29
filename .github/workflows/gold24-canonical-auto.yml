@@ -12,7 +12,6 @@ on:
       - 'backtest/gold24/v11_runner.py'
       - 'backtest/gold24/v11_screening.py'
       - 'backtest/gold24/RULES_GOLD_V11_2026.md'
-      - 'backtest/gold24/GITHUB_RUNNER_KICK'
 
 permissions:
   contents: write
