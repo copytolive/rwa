@@ -28,8 +28,8 @@ try{
   {
     const context=await browser.newContext({locale:'en-US',viewport:{width:1440,height:960},serviceWorkers:'block'});await mocks(context);const page=await context.newPage();
     const errors=[];page.on('pageerror',e=>errors.push(String(e.message||e)));
-    await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await waitV5(page);await page.waitForTimeout(1200);await assertRoot(page,'root');
-    assert.ok(await page.locator('[data-v5-route="markets"]').count(),'desktop nav missing');
+    await page.goto(BASE+'#markets',{waitUntil:'domcontentloaded',timeout:30000});await waitV5(page);await page.waitForTimeout(1200);await assertRoot(page,'markets root');
+    assert.ok(await page.locator('[data-rwa-target-nav="markets"]').count(),'canonical target Markets nav missing');assert.equal(await page.locator('.topnav [data-v5-route]').count(),0,'legacy desktop nav resurfaced');
     assert.ok(await page.locator('#rwaGlobalTicker').count(),'global ticker missing');
     assert.ok(await page.locator('#rwaHealth').count(),'health indicator missing');
     const localeProbe=await page.evaluate(()=>{/* RWA_LOCALE_CI_PROBE_V2 */ const bad='en-US@posix';return{safe:window.__RWA_SAFE_LOCALE__,number:new Intl.NumberFormat(bad).format(1234.5),date:new Intl.DateTimeFormat(bad).format(new Date(0)),proto:(1234.5).toLocaleString(bad),canonical:Intl.getCanonicalLocales(bad)[0],locale:typeof Intl.Locale==='function'?new Intl.Locale(bad).toString():'en-US'}});assert.equal(localeProbe.safe,'en-US','safe locale not normalized');assert.ok(localeProbe.number&&localeProbe.date&&localeProbe.proto,'invalid locale runtime fallback failed');assert.equal(localeProbe.canonical,'en-US','invalid locale canonicalization failed');
@@ -73,12 +73,12 @@ try{
   {
     const context=await browser.newContext({locale:'en-US',viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:'block'});await mocks(context);const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e.message||e)));
     await page.goto(BASE+'#markets',{waitUntil:'domcontentloaded',timeout:30000});await waitV5(page);await page.waitForTimeout(900);await assertRoot(page,'mobile root');
-    for(const key of ['markets','search','trade','social','portfolio'])assert.ok(await page.locator(`[data-v5-mobile="${key}"]`).count(),`mobile ${key} missing`);
+    assert.equal(await page.locator('[data-v5-mobile]').count(),0,'legacy mobile navigation resurfaced');
     await page.evaluate(()=>window.RWASuperApp.navigate('asset/ONDO'));await page.waitForTimeout(250);await assertRoot(page,'mobile asset');assert.equal(await page.locator('#rwaSuperWorkspace').isVisible(),true,'mobile asset internal sheet missing');
     const size=await page.evaluate(()=>({w:innerWidth,sw:document.documentElement.scrollWidth,workspace:getComputedStyle(document.getElementById('rwaSuperWorkspace')).position}));assert.ok(size.sw<=size.w+3,`mobile overflow ${size.sw}/${size.w}`);assert.equal(size.workspace,'fixed','mobile asset should be full-screen internal sheet');
     await page.evaluate(()=>window.RWASuperApp.navigate('trade/ONDO'));await page.waitForSelector('#exCoin',{timeout:12000});await page.waitForTimeout(250);assert.equal(await page.locator('#exCoin').inputValue(),'ONDO','mobile trade symbol not synced');await assertRoot(page,'mobile trade');
     assert.equal(errors.length,0,`mobile uncaught errors: ${errors.join(' | ')}`);
-    result.mobile={pathname:'/rwa/',bottomNav:true,assetSheet:true,tradeInternal:true,noOverflow:true};await context.close();
+    result.mobile={pathname:'/rwa/',legacyBottomNavAbsent:true,assetSheet:true,tradeInternal:true,noOverflow:true};await context.close();
   }
   console.log(JSON.stringify({ok:true,contract:'rwa-superapp-v5-browser',...result},null,2));
 }finally{await browser.close()}

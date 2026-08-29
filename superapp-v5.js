@@ -130,6 +130,7 @@ function applyRoute(raw){
   state.route=cleanRoute(raw);
   document.documentElement.dataset.rwaRoute=state.route;document.documentElement.dataset.rwaPath=location.pathname;
   setActive(name);
+  if(name==='shop'){showMarketShell();setActive('markets');return}
   if(name==='markets'){showMarketShell();scrollToTerminal();return}
   if(name==='trade'){openTrade(arg||selectedBase(),false);return}
   if(name==='asset'){openAsset(arg||selectedBase(),false);return}
@@ -189,6 +190,7 @@ function openResearch(tool=''){navigate(tool?`research/${tool}/${selectedBase()}
 function openInstitutional(){navigate('institutional')}
 
 function installShell(){
+  if(document.body?.classList.contains('rwa-target-dashboard-v2')){installWorkspace();installQuickDock();installTicker();return}
   const top=document.querySelector('.topnav');
   if(top)top.innerHTML=[
     ['markets','Markets'],['intelligence','Intelligence'],['assets','Assets'],

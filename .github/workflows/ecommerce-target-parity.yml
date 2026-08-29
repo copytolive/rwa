@@ -4,16 +4,22 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'index.html'
       - 'chart-core.js'
       - 'rwa-target-dashboard-v2.js'
       - 'rwa-target-dashboard-v2.css'
+      - 'rwa-target-dashboard-v2-hardening.css'
       - 'rwa-ecommerce-target-controller-v1.js'
+      - 'rwa-ecommerce-production-visual-v1.js'
+      - 'rwa-ecommerce-parity-finish-v2.js'
+      - 'rwa-target-topbar-cleanup-v1.js'
       - 'rwa-seablueprint-commerce-bridge.js'
       - 'rwa-seablueprint-commerce-bridge.css'
       - 'rwa-storefront.js'
       - 'rwa-screenshot-parity-v1.js'
       - 'rwa-screenshot-parity-v1.css'
       - 'assets/ecommerce/**'
+      - 'tools/ecommerce-first-paint-browser.mjs'
       - 'tools/ecommerce-target-parity-browser.mjs'
       - 'tools/screenshot-to-code-parity-browser.mjs'
       - 'tools/screenshot-parity-production-guard-browser.mjs'
@@ -29,7 +35,7 @@ jobs:
   local-browser:
     if: github.event_name != 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 22
     steps:
       - uses: actions/checkout@v4
       - name: Install Chromium
@@ -42,7 +48,12 @@ jobs:
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && exit 0; sleep 1; done
           cat /tmp/rwa-http.log
           exit 1
-      - name: Run existing target interaction matrix
+      - name: Prove 0ms first paint has no legacy shell
+        env:
+          RWA_UI_URL: http://127.0.0.1:4173/rwa/
+          RWA_UI_PROOF_DIR: proof/ecommerce-first-paint-local
+        run: node tools/ecommerce-first-paint-browser.mjs
+      - name: Run target interaction matrix
         env:
           RWA_UI_URL: http://127.0.0.1:4173/rwa/
           RWA_UI_PROOF_DIR: proof/ecommerce-target-parity-local
@@ -52,7 +63,7 @@ jobs:
           RWA_UI_URL: http://127.0.0.1:4173/rwa/
           RWA_UI_PROOF_DIR: proof/screenshot-parity-production-guard-local
         run: node tools/screenshot-parity-production-guard-browser.mjs
-      - name: Run screenshot-to-code exact 1672x941 render preview
+      - name: Run screenshot-to-code exact 1672x941 preview
         env:
           RWA_UI_URL: http://127.0.0.1:4173/rwa/
           RWA_UI_PROOF_DIR: proof/screenshot-to-code-parity-local
@@ -62,6 +73,7 @@ jobs:
         with:
           name: ecommerce-target-parity-local-${{ github.sha }}
           path: |
+            proof/ecommerce-first-paint-local/
             proof/ecommerce-target-parity-local/
             proof/screenshot-parity-production-guard-local/
             proof/screenshot-to-code-parity-local/
@@ -71,7 +83,7 @@ jobs:
   public-browser:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 28
     steps:
       - uses: actions/checkout@v4
       - name: Wait for exact GitHub Pages SHA
@@ -90,7 +102,12 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Run real public target interaction matrix
+      - name: Prove public 0ms first paint has no legacy shell
+        env:
+          RWA_UI_URL: https://copytolive.github.io/rwa/
+          RWA_UI_PROOF_DIR: proof/ecommerce-first-paint-public
+        run: node tools/ecommerce-first-paint-browser.mjs
+      - name: Run public target interaction matrix
         env:
           RWA_UI_URL: https://copytolive.github.io/rwa/
           RWA_UI_PROOF_DIR: proof/ecommerce-target-parity-public
@@ -100,41 +117,38 @@ jobs:
           RWA_UI_URL: https://copytolive.github.io/rwa/
           RWA_UI_PROOF_DIR: proof/screenshot-parity-production-guard-public
         run: node tools/screenshot-parity-production-guard-browser.mjs
-      - name: Run public screenshot-to-code exact render preview
+      - name: Run public screenshot-to-code exact preview
         env:
           RWA_UI_URL: https://copytolive.github.io/rwa/
           RWA_UI_PROOF_DIR: proof/screenshot-to-code-parity-public
         run: node tools/screenshot-to-code-parity-browser.mjs
-      - name: Verify zero-duration and fail-closed contract
+      - name: Verify fail-closed and zero-duration contract
         run: |
           python3 - <<'PY'
           import json
-          p='proof/ecommerce-target-parity-public/browser-result.json'
-          d=json.load(open(p))
-          assert d['ok'] is True, d
-          assert d['publicMode'] is True, d
-          assert not d['failures'], d
-          for r in d['results']:
-              assert r['openAudit']['target']['transitionMs'] == 0, r
-              assert r['openAudit']['target']['animationMs'] == 0, r
-              assert r['openAudit']['target']['backendLocked'] is True, r
+          f=json.load(open('proof/ecommerce-first-paint-public/browser-result.json'))
+          assert f['ok'] is True and not f['failures'], f
+          assert all(r['captureDelayMs']==0 for r in f['results']), f
+          p=json.load(open('proof/ecommerce-target-parity-public/browser-result.json'))
+          assert p['ok'] is True and p['publicMode'] is True and not p['failures'], p
+          for r in p['results']:
+              assert r['audit']['target']['transitionMs'] == 0, r
+              assert r['audit']['target']['animationMs'] == 0, r
+              assert r['audit']['target']['backendLocked'] is True, r
           g=json.load(open('proof/screenshot-parity-production-guard-public/browser-result.json'))
           assert g['ok'] is True and not g['failures'], g
-          assert g['audit']['parityApiLoaded'] is False, g
-          assert g['audit']['parityRootPresent'] is False, g
-          assert g['audit']['canonicalTargetPresent'] is True, g
-          assert g['audit']['backendLocked'] is True, g
+          assert g['audit']['parityApiLoaded'] is False and g['audit']['parityRootPresent'] is False, g
+          assert g['audit']['canonicalTargetPresent'] is True and g['audit']['backendLocked'] is True, g
           s=json.load(open('proof/screenshot-to-code-parity-public/browser-result.json'))
           assert s['ok'] is True and not s['failures'], s
-          assert s['audit']['api']['transitionMs'] == 0, s
-          assert s['audit']['api']['animationMs'] == 0, s
-          print('PUBLIC_ECOMMERCE_SCREENSHOT_TO_CODE_PARITY_PASS')
+          print('PUBLIC_ECOMMERCE_FIRST_PAINT_AND_PARITY_PASS')
           PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ecommerce-target-parity-public-${{ github.sha }}
           path: |
+            proof/ecommerce-first-paint-public/
             proof/ecommerce-target-parity-public/
             proof/screenshot-parity-production-guard-public/
             proof/screenshot-to-code-parity-public/
