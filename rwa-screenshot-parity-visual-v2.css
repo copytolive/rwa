@@ -1,0 +1,32 @@
+/* Screenshot-to-code visual parity refinement. Desktop reconstruction only; canonical /rwa/ layout and Ecommerce bridge remain unchanged. */
+#rwaScreenshotParity .stc-eheadcopy b{font-size:13px}
+#rwaScreenshotParity .stc-eheadcopy small{font-size:8px}
+#rwaScreenshotParity .stc-inpage{font-size:8px}
+#rwaScreenshotParity .stc-etabs button{font-size:10px}
+#rwaScreenshotParity .stc-store h3{font-size:12px}
+#rwaScreenshotParity .stc-store p{font-size:8px}
+#rwaScreenshotParity .stc-storemeta{font-size:8px}
+#rwaScreenshotParity .stc-badge{font-size:6px}
+#rwaScreenshotParity .stc-metrics b{font-size:11px}
+#rwaScreenshotParity .stc-metrics small{font-size:7px}
+#rwaScreenshotParity .stc-viewstore{font-size:9px}
+#rwaScreenshotParity .stc-sectionhead b{font-size:11px}
+#rwaScreenshotParity .stc-sectionhead button{font-size:9px}
+#rwaScreenshotParity .stc-product h4{font-size:10px;line-height:1.22;height:27px}
+#rwaScreenshotParity .stc-tag{font-size:6px}
+#rwaScreenshotParity .stc-product strong{font-size:10px;margin-top:5px}
+#rwaScreenshotParity .stc-product small{font-size:6.5px;margin-top:4px}
+#rwaScreenshotParity .stc-landcopy b{font-size:10px;line-height:1.25}
+#rwaScreenshotParity .stc-landcopy span{font-size:6px;margin-top:6px}
+#rwaScreenshotParity .stc-landcopy strong{font-size:9px;margin-top:6px}
+#rwaScreenshotParity .stc-carthead b,#rwaScreenshotParity .stc-carthead span{font-size:10px}
+#rwaScreenshotParity .stc-cartitem b,#rwaScreenshotParity .stc-cartitem strong{font-size:7.5px}
+#rwaScreenshotParity .stc-cartitem small{font-size:6.5px}
+#rwaScreenshotParity .stc-cartbuttons button{font-size:10px}
+#rwaScreenshotParity .stc-warning{font-size:8px}
+#rwaScreenshotParity .stc-bookhead b{font-size:13px}
+#rwaScreenshotParity .stc-bookcols{font-size:8px}
+#rwaScreenshotParity .stc-bookrow{font-size:9px}
+#rwaScreenshotParity .stc-mid b{font-size:16px}
+#rwaScreenshotParity .stc-mid span{font-size:8px}
+@media(max-width:899px){#rwaScreenshotParity{display:none!important}}
