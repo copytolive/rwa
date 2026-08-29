@@ -48,6 +48,22 @@ html body.rwa-target-dashboard-v2 #rwaMarketplaceLaunch .rwa-marketplace-mark{di
 /* #shop first paint must never expose Context / AI or other legacy right-rail cards before runtime reconciliation. */
 html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 .layout>.right>:not(.order-section){display:none!important;visibility:hidden!important;pointer-events:none!important}
 html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 .layout>.right>.order-section{display:block!important;visibility:visible!important;opacity:1!important}
+/* First-paint typography is production UI too: never render 5/6/7px copy. */
+html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 #rwaFirstPaintCommerceSkeleton .fp-head small,
+html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 #rwaFirstPaintCommerceSkeleton .fp-pill,
+html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 #rwaFirstPaintCommerceSkeleton .fp-badges i,
+html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 #rwaFirstPaintCommerceSkeleton .fp-store p,
+html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 #rwaFirstPaintCommerceSkeleton .fp-metrics small,
+html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 #rwaFirstPaintCommerceSkeleton .fp-card b,
+html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 #rwaFirstPaintCommerceSkeleton .fp-card small,
+html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 #rwaFirstPaintCommerceSkeleton .fp-cart,
+html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 #rwaFirstPaintCommerceSkeleton .fp-lockline{font-size:8.5px!important;line-height:1.25!important}
+html body.rwa-target-dashboard-v2 .rwa-target-inpage b{font-size:9px!important;line-height:1.1!important}
+html body.rwa-target-dashboard-v2 .rwa-target-inpage small{font-size:8.5px!important;line-height:1.1!important}
+html body.rwa-target-dashboard-v2 .aside-label small,
+html body.rwa-target-dashboard-v2 .paircount{font-size:8.5px!important}
+html body.rwa-target-dashboard-v2 .tokenicon{font-size:9px!important}
+html body.rwa-target-dashboard-v2 .search-icon{font-size:0!important;width:14px!important;height:14px!important;display:inline-block!important;background-repeat:no-repeat!important;background-position:center!important;background-size:14px 14px!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238292a5' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6'/%3E%3Cpath d='m16 16 4 4'/%3E%3C/svg%3E")!important;color:transparent!important}
 
 /* Canonical target chrome. */
 html body.rwa-target-dashboard-v2 .rwa-target-topbar{height:var(--rwa-topbar-h)!important;min-height:var(--rwa-topbar-h)!important;background:#030b15!important;border-bottom:1px solid var(--rwa-border)!important;box-shadow:none!important}
@@ -145,7 +161,6 @@ html body.rwa-target-dashboard-v2 [role="button"]:focus-visible{outline:2px soli
   html body.rwa-target-dashboard-v2 .app,html[data-rwa-level] body.rwa-target-dashboard-v2 .app{padding-top:var(--rwa-topbar-h)!important}
   html body.rwa-target-dashboard-v2 .app>#rwaExperienceRail~.layout,html[data-rwa-level] body.rwa-target-dashboard-v2 .app>#rwaExperienceRail~.layout{margin-top:0!important}
   html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-super-market-open .layout,html body.rwa-target-dashboard-v2.rwa-super-market-open .layout{width:100%!important;max-width:none!important;min-width:0!important;margin-right:0!important;padding-right:0!important}
-  /* Ecommerce is a real fourth column at target desktop geometry; never let the market grid run underneath it. */
   html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout,
   html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout{
     box-sizing:border-box!important;width:calc(100vw - var(--rwa-ecommerce-w))!important;max-width:calc(100vw - var(--rwa-ecommerce-w))!important;min-width:0!important;margin-right:var(--rwa-ecommerce-w)!important;padding-right:0!important;
@@ -168,7 +183,6 @@ html body.rwa-target-dashboard-v2 [role="button"]:focus-visible{outline:2px soli
   html.rwa-target-prepaint.rwa-target-prepaint-shop #rwaFirstPaintCommerceSkeleton{position:fixed!important;left:calc(100vw - 460px)!important;right:auto!important;top:62px!important;bottom:60px!important;height:auto!important;width:460px!important;min-width:460px!important;max-width:460px!important;margin:0!important;transform:none!important;translate:none!important}
 }
 @media(min-width:2000px){
-  /* Preserve proportions on wide desktops without allowing Ecommerce to cover Order Book. */
   html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout{--rwa-watchlist-w:304px;--rwa-orderbook-w:248px}
 }
 @media(max-width:1450px) and (min-width:1121px){html body.rwa-target-dashboard-v2 #rwaMultiChainLaunch{max-width:38px!important;min-width:38px!important;padding:0 4px!important;overflow:hidden!important;text-indent:-9999px!important}html body.rwa-target-dashboard-v2 #rwaMultiChainLaunch:after{content:'MC';display:block;text-indent:0!important;font-size:9px!important}html body.rwa-target-dashboard-v2 #rwaMarketplaceLaunch{width:32px!important;min-width:32px!important;padding:0!important}}
