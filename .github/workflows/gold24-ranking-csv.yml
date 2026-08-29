@@ -1,0 +1,64 @@
+name: GOLD v11 Sheet CSV Publisher
+
+on:
+  push:
+    paths:
+      - '.github/workflows/gold24-ranking-csv.yml'
+      - 'backtest/gold24/runtime_v11/latest_profit_top200.json'
+      - 'backtest/gold24/runtime_v11/latest_entry_profit_top200.json'
+      - 'backtest/gold24/runtime_v11/latest_positive_summary.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gold24-v11-sheet-csv
+  cancel-in-progress: true
+
+jobs:
+  csv:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build sheet-ready CSV files
+        run: |
+          python - <<'PY'
+          import csv, json, pathlib
+          root = pathlib.Path('backtest/gold24/runtime_v11')
+          specs = [
+            ('latest_profit_top200.json', 'latest_profit_top200.csv'),
+            ('latest_entry_profit_top200.json', 'latest_entry_profit_top200.csv'),
+          ]
+          for src_name, dst_name in specs:
+              src = json.loads((root/src_name).read_text())
+              with (root/dst_name).open('w', newline='', encoding='utf-8') as f:
+                  w = csv.writer(f)
+                  for x in src.get('ranking', []):
+                      if x.get('baseline_qualified_v11'):
+                          status='LOLOS TIER1+TIER2 — belum robustness final'
+                      elif x.get('sample_pass_v11'):
+                          status='POSITIF — SAMPLE PASS, BELUM LOLOS v11'
+                      else:
+                          status='POSITIF — BELUM LOLOS v11 (sample gagal)'
+                      w.writerow([
+                          x.get('rank'), x.get('method'), x.get('family'), x.get('timeframe'),
+                          x.get('entry_method'), x.get('direction_mode'), x.get('sl'), x.get('tp'),
+                          x.get('trades'), x.get('win_rate_pct'), x.get('profit_factor_net'),
+                          x.get('net_profit'), x.get('net_expectancy'), x.get('max_dd_pct'), x.get('sqn'),
+                          'YA' if x.get('sample_pass_v11') else 'TIDAK',
+                          '' if x.get('correlation_max') is None else x.get('correlation_max'),
+                          x.get('correlation_gate') or 'N/A — belum pre-portfolio', status
+                      ])
+          PY
+      - name: Publish CSV files
+        run: |
+          set -euo pipefail
+          git config user.name 'gold24-bot'
+          git config user.email 'gold24-bot@users.noreply.github.com'
+          git add backtest/gold24/runtime_v11/latest_profit_top200.csv backtest/gold24/runtime_v11/latest_entry_profit_top200.csv
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'chore(gold24): publish sheet-ready v11 rankings [skip ci]'
+          git pull --rebase origin main
+          git push origin HEAD:main
