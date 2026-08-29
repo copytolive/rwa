@@ -1,6 +1,6 @@
 {
   "schema": 5,
-  "generated_at": "2026-08-29T17:19:28.407Z",
+  "generated_at": "2026-08-29T17:32:15.956Z",
   "status": "BLOCKED",
   "engineering_ready": true,
   "beta_ready": false,
@@ -8,12 +8,27 @@
   "mainnet_ready": false,
   "evidence_policy": "public-https-distinct-probed-v1",
   "beta": {
-    "thresholds": {"internal": 3,"closed": 20,"public": 100},
-    "counts": {"internal": 0,"closed": 0,"public": 0},
+    "thresholds": {
+      "internal": 3,
+      "closed": 20,
+      "public": 100
+    },
+    "counts": {
+      "internal": 0,
+      "closed": 0,
+      "public": 0
+    },
     "verified_proofs": 0
   },
-  "product_rwa": {"testnet_status": "NOT_DEPLOYED","transfer_enabled": false},
-  "commerce": {"configured": false,"live": false,"checkout_ready": false},
+  "product_rwa": {
+    "testnet_status": "NOT_DEPLOYED",
+    "transfer_enabled": false
+  },
+  "commerce": {
+    "configured": false,
+    "live": false,
+    "checkout_ready": false
+  },
   "checks": {
     "browser_single_write": {"ok": true,"detail": "RWAExecutionAPI + mandatory risk + atomic normalTpsl"},
     "browser_global_mainnet_lock": {"ok": true,"detail": "mainnet requires wallet E2E + global READY_FOR_MAINNET"},
