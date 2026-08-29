@@ -1,0 +1,35 @@
+{
+  "contract": "seablueprint-2026-08-30",
+  "canonicalViewport": {"width": 1672, "height": 941},
+  "geometry": {
+    "topbar": 62,
+    "footer": 60,
+    "watchlist": 291,
+    "center": 682,
+    "orderBook": 239,
+    "ecommerce": 460
+  },
+  "desktop": {
+    "min1600": {"watchlist": 291, "orderBook": 239, "ecommerce": 460},
+    "between1401And1599": {"watchlist": 286, "orderBook": 236, "ecommerce": 440},
+    "between681And1400": {"watchlist": 260, "orderBook": 220, "ecommerce": 440}
+  },
+  "viewports": [
+    [1672, 941], [2048, 1129], [1600, 1000], [1440, 900], [1366, 768],
+    [1280, 800], [1024, 768], [412, 915], [390, 844]
+  ],
+  "forbiddenVisible": ["#rwaExperienceRail", ".context-card", ".assistant-panel", ".browser-panel"],
+  "visibleFontMinimumPx": 8.5,
+  "navigation": ["markets", "ecommerce", "intelligence", "portfolio", "orders", "reports"],
+  "ecommerce": {
+    "route": "#shop",
+    "tabs": ["stores", "products", "cart"],
+    "backend": "LOCKED",
+    "verificationRequired": true,
+    "allowLiveMerchantClaim": false,
+    "allowLivePaymentClaim": false,
+    "allowLiveSettlementClaim": false
+  },
+  "legacy": {"experienceRailVisible": false},
+  "production": {"path": "/rwa/", "exactShaRequired": true}
+}
