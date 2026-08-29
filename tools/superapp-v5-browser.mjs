@@ -28,7 +28,7 @@ try{
   {
     const context=await browser.newContext({locale:'en-US',viewport:{width:1440,height:960},serviceWorkers:'block'});await mocks(context);const page=await context.newPage();
     const errors=[];page.on('pageerror',e=>errors.push(String(e.message||e)));
-    await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:30000});await waitV5(page);await page.waitForTimeout(1200);await assertRoot(page,'root');
+    await page.goto(BASE+'#markets',{waitUntil:'domcontentloaded',timeout:30000});await waitV5(page);await page.waitForTimeout(1200);await assertRoot(page,'markets root');
     assert.ok(await page.locator('[data-v5-route="markets"]').count(),'desktop nav missing');
     assert.ok(await page.locator('#rwaGlobalTicker').count(),'global ticker missing');
     assert.ok(await page.locator('#rwaHealth').count(),'health indicator missing');
