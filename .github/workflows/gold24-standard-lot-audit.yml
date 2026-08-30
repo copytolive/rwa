@@ -12,6 +12,7 @@ on:
       - '.github/workflows/gold24-standard-lot-audit.yml'
       - 'backtest/gold24/mt5_standard_lot_audit.py'
       - 'backtest/gold24/mt5_standard_lot_audit_20k.py'
+      - 'backtest/gold24/mt5_standard_lot_full_metrics.py'
       - 'backtest/gold24/runtime_v11/latest_validation_summary.json'
 
 permissions:
@@ -97,6 +98,7 @@ jobs:
           set -euo pipefail
           rm -rf "$OUT_DIR"
           python mt5_standard_lot_audit_20k.py --state-dir "$STATE_DIR" --out-dir "$OUT_DIR"
+          python mt5_standard_lot_full_metrics.py --state-dir "$STATE_DIR" --out-dir "$OUT_DIR"
 
       - name: Verify standard-lot and strict USD20k correlation audit
         shell: bash
@@ -119,6 +121,7 @@ jobs:
               assert r['standard_lot_gold_units']==100.0
               assert r['standard_lot_net_profit_usd_same_cost_model'] > 0
           assert s['status']=='PASS'
+          assert s['full_metrics_status']=='PASS'
           assert s['minimum_trades']==100
           assert s['minimum_net_profit_usd_standard_lot']==20000.0
           assert s['exact_rebacktest_qty_100'] is True
@@ -129,18 +132,23 @@ jobs:
           assert s['economic_count_before_correlation'] >= s['count']
           assert s['count'] > 0, 'USD20k list unexpectedly empty after exact standard-lot re-backtest'
           assert s['correlation_rule']['wording']=='Maks 0.50 (pearson, log-return equity). Metode: per-symbol greedy filter. > 0.50 → yang kualitas lebih rendah DIHAPUS.'
+          required=['sl_pips','tp_pips','total_entry','total_trades','standard_lot_win_rate_pct','probability_positive_pct','standard_lot_profit_factor_same_cost_model','standard_lot_net_profit_usd_same_cost_model','standard_lot_ev_per_trade_usd_same_cost_model','avg_win_loss_ratio','standard_lot_max_dd_pct_starting_equity_10000','recovery_factor','max_consecutive_loss','standard_lot_sqn_same_cost_model','oos_profit_factor','monte_carlo_pass','mc_95pct_max_drawdown_pct','positive_years_pct','worst_year','worst_year_net_profit_usd','backtest_start_utc','backtest_end_utc','history_years','sample_v11','correlation_max','correlation_gate']
           for r in s['ranking']:
               assert r['trades'] >= 100
               assert r['standard_lot_net_profit_usd_same_cost_model'] >= 20000.0
               assert r['correlation_max'] <= 0.50 + 1e-12
               assert r['correlation_gate']=='PASS'
-          print('standard-lot Entry100 + USD20000 + correlation verification: PASS')
+              missing=[k for k in required if k not in r or r[k] is None]
+              assert not missing, f'missing full real metrics {missing}'
+              assert not any(str(v).strip().upper()=='N/A' for v in r.values())
+          print('standard-lot Entry100 + USD20000 + correlation + full real metrics verification: PASS')
           print(json.dumps({
               'positive_entry100': x['count'],
               'economic_before_corr': s['economic_count_before_correlation'],
               'removed_corr': s['removed_by_correlation_count'],
               'strict_after_corr': s['count'],
               'source_run_id': s['source_run_id'],
+              'full_metrics_status': s['full_metrics_status'],
           }, indent=2))
           PY
 
@@ -166,7 +174,7 @@ jobs:
               echo 'standard-lot runtime already current'
               break
             fi
-            git commit -m 'chore(gold24): publish Entry100 USD20k standard-lot audit [skip ci]'
+            git commit -m 'chore(gold24): publish Entry100 USD20k full real metrics [skip ci]'
             if git push origin HEAD:main; then
               echo 'standard-lot audit publish: PASS'
               break
