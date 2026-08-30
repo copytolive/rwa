@@ -15,12 +15,14 @@ function sync(){
   return true;
 }
 function loadPreset5Y(){
+  if(window.RENKO_GOLD_ONLY)return false;
   if(!document.querySelector('link[data-renko-presets5y]')){const l=document.createElement('link');l.rel='stylesheet';l.href='renko-tv-presets-5y.css?v=1';l.dataset.renkoPresets5y='true';document.head.appendChild(l)}
   if(!window.RWARenkoPreset5Y&&!document.querySelector('script[data-renko-presets5y]')){const s=document.createElement('script');s.src='renko-tv-presets-5y.js?v=1';s.dataset.renkoPresets5y='true';document.body.appendChild(s)}
+  return true;
 }
 window.addEventListener('renko:tv-ready',()=>setTimeout(sync,0));
 window.addEventListener('renko:symbol-switch-end',()=>setTimeout(sync,0));
 setInterval(sync,75);
-loadPreset5Y();
-window.RWARenkoATRUiSync={version:'1.2.1',rule:'visible-status-follows-current-real-deep-atr-state-plus-idempotent-preset-5y-loader',sync,loadPreset5Y};
+if(!window.RENKO_GOLD_ONLY)loadPreset5Y();
+window.RWARenkoATRUiSync={version:'1.3.0',rule:'visible-status-follows-current-real-deep-atr-state-no-legacy-presets-in-gold-only-shell',sync,loadPreset5Y};
 })();
