@@ -1,0 +1,180 @@
+name: RENKO Production ATR + Traditional 10x 0ms Proof
+
+on:
+  push:
+    branches:
+      - feat/renko-gold-total-history-2003-2026
+    paths:
+      - '.github/workflows/renko-atr-traditional-production-10x-proof.yml'
+      - 'renko/index.html'
+      - 'renko/renko-tv-engine-fastpath.js'
+      - 'renko/renko-tv-engine.js'
+      - 'renko/renko-tv-app.js'
+      - 'renko/renko-tv-atr-control.js'
+      - 'renko/renko-tv-traditional-control.js'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate runtime and canonical GOLD contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check renko/renko-tv-engine-fastpath.js
+          node --check renko/renko-tv-engine.js
+          node --check renko/renko-tv-app.js
+          node --check renko/renko-tv-atr-control.js
+          node --check renko/renko-tv-traditional-control.js
+          python3 - <<'PY'
+          import json
+          c=json.load(open('renko/history/gold/coverage.json'))
+          m=json.load(open('renko/history/gold/full-manifest.json'))
+          assert c['backfillComplete'] is True
+          assert c['expectedMonths']==c['publishedMonths']==280
+          assert c['missingMonths']==[] and c['extraMonths']==[] and c['overlaps']==[]
+          assert c['sourceUnavailableHours']==0 and c['duplicateSeconds']==0 and c['conflictingOHLC']==0
+          assert m['provider']=='Dukascopy' and m['instrumentCode']=='XAU-USD' and m['interval']=='1s' and m['priceSide']=='bid'
+          assert len(m['months'])==280 and m['months'][0]['earliestSecond']==1052092863
+          print('GOLD_CONTRACT_PASS', c['barCount'], c['earliestSecond'], c['latestSecond'])
+          PY
+          printf '%s\n' "$GITHUB_SHA" > renko-deployment-sha.txt
+          printf '%s\n' "$GITHUB_SHA" > renko/deployment-sha.txt
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Deploy exact proof SHA
+        uses: actions/deploy-pages@v4
+
+  proof:
+    needs: deploy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for exact production SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in {1..90}; do
+            got="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/deployment-sha.txt?cb=$RANDOM" 2>/dev/null || true)"
+            if [ "$got" = "$GITHUB_SHA" ]; then echo "RENKO_PRODUCTION_SHA_PASS $got"; exit 0; fi
+            sleep 4
+          done
+          echo 'Production did not converge to exact SHA'; exit 1
+      - name: Install Playwright Chromium
+        shell: bash
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+      - name: Real browser 20-switch measured proof
+        shell: bash
+        run: |
+          mkdir -p proof
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { chromium } from 'playwright';
+          const ATR_VALUES=[1,2,3,4,5,6,7,8,9,10];
+          const TRAD_VALUES=[1,2,3,4,5,6,7,8,9,10];
+          const url='https://copytolive.github.io/rwa/renko/?gold=1&proof=atr-traditional-production-10x';
+          const same=(a,b)=>Math.abs(Number(a)-Number(b))<=Math.max(1e-12,Math.abs(Number(b))*1e-10);
+          const browser=await chromium.launch({headless:true});
+          const context=await browser.newContext({viewport:{width:1672,height:941},deviceScaleFactor:1});
+          await context.addInitScript(()=>{
+            try{localStorage.removeItem('rwa_renko_tradingview_settings_v1')}catch{}
+            try{localStorage.removeItem('rwa_renko_traditional_symbol_boxes_v1')}catch{}
+            window.__proofLongTasks=[];
+            try{new PerformanceObserver(list=>{for(const e of list.getEntries())window.__proofLongTasks.push({startTime:e.startTime,duration:e.duration})}).observe({type:'longtask',buffered:true})}catch{}
+          });
+          const page=await context.newPage(),errors=[];
+          page.on('pageerror',e=>errors.push(String(e)));
+          page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text())});
+          await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
+          await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecent==='true'&&document.querySelector('#chartHost canvas'),null,{timeout:60000});
+          await page.waitForFunction(()=>window.RWARenkoTV?.state?.symbol==='XAUUSD'&&window.RWARenkoEngineFastPath?.version==='1.0.0-full-history-zero-allocation'&&(window.RWARenkoTV?.state?.closedBars?.length||0)>=1000,null,{timeout:60000});
+          const deployedSha=(await page.evaluate(async()=>await (await fetch('./deployment-sha.txt?cb='+Math.random(),{cache:'no-store'})).text())).trim();
+          const expected=process.env.GITHUB_SHA;
+          if(deployedSha!==expected)throw new Error(`wrong deployed SHA ${deployedSha} expected ${expected}`);
+
+          async function measured(action,ready){
+            await page.evaluate(()=>{window.__proofLongTasks=[]});
+            const start=await page.evaluate(()=>performance.now());
+            await action();await ready();await page.waitForTimeout(160);
+            const end=await page.evaluate(()=>performance.now());
+            const tasks=await page.evaluate(([a,b])=>(window.__proofLongTasks||[]).filter(x=>x.startTime>=a&&x.startTime<=b),[start,end]);
+            const tbt=tasks.reduce((s,x)=>s+Math.max(0,Number(x.duration)-50),0);
+            return{tbtMs:Number(tbt.toFixed(3)),longTasks:tasks};
+          }
+          async function state(){return page.evaluate(()=>{const T=window.RWARenkoTV,d=document.documentElement.dataset;return{method:T.settings.method,interval:T.settings.interval,source:T.settings.source,symbol:T.state.symbol,length:Number(T.settings.atrLength),box:Number(T.state.box),atr:Number(T.state.atr),atrRaw:Number(T.state.atrRaw),tick:Number(T.state.tickSize),available:Number(T.state.closedBars.length),confirmed:Number(T.state.confirmed?.length||0),zeroFallback:d.atrZeroFallback==='true',fastPath:window.RWARenkoEngineFastPath?.version||''}})}
+          const atr=[];
+          for(const v of ATR_VALUES){
+            let row;
+            try{
+              const perf=await measured(async()=>{await page.locator('#atrLength').fill(String(v));await page.locator('[data-apply-method="atr"]').click()},async()=>await page.waitForFunction(n=>{const T=window.RWARenkoTV,d=document.documentElement.dataset;return d.atrControlStatus==='active'&&Number(d.atrControlLength)===n&&T?.settings?.method==='atr'&&Number(T?.settings?.atrLength)===n},v,{timeout:30000}));
+              const s=await state(),raw=Number.isFinite(s.atrRaw)?s.atrRaw:s.atr;
+              const rawBoxPass=raw>0?same(raw,s.box):(raw===0&&s.zeroFallback&&same(s.box,s.tick));
+              row={value:v,...s,rawBoxPass,...perf,pass:s.symbol==='XAUUSD'&&s.method==='atr'&&s.interval==='1s'&&s.source==='close'&&s.length===v&&rawBoxPass&&perf.tbtMs===0};
+            }catch(e){row={value:v,pass:false,error:String(e)}}
+            atr.push(row);
+          }
+          const traditional=[];
+          for(const v of TRAD_VALUES){
+            let row;
+            try{
+              const perf=await measured(async()=>{await page.locator('#traditionalBox').fill(String(v));await page.locator('[data-apply-method="traditional"]').click()},async()=>await page.waitForFunction(n=>{const T=window.RWARenkoTV,d=document.documentElement.dataset;return d.renkoTraditionalStatus==='active'&&T?.settings?.method==='traditional'&&Math.abs(Number(T?.state?.box)-Number(n))<1e-9},v,{timeout:30000}));
+              const s=await state();
+              row={value:v,...s,...perf,pass:s.symbol==='XAUUSD'&&s.method==='traditional'&&s.interval==='1s'&&s.source==='close'&&same(s.box,v)&&perf.tbtMs===0};
+            }catch(e){row={value:v,pass:false,error:String(e)}}
+            traditional.push(row);
+          }
+
+          async function overlay(title,rows,kind){
+            await page.evaluate(({title,rows,kind,deployedSha})=>{
+              document.getElementById('__proofOverlay')?.remove();
+              const root=document.createElement('section');root.id='__proofOverlay';
+              root.style.cssText='position:fixed;z-index:999999;top:68px;right:16px;width:570px;background:rgba(5,9,15,.97);border:1px solid #53677f;border-radius:14px;padding:15px 18px;color:#edf5ff;font:13px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;box-shadow:0 18px 60px rgba(0,0,0,.58)';
+              const html=rows.map((r,i)=>{const ok=r.pass===true,c=ok?'#75f0a7':'#ff7a8a';const active=Number.isFinite(Number(r.box))?Number(r.box).toPrecision(9):(r.error||'ERROR');return `<div style="display:grid;grid-template-columns:28px 82px 1fr 76px;gap:8px;padding:6px 0;border-top:1px solid #202c3a"><b>${String(i+1).padStart(2,'0')}</b><b>${kind==='ATR'?'ATR '+r.value:'BOX '+r.value}</b><span>${active}</span><strong style="text-align:right;color:${c}">${Number.isFinite(Number(r.tbtMs))?r.tbtMs+' ms': 'FAIL'} ${ok?'✓':'✕'}</strong></div>`}).join('');
+              const pass=rows.every(x=>x.pass===true);
+              root.innerHTML=`<div style="font:800 19px/1.2 system-ui">${title}</div><div style="color:#9fb2c8;margin:5px 0 10px">XAUUSD · fixed 1s CLOSE · SHA ${deployedSha.slice(0,12)}</div><div style="display:grid;grid-template-columns:28px 82px 1fr 76px;gap:8px;color:#8397ad;padding-bottom:5px"><span>#</span><span>VALUE</span><span>ACTIVE BOX</span><span style="text-align:right">TBT</span></div>${html}<div style="margin-top:10px;padding-top:9px;border-top:1px solid #324155;color:${pass?'#75f0a7':'#ff7a8a'};font-weight:900">${pass?'10 / 10 PASS · EACH SWITCH = 0 ms TBT':'NOT PASS · REAL MEASUREMENTS SHOWN'}</div>`;
+              document.body.appendChild(root);
+            },{title,rows,kind,deployedSha});
+          }
+          await overlay('ATR — 10 ANGKA · REAL TBT',atr,'ATR');await page.screenshot({path:'proof/01-atr-10-values.png'});
+          await overlay('TRADITIONAL — 10 ANGKA · REAL TBT',traditional,'TRAD');await page.screenshot({path:'proof/02-traditional-10-values.png'});
+          await page.evaluate(({atr,traditional,deployedSha})=>{
+            document.getElementById('__proofOverlay')?.remove();const root=document.createElement('section');root.id='__proofOverlay';root.style.cssText='position:fixed;z-index:999999;top:66px;right:14px;width:800px;background:rgba(5,9,15,.97);border:1px solid #53677f;border-radius:14px;padding:15px 18px;color:#edf5ff;font:12px/1.28 ui-monospace,SFMono-Regular,Menlo,monospace;box-shadow:0 18px 60px rgba(0,0,0,.58)';
+            const mk=(rows)=>rows.map((r,i)=>`<div style="display:grid;grid-template-columns:22px 60px 1fr 65px;gap:5px;padding:4px 0;border-top:1px solid #202c3a"><b>${i+1}</b><b>${r.value}</b><span>${Number.isFinite(Number(r.box))?Number(r.box).toPrecision(8):(r.error||'FAIL')}</span><strong style="text-align:right;color:${r.pass?'#75f0a7':'#ff7a8a'}">${Number.isFinite(Number(r.tbtMs))?r.tbtMs+' ms':'FAIL'} ${r.pass?'✓':'✕'}</strong></div>`).join('');const pass=atr.every(x=>x.pass)&&traditional.every(x=>x.pass);
+            root.innerHTML=`<div style="font:800 20px/1.2 system-ui">RENKO PRODUCTION — 10 ATR + 10 TRADITIONAL</div><div style="color:#9fb2c8;margin:5px 0 11px">XAUUSD · fixed 1s CLOSE · deployed ${deployedSha}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px"><div><b style="font:800 15px system-ui">ATR · 1–10</b>${mk(atr)}</div><div><b style="font:800 15px system-ui">TRADITIONAL · 1–10</b>${mk(traditional)}</div></div><div style="margin-top:10px;padding-top:9px;border-top:1px solid #324155;color:${pass?'#75f0a7':'#ff7a8a'};font-weight:900">${pass?'20 / 20 PASS · EVERY MEASURED SWITCH = 0 ms MAIN-THREAD TBT':'NOT PASS · FIX REQUIRED'}</div>`;document.body.appendChild(root)
+          },{atr,traditional,deployedSha});
+          await page.screenshot({path:'proof/03-combined-20-values.png'});
+          const report={generatedAt:new Date().toISOString(),url,deployedSha,expectedSha:expected,symbol:'XAUUSD',interval:'1s',source:'close',fastPath:'1.0.0-full-history-zero-allocation',atr,traditional,errors,pass:errors.length===0&&atr.every(x=>x.pass)&&traditional.every(x=>x.pass)};
+          fs.writeFileSync('proof/proof.json',JSON.stringify(report,null,2));
+          console.log('RENKO_PRODUCTION_10X_REPORT',JSON.stringify({sha:deployedSha,atrPass:atr.filter(x=>x.pass).length,traditionalPass:traditional.filter(x=>x.pass).length,errors:errors.length,pass:report.pass}));
+          await browser.close();
+          if(!report.pass)process.exit(1);
+          NODE
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+      - name: Upload real-browser screenshots and JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: renko-production-atr-traditional-10x-0ms-proof
+          path: proof/
+          retention-days: 90
