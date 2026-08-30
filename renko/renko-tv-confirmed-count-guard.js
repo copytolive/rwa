@@ -22,8 +22,18 @@ function own(el){
   el.dataset.renkoConfirmedCountOwned='true';
 }
 function install(){own(document.getElementById('brickCount'));document.documentElement.dataset.renkoConfirmedCountGuard='true'}
-install();
-window.addEventListener('renko:tv-ready',install);
+function captureGoldChart(){
+  const L=window.LightweightCharts;if(!L||typeof L.createChart!=='function'||L.__RENKO_GOLD_CAPTURE_GUARD__)return;
+  const native=L.createChart.bind(L);
+  L.createChart=(...args)=>{const c=native(...args);window.__RENKO_GOLD_HISTORY_CHART__=c;return c};
+  L.__RENKO_GOLD_CAPTURE_GUARD__=true;
+}
+function loadGoldHistory(){
+  if(window.RWARenkoGoldHistory||document.querySelector('script[data-renko-gold-history]'))return;
+  const s=document.createElement('script');s.src='renko-gold-infinite-history.js?v=1';s.async=false;s.dataset.renkoGoldHistory='1';document.head.appendChild(s);
+}
+captureGoldChart();install();
+window.addEventListener('renko:tv-ready',()=>{install();loadGoldHistory()});
 window.addEventListener('renko:symbol-switch-end',install);
-window.RWARenkoConfirmedCountGuard={version:'1.0.0',rule:'visible-confirmed-count-is-full-engine-total-never-render-cap',total,install,stats};
+window.RWARenkoConfirmedCountGuard={version:'1.1.0',rule:'visible-confirmed-count-is-full-engine-total-never-render-cap-plus-gold-chart-capture',total,install,stats,captureGoldChart,loadGoldHistory};
 })();

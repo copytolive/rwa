@@ -1,0 +1,157 @@
+name: RENKO GOLD Lazy History Gate
+
+on:
+  push:
+    branches:
+      - main
+      - fix/renko-gold-infinite-history-20260830
+    paths:
+      - 'renko/index.html'
+      - 'renko/renko-gold-infinite-history.js'
+      - 'renko/history/gold/**'
+      - '.github/workflows/renko-gold-history-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  local-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate GOLD pack contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s renko/index.html
+          test -s renko/renko-gold-infinite-history.js
+          test -s renko/history/gold/manifest.json
+          node --check renko/renko-gold-infinite-history.js
+          grep -Fq 'renko-gold-infinite-history.js?v=1' renko/renko-tv-confirmed-count-guard.js
+          grep -Fq "b.id='goldHistoryQuick'" renko/renko-gold-infinite-history.js
+          python3 - <<'PY'
+          import gzip,json,pathlib
+          m=json.load(open('renko/history/gold/manifest.json'))
+          assert m['schema']=='renko-gold-s1-manifest-v1'
+          assert m['provider']=='Dukascopy' and m['instrumentCode']=='XAU-USD' and m['symbol']=='XAUUSD' and m['interval']=='1s'
+          assert len(m['chunks'])>=3
+          for c in m['chunks'][:3]:
+              p=pathlib.Path('renko')/c['url']
+              j=json.loads(gzip.decompress(p.read_bytes()))
+              assert j['payloadSha256']==c['payloadSha256']
+              assert len(j['bars'])==c['barCount'] and len(j['bars'])>=100
+          print('RENKO_GOLD_PACK_CONTRACT_PASS',len(m['chunks']))
+          PY
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Prove lazy backward GOLD history + cache path
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/gold-lazy
+          python3 -m http.server 8000 >/tmp/renko-gold-http.log 2>&1 &
+          server=$!
+          trap 'kill $server 2>/dev/null || true' EXIT
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { chromium } from 'playwright';
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage({viewport:{width:1600,height:1000}});
+          const pageErrors=[];
+          page.on('pageerror',e=>pageErrors.push(String(e.message||e)));
+          page.on('console',m=>{if(m.type()==='error'&&!/WebSocket connection .* failed/i.test(m.text()))pageErrors.push(m.text())});
+          await page.goto('http://127.0.0.1:8000/renko/?symbol=ZEC&goldLazyGate=1',{waitUntil:'domcontentloaded',timeout:60000});
+          await page.waitForFunction(()=>window.RWARenkoTV?.rebuild&&window.RWARenkoGoldHistory?.version==='1.0.0',null,{timeout:60000});
+          await page.evaluate(()=>window.RWARenkoGoldHistory.openLatest());
+          await page.waitForFunction(()=>RWARenkoTV.state.symbol==='XAUUSD'&&RWARenkoTV.state.historyViewMode==='gold-archive'&&RWARenkoGoldHistory.activeIndex===0,null,{timeout:60000});
+          const first=await page.evaluate(()=>({index:RWARenkoGoldHistory.activeIndex,date:RWARenkoTV.state.historyMeta?.chunkDate,bars:RWARenkoTV.state.closedBars.length,box:RWARenkoTV.state.box,provider:RWARenkoTV.state.historyMeta?.provider,interval:RWARenkoTV.state.historyMeta?.interval,chunkCount:RWARenkoTV.state.historyMeta?.chunkCount,mode:document.documentElement.dataset.renkoGoldHistoryMode,canvas:document.querySelectorAll('#chartHost canvas').length}));
+          if(first.index!==0||first.bars<100||!(first.box>0)||first.provider!=='Dukascopy'||first.interval!=='1s'||first.chunkCount<3||first.mode!=='daily-lazy'||first.canvas<1)throw Error('first '+JSON.stringify(first));
+          await page.evaluate(()=>window.RWARenkoGoldHistory.loadOlder({trigger:'gate-direct'}));
+          await page.waitForFunction(()=>RWARenkoGoldHistory.activeIndex===1,null,{timeout:60000});
+          const second=await page.evaluate(()=>({index:RWARenkoGoldHistory.activeIndex,date:RWARenkoTV.state.historyMeta?.chunkDate,bars:RWARenkoTV.state.closedBars.length,box:RWARenkoTV.state.box,cachePersisted:RWARenkoTV.state.historyMeta?.cachePersisted}));
+          if(second.index!==1||second.bars<100||!(second.box>0)||second.date===first.date||second.cachePersisted!==true)throw Error('second '+JSON.stringify(second));
+          const beforeEdge=second.index;
+          await page.evaluate(()=>{const c=RWARenkoGoldHistory.chart;if(!c)throw Error('captured chart missing');c.timeScale().setVisibleLogicalRange({from:0,to:30})});
+          await page.waitForFunction(i=>RWARenkoGoldHistory.activeIndex>i,beforeEdge,{timeout:60000});
+          const third=await page.evaluate(()=>({index:RWARenkoGoldHistory.activeIndex,date:RWARenkoTV.state.historyMeta?.chunkDate,bars:RWARenkoTV.state.closedBars.length,edgeLoads:RWARenkoGoldHistory.stats.edgeLoads,losses:Number(document.documentElement.dataset.renkoGoldHistoryLosses||-1)}));
+          if(third.index<2||third.bars<100||third.edgeLoads<1||third.losses!==0)throw Error('edge '+JSON.stringify(third));
+          await page.screenshot({path:'artifacts/gold-lazy/gold-lazy-third-page.png',fullPage:true});
+          if(pageErrors.length)throw Error('browser errors '+JSON.stringify(pageErrors.slice(0,10)));
+          const receipt={schema:'renko-gold-lazy-history-gate-v1',sha:process.env.GITHUB_SHA,first,second,third,stats:await page.evaluate(()=>RWARenkoGoldHistory.stats),status:'PASS'};
+          fs.writeFileSync('artifacts/gold-lazy/receipt.json',JSON.stringify(receipt,null,2));
+          console.log('RENKO_GOLD_LAZY_HISTORY_PASS',JSON.stringify(receipt));
+          await browser.close();
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: renko-gold-lazy-history-${{ github.sha }}
+          path: artifacts/gold-lazy/
+          retention-days: 30
+
+  public-browser:
+    if: github.ref_name == 'main'
+    needs: local-browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for RENKO Pages exact SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://copytolive.github.io/rwa'
+          ok=0
+          for i in $(seq 1 120); do
+            got="$(curl -fsSL -H 'Cache-Control: no-cache' "$base/renko-deployment-sha.txt?sha=$GITHUB_SHA&n=$i" 2>/dev/null | tr -d '\r\n' || true)"
+            if [ "$got" = "$GITHUB_SHA" ]; then ok=1; break; fi
+            sleep 5
+          done
+          test "$ok" = 1
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Public GOLD lazy backward history
+        shell: bash
+        run: |
+          mkdir -p artifacts/gold-lazy-public
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { chromium } from 'playwright';
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage({viewport:{width:1600,height:1000}});
+          const errors=[];
+          page.on('pageerror',e=>errors.push(String(e.message||e)));
+          page.on('console',m=>{if(m.type()==='error'&&!/WebSocket connection .* failed/i.test(m.text()))errors.push(m.text())});
+          const resp=await page.goto('https://copytolive.github.io/rwa/renko/?symbol=ZEC&goldLazyPublic=1&ts='+Date.now(),{waitUntil:'domcontentloaded',timeout:60000});
+          if(!resp||resp.status()<200||resp.status()>=400)throw Error('HTTP '+(resp?.status()||0));
+          await page.waitForFunction(()=>window.RWARenkoGoldHistory?.version==='1.0.0'&&window.RWARenkoTV?.rebuild,null,{timeout:60000});
+          await page.evaluate(()=>RWARenkoGoldHistory.openLatest());
+          await page.waitForFunction(()=>RWARenkoGoldHistory.activeIndex===0&&RWARenkoTV.state.symbol==='XAUUSD',null,{timeout:60000});
+          await page.evaluate(()=>RWARenkoGoldHistory.loadOlder({trigger:'public-direct'}));
+          await page.waitForFunction(()=>RWARenkoGoldHistory.activeIndex===1,null,{timeout:60000});
+          const before=await page.evaluate(()=>RWARenkoGoldHistory.activeIndex);
+          await page.evaluate(()=>RWARenkoGoldHistory.chart.timeScale().setVisibleLogicalRange({from:0,to:30}));
+          await page.waitForFunction(i=>RWARenkoGoldHistory.activeIndex>i,before,{timeout:60000});
+          const out=await page.evaluate(()=>({index:RWARenkoGoldHistory.activeIndex,date:RWARenkoTV.state.historyMeta?.chunkDate,bars:RWARenkoTV.state.closedBars.length,provider:RWARenkoTV.state.historyMeta?.provider,interval:RWARenkoTV.state.historyMeta?.interval,edgeLoads:RWARenkoGoldHistory.stats.edgeLoads,losses:Number(document.documentElement.dataset.renkoGoldHistoryLosses||-1),chunkCount:RWARenkoTV.state.historyMeta?.chunkCount}));
+          if(out.index<2||out.bars<100||out.provider!=='Dukascopy'||out.interval!=='1s'||out.edgeLoads<1||out.losses!==0||out.chunkCount<3)throw Error(JSON.stringify(out));
+          await page.screenshot({path:'artifacts/gold-lazy-public/public-gold-lazy.png',fullPage:true});
+          if(errors.length)throw Error('browser errors '+JSON.stringify(errors.slice(0,10)));
+          fs.writeFileSync('artifacts/gold-lazy-public/receipt.json',JSON.stringify({schema:'renko-gold-lazy-public-v1',sha:process.env.GITHUB_SHA,url:page.url(),out,status:'PASS'},null,2));
+          console.log('RENKO_GOLD_LAZY_PUBLIC_PASS',JSON.stringify(out));
+          await browser.close();
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: renko-gold-lazy-public-${{ github.sha }}
+          path: artifacts/gold-lazy-public/
+          retention-days: 30
