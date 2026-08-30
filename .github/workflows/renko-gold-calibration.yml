@@ -1,0 +1,57 @@
+name: RENKO GOLD Canonical Price-Side Calibration
+
+on:
+  push:
+    branches:
+      - feat/renko-gold-total-history-2003-2026
+    paths:
+      - '.github/workflows/renko-gold-calibration.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  calibrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Calibrate bid ask mid against verified recent Dukascopy fixed-1s pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/renko_gold_full_backfill.py calibrate \
+            --reference-pack renko/history/gold/2026-08-28.json.gz \
+            --date 2026-08-28 \
+            --output renko/history/gold/calibration.json
+          python3 - <<'PY'
+          import json
+          p='renko/history/gold/calibration.json'
+          x=json.load(open(p))
+          assert x['provider']=='Dukascopy'
+          assert x['instrumentCode']=='XAU-USD'
+          assert x['tickSize']==0.001
+          assert x['priceSide'] in ('bid','ask','mid')
+          assert x['compared'] >= 100
+          assert x['exactRatio'] >= 0.90
+          print('GOLD_CALIBRATION_GATE_PASS',json.dumps(x,separators=(',',':')))
+          PY
+      - name: Commit calibration lock evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name copytolive
+          git config user.email copytolive@gmail.com
+          git add renko/history/gold/calibration.json
+          if git diff --cached --quiet; then
+            echo GOLD_CALIBRATION_UNCHANGED
+          else
+            git commit -m 'data(renko): lock GOLD canonical price side from parity calibration'
+            git push origin HEAD:feat/renko-gold-total-history-2003-2026
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: renko-gold-calibration
+          path: renko/history/gold/calibration.json
+          retention-days: 90
