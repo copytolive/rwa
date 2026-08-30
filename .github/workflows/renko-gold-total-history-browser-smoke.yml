@@ -1,0 +1,117 @@
+name: RENKO GOLD Total History Browser Runtime Smoke
+
+on:
+  push:
+    branches:
+      - feat/renko-gold-total-history-2003-2026
+    paths:
+      - 'renko/renko-chart-bridge.js'
+      - 'renko/renko-gold-total-history.js'
+      - 'renko/renko-gold-total-history-worker.js'
+      - 'renko/index.html'
+      - '.github/workflows/renko-gold-total-history-browser-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check renko/renko-chart-bridge.js
+          node --check renko/renko-gold-total-history.js
+          node --check renko/renko-gold-total-history-worker.js
+          grep -Fq 'renko-chart-bridge.js?v=1' renko/index.html
+          grep -Fq 'renko-gold-total-history.js?v=1' renko/index.html
+      - name: Install Chromium and build immutable one-month test manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+          DATA_SHA="$(git ls-remote origin refs/heads/renko-gold-lfs-data | awk '{print $1}')"
+          test -n "$DATA_SHA"
+          python3 - "$DATA_SHA" <<'PY'
+          import json,sys
+          sha=sys.argv[1]
+          m={
+            'schema':'renko-gold-s1-full-manifest-v1','dataVersion':'dukascopy-xauusd-s1-browser-smoke','versionSha256':'3d4a26e7aeacb89a72afebdc6a03b2d45da28d80de387336e58b5a26eb18bb8c',
+            'provider':'Dukascopy','instrumentCode':'XAU-USD','symbol':'XAUUSD','interval':'1s','priceSide':'bid','tickSize':0.001,'backfillComplete':False,
+            'months':[{'year':2026,'month':8,'asset':'xauusd-s1-2026-08.csv.gz','assetUrl':f'https://media.githubusercontent.com/media/copytolive/rwa/{sha}/xauusd-s1-2026-08.csv.gz','dataCommitSha':sha,'storage':'git-lfs-media','format':'csv.gz','barCount':1317014,'earliestSecond':1785708001,'latestSecond':1787950798,'sourceHours':672,'emptySourceHours':212,'notFoundHours':0,'tickSize':0.001,'priceSide':'bid','bytes':10919195,'assetSha256':'3d4a26e7aeacb89a72afebdc6a03b2d45da28d80de387336e58b5a26eb18bb8c','sourceDigestSha256':'ead18e5883f91b4141460216f26cad2197bdd1d97bc7c66c67f3e8c77350f106','auditPass':True}]
+          }
+          open('renko/history/gold/full-manifest.json','w').write(json.dumps(m,indent=2)+'\n')
+          PY
+      - name: Serve checkout
+        shell: bash
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/http.log 2>&1 &
+          echo $! >/tmp/http.pid
+          for i in {1..30}; do curl -fsS http://127.0.0.1:8765/renko/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/http.log; exit 1
+      - name: Desktop lazy history cache concurrency and bounded-RAM proof
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { chromium } from 'playwright';
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage({viewport:{width:1440,height:900}});
+          const pageErrors=[];page.on('pageerror',e=>pageErrors.push(String(e)));
+          await page.goto('http://127.0.0.1:8765/renko/?gold=1',{waitUntil:'domcontentloaded',timeout:60000});
+          await page.waitForFunction(()=>window.RWARenkoTV?.state&&window.RWARenkoGoldRecentHistory&&window.RWARenkoGoldTotalHistory&&window.__RWARenkoChart,{timeout:60000});
+          await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecent==='true',{timeout:60000});
+          const first=await page.evaluate(async()=>{
+            const H=window.RWARenkoGoldTotalHistory;await H.loadManifest();await H.clearPersistentCache();await H.loadManifest(true);
+            const meta=H.manifest.months[0];
+            const before=H.stats.duplicateFetchAvoided;
+            const [a,b]=await Promise.all([H.getBytes(meta),H.getBytes(meta)]);
+            if(a.byteLength!==10919195||b.byteLength!==10919195)throw new Error('canonical bytes mismatch');
+            if(H.stats.duplicateFetchAvoided<=before)throw new Error('in-flight de-duplication not observed');
+            const recentOldest=Math.floor(window.RWARenkoTV.state.closedBars[0].openTime/1000);
+            const ok=await H.prependOlder({panOlder:false});if(!ok)throw new Error('prepend older failed');
+            const bars=window.RWARenkoTV.state.closedBars;
+            const oldest=Math.floor(bars[0].openTime/1000);
+            if(!(oldest<recentOldest))throw new Error(`history did not move older ${oldest}/${recentOldest}`);
+            if(bars.length>140000)throw new Error(`RAM source bound exceeded ${bars.length}`);
+            for(let i=1;i<bars.length;i++)if(bars[i].openTime<=bars[i-1].openTime)throw new Error('duplicate/non-monotonic source bar');
+            return {recentOldest,oldest,bars:bars.length,stats:{...H.stats},provider:window.RWARenkoTV.state.historyMeta.provider,interval:window.RWARenkoTV.state.historyMeta.interval,dataVersion:window.RWARenkoTV.state.historyMeta.dataVersion};
+          });
+          console.log('GOLD_BROWSER_RUNTIME_FIRST_PASS',JSON.stringify(first));
+          if(pageErrors.length)throw new Error('page errors: '+JSON.stringify(pageErrors));
+          await page.reload({waitUntil:'domcontentloaded',timeout:60000});
+          await page.waitForFunction(()=>window.RWARenkoGoldTotalHistory&&window.RWARenkoGoldRecentHistory,{timeout:60000});
+          await page.evaluate(()=>window.RWARenkoGoldRecentHistory.newest());
+          await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecent==='true',{timeout:60000});
+          const reuse=await page.evaluate(async()=>{const H=window.RWARenkoGoldTotalHistory;await H.loadManifest();const hit=H.stats.idbHits;await H.prefetchPreviousFor(Math.floor(window.RWARenkoTV.state.closedBars[0].openTime/1000));return{before:hit,after:H.stats.idbHits,stats:{...H.stats}}});
+          if(reuse.after<=reuse.before)throw new Error('IndexedDB cache did not survive reload');
+          console.log('GOLD_BROWSER_IDB_RELOAD_PASS',JSON.stringify(reuse));
+          if(pageErrors.length)throw new Error('page errors after reload: '+JSON.stringify(pageErrors));
+          await browser.close();
+          NODE
+      - name: Mobile first-paint remains recent bounded GOLD
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { chromium, devices } from 'playwright';
+          const browser=await chromium.launch({headless:true});const page=await browser.newPage({...devices['iPhone 13']});const errs=[];page.on('pageerror',e=>errs.push(String(e)));
+          await page.goto('http://127.0.0.1:8765/renko/?gold=1',{waitUntil:'domcontentloaded',timeout:60000});
+          await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecent==='true',{timeout:60000});
+          const x=await page.evaluate(()=>({symbol:window.RWARenkoTV.state.symbol,status:window.RWARenkoTV.state.status,bars:window.RWARenkoTV.state.closedBars.length,totalLoaded:!!window.RWARenkoGoldTotalHistory,network:window.RWARenkoGoldTotalHistory?.stats.networkFetches||0,canvas:!!document.querySelector('#chartHost canvas')}));
+          if(x.symbol!=='XAUUSD'||x.bars<100||x.bars>100000||!x.totalLoaded||!x.canvas)throw new Error(JSON.stringify(x));
+          if(errs.length)throw new Error(JSON.stringify(errs));
+          console.log('GOLD_MOBILE_RECENT_FIRST_PAINT_PASS',JSON.stringify(x));await browser.close();
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: renko-gold-total-history-browser-smoke
+          path: /tmp/http.log
+          retention-days: 30
