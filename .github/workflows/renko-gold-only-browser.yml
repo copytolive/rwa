@@ -1,0 +1,113 @@
+name: RENKO GOLD Only Fixed 1s Browser Gate
+
+on:
+  push:
+    branches:
+      - fix/renko-gold-only-public-20260830
+    paths:
+      - 'renko/index.html'
+      - 'renko/renko-gold-recent-history.js'
+      - 'renko/history/gold/**'
+      - '.github/workflows/renko-gold-only-browser.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gold-only-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate GOLD deterministic pack and runtime syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check renko/renko-gold-recent-history.js
+          grep -Fq 'renko-gold-recent-history.js?v=1' renko/index.html
+          python3 - <<'PY'
+          import gzip, hashlib, json, pathlib
+          root=pathlib.Path('renko')
+          m=json.load(open(root/'history/gold/manifest.json'))
+          assert m['schema']=='renko-gold-s1-manifest-v1'
+          assert m['provider']=='Dukascopy' and m['instrumentCode']=='XAU-USD'
+          assert m['symbol']=='XAUUSD' and m['interval']=='1s'
+          assert m['documentedEarliestS1Ms']==1052092863421
+          assert m['chunkUnit']=='trading-day' and m['continuousRecent'] is True
+          assert m['backfillComplete'] is False
+          assert len(m['chunks'])==12
+          assert m['chunks'][0]['date']=='2026-08-28'
+          assert m['chunks'][-1]['date']=='2026-08-16'
+          total=0
+          for c in m['chunks']:
+              p=root/c['url']
+              j=json.loads(gzip.decompress(p.read_bytes()))
+              assert j['schema']=='renko-gold-s1-chunk-v1'
+              assert j['provider']=='Dukascopy' and j['instrumentCode']=='XAU-USD'
+              assert j['symbol']=='XAUUSD' and j['interval']=='1s'
+              assert j['date']==c['date'] and j['payloadSha256']==c['payloadSha256']
+              assert len(j['bars'])==c['barCount'] and len(j['bars'])>=100
+              total += len(j['bars'])
+          print('RENKO_GOLD_STATIC_PASS',len(m['chunks']),'chunks',total,'fixed-1s bars')
+          PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Serve branch checkout
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/renko-gold-http.log 2>&1 &
+          echo $! > /tmp/renko-gold-http.pid
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/renko/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/renko-gold-http.log
+          exit 1
+      - name: Chromium desktop + mobile GOLD newest older newer
+        shell: bash
+        run: |
+          mkdir -p artifacts/renko-gold-only
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { chromium } from 'playwright';
+          const browser=await chromium.launch({headless:true});
+          const base='http://127.0.0.1:4173/renko/';
+          const receipt={schema:'renko-gold-only-browser-v1',sha:process.env.GITHUB_SHA,rows:[],status:'PASS'};
+          for(const mode of [{name:'desktop',width:1900,height:1000},{name:'mobile',width:430,height:932}]){
+            const page=await browser.newPage({viewport:{width:mode.width,height:mode.height}});
+            const pageErrors=[];
+            page.on('pageerror',e=>pageErrors.push(String(e.message||e)));
+            await page.addInitScript(()=>localStorage.setItem('rwa_renko_tradingview_settings_v1',JSON.stringify({source:'close',method:'atr',boxSize:1,atrLength:14,wicks:true})));
+            const resp=await page.goto(base+'?symbol=ZECUSDT&gold=1&gate='+Date.now(),{waitUntil:'domcontentloaded',timeout:60000});
+            if(!resp||resp.status()!==200)throw Error(mode.name+' HTTP '+(resp?.status()||0));
+            await page.waitForFunction(()=>window.RWARenkoTV?.state&&window.RWARenkoGoldRecentHistory?.version==='1.0.0',null,{timeout:30000});
+            await page.evaluate(()=>window.RWARenkoGoldRecentHistory.addControls());
+            const ok=await page.evaluate(()=>window.RWARenkoGoldRecentHistory.newest());
+            if(!ok)throw Error(mode.name+' newest returned false '+JSON.stringify(window.RWARenkoGoldRecentHistory?.stats||{}));
+            await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecentDate==='2026-08-28'&&window.RWARenkoTV.state.symbol==='XAUUSD'&&window.RWARenkoTV.state.status==='history-gold',null,{timeout:90000});
+            const newest=await page.evaluate(()=>({date:document.documentElement.dataset.renkoGoldRecentDate,bars:RWARenkoTV.state.closedBars.length,provider:RWARenkoTV.state.historyMeta?.provider,instrument:RWARenkoTV.state.historyMeta?.instrumentCode,interval:RWARenkoTV.state.historyMeta?.interval,losses:RWARenkoTV.state.historyMeta?.losses,canvas:document.querySelectorAll('#chartHost canvas').length,pair:document.getElementById('pairName')?.textContent,sourceBars:document.getElementById('sourceBarCount')?.textContent,coverage:document.getElementById('tvCoverage')?.textContent,stats:RWARenkoGoldRecentHistory.stats}));
+            if(newest.date!=='2026-08-28'||newest.bars<60000||newest.provider!=='Dukascopy'||newest.instrument!=='XAU-USD'||newest.interval!=='1s'||Number(newest.losses)!==0||newest.canvas<1||newest.pair!=='XAU / USD')throw Error(mode.name+' newest '+JSON.stringify(newest));
+            await page.locator('#tvGoldOlder').click();
+            await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecentDate==='2026-08-27',null,{timeout:90000});
+            const older=await page.evaluate(()=>({date:document.documentElement.dataset.renkoGoldRecentDate,bars:RWARenkoTV.state.closedBars.length,provider:RWARenkoTV.state.historyMeta?.provider,interval:RWARenkoTV.state.historyMeta?.interval,canvas:document.querySelectorAll('#chartHost canvas').length}));
+            if(older.date!=='2026-08-27'||older.bars<60000||older.provider!=='Dukascopy'||older.interval!=='1s'||older.canvas<1)throw Error(mode.name+' older '+JSON.stringify(older));
+            await page.locator('#tvGoldNewer').click();
+            await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecentDate==='2026-08-28',null,{timeout:90000});
+            if(pageErrors.length)throw Error(mode.name+' page errors '+JSON.stringify(pageErrors));
+            const screenshot=`artifacts/renko-gold-only/${mode.name}-gold-2026-08-28.png`;
+            await page.screenshot({path:screenshot,fullPage:true});
+            receipt.rows.push({mode:mode.name,newest,older,screenshot,pass:true});
+            await page.close();
+          }
+          fs.writeFileSync('artifacts/renko-gold-only/receipt.json',JSON.stringify(receipt,null,2));
+          console.log('RENKO_GOLD_ONLY_BROWSER_PASS',JSON.stringify(receipt));
+          await browser.close();
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: renko-gold-only-${{ github.sha }}
+          path: artifacts/renko-gold-only/
+          retention-days: 30
