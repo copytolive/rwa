@@ -1,0 +1,46 @@
+name: RENKO GOLD Deep Back-Scroll Smoke
+
+on:
+  push:
+    branches:
+      - feat/renko-gold-total-history-2003-2026
+    paths:
+      - '.github/workflows/renko-gold-deep-scroll-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deep-scroll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install browser and stage immutable August manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+          DATA_SHA="$(git ls-remote origin refs/heads/renko-gold-lfs-data | awk '{print $1}')"
+          python3 - "$DATA_SHA" <<'PY'
+          import json,sys
+          sha=sys.argv[1]
+          m={'schema':'renko-gold-s1-full-manifest-v1','dataVersion':'deep-scroll-smoke','provider':'Dukascopy','instrumentCode':'XAU-USD','symbol':'XAUUSD','interval':'1s','priceSide':'bid','tickSize':0.001,'backfillComplete':False,'months':[{'year':2026,'month':8,'asset':'xauusd-s1-2026-08.csv.gz','assetUrl':f'https://media.githubusercontent.com/media/copytolive/rwa/{sha}/xauusd-s1-2026-08.csv.gz','dataCommitSha':sha,'barCount':1317014,'earliestSecond':1785708001,'latestSecond':1787950798,'bytes':10919195,'tickSize':0.001,'priceSide':'bid','assetSha256':'3d4a26e7aeacb89a72afebdc6a03b2d45da28d80de387336e58b5a26eb18bb8c','sourceDigestSha256':'ead18e5883f91b4141460216f26cad2197bdd1d97bc7c66c67f3e8c77350f106'}]}
+          open('renko/history/gold/full-manifest.json','w').write(json.dumps(m)+'\n')
+          PY
+          python3 -m http.server 8766 --bind 127.0.0.1 >/tmp/http-deep.log 2>&1 &
+          for i in {1..30}; do curl -fsS http://127.0.0.1:8766/renko/ >/dev/null && break; sleep 1; done
+      - name: Repeated older navigation preserves bounded usable viewport
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import {chromium} from 'playwright';const b=await chromium.launch({headless:true});const p=await b.newPage({viewport:{width:1672,height:941}});const errs=[];p.on('pageerror',e=>errs.push(String(e)));
+          await p.goto('http://127.0.0.1:8766/renko/?gold=1',{waitUntil:'domcontentloaded',timeout:60000});await p.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecent==='true'&&window.__RWARenkoChart,{timeout:60000});
+          const r=await p.evaluate(async()=>{const H=window.RWARenkoGoldTotalHistory,T=window.RWARenkoTV,ts=window.__RWARenkoChart.timeScale();await H.loadManifest();let previous=Math.floor(T.state.closedBars[0].openTime/1000),steps=[];for(let i=0;i<5;i++){const ok=await H.prependOlder({panOlder:true});if(!ok)throw new Error('prepend '+i+' failed');await new Promise(r=>setTimeout(r,150));const oldest=Math.floor(T.state.closedBars[0].openTime/1000),range=ts.getVisibleRange();if(!(oldest<previous))throw new Error(`oldest did not decrease ${i} ${oldest}/${previous}`);if(T.state.closedBars.length>140000)throw new Error('RAM bound exceeded');if(range&&(Number(range.to)<oldest||Number(range.from)>Math.floor(T.state.closedBars.at(-1).closeTime/1000)))throw new Error(`viewport escaped loaded data step ${i} ${JSON.stringify(range)}`);steps.push({i,oldest,bars:T.state.closedBars.length,range});previous=oldest}return{steps,stats:{...H.stats}}});
+          if(errs.length)throw new Error(JSON.stringify(errs));console.log('GOLD_REPEATED_DEEP_SCROLL_PASS',JSON.stringify(r));await b.close();
+          NODE
