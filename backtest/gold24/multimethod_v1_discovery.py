@@ -318,6 +318,21 @@ def main() -> int:
 
     execution_unique = []
     exact_hash_seen = set(archive_exec_hashes)
+    # Preserve execution uniqueness against previously discovered LIBRARY rows too.
+    for old in existing_payload.get("ranking", []):
+        h = str(old.get("config_hash") or "")
+        cdict = existing_config_by_hash.get(h) or old.get("candidate")
+        if not cdict:
+            continue
+        c = Candidate(**cdict)
+        validate_candidate(c)
+        if c.config_hash != h:
+            raise RuntimeError(f"existing library candidate/hash mismatch: expected={h} got={c.config_hash}")
+        prior_result = backtest_candidate(d, c, flat_lot=1.0)
+        prior_execution_hash = str(prior_result.get("execution_hash") or "")
+        if prior_execution_hash:
+            exact_hash_seen.add(prior_execution_hash)
+
     duplicate_execution_rejected = 0
     cheap_pass_count = 0
     for r in simulated:
@@ -349,15 +364,25 @@ def main() -> int:
         new_tradepnl[row["config_hash"]] = trade_pnl
 
     # Rebuild the existing frozen LIBRARY rows exactly so one greedy correlation authority ranks old + new together.
+    # Previously discovered rows are not necessarily present in the canonical archive DB, so their stored candidate
+    # is the authoritative fallback. Every fallback is hash-validated and exact-rebacktested before reuse.
     combined_rows: list[dict] = []
     barpnls: dict[str, np.ndarray] = {}
     tradepnls: dict[str, np.ndarray] = {}
     for old in existing_payload.get("ranking", []):
         h = str(old["config_hash"])
         cdict = existing_config_by_hash.get(h)
+        origin = "ARCHIVE"
         if not cdict:
-            raise RuntimeError(f"existing library config missing from canonical DB: {h}")
-        row, bar_pnl, trade_pnl = _exact_row(d, audit, cdict, "ARCHIVE")
+            cdict = old.get("candidate")
+            origin = "DISCOVERY_PREVIOUS"
+        if not cdict:
+            raise RuntimeError(f"existing library config missing from canonical DB and prior payload: {h}")
+        c = Candidate(**cdict)
+        validate_candidate(c)
+        if c.config_hash != h:
+            raise RuntimeError(f"existing library candidate/hash mismatch: expected={h} got={c.config_hash}")
+        row, bar_pnl, trade_pnl = _exact_row(d, audit, c.canonical_dict(), origin)
         if not _library_pre_corr(row):
             raise RuntimeError(f"frozen existing LIBRARY row no longer passes exact gate: {h}")
         combined_rows.append(row)
@@ -397,7 +422,7 @@ def main() -> int:
     for row in selected:
         tier_counts[row["tier_v1"]] = tier_counts.get(row["tier_v1"], 0) + 1
     new_selected_count = sum(1 for row in selected if row.get("origin") == "DISCOVERY")
-    existing_selected_count = sum(1 for row in selected if row.get("origin") == "ARCHIVE")
+    existing_selected_count = sum(1 for row in selected if row.get("origin") != "DISCOVERY")
 
     evaluated_hashes = sorted(prior_evaluated | generated_hashes)
     payload = {
