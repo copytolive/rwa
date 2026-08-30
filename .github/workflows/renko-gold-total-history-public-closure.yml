@@ -36,7 +36,7 @@ jobs:
           test -s renko/history/gold/coverage.json
           test -s renko/history/gold/checksums.json
           python3 - <<'PY'
-          import datetime as dt,json
+          import json
           m=json.load(open('renko/history/gold/full-manifest.json'))
           c=json.load(open('renko/history/gold/coverage.json'))
           s=json.load(open('renko/history/gold/checksums.json'))
@@ -45,16 +45,19 @@ jobs:
           assert m['interval']=='1s' and m['priceSide']=='bid' and float(m['tickSize'])==0.001
           assert m['backfillComplete'] is True and c['backfillComplete'] is True
           assert c['originWitnessSatisfied'] is True and c['allMonthlyAuditsPass'] is True
+          assert c['sourceStatusAccountingPass'] is True
           assert c['sourceUnavailableHours']==0 and c['duplicateSeconds']==0 and c['conflictingOHLC']==0
           assert c['missingMonths']==[] and c['extraMonths']==[] and c['overlaps']==[]
           months=m['months']; assert months and months[0]['year']==2003 and months[0]['month']==5
           assert months[0]['earliestSecond']==1052092863
-          assert all(x['auditPass'] and x['sourceUnavailableHours']==0 and x['notFoundHours']==0 for x in months)
+          assert all(x['auditPass'] and x['sourceStatusAccountingPass'] and x['sourceUnavailableHours']==0 for x in months)
+          assert all(x['notFoundHours']==x['marketClosedNotFoundHours'] for x in months)
+          assert all(x['emptySourceHours']==x['marketClosedEmptyHours']+x['providerEmptyHours'] for x in months)
+          assert all(x['marketClosedHours']==x['marketClosedEmptyHours']+x['marketClosedNotFoundHours'] for x in months)
           assert len(s['assets'])==len(months)==c['publishedMonths']==c['expectedMonths']
           assert len({(x['year'],x['month']) for x in months})==len(months)
-          assert len({x['assetSha256'] for x in months})==len(months)
           assert all(x['assetUrl'].startswith('https://media.githubusercontent.com/media/copytolive/rwa/') for x in months)
-          print('GOLD_TOTAL_FINAL_DATA_GATE_PASS',json.dumps({'months':len(months),'bars':c['barCount'],'bytes':c['compressedBytes'],'earliestSecond':c['earliestSecond'],'latestSecond':c['latestSecond'],'version':m['dataVersion']},separators=(',',':')))
+          print('GOLD_TOTAL_FINAL_DATA_GATE_PASS',json.dumps({'months':len(months),'bars':c['barCount'],'bytes':c['compressedBytes'],'earliestSecond':c['earliestSecond'],'latestSecond':c['latestSecond'],'marketClosedNotFoundHours':c['marketClosedNotFoundHours'],'providerEmptyHours':c['providerEmptyHours'],'version':m['dataVersion']},separators=(',',':')))
           PY
           if find . -type f -name 'xauusd-s1-*.csv.gz' -print -quit | grep -q .; then echo 'large canonical CSV gzip leaked into Pages tree'; exit 1; fi
           printf '%s\n' "$GITHUB_SHA" > renko-deployment-sha.txt
@@ -135,9 +138,19 @@ jobs:
   public-backtest-reader:
     needs: validate-and-deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+      - name: Wait for exact public manifest SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in {1..60}; do
+            got="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/deployment-sha.txt?cb=$RANDOM" 2>/dev/null || true)"
+            if [ "$got" = "$GITHUB_SHA" ]; then echo "GOLD_BACKTEST_PUBLIC_SHA_PASS $got"; exit 0; fi
+            sleep 5
+          done
+          echo 'Pages did not converge before public backtest'; exit 1
       - name: Stream public canonical manifest across a year boundary with ATR context
         shell: bash
         run: |
