@@ -1,0 +1,38 @@
+{
+  "schema": "renko-gold-calibration-v2",
+  "provider": "Dukascopy",
+  "transport": "https://jetta.dukascopy.com/v1/ticks/XAU-USD/{year}/{month}/{day}/{hour}",
+  "instrumentCode": "XAU-USD",
+  "referenceDate": "2026-08-28",
+  "referencePack": "renko/history/gold/2026-08-28.json.gz",
+  "tickSize": 0.001,
+  "priceSide": "bid",
+  "providerMultipliersObserved": [
+    0.001
+  ],
+  "exactRatio": 1.0,
+  "compared": 5000,
+  "candidates": [
+    {
+      "side": "bid",
+      "compared": 5000,
+      "exact": 5000,
+      "exactRatio": 1.0,
+      "meanMaxError": 2.4410837795585396e-13
+    },
+    {
+      "side": "mid",
+      "compared": 5000,
+      "exact": 0,
+      "exactRatio": 0.0,
+      "meanMaxError": 0.3867133999999649
+    },
+    {
+      "side": "ask",
+      "compared": 5000,
+      "exact": 0,
+      "exactRatio": 0.0,
+      "meanMaxError": 0.7732925999999676
+    }
+  ]
+}
