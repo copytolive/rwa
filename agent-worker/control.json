@@ -1,8 +1,0 @@
-{
-  "schema": 1,
-  "enabled": false,
-  "kill_switch": true,
-  "mainnet_enabled": false,
-  "production_ready": false,
-  "note": "Safe default. Enable only after real-wallet testnet E2E, persistent worker deployment, encrypted secret storage, and launch gate PASS."
-}

@@ -1,6 +1,0 @@
-{
-  "enabled": true,
-  "alerts": [],
-  "copy_targets": [],
-  "execution": "wallet-signature-required"
-}
