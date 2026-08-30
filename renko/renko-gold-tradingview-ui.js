@@ -2,16 +2,18 @@
 'use strict';
 if(!window.RENKO_GOLD_ONLY||window.RWARenkoGoldTradingViewUI)return;
 const root=document.documentElement;
+const hideEl=el=>{if(!el)return;if(!el.hidden)el.hidden=true;if(el.getAttribute('aria-hidden')!=='true')el.setAttribute('aria-hidden','true')};
+const setText=(el,text)=>{if(el&&el.textContent!==text)el.textContent=text};
 const hideNonGold=()=>{
   root.classList.add('gold-clean-only','tv-gold-shell');
   root.dataset.renkoDownloadedOnly='gold';
-  document.querySelectorAll('.markets,#openPairs,.easybar,.source-card,.instrument-bar .stats,.auditbar,.attribution,.methodology,.summary,.method[data-method="percentage"],.chart-toolbar .pill,#tvCoverage,.topbar .nav').forEach(el=>{el.hidden=true;el.setAttribute('aria-hidden','true')});
-  const pair=document.getElementById('pairName');if(pair)pair.textContent='XAU / USD';
-  const icon=document.getElementById('pairIcon');if(icon)icon.textContent='AU';
-  const tag=document.querySelector('.pair-title span');if(tag)tag.textContent='GOLD';
-  const source=document.getElementById('sourceText');if(source)source.textContent='Dukascopy XAU/USD · canonical downloaded fixed 1-second history';
+  document.querySelectorAll('.markets,#openPairs,.easybar,.source-card,.instrument-bar .stats,.auditbar,.attribution,.methodology,.summary,.method[data-method="percentage"],.chart-toolbar .pill,#tvCoverage,.topbar .nav').forEach(hideEl);
+  setText(document.getElementById('pairName'),'XAU / USD');
+  setText(document.getElementById('pairIcon'),'AU');
+  setText(document.querySelector('.pair-title span'),'GOLD');
+  setText(document.getElementById('sourceText'),'Dukascopy XAU/USD · canonical downloaded fixed 1-second history');
   const feed=document.querySelector('#feedPill b');if(feed&&feed.textContent!=='HISTORY')feed.textContent='HISTORY';
-  document.title='GOLD / XAUUSD — RENKO';
+  if(document.title!=='GOLD / XAUUSD — RENKO')document.title='GOLD / XAUUSD — RENKO';
 };
 const skinChart=()=>{
   const chart=window.__RWARenkoChart;if(!chart?.applyOptions)return false;
@@ -34,15 +36,17 @@ const canonicalize=()=>{
     root.dataset.renkoCanonicalUrl=location.pathname+location.search;
   }catch(_){ }
 };
-const sync=()=>{hideNonGold();skinChart()};
-const observer=new MutationObserver(()=>hideNonGold());
+let syncQueued=false;
+const sync=()=>{
+  if(syncQueued)return;syncQueued=true;
+  requestAnimationFrame(()=>{syncQueued=false;hideNonGold();skinChart()});
+};
 const start=()=>{
   hideNonGold();skinChart();
-  try{observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','class']})}catch(_){ }
-  setTimeout(canonicalize,1200);
+  setTimeout(canonicalize,100);
 };
-for(const ev of ['renko:chart-ready','renko:tv-ready','renko:gold-recent','renko:gold-total','renko:gold-origin','renko:atr-control-applied','renko:traditional-applied'])window.addEventListener(ev,sync);
+for(const ev of ['renko:chart-ready','renko:tv-ready','renko:gold-recent','renko:gold-total','renko:gold-origin','renko:atr-control-applied','renko:traditional-applied'])window.addEventListener(ev,()=>{sync();if(ev==='renko:gold-recent')setTimeout(canonicalize,0)});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
-window.addEventListener('load',()=>{sync();setTimeout(canonicalize,50)},{once:true});
-window.RWARenkoGoldTradingViewUI={version:'1.0.0-gold-only-tv-shell',sync,skinChart,canonicalize,hideNonGold};
+window.addEventListener('load',()=>{sync();setTimeout(canonicalize,0)},{once:true});
+window.RWARenkoGoldTradingViewUI={version:'1.1.0-gold-only-tv-shell-no-mutation-loop',sync,skinChart,canonicalize,hideNonGold};
 })();
