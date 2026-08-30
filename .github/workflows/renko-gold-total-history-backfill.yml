@@ -17,7 +17,7 @@ concurrency:
 
 env:
   ORIGIN: '2003-05-05T00:00:00Z'
-  YEAR_HTTP_WORKERS: '24'
+  YEAR_HTTP_WORKERS: '16'
 
 jobs:
   prepare:
@@ -27,7 +27,7 @@ jobs:
       side: ${{ steps.lock.outputs.side }}
     steps:
       - uses: actions/checkout@v4
-      - name: Syntax and source-status accounting gate
+      - name: Syntax transport-recovery and source-status accounting gate
         shell: bash
         run: |
           set -euo pipefail
@@ -36,10 +36,11 @@ jobs:
           import datetime as dt, importlib.util, pathlib
           p=pathlib.Path('scripts/renko_gold_full_year_job.py')
           s=importlib.util.spec_from_file_location('yearjob',p);m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
+          assert m.GOLD.RECOVERY_ATTEMPTS >= 8
           UTC=dt.timezone.utc
           assert m.expected_market_closed(dt.datetime(2026,8,29,12,tzinfo=UTC)) is True
           assert m.expected_market_closed(dt.datetime(2026,8,28,12,tzinfo=UTC)) is False
-          print('GOLD_SOURCE_STATUS_CLASSIFIER_PASS')
+          print('GOLD_TRANSPORT_RECOVERY_AND_STATUS_CLASSIFIER_PASS',m.GOLD.RECOVERY_ATTEMPTS)
           PY
       - id: lock
         name: Lock calibrated side and closed-hour cutoff
