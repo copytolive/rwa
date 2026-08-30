@@ -47,7 +47,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Browser-origin CORS fetch proof via GitHub REST asset API
+      - name: Browser-origin CORS transport candidate proof
         shell: bash
         run: |
           npm install --no-save playwright@1.55.0
@@ -56,24 +56,38 @@ jobs:
           import { chromium } from 'playwright';
           const browser=await chromium.launch({headless:true});
           const page=await browser.newPage();
-          await page.goto('https://copytolive.github.io/rwa/renko/?goldTransportSmoke=2',{waitUntil:'domcontentloaded',timeout:60000});
+          page.on('console',m=>console.log('BROWSER_CONSOLE',m.type(),m.text()));
+          await page.goto('https://copytolive.github.io/rwa/renko/?goldTransportSmoke=3',{waitUntil:'domcontentloaded',timeout:60000});
           const result=await page.evaluate(async()=>{
-            const release=await fetch('https://api.github.com/repos/copytolive/rwa/releases/tags/renko-gold-history-v1',{cache:'no-store',headers:{Accept:'application/vnd.github+json'}});
+            const release=await fetch('https://api.github.com/repos/copytolive/rwa/releases/tags/renko-gold-history-v1',{cache:'no-store'});
             if(!release.ok)throw new Error(`release metadata ${release.status}`);
             const meta=await release.json();
             const asset=(meta.assets||[]).find(a=>a.name==='xauusd-s1-2026-08.csv.gz');
-            if(!asset?.url)throw new Error('release asset missing');
-            const r=await fetch(asset.url,{cache:'no-store',redirect:'follow',headers:{Accept:'application/octet-stream'}});
-            const bytes=new Uint8Array(await r.arrayBuffer());
-            if(!r.ok||bytes.length<1000)throw new Error(`asset fetch ${r.status} ${bytes.length} ${r.headers.get('content-type')}`);
-            if(bytes[0]!==0x1f||bytes[1]!==0x8b)throw new Error(`not gzip ${r.headers.get('content-type')} ${bytes[0]} ${bytes[1]}`);
-            const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-            const text=await new Response(stream).text();
-            const lines=text.trim().split('\n');
-            return {assetId:asset.id,status:r.status,bytes:bytes.length,rows:lines.length-1,header:lines[0],first:lines[1],last:lines.at(-1)};
+            if(!asset?.browser_download_url)throw new Error('release asset missing');
+            const candidates=[
+              {name:'browser_download_url',url:asset.browser_download_url},
+              {name:'release_direct',url:'https://github.com/copytolive/rwa/releases/download/renko-gold-history-v1/xauusd-s1-2026-08.csv.gz'},
+              {name:'asset_api_no_accept',url:asset.url}
+            ];
+            const diagnostics=[];
+            for(const c of candidates){
+              try{
+                const r=await fetch(c.url,{cache:'no-store',redirect:'follow'});
+                const ab=await r.arrayBuffer();
+                const bytes=new Uint8Array(ab);
+                diagnostics.push({name:c.name,ok:r.ok,status:r.status,type:r.type,url:r.url,bytes:bytes.length,contentType:r.headers.get('content-type'),acao:r.headers.get('access-control-allow-origin'),b0:bytes[0],b1:bytes[1]});
+                if(r.ok&&bytes.length>1000&&bytes[0]===0x1f&&bytes[1]===0x8b){
+                  const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+                  const text=await new Response(stream).text();
+                  const lines=text.trim().split('\n');
+                  return {winner:c.name,assetId:asset.id,status:r.status,bytes:bytes.length,rows:lines.length-1,header:lines[0],first:lines[1],last:lines.at(-1),diagnostics};
+                }
+              }catch(e){diagnostics.push({name:c.name,error:String(e)});}
+            }
+            throw new Error('NO_BROWSER_CORS_TRANSPORT '+JSON.stringify(diagnostics));
           });
           if(result.header!=='unix_second,open_tick,high_tick,low_tick,close_tick'||result.rows<100000)throw new Error(JSON.stringify(result));
-          console.log('GOLD_BROWSER_RELEASE_API_FETCH_PASS',JSON.stringify(result));
+          console.log('GOLD_BROWSER_TRANSPORT_FETCH_PASS',JSON.stringify(result));
           await browser.close();
           NODE
       - uses: actions/upload-artifact@v4
