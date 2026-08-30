@@ -7,6 +7,7 @@ on:
     paths:
       - 'renko/index.html'
       - 'renko/renko-chart-bridge.js'
+      - 'renko/renko-gold-display-guard.js'
       - 'renko/renko-gold-manual-viewport-lock.js'
       - 'renko/renko-gold-recent-history.js'
       - 'renko/renko-gold-total-history.js'
@@ -35,6 +36,7 @@ jobs:
         run: |
           set -euo pipefail
           node --check renko/renko-chart-bridge.js
+          node --check renko/renko-gold-display-guard.js
           node --check renko/renko-gold-manual-viewport-lock.js
           node --check renko/renko-gold-recent-history.js
           node --check renko/renko-gold-total-history.js
@@ -42,6 +44,8 @@ jobs:
           grep -q 'window.RENKO_GOLD_ONLY=true' renko/index.html
           grep -q 'renko-gold-tradingview.css' renko/index.html
           grep -q 'renko-gold-tradingview-ui.js' renko/index.html
+          grep -q 'renko-gold-display-guard.js' renko/index.html
+          grep -q 'rwa_renko_gold_canonical_boot_v2' renko/index.html
           grep -q 'https://copytolive.github.io/rwa/renko' renko/index.html
           python3 - <<'PY'
           import json
@@ -100,7 +104,7 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium >/dev/null
-      - name: Verify clean canonical GOLD TradingView shell and bidirectional zoom
+      - name: Verify visible GOLD chart, compact TradingView shell, and stable zoom
         shell: bash
         run: |
           mkdir -p proof
@@ -110,47 +114,71 @@ jobs:
           const browser=await chromium.launch({headless:true});
           const page=await browser.newPage({viewport:{width:1672,height:941}});
           const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+
+          // Reproduce the user's broken state: the old shared settings key had
+          // Traditional 100 / ATR 100 persisted. Canonical GOLD must recover
+          // first paint to a visible, deterministic ATR 14 chart.
+          await page.addInitScript(()=>{
+            localStorage.removeItem('rwa_renko_gold_canonical_boot_v2');
+            localStorage.setItem('rwa_renko_tradingview_settings_v1',JSON.stringify({source:'close',method:'traditional',atrLength:100,boxSize:100,percentage:.01,wicks:true}));
+          });
           await page.goto('https://copytolive.github.io/rwa/renko',{waitUntil:'domcontentloaded',timeout:60000});
-          await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecent==='true'&&document.querySelector('#chartHost canvas')&&window.RWARenkoGoldManualViewport&&window.RWARenkoGoldViewport&&window.RWARenkoGoldTradingViewUI,{timeout:60000});
+          await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecent==='true'&&document.querySelector('#chartHost canvas')&&window.RWARenkoGoldManualViewport&&window.RWARenkoGoldViewport&&window.RWARenkoGoldTradingViewUI&&window.RWARenkoGoldDisplayGuard,{timeout:60000});
           await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldManualViewportRebuildGuard==='true'&&document.documentElement.dataset.renkoGoldManualViewportRangeObserver==='true'&&document.documentElement.dataset.renkoTradingViewSkin==='true',{timeout:15000});
-          await page.waitForTimeout(1800);
+          await page.waitForFunction(()=>window.RWARenkoTV?.settings?.method==='atr'&&Number(window.RWARenkoTV?.settings?.atrLength)===14&&Number(window.RWARenkoTV?.state?.confirmedData?.length)>0&&document.documentElement.dataset.renkoGoldChartVisible==='true',{timeout:30000});
+          await page.waitForTimeout(900);
+
           const shell=await page.evaluate(()=>{
             const vis=el=>!!el&&!el.hidden&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden'&&el.getBoundingClientRect().width>0&&el.getBoundingClientRect().height>0;
-            const root=getComputedStyle(document.documentElement),top=getComputedStyle(document.querySelector('.topbar')),chart=document.getElementById('chartWrap')?.getBoundingClientRect();
+            const root=getComputedStyle(document.documentElement),top=getComputedStyle(document.querySelector('.topbar')),chart=document.getElementById('chartWrap')?.getBoundingClientRect(),navEl=document.querySelector('.chart-nav'),nav=navEl?.getBoundingClientRect();
             const methods=[...document.querySelectorAll('.method')].filter(vis).map(x=>x.dataset.method);
-            const nav=[...document.querySelectorAll('#chartWrap button')].filter(vis).map(x=>x.id);
+            const navIds=[...document.querySelectorAll('#chartWrap button')].filter(vis).map(x=>x.id);
             const legacy=['tvGoldRecent','tvGoldOlder','tvGoldNewer','tvOrigin'].filter(id=>vis(document.getElementById(id)));
             const rangeOverlays=[...document.querySelectorAll('#chartWrap input[type="range"]')].filter(vis).length;
-            return {path:location.pathname,search:location.search,title:document.title,goldOnly:window.RENKO_GOLD_ONLY===true,downloadedOnly:document.documentElement.dataset.renkoDownloadedOnly,tvSkin:document.documentElement.dataset.renkoTradingViewSkin,symbol:window.RWARenkoTV?.state?.symbol,provider:window.RWARenkoTV?.state?.historyMeta?.provider,pair:document.getElementById('pairName')?.textContent?.trim(),methods,nav,legacy,rangeOverlays,marketsVisible:vis(document.querySelector('.markets')),sourceVisible:vis(document.querySelector('.source-card')),easyVisible:vis(document.querySelector('.easybar')),percentageVisible:vis(document.querySelector('[data-method="percentage"]')),rootBg:root.backgroundColor,topBg:top.backgroundColor,chartWidth:Math.round(chart?.width||0),chartHeight:Math.round(chart?.height||0),hasCryptoWords:/BTC|ETH|SOL|BINANCE|OKX/i.test(document.body.innerText)};
+            const emptyVisible=vis(document.getElementById('chartEmpty'));
+            return {
+              path:location.pathname,search:location.search,title:document.title,goldOnly:window.RENKO_GOLD_ONLY===true,
+              downloadedOnly:document.documentElement.dataset.renkoDownloadedOnly,tvSkin:document.documentElement.dataset.renkoTradingViewSkin,
+              chartVisible:document.documentElement.dataset.renkoGoldChartVisible,
+              symbol:window.RWARenkoTV?.state?.symbol,provider:window.RWARenkoTV?.state?.historyMeta?.provider,pair:document.getElementById('pairName')?.textContent?.trim(),
+              method:window.RWARenkoTV?.settings?.method,atrLength:Number(window.RWARenkoTV?.settings?.atrLength),confirmed:Number(window.RWARenkoTV?.state?.confirmedData?.length||0),
+              methods,nav:navIds,legacy,rangeOverlays,emptyVisible,
+              marketsVisible:vis(document.querySelector('.markets')),sourceVisible:vis(document.querySelector('.source-card')),easyVisible:vis(document.querySelector('.easybar')),percentageVisible:vis(document.querySelector('[data-method="percentage"]')),
+              rootBg:root.backgroundColor,topBg:top.backgroundColor,chartWidth:Math.round(chart?.width||0),chartHeight:Math.round(chart?.height||0),
+              navWidth:Math.round(nav?.width||0),navRightGap:Math.round(1672-(nav?.right||0)),navBottomGap:Math.round(941-(nav?.bottom||0)),
+              hasCryptoWords:/BTC|ETH|SOL|BINANCE|OKX/i.test(document.body.innerText)
+            };
           });
           const expectedNav=['tvGoldOrigin','tvGoldMaxZoom','tvPanOlder','tvZoomOut','tvZoomIn','tvPanNewer','tvReset','tvLive'];
           if(shell.path!=='/rwa/renko'||shell.search!=='')throw new Error('canonical URL failed '+JSON.stringify(shell));
-          if(!shell.goldOnly||shell.downloadedOnly!=='gold'||shell.tvSkin!=='true'||shell.symbol!=='XAUUSD'||shell.provider!=='Dukascopy'||shell.pair!=='XAU / USD')throw new Error('GOLD shell identity failed '+JSON.stringify(shell));
+          if(!shell.goldOnly||shell.downloadedOnly!=='gold'||shell.tvSkin!=='true'||shell.chartVisible!=='true'||shell.symbol!=='XAUUSD'||shell.provider!=='Dukascopy'||shell.pair!=='XAU / USD')throw new Error('GOLD shell identity/visibility failed '+JSON.stringify(shell));
+          if(shell.method!=='atr'||shell.atrLength!==14||shell.confirmed<1||shell.emptyVisible)throw new Error('stale settings blank-chart recovery failed '+JSON.stringify(shell));
           if(JSON.stringify(shell.methods)!==JSON.stringify(['atr','traditional']))throw new Error('only ATR + Traditional must be visible '+JSON.stringify(shell));
           if(JSON.stringify(shell.nav)!==JSON.stringify(expectedNav)||shell.legacy.length||shell.rangeOverlays)throw new Error('legacy/duplicate chart controls visible '+JSON.stringify(shell));
           if(shell.marketsVisible||shell.sourceVisible||shell.easyVisible||shell.percentageVisible||shell.hasCryptoWords)throw new Error('non-GOLD UI leaked '+JSON.stringify(shell));
-          if(shell.rootBg!=='rgb(19, 23, 34)'||shell.topBg!=='rgb(30, 34, 45)'||shell.chartWidth<1600||shell.chartHeight<650)throw new Error('TradingView geometry/theme mismatch '+JSON.stringify(shell));
-          console.log('GOLD_CANONICAL_TRADINGVIEW_CLEAN_UI_PASS',JSON.stringify(shell));
-          await page.screenshot({path:'proof/00-gold-canonical-tradingview-clean.png',fullPage:false});
+          if(shell.rootBg!=='rgb(19, 23, 34)'||shell.topBg!=='rgb(30, 34, 45)'||shell.chartWidth<1600||shell.chartHeight<780)throw new Error('TradingView geometry/theme mismatch '+JSON.stringify(shell));
+          if(shell.navWidth>420||shell.navRightGap<0||shell.navRightGap>30||shell.navBottomGap<0||shell.navBottomGap>30)throw new Error('chart navigation is stretched/centered instead of bottom-right '+JSON.stringify(shell));
+          console.log('GOLD_CANONICAL_VISIBLE_TRADINGVIEW_PASS',JSON.stringify(shell));
+          await page.screenshot({path:'proof/00-gold-visible-tradingview.png',fullPage:false});
 
           const snap=()=>page.evaluate(()=>{const T=window.RWARenkoTV,M=window.RWARenkoGoldManualViewport,r=window.__RWARenkoChart.timeScale().getVisibleLogicalRange();return{range:r,span:r?Number(r.to)-Number(r.from):NaN,locked:M.locked,following:T.state.following,method:T.settings.method,rebuilds:M.stats.rebuilds,guardVersion:M.version}});
           const delta=(a,b)=>Math.max(Math.abs(Number(a.range.from)-Number(b.range.from)),Math.abs(Number(a.range.to)-Number(b.range.to)));
           async function rebuildStorm(){for(let i=0;i<4;i++){await page.evaluate(()=>window.RWARenkoTV.rebuild({fit:true}));await page.waitForTimeout(180)}await page.waitForTimeout(300)}
           async function resetManual(){await page.evaluate(()=>{window.RWARenkoGoldManualViewport.unlock('proof-reset');window.RWARenkoGoldViewport?.unlockViewport?.('proof-reset')});await page.click('#tvReset');await page.waitForTimeout(280)}
-          async function setMethod(method){await resetManual();const ok=await page.evaluate(async method=>method==='atr'?await window.RWARenkoATRControl.applyLocal(14,'clean-tv-proof'):window.RWARenkoTraditionalControl.activate(1,'clean-tv-proof',false,false),method);if(!ok)throw new Error(method+' apply failed');await page.waitForTimeout(300);await resetManual()}
+          async function setMethod(method){await resetManual();const ok=await page.evaluate(async method=>method==='atr'?await window.RWARenkoATRControl.applyLocal(14,'visible-tv-proof'):window.RWARenkoTraditionalControl.activate(1,'visible-tv-proof',false,false),method);if(!ok)throw new Error(method+' apply failed');await page.waitForTimeout(300);await resetManual();await page.evaluate(()=>window.RWARenkoGoldDisplayGuard.sync('proof-method'))}
           async function testMethod(method,prefix){await setMethod(method);const initial=await snap();for(let i=0;i<4;i++){await page.click('#tvZoomOut');await page.waitForTimeout(100)}await page.waitForTimeout(300);const outBefore=await snap();if(!outBefore.locked||outBefore.following!==false||!(outBefore.span>initial.span+1))throw new Error(method+' zoom-out failed');await rebuildStorm();const outAfter=await snap();if(delta(outBefore,outAfter)>=0.05||!outAfter.locked||outAfter.following!==false)throw new Error(method+' zoom-out snapped back');await page.screenshot({path:`proof/${prefix}-zoom-out-stable.png`,fullPage:false});for(let i=0;i<3;i++){await page.click('#tvZoomIn');await page.waitForTimeout(100)}await page.waitForTimeout(300);const inBefore=await snap();if(!inBefore.locked||inBefore.following!==false||!(inBefore.span<outAfter.span-1))throw new Error(method+' zoom-in failed');await rebuildStorm();const inAfter=await snap();if(delta(inBefore,inAfter)>=0.05||!inAfter.locked||inAfter.following!==false)throw new Error(method+' zoom-in snapped back');await page.screenshot({path:`proof/${prefix}-zoom-in-stable.png`,fullPage:false});return{initial,outBefore,outAfter,outDelta:delta(outBefore,outAfter),inBefore,inAfter,inDelta:delta(inBefore,inAfter)}}
           const atr=await testMethod('atr','01-atr');
           const traditional=await testMethod('traditional','03-traditional');
           await resetManual();await page.hover('#chartHost');await page.mouse.wheel(0,-900);await page.waitForTimeout(350);const wheelBefore=await snap();if(!wheelBefore.locked||wheelBefore.following!==false)throw new Error('wheel ownership failed');await rebuildStorm();const wheelAfter=await snap();if(delta(wheelBefore,wheelAfter)>=0.05||wheelAfter.following!==false)throw new Error('wheel snapped back');
           await page.click('#tvLive');await page.waitForTimeout(250);const released=await snap();if(released.locked)throw new Error('LIVE did not release viewport');
           if(errors.length)throw new Error('page errors '+JSON.stringify(errors));
-          const proof={productionSha:process.env.GITHUB_SHA,shell,guardVersion:(await snap()).guardVersion,atr,traditional,wheel:{before:wheelBefore,after:wheelAfter,delta:delta(wheelBefore,wheelAfter)},released,errors};
+          const proof={productionSha:process.env.GITHUB_SHA,shell,guardVersion:(await snap()).guardVersion,displayGuard:await page.evaluate(()=>window.RWARenkoGoldDisplayGuard.stats),atr,traditional,wheel:{before:wheelBefore,after:wheelAfter,delta:delta(wheelBefore,wheelAfter)},released,errors};
           fs.writeFileSync('proof/proof.json',JSON.stringify(proof,null,2));
           console.log('GOLD_CANONICAL_TV_ZOOM_PASS',JSON.stringify({sha:process.env.GITHUB_SHA,atrOut:atr.outDelta,atrIn:atr.inDelta,traditionalOut:traditional.outDelta,traditionalIn:traditional.inDelta,wheel:proof.wheel.delta,guard:proof.guardVersion}));
           await browser.close();
           NODE
       - uses: actions/upload-artifact@v4
         with:
-          name: renko-gold-canonical-tradingview-clean-proof
+          name: renko-gold-visible-tradingview-proof
           path: proof/
           retention-days: 30
