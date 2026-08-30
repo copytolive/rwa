@@ -11,8 +11,13 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: renko-gold-total-history-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   ORIGIN: '2003-05-05T00:00:00Z'
+  YEAR_HTTP_WORKERS: '24'
 
 jobs:
   prepare:
@@ -22,6 +27,20 @@ jobs:
       side: ${{ steps.lock.outputs.side }}
     steps:
       - uses: actions/checkout@v4
+      - name: Syntax and source-status accounting gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/renko_gold_full_backfill.py scripts/renko_gold_full_year_job.py scripts/renko_gold_audit.py scripts/renko_gold_canonical_reader.py
+          python3 - <<'PY'
+          import datetime as dt, importlib.util, pathlib
+          p=pathlib.Path('scripts/renko_gold_full_year_job.py')
+          s=importlib.util.spec_from_file_location('yearjob',p);m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
+          UTC=dt.timezone.utc
+          assert m.expected_market_closed(dt.datetime(2026,8,29,12,tzinfo=UTC)) is True
+          assert m.expected_market_closed(dt.datetime(2026,8,28,12,tzinfo=UTC)) is False
+          print('GOLD_SOURCE_STATUS_CLASSIFIER_PASS')
+          PY
       - id: lock
         name: Lock calibrated side and closed-hour cutoff
         shell: bash
@@ -32,17 +51,17 @@ jobs:
           cutoff="$(date -u -d '1 hour ago' '+%Y-%m-%dT%H:59:59Z')"
           echo "side=$side" >> "$GITHUB_OUTPUT"
           echo "cutoff=$cutoff" >> "$GITHUB_OUTPUT"
-          echo "GOLD_BACKFILL_LOCK side=$side cutoff=$cutoff"
+          echo "GOLD_BACKFILL_LOCK side=$side cutoff=$cutoff workers=$YEAR_HTTP_WORKERS"
 
   build-year:
     needs: prepare
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 300
     strategy:
       fail-fast: false
-      max-parallel: 6
+      max-parallel: 4
       matrix:
-        year: [2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]
+        year: [2003, 2026, 2004, 2025, 2005, 2024, 2006, 2023, 2007, 2022, 2008, 2021, 2009, 2020, 2010, 2019, 2011, 2018, 2012, 2017, 2013, 2016, 2014, 2015]
     steps:
       - uses: actions/checkout@v4
       - name: Build canonical fixed-1s months with bounded RAM
@@ -59,7 +78,7 @@ jobs:
             --side "$SIDE" \
             --start "$ORIGIN" \
             --end "$CUTOFF" \
-            --workers 8 \
+            --workers "$YEAR_HTTP_WORKERS" \
             --output-dir "year-$YEAR"
       - name: Audit every monthly gzip before publication
         shell: bash
@@ -72,6 +91,16 @@ jobs:
             --data-dir "year-$YEAR" \
             --output "year-$YEAR/audit-$YEAR.json" \
             --write-summary
+          python3 - "$YEAR" <<'PY'
+          import json,sys
+          y=int(sys.argv[1]);x=json.load(open(f'year-{y}/summary-{y}.json'))
+          assert x['sourceStatusAccountingPass'] is True
+          for m in x['months']:
+              assert m['sourceStatusAccountingPass'] is True
+              assert m['notFoundHours']==m['marketClosedNotFoundHours']+m['sourceUnavailableHours']
+              assert m['emptySourceHours']==m['marketClosedEmptyHours']+m['providerEmptyHours']
+          print('GOLD_YEAR_SOURCE_STATUS_AUDIT_PASS',y,'unavailable',x['sourceUnavailableHours'])
+          PY
       - name: Publish year as Git LFS objects with pointer-only Git tree
         shell: bash
         env:
@@ -152,10 +181,15 @@ jobs:
           import json
           x=json.load(open('generated/coverage.json'))
           assert x['provider']=='Dukascopy' and x['instrumentCode']=='XAU-USD'
-          assert x['allMonthlyAuditsPass'] is True
+          assert x['allMonthlyAuditsPass'] is True and x['sourceStatusAccountingPass'] is True
           assert x['duplicateSeconds']==0 and x['conflictingOHLC']==0
           assert not x['missingMonths'] and not x['extraMonths'] and not x['overlaps']
-          print('GOLD_TOTAL_COVERAGE_AUDIT',json.dumps(x,separators=(',',':')))
+          assert x['originWitnessSatisfied'] is True
+          if x['sourceUnavailableHours']:
+              print('GOLD_TOTAL_EXPLAINED_COVERAGE_BUT_SOURCE_UNAVAILABLE',json.dumps(x,separators=(',',':')))
+          else:
+              assert x['backfillComplete'] is True
+              print('GOLD_TOTAL_BACKFILL_COMPLETE_PASS',json.dumps(x,separators=(',',':')))
           PY
       - name: Commit lightweight total-history metadata only
         shell: bash
