@@ -44,10 +44,32 @@ jobs:
           test "$(sha256sum /tmp/public.csv.gz | awk '{print $1}')" = "$(python3 -c 'import json;print(json.load(open("smoke/info.json"))["assetSha256"])')"
           gzip -t /tmp/public.csv.gz
           echo "GOLD_RELEASE_BYTE_PASS $(stat -c%s /tmp/public.csv.gz) bytes"
+      - name: Publish smoke asset to Git LFS object storage branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp smoke/xauusd-s1-2026-08.csv.gz /tmp/xauusd-s1-2026-08.csv.gz
+          git config user.name copytolive
+          git config user.email copytolive@gmail.com
+          git lfs install --local
+          if git ls-remote --exit-code --heads origin renko-gold-lfs-data >/dev/null 2>&1; then
+            git fetch origin renko-gold-lfs-data:renko-gold-lfs-data
+            git checkout renko-gold-lfs-data
+          else
+            git checkout --orphan renko-gold-lfs-data
+            git rm -rf . >/dev/null 2>&1 || true
+          fi
+          git lfs track '*.csv.gz'
+          cp /tmp/xauusd-s1-2026-08.csv.gz xauusd-s1-2026-08.csv.gz
+          git add .gitattributes xauusd-s1-2026-08.csv.gz
+          git commit -m 'data(renko): publish August 2026 canonical GOLD via LFS' || true
+          git push origin HEAD:renko-gold-lfs-data
+          test "$(git cat-file -s HEAD:xauusd-s1-2026-08.csv.gz)" -lt 1000
+          echo GOLD_LFS_POINTER_PASS
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Browser-origin CORS transport candidate proof
+      - name: Browser-origin CORS fetch + decompression proof via Git LFS media
         shell: bash
         run: |
           npm install --no-save playwright@1.55.0
@@ -57,37 +79,20 @@ jobs:
           const browser=await chromium.launch({headless:true});
           const page=await browser.newPage();
           page.on('console',m=>console.log('BROWSER_CONSOLE',m.type(),m.text()));
-          await page.goto('https://copytolive.github.io/rwa/renko/?goldTransportSmoke=3',{waitUntil:'domcontentloaded',timeout:60000});
+          await page.goto('https://copytolive.github.io/rwa/renko/?goldTransportSmoke=4',{waitUntil:'domcontentloaded',timeout:60000});
           const result=await page.evaluate(async()=>{
-            const release=await fetch('https://api.github.com/repos/copytolive/rwa/releases/tags/renko-gold-history-v1',{cache:'no-store'});
-            if(!release.ok)throw new Error(`release metadata ${release.status}`);
-            const meta=await release.json();
-            const asset=(meta.assets||[]).find(a=>a.name==='xauusd-s1-2026-08.csv.gz');
-            if(!asset?.browser_download_url)throw new Error('release asset missing');
-            const candidates=[
-              {name:'browser_download_url',url:asset.browser_download_url},
-              {name:'release_direct',url:'https://github.com/copytolive/rwa/releases/download/renko-gold-history-v1/xauusd-s1-2026-08.csv.gz'},
-              {name:'asset_api_no_accept',url:asset.url}
-            ];
-            const diagnostics=[];
-            for(const c of candidates){
-              try{
-                const r=await fetch(c.url,{cache:'no-store',redirect:'follow'});
-                const ab=await r.arrayBuffer();
-                const bytes=new Uint8Array(ab);
-                diagnostics.push({name:c.name,ok:r.ok,status:r.status,type:r.type,url:r.url,bytes:bytes.length,contentType:r.headers.get('content-type'),acao:r.headers.get('access-control-allow-origin'),b0:bytes[0],b1:bytes[1]});
-                if(r.ok&&bytes.length>1000&&bytes[0]===0x1f&&bytes[1]===0x8b){
-                  const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-                  const text=await new Response(stream).text();
-                  const lines=text.trim().split('\n');
-                  return {winner:c.name,assetId:asset.id,status:r.status,bytes:bytes.length,rows:lines.length-1,header:lines[0],first:lines[1],last:lines.at(-1),diagnostics};
-                }
-              }catch(e){diagnostics.push({name:c.name,error:String(e)});}
-            }
-            throw new Error('NO_BROWSER_CORS_TRANSPORT '+JSON.stringify(diagnostics));
+            const url='https://media.githubusercontent.com/media/copytolive/rwa/renko-gold-lfs-data/xauusd-s1-2026-08.csv.gz';
+            const r=await fetch(url,{cache:'no-store',redirect:'follow'});
+            const bytes=new Uint8Array(await r.arrayBuffer());
+            if(!r.ok||bytes.length<1000)throw new Error(`lfs asset fetch ${r.status} ${bytes.length} ${r.headers.get('content-type')}`);
+            if(bytes[0]!==0x1f||bytes[1]!==0x8b)throw new Error(`not gzip ${r.headers.get('content-type')} ${bytes[0]} ${bytes[1]}`);
+            const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+            const text=await new Response(stream).text();
+            const lines=text.trim().split('\n');
+            return {status:r.status,url:r.url,bytes:bytes.length,rows:lines.length-1,header:lines[0],first:lines[1],last:lines.at(-1),contentType:r.headers.get('content-type'),acao:r.headers.get('access-control-allow-origin')};
           });
           if(result.header!=='unix_second,open_tick,high_tick,low_tick,close_tick'||result.rows<100000)throw new Error(JSON.stringify(result));
-          console.log('GOLD_BROWSER_TRANSPORT_FETCH_PASS',JSON.stringify(result));
+          console.log('GOLD_BROWSER_LFS_FETCH_PASS',JSON.stringify(result));
           await browser.close();
           NODE
       - uses: actions/upload-artifact@v4
