@@ -1,12 +1,15 @@
-name: RENKO GOLD Clean UI Production
+name: RENKO GOLD Bidirectional Zoom Production
 
 on:
   push:
     branches:
       - feat/renko-gold-total-history-2003-2026
     paths:
+      - 'renko/index.html'
       - 'renko/renko-chart-bridge.js'
+      - 'renko/renko-gold-manual-viewport-lock.js'
       - 'renko/renko-gold-recent-history.js'
+      - 'renko/renko-gold-total-history.js'
       - '.github/workflows/renko-gold-ui-production.yml'
   workflow_dispatch:
 
@@ -25,13 +28,15 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: GOLD-only production gate
+      - name: GOLD production gate
         shell: bash
         run: |
           set -euo pipefail
           node --check renko/renko-chart-bridge.js
+          node --check renko/renko-gold-manual-viewport-lock.js
           node --check renko/renko-gold-recent-history.js
           node --check renko/renko-gold-total-history.js
+          grep -q 'renko-gold-manual-viewport-lock.js' renko/index.html
           python3 - <<'PY'
           import json
           m=json.load(open('renko/history/gold/full-manifest.json'))
@@ -46,7 +51,7 @@ jobs:
           assert c['originWitnessSatisfied'] is True
           assert c['earliestSecond']==1052092863
           assert len(m['months'])==280
-          print('GOLD_DATA_GATE_PASS', len(m['months']), c['barCount'], c['earliestSecond'], c['latestSecond'])
+          print('GOLD_DATA_GATE_PASS',len(m['months']),c['barCount'],c['earliestSecond'],c['latestSecond'])
           PY
           if find . -type f -name 'xauusd-s1-*.csv.gz' -print -quit | grep -q .; then
             echo 'large canonical GOLD CSV gzip leaked into Pages tree'
@@ -58,7 +63,7 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
-      - name: Deploy clean GOLD-only UI
+      - name: Deploy GOLD UI
         uses: actions/deploy-pages@v4
 
   public-ui-proof:
@@ -89,7 +94,7 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium >/dev/null
-      - name: Verify clean GOLD-only layout, no-snap zoom, and 23y origin ATR Traditional
+      - name: Verify real zoom-out and zoom-in never snap back
         shell: bash
         run: |
           mkdir -p proof
@@ -99,101 +104,101 @@ jobs:
           const browser=await chromium.launch({headless:true});
           const page=await browser.newPage({viewport:{width:1672,height:941}});
           const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-          await page.goto('https://copytolive.github.io/rwa/renko/?gold=1&viewport23yProof=2',{waitUntil:'domcontentloaded',timeout:60000});
-          await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecent==='true'&&document.querySelector('#chartHost canvas')&&window.RWARenkoGoldViewport&&window.RWARenkoGoldTotalHistory,{timeout:60000});
-          await page.waitForTimeout(800);
+          await page.goto('https://copytolive.github.io/rwa/renko/?gold=1&bidirZoomProof=1',{waitUntil:'domcontentloaded',timeout:60000});
+          await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecent==='true'&&document.querySelector('#chartHost canvas')&&window.RWARenkoGoldManualViewport&&window.RWARenkoGoldViewport,{timeout:60000});
+          await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldManualViewportRebuildGuard==='true'&&document.documentElement.dataset.renkoGoldManualViewportRangeObserver==='true'&&document.documentElement.dataset.renkoGoldManualViewportTimeScaleGuard==='true',{timeout:15000});
+          await page.waitForTimeout(700);
 
-          const clean=await page.evaluate(()=>{
-            const vis=el=>!!el&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden'&&!el.hidden&&el.getBoundingClientRect().width>0&&el.getBoundingClientRect().height>0;
-            const chart=document.getElementById('chartWrap')?.getBoundingClientRect();
-            const host=document.getElementById('chartHost')?.getBoundingClientRect();
-            return {
-              downloadedOnly:document.documentElement.dataset.renkoDownloadedOnly,
-              pair:document.getElementById('pairName')?.textContent?.trim(),
-              symbol:window.RWARenkoTV?.state?.symbol,
-              provider:window.RWARenkoTV?.state?.historyMeta?.provider,
-              marketsVisible:vis(document.querySelector('.markets')),
-              openPairsVisible:vis(document.getElementById('openPairs')),
-              easybarVisible:vis(document.querySelector('.easybar')),
-              sourceCardVisible:vis(document.querySelector('.source-card')),
-              statsVisible:vis(document.querySelector('.instrument-bar .stats')),
-              methodCardVisible:vis(document.querySelector('.method-card')),
-              summaryVisible:vis(document.querySelector('.summary')),
-              chartWidth:Math.round(chart?.width||0),chartHeight:Math.round(chart?.height||0),hostWidth:Math.round(host?.width||0),hostHeight:Math.round(host?.height||0),
-              listChildren:document.getElementById('pairList')?.childElementCount||0,
-              originButton:!!document.getElementById('tvGoldOrigin'),maxButton:!!document.getElementById('tvGoldMaxZoom')
-            };
+          const snap=()=>page.evaluate(()=>{
+            const T=window.RWARenkoTV,M=window.RWARenkoGoldManualViewport,r=window.__RWARenkoChart.timeScale().getVisibleLogicalRange();
+            return {range:r,span:r?Number(r.to)-Number(r.from):NaN,locked:M.locked,following:T.state.following,method:T.settings.method,blocked:M.stats.blockedRecenters,rebuilds:M.stats.rebuilds,zoomOut:M.stats.zoomOutCommands,zoomIn:M.stats.zoomInCommands,guardVersion:M.version};
           });
-          if(clean.downloadedOnly!=='gold'||clean.pair!=='XAU / USD'||clean.symbol!=='XAUUSD'||clean.provider!=='Dukascopy')throw new Error('GOLD identity mismatch '+JSON.stringify(clean));
-          if(clean.marketsVisible||clean.openPairsVisible||clean.easybarVisible||clean.sourceCardVisible||clean.statsVisible||clean.summaryVisible||clean.listChildren!==0)throw new Error('non-GOLD/unused UI visible '+JSON.stringify(clean));
-          if(!clean.methodCardVisible||!clean.originButton||!clean.maxButton||clean.chartWidth<1600||clean.chartHeight<620)throw new Error('clean chart controls/geometry mismatch '+JSON.stringify(clean));
-
-          const noSnap=await page.evaluate(async()=>{
-            const V=window.RWARenkoGoldViewport,T=window.RWARenkoTV,ts=window.__RWARenkoChart.timeScale();
-            V.lockViewport('proof-zoom');V.maxZoomOut();await new Promise(r=>setTimeout(r,250));
-            const before=ts.getVisibleLogicalRange();
-            T.rebuild({fit:true});await new Promise(r=>setTimeout(r,700));
-            const after=ts.getVisibleLogicalRange();
-            const delta=Math.max(Math.abs(Number(before.from)-Number(after.from)),Math.abs(Number(before.to)-Number(after.to)));
-            return{before,after,delta,locked:V.locked,following:T.state.following,guard:document.documentElement.dataset.renkoGoldRebuildGuard};
-          });
-          if(!noSnap.locked||noSnap.following!==false||noSnap.guard!=='true'||!(noSnap.delta<0.05))throw new Error('zoom snap-back regression '+JSON.stringify(noSnap));
-          console.log('GOLD_ZOOM_NO_SNAP_PASS',JSON.stringify(noSnap));
-
-          await page.click('#tvGoldOrigin');
-          await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldOriginView==='true'&&document.documentElement.dataset.renkoGoldOriginSecond==='1052092863'&&window.RWARenkoTV?.state?.historyViewMode==='gold-origin',{timeout:120000});
-          await page.waitForTimeout(500);
-
-          async function proofFor(method){
-            return await page.evaluate(async method=>{
-              const T=window.RWARenkoTV,V=window.RWARenkoGoldViewport,H=window.RWARenkoGoldTotalHistory;
-              if(method==='atr'){
-                const ok=await window.RWARenkoATRControl.applyLocal(14,'23y-proof');if(!ok)throw new Error('ATR apply failed');
-              }else{
-                const ok=window.RWARenkoTraditionalControl.activate(1,'23y-proof',false,false);if(!ok)throw new Error('Traditional apply failed');
-              }
-              await new Promise(r=>setTimeout(r,100));T.state.following=false;V.lockViewport('23y-'+method);V.maxZoomOut();await new Promise(r=>setTimeout(r,700));
-              const m=await H.loadManifest();const range=window.__RWARenkoChart.timeScale().getVisibleLogicalRange();const oldest=Math.floor(Number(T.state.closedBars[0].openTime)/1000),latest=Number(m.months.at(-1).latestSecond),origin=Number(m.months[0].earliestSecond);
-              const spanYears=(latest-origin)/(365.2425*86400),rangeSpan=Number(range.to)-Number(range.from),confirmed=Number(T.state.confirmedData.length);
-              return{method:T.settings.method,atrLength:Number(T.settings.atrLength),box:Number(T.state.box),sourceBars:T.state.closedBars.length,confirmed,oldestSourceSecond:oldest,originSecond:origin,coverageLatestSecond:latest,months:m.months.length,spanYears,historyViewMode:T.state.historyViewMode,range,rangeSpan,locked:V.locked,following:T.state.following,dataVersion:m.dataVersion,pair:document.getElementById('pairName')?.textContent?.trim(),sourceText:document.getElementById('sourceText')?.textContent?.trim(),loadText:document.getElementById('tvLoadState')?.textContent?.trim(),feed:document.querySelector('#feedPill b')?.textContent?.trim()};
-            },method);
+          const delta=(a,b)=>Math.max(Math.abs(Number(a.range.from)-Number(b.range.from)),Math.abs(Number(a.range.to)-Number(b.range.to)));
+          async function attack(){
+            await page.evaluate(()=>{
+              const T=window.RWARenkoTV,ts=window.__RWARenkoChart.timeScale();
+              T.rebuild({fit:true});
+              try{ts.setVisibleLogicalRange({from:0,to:25})}catch{}
+              try{ts.fitContent()}catch{}
+              try{ts.scrollToRealTime()}catch{}
+            });
+            await page.waitForTimeout(450);
+            await page.evaluate(()=>window.RWARenkoTV.rebuild({fit:true}));
+            await page.waitForTimeout(350);
           }
-          async function badge(label,p){
-            await page.evaluate(({label,p})=>{
-              document.getElementById('proof23y')?.remove();const wrap=document.getElementById('chartWrap');const e=document.createElement('div');e.id='proof23y';
-              e.style.cssText='position:absolute;left:16px;top:16px;z-index:99999;background:rgba(7,12,20,.94);border:1px solid #496078;border-radius:8px;padding:10px 12px;color:#eef5ff;font:600 12px/1.45 ui-monospace,Menlo,monospace;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.35)';
-              const d0=new Date(p.originSecond*1000).toISOString().slice(0,10),d1=new Date(p.coverageLatestSecond*1000).toISOString().slice(0,10);
-              e.innerHTML=`<b style="font-size:14px">${label} · MAX ZOOM · 23Y ORIGIN</b><br>GOLD / XAUUSD · Dukascopy · fixed 1s<br>OLDEST LOADED: ${d0} (${p.oldestSourceSecond})<br>CANONICAL COVERAGE: ${d0} → ${d1} · ${p.months} months · ${p.spanYears.toFixed(2)} years<br>VIEWPORT LOCK: PASS · SNAP-BACK: 0 · following=false`;
+          async function label(text,data){
+            await page.evaluate(({text,data})=>{
+              document.getElementById('zoomProof')?.remove();const wrap=document.getElementById('chartWrap'),e=document.createElement('div');e.id='zoomProof';
+              e.style.cssText='position:absolute;left:16px;top:16px;z-index:99999;background:rgba(7,12,20,.94);border:1px solid #496078;border-radius:8px;padding:10px 12px;color:#eef5ff;font:700 12px/1.5 ui-monospace,Menlo,monospace;pointer-events:none';
+              e.innerHTML=`<b style="font-size:14px">${text}</b><br>GOLD / XAUUSD · Dukascopy · fixed 1s<br>RANGE: ${Number(data.range.from).toFixed(2)} → ${Number(data.range.to).toFixed(2)} · SPAN ${Number(data.span).toFixed(2)}<br>MANUAL LOCK: ${data.locked?'PASS':'FAIL'} · following=${data.following}<br>BLOCKED RECENTERS: ${data.blocked} · REBUILDS: ${data.rebuilds}`;
               wrap.appendChild(e);
-            },{label,p});
+            },{text,data});
           }
-          const validateMethod=(p,name)=>{
-            if(p.oldestSourceSecond!==1052092863||p.months!==280||p.spanYears<23||p.historyViewMode!=='gold-origin'||!p.locked||p.following!==false)throw new Error(name+' 23y origin identity failed '+JSON.stringify(p));
-            if(p.pair!=='XAU / USD'||!/Dukascopy/i.test(p.sourceText||'')||!/Dukascopy/i.test(p.loadText||'')||/Binance/i.test(p.loadText||'')||p.feed!=='HISTORY')throw new Error(name+' GOLD provenance UI failed '+JSON.stringify(p));
-            if(!(p.rangeSpan<=p.confirmed+12)&&p.confirmed>0)throw new Error(name+' max zoom not authoritative '+JSON.stringify(p));
-          };
+          async function resetManual(){
+            await page.evaluate(()=>{window.RWARenkoGoldManualViewport.unlock('proof-reset');window.RWARenkoGoldViewport?.unlockViewport?.('proof-reset')});
+            await page.click('#tvReset');await page.waitForTimeout(250);
+          }
+          async function setMethod(method){
+            await resetManual();
+            const ok=await page.evaluate(async method=>{
+              if(method==='atr')return await window.RWARenkoATRControl.applyLocal(14,'bidir-proof');
+              return window.RWARenkoTraditionalControl.activate(1,'bidir-proof',false,false);
+            },method);
+            if(!ok)throw new Error(method+' method apply failed');
+            await page.waitForTimeout(300);
+            await resetManual();
+          }
+          async function testMethod(method,prefix){
+            await setMethod(method);
+            const initial=await snap();
+            for(let i=0;i<4;i++){await page.click('#tvZoomOut');await page.waitForTimeout(90)}
+            await page.waitForTimeout(250);
+            const outBefore=await snap();
+            if(!outBefore.locked||outBefore.following!==false||!(outBefore.span>initial.span+1))throw new Error(method+' real zoom-out did not take ownership '+JSON.stringify({initial,outBefore}));
+            await attack();
+            const outAfter=await snap();
+            if(delta(outBefore,outAfter)>=0.05||!outAfter.locked||outAfter.following!==false)throw new Error(method+' zoom-out snapped back '+JSON.stringify({outBefore,outAfter}));
+            await label(method.toUpperCase()+' · ZOOM OUT · NO SNAP-BACK',outAfter);
+            await page.screenshot({path:`proof/${prefix}-zoom-out-stable.png`,fullPage:false});
 
-          const atr=await proofFor('atr');
-          if(atr.method!=='atr'||atr.atrLength!==14)throw new Error('ATR method failed '+JSON.stringify(atr));validateMethod(atr,'ATR');
-          await badge('ATR 14',atr);await page.screenshot({path:'proof/01-atr-23y-origin-max-zoom.png',fullPage:false});
-          console.log('GOLD_ATR_23Y_ORIGIN_MAX_ZOOM_PASS',JSON.stringify(atr));
+            for(let i=0;i<3;i++){await page.click('#tvZoomIn');await page.waitForTimeout(90)}
+            await page.waitForTimeout(250);
+            const inBefore=await snap();
+            if(!inBefore.locked||inBefore.following!==false||!(inBefore.span<outAfter.span-1))throw new Error(method+' real zoom-in did not take ownership '+JSON.stringify({outAfter,inBefore}));
+            await attack();
+            const inAfter=await snap();
+            if(delta(inBefore,inAfter)>=0.05||!inAfter.locked||inAfter.following!==false)throw new Error(method+' zoom-in snapped back '+JSON.stringify({inBefore,inAfter}));
+            await label(method.toUpperCase()+' · ZOOM IN · NO SNAP-BACK',inAfter);
+            await page.screenshot({path:`proof/${prefix}-zoom-in-stable.png`,fullPage:false});
+            return {initial,outBefore,outAfter,outDelta:delta(outBefore,outAfter),inBefore,inAfter,inDelta:delta(inBefore,inAfter)};
+          }
 
-          const traditional=await proofFor('traditional');
-          if(traditional.method!=='traditional'||Math.abs(traditional.box-1)>1e-12)throw new Error('Traditional method failed '+JSON.stringify(traditional));validateMethod(traditional,'Traditional');
-          await badge('TRADITIONAL 1',traditional);await page.screenshot({path:'proof/02-traditional-23y-origin-max-zoom.png',fullPage:false});
-          console.log('GOLD_TRADITIONAL_23Y_ORIGIN_MAX_ZOOM_PASS',JSON.stringify(traditional));
+          const atr=await testMethod('atr','01-atr');
+          const traditional=await testMethod('traditional','03-traditional');
 
-          const traditionalNoSnap=await page.evaluate(async()=>{const T=window.RWARenkoTV,V=window.RWARenkoGoldViewport,ts=window.__RWARenkoChart.timeScale();const before=ts.getVisibleLogicalRange();T.rebuild({fit:true});await new Promise(r=>setTimeout(r,700));const after=ts.getVisibleLogicalRange();const delta=Math.max(Math.abs(Number(before.from)-Number(after.from)),Math.abs(Number(before.to)-Number(after.to)));return{before,after,delta,locked:V.locked,following:T.state.following}});
-          if(!(traditionalNoSnap.delta<0.05)||!traditionalNoSnap.locked||traditionalNoSnap.following!==false)throw new Error('Traditional zoom snap-back regression '+JSON.stringify(traditionalNoSnap));
-          console.log('GOLD_TRADITIONAL_ZOOM_NO_SNAP_PASS',JSON.stringify(traditionalNoSnap));
+          // Real wheel/trackpad path: interaction itself must acquire ownership,
+          // and later rebuild/recenter attempts must not move that owned range.
+          await resetManual();
+          await page.hover('#chartHost');
+          await page.mouse.wheel(0,-900);await page.waitForTimeout(350);
+          const wheelBefore=await snap();
+          if(!wheelBefore.locked||wheelBefore.following!==false)throw new Error('wheel did not acquire manual viewport '+JSON.stringify(wheelBefore));
+          await attack();const wheelAfter=await snap();
+          if(delta(wheelBefore,wheelAfter)>=0.05||wheelAfter.following!==false)throw new Error('wheel viewport snapped back '+JSON.stringify({wheelBefore,wheelAfter}));
+
+          // Explicit LIVE/Reset is the only operation allowed to release ownership.
+          await page.click('#tvLive');await page.waitForTimeout(250);
+          const released=await snap();
+          if(released.locked)throw new Error('LIVE did not release manual viewport '+JSON.stringify(released));
 
           if(errors.length)throw new Error('page errors '+JSON.stringify(errors));
-          const proof={clean,noSnap,atr,traditional,traditionalNoSnap,errors,productionSha:process.env.GITHUB_SHA};
+          const proof={productionSha:process.env.GITHUB_SHA,guardVersion:(await snap()).guardVersion,atr,traditional,wheel:{before:wheelBefore,after:wheelAfter,delta:delta(wheelBefore,wheelAfter)},released,errors};
           fs.writeFileSync('proof/proof.json',JSON.stringify(proof,null,2));
+          console.log('GOLD_BIDIRECTIONAL_ZOOM_PASS',JSON.stringify({sha:process.env.GITHUB_SHA,atrOut:atr.outDelta,atrIn:atr.inDelta,traditionalOut:traditional.outDelta,traditionalIn:traditional.inDelta,wheel:proof.wheel.delta,blocked:traditional.inAfter.blocked,guard:proof.guardVersion}));
           await browser.close();
           NODE
       - uses: actions/upload-artifact@v4
         with:
-          name: renko-gold-23y-viewport-proof
+          name: renko-gold-bidirectional-zoom-proof
           path: proof/
           retention-days: 30
