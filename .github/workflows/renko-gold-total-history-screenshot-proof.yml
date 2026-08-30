@@ -1,0 +1,138 @@
+name: RENKO GOLD Total History Screenshot Proof
+
+on:
+  workflow_run:
+    workflows:
+      - RENKO GOLD Total History Public Closure
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+env:
+  PUBLIC_RENKO: https://copytolive.github.io/rwa/renko/
+
+jobs:
+  screenshot-proof:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'feat/renko-gold-total-history-2003-2026'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for exact production SHA
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          for i in {1..60}; do
+            got="$(curl -fsS --max-time 10 "$PUBLIC_RENKO/deployment-sha.txt?cb=$RANDOM" 2>/dev/null || true)"
+            if [ "$got" = "$EXPECTED_SHA" ]; then
+              echo "GOLD_SCREENSHOT_PRODUCTION_SHA_PASS $got"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "production SHA mismatch: expected=$EXPECTED_SHA" >&2
+          exit 1
+      - name: Install Chromium and image tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y imagemagick >/dev/null
+      - name: Capture desktop mobile and deep-history comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p screenshot-proof
+          node --input-type=module <<'NODE'
+          import { chromium, devices } from 'playwright';
+          import fs from 'node:fs';
+          const base='https://copytolive.github.io/rwa/renko/';
+          const browser=await chromium.launch({headless:true});
+
+          async function ready(page,url){
+            const errors=[]; page.on('pageerror',e=>errors.push(String(e)));
+            await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
+            await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecent==='true'&&document.querySelector('#chartHost canvas'),{timeout:60000});
+            await page.waitForTimeout(1200);
+            return errors;
+          }
+          async function proofOverlay(page,label,extra={}){
+            return await page.evaluate(async({label,extra})=>{
+              const H=window.RWARenkoGoldTotalHistory,T=window.RWARenkoTV;
+              if(!H||!T) throw new Error('total-history runtime missing');
+              const m=await H.loadManifest(true);
+              const c=await fetch('./history/gold/coverage.json?cb='+Date.now()).then(r=>{if(!r.ok)throw new Error('coverage HTTP '+r.status);return r.json()});
+              if(!m.backfillComplete||!c.backfillComplete)throw new Error('backfillComplete false');
+              if(c.sourceUnavailableHours!==0||c.missingMonths.length||c.extraMonths.length||c.overlaps.length)throw new Error('coverage incomplete');
+              const existing=document.getElementById('gold-total-proof'); if(existing) existing.remove();
+              const p=document.createElement('div'); p.id='gold-total-proof';
+              Object.assign(p.style,{position:'fixed',left:'14px',bottom:'14px',zIndex:'2147483647',background:'rgba(8,12,18,.94)',border:'1px solid rgba(255,255,255,.24)',borderRadius:'8px',padding:'10px 12px',color:'#fff',font:'12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace',boxShadow:'0 8px 30px rgba(0,0,0,.35)',maxWidth:'620px',whiteSpace:'pre-wrap'});
+              p.textContent=[
+                label,
+                'TOTAL HISTORY: PASS',
+                `Provider: ${m.provider} ${m.instrumentCode} ${m.interval} ${m.priceSide}`,
+                `Months: ${m.months.length} | Bars: ${c.barCount.toLocaleString('en-US')}`,
+                `Origin: ${c.earliestSecond} (2003-05-05) | Latest: ${c.latestSecond}`,
+                `Missing: ${c.missingMonths.length} | Overlap: ${c.overlaps.length} | Source unavailable: ${c.sourceUnavailableHours}`,
+                `Data version: ${m.dataVersion}`,
+                ...Object.entries(extra).map(([k,v])=>`${k}: ${v}`)
+              ].join('\n');
+              document.body.appendChild(p);
+              return {months:m.months.length,bars:c.barCount,earliest:c.earliestSecond,latest:c.latestSecond,version:m.dataVersion};
+            },{label,extra});
+          }
+
+          const desktop=await browser.newPage({viewport:{width:1672,height:941},deviceScaleFactor:1});
+          let errors=await ready(desktop,base+'?gold=1&screenshotProof=recent');
+          const recent=await proofOverlay(desktop,'DESKTOP — RECENT FIRST PAINT');
+          if(errors.length)throw new Error('desktop recent page errors '+JSON.stringify(errors));
+          await desktop.screenshot({path:'screenshot-proof/01-desktop-recent.png',fullPage:false});
+
+          const deep=await desktop.evaluate(async()=>{
+            const H=window.RWARenkoGoldTotalHistory,T=window.RWARenkoTV;
+            for(let i=0;i<6;i++){
+              const ok=await H.prependOlder({panOlder:true});
+              if(!ok)throw new Error('prepend failed '+i);
+              await new Promise(r=>setTimeout(r,180));
+            }
+            const bars=T.state.closedBars;
+            if(bars.length>140000)throw new Error('RAM cap exceeded '+bars.length);
+            return {loadedOldest:Math.floor(bars[0].openTime/1000),loadedNewest:Math.floor(bars.at(-1).openTime/1000),memoryBars:bars.length,stats:{...H.stats}};
+          });
+          await proofOverlay(desktop,'DESKTOP — DEEP HISTORY AFTER 6 PREPENDS',{loadedOldest:deep.loadedOldest,memoryBars:deep.memoryBars,networkFetches:deep.stats.networkFetches,idbHits:deep.stats.idbHits});
+          await desktop.waitForTimeout(500);
+          await desktop.screenshot({path:'screenshot-proof/02-desktop-deep.png',fullPage:false});
+
+          const mobile=await browser.newPage({...devices['iPhone 13']});
+          errors=await ready(mobile,base+'?gold=1&screenshotProof=mobile');
+          const mob=await proofOverlay(mobile,'MOBILE — TOTAL HISTORY READY');
+          if(errors.length)throw new Error('mobile page errors '+JSON.stringify(errors));
+          await mobile.screenshot({path:'screenshot-proof/03-mobile.png',fullPage:false});
+
+          const report={recent,deep,mobile:mob};
+          fs.writeFileSync('screenshot-proof/proof.json',JSON.stringify(report,null,2)+'\n');
+          console.log('GOLD_SCREENSHOT_PROOF_PASS',JSON.stringify(report));
+          await browser.close();
+          NODE
+          convert screenshot-proof/01-desktop-recent.png -gravity north -background white -splice 0x34 -fill black -pointsize 20 -annotate +0+6 'RECENT FIRST PAINT' /tmp/recent-labeled.png
+          convert screenshot-proof/02-desktop-deep.png -gravity north -background white -splice 0x34 -fill black -pointsize 20 -annotate +0+6 'AFTER 6 OLDER PREPENDS' /tmp/deep-labeled.png
+          convert /tmp/recent-labeled.png /tmp/deep-labeled.png +append screenshot-proof/04-desktop-compare.png
+      - name: Upload screenshot proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: renko-gold-total-history-screenshots
+          path: screenshot-proof/
+          retention-days: 90
