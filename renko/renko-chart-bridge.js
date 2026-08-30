@@ -81,39 +81,50 @@
     forceText('universeNote','GOLD · XAU/USD · Dukascopy fixed 1s');
     forceText('pairName','XAU / USD');
     forceText('pairIcon','AU');
+    const pairTag=document.querySelector('.pair-title span');if(pairTag&&pairTag.textContent!=='GOLD')pairTag.textContent='GOLD';
     const easy=document.querySelector('.easy-label');if(easy&&easy.textContent!=='GOLD')easy.textContent='GOLD';
-    const source=document.getElementById('sourceText');const sourceLabel='Dukascopy XAU/USD · downloaded fixed 1-second source only.';if(source&&source.textContent!==sourceLabel)source.textContent=sourceLabel;
+    const source=document.getElementById('sourceText');const sourceLabel='Dukascopy XAU/USD · downloaded canonical fixed 1-second source only.';if(source&&source.textContent!==sourceLabel)source.textContent=sourceLabel;
+    const feed=document.getElementById('feedPill');if(feed){feed.classList.add('live');const b=feed.querySelector('b');if(b&&b.textContent!=='HISTORY')b.textContent='HISTORY'}
+    const T=window.RWARenkoTV,count=Number(T?.state?.closedBars?.length||0);
+    if(T?.state?.symbol==='XAUUSD'&&count){
+      const method=T.settings?.method==='traditional'?'TRADITIONAL':T.settings?.method==='atr'?'ATR':'RENKO';
+      const suffix=method==='ATR'?` ${Math.max(1,Math.floor(Number(T.settings?.atrLength)||14))}`:method==='TRADITIONAL'?` ${Number(T.state?.box)||Number(T.settings?.boxSize)||''}`:'';
+      const scope=T.state?.historyViewMode==='gold-origin'?'GOLD ORIGIN':T.state?.historyViewMode==='gold-total'?'GOLD TOTAL':'GOLD';
+      const load=document.getElementById('tvLoadState');if(load){load.textContent=`${scope} · Dukascopy fixed 1s · ${method}${suffix} · ${count.toLocaleString()} source bars`;load.classList.add('live')}
+    }
   };
 
   // User viewport ownership. Once the operator zooms/pans, no rebuild is allowed
   // to auto-fit or snap back to the latest frame until an explicit latest/reset.
-  let viewportLocked=false,lastLogicalRange=null,rebuildWrapped=false,interactionAt=0;
+  let viewportLocked=false,lastLogicalRange=null,rebuildWrapped=false,interactionAt=0,viewportSeq=0;
   const tv=()=>window.RWARenkoTV||null;
   const ts=()=>window.__RWARenkoChart?.timeScale?.()||null;
   const finiteRange=r=>r&&Number.isFinite(Number(r.from))&&Number.isFinite(Number(r.to));
   const readRange=()=>{try{return ts()?.getVisibleLogicalRange?.()||null}catch(_){return null}};
   const setFollowingOff=()=>{const T=tv();if(T?.state)T.state.following=false};
-  function rememberRange(){
+  function rememberRange(token=viewportSeq){
+    if(token!==viewportSeq)return lastLogicalRange;
     const r=readRange();if(finiteRange(r))lastLogicalRange={from:Number(r.from),to:Number(r.to)};
     document.documentElement.dataset.renkoGoldViewportLocked=viewportLocked?'true':'false';
     if(lastLogicalRange)document.documentElement.dataset.renkoGoldViewportRange=`${lastLogicalRange.from.toFixed(4)}:${lastLogicalRange.to.toFixed(4)}`;
     return lastLogicalRange;
   }
-  function restoreRange(range=lastLogicalRange){
-    if(!finiteRange(range))return false;
+  function restoreRange(range=lastLogicalRange,token=viewportSeq){
+    if(token!==viewportSeq||!finiteRange(range))return false;
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      if(token!==viewportSeq)return;
       try{const t=ts();if(!t)return;t.setVisibleLogicalRange({from:Number(range.from),to:Number(range.to)});setFollowingOff();lastLogicalRange={from:Number(range.from),to:Number(range.to)}}catch(_){ }
     }));
     return true;
   }
   function lockViewport(reason='user'){
-    viewportLocked=true;interactionAt=performance.now();setFollowingOff();
+    const token=++viewportSeq;viewportLocked=true;interactionAt=performance.now();setFollowingOff();
     document.documentElement.dataset.renkoGoldViewportReason=String(reason);
     document.documentElement.dataset.renkoGoldViewportLocked='true';
-    requestAnimationFrame(()=>requestAnimationFrame(rememberRange));
+    requestAnimationFrame(()=>requestAnimationFrame(()=>rememberRange(token)));
   }
   function unlockViewport(reason='latest'){
-    viewportLocked=false;lastLogicalRange=null;
+    viewportSeq++;viewportLocked=false;lastLogicalRange=null;
     document.documentElement.dataset.renkoGoldViewportReason=String(reason);
     document.documentElement.dataset.renkoGoldViewportLocked='false';
   }
@@ -121,12 +132,11 @@
     const T=tv();if(!T?.rebuild||rebuildWrapped)return false;
     const original=T.rebuild.bind(T);
     T.rebuild=(opts={})=>{
-      const preserve=viewportLocked&&finiteRange(readRange()||lastLogicalRange);
-      const range=preserve?(readRange()||lastLogicalRange):null;
+      const token=viewportSeq,range=readRange()||lastLogicalRange,preserve=viewportLocked&&finiteRange(range);
       if(viewportLocked)setFollowingOff();
       const out=original({...opts,fit:preserve?false:!!opts?.fit});
       const totalBusy=!!window.RWARenkoGoldTotalHistory?.busy;
-      if(preserve&&!totalBusy)restoreRange(range);
+      if(preserve&&!totalBusy)restoreRange(range,token);
       if(viewportLocked)setFollowingOff();
       return out;
     };
@@ -136,7 +146,7 @@
   }
   function maxZoomOut(){
     const T=tv(),t=ts();if(!T||!t)return null;
-    const n=Math.max(1,Number(T.state?.confirmedData?.length||0)+Number(T.state?.projectionData?.length||0));
+    const token=++viewportSeq,n=Math.max(1,Number(T.state?.confirmedData?.length||0)+Number(T.state?.projectionData?.length||0));
     viewportLocked=true;setFollowingOff();
     try{t.applyOptions?.({minBarSpacing:0.01,rightOffset:0});}catch(_){ }
     const range={from:-2,to:n+2};
@@ -145,7 +155,7 @@
     document.documentElement.dataset.renkoGoldMaxZoom='true';
     document.documentElement.dataset.renkoGoldMaxZoomBars=String(n);
     document.documentElement.dataset.renkoGoldViewportLocked='true';
-    requestAnimationFrame(rememberRange);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>rememberRange(token)));
     return range;
   }
   async function jumpToOrigin(){
@@ -160,7 +170,6 @@
     T.state.historyMeta={...(T.state.historyMeta||{}),symbol:'XAUUSD',instrumentCode:'XAU-USD',provider:'Dukascopy',source:'immutable Git LFS canonical monthly gzip',interval:'1s',dataVersion:m.dataVersion,priceSide:m.priceSide,tickSize:tick,loadedOldestMs:Number(bars[0].openTime),loadedNewestMs:Number(bars.at(-1).closeTime),totalSourceChunks:m.months.length,chunkUnit:'calendar-month',backfillComplete:!!m.backfillComplete,cachePersisted:true,losses:0};
     T.rebuild({fit:false});T.state.status='history-gold-origin';T.state.following=false;
     lockGoldUi();
-    const load=document.getElementById('tvLoadState');if(load){load.textContent=`GOLD ORIGIN · ${new Date(bars[0].openTime).toISOString()} · ${bars.length.toLocaleString()} canonical 1s bars`;load.classList.add('live')}
     Object.assign(document.documentElement.dataset,{renkoGoldOriginView:'true',renkoGoldOriginSecond:String(c.sec[0]),renkoGoldOriginBars:String(bars.length),renkoGoldCoverageLatest:String(m.months.at(-1)?.latestSecond||'')});
     maxZoomOut();
     try{window.dispatchEvent(new CustomEvent('renko:gold-origin',{detail:{originSecond:Number(c.sec[0]),loadedBars:bars.length,dataVersion:m.dataVersion,months:m.months.length,latestSecond:Number(m.months.at(-1)?.latestSecond||0)}}))}catch(_){ }
@@ -183,7 +192,7 @@
     document.addEventListener('wheel',mark,{capture:true,passive:true});
     document.addEventListener('pointerdown',mark,{capture:true,passive:true});
     document.addEventListener('touchstart',mark,{capture:true,passive:true});
-    document.addEventListener('click',e=>{const id=e.target?.closest?.('button')?.id;if(['tvZoomIn','tvZoomOut','tvPanOlder','tvPanNewer','tvGoldOlder','tvGoldNewer'].includes(id)){lockViewport(id);requestAnimationFrame(()=>requestAnimationFrame(rememberRange))}if(id==='tvLive'||id==='tvReset')unlockViewport(id)},true);
+    document.addEventListener('click',e=>{const id=e.target?.closest?.('button')?.id;if(['tvZoomIn','tvZoomOut','tvPanOlder','tvPanNewer','tvGoldOlder','tvGoldNewer'].includes(id)){lockViewport(id);requestAnimationFrame(()=>requestAnimationFrame(()=>rememberRange(viewportSeq)))}if(id==='tvLive'||id==='tvReset')unlockViewport(id)},true);
   }
 
   lockGoldUi();installViewportInteractions();
@@ -197,8 +206,11 @@
   window.addEventListener('renko:tv-ready',ready);
   window.addEventListener('renko:gold-recent',()=>{ready();if(!viewportLocked)document.documentElement.dataset.renkoGoldOriginView='false'});
   window.addEventListener('renko:gold-total',()=>{ready();if(viewportLocked)setFollowingOff()});
+  window.addEventListener('renko:gold-origin',ready);
+  window.addEventListener('renko:atr-control-applied',()=>setTimeout(lockGoldUi,0));
+  window.addEventListener('renko:traditional-applied',()=>setTimeout(lockGoldUi,0));
   window.addEventListener('resize',()=>{try{window.__RWARenkoChart?.applyOptions?.({width:document.getElementById('chartHost')?.clientWidth||0,height:document.getElementById('chartHost')?.clientHeight||0})}catch(_){ }});
-  const poll=setInterval(()=>{if(ready()!==false&&window.RWARenkoGoldTotalHistory){ensureHistoryButtons();clearInterval(poll)}},250);
+  const poll=setInterval(()=>{ready();if(window.RWARenkoGoldTotalHistory){ensureHistoryButtons();clearInterval(poll)}},250);
   setTimeout(()=>clearInterval(poll),15000);
-  window.RWARenkoGoldViewport={version:'2.0.0-23y-lock',rule:'user-owned-logical-range-no-rebuild-snap-plus-direct-canonical-origin-jump',get locked(){return viewportLocked},get lastRange(){return lastLogicalRange},get interactionAt(){return interactionAt},lockViewport,unlockViewport,rememberRange,restoreRange,maxZoomOut,jumpToOrigin,returnLatest,installRebuildGuard,ensureHistoryButtons};
+  window.RWARenkoGoldViewport={version:'2.1.0-23y-authoritative-max',rule:'user-owned-logical-range-tokenized-no-stale-restore-plus-direct-canonical-origin-jump',get locked(){return viewportLocked},get lastRange(){return lastLogicalRange},get interactionAt(){return interactionAt},get sequence(){return viewportSeq},lockViewport,unlockViewport,rememberRange,restoreRange,maxZoomOut,jumpToOrigin,returnLatest,installRebuildGuard,ensureHistoryButtons};
 })();
