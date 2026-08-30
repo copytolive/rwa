@@ -1,0 +1,9 @@
+RENKO final public-production closure trigger.
+
+Purpose:
+- run the complete RENKO hard-gate matrix after fixing the XAUT fixed-1s seven-length acceptance contract for mathematically valid zero-ATR / zero-brick states;
+- preserve all strict positive-ATR geometry, physical Apply, fixed-1s, provider, history, TBT, persistence, and public byte-binding invariants;
+- require same-SHA public production evidence before closure.
+
+Patch parent: 642fe53cc01f32b2808472383c08f39f3109d6ae
+Acceptance: zero ATR may produce zero bricks only when the runtime explicitly reports legal minimum-tick fallback and confirmed/total/brick timestamps remain exactly zero.
