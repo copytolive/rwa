@@ -1,4 +1,4 @@
 GOLD Canonical v11 recovery kick
 requested_by=ChatGPT
-reason=Batch 239 published successfully, but canonical workflow regressed to V2 fail-closed; restored v11 and continue authoritative search from batch 239.
-utc=2026-08-31T00:00:00Z
+reason=Batch 240 published successfully, but canonical workflow regressed again to V2 Gate A Guard; restored GOLD Canonical v11 Recovery Continuation and continue authoritative search from batch 240.
+utc=2026-08-30T18:49:18Z
