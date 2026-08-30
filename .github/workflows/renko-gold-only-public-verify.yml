@@ -1,0 +1,90 @@
+name: RENKO GOLD Only Public Browser Verify
+
+on:
+  push:
+    branches:
+      - fix/renko-gold-only-public-20260830
+    paths:
+      - '.github/workflows/renko-gold-only-public-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-gold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TARGET_SHA: 07a4894c9e6d395452618949f95fcfbbc6581cea
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify exact public marker and runtime bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://copytolive.github.io/rwa'
+          ok=0
+          for i in $(seq 1 60); do
+            got="$(curl -fsSL -H 'Cache-Control: no-cache' "$BASE/renko-deployment-sha.txt?gold=$TARGET_SHA&n=$i" 2>/dev/null | tr -d '\r\n' || true)"
+            if [ "$got" = "$TARGET_SHA" ]; then ok=1; break; fi
+            sleep 5
+          done
+          test "$ok" = 1
+          for f in renko/index.html renko/renko-gold-recent-history.js renko/history/gold/manifest.json renko/history/gold/2026-08-28.json.gz renko/history/gold/2026-08-27.json.gz; do
+            local_sha="$(sha256sum "$f" | awk '{print $1}')"
+            remote_sha="$(curl -fsSL -H 'Cache-Control: no-cache' "$BASE/$f?sha=$TARGET_SHA" | sha256sum | awk '{print $1}')"
+            test "$local_sha" = "$remote_sha"
+            echo "GOLD_PUBLIC_BYTE_PARITY $f $local_sha"
+          done
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify public GOLD navigation desktop and mobile
+        shell: bash
+        run: |
+          mkdir -p artifacts/renko-gold-public-verify
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { chromium } from 'playwright';
+          const browser=await chromium.launch({headless:true});
+          const url='https://copytolive.github.io/rwa/renko/';
+          const receipt={schema:'renko-gold-only-public-verify-v1',deployedSha:process.env.TARGET_SHA,url,rows:[],status:'PASS'};
+          for(const mode of [{name:'desktop',width:1900,height:1000},{name:'mobile',width:430,height:932}]){
+            const page=await browser.newPage({viewport:{width:mode.width,height:mode.height}});
+            const pageErrors=[];
+            page.on('pageerror',e=>pageErrors.push(String(e.message||e)));
+            await page.addInitScript(()=>localStorage.setItem('rwa_renko_tradingview_settings_v1',JSON.stringify({source:'close',method:'atr',boxSize:1,atrLength:14,wicks:true})));
+            const resp=await page.goto(url+'?symbol=ZECUSDT&gold=1&verify='+Date.now(),{waitUntil:'domcontentloaded',timeout:60000});
+            if(!resp||resp.status()!==200)throw Error(mode.name+' HTTP '+(resp?.status()||0));
+            await page.waitForFunction(()=>window.RWARenkoTV?.state&&window.RWARenkoGoldRecentHistory?.version==='1.0.0',null,{timeout:30000});
+            await page.evaluate(()=>window.RWARenkoGoldRecentHistory.addControls());
+            if(!(await page.evaluate(()=>window.RWARenkoGoldRecentHistory.newest())))throw Error(mode.name+' newest false');
+            await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecentDate==='2026-08-28'&&window.RWARenkoTV.state.symbol==='XAUUSD'&&window.RWARenkoTV.state.status==='history-gold',null,{timeout:90000});
+            const newest=await page.evaluate(()=>({date:document.documentElement.dataset.renkoGoldRecentDate,bars:RWARenkoTV.state.closedBars.length,provider:RWARenkoTV.state.historyMeta?.provider,instrument:RWARenkoTV.state.historyMeta?.instrumentCode,interval:RWARenkoTV.state.historyMeta?.interval,losses:Number(RWARenkoTV.state.historyMeta?.losses),canvas:document.querySelectorAll('#chartHost canvas').length,pair:document.getElementById('pairName')?.textContent,coverage:document.getElementById('tvCoverage')?.textContent,failures:Number(RWARenkoGoldRecentHistory.stats.failures)}));
+            if(newest.date!=='2026-08-28'||newest.bars!==64309||newest.provider!=='Dukascopy'||newest.instrument!=='XAU-USD'||newest.interval!=='1s'||newest.losses!==0||newest.canvas<1||newest.pair!=='XAU / USD'||newest.failures!==0)throw Error(mode.name+' newest '+JSON.stringify(newest));
+            await page.locator('#tvGoldOlder').click();
+            await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecentDate==='2026-08-27',null,{timeout:90000});
+            const older=await page.evaluate(()=>({date:document.documentElement.dataset.renkoGoldRecentDate,bars:RWARenkoTV.state.closedBars.length,provider:RWARenkoTV.state.historyMeta?.provider,interval:RWARenkoTV.state.historyMeta?.interval,canvas:document.querySelectorAll('#chartHost canvas').length}));
+            if(older.date!=='2026-08-27'||older.bars!==64913||older.provider!=='Dukascopy'||older.interval!=='1s'||older.canvas<1)throw Error(mode.name+' older '+JSON.stringify(older));
+            await page.locator('#tvGoldNewer').click();
+            await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecentDate==='2026-08-28',null,{timeout:90000});
+            if(pageErrors.length)throw Error(mode.name+' page errors '+JSON.stringify(pageErrors));
+            const screenshot=`artifacts/renko-gold-public-verify/${mode.name}-gold-public.png`;
+            await page.screenshot({path:screenshot,fullPage:true});
+            receipt.rows.push({mode:mode.name,newest,older,screenshot,pass:true});
+            await page.close();
+          }
+          fs.writeFileSync('artifacts/renko-gold-public-verify/receipt.json',JSON.stringify(receipt,null,2));
+          console.log('RENKO_GOLD_PUBLIC_VERIFY_PASS',JSON.stringify(receipt));
+          await browser.close();
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: renko-gold-public-verify-${{ env.TARGET_SHA }}
+          path: artifacts/renko-gold-public-verify/
+          retention-days: 30
