@@ -1,0 +1,247 @@
+name: RENKO GOLD Total History Sharded Backfill
+
+on:
+  push:
+    branches:
+      - feat/renko-gold-total-history-2003-2026
+    paths:
+      - '.github/workflows/renko-gold-total-history-sharded-backfill.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: renko-gold-total-history-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ORIGIN: '2003-05-05T00:00:00Z'
+  YEAR_HTTP_WORKERS: '16'
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      cutoff: ${{ steps.lock.outputs.cutoff }}
+      side: ${{ steps.lock.outputs.side }}
+      matrix: ${{ steps.lock.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lock calibrated side cutoff and four-month shard matrix
+        id: lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/renko_gold_full_backfill.py scripts/renko_gold_full_year_job.py scripts/renko_gold_audit.py
+          side="$(python3 -c 'import json;print(json.load(open("renko/history/gold/calibration.json"))["priceSide"])')"
+          test "$side" = bid
+          cutoff="$(date -u -d '1 hour ago' '+%Y-%m-%dT%H:59:59Z')"
+          matrix="$(python3 - "$cutoff" <<'PY'
+          import datetime as dt,json,sys
+          cutoff=dt.datetime.fromisoformat(sys.argv[1].replace('Z','+00:00'))
+          items=[]
+          for year in range(2003, cutoff.year+1):
+              first=5 if year==2003 else 1
+              last=cutoff.month if year==cutoff.year else 12
+              month=first
+              while month<=last:
+                  end=min(last, month+3)
+                  items.append({'year':year,'startMonth':month,'endMonth':end,'key':f'{year:04d}-{month:02d}-{end:02d}'})
+                  month=end+1
+          print(json.dumps({'include':items},separators=(',',':')))
+          PY
+          )"
+          echo "side=$side" >> "$GITHUB_OUTPUT"
+          echo "cutoff=$cutoff" >> "$GITHUB_OUTPUT"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          python3 - "$matrix" <<'PY'
+          import json,sys
+          m=json.loads(sys.argv[1])['include']
+          assert m[0]=={'year':2003,'startMonth':5,'endMonth':8,'key':'2003-05-08'}
+          assert m[-1]['year']==2026 and m[-1]['endMonth']<=12
+          assert len(m)<256
+          print('GOLD_SHARDED_MATRIX_PASS',len(m),m[0],m[-1])
+          PY
+
+  build-shard:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    env:
+      YEAR: ${{ matrix.year }}
+      START_MONTH: ${{ matrix.startMonth }}
+      END_MONTH: ${{ matrix.endMonth }}
+      SHARD_KEY: ${{ matrix.key }}
+      SIDE: ${{ needs.prepare.outputs.side }}
+      CUTOFF: ${{ needs.prepare.outputs.cutoff }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Clamp shard to canonical origin and cutoff
+        id: range
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "$YEAR" "$START_MONTH" "$END_MONTH" "$ORIGIN" "$CUTOFF" "$GITHUB_OUTPUT" <<'PY'
+          import datetime as dt,sys
+          y,sm,em=int(sys.argv[1]),int(sys.argv[2]),int(sys.argv[3])
+          origin=dt.datetime.fromisoformat(sys.argv[4].replace('Z','+00:00'))
+          cutoff=dt.datetime.fromisoformat(sys.argv[5].replace('Z','+00:00'))
+          start=dt.datetime(y,sm,1,tzinfo=dt.timezone.utc)
+          if em==12: nxt=dt.datetime(y+1,1,1,tzinfo=dt.timezone.utc)
+          else: nxt=dt.datetime(y,em+1,1,tzinfo=dt.timezone.utc)
+          end=nxt-dt.timedelta(seconds=1)
+          start=max(start,origin); end=min(end,cutoff)
+          assert start<=end
+          with open(sys.argv[6],'a') as f:
+              f.write('start='+start.isoformat().replace('+00:00','Z')+'\n')
+              f.write('end='+end.isoformat().replace('+00:00','Z')+'\n')
+          print('GOLD_SHARD_RANGE_PASS',y,sm,em,start,end)
+          PY
+      - name: Build canonical fixed-1s shard with bounded RAM
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p shard
+          python3 scripts/renko_gold_full_year_job.py \
+            --year "$YEAR" \
+            --side "$SIDE" \
+            --start "${{ steps.range.outputs.start }}" \
+            --end "${{ steps.range.outputs.end }}" \
+            --workers "$YEAR_HTTP_WORKERS" \
+            --output-dir shard
+      - name: Audit every monthly gzip and require zero source-unavailable hours
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/renko_gold_audit.py audit-year \
+            --summary "shard/summary-$YEAR.json" \
+            --data-dir shard \
+            --output "shard/audit-$YEAR.json" \
+            --write-summary
+          python3 - "$YEAR" "$START_MONTH" "$END_MONTH" <<'PY'
+          import json,sys
+          y,sm,em=map(int,sys.argv[1:])
+          x=json.load(open(f'shard/summary-{y}.json'))
+          assert x['sourceStatusAccountingPass'] is True
+          assert x['sourceUnavailableHours']==0
+          months=x['months']
+          assert [int(m['month']) for m in months]==list(range(sm,em+1))
+          for m in months:
+              assert m['auditPass'] is True
+              assert m['sourceStatusAccountingPass'] is True
+              assert m['sourceUnavailableHours']==0
+              assert m['notFoundHours']==m['marketClosedNotFoundHours']
+              assert m['emptySourceHours']==m['marketClosedEmptyHours']+m['providerEmptyHours']
+          print('GOLD_SHARD_AUDIT_PASS',y,sm,em,'months',len(months),'bars',x['barCount'],'unavailable',x['sourceUnavailableHours'])
+          PY
+      - name: Publish shard as immutable Git LFS objects with pointer-only Git tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          SM="$(printf '%02d' "$START_MONTH")"; EM="$(printf '%02d' "$END_MONTH")"
+          DATA_BRANCH="renko-gold-lfs-$YEAR-$SM-$EM"
+          mkdir -p /tmp/gold-data /tmp/gold-meta
+          cp shard/xauusd-s1-*.csv.gz /tmp/gold-data/
+          cp "shard/summary-$YEAR.json" "/tmp/gold-meta/summary-$YEAR-$SM-$EM.json"
+          cp "shard/audit-$YEAR.json" "/tmp/gold-meta/audit-$YEAR-$SM-$EM.json"
+          git config user.name copytolive
+          git config user.email copytolive@gmail.com
+          git lfs install --local
+          if git ls-remote --exit-code --heads origin "$DATA_BRANCH" >/dev/null 2>&1; then
+            git fetch origin "$DATA_BRANCH:$DATA_BRANCH"
+            GIT_LFS_SKIP_SMUDGE=1 git checkout "$DATA_BRANCH"
+            git rm -rf . >/dev/null 2>&1 || true
+            git clean -fdx >/dev/null 2>&1 || true
+          else
+            git checkout --orphan "$DATA_BRANCH"
+            git rm -rf . >/dev/null 2>&1 || true
+            git clean -fdx >/dev/null 2>&1 || true
+          fi
+          git lfs track '*.csv.gz'
+          cp /tmp/gold-data/*.csv.gz .
+          git add .gitattributes *.csv.gz
+          git commit -m "data(renko): publish canonical GOLD $YEAR $SM-$EM via LFS" || true
+          git push origin "HEAD:$DATA_BRANCH"
+          DATA_SHA="$(git rev-parse HEAD)"
+          for f in *.csv.gz; do test "$(git cat-file -s "HEAD:$f")" -lt 1000; done
+          python3 - "$YEAR" "$SM" "$EM" "$DATA_SHA" <<'PY'
+          import json,pathlib,sys
+          y,sm,em,sha=int(sys.argv[1]),sys.argv[2],sys.argv[3],sys.argv[4]
+          p=pathlib.Path(f'/tmp/gold-meta/summary-{y}-{sm}-{em}.json')
+          x=json.loads(p.read_text())
+          x['dataBranch']=f'renko-gold-lfs-{y}-{sm}-{em}'
+          x['dataCommitSha']=sha
+          x['storage']='git-lfs-media'
+          for m in x['months']:
+              m['dataCommitSha']=sha
+              m['storage']='git-lfs-media'
+              m['assetUrl']=f'https://media.githubusercontent.com/media/copytolive/rwa/{sha}/{m["asset"]}'
+          p.write_text(json.dumps(x,indent=2)+'\n')
+          print('GOLD_SHARD_LFS_POINTER_PASS',y,sm,em,sha,len(x['months']),x['bytes'])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gold-shard-${{ matrix.key }}
+          path: /tmp/gold-meta/
+          retention-days: 90
+
+  manifest:
+    needs: [prepare, build-shard]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: gold-shard-*
+          path: summaries
+          merge-multiple: true
+      - name: Build strict total manifest coverage and checksum inventory
+        shell: bash
+        env:
+          CUTOFF: ${{ needs.prepare.outputs.cutoff }}
+        run: |
+          set -euo pipefail
+          python3 scripts/renko_gold_audit.py build-manifest \
+            --summaries-dir summaries \
+            --cutoff "$CUTOFF" \
+            --output-dir generated
+          python3 - <<'PY'
+          import json
+          m=json.load(open('generated/full-manifest.json'))
+          x=json.load(open('generated/coverage.json'))
+          assert x['provider']=='Dukascopy' and x['instrumentCode']=='XAU-USD' and x['interval']=='1s'
+          assert x['allMonthlyAuditsPass'] is True and x['sourceStatusAccountingPass'] is True
+          assert x['duplicateSeconds']==0 and x['conflictingOHLC']==0
+          assert not x['missingMonths'] and not x['extraMonths'] and not x['overlaps']
+          assert x['originWitnessSatisfied'] is True and x['earliestSecond']==1052092863
+          assert x['sourceUnavailableHours']==0
+          assert x['publishedMonths']==x['expectedMonths']==len(m['months'])
+          assert x['backfillComplete'] is True and m['backfillComplete'] is True
+          assert all(v['assetUrl'].startswith('https://media.githubusercontent.com/media/copytolive/rwa/') for v in m['months'])
+          print('GOLD_TOTAL_SHARDED_BACKFILL_COMPLETE_PASS',json.dumps(x,separators=(',',':')))
+          PY
+      - name: Commit lightweight audited total-history metadata only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name copytolive
+          git config user.email copytolive@gmail.com
+          git pull --rebase origin feat/renko-gold-total-history-2003-2026
+          cp generated/full-manifest.json renko/history/gold/full-manifest.json
+          cp generated/coverage.json renko/history/gold/coverage.json
+          cp generated/checksums.json renko/history/gold/checksums.json
+          cp generated/checksums.sha256 renko/history/gold/checksums.sha256
+          git add renko/history/gold/full-manifest.json renko/history/gold/coverage.json renko/history/gold/checksums.json renko/history/gold/checksums.sha256
+          git commit -m 'data(renko): publish sharded audited GOLD total-history manifest'
+          git push origin HEAD:feat/renko-gold-total-history-2003-2026
+      - uses: actions/upload-artifact@v4
+        with:
+          name: renko-gold-total-history-sharded-manifest
+          path: generated/
+          retention-days: 90
