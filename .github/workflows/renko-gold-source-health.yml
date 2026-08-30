@@ -1,0 +1,51 @@
+name: RENKO GOLD Dukascopy Source Health
+
+on:
+  push:
+    branches:
+      - feat/renko-gold-total-history-2003-2026
+    paths:
+      - '.github/workflows/renko-gold-source-health.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Probe representative Dukascopy XAU-USD fixed-hour endpoints serially
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,time,urllib.request,urllib.error
+          base='https://jetta.dukascopy.com/v1/ticks/XAU-USD'
+          paths=[
+            '2003/05/05/12','2004/03/15/12','2005/07/11/12',
+            '2024/04/15/12','2025/03/17/12','2026/08/28/12'
+          ]
+          out=[]
+          for p in paths:
+            u=f'{base}/{p}'
+            t=time.monotonic()
+            try:
+              req=urllib.request.Request(u,headers={'User-Agent':'copytolive-renko-gold-health/1.0','Accept':'application/json','Connection':'close'})
+              with urllib.request.urlopen(req,timeout=20) as r:
+                b=r.read(); status=r.status
+              elapsed=round(time.monotonic()-t,3)
+              x=json.loads(b)
+              row={'path':p,'status':status,'bytes':len(b),'ticks':len(x.get('times',[])),'latencySec':elapsed}
+            except urllib.error.HTTPError as e:
+              row={'path':p,'status':e.code,'latencySec':round(time.monotonic()-t,3)}
+            except Exception as e:
+              row={'path':p,'error':type(e).__name__+':'+str(e),'latencySec':round(time.monotonic()-t,3)}
+            out.append(row); print('GOLD_SOURCE_HEALTH_SAMPLE',json.dumps(row,separators=(',',':')),flush=True)
+            time.sleep(1)
+          good=[x for x in out if x.get('status')==200]
+          print('GOLD_SOURCE_HEALTH_SUMMARY',json.dumps({'samples':len(out),'http200':len(good),'maxLatencySec':max((x.get('latencySec',0) for x in out),default=0),'results':out},separators=(',',':')))
+          if len(good)<5:
+            raise SystemExit('Dukascopy source health degraded: fewer than 5/6 representative HTTP 200 samples')
+          PY
