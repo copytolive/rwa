@@ -1320,9 +1320,9 @@
   ],
   "removed_by_correlation_count": 25,
   "schema": "gold24-entry100-net3000-standard-lot-corr-v1",
-  "source_batch": 228,
-  "source_candidate_cursor": 22642557,
-  "source_run_id": "33281017237",
+  "source_batch": 229,
+  "source_candidate_cursor": 23070393,
+  "source_run_id": "33282340624",
   "status": "PASS",
   "unit": "1.0 XAUUSD standard lot = 100 GOLD units; exact re-backtest under canonical stressed Hyperliquid cost model"
 }
