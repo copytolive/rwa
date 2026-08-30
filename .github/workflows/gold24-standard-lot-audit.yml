@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/gold24-standard-lot-audit.yml'
       - 'backtest/gold24/mt5_standard_lot_audit.py'
+      - 'backtest/gold24/runtime_v11/latest_validation_summary.json'
 
 permissions:
   contents: write
