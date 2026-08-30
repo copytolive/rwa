@@ -35,5 +35,5 @@ function loadGoldHistory(){
 captureGoldChart();install();
 window.addEventListener('renko:tv-ready',()=>{install();loadGoldHistory()});
 window.addEventListener('renko:symbol-switch-end',install);
-window.RWARenkoConfirmedCountGuard={version:'1.1.0',rule:'visible-confirmed-count-is-full-engine-total-never-render-cap-plus-gold-chart-capture',total,install,stats,captureGoldChart,loadGoldHistory};
+window.RWARenkoConfirmedCountGuard={version:'1.0.0',rule:'visible-confirmed-count-is-full-engine-total-never-render-cap-plus-gold-chart-capture',total,install,stats,captureGoldChart,loadGoldHistory};
 })();
