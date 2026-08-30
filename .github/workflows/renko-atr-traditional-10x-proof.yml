@@ -1,0 +1,153 @@
+name: RENKO ATR + Traditional 10x 0ms Proof
+
+on:
+  push:
+    branches:
+      - feat/renko-gold-total-history-2003-2026
+    paths:
+      - .github/workflows/renko-atr-traditional-10x-proof.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+      - name: Run real-production 10x ATR + 10x Traditional proof
+        run: |
+          mkdir -p proof
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { chromium } from 'playwright';
+
+          const ATR_VALUES = [1,2,3,4,5,6,7,8,9,10];
+          const TRAD_VALUES = [0.01,0.02,0.05,0.1,0.2,0.5,1,2,5,10];
+          const url = 'https://copytolive.github.io/rwa/renko/?gold=1&proof=atr-traditional-10x';
+          const same = (a,b) => Math.abs(Number(a)-Number(b)) <= Math.max(1e-12, Math.abs(Number(b))*1e-10);
+          const browser = await chromium.launch({headless:true});
+          const context = await browser.newContext({viewport:{width:1672,height:941}, deviceScaleFactor:1});
+          await context.addInitScript(() => {
+            try { localStorage.removeItem('rwa_renko_tradingview_settings_v1'); } catch {}
+            try { localStorage.removeItem('rwa_renko_traditional_symbol_boxes_v1'); } catch {}
+          });
+          const page = await context.newPage();
+          const errors=[];
+          page.on('pageerror', e=>errors.push(String(e)));
+          page.on('console', m=>{ if(m.type()==='error') errors.push('console: '+m.text()); });
+          await page.addInitScript(() => {
+            window.__proofLongTasks=[];
+            try {
+              new PerformanceObserver(list => {
+                for (const e of list.getEntries()) window.__proofLongTasks.push({startTime:e.startTime,duration:e.duration});
+              }).observe({type:'longtask', buffered:true});
+            } catch {}
+          });
+          await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
+          await page.waitForFunction(() => document.documentElement.dataset.renkoGoldRecent==='true' && document.querySelector('#chartHost canvas'), null, {timeout:60000});
+          await page.waitForFunction(() => window.RWARenkoTV?.state?.symbol==='XAUUSD' && Number(window.RWARenkoTV?.state?.tickSize)>0 && (window.RWARenkoTV?.state?.closedBars?.length||0)>=1000, null, {timeout:60000});
+          const deployedSha = await page.evaluate(async()=> (await fetch('./deployment-sha.txt?cb='+Math.random(),{cache:'no-store'})).text());
+
+          async function measureSwitch(action, ready) {
+            const mark = await page.evaluate(() => performance.now());
+            await action();
+            await ready();
+            await page.waitForTimeout(180);
+            const end = await page.evaluate(() => performance.now());
+            const tasks = await page.evaluate(([a,b]) => (window.__proofLongTasks||[]).filter(x=>x.startTime>=a && x.startTime<=b), [mark,end]);
+            const tbt = tasks.reduce((s,x)=>s+Math.max(0,Number(x.duration)-50),0);
+            return {tbtMs:Number(tbt.toFixed(3)), longTasks:tasks};
+          }
+
+          const atr=[];
+          for (const n of ATR_VALUES) {
+            const perf = await measureSwitch(async()=>{
+              await page.locator('#atrLength').fill(String(n));
+              await page.locator('[data-apply-method="atr"]').click();
+            }, async()=>{
+              await page.waitForFunction(v => {
+                const d=document.documentElement.dataset,T=window.RWARenkoTV;
+                return d.atrControlStatus==='active' && Number(d.atrControlLength)===v && T?.settings?.method==='atr' && Number(T?.settings?.atrLength)===v;
+              }, n, {timeout:30000});
+            });
+            const state = await page.evaluate(() => {
+              const T=window.RWARenkoTV, d=document.documentElement.dataset;
+              return {method:T.settings.method,interval:T.settings.interval,length:Number(T.settings.atrLength),box:Number(T.state.box),atr:Number(T.state.atr),atrRaw:Number(T.state.atrRaw),tick:Number(T.state.tickSize),available:Number(T.state.closedBars.length),zeroFallback:d.atrZeroFallback==='true'};
+            });
+            const raw = Number.isFinite(state.atrRaw) ? state.atrRaw : state.atr;
+            const rawBoxPass = raw>0 ? same(raw,state.box) : (raw===0 && state.zeroFallback && same(state.box,state.tick));
+            const pass = state.method==='atr' && state.interval==='1s' && state.length===n && rawBoxPass && perf.tbtMs===0;
+            atr.push({value:n,...state,rawBoxPass,...perf,pass});
+            if(!pass) throw new Error('ATR '+n+' failed '+JSON.stringify(atr.at(-1)));
+          }
+
+          function overlay(title, rows, kind) {
+            return page.evaluate(({title,rows,kind,deployedSha})=>{
+              document.getElementById('__proofOverlay')?.remove();
+              const root=document.createElement('section');root.id='__proofOverlay';
+              root.style.cssText='position:fixed;z-index:999999;top:72px;right:18px;width:520px;max-height:820px;overflow:hidden;background:rgba(7,11,18,.96);border:1px solid #4d6077;border-radius:14px;padding:16px 18px;color:#eaf2ff;font:13px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace;box-shadow:0 18px 60px rgba(0,0,0,.55)';
+              const line=rows.map((r,i)=>`<div style="display:grid;grid-template-columns:30px 90px 1fr 80px;gap:8px;padding:6px 0;border-top:1px solid #202b39"><b>${String(i+1).padStart(2,'0')}</b><b>${kind==='ATR'?'ATR '+r.value:'BOX '+r.value}</b><span>${kind==='ATR'?'raw='+Number(r.atrRaw||r.atr).toPrecision(8):'active='+Number(r.box).toPrecision(8)}</span><strong style="text-align:right;color:#75f0a7">0 ms ✓</strong></div>`).join('');
+              root.innerHTML=`<div style="font:800 19px/1.2 system-ui;margin-bottom:7px">${title}</div><div style="color:#9fb2c8;margin-bottom:10px">XAUUSD · fixed 1s · production SHA ${deployedSha.trim().slice(0,12)}</div><div style="display:grid;grid-template-columns:30px 90px 1fr 80px;gap:8px;color:#8295aa;padding-bottom:6px"><span>#</span><span>VALUE</span><span>ACTIVE RESULT</span><span style="text-align:right">TBT</span></div>${line}<div style="margin-top:10px;padding-top:9px;border-top:1px solid #324155;color:#75f0a7;font-weight:800">10 / 10 PASS · MAIN-THREAD TOTAL BLOCKING TIME = 0 ms</div>`;
+              document.body.appendChild(root);
+            },{title,rows,kind,deployedSha});
+          }
+
+          await overlay('ATR — 10 ANGKA · 0 ms',atr,'ATR');
+          await page.screenshot({path:'proof/01-atr-10-values-0ms.png',fullPage:false});
+
+          const traditional=[];
+          for (const v of TRAD_VALUES) {
+            const perf = await measureSwitch(async()=>{
+              await page.locator('#traditionalBox').fill(String(v));
+              await page.locator('[data-apply-method="traditional"]').click();
+            }, async()=>{
+              await page.waitForFunction(v => {
+                const T=window.RWARenkoTV,d=document.documentElement.dataset;
+                return d.renkoTraditionalStatus==='active' && T?.settings?.method==='traditional' && Math.abs(Number(T?.state?.box)-Number(v))<1e-9;
+              }, v, {timeout:30000});
+            });
+            const state = await page.evaluate(() => {
+              const T=window.RWARenkoTV;
+              return {method:T.settings.method,interval:T.settings.interval,box:Number(T.state.box),tick:Number(T.state.tickSize),confirmed:Number(T.state.bricks?.length||0)};
+            });
+            const pass = state.method==='traditional' && state.interval==='1s' && same(state.box,v) && perf.tbtMs===0;
+            traditional.push({value:v,...state,...perf,pass});
+            if(!pass) throw new Error('Traditional '+v+' failed '+JSON.stringify(traditional.at(-1)));
+          }
+
+          await overlay('TRADITIONAL — 10 ANGKA · 0 ms',traditional,'TRADITIONAL');
+          await page.screenshot({path:'proof/02-traditional-10-values-0ms.png',fullPage:false});
+
+          await page.evaluate(({atr,traditional,deployedSha})=>{
+            document.getElementById('__proofOverlay')?.remove();
+            const root=document.createElement('section');root.id='__proofOverlay';
+            root.style.cssText='position:fixed;z-index:999999;inset:74px 18px auto auto;width:770px;background:rgba(7,11,18,.97);border:1px solid #4d6077;border-radius:14px;padding:16px 18px;color:#eaf2ff;font:12px/1.28 ui-monospace,SFMono-Regular,Menlo,monospace;box-shadow:0 18px 60px rgba(0,0,0,.55)';
+            const mk=(rows,kind)=>rows.map((r,i)=>`<div style="display:grid;grid-template-columns:25px 74px 1fr 68px;gap:5px;padding:4px 0;border-top:1px solid #202b39"><b>${i+1}</b><b>${r.value}</b><span>${kind==='ATR'?'box '+Number(r.box).toPrecision(7):'box '+Number(r.box).toPrecision(7)}</span><strong style="color:#75f0a7;text-align:right">0 ms ✓</strong></div>`).join('');
+            root.innerHTML=`<div style="font:800 20px/1.2 system-ui">RENKO PRODUCTION — 20 SWITCHES · ALL 0 ms TBT</div><div style="color:#9fb2c8;margin:5px 0 12px">XAUUSD · fixed 1s · deployed ${deployedSha.trim()}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px"><div><b style="font:800 15px system-ui">ATR · 10 ANGKA</b>${mk(atr,'ATR')}</div><div><b style="font:800 15px system-ui">TRADITIONAL · 10 ANGKA</b>${mk(traditional,'TRAD')}</div></div><div style="margin-top:11px;padding-top:9px;border-top:1px solid #324155;color:#75f0a7;font-weight:800">ATR 10/10 PASS · TRADITIONAL 10/10 PASS · TOTAL BLOCKING TIME 0 ms EACH</div>`;
+            document.body.appendChild(root);
+          },{atr,traditional,deployedSha});
+          await page.screenshot({path:'proof/03-combined-20-values-0ms.png',fullPage:false});
+
+          const report={url,deployedSha:deployedSha.trim(),generatedAt:new Date().toISOString(),symbol:'XAUUSD',interval:'1s',atr,traditional,errors,pass:errors.length===0&&atr.every(x=>x.pass)&&traditional.every(x=>x.pass)};
+          fs.writeFileSync('proof/proof.json',JSON.stringify(report,null,2));
+          console.log('RENKO_ATR_TRADITIONAL_10X_0MS_PASS',JSON.stringify({deployedSha:report.deployedSha,atr:atr.length,traditional:traditional.length,pass:report.pass}));
+          if(!report.pass) process.exit(1);
+          await browser.close();
+          NODE
+      - name: Upload proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: renko-atr-traditional-10x-0ms-proof
+          path: proof/
+          retention-days: 90
