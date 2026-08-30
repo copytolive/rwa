@@ -5,6 +5,11 @@ This is a thin orchestration layer around renko_gold_full_backfill.py. It keeps 
 already-verified decoder/aggregator unchanged, records whether each requested
 Dukascopy Jetta hour was active, provider-empty, expected market-closed, or
 unavailable, and writes a small year summary beside the monthly gzip assets.
+
+A provider 404/410 is not automatically called a source gap: when that exact hour
+falls inside the deterministic XAU closed-session schedule it is recorded as an
+explained market-closed not-found hour. A not-found hour outside the schedule stays
+source-unavailable and therefore prevents final backfillComplete=true.
 """
 from __future__ import annotations
 
@@ -77,7 +82,7 @@ def build_year(year: int, side: str, start: dt.datetime, end: dt.datetime, worke
     def recording_fetch(url: str, retries: int = 5):
         blob = original_fetch(url, retries)
         if blob is None:
-            state = "unavailable"
+            state = "not-found"
         else:
             try:
                 payload = json.loads(blob)
@@ -103,41 +108,63 @@ def build_year(year: int, side: str, start: dt.datetime, end: dt.datetime, worke
                 observed = dict(statuses)
             if not info:
                 raise RuntimeError(f"requested month {year:04d}-{month:02d} produced no bars")
-            market_closed, provider_empty, unavailable, invalid = [], [], [], []
+
+            market_closed_empty: list[str] = []
+            market_closed_not_found: list[str] = []
+            provider_empty: list[str] = []
+            unavailable: list[str] = []
+            invalid: list[str] = []
             active = 0
             for url, state in sorted(observed.items()):
                 h = parse_hour_url(url)
                 key = h.isoformat().replace("+00:00", "Z")
+                closed = expected_market_closed(h)
                 if state == "active":
                     active += 1
                 elif state == "empty":
-                    (market_closed if expected_market_closed(h) else provider_empty).append(key)
-                elif state == "unavailable":
-                    unavailable.append(key)
+                    (market_closed_empty if closed else provider_empty).append(key)
+                elif state == "not-found":
+                    (market_closed_not_found if closed else unavailable).append(key)
                 else:
                     invalid.append(key)
+
             if invalid:
                 raise RuntimeError(f"invalid source payload hours in {year:04d}-{month:02d}: {invalid[:5]}")
-            if len(unavailable) != int(info.get("notFoundHours", -1)):
-                raise RuntimeError("source unavailable count mismatch")
-            if len(market_closed) + len(provider_empty) != int(info.get("emptySourceHours", -1)):
-                raise RuntimeError("source empty count mismatch")
+            raw_not_found = int(info.get("notFoundHours", -1))
+            raw_empty = int(info.get("emptySourceHours", -1))
+            if len(market_closed_not_found) + len(unavailable) != raw_not_found:
+                raise RuntimeError(
+                    f"source not-found accounting mismatch {year:04d}-{month:02d}: "
+                    f"closed={len(market_closed_not_found)} unavailable={len(unavailable)} raw={raw_not_found}"
+                )
+            if len(market_closed_empty) + len(provider_empty) != raw_empty:
+                raise RuntimeError(
+                    f"source empty accounting mismatch {year:04d}-{month:02d}: "
+                    f"closed={len(market_closed_empty)} providerEmpty={len(provider_empty)} raw={raw_empty}"
+                )
+
+            market_closed = sorted(set(market_closed_empty + market_closed_not_found))
             info.update({
-                "sourceStatusSchema": "dukascopy-hour-status-v1",
+                "sourceStatusSchema": "dukascopy-hour-status-v2",
                 "activeSourceHours": active,
                 "marketClosedHours": len(market_closed),
+                "marketClosedEmptyHours": len(market_closed_empty),
+                "marketClosedNotFoundHours": len(market_closed_not_found),
                 "providerEmptyHours": len(provider_empty),
                 "sourceUnavailableHours": len(unavailable),
                 "marketClosedHourRanges": compress_hours(market_closed),
+                "marketClosedEmptyHourRanges": compress_hours(market_closed_empty),
+                "marketClosedNotFoundHourRanges": compress_hours(market_closed_not_found),
                 "providerEmptyHourRanges": compress_hours(provider_empty),
                 "sourceUnavailableHourRanges": compress_hours(unavailable),
+                "sourceStatusAccountingPass": True,
             })
             months.append(info)
     finally:
         GOLD.fetch_bytes = original_fetch
 
     summary = {
-        "schema": "renko-gold-year-v3",
+        "schema": "renko-gold-year-v4",
         "provider": "Dukascopy",
         "transport": "Jetta compact hourly ticks",
         "instrumentCode": "XAU-USD",
@@ -152,9 +179,14 @@ def build_year(year: int, side: str, start: dt.datetime, end: dt.datetime, worke
         "barCount": sum(int(m["barCount"]) for m in months),
         "bytes": sum(int(m["bytes"]) for m in months),
         "sourceHours": sum(int(m["sourceHours"]) for m in months),
+        "notFoundHours": sum(int(m["notFoundHours"]) for m in months),
+        "emptySourceHours": sum(int(m["emptySourceHours"]) for m in months),
         "marketClosedHours": sum(int(m["marketClosedHours"]) for m in months),
+        "marketClosedEmptyHours": sum(int(m["marketClosedEmptyHours"]) for m in months),
+        "marketClosedNotFoundHours": sum(int(m["marketClosedNotFoundHours"]) for m in months),
         "providerEmptyHours": sum(int(m["providerEmptyHours"]) for m in months),
         "sourceUnavailableHours": sum(int(m["sourceUnavailableHours"]) for m in months),
+        "sourceStatusAccountingPass": all(bool(m.get("sourceStatusAccountingPass")) for m in months),
     }
     path = outdir / f"summary-{year}.json"
     path.write_text(json.dumps(summary, indent=2) + "\n")
@@ -168,7 +200,7 @@ def main():
     p.add_argument("--side", choices=["bid", "ask", "mid"], required=True)
     p.add_argument("--start", default=ORIGIN.isoformat())
     p.add_argument("--end", required=True)
-    p.add_argument("--workers", type=int, default=8)
+    p.add_argument("--workers", type=int, default=16)
     p.add_argument("--output-dir", required=True)
     a = p.parse_args()
     start = dt.datetime.fromisoformat(a.start.replace("Z", "+00:00"))
