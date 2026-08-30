@@ -1,0 +1,14 @@
+RENKO FINAL PUBLIC PRODUCTION CLOSURE V2
+
+Purpose: neutral same-SHA closure trigger after zero-ATR minimum-tick geometry acceptance was corrected.
+
+Closure contract:
+- run all RENKO hard gates on this exact SHA;
+- deploy this exact SHA to GitHub Pages;
+- require public production marker / byte parity to this exact SHA;
+- preserve fixed 1s XAUT provider and seven-length ATR matrix;
+- preserve GOLD exact-source earliest timestamp contract;
+- preserve desktop/mobile 50-pair ATR and Traditional controls;
+- preserve zero blocking, finite writes, anti-pulse stability, and bounded render geometry.
+
+This file is runtime-neutral and exists only to trigger one authoritative full closure matrix.
