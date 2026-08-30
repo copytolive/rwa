@@ -1,5 +1,6 @@
 MULTIMETHOD_V1_DISCOVERY_KICK
 candidate_count=5000
-base_seed=2026083102
+base_seed=2026083103
 source_batch=LATEST
-reason=rerun after cumulative-library fallback fix d0ba2550; preserve existing discovered LIBRARY rows and search 5000 new configs
+requested_at=2026-08-31T03:52:00+07:00
+reason=refresh adaptive discovery from latest authoritative canonical PASS after batch 243; preserve cumulative discovered LIBRARY rows; enforce Entry>=100 / NP>=USD20000 reporting and Corr<=0.50 authority
