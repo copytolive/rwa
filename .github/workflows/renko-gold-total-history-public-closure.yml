@@ -1,0 +1,161 @@
+name: RENKO GOLD Total History Public Closure
+
+on:
+  push:
+    branches:
+      - feat/renko-gold-total-history-2003-2026
+    paths:
+      - 'renko/history/gold/full-manifest.json'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  validate-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Final data-contract and lightweight-Git gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check renko/renko-chart-bridge.js
+          node --check renko/renko-gold-total-history.js
+          node --check renko/renko-gold-total-history-worker.js
+          test -s renko/history/gold/full-manifest.json
+          test -s renko/history/gold/coverage.json
+          test -s renko/history/gold/checksums.json
+          python3 - <<'PY'
+          import datetime as dt,json
+          m=json.load(open('renko/history/gold/full-manifest.json'))
+          c=json.load(open('renko/history/gold/coverage.json'))
+          s=json.load(open('renko/history/gold/checksums.json'))
+          assert m['schema']=='renko-gold-s1-full-manifest-v1'
+          assert m['provider']=='Dukascopy' and m['instrumentCode']=='XAU-USD' and m['symbol']=='XAUUSD'
+          assert m['interval']=='1s' and m['priceSide']=='bid' and float(m['tickSize'])==0.001
+          assert m['backfillComplete'] is True and c['backfillComplete'] is True
+          assert c['originWitnessSatisfied'] is True and c['allMonthlyAuditsPass'] is True
+          assert c['sourceUnavailableHours']==0 and c['duplicateSeconds']==0 and c['conflictingOHLC']==0
+          assert c['missingMonths']==[] and c['extraMonths']==[] and c['overlaps']==[]
+          months=m['months']; assert months and months[0]['year']==2003 and months[0]['month']==5
+          assert months[0]['earliestSecond']==1052092863
+          assert all(x['auditPass'] and x['sourceUnavailableHours']==0 and x['notFoundHours']==0 for x in months)
+          assert len(s['assets'])==len(months)==c['publishedMonths']==c['expectedMonths']
+          assert len({(x['year'],x['month']) for x in months})==len(months)
+          assert len({x['assetSha256'] for x in months})==len(months)
+          assert all(x['assetUrl'].startswith('https://media.githubusercontent.com/media/copytolive/rwa/') for x in months)
+          print('GOLD_TOTAL_FINAL_DATA_GATE_PASS',json.dumps({'months':len(months),'bars':c['barCount'],'bytes':c['compressedBytes'],'earliestSecond':c['earliestSecond'],'latestSecond':c['latestSecond'],'version':m['dataVersion']},separators=(',',':')))
+          PY
+          if find . -type f -name 'xauusd-s1-*.csv.gz' -print -quit | grep -q .; then echo 'large canonical CSV gzip leaked into Pages tree'; exit 1; fi
+          printf '%s\n' "$GITHUB_SHA" > renko-deployment-sha.txt
+          printf '%s\n' "$GITHUB_SHA" > renko/deployment-sha.txt
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Deploy exact audited total-history branch to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  public-browser:
+    needs: validate-and-deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for exact production SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in {1..60}; do
+            got="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/deployment-sha.txt?cb=$RANDOM" 2>/dev/null || true)"
+            if [ "$got" = "$GITHUB_SHA" ]; then echo "GOLD_PRODUCTION_SHA_PASS $got"; exit 0; fi
+            sleep 5
+          done
+          echo 'Pages did not converge to expected SHA'; exit 1
+      - name: Install Chromium
+        shell: bash
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+      - name: Desktop newest lazy-prepend cache origin and viewport proof
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { chromium } from 'playwright';
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage({viewport:{width:1672,height:941}});const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+          const started=Date.now();await page.goto('https://copytolive.github.io/rwa/renko/?gold=1&totalClosure=1',{waitUntil:'domcontentloaded',timeout:60000});
+          await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecent==='true'&&document.querySelector('#chartHost canvas'),{timeout:60000});
+          const firstPaintMs=Date.now()-started;
+          const result=await page.evaluate(async()=>{
+            const H=window.RWARenkoGoldTotalHistory,T=window.RWARenkoTV;if(!H||!T)throw new Error('total runtime missing');
+            const m=await H.loadManifest(true);if(!m.backfillComplete)throw new Error('public manifest incomplete');
+            const recentOldest=Math.floor(T.state.closedBars[0].openTime/1000),ts=window.__RWARenkoChart.timeScale();
+            const beforeRange=ts.getVisibleRange();await H.prefetchPreviousFor(recentOldest);const afterRange=ts.getVisibleRange();
+            if(beforeRange&&afterRange&&(Number(beforeRange.from)!==Number(afterRange.from)||Number(beforeRange.to)!==Number(afterRange.to)))throw new Error('prefetch moved viewport');
+            for(let i=0;i<4;i++){const ok=await H.prependOlder({panOlder:false});if(!ok)throw new Error('repeated prepend failed '+i);await new Promise(r=>setTimeout(r,80));}
+            const bars=T.state.closedBars;if(bars.length>140000)throw new Error('bounded RAM source-bar cap exceeded');
+            for(let i=1;i<bars.length;i++)if(bars[i].openTime<=bars[i-1].openTime)throw new Error('duplicate/non-monotonic loaded second');
+            const origin=await H.decodeMonth(m.months[0]);if(origin.sec[0]!==1052092863)throw new Error('true origin mismatch '+origin.sec[0]);
+            const latest=m.months.at(-1),latestBytes=await H.getBytes(latest);if(latestBytes.byteLength!==Number(latest.bytes))throw new Error('latest canonical bytes mismatch');
+            return {months:m.months.length,dataVersion:m.dataVersion,backfillComplete:m.backfillComplete,recentOldest,loadedOldest:Math.floor(bars[0].openTime/1000),memoryBars:bars.length,originSecond:origin.sec[0],latestSecond:latest.latestSecond,stats:{...H.stats},provider:T.state.historyMeta.provider,interval:T.state.historyMeta.interval};
+          });
+          if(errors.length)throw new Error('page errors '+JSON.stringify(errors));
+          console.log('GOLD_PUBLIC_DESKTOP_TOTAL_HISTORY_PASS',JSON.stringify({firstPaintMs,...result}));
+          await page.reload({waitUntil:'domcontentloaded',timeout:60000});await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecent==='true',{timeout:60000});
+          const cache=await page.evaluate(async()=>{const H=window.RWARenkoGoldTotalHistory,T=window.RWARenkoTV;await H.loadManifest();const before=H.stats.idbHits;await H.prefetchPreviousFor(Math.floor(T.state.closedBars[0].openTime/1000));return{before,after:H.stats.idbHits,network:H.stats.networkFetches}});
+          if(cache.after<=cache.before)throw new Error('persistent IndexedDB cache miss after production reload '+JSON.stringify(cache));
+          console.log('GOLD_PUBLIC_CACHE_RELOAD_PASS',JSON.stringify(cache));await browser.close();
+          NODE
+      - name: Mobile production first-paint and canonical identity proof
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { chromium,devices } from 'playwright';const browser=await chromium.launch({headless:true});const page=await browser.newPage({...devices['iPhone 13']});const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+          const t=Date.now();await page.goto('https://copytolive.github.io/rwa/renko/?gold=1&totalClosureMobile=1',{waitUntil:'domcontentloaded',timeout:60000});await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecent==='true'&&document.querySelector('#chartHost canvas'),{timeout:60000});
+          const x=await page.evaluate(async()=>{const H=window.RWARenkoGoldTotalHistory,T=window.RWARenkoTV,m=await H.loadManifest();return{symbol:T.state.symbol,status:T.state.status,bars:T.state.closedBars.length,provider:m.provider,instrument:m.instrumentCode,interval:m.interval,side:m.priceSide,complete:m.backfillComplete,months:m.months.length,canvas:!!document.querySelector('#chartHost canvas')}});
+          if(x.symbol!=='XAUUSD'||x.provider!=='Dukascopy'||x.instrument!=='XAU-USD'||x.interval!=='1s'||x.side!=='bid'||!x.complete||x.bars>100000||!x.canvas||errors.length)throw new Error(JSON.stringify({x,errors}));
+          console.log('GOLD_PUBLIC_MOBILE_TOTAL_HISTORY_PASS',JSON.stringify({firstPaintMs:Date.now()-t,...x}));await browser.close();
+          NODE
+
+  public-backtest-reader:
+    needs: validate-and-deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stream public canonical manifest across a year boundary with ATR context
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/gold-reader-cache
+          python3 - <<'PY'
+          import pathlib,sys
+          sys.path.insert(0,'scripts')
+          from renko_gold_canonical_reader import CanonicalGoldReader,WilderATRState
+          url='https://copytolive.github.io/rwa/renko/history/gold/full-manifest.json'
+          r=CanonicalGoldReader.from_path_or_url(url,pathlib.Path('/tmp/gold-reader-cache'))
+          state=WilderATRState(14);count=0;cross=None;prev_year=None;first=last=None
+          for b in r.iter_bars(1735603200,1735862400):
+              atr=state.update(b);year=__import__('datetime').datetime.fromtimestamp(b.unix_second,__import__('datetime').timezone.utc).year
+              if first is None:first=b.unix_second
+              if prev_year is not None and year!=prev_year and cross is None:cross={'second':b.unix_second,'atrTicks':atr,'stateCount':state.count}
+              prev_year=year;last=b.unix_second;count+=1
+          assert count>10000 and cross and cross['atrTicks'] is not None and cross['stateCount']>14
+          ident=r.reproducibility_identity();assert ident['dataVersion'] and ident['versionSha256'] and len(ident['assets'])>200
+          print('GOLD_PUBLIC_BACKTEST_STREAM_PASS',{'bars':count,'first':first,'last':last,'crossYear':cross,'dataVersion':ident['dataVersion'],'assets':len(ident['assets'])})
+          PY
