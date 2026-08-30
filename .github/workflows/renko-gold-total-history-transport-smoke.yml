@@ -1,0 +1,79 @@
+name: RENKO GOLD Total History Transport Smoke
+
+on:
+  push:
+    branches:
+      - feat/renko-gold-total-history-2003-2026
+    paths:
+      - '.github/workflows/renko-gold-total-history-transport-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  month-and-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build August 2026 canonical month with bounded RAM
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p smoke
+          python3 - <<'PY'
+          import datetime as dt, importlib.util, json, pathlib
+          p='scripts/renko_gold_full_backfill.py'
+          spec=importlib.util.spec_from_file_location('gold',p); m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+          info=m.build_month(2026,8,pathlib.Path('smoke'),'bid',dt.datetime(2026,8,1,tzinfo=dt.timezone.utc),dt.datetime(2026,8,28,23,59,59,tzinfo=dt.timezone.utc),12)
+          assert info and info['barCount']>100000 and info['assetSha256']
+          pathlib.Path('smoke/info.json').write_text(json.dumps(info,indent=2)+'\n')
+          print('GOLD_MONTH_TRANSPORT_BUILD_PASS',json.dumps(info,separators=(',',':')))
+          PY
+      - name: Upload month to lightweight Release store
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload renko-gold-history-v1 smoke/xauusd-s1-2026-08.csv.gz --clobber
+      - name: Verify Release bytes and gzip locally
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL='https://github.com/copytolive/rwa/releases/download/renko-gold-history-v1/xauusd-s1-2026-08.csv.gz'
+          curl -fL --retry 5 --retry-delay 2 "$URL" -o /tmp/public.csv.gz
+          test "$(sha256sum /tmp/public.csv.gz | awk '{print $1}')" = "$(python3 -c 'import json;print(json.load(open("smoke/info.json"))["assetSha256"])')"
+          gzip -t /tmp/public.csv.gz
+          echo "GOLD_RELEASE_BYTE_PASS $(stat -c%s /tmp/public.csv.gz) bytes"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Browser-origin CORS fetch proof
+        shell: bash
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+          node --input-type=module <<'NODE'
+          import { chromium } from 'playwright';
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage();
+          await page.goto('https://copytolive.github.io/rwa/renko/?goldTransportSmoke=1',{waitUntil:'domcontentloaded',timeout:60000});
+          const url='https://github.com/copytolive/rwa/releases/download/renko-gold-history-v1/xauusd-s1-2026-08.csv.gz';
+          const result=await page.evaluate(async url=>{
+            const r=await fetch(url,{cache:'no-store'});
+            const bytes=new Uint8Array(await r.arrayBuffer());
+            if(!r.ok||bytes.length<1000)throw new Error(`fetch ${r.status} ${bytes.length}`);
+            if(bytes[0]!==0x1f||bytes[1]!==0x8b)throw new Error('not gzip');
+            const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+            const text=await new Response(stream).text();
+            const lines=text.trim().split('\n');
+            return {status:r.status,bytes:bytes.length,rows:lines.length-1,header:lines[0],first:lines[1],last:lines.at(-1)};
+          },url);
+          if(result.header!=='unix_second,open_tick,high_tick,low_tick,close_tick'||result.rows<100000)throw new Error(JSON.stringify(result));
+          console.log('GOLD_BROWSER_RELEASE_FETCH_PASS',JSON.stringify(result));
+          await browser.close();
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: renko-gold-total-history-transport-smoke
+          path: smoke/info.json
+          retention-days: 30
