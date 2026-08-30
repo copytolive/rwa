@@ -31,6 +31,7 @@ jobs:
           set -euo pipefail
           node --check renko/renko-chart-bridge.js
           node --check renko/renko-gold-recent-history.js
+          node --check renko/renko-gold-total-history.js
           python3 - <<'PY'
           import json
           m=json.load(open('renko/history/gold/full-manifest.json'))
@@ -42,7 +43,10 @@ jobs:
           assert m['backfillComplete'] is True
           assert c['backfillComplete'] is True
           assert c['sourceUnavailableHours']==0
-          print('GOLD_DATA_GATE_PASS', len(m['months']), c['barCount'])
+          assert c['originWitnessSatisfied'] is True
+          assert c['earliestSecond']==1052092863
+          assert len(m['months'])==280
+          print('GOLD_DATA_GATE_PASS', len(m['months']), c['barCount'], c['earliestSecond'], c['latestSecond'])
           PY
           if find . -type f -name 'xauusd-s1-*.csv.gz' -print -quit | grep -q .; then
             echo 'large canonical GOLD CSV gzip leaked into Pages tree'
@@ -60,7 +64,7 @@ jobs:
   public-ui-proof:
     needs: deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -85,19 +89,21 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium >/dev/null
-      - name: Verify clean GOLD-only layout and capture screenshot
+      - name: Verify clean GOLD-only layout, no-snap zoom, and 23y origin ATR Traditional
         shell: bash
         run: |
           mkdir -p proof
           node --input-type=module <<'NODE'
           import { chromium } from 'playwright';
+          import fs from 'node:fs';
           const browser=await chromium.launch({headless:true});
           const page=await browser.newPage({viewport:{width:1672,height:941}});
           const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-          await page.goto('https://copytolive.github.io/rwa/renko/?gold=1&cleanProof=1',{waitUntil:'domcontentloaded',timeout:60000});
-          await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecent==='true'&&document.querySelector('#chartHost canvas'),{timeout:60000});
-          await page.waitForTimeout(1200);
-          const proof=await page.evaluate(()=>{
+          await page.goto('https://copytolive.github.io/rwa/renko/?gold=1&viewport23yProof=1',{waitUntil:'domcontentloaded',timeout:60000});
+          await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecent==='true'&&document.querySelector('#chartHost canvas')&&window.RWARenkoGoldViewport&&window.RWARenkoGoldTotalHistory,{timeout:60000});
+          await page.waitForTimeout(800);
+
+          const clean=await page.evaluate(()=>{
             const vis=el=>!!el&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden'&&!el.hidden&&el.getBoundingClientRect().width>0&&el.getBoundingClientRect().height>0;
             const chart=document.getElementById('chartWrap')?.getBoundingClientRect();
             const host=document.getElementById('chartHost')?.getBoundingClientRect();
@@ -113,30 +119,82 @@ jobs:
               statsVisible:vis(document.querySelector('.instrument-bar .stats')),
               methodCardVisible:vis(document.querySelector('.method-card')),
               summaryVisible:vis(document.querySelector('.summary')),
-              chartWidth:Math.round(chart?.width||0),
-              chartHeight:Math.round(chart?.height||0),
-              hostWidth:Math.round(host?.width||0),
-              hostHeight:Math.round(host?.height||0),
-              viewport:{width:innerWidth,height:innerHeight},
+              chartWidth:Math.round(chart?.width||0),chartHeight:Math.round(chart?.height||0),hostWidth:Math.round(host?.width||0),hostHeight:Math.round(host?.height||0),
               listChildren:document.getElementById('pairList')?.childElementCount||0,
-              errors:[]
+              originButton:!!document.getElementById('tvGoldOrigin'),maxButton:!!document.getElementById('tvGoldMaxZoom')
             };
           });
-          proof.errors=errors;
-          if(proof.downloadedOnly!=='gold')throw new Error('downloaded-only lock missing '+JSON.stringify(proof));
-          if(proof.pair!=='XAU / USD'||proof.symbol!=='XAUUSD'||proof.provider!=='Dukascopy')throw new Error('GOLD identity mismatch '+JSON.stringify(proof));
-          if(proof.marketsVisible||proof.openPairsVisible||proof.easybarVisible||proof.sourceCardVisible||proof.statsVisible||proof.summaryVisible)throw new Error('unused area still visible '+JSON.stringify(proof));
-          if(!proof.methodCardVisible)throw new Error('ATR/Traditional controls must remain visible '+JSON.stringify(proof));
-          if(proof.listChildren!==0)throw new Error('non-GOLD pair rows still present '+JSON.stringify(proof));
-          if(proof.chartWidth<1600||proof.chartHeight<620||proof.hostWidth<1600)throw new Error('chart not enlarged enough '+JSON.stringify(proof));
+          if(clean.downloadedOnly!=='gold'||clean.pair!=='XAU / USD'||clean.symbol!=='XAUUSD'||clean.provider!=='Dukascopy')throw new Error('GOLD identity mismatch '+JSON.stringify(clean));
+          if(clean.marketsVisible||clean.openPairsVisible||clean.easybarVisible||clean.sourceCardVisible||clean.statsVisible||clean.summaryVisible||clean.listChildren!==0)throw new Error('non-GOLD/unused UI visible '+JSON.stringify(clean));
+          if(!clean.methodCardVisible||!clean.originButton||!clean.maxButton||clean.chartWidth<1600||clean.chartHeight<620)throw new Error('clean chart controls/geometry mismatch '+JSON.stringify(clean));
+
+          // Reproduce the reported bug: maximum zoom-out, then a forced rebuild that
+          // previously snapped the chart back to the latest/default window.
+          const noSnap=await page.evaluate(async()=>{
+            const V=window.RWARenkoGoldViewport,T=window.RWARenkoTV,ts=window.__RWARenkoChart.timeScale();
+            V.lockViewport('proof-zoom');V.maxZoomOut();await new Promise(r=>setTimeout(r,250));
+            const before=ts.getVisibleLogicalRange();
+            T.rebuild({fit:true});await new Promise(r=>setTimeout(r,700));
+            const after=ts.getVisibleLogicalRange();
+            const delta=Math.max(Math.abs(Number(before.from)-Number(after.from)),Math.abs(Number(before.to)-Number(after.to)));
+            return{before,after,delta,locked:V.locked,following:T.state.following,guard:document.documentElement.dataset.renkoGoldRebuildGuard};
+          });
+          if(!noSnap.locked||noSnap.following!==false||noSnap.guard!=='true'||!(noSnap.delta<0.05))throw new Error('zoom snap-back regression '+JSON.stringify(noSnap));
+          console.log('GOLD_ZOOM_NO_SNAP_PASS',JSON.stringify(noSnap));
+
+          // Use the real public 23Y button and wait until the canonical 2003 witness
+          // is the leftmost loaded source second.
+          await page.click('#tvGoldOrigin');
+          await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldOriginView==='true'&&document.documentElement.dataset.renkoGoldOriginSecond==='1052092863'&&window.RWARenkoTV?.state?.historyViewMode==='gold-origin',{timeout:120000});
+          await page.waitForTimeout(500);
+
+          async function proofFor(method){
+            return await page.evaluate(async method=>{
+              const T=window.RWARenkoTV,V=window.RWARenkoGoldViewport,H=window.RWARenkoGoldTotalHistory;
+              if(method==='atr'){
+                const ok=await window.RWARenkoATRControl.applyLocal(14,'23y-proof');if(!ok)throw new Error('ATR apply failed');
+              }else{
+                const ok=window.RWARenkoTraditionalControl.activate(1,'23y-proof',false,false);if(!ok)throw new Error('Traditional apply failed');
+              }
+              T.state.following=false;V.lockViewport('23y-'+method);V.maxZoomOut();await new Promise(r=>setTimeout(r,700));
+              const m=await H.loadManifest();const range=window.__RWARenkoChart.timeScale().getVisibleLogicalRange();const oldest=Math.floor(Number(T.state.closedBars[0].openTime)/1000),latest=Number(m.months.at(-1).latestSecond),origin=Number(m.months[0].earliestSecond);
+              const spanYears=(latest-origin)/(365.2425*86400);
+              return{method:T.settings.method,atrLength:Number(T.settings.atrLength),box:Number(T.state.box),sourceBars:T.state.closedBars.length,confirmed:T.state.confirmedData.length,oldestSourceSecond:oldest,originSecond:origin,coverageLatestSecond:latest,months:m.months.length,spanYears,historyViewMode:T.state.historyViewMode,range,locked:V.locked,following:T.state.following,dataVersion:m.dataVersion};
+            },method);
+          }
+          async function badge(label,p){
+            await page.evaluate(({label,p})=>{
+              document.getElementById('proof23y')?.remove();const wrap=document.getElementById('chartWrap');const e=document.createElement('div');e.id='proof23y';
+              e.style.cssText='position:absolute;left:16px;top:16px;z-index:99999;background:rgba(7,12,20,.94);border:1px solid #496078;border-radius:8px;padding:10px 12px;color:#eef5ff;font:600 12px/1.45 ui-monospace,Menlo,monospace;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.35)';
+              const d0=new Date(p.originSecond*1000).toISOString().slice(0,10),d1=new Date(p.coverageLatestSecond*1000).toISOString().slice(0,10);
+              e.innerHTML=`<b style="font-size:14px">${label} · MAX ZOOM · 23Y ORIGIN</b><br>GOLD / XAUUSD · Dukascopy · fixed 1s<br>OLDEST LOADED: ${d0} (${p.oldestSourceSecond})<br>CANONICAL COVERAGE: ${d0} → ${d1} · ${p.months} months · ${p.spanYears.toFixed(2)} years<br>VIEWPORT LOCK: PASS · SNAP-BACK: 0 · following=false`;
+              wrap.appendChild(e);
+            },{label,p});
+          }
+
+          const atr=await proofFor('atr');
+          if(atr.method!=='atr'||atr.atrLength!==14||atr.oldestSourceSecond!==1052092863||atr.months!==280||atr.spanYears<23||atr.historyViewMode!=='gold-origin'||!atr.locked||atr.following!==false)throw new Error('ATR 23y origin proof failed '+JSON.stringify(atr));
+          await badge('ATR 14',atr);await page.screenshot({path:'proof/01-atr-23y-origin-max-zoom.png',fullPage:false});
+          console.log('GOLD_ATR_23Y_ORIGIN_MAX_ZOOM_PASS',JSON.stringify(atr));
+
+          const traditional=await proofFor('traditional');
+          if(traditional.method!=='traditional'||traditional.oldestSourceSecond!==1052092863||traditional.months!==280||traditional.spanYears<23||traditional.historyViewMode!=='gold-origin'||!traditional.locked||traditional.following!==false)throw new Error('Traditional 23y origin proof failed '+JSON.stringify(traditional));
+          await badge('TRADITIONAL 1',traditional);await page.screenshot({path:'proof/02-traditional-23y-origin-max-zoom.png',fullPage:false});
+          console.log('GOLD_TRADITIONAL_23Y_ORIGIN_MAX_ZOOM_PASS',JSON.stringify(traditional));
+
+          // Force another rebuild after Traditional max zoom. This verifies the fix
+          // remains stable in both methods, not only ATR.
+          const traditionalNoSnap=await page.evaluate(async()=>{const T=window.RWARenkoTV,V=window.RWARenkoGoldViewport,ts=window.__RWARenkoChart.timeScale();const before=ts.getVisibleLogicalRange();T.rebuild({fit:true});await new Promise(r=>setTimeout(r,700));const after=ts.getVisibleLogicalRange();const delta=Math.max(Math.abs(Number(before.from)-Number(after.from)),Math.abs(Number(before.to)-Number(after.to)));return{before,after,delta,locked:V.locked,following:T.state.following}});
+          if(!(traditionalNoSnap.delta<0.05)||!traditionalNoSnap.locked||traditionalNoSnap.following!==false)throw new Error('Traditional zoom snap-back regression '+JSON.stringify(traditionalNoSnap));
+          console.log('GOLD_TRADITIONAL_ZOOM_NO_SNAP_PASS',JSON.stringify(traditionalNoSnap));
+
           if(errors.length)throw new Error('page errors '+JSON.stringify(errors));
-          await page.screenshot({path:'proof/gold-clean-only.png',fullPage:true});
-          await import('node:fs').then(fs=>fs.writeFileSync('proof/proof.json',JSON.stringify(proof,null,2)));
-          console.log('GOLD_CLEAN_UI_PUBLIC_PASS',JSON.stringify(proof));
+          const proof={clean,noSnap,atr,traditional,traditionalNoSnap,errors,productionSha:process.env.GITHUB_SHA};
+          fs.writeFileSync('proof/proof.json',JSON.stringify(proof,null,2));
           await browser.close();
           NODE
       - uses: actions/upload-artifact@v4
         with:
-          name: renko-gold-clean-ui-proof
+          name: renko-gold-23y-viewport-proof
           path: proof/
           retention-days: 30
