@@ -194,3 +194,5 @@ jobs:
           path: ${{ env.OUT_DIR }}/
           if-no-files-found: error
           retention-days: 14
+
+# manual refresh trigger for authoritative batch 239
