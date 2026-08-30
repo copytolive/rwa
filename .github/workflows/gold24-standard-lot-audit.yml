@@ -11,6 +11,7 @@ on:
     paths:
       - '.github/workflows/gold24-standard-lot-audit.yml'
       - 'backtest/gold24/mt5_standard_lot_audit.py'
+      - 'backtest/gold24/mt5_standard_lot_audit_20k.py'
       - 'backtest/gold24/runtime_v11/latest_validation_summary.json'
 
 permissions:
@@ -90,14 +91,14 @@ jobs:
           print(f'canonical restore count PASS: {n}')
           PY
 
-      - name: Re-backtest positive entry100 candidates at 1 standard lot
+      - name: Re-backtest positive Entry100 candidates at 1 standard lot and apply USD20k
         working-directory: backtest/gold24
         run: |
           set -euo pipefail
           rm -rf "$OUT_DIR"
-          python mt5_standard_lot_audit.py --state-dir "$STATE_DIR" --out-dir "$OUT_DIR"
+          python mt5_standard_lot_audit_20k.py --state-dir "$STATE_DIR" --out-dir "$OUT_DIR"
 
-      - name: Verify standard-lot and strict USD/correlation audit
+      - name: Verify standard-lot and strict USD20k correlation audit
         shell: bash
         run: |
           set -euo pipefail
@@ -105,12 +106,13 @@ jobs:
           import json, os, pathlib
           out=pathlib.Path(os.environ['OUT_DIR'])
           x=json.loads((out/'latest_standard_lot_audit.json').read_text())
-          s=json.loads((out/'latest_entry100_net3000_standard_lot.json').read_text())
+          s=json.loads((out/'latest_entry100_net20000_standard_lot.json').read_text())
           assert x['status']=='PASS'
           assert x['count'] > 0
           assert x['report_minimum_trades']==100
           assert x['standard_lot_reference']['contract_size_oz']==100.0
           assert x['standard_lot_reference']['gold_units']==100.0
+          assert x['standard_lot_reference']['pip_size_usd']==0.01
           assert x['standard_lot_reference']['pip_value_usd']==1.0
           for r in x['ranking']:
               assert r['trades'] >= 100
@@ -118,21 +120,27 @@ jobs:
               assert r['standard_lot_net_profit_usd_same_cost_model'] > 0
           assert s['status']=='PASS'
           assert s['minimum_trades']==100
-          assert s['minimum_net_profit_usd_standard_lot']==3000.0
+          assert s['minimum_net_profit_usd_standard_lot']==20000.0
+          assert s['exact_rebacktest_qty_100'] is True
+          assert s['simple_relabel_forbidden'] is True
+          assert s['canonical_qty_gold_units']==1.0
+          assert s['audited_qty_gold_units']==100.0
+          assert s['gold_units_per_standard_lot']==100.0
           assert s['economic_count_before_correlation'] >= s['count']
-          assert s['count'] > 0, 'strict list unexpectedly empty after correct standard-lot re-backtest'
+          assert s['count'] > 0, 'USD20k list unexpectedly empty after exact standard-lot re-backtest'
           assert s['correlation_rule']['wording']=='Maks 0.50 (pearson, log-return equity). Metode: per-symbol greedy filter. > 0.50 → yang kualitas lebih rendah DIHAPUS.'
           for r in s['ranking']:
               assert r['trades'] >= 100
-              assert r['standard_lot_net_profit_usd_same_cost_model'] >= 3000.0
+              assert r['standard_lot_net_profit_usd_same_cost_model'] >= 20000.0
               assert r['correlation_max'] <= 0.50 + 1e-12
               assert r['correlation_gate']=='PASS'
-          print('standard-lot entry100 + USD3000 + correlation verification: PASS')
+          print('standard-lot Entry100 + USD20000 + correlation verification: PASS')
           print(json.dumps({
               'positive_entry100': x['count'],
               'economic_before_corr': s['economic_count_before_correlation'],
               'removed_corr': s['removed_by_correlation_count'],
               'strict_after_corr': s['count'],
+              'source_run_id': s['source_run_id'],
           }, indent=2))
           PY
 
@@ -158,7 +166,7 @@ jobs:
               echo 'standard-lot runtime already current'
               break
             fi
-            git commit -m 'chore(gold24): publish entry100 standard-lot audit [skip ci]'
+            git commit -m 'chore(gold24): publish Entry100 USD20k standard-lot audit [skip ci]'
             if git push origin HEAD:main; then
               echo 'standard-lot audit publish: PASS'
               break
