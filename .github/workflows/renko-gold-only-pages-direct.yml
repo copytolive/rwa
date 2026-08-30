@@ -1,0 +1,45 @@
+name: RENKO GOLD Only Direct Pages Release
+
+on:
+  push:
+    branches:
+      - fix/renko-gold-only-public-20260830
+    paths:
+      - '.github/workflows/renko-gold-only-pages-direct.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy-gold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate and stamp exact release
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s renko/renko-gold-recent-history.js
+          test -s renko/history/gold/manifest.json
+          node --check renko/renko-gold-recent-history.js
+          grep -Fq 'renko-gold-recent-history.js?v=1' renko/index.html
+          python3 - <<'PY'
+          import json
+          m=json.load(open('renko/history/gold/manifest.json'))
+          assert m['provider']=='Dukascopy' and m['instrumentCode']=='XAU-USD' and m['interval']=='1s'
+          assert len(m['chunks'])==12 and m['chunks'][0]['date']=='2026-08-28'
+          assert sum(int(x['barCount']) for x in m['chunks'])==673253
+          PY
+          printf '%s\n' "$GITHUB_SHA" > renko-deployment-sha.txt
+          printf '%s\n' "$GITHUB_SHA" > renko/deployment-sha.txt
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Deploy exact GOLD branch to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
