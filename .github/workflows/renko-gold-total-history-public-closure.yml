@@ -110,7 +110,7 @@ jobs:
             const recentOldest=Math.floor(T.state.closedBars[0].openTime/1000),ts=window.__RWARenkoChart.timeScale();
             const beforeRange=ts.getVisibleRange();await H.prefetchPreviousFor(recentOldest);const afterRange=ts.getVisibleRange();
             if(beforeRange&&afterRange&&(Number(beforeRange.from)!==Number(afterRange.from)||Number(beforeRange.to)!==Number(afterRange.to)))throw new Error('prefetch moved viewport');
-            for(let i=0;i<4;i++){const ok=await H.prependOlder({panOlder:false});if(!ok)throw new Error('repeated prepend failed '+i);await new Promise(r=>setTimeout(r,80));}
+            for(let i=0;i<4;i++){const ok=await H.prependOlder({panOlder:true});if(!ok)throw new Error('repeated prepend failed '+i);await new Promise(r=>setTimeout(r,80));}
             const bars=T.state.closedBars;if(bars.length>140000)throw new Error('bounded RAM source-bar cap exceeded');
             for(let i=1;i<bars.length;i++)if(bars[i].openTime<=bars[i-1].openTime)throw new Error('duplicate/non-monotonic loaded second');
             const origin=await H.decodeMonth(m.months[0]);if(origin.sec[0]!==1052092863)throw new Error('true origin mismatch '+origin.sec[0]);
@@ -136,7 +136,7 @@ jobs:
           NODE
 
   public-backtest-reader:
-    needs: validate-and-deploy
+    needs: public-browser
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
