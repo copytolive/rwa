@@ -5,14 +5,16 @@ The verified RENKO GOLD origin/recent packs use the public Jetta Dukascopy sourc
 This backfill therefore uses the same hourly endpoint family instead of changing
 providers during deep history.
 
-The repository stays light: monthly gzip CSV packs are uploaded as GitHub Release
-assets, never committed as large Git blobs and never bundled into first paint.
-Raw compact tick responses are discarded after aggregation, while each month keeps
-a deterministic SHA256 provenance digest over the exact source bytes that were read.
+The repository stays light: monthly gzip CSV packs are published as large-data
+objects outside normal Git blobs and are never bundled into first paint. Raw compact
+tick responses are discarded after aggregation, while each month keeps a
+deterministic SHA256 provenance digest over the exact source bytes that were read.
 
 CSV schema (gzip):
   unix_second,open_tick,high_tick,low_tick,close_tick\n
 Prices are integer multiples of 0.001 USD. Empty source seconds are not fabricated.
+Transient transport errors are retried aggressively but are never reclassified as
+empty/not-found source data.
 """
 from __future__ import annotations
 
@@ -23,16 +25,20 @@ import gzip
 import hashlib
 import json
 import pathlib
+import random
+import threading
 import time
 import urllib.error
 import urllib.request
 
 BASE = "https://jetta.dukascopy.com/v1/ticks/XAU-USD"
-UA = "copytolive-renko-gold-history/2.0"
+UA = "copytolive-renko-gold-history/2.1"
 UTC = dt.timezone.utc
 ORIGIN = dt.datetime(2003, 5, 5, tzinfo=UTC)
 DEFAULT_END = dt.datetime(2026, 8, 28, 23, 59, 59, tzinfo=UTC)
 TICK_SCALE = 1000  # canonical integer price unit = 0.001 USD
+RECOVERY_GATE = threading.Semaphore(2)
+RECOVERY_ATTEMPTS = 8
 
 
 def month_days(year: int, month: int):
@@ -47,22 +53,76 @@ def hour_url(day: dt.date, hour: int) -> str:
     return f"{BASE}/{day.year:04d}/{day.month:02d}/{day.day:02d}/{hour:02d}"
 
 
+def _fetch_once(url: str, timeout: float) -> bytes | None:
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": UA,
+            "Accept": "application/json",
+            "Connection": "close",
+            "Cache-Control": "no-cache",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        data = r.read()
+        return data if data else None
+
+
 def fetch_bytes(url: str, retries: int = 5) -> bytes | None:
+    """Fetch one exact Dukascopy hour without turning transport errors into gaps.
+
+    The fast phase runs with normal parallelism. If every fast attempt fails for a
+    transport/server reason, recovery is admitted through a tiny global semaphore
+    so a transient Dukascopy/CDN slowdown cannot create a retry stampede. Only an
+    explicit HTTP 404/410 is returned as source not-found. Any unresolved transport
+    failure still aborts the build, preserving source truth.
+    """
     last = None
-    for attempt in range(retries):
+    fast_attempts = max(1, int(retries))
+    for attempt in range(fast_attempts):
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
-            with urllib.request.urlopen(req, timeout=25) as r:
-                data = r.read()
-                return data if data else None
+            return _fetch_once(url, timeout=30 + min(10, attempt * 2))
         except urllib.error.HTTPError as e:
             if e.code in (404, 410):
                 return None
             last = e
+            retry_after = e.headers.get("Retry-After") if getattr(e, "headers", None) else None
+            if retry_after:
+                try:
+                    time.sleep(min(30.0, max(0.0, float(retry_after))))
+                    continue
+                except Exception:
+                    pass
         except Exception as e:
             last = e
-        time.sleep(min(10.0, 0.6 * (2 ** attempt)))
-    raise RuntimeError(f"download failed after {retries} attempts: {url}: {last}")
+        if attempt + 1 < fast_attempts:
+            time.sleep(min(8.0, 0.5 * (2 ** attempt)) + random.uniform(0.05, 0.35))
+
+    print(f"GOLD_FETCH_RECOVERY_ENTER {url} last={type(last).__name__}:{last}", flush=True)
+    with RECOVERY_GATE:
+        for attempt in range(RECOVERY_ATTEMPTS):
+            try:
+                data = _fetch_once(url, timeout=min(75.0, 40.0 + attempt * 5.0))
+                print(f"GOLD_FETCH_RECOVERY_PASS {url} attempt={attempt + 1}", flush=True)
+                return data
+            except urllib.error.HTTPError as e:
+                if e.code in (404, 410):
+                    print(f"GOLD_FETCH_RECOVERY_NOT_FOUND {url} code={e.code}", flush=True)
+                    return None
+                last = e
+                retry_after = e.headers.get("Retry-After") if getattr(e, "headers", None) else None
+                if retry_after:
+                    try:
+                        time.sleep(min(30.0, max(0.0, float(retry_after))))
+                    except Exception:
+                        pass
+            except Exception as e:
+                last = e
+            if attempt + 1 < RECOVERY_ATTEMPTS:
+                time.sleep(min(20.0, 1.0 * (2 ** attempt)) + random.uniform(0.1, 0.8))
+    raise RuntimeError(
+        f"download failed after {fast_attempts}+{RECOVERY_ATTEMPTS} attempts: {url}: {last}"
+    )
 
 
 def decode_jetta_ticks(blob: bytes):
