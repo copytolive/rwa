@@ -14,23 +14,23 @@ permissions:
 
 concurrency:
   group: renko-gold-total-history-v1
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   RELEASE_TAG: renko-gold-history-v1
   START_ISO: '2003-05-05T00:00:00+00:00'
-  END_ISO: '2026-08-30T23:59:59+00:00'
+  END_ISO: '2026-08-28T23:59:59+00:00'
 
 jobs:
   calibrate:
-    name: Calibrate exact Dukascopy decoder
+    name: Calibrate exact Dukascopy Jetta decoder
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - name: Syntax check
         run: python3 -m py_compile scripts/renko_gold_full_backfill.py
-      - name: Prove raw BI5 decoder against existing verified GOLD fixed-1s pack
+      - name: Prove Jetta decoder against existing verified GOLD fixed-1s pack
         run: |
           set -euo pipefail
           mkdir -p out-calibration
@@ -61,7 +61,7 @@ jobs:
           else
             gh release create "$RELEASE_TAG" \
               --title 'RENKO GOLD canonical fixed-1s history v1' \
-              --notes 'Canonical XAU/USD Dukascopy tick-derived fixed-1s OHLC packs. Monthly gzip CSV assets keep Git and GitHub Pages light; manifest/checksums make the dataset reproducible for RENKO chart history and backtests.'
+              --notes 'Canonical XAU/USD Dukascopy Jetta tick-derived fixed-1s OHLC packs. Monthly gzip CSV assets keep Git and GitHub Pages light; manifest/checksums make the dataset reproducible for RENKO chart history and backtests.'
           fi
 
   backfill:
@@ -85,12 +85,10 @@ jobs:
         run: |
           set -euo pipefail
           SIDE="$(python3 -c 'import json;print(json.load(open("calibration/calibration.json"))["priceSide"])')"
-          SCALE="$(python3 -c 'import json;print(json.load(open("calibration/calibration.json"))["sourceScale"])')"
           mkdir -p "out/${{ matrix.year }}"
           python3 scripts/renko_gold_full_backfill.py backfill-year \
             --year "${{ matrix.year }}" \
             --side "$SIDE" \
-            --source-scale "$SCALE" \
             --start "$START_ISO" \
             --end "$END_ISO" \
             --workers 6 \
@@ -136,7 +134,7 @@ jobs:
           set -euo pipefail
           mkdir -p final
           python3 - <<'PY'
-          import datetime as dt, glob, hashlib, json, pathlib
+          import glob, hashlib, json, pathlib
           tag='renko-gold-history-v1'
           summaries=[json.load(open(p)) for p in sorted(glob.glob('summaries/summary-*.json'))]
           assert len(summaries)==24, len(summaries)
@@ -160,13 +158,14 @@ jobs:
               m['url']=f'https://github.com/copytolive/rwa/releases/download/{tag}/{m["asset"]}'
               chain.update(f'{m["year"]:04d}-{m["month"]:02d} {m["assetSha256"]}\n'.encode())
           manifest={
-              'schema':'renko-gold-total-history-manifest-v1',
+              'schema':'renko-gold-total-history-manifest-v2',
               'provider':'Dukascopy','instrumentCode':'XAU-USD','symbol':'XAUUSD','interval':'1s',
-              'sourceModel':'provider-native tick -> exact selected price side -> UTC epoch-second OHLC; empty seconds are not fabricated',
-              'start':'2003-05-05T00:00:00Z','end':'2026-08-30T23:59:59Z','backfillComplete':True,
+              'sourceTransport':'Dukascopy Jetta compact hourly ticks',
+              'sourceModel':'provider-native tick -> verified selected price side -> UTC epoch-second OHLC; empty seconds are not fabricated',
+              'start':'2003-05-05T00:00:00Z','end':'2026-08-28T23:59:59Z','backfillComplete':True,
               'storage':'GitHub Release monthly gzip CSV assets; not stored as Git blobs or bundled into first page load',
               'releaseTag':tag,'releaseUrl':f'https://github.com/copytolive/rwa/releases/tag/{tag}',
-              'tickSize':0.001,'priceSide':cal['priceSide'],'sourceScale':cal['sourceScale'],
+              'tickSize':0.001,'priceSide':cal['priceSide'],
               'referenceParity':{'date':cal['referenceDate'],'exactRatio':cal['exactRatio'],'compared':cal['compared']},
               'monthCount':len(months),'barCount':sum(m['barCount'] for m in months),
               'compressedBytes':sum(m['bytes'] for m in months),'datasetChainSha256':chain.hexdigest(),
@@ -174,11 +173,11 @@ jobs:
           }
           pathlib.Path('final/manifest.json').write_text(json.dumps(manifest,separators=(',',':'))+'\n')
           pathlib.Path('final/coverage.json').write_text(json.dumps({
-              'schema':'renko-gold-total-coverage-v1','backfillComplete':True,'monthCount':len(months),
+              'schema':'renko-gold-total-coverage-v2','backfillComplete':True,'monthCount':len(months),
               'barCount':manifest['barCount'],'compressedBytes':manifest['compressedBytes'],
               'firstMonth':'2003-05','lastMonth':'2026-08','datasetChainSha256':manifest['datasetChainSha256']
           },indent=2)+'\n')
-          print('RENKO_GOLD_TOTAL_HISTORY_PASS',json.dumps({k:manifest[k] for k in ('monthCount','barCount','compressedBytes','datasetChainSha256','priceSide','sourceScale')}))
+          print('RENKO_GOLD_TOTAL_HISTORY_PASS',json.dumps({k:manifest[k] for k in ('monthCount','barCount','compressedBytes','datasetChainSha256','priceSide')}))
           PY
       - name: Verify every release asset exists and matches recorded size
         env:
@@ -186,7 +185,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gh api --paginate "repos/${GITHUB_REPOSITORY}/releases/tags/$RELEASE_TAG" > final/release.json
+          gh api "repos/${GITHUB_REPOSITORY}/releases/tags/$RELEASE_TAG" > final/release.json
           python3 - <<'PY'
           import json
           m=json.load(open('final/manifest.json')); r=json.load(open('final/release.json'))
