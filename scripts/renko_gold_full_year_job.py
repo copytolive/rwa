@@ -10,6 +10,11 @@ A provider 404/410 is not automatically called a source gap: when that exact hou
 falls inside the deterministic XAU closed-session schedule it is recorded as an
 explained market-closed not-found hour. A not-found hour outside the schedule stays
 source-unavailable and therefore prevents final backfillComplete=true.
+
+Transient download failure of one hour does not throw away the rest of a month:
+successful exact source responses already written by the canonical builder are
+reused from its bounded per-month disk cache on a retry. Explicit no-source results
+are kept only as tiny in-memory sentinels. No source row is fabricated.
 """
 from __future__ import annotations
 
@@ -29,12 +34,18 @@ SPEC.loader.exec_module(GOLD)
 UTC = dt.timezone.utc
 NY = ZoneInfo("America/New_York")
 ORIGIN = dt.datetime(2003, 5, 5, tzinfo=UTC)
+MONTH_BUILD_ATTEMPTS = 3
 
 
 def parse_hour_url(url: str) -> dt.datetime:
     p = url.rstrip("/").split("/")
     y, m, d, h = map(int, p[-4:])
     return dt.datetime(y, m, d, h, tzinfo=UTC)
+
+
+def source_cache_path(outdir: pathlib.Path, url: str) -> pathlib.Path:
+    h = parse_hour_url(url)
+    return outdir / f".source-{h.year:04d}-{h.month:02d}" / f"{h.date().isoformat()}-{h.hour:02d}.json"
 
 
 def expected_market_closed(hour_utc: dt.datetime) -> bool:
@@ -78,9 +89,9 @@ def build_year(year: int, side: str, start: dt.datetime, end: dt.datetime, worke
     original_fetch = GOLD.fetch_bytes
     status_lock = threading.Lock()
     statuses: dict[str, str] = {}
+    negative_cache: set[str] = set()
 
-    def recording_fetch(url: str, retries: int = 5):
-        blob = original_fetch(url, retries)
+    def classify(url: str, blob: bytes | None):
         if blob is None:
             state = "not-found"
         else:
@@ -93,6 +104,22 @@ def build_year(year: int, side: str, start: dt.datetime, end: dt.datetime, worke
             statuses[url] = state
         return blob
 
+    def recording_fetch(url: str, retries: int = 5):
+        # A prior successful attempt has already been persisted by GOLD.build_month.
+        # Reuse exact bytes instead of re-downloading hundreds of completed hours.
+        p = source_cache_path(outdir, url)
+        if p.exists() and p.stat().st_size:
+            return classify(url, p.read_bytes())
+        with status_lock:
+            known_none = url in negative_cache
+        if known_none:
+            return classify(url, None)
+        blob = original_fetch(url, retries)
+        if blob is None:
+            with status_lock:
+                negative_cache.add(url)
+        return classify(url, blob)
+
     GOLD.fetch_bytes = recording_fetch
     months = []
     try:
@@ -103,11 +130,32 @@ def build_year(year: int, side: str, start: dt.datetime, end: dt.datetime, worke
                 continue
             with status_lock:
                 statuses.clear()
-            info = GOLD.build_month(year, month, outdir, side, start, end, workers)
+                negative_cache.clear()
+
+            info = None
+            last_error = None
+            worker_plan = [max(1, workers), max(4, workers // 2), 4]
+            for attempt in range(MONTH_BUILD_ATTEMPTS):
+                attempt_workers = worker_plan[min(attempt, len(worker_plan)-1)]
+                try:
+                    info = GOLD.build_month(year, month, outdir, side, start, end, attempt_workers)
+                    break
+                except Exception as e:
+                    last_error = e
+                    asset = outdir / f"xauusd-s1-{year:04d}-{month:02d}.csv.gz"
+                    asset.unlink(missing_ok=True)
+                    print(
+                        f"GOLD_MONTH_RETRY year={year} month={month:02d} attempt={attempt+1}/{MONTH_BUILD_ATTEMPTS} "
+                        f"workers={attempt_workers} error={type(e).__name__}:{e}",
+                        flush=True,
+                    )
+            if info is None:
+                if last_error is not None:
+                    raise RuntimeError(f"month {year:04d}-{month:02d} failed after {MONTH_BUILD_ATTEMPTS} resumable attempts") from last_error
+                raise RuntimeError(f"requested month {year:04d}-{month:02d} produced no bars")
+
             with status_lock:
                 observed = dict(statuses)
-            if not info:
-                raise RuntimeError(f"requested month {year:04d}-{month:02d} produced no bars")
 
             market_closed_empty: list[str] = []
             market_closed_not_found: list[str] = []
@@ -164,7 +212,7 @@ def build_year(year: int, side: str, start: dt.datetime, end: dt.datetime, worke
         GOLD.fetch_bytes = original_fetch
 
     summary = {
-        "schema": "renko-gold-year-v4",
+        "schema": "renko-gold-year-v5",
         "provider": "Dukascopy",
         "transport": "Jetta compact hourly ticks",
         "instrumentCode": "XAU-USD",
