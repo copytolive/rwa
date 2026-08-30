@@ -1,0 +1,18 @@
+{
+  "active_count": 0,
+  "cheap_scale_invariant_prefilter_count": 5,
+  "correlation_wording": "Maks 0.50 (pearson, log-return equity). Metode: per-symbol greedy filter. > 0.50 \u2192 yang kualitas lebih rendah DIHAPUS.",
+  "elite_count": 0,
+  "exact_full_metrics_pre_correlation_count": 1,
+  "full_archive_rows_scanned": 62472,
+  "library_count": 1,
+  "removed_by_correlation_count": 0,
+  "source_batch": 241,
+  "source_candidate_cursor": 27842557,
+  "source_run_id": "33329163612",
+  "source_with_trades": 61153,
+  "status": "PASS",
+  "tier_counts": {
+    "LIBRARY": 1
+  }
+}
