@@ -1,0 +1,84 @@
+name: RENKO GOLD Canonical Backtest Reader Smoke
+
+on:
+  push:
+    branches:
+      - feat/renko-gold-total-history-2003-2026
+    paths:
+      - 'scripts/renko_gold_canonical_reader.py'
+      - '.github/workflows/renko-gold-canonical-reader-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reader:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build immutable August smoke manifest from canonical LFS object
+        shell: bash
+        run: |
+          set -euo pipefail
+          DATA_SHA="$(git ls-remote origin refs/heads/renko-gold-lfs-data | awk '{print $1}')"
+          test -n "$DATA_SHA"
+          python3 - "$DATA_SHA" <<'PY'
+          import json,sys
+          sha=sys.argv[1]
+          m={
+            'schema':'renko-gold-s1-full-manifest-v1-smoke',
+            'dataVersion':'dukascopy-xauusd-s1-august-smoke',
+            'versionSha256':'3d4a26e7aeacb89a72afebdc6a03b2d45da28d80de387336e58b5a26eb18bb8c',
+            'provider':'Dukascopy','instrumentCode':'XAU-USD','symbol':'XAUUSD','interval':'1s',
+            'priceSide':'bid','tickSize':0.001,'backfillComplete':False,
+            'months':[{
+              'year':2026,'month':8,'asset':'xauusd-s1-2026-08.csv.gz',
+              'assetUrl':f'https://media.githubusercontent.com/media/copytolive/rwa/{sha}/xauusd-s1-2026-08.csv.gz',
+              'dataCommitSha':sha,'storage':'git-lfs-media','format':'csv.gz',
+              'barCount':1317014,'earliestSecond':1785708001,'latestSecond':1787950798,
+              'tickSize':0.001,'priceSide':'bid','bytes':10919195,
+              'assetSha256':'3d4a26e7aeacb89a72afebdc6a03b2d45da28d80de387336e58b5a26eb18bb8c',
+              'sourceDigestSha256':'ead18e5883f91b4141460216f26cad2197bdd1d97bc7c66c67f3e8c77350f106'
+            }]
+          }
+          open('/tmp/smoke-manifest.json','w').write(json.dumps(m,indent=2)+'\n')
+          print('SMOKE_DATA_SHA',sha)
+          PY
+      - name: Stream exact canonical rows and carry Wilder ATR state
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/gold-cache
+          python3 scripts/renko_gold_canonical_reader.py \
+            --manifest /tmp/smoke-manifest.json \
+            --cache-dir /tmp/gold-cache \
+            --start 2026-08-28T19:00:00Z \
+            --end 2026-08-28T20:59:58Z \
+            --atr-length 14 | tee /tmp/reader.txt
+          grep -q RENKO_GOLD_CANONICAL_READER_PASS /tmp/reader.txt
+      - name: Prove cache reuse and reproducibility identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          before="$(stat -c '%Y:%s' /tmp/gold-cache/xauusd-s1-2026-08.csv.gz)"
+          python3 scripts/renko_gold_canonical_reader.py \
+            --manifest /tmp/smoke-manifest.json \
+            --cache-dir /tmp/gold-cache \
+            --start 2026-08-28T20:00:00Z \
+            --end 2026-08-28T20:10:00Z >/tmp/reader-reuse.txt
+          after="$(stat -c '%Y:%s' /tmp/gold-cache/xauusd-s1-2026-08.csv.gz)"
+          test "$before" = "$after"
+          python3 scripts/renko_gold_canonical_reader.py --manifest /tmp/smoke-manifest.json --identity > /tmp/identity.json
+          grep -q '3d4a26e7aeacb89a72afebdc6a03b2d45da28d80de387336e58b5a26eb18bb8c' /tmp/identity.json
+          echo GOLD_BACKTEST_READER_CACHE_AND_IDENTITY_PASS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: renko-gold-canonical-reader-smoke
+          path: |
+            /tmp/smoke-manifest.json
+            /tmp/reader.txt
+            /tmp/reader-reuse.txt
+            /tmp/identity.json
+          retention-days: 90
