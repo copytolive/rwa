@@ -1,0 +1,63 @@
+name: RENKO Final ATR + Traditional 0ms Screenshots
+
+on:
+  push:
+    branches:
+      - feat/renko-gold-total-history-2003-2026
+    paths:
+      - '.github/workflows/renko-atr-traditional-screenshot-final.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  screenshot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+      - name: Capture final real-production proof
+        shell: bash
+        run: |
+          mkdir -p proof
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { chromium } from 'playwright';
+          const EXPECTED='d0f7d949e99aa04ac85ff739ddc93b0891c8c42f';
+          const values=[1,2,3,4,5,6,7,8,9,10];
+          const same=(a,b)=>Math.abs(Number(a)-Number(b))<=Math.max(1e-12,Math.abs(Number(b))*1e-10);
+          const browser=await chromium.launch({headless:true});
+          const ctx=await browser.newContext({viewport:{width:1672,height:941},deviceScaleFactor:1});
+          await ctx.addInitScript(()=>{try{localStorage.removeItem('rwa_renko_tradingview_settings_v1')}catch{};try{localStorage.removeItem('rwa_renko_traditional_symbol_boxes_v1')}catch{};window.__proofLongTasks=[];try{new PerformanceObserver(l=>{for(const e of l.getEntries())window.__proofLongTasks.push({startTime:e.startTime,duration:e.duration})}).observe({type:'longtask',buffered:true})}catch{}});
+          const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text())});
+          await page.goto('https://copytolive.github.io/rwa/renko/?gold=1&proof=final-10x-0ms',{waitUntil:'domcontentloaded',timeout:60000});
+          await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecent==='true'&&document.querySelector('#chartHost canvas')&&window.RWARenkoEngineFastPath?.version==='1.0.0-full-history-zero-allocation',null,{timeout:60000});
+          const deployedSha=(await page.evaluate(async()=>await (await fetch('./deployment-sha.txt?cb='+Math.random(),{cache:'no-store'})).text())).trim();
+          if(deployedSha!==EXPECTED)throw new Error('production SHA changed: '+deployedSha);
+          async function measured(action,ready){await page.evaluate(()=>window.__proofLongTasks=[]);const a=await page.evaluate(()=>performance.now());await action();await ready();await page.waitForTimeout(160);const b=await page.evaluate(()=>performance.now());const tasks=await page.evaluate(([a,b])=>(window.__proofLongTasks||[]).filter(x=>x.startTime>=a&&x.startTime<=b),[a,b]);return{tbtMs:Number(tasks.reduce((s,x)=>s+Math.max(0,Number(x.duration)-50),0).toFixed(3)),longTasks:tasks}}
+          async function state(){return page.evaluate(()=>{const T=window.RWARenkoTV,d=document.documentElement.dataset;return{method:T.settings.method,interval:T.settings.interval,source:T.settings.source,symbol:T.state.symbol,length:Number(T.settings.atrLength),box:Number(T.state.box),atr:Number(T.state.atr),atrRaw:Number(T.state.atrRaw),tick:Number(T.state.tickSize),available:Number(T.state.closedBars.length),confirmed:Number(T.state.confirmed?.length||0),zeroFallback:d.atrZeroFallback==='true'}})}
+          async function overlay(title,rows,kind){await page.evaluate(({title,rows,kind,deployedSha})=>{document.getElementById('__proofOverlay')?.remove();const root=document.createElement('section');root.id='__proofOverlay';root.style.cssText='position:fixed;z-index:999999;top:68px;right:16px;width:570px;background:rgba(5,9,15,.97);border:1px solid #53677f;border-radius:14px;padding:15px 18px;color:#edf5ff;font:13px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;box-shadow:0 18px 60px rgba(0,0,0,.58)';const html=rows.map((r,i)=>`<div style="display:grid;grid-template-columns:28px 82px 1fr 76px;gap:8px;padding:6px 0;border-top:1px solid #202c3a"><b>${String(i+1).padStart(2,'0')}</b><b>${kind==='ATR'?'ATR '+r.value:'BOX '+r.value}</b><span>${Number(r.box).toPrecision(9)}</span><strong style="text-align:right;color:${r.pass?'#75f0a7':'#ff7a8a'}">${r.tbtMs} ms ${r.pass?'✓':'✕'}</strong></div>`).join('');const pass=rows.every(x=>x.pass);root.innerHTML=`<div style="font:800 19px/1.2 system-ui">${title}</div><div style="color:#9fb2c8;margin:5px 0 10px">XAUUSD · fixed 1s CLOSE · SHA ${deployedSha.slice(0,12)}</div><div style="display:grid;grid-template-columns:28px 82px 1fr 76px;gap:8px;color:#8397ad;padding-bottom:5px"><span>#</span><span>VALUE</span><span>ACTIVE BOX</span><span style="text-align:right">TBT</span></div>${html}<div style="margin-top:10px;padding-top:9px;border-top:1px solid #324155;color:${pass?'#75f0a7':'#ff7a8a'};font-weight:900">${pass?'10 / 10 PASS · EACH SWITCH = 0 ms TBT':'NOT PASS'}</div>`;document.body.appendChild(root)},{title,rows,kind,deployedSha})}
+          const atr=[];
+          for(const v of values){const perf=await measured(async()=>{await page.locator('#atrLength').fill(String(v));await page.locator('[data-apply-method="atr"]').click()},async()=>await page.waitForFunction(n=>{const T=window.RWARenkoTV,d=document.documentElement.dataset;return d.atrControlStatus==='active'&&Number(d.atrControlLength)===n&&T?.settings?.method==='atr'},v,{timeout:30000}));const s=await state(),raw=Number.isFinite(s.atrRaw)?s.atrRaw:s.atr,rawBoxPass=raw>0?same(raw,s.box):(raw===0&&s.zeroFallback&&same(s.box,s.tick));atr.push({value:v,...s,rawBoxPass,...perf,pass:s.method==='atr'&&s.symbol==='XAUUSD'&&s.interval==='1s'&&s.source==='close'&&s.length===v&&rawBoxPass&&perf.tbtMs===0})}
+          await overlay('ATR — 10 ANGKA · 0 ms',atr,'ATR');await page.screenshot({path:'proof/01-atr-10-angka-0ms.png'});
+          const traditional=[];
+          for(const v of values){const perf=await measured(async()=>{await page.locator('#traditionalBox').fill(String(v));await page.locator('[data-apply-method="traditional"]').click()},async()=>await page.waitForFunction(n=>{const T=window.RWARenkoTV,d=document.documentElement.dataset;return d.renkoTraditionalStatus==='active'&&T?.settings?.method==='traditional'&&Math.abs(Number(T.state.box)-Number(n))<1e-9},v,{timeout:30000}));const s=await state();traditional.push({value:v,...s,...perf,pass:s.method==='traditional'&&s.symbol==='XAUUSD'&&s.interval==='1s'&&s.source==='close'&&same(s.box,v)&&perf.tbtMs===0})}
+          await overlay('TRADITIONAL — 10 ANGKA · 0 ms',traditional,'TRAD');await page.screenshot({path:'proof/02-traditional-10-angka-0ms.png'});
+          await page.evaluate(({atr,traditional,deployedSha})=>{document.getElementById('__proofOverlay')?.remove();const root=document.createElement('section');root.id='__proofOverlay';root.style.cssText='position:fixed;z-index:999999;top:66px;right:14px;width:800px;background:rgba(5,9,15,.97);border:1px solid #53677f;border-radius:14px;padding:15px 18px;color:#edf5ff;font:12px/1.28 ui-monospace,SFMono-Regular,Menlo,monospace;box-shadow:0 18px 60px rgba(0,0,0,.58)';const mk=rows=>rows.map((r,i)=>`<div style="display:grid;grid-template-columns:22px 60px 1fr 65px;gap:5px;padding:4px 0;border-top:1px solid #202c3a"><b>${i+1}</b><b>${r.value}</b><span>${Number(r.box).toPrecision(8)}</span><strong style="text-align:right;color:${r.pass?'#75f0a7':'#ff7a8a'}">${r.tbtMs} ms ${r.pass?'✓':'✕'}</strong></div>`).join('');const pass=atr.every(x=>x.pass)&&traditional.every(x=>x.pass);root.innerHTML=`<div style="font:800 20px/1.2 system-ui">RENKO PRODUCTION — 10 ATR + 10 TRADITIONAL</div><div style="color:#9fb2c8;margin:5px 0 11px">XAUUSD · fixed 1s CLOSE · deployed ${deployedSha}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px"><div><b style="font:800 15px system-ui">ATR · 1–10</b>${mk(atr)}</div><div><b style="font:800 15px system-ui">TRADITIONAL · 1–10</b>${mk(traditional)}</div></div><div style="margin-top:10px;padding-top:9px;border-top:1px solid #324155;color:${pass?'#75f0a7':'#ff7a8a'};font-weight:900">${pass?'20 / 20 PASS · EVERY MEASURED SWITCH = 0 ms MAIN-THREAD TBT':'NOT PASS'}</div>`;document.body.appendChild(root)},{atr,traditional,deployedSha});await page.screenshot({path:'proof/03-combined-20-angka-0ms.png'});
+          const report={generatedAt:new Date().toISOString(),deployedSha,symbol:'XAUUSD',interval:'1s',source:'close',fastPath:'1.0.0-full-history-zero-allocation',atr,traditional,errors,pass:errors.length===0&&atr.every(x=>x.pass)&&traditional.every(x=>x.pass)};fs.writeFileSync('proof/proof.json',JSON.stringify(report,null,2));console.log('FINAL_10X_0MS_SCREENSHOT_PASS',JSON.stringify({sha:deployedSha,atr:atr.filter(x=>x.pass).length,traditional:traditional.filter(x=>x.pass).length,errors:errors.length,pass:report.pass}));await browser.close();if(!report.pass)process.exit(1);
+          NODE
+      - name: Upload final screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: renko-final-atr-traditional-10x-0ms-screenshots
+          path: proof/
+          retention-days: 90
