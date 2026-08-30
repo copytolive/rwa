@@ -76,7 +76,7 @@ function addControls(){
   const quick=document.querySelector('.quick');if(quick&&!quick.querySelector('[data-gold-recent]')){const b=document.createElement('button');b.textContent='GOLD';b.dataset.goldRecent='1';b.addEventListener('click',()=>void newest());quick.appendChild(b)}
 }
 function auto(){addControls();const q=new URLSearchParams(location.search);if(q.get('gold')==='1')void newest()}
-window.RWARenkoGoldRecentHistory={version:'1.0.0',rule:'dukascopy-same-origin-fixed-s1-bounded-daily-window',stats,get manifest(){return manifest},get index(){return index},loadManifest,loadChunk,apply,older,newer,newest,addControls};
+window.RWARenkoGoldRecentHistory={version:'1.0.1',rule:'dukascopy-same-origin-fixed-s1-bounded-daily-window',stats,get manifest(){return manifest},get index(){return index},loadManifest,loadChunk,apply,older,newer,newest,addControls};
 window.addEventListener('renko:tv-ready',auto,{once:true});
-if(document.readyState!=='loading')setTimeout(auto,0);else document.addEventListener('DOMContentLoaded',addControls,{once:true});
+if(document.readyState!=='loading')setTimeout(auto,0);else document.addEventListener('DOMContentLoaded',auto,{once:true});
 })();
