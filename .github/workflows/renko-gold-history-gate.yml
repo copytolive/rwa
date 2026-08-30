@@ -78,7 +78,7 @@ jobs:
           const second=await page.evaluate(()=>({index:RWARenkoGoldHistory.activeIndex,date:RWARenkoTV.state.historyMeta?.chunkDate,bars:RWARenkoTV.state.closedBars.length,box:RWARenkoTV.state.box,cachePersisted:RWARenkoTV.state.historyMeta?.cachePersisted}));
           if(second.index!==1||second.bars<100||!(second.box>0)||second.date===first.date||second.cachePersisted!==true)throw Error('second '+JSON.stringify(second));
           const beforeEdge=second.index;
-          await page.evaluate(()=>{const c=RWARenkoGoldHistory.chart;if(!c)throw Error('captured chart missing');c.timeScale().setVisibleLogicalRange({from:0,to:30})});
+          await page.evaluate(()=>{const c=RWARenkoGoldHistory.chart;if(!c)throw Error('captured chart missing');c.timeScale().setVisibleLogicalRange({from:0,to:30});document.getElementById('chartHost').dispatchEvent(new WheelEvent('wheel',{deltaX:-120,bubbles:true}))});
           await page.waitForFunction(i=>RWARenkoGoldHistory.activeIndex>i,beforeEdge,{timeout:60000});
           const third=await page.evaluate(()=>({index:RWARenkoGoldHistory.activeIndex,date:RWARenkoTV.state.historyMeta?.chunkDate,bars:RWARenkoTV.state.closedBars.length,edgeLoads:RWARenkoGoldHistory.stats.edgeLoads,losses:Number(document.documentElement.dataset.renkoGoldHistoryLosses||-1)}));
           if(third.index<2||third.bars<100||third.edgeLoads<1||third.losses!==0)throw Error('edge '+JSON.stringify(third));
@@ -140,7 +140,7 @@ jobs:
           await page.evaluate(()=>RWARenkoGoldHistory.loadOlder({trigger:'public-direct'}));
           await page.waitForFunction(()=>RWARenkoGoldHistory.activeIndex===1,null,{timeout:60000});
           const before=await page.evaluate(()=>RWARenkoGoldHistory.activeIndex);
-          await page.evaluate(()=>RWARenkoGoldHistory.chart.timeScale().setVisibleLogicalRange({from:0,to:30}));
+          await page.evaluate(()=>{RWARenkoGoldHistory.chart.timeScale().setVisibleLogicalRange({from:0,to:30});document.getElementById('chartHost').dispatchEvent(new WheelEvent('wheel',{deltaX:-120,bubbles:true}))});
           await page.waitForFunction(i=>RWARenkoGoldHistory.activeIndex>i,before,{timeout:60000});
           const out=await page.evaluate(()=>({index:RWARenkoGoldHistory.activeIndex,date:RWARenkoTV.state.historyMeta?.chunkDate,bars:RWARenkoTV.state.closedBars.length,provider:RWARenkoTV.state.historyMeta?.provider,interval:RWARenkoTV.state.historyMeta?.interval,edgeLoads:RWARenkoGoldHistory.stats.edgeLoads,losses:Number(document.documentElement.dataset.renkoGoldHistoryLosses||-1),chunkCount:RWARenkoTV.state.historyMeta?.chunkCount}));
           if(out.index<2||out.bars<100||out.provider!=='Dukascopy'||out.interval!=='1s'||out.edgeLoads<1||out.losses!==0||out.chunkCount<3)throw Error(JSON.stringify(out));
