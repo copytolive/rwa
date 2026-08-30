@@ -1,11 +1,11 @@
 name: RENKO GOLD Total History Screenshot Proof
 
 on:
-  workflow_run:
-    workflows:
-      - RENKO GOLD Total History Public Closure
-    types:
-      - completed
+  push:
+    branches:
+      - feat/renko-gold-total-history-2003-2026
+    paths:
+      - 'renko/history/gold/full-manifest.json'
 
 permissions:
   contents: read
@@ -15,25 +15,20 @@ env:
 
 jobs:
   screenshot-proof:
-    if: >-
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.head_branch == 'feat/renko-gold-total-history-2003-2026'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: Wait for exact production SHA
         shell: bash
         env:
-          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+          EXPECTED_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          for i in {1..60}; do
+          for i in {1..90}; do
             got="$(curl -fsS --max-time 10 "$PUBLIC_RENKO/deployment-sha.txt?cb=$RANDOM" 2>/dev/null || true)"
             if [ "$got" = "$EXPECTED_SHA" ]; then
               echo "GOLD_SCREENSHOT_PRODUCTION_SHA_PASS $got"
