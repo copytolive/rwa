@@ -1,0 +1,25 @@
+{
+  "active_count": 0,
+  "base_seed": 2026083101,
+  "cheap_pass_count_this_run": 60,
+  "combined_pre_corr_count": 21,
+  "elite_count": 0,
+  "evaluated_config_hash_count_cumulative": 2000,
+  "exact_full_metrics_pre_corr_new_this_run": 20,
+  "execution_duplicate_rejected_this_run": 0,
+  "existing_selected_count": 1,
+  "library_count": 3,
+  "new_selected_count": 2,
+  "removed_by_correlation_count": 18,
+  "schema": "gold24-multimethod-v1-adaptive-discovery-v1",
+  "simulated_new_configs_this_run": 2000,
+  "source_archive_total": 62472,
+  "source_batch": 241,
+  "source_candidate_cursor": 27842557,
+  "source_run_id": "33329163612",
+  "status": "PASS",
+  "tier_counts": {
+    "LIBRARY": 3
+  },
+  "workers": 3
+}
