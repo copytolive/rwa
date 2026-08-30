@@ -6,6 +6,7 @@ on:
       - feat/renko-gold-total-history-2003-2026
     paths:
       - 'renko/renko-chart-bridge.js'
+      - 'renko/renko-gold-recent-history.js'
       - '.github/workflows/renko-gold-ui-production.yml'
   workflow_dispatch:
 
@@ -29,6 +30,7 @@ jobs:
         run: |
           set -euo pipefail
           node --check renko/renko-chart-bridge.js
+          node --check renko/renko-gold-recent-history.js
           python3 - <<'PY'
           import json
           m=json.load(open('renko/history/gold/full-manifest.json'))
