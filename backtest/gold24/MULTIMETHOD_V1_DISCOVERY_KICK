@@ -1,0 +1,5 @@
+MULTIMETHOD_V1_DISCOVERY_KICK
+candidate_count=5000
+base_seed=2026083102
+source_batch=241
+reason=continue total after first adaptive PASS: 3 LIBRARY from 2000 targeted configs; preserve existing 3 and search 5000 new configs
