@@ -14,7 +14,7 @@ permissions:
 jobs:
   source-health:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Probe representative Dukascopy XAU-USD fixed-hour endpoints serially
         shell: bash
@@ -23,29 +23,46 @@ jobs:
           python3 - <<'PY'
           import json,time,urllib.request,urllib.error
           base='https://jetta.dukascopy.com/v1/ticks/XAU-USD'
-          paths=[
-            '2003/05/05/12','2004/03/15/12','2005/07/11/12',
-            '2024/04/15/12','2025/03/17/12','2026/08/28/12'
-          ]
+          paths=['2003/05/05/12','2004/03/15/12','2005/07/11/12','2024/04/15/12','2025/03/17/12','2026/08/28/12']
           out=[]
           for p in paths:
-            u=f'{base}/{p}'
-            t=time.monotonic()
+            u=f'{base}/{p}'; t=time.monotonic()
             try:
-              req=urllib.request.Request(u,headers={'User-Agent':'copytolive-renko-gold-health/1.0','Accept':'application/json','Connection':'close'})
-              with urllib.request.urlopen(req,timeout=20) as r:
-                b=r.read(); status=r.status
-              elapsed=round(time.monotonic()-t,3)
-              x=json.loads(b)
-              row={'path':p,'status':status,'bytes':len(b),'ticks':len(x.get('times',[])),'latencySec':elapsed}
-            except urllib.error.HTTPError as e:
-              row={'path':p,'status':e.code,'latencySec':round(time.monotonic()-t,3)}
-            except Exception as e:
-              row={'path':p,'error':type(e).__name__+':'+str(e),'latencySec':round(time.monotonic()-t,3)}
-            out.append(row); print('GOLD_SOURCE_HEALTH_SAMPLE',json.dumps(row,separators=(',',':')),flush=True)
-            time.sleep(1)
+              req=urllib.request.Request(u,headers={'User-Agent':'copytolive-renko-gold-health/1.1','Accept':'application/json','Connection':'close'})
+              with urllib.request.urlopen(req,timeout=20) as r: b=r.read(); status=r.status
+              x=json.loads(b); row={'path':p,'status':status,'bytes':len(b),'ticks':len(x.get('times',[])),'latencySec':round(time.monotonic()-t,3)}
+            except urllib.error.HTTPError as e: row={'path':p,'status':e.code,'latencySec':round(time.monotonic()-t,3)}
+            except Exception as e: row={'path':p,'error':type(e).__name__+':'+str(e),'latencySec':round(time.monotonic()-t,3)}
+            out.append(row); print('GOLD_SOURCE_HEALTH_SAMPLE',json.dumps(row,separators=(',',':')),flush=True); time.sleep(.5)
           good=[x for x in out if x.get('status')==200]
-          print('GOLD_SOURCE_HEALTH_SUMMARY',json.dumps({'samples':len(out),'http200':len(good),'maxLatencySec':max((x.get('latencySec',0) for x in out),default=0),'results':out},separators=(',',':')))
-          if len(good)<5:
-            raise SystemExit('Dukascopy source health degraded: fewer than 5/6 representative HTTP 200 samples')
+          print('GOLD_SOURCE_HEALTH_SUMMARY',json.dumps({'samples':len(out),'http200':len(good),'maxLatencySec':max((x.get('latencySec',0) for x in out),default=0)},separators=(',',':')))
+          if len(good)<5: raise SystemExit('Dukascopy source health degraded')
+          PY
+      - name: Benchmark safe per-runner concurrency on 24 active recent hours
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import concurrent.futures as cf,json,time,urllib.request
+          base='https://jetta.dukascopy.com/v1/ticks/XAU-USD/2025/03/17'
+          urls=[f'{base}/{h:02d}' for h in range(24)]
+          def one(u):
+            t=time.monotonic()
+            req=urllib.request.Request(u,headers={'User-Agent':'copytolive-renko-gold-concurrency-benchmark/1.0','Accept':'application/json','Connection':'close'})
+            try:
+              with urllib.request.urlopen(req,timeout=25) as r: b=r.read(); status=r.status
+              return status,len(b),time.monotonic()-t,''
+            except Exception as e:
+              return 0,0,time.monotonic()-t,type(e).__name__+':'+str(e)
+          rows=[]
+          for workers in (1,4,8,16):
+            t=time.monotonic()
+            with cf.ThreadPoolExecutor(max_workers=workers) as ex: out=list(ex.map(one,urls))
+            elapsed=time.monotonic()-t; ok=sum(1 for s,_,_,_ in out if s==200); errs=[e for s,_,_,e in out if s!=200]
+            row={'workers':workers,'hours':24,'ok':ok,'elapsedSec':round(elapsed,3),'hoursPerSec':round(24/elapsed,3),'maxRequestSec':round(max(x[2] for x in out),3),'bytes':sum(x[1] for x in out),'errors':errs[:3]}
+            rows.append(row); print('GOLD_SOURCE_CONCURRENCY_SAMPLE',json.dumps(row,separators=(',',':')),flush=True); time.sleep(2)
+          valid=[x for x in rows if x['ok']==24]
+          best=max(valid,key=lambda x:x['hoursPerSec']) if valid else None
+          print('GOLD_SOURCE_CONCURRENCY_SUMMARY',json.dumps({'best':best,'rows':rows},separators=(',',':')))
+          if not best: raise SystemExit('no safe concurrency level completed 24/24')
           PY
