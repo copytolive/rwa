@@ -99,7 +99,7 @@ jobs:
           const browser=await chromium.launch({headless:true});
           const page=await browser.newPage({viewport:{width:1672,height:941}});
           const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-          await page.goto('https://copytolive.github.io/rwa/renko/?gold=1&viewport23yProof=1',{waitUntil:'domcontentloaded',timeout:60000});
+          await page.goto('https://copytolive.github.io/rwa/renko/?gold=1&viewport23yProof=2',{waitUntil:'domcontentloaded',timeout:60000});
           await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldRecent==='true'&&document.querySelector('#chartHost canvas')&&window.RWARenkoGoldViewport&&window.RWARenkoGoldTotalHistory,{timeout:60000});
           await page.waitForTimeout(800);
 
@@ -128,8 +128,6 @@ jobs:
           if(clean.marketsVisible||clean.openPairsVisible||clean.easybarVisible||clean.sourceCardVisible||clean.statsVisible||clean.summaryVisible||clean.listChildren!==0)throw new Error('non-GOLD/unused UI visible '+JSON.stringify(clean));
           if(!clean.methodCardVisible||!clean.originButton||!clean.maxButton||clean.chartWidth<1600||clean.chartHeight<620)throw new Error('clean chart controls/geometry mismatch '+JSON.stringify(clean));
 
-          // Reproduce the reported bug: maximum zoom-out, then a forced rebuild that
-          // previously snapped the chart back to the latest/default window.
           const noSnap=await page.evaluate(async()=>{
             const V=window.RWARenkoGoldViewport,T=window.RWARenkoTV,ts=window.__RWARenkoChart.timeScale();
             V.lockViewport('proof-zoom');V.maxZoomOut();await new Promise(r=>setTimeout(r,250));
@@ -142,8 +140,6 @@ jobs:
           if(!noSnap.locked||noSnap.following!==false||noSnap.guard!=='true'||!(noSnap.delta<0.05))throw new Error('zoom snap-back regression '+JSON.stringify(noSnap));
           console.log('GOLD_ZOOM_NO_SNAP_PASS',JSON.stringify(noSnap));
 
-          // Use the real public 23Y button and wait until the canonical 2003 witness
-          // is the leftmost loaded source second.
           await page.click('#tvGoldOrigin');
           await page.waitForFunction(()=>document.documentElement.dataset.renkoGoldOriginView==='true'&&document.documentElement.dataset.renkoGoldOriginSecond==='1052092863'&&window.RWARenkoTV?.state?.historyViewMode==='gold-origin',{timeout:120000});
           await page.waitForTimeout(500);
@@ -156,10 +152,10 @@ jobs:
               }else{
                 const ok=window.RWARenkoTraditionalControl.activate(1,'23y-proof',false,false);if(!ok)throw new Error('Traditional apply failed');
               }
-              T.state.following=false;V.lockViewport('23y-'+method);V.maxZoomOut();await new Promise(r=>setTimeout(r,700));
+              await new Promise(r=>setTimeout(r,100));T.state.following=false;V.lockViewport('23y-'+method);V.maxZoomOut();await new Promise(r=>setTimeout(r,700));
               const m=await H.loadManifest();const range=window.__RWARenkoChart.timeScale().getVisibleLogicalRange();const oldest=Math.floor(Number(T.state.closedBars[0].openTime)/1000),latest=Number(m.months.at(-1).latestSecond),origin=Number(m.months[0].earliestSecond);
-              const spanYears=(latest-origin)/(365.2425*86400);
-              return{method:T.settings.method,atrLength:Number(T.settings.atrLength),box:Number(T.state.box),sourceBars:T.state.closedBars.length,confirmed:T.state.confirmedData.length,oldestSourceSecond:oldest,originSecond:origin,coverageLatestSecond:latest,months:m.months.length,spanYears,historyViewMode:T.state.historyViewMode,range,locked:V.locked,following:T.state.following,dataVersion:m.dataVersion};
+              const spanYears=(latest-origin)/(365.2425*86400),rangeSpan=Number(range.to)-Number(range.from),confirmed=Number(T.state.confirmedData.length);
+              return{method:T.settings.method,atrLength:Number(T.settings.atrLength),box:Number(T.state.box),sourceBars:T.state.closedBars.length,confirmed,oldestSourceSecond:oldest,originSecond:origin,coverageLatestSecond:latest,months:m.months.length,spanYears,historyViewMode:T.state.historyViewMode,range,rangeSpan,locked:V.locked,following:T.state.following,dataVersion:m.dataVersion,pair:document.getElementById('pairName')?.textContent?.trim(),sourceText:document.getElementById('sourceText')?.textContent?.trim(),loadText:document.getElementById('tvLoadState')?.textContent?.trim(),feed:document.querySelector('#feedPill b')?.textContent?.trim()};
             },method);
           }
           async function badge(label,p){
@@ -171,19 +167,22 @@ jobs:
               wrap.appendChild(e);
             },{label,p});
           }
+          const validateMethod=(p,name)=>{
+            if(p.oldestSourceSecond!==1052092863||p.months!==280||p.spanYears<23||p.historyViewMode!=='gold-origin'||!p.locked||p.following!==false)throw new Error(name+' 23y origin identity failed '+JSON.stringify(p));
+            if(p.pair!=='XAU / USD'||!/Dukascopy/i.test(p.sourceText||'')||!/Dukascopy/i.test(p.loadText||'')||/Binance/i.test(p.loadText||'')||p.feed!=='HISTORY')throw new Error(name+' GOLD provenance UI failed '+JSON.stringify(p));
+            if(!(p.rangeSpan<=p.confirmed+12)&&p.confirmed>0)throw new Error(name+' max zoom not authoritative '+JSON.stringify(p));
+          };
 
           const atr=await proofFor('atr');
-          if(atr.method!=='atr'||atr.atrLength!==14||atr.oldestSourceSecond!==1052092863||atr.months!==280||atr.spanYears<23||atr.historyViewMode!=='gold-origin'||!atr.locked||atr.following!==false)throw new Error('ATR 23y origin proof failed '+JSON.stringify(atr));
+          if(atr.method!=='atr'||atr.atrLength!==14)throw new Error('ATR method failed '+JSON.stringify(atr));validateMethod(atr,'ATR');
           await badge('ATR 14',atr);await page.screenshot({path:'proof/01-atr-23y-origin-max-zoom.png',fullPage:false});
           console.log('GOLD_ATR_23Y_ORIGIN_MAX_ZOOM_PASS',JSON.stringify(atr));
 
           const traditional=await proofFor('traditional');
-          if(traditional.method!=='traditional'||traditional.oldestSourceSecond!==1052092863||traditional.months!==280||traditional.spanYears<23||traditional.historyViewMode!=='gold-origin'||!traditional.locked||traditional.following!==false)throw new Error('Traditional 23y origin proof failed '+JSON.stringify(traditional));
+          if(traditional.method!=='traditional'||Math.abs(traditional.box-1)>1e-12)throw new Error('Traditional method failed '+JSON.stringify(traditional));validateMethod(traditional,'Traditional');
           await badge('TRADITIONAL 1',traditional);await page.screenshot({path:'proof/02-traditional-23y-origin-max-zoom.png',fullPage:false});
           console.log('GOLD_TRADITIONAL_23Y_ORIGIN_MAX_ZOOM_PASS',JSON.stringify(traditional));
 
-          // Force another rebuild after Traditional max zoom. This verifies the fix
-          // remains stable in both methods, not only ATR.
           const traditionalNoSnap=await page.evaluate(async()=>{const T=window.RWARenkoTV,V=window.RWARenkoGoldViewport,ts=window.__RWARenkoChart.timeScale();const before=ts.getVisibleLogicalRange();T.rebuild({fit:true});await new Promise(r=>setTimeout(r,700));const after=ts.getVisibleLogicalRange();const delta=Math.max(Math.abs(Number(before.from)-Number(after.from)),Math.abs(Number(before.to)-Number(after.to)));return{before,after,delta,locked:V.locked,following:T.state.following}});
           if(!(traditionalNoSnap.delta<0.05)||!traditionalNoSnap.locked||traditionalNoSnap.following!==false)throw new Error('Traditional zoom snap-back regression '+JSON.stringify(traditionalNoSnap));
           console.log('GOLD_TRADITIONAL_ZOOM_NO_SNAP_PASS',JSON.stringify(traditionalNoSnap));
