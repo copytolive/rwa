@@ -73,19 +73,22 @@
     const openPairs=document.getElementById('openPairs');if(openPairs)openPairs.hidden=true;
     document.querySelectorAll('[data-quick]').forEach(el=>{el.hidden=true});
     const list=document.getElementById('pairList');if(list&&list.childNodes.length)list.replaceChildren();
-    const search=document.getElementById('pairSearch');if(search){search.disabled=true;search.value='GOLD / XAUUSD'}
+    const search=document.getElementById('pairSearch');if(search){search.disabled=true;if(search.value!=='GOLD / XAUUSD')search.value='GOLD / XAUUSD'}
     forceText('pairTotal','1 downloaded');
     forceText('pairShown','Downloaded only');
     forceText('universeNote','GOLD · XAU/USD · Dukascopy fixed 1s');
     forceText('pairName','XAU / USD');
     forceText('pairIcon','AU');
-    const easy=document.querySelector('.easy-label');if(easy)easy.textContent='GOLD';
-    const source=document.getElementById('sourceText');if(source)source.textContent='Dukascopy XAU/USD · downloaded fixed 1-second source only.';
+    const easy=document.querySelector('.easy-label');if(easy&&easy.textContent!=='GOLD')easy.textContent='GOLD';
+    const source=document.getElementById('sourceText');const sourceLabel='Dukascopy XAU/USD · downloaded fixed 1-second source only.';if(source&&source.textContent!==sourceLabel)source.textContent=sourceLabel;
   };
 
   lockGoldUi();
-  const bodyObserver=new MutationObserver(lockGoldUi);
-  if(document.body)bodyObserver.observe(document.body,{childList:true,subtree:true,characterData:true});
+  const list=document.getElementById('pairList');
+  if(list){
+    const listObserver=new MutationObserver(()=>{if(list.childNodes.length)list.replaceChildren()});
+    listObserver.observe(list,{childList:true});
+  }
   window.addEventListener('renko:tv-ready',lockGoldUi);
   window.addEventListener('renko:gold-recent',lockGoldUi);
   window.addEventListener('resize',()=>{try{window.__RWARenkoChart?.applyOptions?.({width:document.getElementById('chartHost')?.clientWidth||0,height:document.getElementById('chartHost')?.clientHeight||0})}catch(_){ }});
