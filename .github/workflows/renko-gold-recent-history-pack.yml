@@ -1,0 +1,147 @@
+name: RENKO GOLD Recent History Pack
+
+on:
+  push:
+    branches:
+      - fix/renko-gold-infinite-history-20260830
+    paths:
+      - '.github/workflows/renko-gold-recent-history-pack.yml'
+      - 'renko/history/gold/BACKFILL_TRIGGER'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-recent-gold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Build bounded recent Dukascopy XAU-USD fixed-1s daily chunks
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p renko/history/gold artifacts/gold-history
+          python3 - <<'PY'
+          import datetime as dt
+          import gzip
+          import hashlib
+          import json
+          import math
+          import pathlib
+          import time
+          import urllib.error
+          import urllib.request
+
+          OUT = pathlib.Path('renko/history/gold')
+          BASE = 'https://jetta.dukascopy.com/v1/ticks/XAU-USD/{}/{}/{}/{}'
+          DAYS = 14
+          today = dt.datetime.now(dt.timezone.utc).date()
+          chunks = []
+
+          def tick_rows(j):
+              if not isinstance(j, dict): return []
+              times, bids = j.get('times'), j.get('bids')
+              if not isinstance(times, list) or not isinstance(bids, list): return []
+              mult = float(j.get('multiplier') or 0)
+              if not (mult > 0): return []
+              ts = float(j.get('timestamp') or 0)
+              units = round(float(j.get('bid') or 0) / mult)
+              rows=[]
+              for delta_t, delta_bid in zip(times,bids):
+                  ts += float(delta_t); units += int(delta_bid)
+                  price = units * mult
+                  if math.isfinite(ts) and math.isfinite(price): rows.append((int(ts),price))
+              return rows
+
+          def aggregate_s1(ticks):
+              bars={}
+              for ts,p in ticks:
+                  sec=(ts//1000)*1000
+                  b=bars.get(sec)
+                  if b is None:
+                      bars[sec]={'openTime':sec,'closeTime':sec+999,'open':p,'high':p,'low':p,'close':p,'volume':0}
+                  else:
+                      b['high']=max(b['high'],p); b['low']=min(b['low'],p); b['close']=p
+              return [bars[k] for k in sorted(bars)]
+
+          for offset in range(1,DAYS+1):
+              day=today-dt.timedelta(days=offset)
+              ticks=[]; sources=[]; min_move=None
+              for hour in range(24):
+                  url=BASE.format(day.year,day.month,day.day,hour)
+                  req=urllib.request.Request(url,headers={'User-Agent':'RENKO-GOLD-history-pack/1.0'})
+                  try:
+                      with urllib.request.urlopen(req,timeout=25) as r: raw=r.read()
+                  except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError):
+                      continue
+                  if not raw: continue
+                  try: j=json.loads(raw)
+                  except Exception: continue
+                  rows=tick_rows(j)
+                  if not rows: continue
+                  mult=float(j.get('multiplier') or 0)
+                  if mult>0: min_move=mult if min_move is None else min(min_move,mult)
+                  ticks.extend(rows)
+                  sources.append({'hour':hour,'url':url,'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw)})
+                  time.sleep(0.03)
+              bars=aggregate_s1(ticks)
+              if len(bars)<100:
+                  print('SKIP',day.isoformat(),'bars',len(bars)); continue
+              core={'schema':'renko-gold-s1-chunk-v1','provider':'Dukascopy','instrumentCode':'XAU-USD','symbol':'XAUUSD','interval':'1s','date':day.isoformat(),'tickSize':min_move or 0.001,'earliestAvailableMs':bars[0]['openTime'],'latestAvailableMs':bars[-1]['closeTime'],'bars':bars,'sourceBuckets':sources,'generator':'github-actions dukascopy-daily-fixed-s1-v1'}
+              canonical=json.dumps(core,separators=(',',':'),sort_keys=True).encode()
+              core['payloadSha256']=hashlib.sha256(canonical).hexdigest()
+              raw=json.dumps(core,separators=(',',':')).encode()
+              name=f'{day.isoformat()}.json.gz'
+              (OUT/name).write_bytes(gzip.compress(raw,compresslevel=9,mtime=0))
+              chunks.append({'date':day.isoformat(),'url':f'history/gold/{name}','barCount':len(bars),'earliestMs':bars[0]['openTime'],'latestMs':bars[-1]['closeTime'],'tickSize':core['tickSize'],'payloadSha256':core['payloadSha256'],'sourceBucketCount':len(sources)})
+              print('BUILT',day.isoformat(),len(bars),'bars',len(sources),'buckets')
+
+          chunks.sort(key=lambda x:x['earliestMs'], reverse=True)
+          if len(chunks)<3:
+              raise SystemExit(f'need at least 3 GOLD trading-day chunks, got {len(chunks)}')
+          manifest={'schema':'renko-gold-s1-manifest-v1','provider':'Dukascopy','instrumentCode':'XAU-USD','symbol':'XAUUSD','interval':'1s','generatedAt':dt.datetime.now(dt.timezone.utc).isoformat(),'documentedEarliestS1Ms':1052092863421,'originPack':'history/renko-gold-xauusd-origin.json.gz','chunkUnit':'trading-day','continuousRecent':True,'backfillComplete':False,'chunks':chunks,'newestAvailableMs':chunks[0]['latestMs'],'oldestRecentMs':chunks[-1]['earliestMs']}
+          (OUT/'manifest.json').write_text(json.dumps(manifest,separators=(',',':'),indent=2)+'\n')
+          pathlib.Path('artifacts/gold-history/receipt.json').write_text(json.dumps({'status':'PASS','chunkCount':len(chunks),'newest':chunks[0],'oldest':chunks[-1]},indent=2)+'\n')
+          print('RENKO_GOLD_RECENT_PACK_PASS',len(chunks),chunks[0]['date'],'->',chunks[-1]['date'])
+          PY
+      - name: Validate generated chunks
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import gzip,json,pathlib
+          m=json.load(open('renko/history/gold/manifest.json'))
+          assert m['schema']=='renko-gold-s1-manifest-v1' and m['provider']=='Dukascopy' and m['interval']=='1s'
+          assert len(m['chunks'])>=3
+          prev=None
+          for c in m['chunks']:
+              p=pathlib.Path('renko')/c['url']
+              j=json.loads(gzip.decompress(p.read_bytes()))
+              assert j['schema']=='renko-gold-s1-chunk-v1' and j['symbol']=='XAUUSD' and j['interval']=='1s'
+              assert len(j['bars'])==c['barCount'] and len(j['bars'])>=100
+              assert j['payloadSha256']==c['payloadSha256']
+              if prev is not None: assert c['earliestMs'] < prev
+              prev=c['earliestMs']
+          print('RENKO_GOLD_RECENT_PACK_VALIDATE_PASS',len(m['chunks']))
+          PY
+      - name: Commit deterministic GOLD chunks to feature branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add renko/history/gold
+          if git diff --cached --quiet; then
+            echo RENKO_GOLD_HISTORY_PACK_UNCHANGED
+          else
+            git commit -m 'RENKO: add recent Dukascopy GOLD 1s history chunks'
+            git push origin HEAD:${GITHUB_REF_NAME}
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: renko-gold-recent-history-${{ github.sha }}
+          path: artifacts/gold-history/receipt.json
+          retention-days: 30
