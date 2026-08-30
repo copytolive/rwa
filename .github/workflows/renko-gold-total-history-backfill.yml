@@ -1,227 +1,178 @@
-name: RENKO GOLD Total History 2003-2026
+name: RENKO GOLD Total History Backfill 2003-Current
 
 on:
   push:
     branches:
       - feat/renko-gold-total-history-2003-2026
     paths:
-      - 'scripts/renko_gold_full_backfill.py'
       - '.github/workflows/renko-gold-total-history-backfill.yml'
   workflow_dispatch:
 
 permissions:
   contents: write
 
-concurrency:
-  group: renko-gold-total-history-v1
-  cancel-in-progress: true
-
 env:
-  RELEASE_TAG: renko-gold-history-v1
-  START_ISO: '2003-05-05T00:00:00+00:00'
-  END_ISO: '2026-08-28T23:59:59+00:00'
+  ORIGIN: '2003-05-05T00:00:00Z'
 
 jobs:
-  calibrate:
-    name: Calibrate exact Dukascopy Jetta decoder
+  prepare:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    outputs:
+      cutoff: ${{ steps.lock.outputs.cutoff }}
+      side: ${{ steps.lock.outputs.side }}
     steps:
       - uses: actions/checkout@v4
-      - name: Syntax check
-        run: python3 -m py_compile scripts/renko_gold_full_backfill.py
-      - name: Prove Jetta decoder against existing verified GOLD fixed-1s pack
+      - id: lock
+        name: Lock calibrated side and closed-hour cutoff
+        shell: bash
         run: |
           set -euo pipefail
-          mkdir -p out-calibration
-          python3 scripts/renko_gold_full_backfill.py calibrate \
-            --reference-pack renko/history/gold/2026-08-28.json.gz \
-            --date 2026-08-28 \
-            --output out-calibration/calibration.json
-          cat out-calibration/calibration.json
-      - uses: actions/upload-artifact@v4
-        with:
-          name: renko-gold-calibration
-          path: out-calibration/calibration.json
-          retention-days: 30
+          side="$(python3 -c 'import json;print(json.load(open("renko/history/gold/calibration.json"))["priceSide"])')"
+          test "$side" = bid
+          cutoff="$(date -u -d '1 hour ago' '+%Y-%m-%dT%H:59:59Z')"
+          echo "side=$side" >> "$GITHUB_OUTPUT"
+          echo "cutoff=$cutoff" >> "$GITHUB_OUTPUT"
+          echo "GOLD_BACKFILL_LOCK side=$side cutoff=$cutoff"
 
-  prepare-release:
-    name: Prepare lightweight history store
-    needs: calibrate
+  build-year:
+    needs: prepare
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Create or reuse release asset store
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            echo "Using existing release $RELEASE_TAG"
-          else
-            gh release create "$RELEASE_TAG" \
-              --title 'RENKO GOLD canonical fixed-1s history v1' \
-              --notes 'Canonical XAU/USD Dukascopy Jetta tick-derived fixed-1s OHLC packs. Monthly gzip CSV assets keep Git and GitHub Pages light; manifest/checksums make the dataset reproducible for RENKO chart history and backtests.'
-          fi
-
-  backfill:
-    name: Backfill ${{ matrix.year }}
-    needs: [calibrate, prepare-release]
-    runs-on: ubuntu-latest
-    timeout-minutes: 330
+    timeout-minutes: 120
     strategy:
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 6
       matrix:
         year: [2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: renko-gold-calibration
-          path: calibration
-      - name: Build canonical monthly packs for ${{ matrix.year }}
+      - name: Build canonical fixed-1s months with bounded RAM
         shell: bash
-        run: |
-          set -euo pipefail
-          SIDE="$(python3 -c 'import json;print(json.load(open("calibration/calibration.json"))["priceSide"])')"
-          mkdir -p "out/${{ matrix.year }}"
-          python3 scripts/renko_gold_full_backfill.py backfill-year \
-            --year "${{ matrix.year }}" \
-            --side "$SIDE" \
-            --start "$START_ISO" \
-            --end "$END_ISO" \
-            --workers 6 \
-            --output-dir "out/${{ matrix.year }}"
-      - name: Upload monthly packs to GitHub Release, never Git history
         env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
+          YEAR: ${{ matrix.year }}
+          SIDE: ${{ needs.prepare.outputs.side }}
+          CUTOFF: ${{ needs.prepare.outputs.cutoff }}
         run: |
           set -euo pipefail
-          shopt -s nullglob
-          files=(out/${{ matrix.year }}/xauusd-s1-*.csv.gz)
-          test ${#files[@]} -gt 0
-          for f in "${files[@]}"; do
-            echo "UPLOAD_RELEASE_ASSET $(basename "$f") $(stat -c%s "$f") bytes"
-            gh release upload "$RELEASE_TAG" "$f" --clobber
+          mkdir -p "year-$YEAR"
+          python3 scripts/renko_gold_full_year_job.py \
+            --year "$YEAR" \
+            --side "$SIDE" \
+            --start "$ORIGIN" \
+            --end "$CUTOFF" \
+            --workers 8 \
+            --output-dir "year-$YEAR"
+      - name: Audit every monthly gzip before publication
+        shell: bash
+        env:
+          YEAR: ${{ matrix.year }}
+        run: |
+          set -euo pipefail
+          python3 scripts/renko_gold_audit.py audit-year \
+            --summary "year-$YEAR/summary-$YEAR.json" \
+            --data-dir "year-$YEAR" \
+            --output "year-$YEAR/audit-$YEAR.json" \
+            --write-summary
+      - name: Publish year as Git LFS objects with pointer-only Git tree
+        shell: bash
+        env:
+          YEAR: ${{ matrix.year }}
+        run: |
+          set -euo pipefail
+          DATA_BRANCH="renko-gold-lfs-$YEAR"
+          mkdir -p /tmp/gold-data /tmp/gold-meta
+          cp "year-$YEAR"/xauusd-s1-*.csv.gz /tmp/gold-data/
+          cp "year-$YEAR/summary-$YEAR.json" "year-$YEAR/audit-$YEAR.json" /tmp/gold-meta/
+          git config user.name copytolive
+          git config user.email copytolive@gmail.com
+          git lfs install --local
+          if git ls-remote --exit-code --heads origin "$DATA_BRANCH" >/dev/null 2>&1; then
+            git fetch origin "$DATA_BRANCH:$DATA_BRANCH"
+            GIT_LFS_SKIP_SMUDGE=1 git checkout "$DATA_BRANCH"
+            git rm -rf . >/dev/null 2>&1 || true
+            git clean -fdx >/dev/null 2>&1 || true
+          else
+            git checkout --orphan "$DATA_BRANCH"
+            git rm -rf . >/dev/null 2>&1 || true
+            git clean -fdx >/dev/null 2>&1 || true
+          fi
+          git lfs track '*.csv.gz'
+          cp /tmp/gold-data/*.csv.gz .
+          git add .gitattributes *.csv.gz
+          git commit -m "data(renko): publish canonical GOLD $YEAR via LFS" || true
+          git push origin "HEAD:$DATA_BRANCH"
+          DATA_SHA="$(git rev-parse HEAD)"
+          for f in *.csv.gz; do
+            test "$(git cat-file -s "HEAD:$f")" -lt 1000
           done
+          python3 - "$YEAR" "$DATA_SHA" <<'PY'
+          import json, pathlib, sys
+          year, sha = int(sys.argv[1]), sys.argv[2]
+          p=pathlib.Path(f'/tmp/gold-meta/summary-{year}.json')
+          x=json.loads(p.read_text())
+          x['dataBranch']=f'renko-gold-lfs-{year}'
+          x['dataCommitSha']=sha
+          x['storage']='git-lfs-media'
+          for m in x['months']:
+              m['dataCommitSha']=sha
+              m['storage']='git-lfs-media'
+              m['assetUrl']=f'https://media.githubusercontent.com/media/copytolive/rwa/{sha}/{m["asset"]}'
+          p.write_text(json.dumps(x,indent=2)+'\n')
+          print('GOLD_YEAR_LFS_POINTER_PASS',year,sha,len(x['months']),x['bytes'])
+          PY
       - uses: actions/upload-artifact@v4
         with:
-          name: renko-gold-summary-${{ matrix.year }}
-          path: out/${{ matrix.year }}/summary-${{ matrix.year }}.json
-          retention-days: 30
+          name: gold-year-${{ matrix.year }}
+          path: |
+            /tmp/gold-meta/summary-${{ matrix.year }}.json
+            /tmp/gold-meta/audit-${{ matrix.year }}.json
+          retention-days: 90
 
-  finalize:
-    name: Verify total coverage and publish manifest
-    needs: backfill
+  manifest:
+    needs: [prepare, build-year]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          pattern: renko-gold-summary-*
+          pattern: gold-year-*
           path: summaries
           merge-multiple: true
-      - uses: actions/download-artifact@v4
-        with:
-          name: renko-gold-calibration
-          path: calibration
-      - name: Build strict 2003-05 through 2026-08 manifest
+      - name: Build total manifest coverage and checksum inventory
         shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p final
-          python3 - <<'PY'
-          import glob, hashlib, json, pathlib
-          tag='renko-gold-history-v1'
-          summaries=[json.load(open(p)) for p in sorted(glob.glob('summaries/summary-*.json'))]
-          assert len(summaries)==24, len(summaries)
-          months=[]
-          for s in summaries:
-              months.extend(s['months'])
-          months.sort(key=lambda m:(m['year'],m['month']))
-          expected=[]
-          y,m=2003,5
-          while (y,m) <= (2026,8):
-              expected.append((y,m))
-              m+=1
-              if m==13: y,m=y+1,1
-          got=[(m['year'],m['month']) for m in months]
-          assert got==expected, {'expectedCount':len(expected),'gotCount':len(got),'missing':sorted(set(expected)-set(got))[:20],'extra':sorted(set(got)-set(expected))[:20]}
-          assert len(months)==280
-          assert all(m['barCount']>0 and m['sourceHours']>0 and len(m['assetSha256'])==64 and len(m['sourceDigestSha256'])==64 for m in months)
-          cal=json.load(open('calibration/calibration.json'))
-          chain=hashlib.sha256()
-          for m in months:
-              m['url']=f'https://github.com/copytolive/rwa/releases/download/{tag}/{m["asset"]}'
-              chain.update(f'{m["year"]:04d}-{m["month"]:02d} {m["assetSha256"]}\n'.encode())
-          manifest={
-              'schema':'renko-gold-total-history-manifest-v2',
-              'provider':'Dukascopy','instrumentCode':'XAU-USD','symbol':'XAUUSD','interval':'1s',
-              'sourceTransport':'Dukascopy Jetta compact hourly ticks',
-              'sourceModel':'provider-native tick -> verified selected price side -> UTC epoch-second OHLC; empty seconds are not fabricated',
-              'start':'2003-05-05T00:00:00Z','end':'2026-08-28T23:59:59Z','backfillComplete':True,
-              'storage':'GitHub Release monthly gzip CSV assets; not stored as Git blobs or bundled into first page load',
-              'releaseTag':tag,'releaseUrl':f'https://github.com/copytolive/rwa/releases/tag/{tag}',
-              'tickSize':0.001,'priceSide':cal['priceSide'],
-              'referenceParity':{'date':cal['referenceDate'],'exactRatio':cal['exactRatio'],'compared':cal['compared']},
-              'monthCount':len(months),'barCount':sum(m['barCount'] for m in months),
-              'compressedBytes':sum(m['bytes'] for m in months),'datasetChainSha256':chain.hexdigest(),
-              'months':months,
-          }
-          pathlib.Path('final/manifest.json').write_text(json.dumps(manifest,separators=(',',':'))+'\n')
-          pathlib.Path('final/coverage.json').write_text(json.dumps({
-              'schema':'renko-gold-total-coverage-v2','backfillComplete':True,'monthCount':len(months),
-              'barCount':manifest['barCount'],'compressedBytes':manifest['compressedBytes'],
-              'firstMonth':'2003-05','lastMonth':'2026-08','datasetChainSha256':manifest['datasetChainSha256']
-          },indent=2)+'\n')
-          print('RENKO_GOLD_TOTAL_HISTORY_PASS',json.dumps({k:manifest[k] for k in ('monthCount','barCount','compressedBytes','datasetChainSha256','priceSide')}))
-          PY
-      - name: Verify every release asset exists and matches recorded size
         env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
+          CUTOFF: ${{ needs.prepare.outputs.cutoff }}
         run: |
           set -euo pipefail
-          gh api "repos/${GITHUB_REPOSITORY}/releases/tags/$RELEASE_TAG" > final/release.json
+          python3 scripts/renko_gold_audit.py build-manifest \
+            --summaries-dir summaries \
+            --cutoff "$CUTOFF" \
+            --output-dir generated
           python3 - <<'PY'
           import json
-          m=json.load(open('final/manifest.json')); r=json.load(open('final/release.json'))
-          assets={a['name']:a for a in r.get('assets',[])}
-          missing=[]; bad=[]
-          for x in m['months']:
-              a=assets.get(x['asset'])
-              if not a: missing.append(x['asset']); continue
-              if int(a['size'])!=int(x['bytes']): bad.append((x['asset'],x['bytes'],a['size']))
-          assert not missing, missing[:20]
-          assert not bad, bad[:20]
-          print('RENKO_GOLD_RELEASE_ASSETS_PASS',len(m['months']))
+          x=json.load(open('generated/coverage.json'))
+          assert x['provider']=='Dukascopy' and x['instrumentCode']=='XAU-USD'
+          assert x['allMonthlyAuditsPass'] is True
+          assert x['duplicateSeconds']==0 and x['conflictingOHLC']==0
+          assert not x['missingMonths'] and not x['extraMonths'] and not x['overlaps']
+          print('GOLD_TOTAL_COVERAGE_AUDIT',json.dumps(x,separators=(',',':')))
           PY
-      - name: Publish manifest as tiny release assets
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release upload "$RELEASE_TAG" final/manifest.json final/coverage.json calibration/calibration.json --clobber
-      - name: Commit only lightweight pointer manifests to branch
+      - name: Commit lightweight total-history metadata only
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p renko/history/gold-total
-          cp final/manifest.json renko/history/gold-total/manifest.json
-          cp final/coverage.json renko/history/gold-total/coverage.json
-          cp calibration/calibration.json renko/history/gold-total/calibration.json
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add renko/history/gold-total
-          git commit -m 'data(renko): publish total GOLD 2003-2026 manifest [skip ci]'
+          git config user.name copytolive
+          git config user.email copytolive@gmail.com
+          git pull --rebase origin feat/renko-gold-total-history-2003-2026
+          cp generated/full-manifest.json renko/history/gold/full-manifest.json
+          cp generated/coverage.json renko/history/gold/coverage.json
+          cp generated/checksums.json renko/history/gold/checksums.json
+          cp generated/checksums.sha256 renko/history/gold/checksums.sha256
+          git add renko/history/gold/full-manifest.json renko/history/gold/coverage.json renko/history/gold/checksums.json renko/history/gold/checksums.sha256
+          git commit -m 'data(renko): publish audited GOLD total-history manifest' || true
           git push origin HEAD:feat/renko-gold-total-history-2003-2026
       - uses: actions/upload-artifact@v4
         with:
-          name: renko-gold-total-history-proof
-          path: |
-            final/manifest.json
-            final/coverage.json
-            calibration/calibration.json
+          name: renko-gold-total-history-manifest
+          path: generated/
           retention-days: 90
