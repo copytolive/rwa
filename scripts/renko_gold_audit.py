@@ -71,6 +71,23 @@ def audit_month(path: pathlib.Path, meta: dict) -> dict:
     }
 
 
+def audit_source_status(meta: dict) -> bool:
+    """Require raw source observations to reconcile with explicit classifications."""
+    raw_not_found = int(meta.get("notFoundHours", 0))
+    raw_empty = int(meta.get("emptySourceHours", 0))
+    closed_nf = int(meta.get("marketClosedNotFoundHours", 0))
+    closed_empty = int(meta.get("marketClosedEmptyHours", 0))
+    unavailable = int(meta.get("sourceUnavailableHours", raw_not_found))
+    provider_empty = int(meta.get("providerEmptyHours", 0))
+    market_closed = int(meta.get("marketClosedHours", closed_nf + closed_empty))
+    return (
+        raw_not_found == closed_nf + unavailable
+        and raw_empty == closed_empty + provider_empty
+        and market_closed == closed_nf + closed_empty
+        and bool(meta.get("sourceStatusAccountingPass", False))
+    )
+
+
 def audit_year(summary_path: pathlib.Path, data_dir: pathlib.Path, output: pathlib.Path, write_summary: bool) -> dict:
     summary = json.loads(summary_path.read_text())
     if summary.get("provider") != "Dukascopy" or summary.get("instrumentCode") != "XAU-USD" or summary.get("interval") != "1s":
@@ -78,6 +95,8 @@ def audit_year(summary_path: pathlib.Path, data_dir: pathlib.Path, output: pathl
     audits = []
     prev_last = None
     for m in sorted(summary.get("months", []), key=lambda x: (int(x["year"]), int(x["month"]))):
+        if not audit_source_status(m):
+            raise RuntimeError(f"source-hour accounting invalid {m.get('year')}-{m.get('month')}")
         p = data_dir / m["asset"]
         if not p.exists():
             raise RuntimeError(f"missing monthly asset {p}")
@@ -87,8 +106,9 @@ def audit_year(summary_path: pathlib.Path, data_dir: pathlib.Path, output: pathl
         prev_last = int(a["latestSecond"])
         audits.append(a)
         m["auditPass"] = True
+        m["sourceStatusAccountingPass"] = True
     result = {
-        "schema": "renko-gold-year-audit-v1",
+        "schema": "renko-gold-year-audit-v2",
         "year": summary["year"],
         "provider": "Dukascopy",
         "instrumentCode": "XAU-USD",
@@ -100,9 +120,16 @@ def audit_year(summary_path: pathlib.Path, data_dir: pathlib.Path, output: pathl
         "bytes": sum(x["bytes"] for x in audits),
         "duplicates": 0,
         "conflicts": 0,
+        "sourceStatusAccountingPass": True,
         "pass": True,
     }
-    summary["audit"] = {"schema": result["schema"], "pass": True, "duplicates": 0, "conflicts": 0}
+    summary["audit"] = {
+        "schema": result["schema"],
+        "pass": True,
+        "duplicates": 0,
+        "conflicts": 0,
+        "sourceStatusAccountingPass": True,
+    }
     if write_summary:
         summary_path.write_text(json.dumps(summary, indent=2) + "\n")
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -134,17 +161,23 @@ def build_manifest(summary_paths: Iterable[pathlib.Path], cutoff: dt.datetime, o
         raise RuntimeError(f"price-side not locked to calibrated bid: {sides}")
     if ticks != {0.001}:
         raise RuntimeError(f"tick-size mismatch: {ticks}")
+
     months = []
     for y in summaries:
         if not y.get("audit", {}).get("pass"):
             raise RuntimeError(f"year {y.get('year')} missing PASS audit")
+        if not y.get("audit", {}).get("sourceStatusAccountingPass"):
+            raise RuntimeError(f"year {y.get('year')} missing source-hour accounting PASS")
         for m in y.get("months", []):
             if not m.get("auditPass"):
                 raise RuntimeError(f"month {m.get('year')}-{m.get('month')} missing PASS audit")
+            if not audit_source_status(m):
+                raise RuntimeError(f"month {m.get('year')}-{m.get('month')} source-hour accounting invalid")
             if not m.get("assetUrl") or not m.get("dataCommitSha"):
                 raise RuntimeError(f"month {m.get('year')}-{m.get('month')} missing immutable storage identity")
             months.append(m)
     months.sort(key=lambda x: (int(x["year"]), int(x["month"])))
+
     actual_keys = [f"{int(m['year']):04d}-{int(m['month']):02d}" for m in months]
     expected_keys = expected_months(ORIGIN, cutoff)
     missing = [x for x in expected_keys if x not in set(actual_keys)]
@@ -157,18 +190,31 @@ def build_manifest(summary_paths: Iterable[pathlib.Path], cutoff: dt.datetime, o
     for m in months:
         first, last = int(m["earliestSecond"]), int(m["latestSecond"])
         if prev_last is not None and first <= prev_last:
-            overlaps.append({"month": f"{m['year']:04d}-{m['month']:02d}", "previousLatestSecond": prev_last, "earliestSecond": first})
+            overlaps.append({"month": f"{int(m['year']):04d}-{int(m['month']):02d}", "previousLatestSecond": prev_last, "earliestSecond": first})
         prev_last = last
 
     unavailable = sum(int(m.get("sourceUnavailableHours", m.get("notFoundHours", 0))) for m in months)
     provider_empty = sum(int(m.get("providerEmptyHours", 0)) for m in months)
     market_closed = sum(int(m.get("marketClosedHours", 0)) for m in months)
+    market_closed_empty = sum(int(m.get("marketClosedEmptyHours", 0)) for m in months)
+    market_closed_not_found = sum(int(m.get("marketClosedNotFoundHours", 0)) for m in months)
+    raw_not_found = sum(int(m.get("notFoundHours", 0)) for m in months)
+    raw_empty = sum(int(m.get("emptySourceHours", 0)) for m in months)
     source_hours = sum(int(m.get("sourceHours", 0)) for m in months)
     first_second = int(months[0]["earliestSecond"]) if months else None
     last_second = int(months[-1]["latestSecond"]) if months else None
     origin_ok = first_second is not None and int(ORIGIN.timestamp()) <= first_second <= ORIGIN_WITNESS_SECOND + 1
     all_audited = all(bool(m.get("auditPass")) for m in months)
-    backfill_complete = bool(not missing and not extra and not overlaps and unavailable == 0 and origin_ok and all_audited)
+    source_status_accounting = all(audit_source_status(m) for m in months)
+    backfill_complete = bool(
+        not missing
+        and not extra
+        and not overlaps
+        and unavailable == 0
+        and origin_ok
+        and all_audited
+        and source_status_accounting
+    )
 
     manifest_months = []
     for m in months:
@@ -185,10 +231,13 @@ def build_manifest(summary_paths: Iterable[pathlib.Path], cutoff: dt.datetime, o
             "latestSecond": int(m["latestSecond"]),
             "sourceHours": int(m["sourceHours"]),
             "emptySourceHours": int(m["emptySourceHours"]),
+            "notFoundHours": int(m.get("notFoundHours", 0)),
             "marketClosedHours": int(m.get("marketClosedHours", 0)),
+            "marketClosedEmptyHours": int(m.get("marketClosedEmptyHours", 0)),
+            "marketClosedNotFoundHours": int(m.get("marketClosedNotFoundHours", 0)),
             "providerEmptyHours": int(m.get("providerEmptyHours", 0)),
             "sourceUnavailableHours": int(m.get("sourceUnavailableHours", m.get("notFoundHours", 0))),
-            "notFoundHours": int(m.get("notFoundHours", 0)),
+            "sourceStatusAccountingPass": True,
             "tickSize": float(m["tickSize"]),
             "priceSide": m["priceSide"],
             "sourceDigestSha256": m["sourceDigestSha256"],
@@ -196,10 +245,19 @@ def build_manifest(summary_paths: Iterable[pathlib.Path], cutoff: dt.datetime, o
             "bytes": int(m["bytes"]),
             "auditPass": True,
             "marketClosedHourRanges": m.get("marketClosedHourRanges", []),
+            "marketClosedEmptyHourRanges": m.get("marketClosedEmptyHourRanges", []),
+            "marketClosedNotFoundHourRanges": m.get("marketClosedNotFoundHourRanges", []),
             "providerEmptyHourRanges": m.get("providerEmptyHourRanges", []),
             "sourceUnavailableHourRanges": m.get("sourceUnavailableHourRanges", []),
         })
-    version_hash = hashlib.sha256(json.dumps([{k:m[k] for k in ("year","month","assetSha256","sourceDigestSha256","dataCommitSha")} for m in manifest_months], separators=(",",":"), sort_keys=True).encode()).hexdigest()
+
+    version_hash = hashlib.sha256(
+        json.dumps(
+            [{k:m[k] for k in ("year", "month", "assetSha256", "sourceDigestSha256", "dataCommitSha")} for m in manifest_months],
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode()
+    ).hexdigest()
     generated = dt.datetime.now(UTC).isoformat().replace("+00:00", "Z")
     manifest = {
         "schema": "renko-gold-s1-full-manifest-v1",
@@ -222,7 +280,7 @@ def build_manifest(summary_paths: Iterable[pathlib.Path], cutoff: dt.datetime, o
         "months": manifest_months,
     }
     coverage = {
-        "schema": "renko-gold-s1-coverage-v1",
+        "schema": "renko-gold-s1-coverage-v2",
         "generatedAt": generated,
         "dataVersion": manifest["dataVersion"],
         "provider": "Dukascopy",
@@ -240,9 +298,14 @@ def build_manifest(summary_paths: Iterable[pathlib.Path], cutoff: dt.datetime, o
         "barCount": sum(int(m["barCount"]) for m in months),
         "compressedBytes": sum(int(m["bytes"]) for m in months),
         "sourceHours": source_hours,
+        "emptySourceHours": raw_empty,
+        "notFoundHours": raw_not_found,
         "marketClosedHours": market_closed,
+        "marketClosedEmptyHours": market_closed_empty,
+        "marketClosedNotFoundHours": market_closed_not_found,
         "providerEmptyHours": provider_empty,
         "sourceUnavailableHours": unavailable,
+        "sourceStatusAccountingPass": source_status_accounting,
         "earliestSecond": first_second,
         "latestSecond": last_second,
         "originWitnessSatisfied": origin_ok,
@@ -254,7 +317,14 @@ def build_manifest(summary_paths: Iterable[pathlib.Path], cutoff: dt.datetime, o
     checksums = {
         "schema": "renko-gold-s1-checksums-v1",
         "dataVersion": manifest["dataVersion"],
-        "assets": [{"year":m["year"],"month":m["month"],"asset":m["asset"],"bytes":m["bytes"],"barCount":m["barCount"],"assetSha256":m["assetSha256"],"sourceDigestSha256":m["sourceDigestSha256"]} for m in manifest_months],
+        "assets": [
+            {
+                "year":m["year"], "month":m["month"], "asset":m["asset"],
+                "bytes":m["bytes"], "barCount":m["barCount"],
+                "assetSha256":m["assetSha256"], "sourceDigestSha256":m["sourceDigestSha256"]
+            }
+            for m in manifest_months
+        ],
     }
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "full-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
