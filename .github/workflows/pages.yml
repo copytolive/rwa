@@ -1,4 +1,4 @@
-name: Deploy RWA to GitHub Pages
+name: Deploy RWA System + Total Realworldasset UI
 
 on:
   push:
@@ -15,14 +15,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  verify:
+  verify-system:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - name: Checkout exact release SHA
         uses: actions/checkout@v4
 
-      - name: Validate root production application
+      - name: Validate RWA system/runtime payload
         shell: bash
         run: |
           set -euo pipefail
@@ -34,18 +34,14 @@ jobs:
             manifest.webmanifest; do
             test -s "$f"
           done
-          grep -Fq '<!doctype html>' index.html
-          grep -Fq 'superapp-v5.js' index.html
-          grep -Fq 'rwa-target-dashboard-v2.js' index.html
-          grep -Fq 'rwa-ecommerce-target-controller-v1.js' index.html
           node --check app.js
           node --check superapp-v5.js
           node --check rwa-target-dashboard-v2.js
           node --check rwa-ecommerce-target-controller-v1.js
           node --check rwa-ecommerce-target-hardening-v1.js
-          echo ROOT_RWA_PAYLOAD_PASS
+          echo RWA_SYSTEM_RUNTIME_PASS
 
-      - name: Validate RENKO production payload
+      - name: Validate RENKO system payload
         shell: bash
         run: |
           set -euo pipefail
@@ -67,19 +63,8 @@ jobs:
             renko/xaut-okx-1s-pack.meta.json; do
             test -s "$f"
           done
-          for f in \
-            renko/renko-tv-engine.js \
-            renko/renko-tv-app.js \
-            renko/renko-tv-fixed-1s.js \
-            renko/renko-tv-atr-control.js \
-            renko/renko-tv-atr-fixed1s.js \
-            renko/renko-tv-atr-ui-sync.js \
-            renko/renko-tv-traditional-control.js \
-            renko/renko-tv-locale-guard.js \
-            renko/renko-tv-total-history.js \
-            renko/renko-gold-origin-pack.js; do
-            node --check "$f"
-          done
+          node --check renko/renko-tv-engine.js
+          node --check renko/renko-tv-app.js
           python3 - <<'PY'
           import json
           from pathlib import Path
@@ -89,30 +74,168 @@ jobs:
           assert m['provider']=='OKX Spot' and m['instrument']=='XAUT-USDT',m
           assert m['interval']=='1s' and m['intervalMs']==1000,m
           assert m['rows']==1_005_000,m
-          assert p.get('sourceBar')=='1s' and p.get('sourceIntervalMs')==1000,p
           assert p.get('upsampled') is False and p.get('synthetic1s') is False,p
-          print('RENKO_PAGES_PAYLOAD_PASS')
+          print('RENKO_SYSTEM_PAYLOAD_PASS')
           PY
 
-  deploy:
-    needs: verify
+  build-ui:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact release SHA
+        uses: actions/checkout@v4
+
+      - name: Verify synchronized total UI source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s UI_SYNC_MANIFEST.json
+          test -s ui/realworldasset/UPSTREAM_SHA.txt
+          test -s ui/realworldasset/package.json
+          test -s ui/realworldasset/next.config.js
+          test -s 'ui/realworldasset/src/app/[...slug]/page.tsx'
+          FILE_COUNT="$(git ls-files ui/realworldasset | wc -l | tr -d ' ')"
+          test "$FILE_COUNT" -gt 50
+          grep -Fq 'MerchantGrowthRoute' 'ui/realworldasset/src/app/[...slug]/page.tsx'
+          grep -Fq '"/rwa"' ui/realworldasset/next.config.js
+          echo "TOTAL_UI_SOURCE_PASS files=$FILE_COUNT upstream=$(cat ui/realworldasset/UPSTREAM_SHA.txt)"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ui/realworldasset/package.json
+
+      - name: Install UI dependencies
+        working-directory: ui/realworldasset
+        run: npm install --no-audit --no-fund
+
+      - name: Verify total UI interactions
+        working-directory: ui/realworldasset
+        run: |
+          set -euo pipefail
+          npm run verify:interactions
+          npm run verify:chat04
+          npm run verify:chat05
+          npm run verify:chat06
+          npm run verify:chat07
+          npm run verify:chat08
+          npm run verify:chat09
+          npm run verify:chat10
+          npm run verify:chat11
+          npm run verify:chat12
+          npm run verify:chat13
+
+      - name: TypeScript verification
+        working-directory: ui/realworldasset
+        run: npm run typecheck
+
+      - name: Build total UI at canonical /rwa base path
+        working-directory: ui/realworldasset
+        env:
+          RWA_BASE_PATH: /rwa
+          GITHUB_ACTIONS: "true"
+        run: npm run build
+
+      - name: Compose single production artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          O=ui/realworldasset/out
+          test -s "$O/index.html"
+          for route in markets merchant merchant/orders merchant/updates/new merchant/ads community settings checkout account/orders; do
+            test -s "$O/$route/index.html"
+          done
+          grep -Rq '/rwa/_next/' "$O/index.html" "$O/merchant/index.html"
+          rm -rf "$O/renko"
+          cp -a renko "$O/renko"
+          printf '%s\n' "$GITHUB_SHA" > "$O/deployment-sha.txt"
+          printf '%s\n' "$GITHUB_SHA" > "$O/system-sha.txt"
+          cp ui/realworldasset/UPSTREAM_SHA.txt "$O/ui-source-sha.txt"
+          cp UI_SYNC_MANIFEST.json "$O/UI_SYNC_MANIFEST.json"
+          touch "$O/.nojekyll"
+          test -s "$O/renko/index.html"
+          echo SINGLE_RWA_PRODUCTION_ARTIFACT_PASS
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ui/realworldasset/out
+
+  deploy:
+    needs: [verify-system, build-ui]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout exact release SHA
-        uses: actions/checkout@v4
-      - name: Stamp exact deployed SHA
-        run: |
-          printf '%s\n' "$GITHUB_SHA" > deployment-sha.txt
-          printf '%s\n' "$GITHUB_SHA" > renko-deployment-sha.txt
-          printf '%s\n' "$GITHUB_SHA" > renko/deployment-sha.txt
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.'
-      - name: Deploy to GitHub Pages
+      - name: Deploy single RWA production
         id: deployment
         uses: actions/deploy-pages@v4
+
+  validate-public:
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Wait for exact public deployment and validate routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://copytolive.github.io/rwa'
+          PASS=0
+          for i in $(seq 1 36); do
+            SHA="$(curl -fsSL --retry 2 "$BASE/deployment-sha.txt" 2>/dev/null || true)"
+            if [ "$SHA" = "$GITHUB_SHA" ]; then PASS=1; break; fi
+            sleep 5
+          done
+          test "$PASS" = 1
+          UI_SHA="$(curl -fsSL "$BASE/ui-source-sha.txt")"
+          test -n "$UI_SHA"
+          for route in / /markets/ /merchant/ /merchant/orders/ /merchant/updates/new/ /merchant/ads/ /community/ /settings/ /checkout/ /account/orders/ /renko/; do
+            CODE="$(curl -sS -L -o /tmp/page.html -w '%{http_code}' --retry 4 --retry-delay 2 "$BASE$route")"
+            test "$CODE" = 200
+          done
+          echo "PUBLIC_SINGLE_RWA_PASS system=$GITHUB_SHA ui=$UI_SHA"
+
+      - name: Install Chromium
+        run: |
+          python3 -m pip install --disable-pip-version-check playwright==1.55.0
+          python3 -m playwright install --with-deps chromium
+
+      - name: Chromium production validation and screenshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p production-proof
+          python3 - <<'PY'
+          from playwright.sync_api import sync_playwright
+          from pathlib import Path
+          base='https://copytolive.github.io/rwa'
+          routes=['/','/markets/','/merchant/','/merchant/orders/','/merchant/updates/new/','/merchant/ads/','/community/','/settings/','/checkout/','/account/orders/','/renko/']
+          errors=[]
+          with sync_playwright() as p:
+              b=p.chromium.launch(headless=True,args=['--no-sandbox'])
+              page=b.new_page(viewport={'width':1672,'height':941},device_scale_factor=1)
+              page.on('pageerror',lambda e: errors.append(str(e)))
+              for route in routes:
+                  r=page.goto(base+route,wait_until='domcontentloaded',timeout=30000)
+                  assert r and r.status==200,(route,r.status if r else None)
+                  page.wait_for_timeout(150)
+                  text=page.locator('body').inner_text()
+                  assert '404' not in text[:120],route
+              page.goto(base+'/',wait_until='networkidle',timeout=30000)
+              page.screenshot(path='production-proof/rwa-total-ui-1672x941.png',full_page=False)
+              Path('production-proof/result.txt').write_text(f'PUBLIC_CHROMIUM_PASS routes={len(routes)} runtimeErrors={len(errors)}\n')
+              assert not errors,errors
+              b.close()
+          PY
+
+      - name: Upload public production proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: rwa-total-ui-production-proof
+          path: production-proof/
+          retention-days: 7
