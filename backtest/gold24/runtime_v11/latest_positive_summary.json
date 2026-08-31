@@ -1,5 +1,5 @@
 {
-  "configs_archived": 63925,
+  "configs_archived": 63994,
   "correlation_rule": {
     "action": ">0.50 remove lower-quality method from final selection",
     "maximum": 0.5,
@@ -19,6 +19,6 @@
     "unit_policy": "canonical net_profit directly; x100 standard-lot conversion forbidden unless separately broker-validated"
   },
   "schema": "gold-v11-positive-ranking-summary-v3",
-  "source_run_id": "33368343392",
+  "source_run_id": "33372888233",
   "target_v11_count": 0
 }
