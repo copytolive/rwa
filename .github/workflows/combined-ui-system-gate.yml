@@ -1,0 +1,140 @@
+name: Combined RWA System + Total UI Gate
+
+on:
+  push:
+    branches: ["integrate/total-ui-realworldasset-20260831-v2"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  system-and-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact candidate SHA
+        uses: actions/checkout@v4
+
+      - name: Verify system/runtime remains intact
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in index.html app.js styles.css superapp-v5.js rwa-target-dashboard-v2.js rwa-ecommerce-target-controller-v1.js manifest.webmanifest; do
+            test -s "$f"
+          done
+          test -s renko/index.html
+          test -s renko/renko-tv-engine.js
+          node --check app.js
+          node --check superapp-v5.js
+          node --check rwa-target-dashboard-v2.js
+          node --check rwa-ecommerce-target-controller-v1.js
+          node --check renko/renko-tv-engine.js
+          echo SYSTEM_RUNTIME_PASS
+
+      - name: Verify complete vendored UI source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s UI_SYNC_MANIFEST.json
+          test -s ui/realworldasset/UPSTREAM_SHA.txt
+          test -s ui/realworldasset/package.json
+          test -s ui/realworldasset/next.config.js
+          test -s ui/realworldasset/src/app/page.tsx
+          test -s 'ui/realworldasset/src/app/[...slug]/page.tsx'
+          test -d ui/realworldasset/src/components
+          test -d ui/realworldasset/scripts
+          test -d ui/realworldasset/public
+          FILE_COUNT="$(git ls-files ui/realworldasset | wc -l | tr -d ' ')"
+          test "$FILE_COUNT" -gt 50
+          grep -Fq 'MerchantGrowthRoute' 'ui/realworldasset/src/app/[...slug]/page.tsx'
+          grep -Fq '"/rwa"' ui/realworldasset/next.config.js
+          echo "TOTAL_UI_SOURCE_PASS files=$FILE_COUNT upstream=$(cat ui/realworldasset/UPSTREAM_SHA.txt)"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ui/realworldasset/package.json
+
+      - name: Install UI dependencies
+        working-directory: ui/realworldasset
+        run: npm install --no-audit --no-fund
+
+      - name: Run final UI interaction contracts
+        working-directory: ui/realworldasset
+        run: |
+          set -euo pipefail
+          npm run verify:interactions
+          npm run verify:chat04
+          npm run verify:chat05
+          npm run verify:chat06
+          npm run verify:chat07
+          npm run verify:chat08
+          npm run verify:chat09
+          npm run verify:chat10
+          npm run verify:chat11
+          npm run verify:chat12
+          npm run verify:chat13
+
+      - name: TypeScript verification
+        working-directory: ui/realworldasset
+        run: npm run typecheck
+
+      - name: Build canonical /rwa static UI
+        working-directory: ui/realworldasset
+        env:
+          RWA_BASE_PATH: /rwa
+          GITHUB_ACTIONS: "true"
+        run: npm run build
+
+      - name: Validate exported total UI routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          O=ui/realworldasset/out
+          test -s "$O/index.html"
+          for route in markets merchant merchant/orders merchant/updates/new merchant/ads community settings checkout account/orders; do
+            test -s "$O/$route/index.html"
+          done
+          grep -Rq '/rwa/_next/' "$O"/index.html "$O"/merchant/index.html
+          echo TOTAL_UI_BUILD_PASS
+
+      - name: Install Chromium
+        run: |
+          python3 -m pip install --disable-pip-version-check playwright==1.55.0
+          python3 -m playwright install --with-deps chromium
+
+      - name: Chromium local production-shape smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .combined-preview
+          mkdir -p .combined-preview/rwa
+          cp -a ui/realworldasset/out/. .combined-preview/rwa/
+          cp -a renko .combined-preview/rwa/renko
+          python3 -m http.server 4197 --bind 127.0.0.1 --directory .combined-preview >/tmp/rwa-ui-http.log 2>&1 &
+          echo $! > /tmp/rwa-ui-http.pid
+          python3 - <<'PY'
+          from playwright.sync_api import sync_playwright
+          base='http://127.0.0.1:4197/rwa'
+          routes=['/','/markets/','/merchant/','/merchant/orders/','/merchant/updates/new/','/merchant/ads/','/community/','/settings/','/checkout/','/account/orders/','/renko/']
+          errors=[]
+          with sync_playwright() as p:
+              b=p.chromium.launch(headless=True,args=['--no-sandbox'])
+              page=b.new_page(viewport={'width':1672,'height':941})
+              page.on('pageerror',lambda e: errors.append(str(e)))
+              for route in routes:
+                  r=page.goto(base+route,wait_until='domcontentloaded',timeout=20000)
+                  assert r and r.status==200,(route,r.status if r else None)
+                  page.wait_for_timeout(100)
+                  text=page.locator('body').inner_text()
+                  assert '404' not in text[:120],route
+              assert not errors,errors
+              b.close()
+          print('CHROMIUM_COMBINED_UI_PASS routes=',len(routes))
+          PY
+          kill "$(cat /tmp/rwa-ui-http.pid)" || true

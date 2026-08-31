@@ -1,0 +1,64 @@
+name: Restore total UI source on main
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: restore-total-ui-source
+  cancel-in-progress: false
+
+jobs:
+  restore:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current main with history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore complete UI tree from last full UI commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_SHA='638d28efa28d708c3f12086b00cccc6b524c7db5'
+          git cat-file -e "$SOURCE_SHA^{commit}"
+          current_deploy="$(mktemp)"
+          cp .github/workflows/deploy-pages.yml "$current_deploy"
+          current_restore="$(mktemp)"
+          cp .github/workflows/restore-total-ui-source.yml "$current_restore"
+          git rm -r --ignore-unmatch . ':!.git' || true
+          git checkout "$SOURCE_SHA" -- .
+          mkdir -p .github/workflows
+          cp "$current_deploy" .github/workflows/deploy-pages.yml
+          cp "$current_restore" .github/workflows/restore-total-ui-source.yml
+          cat > CANONICAL_INTEGRATION.md <<'DOC'
+          # Canonical integration
+          
+          This repository is the complete UI source for the RWA product.
+          
+          - UI source of truth: `copytolive/realworldasset`
+          - System/runtime source of truth: `copytolive/rwa`
+          - Canonical public production: `https://copytolive.github.io/rwa/`
+          - `copytolive/rwa` vendors this complete UI under `ui/realworldasset/` and builds production from it.
+          - Pages for this repository redirects to the canonical `/rwa/` production URL.
+          DOC
+          git add -A
+          test -s package.json
+          test -s next.config.js
+          test -d src/components
+          test -d scripts
+          test -d public
+          grep -Fq 'MerchantGrowthRoute' 'src/app/[...slug]/page.tsx'
+          if git diff --cached --quiet; then
+            echo UI_ALREADY_RESTORED
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'restore(ui): recover complete realworldasset source [skip ci]'
+          git push origin HEAD:main

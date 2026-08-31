@@ -1,0 +1,103 @@
+:root {
+  color-scheme: dark;
+
+  /* Brand / semantic colors */
+  --rwa-primary: #0a64ff;
+  --rwa-primary-hover: #2477ff;
+  --rwa-primary-active: #0754da;
+  --rwa-primary-soft: rgba(10, 100, 255, 0.14);
+  --rwa-success: #10b981;
+  --rwa-warning: #f59e0b;
+  --rwa-danger: #ef4444;
+  --rwa-info: #3b82f6;
+  --rwa-purple: #a855f7;
+
+  /* Dark surfaces derived from the reference sheets */
+  --rwa-navy-950: #030812;
+  --rwa-navy-900: #050b16;
+  --rwa-navy-850: #07111f;
+  --rwa-navy-800: #0a1424;
+  --rwa-navy-750: #0d192b;
+  --rwa-navy-700: #122039;
+  --rwa-slate-600: #31415b;
+  --rwa-slate-500: #526078;
+  --rwa-slate-400: #8591a6;
+  --rwa-slate-300: #b8c1cf;
+  --rwa-slate-200: #d9e0ea;
+  --rwa-white: #f7f9fc;
+
+  --rwa-bg: var(--rwa-navy-950);
+  --rwa-surface: var(--rwa-navy-850);
+  --rwa-surface-raised: var(--rwa-navy-800);
+  --rwa-surface-hover: var(--rwa-navy-750);
+  --rwa-border: #18263a;
+  --rwa-border-strong: #243651;
+  --rwa-text: var(--rwa-white);
+  --rwa-text-secondary: #9ba8bb;
+  --rwa-text-muted: #6f7d92;
+  --rwa-text-disabled: #465267;
+
+  /* Typography */
+  --rwa-font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --rwa-text-display-size: 3rem;
+  --rwa-text-display-line: 3.5rem;
+  --rwa-text-h1-size: 2rem;
+  --rwa-text-h1-line: 2.5rem;
+  --rwa-text-h2-size: 1.5rem;
+  --rwa-text-h2-line: 2rem;
+  --rwa-text-h3-size: 1.25rem;
+  --rwa-text-h3-line: 1.75rem;
+  --rwa-text-body-size: 1rem;
+  --rwa-text-body-line: 1.5rem;
+  --rwa-text-body-sm-size: 0.875rem;
+  --rwa-text-body-sm-line: 1.25rem;
+  --rwa-text-caption-size: 0.75rem;
+  --rwa-text-caption-line: 1rem;
+
+  /* 4pt spacing system */
+  --rwa-space-0: 0;
+  --rwa-space-1: 0.25rem;
+  --rwa-space-2: 0.5rem;
+  --rwa-space-3: 0.75rem;
+  --rwa-space-4: 1rem;
+  --rwa-space-5: 1.25rem;
+  --rwa-space-6: 1.5rem;
+  --rwa-space-8: 2rem;
+  --rwa-space-10: 2.5rem;
+  --rwa-space-12: 3rem;
+  --rwa-space-16: 4rem;
+  --rwa-space-20: 5rem;
+  --rwa-space-24: 6rem;
+  --rwa-space-32: 8rem;
+
+  /* Radius / border / elevation */
+  --rwa-radius-none: 0;
+  --rwa-radius-sm: 0.375rem;
+  --rwa-radius-md: 0.5rem;
+  --rwa-radius-lg: 0.75rem;
+  --rwa-radius-xl: 1rem;
+  --rwa-radius-pill: 999px;
+  --rwa-border-width: 1px;
+  --rwa-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.28);
+  --rwa-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --rwa-shadow-focus: 0 0 0 2px rgba(10, 100, 255, 0.42);
+
+  /* Layout */
+  --rwa-container-max: 1440px;
+  --rwa-grid-gutter: 24px;
+  --rwa-control-h-sm: 32px;
+  --rwa-control-h-md: 40px;
+  --rwa-control-h-lg: 48px;
+
+  /* Motion */
+  --rwa-duration-fast: 120ms;
+  --rwa-duration-base: 180ms;
+  --rwa-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --rwa-duration-fast: 0ms;
+    --rwa-duration-base: 0ms;
+  }
+}

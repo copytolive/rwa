@@ -1,0 +1,21 @@
+@import "../styles/tokens.css";
+
+* { box-sizing: border-box; }
+html { background: var(--rwa-bg); }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--rwa-bg);
+  color: var(--rwa-text);
+  font-family: var(--rwa-font-sans);
+  font-size: var(--rwa-text-body-size);
+  line-height: var(--rwa-text-body-line);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+button, input, select, textarea { font: inherit; }
+a { color: inherit; }
+::selection { background: rgba(10, 100, 255, .35); }
+:focus-visible { outline: 0; box-shadow: var(--rwa-shadow-focus); }
+.soft-theme { filter: saturate(.86) brightness(1.08); }
+.sr-only { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; }

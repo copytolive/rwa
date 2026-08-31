@@ -1,0 +1,1 @@
+export { MerchantGrowthRoute } from "./MerchantGrowth";

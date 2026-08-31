@@ -1,0 +1,38 @@
+{
+  "name": "realworldasset",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "verify:foundation": "node scripts/verify-foundation.mjs",
+    "verify:public-auth": "node scripts/verify-public-auth.mjs",
+    "verify:overlays": "node scripts/verify-overlays.mjs",
+    "verify:chat01": "node scripts/verify-overlays.mjs && node scripts/verify-public-auth.mjs",
+    "verify:chat03": "node scripts/verify-chat03-details.mjs && node scripts/verify-interaction-contract.mjs && node scripts/verify-all-interactions.mjs",
+    "verify:chat04": "node scripts/verify-chat04-trading.mjs && node scripts/verify-interaction-contract.mjs && node scripts/verify-all-interactions.mjs",
+    "verify:chat05": "node scripts/verify-chat05-account.mjs && node scripts/verify-interaction-contract.mjs && node scripts/verify-all-interactions.mjs",
+    "verify:chat06": "node scripts/verify-chat06-account-tools.mjs && node scripts/verify-interaction-contract.mjs && node scripts/verify-all-interactions.mjs",
+    "verify:chat07": "node scripts/verify-chat07-compliance.mjs && node scripts/verify-interaction-contract.mjs && node scripts/verify-all-interactions.mjs",
+    "verify:chat08": "node scripts/verify-chat08-rewards.mjs && node scripts/verify-interaction-contract.mjs && node scripts/verify-all-interactions.mjs",
+    "verify:chat09": "node scripts/verify-chat09-commerce.mjs && node scripts/verify-interaction-contract.mjs && node scripts/verify-all-interactions.mjs",
+    "verify:chat10": "node scripts/verify-chat10-community.mjs && node scripts/verify-interaction-contract.mjs && node scripts/verify-all-interactions.mjs",
+    "verify:chat11": "node scripts/verify-chat11-settings-support.mjs && node scripts/verify-interaction-contract.mjs && node scripts/verify-all-interactions.mjs",
+    "verify:chat12": "node scripts/verify-chat12-merchant-core.mjs && node scripts/verify-interaction-contract.mjs && node scripts/verify-all-interactions.mjs",
+    "verify:chat13": "node scripts/verify-chat13-merchant-growth.mjs && node scripts/verify-interaction-contract.mjs && node scripts/verify-all-interactions.mjs",
+    "verify:interactions": "node scripts/verify-interaction-contract.mjs && node scripts/verify-all-interactions.mjs"
+  },
+  "dependencies": {
+    "next": "^15.5.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "typescript": "^5.8.0"
+  }
+}
