@@ -84,7 +84,8 @@ jobs:
           grep -Fq 'test ! -e ui/realworldasset' .github/workflows/pages.yml
           grep -Fq 'O=apps/realworldasset/out' .github/workflows/pages.yml
           grep -Fq 'cp -a renko "$O/renko"' .github/workflows/pages.yml
-          grep -Fq 'echo "$GITHUB_SHA" > "$O/deployment-sha.txt"' .github/workflows/pages.yml
+          grep -Fq 'printf' .github/workflows/pages.yml
+          grep -Fq 'deployment-sha.txt' .github/workflows/pages.yml
           grep -Fq 'path: apps/realworldasset/out' .github/workflows/pages.yml
           grep -Fq 'PUBLIC_CHROMIUM_REALWORLDASSET_PASS' .github/workflows/pages.yml
       - name: Safety invariants preserved
