@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-08-31T01:38:43.009Z",
+  "generated_at": "2026-08-31T03:43:28.689Z",
   "verification_windows": [
     {
       "from": "2024-01-02T12:00:00.000Z",
@@ -46,8 +46,8 @@
           "valid_ticks": 1214
         }
       ],
-      "verified_at": "2026-08-31T01:38:40.550Z",
-      "latency_ms": 224
+      "verified_at": "2026-08-31T03:43:27.789Z",
+      "latency_ms": 218
     },
     {
       "symbol": "GBPUSD",
@@ -72,8 +72,8 @@
           "valid_ticks": 1562
         }
       ],
-      "verified_at": "2026-08-31T01:38:40.593Z",
-      "latency_ms": 43
+      "verified_at": "2026-08-31T03:43:27.828Z",
+      "latency_ms": 38
     },
     {
       "symbol": "USDJPY",
@@ -98,8 +98,8 @@
           "valid_ticks": 1720
         }
       ],
-      "verified_at": "2026-08-31T01:38:40.719Z",
-      "latency_ms": 126
+      "verified_at": "2026-08-31T03:43:27.855Z",
+      "latency_ms": 27
     },
     {
       "symbol": "USDCHF",
@@ -124,8 +124,8 @@
           "valid_ticks": 1006
         }
       ],
-      "verified_at": "2026-08-31T01:38:40.739Z",
-      "latency_ms": 20
+      "verified_at": "2026-08-31T03:43:27.872Z",
+      "latency_ms": 17
     },
     {
       "symbol": "AUDUSD",
@@ -150,8 +150,8 @@
           "valid_ticks": 733
         }
       ],
-      "verified_at": "2026-08-31T01:38:40.757Z",
-      "latency_ms": 18
+      "verified_at": "2026-08-31T03:43:27.884Z",
+      "latency_ms": 12
     },
     {
       "symbol": "USDCAD",
@@ -176,8 +176,8 @@
           "valid_ticks": 735
         }
       ],
-      "verified_at": "2026-08-31T01:38:40.772Z",
-      "latency_ms": 15
+      "verified_at": "2026-08-31T03:43:27.895Z",
+      "latency_ms": 11
     },
     {
       "symbol": "NZDUSD",
@@ -202,8 +202,8 @@
           "valid_ticks": 1452
         }
       ],
-      "verified_at": "2026-08-31T01:38:40.884Z",
-      "latency_ms": 112
+      "verified_at": "2026-08-31T03:43:27.907Z",
+      "latency_ms": 12
     },
     {
       "symbol": "EURGBP",
@@ -228,8 +228,8 @@
           "valid_ticks": 948
         }
       ],
-      "verified_at": "2026-08-31T01:38:40.995Z",
-      "latency_ms": 111
+      "verified_at": "2026-08-31T03:43:27.917Z",
+      "latency_ms": 10
     },
     {
       "symbol": "EURJPY",
@@ -254,8 +254,8 @@
           "valid_ticks": 3232
         }
       ],
-      "verified_at": "2026-08-31T01:38:41.024Z",
-      "latency_ms": 29
+      "verified_at": "2026-08-31T03:43:27.942Z",
+      "latency_ms": 25
     },
     {
       "symbol": "EURCHF",
@@ -280,8 +280,8 @@
           "valid_ticks": 823
         }
       ],
-      "verified_at": "2026-08-31T01:38:41.132Z",
-      "latency_ms": 108
+      "verified_at": "2026-08-31T03:43:27.954Z",
+      "latency_ms": 11
     },
     {
       "symbol": "EURAUD",
@@ -306,8 +306,8 @@
           "valid_ticks": 1316
         }
       ],
-      "verified_at": "2026-08-31T01:38:41.248Z",
-      "latency_ms": 116
+      "verified_at": "2026-08-31T03:43:27.975Z",
+      "latency_ms": 21
     },
     {
       "symbol": "EURCAD",
@@ -332,8 +332,8 @@
           "valid_ticks": 982
         }
       ],
-      "verified_at": "2026-08-31T01:38:41.264Z",
-      "latency_ms": 16
+      "verified_at": "2026-08-31T03:43:27.993Z",
+      "latency_ms": 18
     },
     {
       "symbol": "EURNZD",
@@ -358,8 +358,8 @@
           "valid_ticks": 1293
         }
       ],
-      "verified_at": "2026-08-31T01:38:41.376Z",
-      "latency_ms": 112
+      "verified_at": "2026-08-31T03:43:28.005Z",
+      "latency_ms": 12
     },
     {
       "symbol": "GBPJPY",
@@ -384,8 +384,8 @@
           "valid_ticks": 1875
         }
       ],
-      "verified_at": "2026-08-31T01:38:41.489Z",
-      "latency_ms": 112
+      "verified_at": "2026-08-31T03:43:28.022Z",
+      "latency_ms": 17
     },
     {
       "symbol": "GBPCHF",
@@ -410,8 +410,8 @@
           "valid_ticks": 1495
         }
       ],
-      "verified_at": "2026-08-31T01:38:41.600Z",
-      "latency_ms": 111
+      "verified_at": "2026-08-31T03:43:28.036Z",
+      "latency_ms": 14
     },
     {
       "symbol": "GBPAUD",
@@ -436,8 +436,8 @@
           "valid_ticks": 1370
         }
       ],
-      "verified_at": "2026-08-31T01:38:41.712Z",
-      "latency_ms": 112
+      "verified_at": "2026-08-31T03:43:28.052Z",
+      "latency_ms": 16
     },
     {
       "symbol": "GBPCAD",
@@ -462,8 +462,8 @@
           "valid_ticks": 1274
         }
       ],
-      "verified_at": "2026-08-31T01:38:41.824Z",
-      "latency_ms": 112
+      "verified_at": "2026-08-31T03:43:28.064Z",
+      "latency_ms": 12
     },
     {
       "symbol": "GBPNZD",
@@ -493,8 +493,8 @@
           "valid_ticks": 2932
         }
       ],
-      "verified_at": "2026-08-31T01:38:42.059Z",
-      "latency_ms": 235
+      "verified_at": "2026-08-31T03:43:28.202Z",
+      "latency_ms": 138
     },
     {
       "symbol": "AUDJPY",
@@ -519,7 +519,7 @@
           "valid_ticks": 1179
         }
       ],
-      "verified_at": "2026-08-31T01:38:42.076Z",
+      "verified_at": "2026-08-31T03:43:28.219Z",
       "latency_ms": 17
     },
     {
@@ -545,8 +545,8 @@
           "valid_ticks": 1128
         }
       ],
-      "verified_at": "2026-08-31T01:38:42.093Z",
-      "latency_ms": 17
+      "verified_at": "2026-08-31T03:43:28.232Z",
+      "latency_ms": 13
     },
     {
       "symbol": "AUDCHF",
@@ -571,8 +571,8 @@
           "valid_ticks": 1056
         }
       ],
-      "verified_at": "2026-08-31T01:38:42.109Z",
-      "latency_ms": 16
+      "verified_at": "2026-08-31T03:43:28.242Z",
+      "latency_ms": 10
     },
     {
       "symbol": "AUDNZD",
@@ -597,8 +597,8 @@
           "valid_ticks": 1359
         }
       ],
-      "verified_at": "2026-08-31T01:38:42.125Z",
-      "latency_ms": 16
+      "verified_at": "2026-08-31T03:43:28.255Z",
+      "latency_ms": 13
     },
     {
       "symbol": "CADJPY",
@@ -623,8 +623,8 @@
           "valid_ticks": 1019
         }
       ],
-      "verified_at": "2026-08-31T01:38:42.141Z",
-      "latency_ms": 16
+      "verified_at": "2026-08-31T03:43:28.267Z",
+      "latency_ms": 11
     },
     {
       "symbol": "CADCHF",
@@ -649,8 +649,8 @@
           "valid_ticks": 975
         }
       ],
-      "verified_at": "2026-08-31T01:38:42.158Z",
-      "latency_ms": 17
+      "verified_at": "2026-08-31T03:43:28.276Z",
+      "latency_ms": 9
     },
     {
       "symbol": "CHFJPY",
@@ -675,8 +675,8 @@
           "valid_ticks": 1557
         }
       ],
-      "verified_at": "2026-08-31T01:38:42.178Z",
-      "latency_ms": 20
+      "verified_at": "2026-08-31T03:43:28.290Z",
+      "latency_ms": 14
     },
     {
       "symbol": "NZDCAD",
@@ -701,8 +701,8 @@
           "valid_ticks": 918
         }
       ],
-      "verified_at": "2026-08-31T01:38:42.299Z",
-      "latency_ms": 121
+      "verified_at": "2026-08-31T03:43:28.300Z",
+      "latency_ms": 10
     },
     {
       "symbol": "NZDCHF",
@@ -727,8 +727,8 @@
           "valid_ticks": 1013
         }
       ],
-      "verified_at": "2026-08-31T01:38:42.413Z",
-      "latency_ms": 114
+      "verified_at": "2026-08-31T03:43:28.309Z",
+      "latency_ms": 9
     },
     {
       "symbol": "XAUUSD",
@@ -753,8 +753,8 @@
           "valid_ticks": 1821
         }
       ],
-      "verified_at": "2026-08-31T01:38:42.431Z",
-      "latency_ms": 17
+      "verified_at": "2026-08-31T03:43:28.321Z",
+      "latency_ms": 12
     },
     {
       "symbol": "XAGUSD",
@@ -779,8 +779,8 @@
           "valid_ticks": 722
         }
       ],
-      "verified_at": "2026-08-31T01:38:42.545Z",
-      "latency_ms": 114
+      "verified_at": "2026-08-31T03:43:28.332Z",
+      "latency_ms": 11
     },
     {
       "symbol": "BTCUSD",
@@ -805,8 +805,8 @@
           "valid_ticks": 1440
         }
       ],
-      "verified_at": "2026-08-31T01:38:42.663Z",
-      "latency_ms": 118
+      "verified_at": "2026-08-31T03:43:28.347Z",
+      "latency_ms": 15
     },
     {
       "symbol": "ETHUSD",
@@ -836,8 +836,8 @@
           "valid_ticks": 0
         }
       ],
-      "verified_at": "2026-08-31T01:38:43.008Z",
-      "latency_ms": 345
+      "verified_at": "2026-08-31T03:43:28.689Z",
+      "latency_ms": 342
     }
   ]
 }
