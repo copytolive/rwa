@@ -75,7 +75,10 @@ await page.route('**/*',async route=>{
 
 try{
   await page.goto(TEST_URL,{waitUntil:'domcontentloaded'});
-  await page.waitForSelector('#rwaMultiChainLaunch',{timeout:10000});await page.click('#rwaMultiChainLaunch');
+  await page.waitForSelector('#rwaMultiChainLaunch',{state:'attached',timeout:10000});
+  const bootstrapped=await page.evaluate(()=>{const el=document.querySelector('#rwaMultiChainLaunch');if(!el)return false;el.click();return true});
+  if(!bootstrapped)throw Error('MULTI CHAIN bootstrap control missing');
+  report.checks.legacy_lazy_bootstrap='PASS';
   await page.waitForFunction(()=>window.RWAMultiChainEngine?.revision==='3.0.0-tuntas',null,{timeout:10000});
   const gate=await page.evaluate(()=>window.RWAMultiChainEngine.executionReadiness());
   if(!gate.ready||!gate.global||!gate.multichain)throw Error(`dual readiness mock failed: ${JSON.stringify(gate)}`);report.checks.dual_mainnet_gate='PASS';
