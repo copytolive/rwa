@@ -12,7 +12,7 @@ if(!window.RWARenkoLocaleGuard){
 }
 if(window.RWARenkoXAUTProvider)return;
 const NF=window.fetch.bind(window),NWS=window.WebSocket;
-const SYMBOL='XAUTUSDT',INST='XAUT-USDT',HTTP='https://www.okx.com/api/v5',WS='wss://ws.okx.com:8443/ws/v5/public',STEP=1000;
+const SYMBOL='XAUTUSDT',INST='XAUT-USDT',HTTP='https://openapi.okx.com/api/v5',WS='wss://ws.okx.com:8443/ws/v5/public',STEP=1000;
 const stats={restRequests:0,restErrors:0,wsConnections:0,wsMessages:0,lastRestAt:0,lastWsAt:0,lastError:'',provider:'okx-spot',instrument:INST,interval:'1s'};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function urlOf(input){try{return new URL(typeof input==='string'?input:input?.url,location.href)}catch{return null}}
@@ -38,7 +38,7 @@ class OWS{
 }
 function WSP(url,protocols){const s=String(url||'');if(/xautusdt@kline_/i.test(s)&&/binance\.(vision|com)/i.test(s)){if(!/kline_1s/i.test(s))throw new Error('RENKO XAUT production timeframe is fixed to 1s');return new OWS(s)}return protocols===undefined?new NWS(url):new NWS(url,protocols)}
 for(const k of ['CONNECTING','OPEN','CLOSING','CLOSED'])Object.defineProperty(WSP,k,{value:NWS[k]});WSP.prototype=NWS.prototype;window.WebSocket=WSP;
-window.RWARenkoXAUTProvider={version:'2.0.0',symbol:SYMBOL,instrument:INST,provider:'OKX Spot',http:HTTP,ws:WS,stats,intervals:['1s'],fixedInterval:'1s'};
+window.RWARenkoXAUTProvider={version:'2.0.1',symbol:SYMBOL,instrument:INST,provider:'OKX Spot',http:HTTP,ws:WS,stats,intervals:['1s'],fixedInterval:'1s'};
 function mark(){const T=window.RWARenkoTV;if(!T||T.state?.symbol!==SYMBOL)return;document.documentElement.dataset.marketProvider='okx-spot';document.documentElement.dataset.fixedInterval='1s';const s=document.querySelector('.pair-title span');if(s)s.textContent='OKX SPOT';const x=document.getElementById('sourceText');if(x&&!x.textContent.includes('OKX XAUT/USDT'))x.textContent=`OKX XAUT/USDT Spot · ${x.textContent}`}
 window.addEventListener('renko:tv-ready',mark);setInterval(mark,3000);
 })();
