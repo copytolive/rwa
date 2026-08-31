@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: realworldasset-ui-total-audit-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   total-ui-audit:
     runs-on: ubuntu-latest
