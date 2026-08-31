@@ -1,0 +1,48 @@
+name: RWA 24x7 Monitor
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "monitor/config.json"
+      - "monitor/monitor.py"
+      - ".github/workflows/monitor.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rwa-monitor
+  cancel-in-progress: true
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run public-data monitor
+        run: python monitor/monitor.py
+      - name: Validate monitor output
+        run: |
+          python -m json.tool monitor/config.json >/dev/null
+          python -m json.tool monitor/status.json >/dev/null
+          python - <<'PY'
+          import json
+          s=json.load(open('monitor/status.json'))
+          assert 'providers' in s and 'alerts' in s and 'active_alerts' in s and 'copy_signals' in s
+          assert 'private key' in s.get('note','').lower()
+          assert 'hyperliquid' in s['providers'] and 'coinbase' in s['providers'] and 'kraken' in s['providers']
+          assert s.get('market_data_provider')
+          print('24x7 monitor PASS:', s.get('market_data_provider'))
+          PY
+      - name: Persist changed status
+        run: |
+          if git diff --quiet -- monitor/status.json; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add monitor/status.json
+          git commit -m 'chore: refresh 24x7 monitor status [skip ci]'
+          git push

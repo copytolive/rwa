@@ -1,0 +1,107 @@
+name: RWA Root Market Stability
+
+on:
+  pull_request:
+    paths:
+      - "index.html"
+      - "app.js"
+      - "realtime-core.js"
+      - "chart-core.js"
+      - "market-performance.js"
+      - "persistent-market-shell-v3.css"
+      - "persistent-market-operability-patch-v1.css"
+      - "enterprise-ui-v12.css"
+      - "styles.css"
+      - "mobile.css"
+      - "stable-shell.css"
+      - "superapp-v5.js"
+      - "superapp-v5.css"
+      - "quick-actions.js"
+      - "mobile.js"
+      - "tools/root-market-browser-stability.mjs"
+      - ".github/workflows/root-market-stability.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "index.html"
+      - "app.js"
+      - "realtime-core.js"
+      - "chart-core.js"
+      - "market-performance.js"
+      - "persistent-market-shell-v3.css"
+      - "persistent-market-operability-patch-v1.css"
+      - "enterprise-ui-v12.css"
+      - "styles.css"
+      - "mobile.css"
+      - "stable-shell.css"
+      - "superapp-v5.js"
+      - "superapp-v5.css"
+      - "quick-actions.js"
+      - "mobile.js"
+      - "tools/root-market-browser-stability.mjs"
+      - ".github/workflows/root-market-stability.yml"
+
+concurrency:
+  group: rwa-root-market-stability-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  stability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate current stable source contract
+        run: |
+          set -euo pipefail
+          node --check realtime-core.js
+          node --check chart-core.js
+          node --check market-performance.js
+          node --check superapp-v5.js
+          node --check quick-actions.js
+          node --check mobile.js
+          node --check tools/root-market-browser-stability.mjs
+          test -s persistent-market-shell-v3.css
+          test -s enterprise-ui-v12.css
+          grep -Fq 'market-performance.js?v=12' index.html
+          grep -Fq 'stable-shell.css?v=3' index.html
+          grep -Fq 'realtime-core.js?v=3' index.html
+          ! grep -Fq 'product-os-mobile-contract-v3.js' index.html
+          ! grep -Fq 'product-os-v3.js' index.html
+          grep -Fq "runtime:'root-terminal-low-jank-v1'" market-performance.js
+          grep -Fq 'persistent-market-shell-v3.css?v=3' market-performance.js
+          grep -Fq 'persistent-market-operability-patch-v1.css?v=11' market-performance.js
+          grep -Fq 'enterprise-ui-v12.css?v=12' market-performance.js
+          ! grep -Fq 'persistent-market-router-v2.js' market-performance.js
+          grep -Fq "persistent_market_workspaces='css-core-router-v3'" market-performance.js
+          grep -Fq "header='single-row-global-shell-v1'" market-performance.js
+          grep -Fq "observer_policy='hot-dom-periodic-1200ms'" market-performance.js
+          grep -Fq "asset_pair_geometry='route-owned-440px-v12'" market-performance.js
+          grep -Fq 'body.rwa-super-workspace-open .layout' persistent-market-shell-v3.css
+          grep -Fq 'body.rwa-super-suite-open .layout' persistent-market-shell-v3.css
+          grep -Fq 'WORKFLOW VIEWPORT PARITY V10' persistent-market-operability-patch-v1.css
+          grep -Fq 'ACTION ZERO-FLICKER TRANSITION LOCK V11' persistent-market-operability-patch-v1.css
+          grep -Fq 'STRICT SINGLE TOP ROW' stable-shell.css
+          grep -Fq 'COMPACT EXCHANGE CORE' stable-shell.css
+          grep -Fq 'rwa-ex-main>.rwa-ex-card:first-child' stable-shell.css
+          grep -Fq 'depth10@1000ms' realtime-core.js
+          grep -Fq 'setInterval(persistUniverse,30000)' realtime-core.js
+          grep -Fq "performance:'lazy-storefront-no-global-observer-v1'" quick-actions.js
+          ! grep -Fq 'new MutationObserver(injectTrade)' quick-actions.js
+          node tools/superapp-v5-audit.mjs
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start deterministic local site
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/rwa-http.log 2>&1 &
+          echo $! >/tmp/rwa-http.pid
+          for i in {1..20}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/rwa-http.log
+          exit 1
+      - name: Stress desktop compact and mobile UI
+        run: node tools/root-market-browser-stability.mjs

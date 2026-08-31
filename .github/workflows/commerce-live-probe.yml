@@ -1,0 +1,53 @@
+name: RWA Commerce Public Candidate Probe
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "rwa-commerce-config.json"
+      - "tools/commerce-candidate-probe.mjs"
+      - ".github/workflows/commerce-live-probe.yml"
+  pull_request:
+    paths:
+      - "rwa-commerce-config.json"
+      - "tools/commerce-candidate-probe.mjs"
+      - ".github/workflows/commerce-live-probe.yml"
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+      - name: Validate probe source
+        run: |
+          set -euo pipefail
+          node --check tools/commerce-candidate-probe.mjs
+          python -m json.tool rwa-commerce-config.json >/dev/null
+          grep -Fq '"api_base": ""' rwa-commerce-config.json
+          grep -Fq '"candidate_base": "https://seablueprint.com/rwa-commerce"' rwa-commerce-config.json
+      - name: Probe candidate
+        id: probe
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node tools/commerce-candidate-probe.mjs --require-live | tee /tmp/commerce-candidate.log
+      - name: Publish live status
+        if: steps.probe.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/commerce-backend-live' -f description='Public RWA commerce candidate health + ready PASS; checkout remains independently gated'
+      - name: Publish waiting status
+        if: steps.probe.outcome != 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=pending -f context='rwa/commerce-backend-live' -f description='Commerce candidate deployment not publicly healthy/ready yet'

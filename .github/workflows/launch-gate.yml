@@ -1,0 +1,107 @@
+name: RWA Full Platform Launch Gate
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "execution-api.js"
+      - "exchange-core.js"
+      - "testnet-e2e.js"
+      - "agent-worker/**"
+      - "commerce-service/**"
+      - "rwa-commerce-config.json"
+      - "rwa-reviewers.json"
+      - "rwa-assets.json"
+      - "rwa-execution-config.json"
+      - "token/contracts/ProductInventoryGate.sol"
+      - "token/contracts/ProductRWA1155.sol"
+      - "token/contracts/RedemptionManager.sol"
+      - "token/test/product-rwa.test.mjs"
+      - "token/product-rwa-config.json"
+      - "launch/e2e-registry.json"
+      - "launch/beta-registry.json"
+      - "launch/product-rwa-testnet.json"
+      - "launch/external-gates.json"
+      - "launch/status.js"
+      - "tools/launch-gate.mjs"
+      - "tools/launch-gate-current.mjs"
+      - "tools/beta-proof.mjs"
+      - ".github/workflows/commerce-service.yml"
+      - ".github/workflows/token-contracts.yml"
+      - ".github/workflows/beta-proof-review.yml"
+      - ".github/workflows/release-candidate.yml"
+      - ".github/workflows/launch-gate.yml"
+  pull_request:
+    paths:
+      - "commerce-service/**"
+      - "rwa-commerce-config.json"
+      - "token/**"
+      - "launch/**"
+      - "tools/launch-gate.mjs"
+      - "tools/launch-gate-current.mjs"
+      - ".github/workflows/commerce-service.yml"
+      - ".github/workflows/token-contracts.yml"
+      - ".github/workflows/release-candidate.yml"
+      - ".github/workflows/launch-gate.yml"
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  statuses: write
+
+concurrency:
+  group: rwa-launch-readiness-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'main' }}
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+      - name: Evaluate full-platform launch gates
+        run: |
+          node --check tools/launch-gate.mjs
+          node --check tools/launch-gate-current.mjs
+          python -m json.tool launch/product-rwa-testnet.json >/dev/null
+          python -m json.tool launch/external-gates.json >/dev/null
+          python -m json.tool rwa-commerce-config.json >/dev/null
+          node tools/launch-gate-current.mjs --write > /tmp/rwa-launch.json
+          cat /tmp/rwa-launch.json
+          python -m json.tool launch/readiness.json >/dev/null
+          python -m json.tool launch/e2e-registry.json >/dev/null
+          python -m json.tool launch/beta-registry.json >/dev/null
+          node -e "const x=require('/tmp/rwa-launch.json');if(x.schema<5||!x.checks.product_rwa_pipeline||!x.checks.commerce_pipeline||!x.checks.legal_terms)process.exit(1)"
+      - name: Require engineering completeness
+        run: node tools/launch-gate-current.mjs --require-engineering >/tmp/rwa-engineering-gate.json
+      - name: Publish readiness file
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add launch/readiness.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'launch: refresh full-platform machine readiness'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+      - name: Publish launch status
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          READY="$(node -e "const x=require('/tmp/rwa-launch.json');process.stdout.write(String(x.mainnet_ready))")"
+          STATUS="$(node -e "const x=require('/tmp/rwa-launch.json');process.stdout.write(String(x.status))")"
+          BLOCKERS="$(node -e "const x=require('/tmp/rwa-launch.json');process.stdout.write(x.blockers.map(b=>b.gate).slice(0,4).join(','))")"
+          if [ "$READY" = "true" ]; then
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/launch-gate' -f description='RWA READY_FOR_MAINNET: engineering + commerce + Product RWA + external + beta gates PASS'
+          else
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=pending -f context='rwa/launch-gate' -f description="${STATUS}: ${BLOCKERS:-awaiting explicit mainnet control}"
+          fi

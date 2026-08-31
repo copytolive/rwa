@@ -1,0 +1,73 @@
+name: VectorForge Chat Backtest
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['main']
+    paths:
+      - 'backtest/chat/requests/**'
+      - 'backtest/chat/run_chat_job.py'
+      - 'backtest/chat/fetch_dukascopy.cjs'
+      - 'backtest/data/assets.json'
+      - '.github/workflows/vectorforge-chat.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: vectorforge-chat-backtest
+  cancel-in-progress: false
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pinned Dukascopy tick adapter
+        run: npm install --no-save --ignore-scripts dukascopy-node@1.50.0
+
+      - name: Validate asset catalog
+        run: python -m json.tool backtest/data/assets.json >/dev/null
+
+      - name: Process pending chat backtests
+        run: python backtest/chat/run_chat_job.py
+
+      - name: Validate result files
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          results = list(Path('backtest/chat/results').glob('*.json'))
+          for p in results:
+              obj = json.loads(p.read_text())
+              assert obj.get('status') in {'PASS_COMPLETED','FAILED'}
+              if obj['status'] == 'PASS_COMPLETED':
+                  assert len(obj.get('dataset_sha256','')) == 64
+                  assert len(obj.get('evaluation_id','')) == 64
+          print(f'PASS · {len(results)} chat result file(s) validated')
+          PY
+
+      - name: Persist chat results
+        run: |
+          git config user.name 'vectorforge-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add backtest/chat/results/
+          if git diff --cached --quiet; then
+            echo 'No new chat results.'
+          else
+            git commit -m 'VectorForge chat backtest results'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi

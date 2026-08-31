@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "updated_at": "2026-08-23",
+  "blocked_authors": [],
+  "blocked_terms": [],
+  "notes": "Public moderation policy. Wallet-scoped mute/block/report lists remain local to each user."
+}

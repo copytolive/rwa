@@ -1,0 +1,39 @@
+name: RWA Trade UI Stability
+
+on:
+  pull_request:
+    paths:
+      - 'trade/**'
+      - 'tools/trade-ui-contract.mjs'
+      - '.github/workflows/trade-ui-stability.yml'
+  push:
+    branches: ['main']
+    paths:
+      - 'trade/**'
+      - '.github/workflows/trade-ui-stability.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  stability:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+      - name: Validate stable UI runtime
+        run: |
+          set -euo pipefail
+          node --check trade/ui-polish.js
+          node --check trade/config.js
+          node tools/trade-ui-contract.mjs
+          grep -Fq "runtime:'stable-no-observer-v2'" trade/ui-polish.js
+          grep -Fq "./ui-polish.js?v=2" trade/config.js
+          grep -Fq "./ui-polish.css?v=2" trade/ui-polish.js
+          ! grep -Fq 'MutationObserver' trade/ui-polish.js
+          ! grep -Fq "addEventListener('resize',inject" trade/ui-polish.js
+          grep -Fq 'position:static!important' trade/ui-polish.css
+          grep -Fq 'backdrop-filter:none!important' trade/ui-polish.css
+          grep -Fq '.rwa-trade-commerce-strip,.rwa-trade-mobile-store{display:none!important}' trade/ui-polish.css

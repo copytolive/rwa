@@ -3,11 +3,6 @@ name: Deploy RWA to GitHub Pages
 on:
   push:
     branches: ["main"]
-    paths:
-      - "renko/**"
-      - "tools/renko*"
-      - ".github/workflows/renko*"
-      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -22,10 +17,34 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
-      - name: Checkout exact RENKO release SHA
+      - name: Checkout exact release SHA
         uses: actions/checkout@v4
+
+      - name: Validate root production application
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in \
+            index.html app.js styles.css mobile.css stable-shell.css \
+            superapp-v5.js superapp-v5.css rwa-sw-v5.js \
+            rwa-target-dashboard-v2.js rwa-target-dashboard-v2.css \
+            rwa-ecommerce-target-controller-v1.js rwa-ecommerce-target-hardening-v1.js \
+            manifest.webmanifest; do
+            test -s "$f"
+          done
+          grep -Fq '<!doctype html>' index.html
+          grep -Fq 'superapp-v5.js' index.html
+          grep -Fq 'rwa-target-dashboard-v2.js' index.html
+          grep -Fq 'rwa-ecommerce-target-controller-v1.js' index.html
+          node --check app.js
+          node --check superapp-v5.js
+          node --check rwa-target-dashboard-v2.js
+          node --check rwa-ecommerce-target-controller-v1.js
+          node --check rwa-ecommerce-target-hardening-v1.js
+          echo ROOT_RWA_PAYLOAD_PASS
+
       - name: Validate RENKO production payload
         shell: bash
         run: |

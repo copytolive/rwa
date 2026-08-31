@@ -1,0 +1,109 @@
+import {readFile,access} from 'node:fs/promises';
+
+const html=await readFile('trade/index.html','utf8');
+const app=await readFile('trade/app.js','utf8');
+const pro=await readFile('trade/terminal-pro.js','utf8');
+const runtime=await readFile('trade/release-runtime.js','utf8');
+const provider=await readFile('trade/provider-runtime.js','utf8');
+const margin=await readFile('trade/margin-runtime.js','utf8');
+const overlay=await readFile('trade/chart-overlays.js','utf8');
+const exec=await readFile('execution-api.js','utf8');
+const cfg=await readFile('trade/config.js','utf8');
+const fail=[];
+const check=(ok,msg)=>{if(!ok)fail.push(msg)};
+
+const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
+const seen=new Set(),dupes=new Set();
+for(const id of ids){if(seen.has(id))dupes.add(id);seen.add(id)}
+check(dupes.size===0,`duplicate DOM ids: ${[...dupes].join(', ')}`);
+
+const required=[
+  'walletBtn','fundBtn','enableTradingBtn','revokeAgentBtn','coin','marketPrice','priceChart','asks','bids','tape',
+  'side','orderType','orderUsd','leverage','limitPrice','tp','sl','tradeBtn','equity','pnl','position','positionsBody',
+  'ordersBody','fillsBody','refreshBtn','cancelAllBtn','withdrawBtn','preflightBtn','marketPickerModal','riskModal','positionModal',
+  'riskSettingsBtn','killSwitchBtn','mobileBuy','mobileSell','toast','marketSearch','marketList','saveRiskBtn',
+  'riskDailyLoss','riskMaxLeverage','riskMaxExposure','riskPerAsset','riskKill','manageCoin','manageSide','manageSize',
+  'manageEntry','managePnl','manageNetwork','manageTp','manageSl','breakEvenBtn','addProtectionBtn','cancelTriggersBtn'
+];
+for(const id of required)check(seen.has(id),`missing required UI id: ${id}`);
+
+const refs=[...app.matchAll(/\$\('([^']+)'\)/g),...pro.matchAll(/\$\('([^']+)'\)/g)].map(m=>m[1]);
+const dynamicAllowed=new Set(['tradeE2E','tradeE2ERows','tradeE2EStatus','tradeE2EResult','tradeE2ERun','tradeE2EPublish','tradeE2EClear']);
+for(const id of new Set(refs))check(seen.has(id)||dynamicAllowed.has(id),`JS references missing DOM id: ${id}`);
+
+for(const m of html.matchAll(/data-close-modal="([^"]+)"/g))check(seen.has(m[1]),`modal close target missing: ${m[1]}`);
+
+const cssLinks=[...html.matchAll(/<link[^>]+href="([^"?]+\.css)(?:\?[^" ]*)?"/g)].map(m=>m[1]);
+for(const href of cssLinks){const p=href.startsWith('./')?`trade/${href.slice(2)}`:href;try{await access(p)}catch{fail.push(`missing stylesheet: ${p}`)}}
+
+check(html.includes("frame-src 'none'"),'CSP frame-src must remain none');
+check(!html.includes('<iframe'),'trade page must not embed third-party iframes');
+check(html.includes('terminal-pro.js?v=1'),'professional terminal module not loaded');
+check((html.match(/aria-modal="true"/g)||[]).length>=3,'all operational modals must be declared modal dialogs');
+check(html.includes('aria-label="Mobile trade actions"'),'mobile trading actions need an accessible label');
+check(html.includes('data-side-btn="BUY"')&&html.includes('data-side-btn="SELL"'),'BUY/SELL controls missing');
+check(html.includes('data-type-btn="MARKET"')&&html.includes('data-type-btn="LIMIT"'),'MARKET/LIMIT controls missing');
+check(html.includes('data-close-fraction="0.25"')&&html.includes('data-close-fraction="0.5"')&&html.includes('data-close-fraction="1"'),'partial-close controls missing');
+
+check(pro.includes('candleSnapshot'),'native candle chart missing');
+check(pro.includes('orders.market')&&pro.includes('reduceOnly:true'),'reduce-only partial close missing');
+check(pro.includes('orders.trigger'),'post-entry TP/SL control missing');
+check(pro.includes('orders.modify'),'open-order modify missing');
+check(pro.includes('addProtectionBtn')&&pro.includes('cancelTriggersBtn')&&pro.includes('breakEvenBtn'),'position protection controls are not bound');
+check(pro.includes("e.key==='Escape'&&S.modal")&&pro.includes('closeModal()'),'Escape-to-close modal behavior missing');
+check(pro.includes("document.querySelectorAll('.modal-backdrop')")&&pro.includes('closeModal'),'backdrop-to-close modal behavior missing');
+check(pro.includes("e.key==='/'")&&pro.includes("e.key.toLowerCase()==='b'")&&pro.includes("e.key.toLowerCase()==='s'"),'keyboard market/buy/sell shortcuts missing');
+check(pro.includes("scrollIntoView({behavior:'smooth'")&&pro.includes("$('mobileBuy')")&&pro.includes("$('mobileSell')"),'mobile BUY/SELL smooth order navigation missing');
+check(pro.includes("trade?.addEventListener('click'")&&pro.includes('stopImmediatePropagation')&&pro.includes('validateOrder'),'invalid order must be blocked before submit');
+check(pro.includes('watchPrice()')&&pro.includes("'RECONNECTING'")&&pro.includes("'LIVE'"),'live/reconnecting market feedback missing');
+check(!pro.includes('ExchangeClient'),'professional UI must not create a write client');
+check(!/api\.hyperliquid(?:-testnet)?\.xyz\/exchange|['"]\/exchange['"]/.test(pro),'professional UI must not call exchange write endpoint directly');
+
+check(app.includes("$('tradeBtn').addEventListener('click', submitTrade)"),'entry submit control is not bound');
+check(app.includes('await app.placeOrder(params)'),'entry must delegate to the trading adapter');
+check(app.includes('await app.cancelAll()'),'cancel-all control missing');
+check(app.includes('await app.closePosition(p)'),'position close control missing');
+check(app.includes('await app.cancelOrder('),'single-order cancel control missing');
+check(app.includes('state.fills.slice(0, 50)'),'venue fill history rendering missing');
+
+check(exec.includes("hardening:'single-write-path-v1'"),'single write path hardening missing');
+check(exec.includes("riskSigner:'agent-only-fail-closed-v1'"),'delegated fail-closed signer missing');
+check(exec.includes("grouping:'normalTpsl'"),'atomic bracket execution missing');
+check(exec.includes('orders:{')&&exec.includes('modify,')&&exec.includes('cancelAll,'),'execution order-management API incomplete');
+
+check(cfg.includes("version:'1.5.0'"),'trade config must be v1.5.0 parity build');
+check(cfg.includes('../launch/readiness.json'),'global readiness source missing');
+check(cfg.includes('../launch/e2e-registry.json'),'wallet E2E registry source missing');
+check(cfg.includes("status==='READY_FOR_MAINNET'"),'READY_FOR_MAINNET requirement missing');
+check(cfg.includes("x?.status==='E2E_VERIFIED'"),'wallet E2E requirement missing');
+check(cfg.includes("Object.defineProperty(BASE,'mainnetEnabled'"),'dynamic mainnet gate missing');
+check(cfg.includes("get:()=>canMainnet()"),'mainnetEnabled must derive from machine gate');
+check(cfg.includes("toggle.dispatchEvent(new Event('change'"),'gate revocation must force environment back to TESTNET');
+check(cfg.includes("import './provider-runtime.js?v=1'"),'EIP-6963 provider runtime must load before trade boot');
+check(cfg.includes("import('./release-runtime.js?v=1')"),'release runtime must load from config');
+check(cfg.includes("import('./margin-runtime.js?v=1')"),'margin runtime must load from config');
+check(cfg.includes("import('./chart-overlays.js?v=1')"),'chart overlay runtime must load from config');
+check(!/\bmainnetEnabled\s*:\s*true\b/.test(cfg),'mainnet must never be hardcoded enabled');
+
+check(provider.includes('RWAProviderRuntime')&&provider.includes('eip6963:requestProvider'),'multi-wallet provider discovery missing');
+check(margin.includes('RWAMarginRuntime')&&margin.includes('ISOLATED')&&margin.includes('CROSS'),'margin mode controls missing');
+check(margin.includes('api.risk.setLeverage')&&margin.includes('isCross'),'margin mode must execute through RWA risk API');
+check(!margin.includes('ExchangeClient'),'margin runtime must not own exchange write client');
+check(overlay.includes('RWAChartTradeOverlay')&&overlay.includes('chartTradeOverlay'),'chart trade overlay missing');
+check(overlay.includes('api.account.state')&&overlay.includes('api.orders.open'),'chart overlay must observe account/order reads');
+check(!overlay.includes('orders.market')&&!overlay.includes('orders.limit')&&!overlay.includes('orders.bracket'),'chart overlay must remain read-only');
+
+check(runtime.includes('EMERGENCY EXIT'),'emergency exit confirmation missing');
+check(runtime.includes('orders.cancelAll'),'emergency cancel-all missing');
+check(runtime.includes('reduceOnly:true'),'emergency closes must be reduce-only');
+check(runtime.includes("r.kill=!!value"),'emergency kill switch missing');
+check(runtime.includes('URLSearchParams'),'safe market/order deep-link prefill missing');
+check(runtime.includes("b.disabled=true")&&runtime.includes("Withdraw · mainnet only"),'TESTNET withdrawal must be visibly disabled');
+check(!runtime.includes('ExchangeClient'),'release runtime must not own exchange write client');
+check(!/api\.hyperliquid(?:-testnet)?\.xyz\/exchange|['"]\/exchange['"]/.test(runtime),'release runtime must not call exchange write endpoint directly');
+
+const controls=[...html.matchAll(/<(button|input|select|textarea)\b[^>]*>/g)].map(m=>m[0]);
+check(controls.length>=45,`unexpectedly small interactive surface: ${controls.length} controls`);
+
+if(fail.length){console.error(JSON.stringify({ok:false,fail},null,2));process.exit(1)}
+console.log(JSON.stringify({ok:true,ids:ids.length,controls:controls.length,js_refs:new Set(refs).size,contract:'rwa-trade-ui-operability-v5-launch'},null,2));

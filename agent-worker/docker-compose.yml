@@ -1,0 +1,30 @@
+services:
+  rwa-agent-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "8787"
+      RWA_STATE_PATH: /data/state.json
+      RWA_LOOP_MS: "3000"
+      RWA_KEY_ENCRYPTION_SECRET: ${RWA_KEY_ENCRYPTION_SECRET:?set a random secret of at least 32 characters}
+      RWA_PUBLIC_ORIGIN: ${RWA_PUBLIC_ORIGIN:?set the exact public HTTPS worker origin}
+      RWA_ALLOWED_ORIGINS: ${RWA_ALLOWED_ORIGINS:-https://narzulalistiqlal.github.io}
+      RWA_CONTROL_URL: ${RWA_CONTROL_URL:-https://narzulalistiqlal.github.io/rwa/agent-worker/control.json}
+      RWA_RISK_JSON: ${RWA_RISK_JSON:-{"dailyLoss":250,"maxLeverage":5,"maxExposure":5000,"perAsset":2000,"kill":false}}
+      RWA_MAINNET_APPROVED: ${RWA_MAINNET_APPROVED:-}
+    volumes:
+      - rwa-agent-data:/data
+    ports:
+      - "127.0.0.1:8787:8787"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8787/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  rwa-agent-data:

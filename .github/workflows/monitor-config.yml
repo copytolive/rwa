@@ -1,0 +1,55 @@
+name: Publish 24x7 Monitor Config
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: rwa-monitor-config
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: startsWith(github.event.issue.title, '[MONITOR-CONFIG]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install signature verifier
+        run: npm install ethers@6.15.0 --no-save --ignore-scripts
+      - name: Verify signed monitor config
+        id: verify
+        continue-on-error: true
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: node tools/monitor-config.mjs
+      - name: Publish monitor config
+        if: steps.verify.outcome == 'success'
+        run: |
+          python -m json.tool monitor/config.json >/dev/null
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add monitor/config.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'monitor: publish wallet-approved 24x7 rules'
+            git push
+          fi
+      - name: Report success
+        if: steps.verify.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          DATA=$(cat monitor-config-success.txt)
+          gh issue comment "${{ github.event.issue.number }}" --body "24/7 monitor config accepted. Wallet signature and admin allowlist passed: \`$DATA\`. The scheduled monitor will consume this config without any trading private key."
+          gh issue close "${{ github.event.issue.number }}" --reason completed
+      - name: Report rejection
+        if: steps.verify.outcome != 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          REASON=$(cat monitor-config-error.txt 2>/dev/null || echo 'Verification failed')
+          gh issue comment "${{ github.event.issue.number }}" --body "24/7 monitor config rejected: $REASON"
+          gh issue close "${{ github.event.issue.number }}" --reason 'not planned'

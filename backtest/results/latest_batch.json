@@ -1,0 +1,605 @@
+{
+  "status": "PASS_COMPLETED",
+  "engine_version": "vectorforge-batch-1.1.0",
+  "source_month": "2018-07",
+  "source_url": "https://raw.githubusercontent.com/zcbmlijygrdwa/fx_EUR_USD_tick/master/EURUSD-2018-07_converted.txt",
+  "dataset_sha256": "914ab4ae4a560b827a761854ba5af7e0b91269f8cb356ef1797b8a7e562e51a9",
+  "valid_samples": 1902585,
+  "evaluations_computed": 59,
+  "new_batch_evaluations": 59,
+  "duplicate_evaluations": 0,
+  "unique_verified_evaluations_total": 6549,
+  "completed_at": "2026-08-26T03:39:11.752199+00:00",
+  "results": [
+    {
+      "evaluation_id": "e1d7be107b253113e3dbb47cd5b64594ef65a8bc1c853e5d7a4cc0db73e5fd2e",
+      "model": "price_vs_sma_state",
+      "period": 50,
+      "samples": 1902536,
+      "flips": 90292,
+      "buy_pct": 49.81866308968661,
+      "sell_pct": 50.18133691031339,
+      "mean_abs_distance_pct": 0.00390342483535043
+    },
+    {
+      "evaluation_id": "96f67858f9878abfb2a2021895d378e96d1760dd985588b2a0fd980dbdba6419",
+      "model": "price_vs_sma_state",
+      "period": 75,
+      "samples": 1902511,
+      "flips": 72744,
+      "buy_pct": 49.81937029536228,
+      "sell_pct": 50.18062970463772,
+      "mean_abs_distance_pct": 0.004839476412984703
+    },
+    {
+      "evaluation_id": "23660285906b2d40918321fb33af567de525a9e7633464ef1c1adf05d69ec34b",
+      "model": "price_vs_sma_state",
+      "period": 100,
+      "samples": 1902486,
+      "flips": 62488,
+      "buy_pct": 49.91679308021189,
+      "sell_pct": 50.083206919788104,
+      "mean_abs_distance_pct": 0.00562567487342044
+    },
+    {
+      "evaluation_id": "7e349166cc78960065188d8f59e4ff5cc3764f363229ac57a287e8d006b907a6",
+      "model": "price_vs_sma_state",
+      "period": 125,
+      "samples": 1902461,
+      "flips": 55960,
+      "buy_pct": 50.02609777546031,
+      "sell_pct": 49.97390222453969,
+      "mean_abs_distance_pct": 0.006308282175211233
+    },
+    {
+      "evaluation_id": "0165f77fd44c0bbed34fbecba71c45b38de3f2bc911ed467905a3135387a61e3",
+      "model": "price_vs_sma_state",
+      "period": 150,
+      "samples": 1902436,
+      "flips": 51026,
+      "buy_pct": 50.07111934383075,
+      "sell_pct": 49.92888065616925,
+      "mean_abs_distance_pct": 0.006922769651632379
+    },
+    {
+      "evaluation_id": "f46cd1a28eba889ae788ea398cf0f0dec4e9d6bc70a17faf4473fdd459dcacf3",
+      "model": "price_vs_sma_state",
+      "period": 175,
+      "samples": 1902411,
+      "flips": 46910,
+      "buy_pct": 50.1051034713319,
+      "sell_pct": 49.8948965286681,
+      "mean_abs_distance_pct": 0.007486468251884665
+    },
+    {
+      "evaluation_id": "f081d8f8b5c9530457f070568ecc752f82f232b5fbf6a705b226260fe3b1e178",
+      "model": "price_vs_sma_state",
+      "period": 200,
+      "samples": 1902386,
+      "flips": 43603,
+      "buy_pct": 50.16810468537931,
+      "sell_pct": 49.831895314620695,
+      "mean_abs_distance_pct": 0.008007761907069652
+    },
+    {
+      "evaluation_id": "76ec59cb94f85a4f28da77b42da91bbf77d088d32792c26605df0999d6f3d169",
+      "model": "price_vs_sma_state",
+      "period": 225,
+      "samples": 1902361,
+      "flips": 40921,
+      "buy_pct": 50.20782070280036,
+      "sell_pct": 49.79217929719964,
+      "mean_abs_distance_pct": 0.008493138754888083
+    },
+    {
+      "evaluation_id": "296b884597cc32c65102658d3d94f1b7774624fcc20b55433701e91191e94fae",
+      "model": "price_vs_sma_state",
+      "period": 250,
+      "samples": 1902336,
+      "flips": 38995,
+      "buy_pct": 50.196495256358496,
+      "sell_pct": 49.803504743641504,
+      "mean_abs_distance_pct": 0.00894622551033232
+    },
+    {
+      "evaluation_id": "964baf2770fe5293f5285a45b5f9f43f4f020e3db297e082c0ac627428b0b376",
+      "model": "price_vs_sma_state",
+      "period": 275,
+      "samples": 1902311,
+      "flips": 36819,
+      "buy_pct": 50.13465201010771,
+      "sell_pct": 49.86534798989229,
+      "mean_abs_distance_pct": 0.009373933899788791
+    },
+    {
+      "evaluation_id": "f860471b18155bebd126a4f45d906112ccc72c94649f607b25b5fefe1a7dde7f",
+      "model": "price_vs_sma_state",
+      "period": 300,
+      "samples": 1902286,
+      "flips": 35065,
+      "buy_pct": 50.1208545928425,
+      "sell_pct": 49.879145407157495,
+      "mean_abs_distance_pct": 0.009778976620902753
+    },
+    {
+      "evaluation_id": "86962e75084334a2f9088f3086f51de43fe853eddded9351f989a6df076c6854",
+      "model": "price_vs_sma_state",
+      "period": 325,
+      "samples": 1902261,
+      "flips": 33683,
+      "buy_pct": 50.12240696728788,
+      "sell_pct": 49.87759303271213,
+      "mean_abs_distance_pct": 0.010164538943189184
+    },
+    {
+      "evaluation_id": "3a6de48342ac63a8b986d2c0ff81e64cc48d2a5dc0fb2f250214c1d431db4dbf",
+      "model": "price_vs_sma_state",
+      "period": 350,
+      "samples": 1902236,
+      "flips": 32333,
+      "buy_pct": 50.16654084982095,
+      "sell_pct": 49.83345915017905,
+      "mean_abs_distance_pct": 0.010533054003119281
+    },
+    {
+      "evaluation_id": "a24bbeb371dcfbde67155e3527f031dccb0bc9942d42a88a7129a0a909b23550",
+      "model": "price_vs_sma_state",
+      "period": 375,
+      "samples": 1902211,
+      "flips": 30831,
+      "buy_pct": 50.17629484846844,
+      "sell_pct": 49.82370515153156,
+      "mean_abs_distance_pct": 0.01088498523125111
+    },
+    {
+      "evaluation_id": "e0b679d5814a34beb838b572b731a1267fd08855ecc68304456fb46dc6166ba5",
+      "model": "price_vs_sma_state",
+      "period": 400,
+      "samples": 1902186,
+      "flips": 30032,
+      "buy_pct": 50.176849161964185,
+      "sell_pct": 49.823150838035815,
+      "mean_abs_distance_pct": 0.011221178894907757
+    },
+    {
+      "evaluation_id": "5d0a4d0f61dade7e0536f48669cf6e40683d2f2bad8133ad910ebbca1905c7c4",
+      "model": "price_vs_sma_state",
+      "period": 425,
+      "samples": 1902161,
+      "flips": 29172,
+      "buy_pct": 50.144861554831586,
+      "sell_pct": 49.855138445168414,
+      "mean_abs_distance_pct": 0.011543987237215433
+    },
+    {
+      "evaluation_id": "da13a4e06a35f30ac7793fa728c5aed74101b7dfa329613c050904618856fed3",
+      "model": "price_vs_sma_state",
+      "period": 450,
+      "samples": 1902136,
+      "flips": 28658,
+      "buy_pct": 50.14462688262038,
+      "sell_pct": 49.85537311737962,
+      "mean_abs_distance_pct": 0.011855570261374395
+    },
+    {
+      "evaluation_id": "cbafe5c24118bcba8ff70cb0c7937022ac29b36e139cc7535e5c9320c42d0f43",
+      "model": "price_vs_sma_state",
+      "period": 475,
+      "samples": 1902111,
+      "flips": 28058,
+      "buy_pct": 50.160059008123085,
+      "sell_pct": 49.839940991876915,
+      "mean_abs_distance_pct": 0.012156674286267861
+    },
+    {
+      "evaluation_id": "967a1d1b94520796d31e42bdf4acaaeb9c651247f0a754e86fb287158cbe8db9",
+      "model": "price_vs_sma_state",
+      "period": 500,
+      "samples": 1902086,
+      "flips": 27408,
+      "buy_pct": 50.1757544085809,
+      "sell_pct": 49.8242455914191,
+      "mean_abs_distance_pct": 0.012448120219643357
+    },
+    {
+      "evaluation_id": "00301fb812c8ec672df1289ee52c37e914a30b0e3e142dd0dc37211b87cde4b4",
+      "model": "price_vs_sma_state",
+      "period": 525,
+      "samples": 1902061,
+      "flips": 26968,
+      "buy_pct": 50.19833748759898,
+      "sell_pct": 49.80166251240102,
+      "mean_abs_distance_pct": 0.012731354578353787
+    },
+    {
+      "evaluation_id": "74c2c46f91eba5790f0cd3b5487591d615308df3d13191ec42c33045c0e581c0",
+      "model": "price_vs_sma_state",
+      "period": 550,
+      "samples": 1902036,
+      "flips": 26334,
+      "buy_pct": 50.2196067792618,
+      "sell_pct": 49.7803932207382,
+      "mean_abs_distance_pct": 0.01300814400122563
+    },
+    {
+      "evaluation_id": "9836d35e3761e46ed6843bc146c4068e6bbedf820853a51c2e1ec68f40e330a0",
+      "model": "price_vs_sma_state",
+      "period": 575,
+      "samples": 1902011,
+      "flips": 25904,
+      "buy_pct": 50.20170756110244,
+      "sell_pct": 49.79829243889757,
+      "mean_abs_distance_pct": 0.013279999389951261
+    },
+    {
+      "evaluation_id": "cbfa29aede631ed894bae0194843a28b411401bfe5c181cb1ab58380e229d0e9",
+      "model": "price_vs_sma_state",
+      "period": 600,
+      "samples": 1901986,
+      "flips": 25522,
+      "buy_pct": 50.1760265322668,
+      "sell_pct": 49.823973467733204,
+      "mean_abs_distance_pct": 0.013546215729152029
+    },
+    {
+      "evaluation_id": "796e66f727032862fe36048535bf2a22b961b5ac3bbbdd7ebb03678a872563b7",
+      "model": "price_vs_sma_state",
+      "period": 625,
+      "samples": 1901961,
+      "flips": 24998,
+      "buy_pct": 50.14792627188464,
+      "sell_pct": 49.85207372811535,
+      "mean_abs_distance_pct": 0.013807890543502604
+    },
+    {
+      "evaluation_id": "720c7dbd8b3287b50e47394079525e129c534be3685b3a60b3bcbf5ea6b19505",
+      "model": "price_vs_sma_state",
+      "period": 650,
+      "samples": 1901936,
+      "flips": 24476,
+      "buy_pct": 50.110624121947325,
+      "sell_pct": 49.889375878052675,
+      "mean_abs_distance_pct": 0.014064995141825324
+    },
+    {
+      "evaluation_id": "7778f68db2ce7dfc96987a9c2e4de63f2438a52ebe3be5ee985773d6d93bc9de",
+      "model": "price_vs_sma_state",
+      "period": 675,
+      "samples": 1901911,
+      "flips": 23979,
+      "buy_pct": 50.112071490201174,
+      "sell_pct": 49.887928509798826,
+      "mean_abs_distance_pct": 0.014317901442759405
+    },
+    {
+      "evaluation_id": "dd1bcb0c80c21fc1bd9f10a93ccc2b161bbddfc9a25040a5e511e32da17ba620",
+      "model": "price_vs_sma_state",
+      "period": 700,
+      "samples": 1901886,
+      "flips": 23480,
+      "buy_pct": 50.09890182692338,
+      "sell_pct": 49.90109817307662,
+      "mean_abs_distance_pct": 0.014565490039250803
+    },
+    {
+      "evaluation_id": "4ba3700c66c39ca629a90b719573ec7b83a3d0bc51e81233b30bfb84405c9738",
+      "model": "price_vs_sma_state",
+      "period": 725,
+      "samples": 1901861,
+      "flips": 23142,
+      "buy_pct": 50.056707614278864,
+      "sell_pct": 49.94329238572114,
+      "mean_abs_distance_pct": 0.014807812819421092
+    },
+    {
+      "evaluation_id": "10b390418d8a5af72ad6856013a58939b800457e6d87340a2d38d484f2371216",
+      "model": "price_vs_sma_state",
+      "period": 750,
+      "samples": 1901836,
+      "flips": 22710,
+      "buy_pct": 50.01093680001851,
+      "sell_pct": 49.989063199981494,
+      "mean_abs_distance_pct": 0.015045439195713625
+    },
+    {
+      "evaluation_id": "aee7fbcceb4929c47fe48545fde06326040cf098507c7228fb5ac5021c71e76b",
+      "model": "price_vs_sma_state",
+      "period": 775,
+      "samples": 1901811,
+      "flips": 22556,
+      "buy_pct": 49.96511220094952,
+      "sell_pct": 50.03488779905049,
+      "mean_abs_distance_pct": 0.015278376299101993
+    },
+    {
+      "evaluation_id": "8d3f495205722e32414ef5f699460e1c521c50067cf2e32ce93383a0ac308c42",
+      "model": "price_vs_sma_state",
+      "period": 800,
+      "samples": 1901786,
+      "flips": 22133,
+      "buy_pct": 49.94946855219251,
+      "sell_pct": 50.05053144780748,
+      "mean_abs_distance_pct": 0.015507026477376628
+    },
+    {
+      "evaluation_id": "2615b746d2de7701e2124f12352f7b461af19e8f6f8fdd800575263a1eca2bec",
+      "model": "price_vs_sma_state",
+      "period": 825,
+      "samples": 1901761,
+      "flips": 22055,
+      "buy_pct": 49.940502513196975,
+      "sell_pct": 50.05949748680302,
+      "mean_abs_distance_pct": 0.015731593080063826
+    },
+    {
+      "evaluation_id": "9a77baa9037a4ecf9db7ada5cac949f56eab1bbf9936ba66c0ca44612047890c",
+      "model": "price_vs_sma_state",
+      "period": 850,
+      "samples": 1901736,
+      "flips": 21585,
+      "buy_pct": 49.88431622475464,
+      "sell_pct": 50.11568377524536,
+      "mean_abs_distance_pct": 0.015953192194384534
+    },
+    {
+      "evaluation_id": "297d1dfa304f9095b68ee58c602dd355b575e50d25181ea0a935e1b493f0f2b5",
+      "model": "price_vs_sma_state",
+      "period": 875,
+      "samples": 1901711,
+      "flips": 21377,
+      "buy_pct": 49.86451674308031,
+      "sell_pct": 50.13548325691969,
+      "mean_abs_distance_pct": 0.016171836549971272
+    },
+    {
+      "evaluation_id": "e36ecbf459c23129a1f4dd46f56575a0e1212ad5e8e2404965f58e79316c7f25",
+      "model": "price_vs_sma_state",
+      "period": 900,
+      "samples": 1901686,
+      "flips": 21109,
+      "buy_pct": 49.83030847363866,
+      "sell_pct": 50.16969152636135,
+      "mean_abs_distance_pct": 0.01638683330766222
+    },
+    {
+      "evaluation_id": "cb3eb2d54cb942cde1a1fe35082882499940100e47e4161ea3065d37d4305ffa",
+      "model": "price_vs_sma_state",
+      "period": 925,
+      "samples": 1901661,
+      "flips": 20897,
+      "buy_pct": 49.81587149339446,
+      "sell_pct": 50.18412850660554,
+      "mean_abs_distance_pct": 0.016599046055867265
+    },
+    {
+      "evaluation_id": "cbfc8a442eb8f80007a394fe5154b7c135b0ab193070252064dc6cc615c538e0",
+      "model": "price_vs_sma_state",
+      "period": 950,
+      "samples": 1901636,
+      "flips": 20685,
+      "buy_pct": 49.81210915232989,
+      "sell_pct": 50.18789084767011,
+      "mean_abs_distance_pct": 0.016808723843270805
+    },
+    {
+      "evaluation_id": "471b2f60d61c2b3456dc13cd6327d38705f460389fe22cceb74f2222ad1e4179",
+      "model": "price_vs_sma_state",
+      "period": 975,
+      "samples": 1901611,
+      "flips": 20427,
+      "buy_pct": 49.80503373192519,
+      "sell_pct": 50.1949662680748,
+      "mean_abs_distance_pct": 0.017016345117715326
+    },
+    {
+      "evaluation_id": "440c415a75fc4ebf74bea4849558b125f2f960976a5b328110b866d8811e69ae",
+      "model": "price_vs_sma_state",
+      "period": 1000,
+      "samples": 1901586,
+      "flips": 20039,
+      "buy_pct": 49.78165594403829,
+      "sell_pct": 50.21834405596171,
+      "mean_abs_distance_pct": 0.017221961102726235
+    },
+    {
+      "evaluation_id": "7a3a8658da19dcfa62a72d8c5c17293958c5a8a4f7f56c5564c2eafb6a4a59e6",
+      "model": "price_vs_sma_state",
+      "period": 1025,
+      "samples": 1901561,
+      "flips": 19685,
+      "buy_pct": 49.786570086365884,
+      "sell_pct": 50.21342991363411,
+      "mean_abs_distance_pct": 0.017425474775119288
+    },
+    {
+      "evaluation_id": "6296bb6ac5cb4eb957fe31f42644453f9e81a54c824e16b20e29996934ba5e87",
+      "model": "price_vs_sma_state",
+      "period": 1050,
+      "samples": 1901536,
+      "flips": 19385,
+      "buy_pct": 49.774655857159686,
+      "sell_pct": 50.225344142840314,
+      "mean_abs_distance_pct": 0.017626591716045574
+    },
+    {
+      "evaluation_id": "d92aba2a84b4337cb9261cbdcf8ced85dc78f5d5c02c53152c5d23a79edfa82b",
+      "model": "price_vs_sma_state",
+      "period": 1075,
+      "samples": 1901511,
+      "flips": 19251,
+      "buy_pct": 49.78009593423335,
+      "sell_pct": 50.21990406576664,
+      "mean_abs_distance_pct": 0.017825498433422463
+    },
+    {
+      "evaluation_id": "688a725904cc158914c99e77d558bc4c2a230d499bb277bde714415a135d5a50",
+      "model": "price_vs_sma_state",
+      "period": 1100,
+      "samples": 1901486,
+      "flips": 19041,
+      "buy_pct": 49.78353771734317,
+      "sell_pct": 50.21646228265683,
+      "mean_abs_distance_pct": 0.018022168507895966
+    },
+    {
+      "evaluation_id": "098983f3d7bf1430b6196f253f2eba182d31f253088c5d06a93cc92adb095fbd",
+      "model": "price_vs_sma_state",
+      "period": 1125,
+      "samples": 1901461,
+      "flips": 18815,
+      "buy_pct": 49.782561935269776,
+      "sell_pct": 50.217438064730224,
+      "mean_abs_distance_pct": 0.018216783400587837
+    },
+    {
+      "evaluation_id": "4a1abb7cbec511204a9a02b5e84c7af248c9b30ae8affa71779e20a84032dc56",
+      "model": "price_vs_sma_state",
+      "period": 1150,
+      "samples": 1901436,
+      "flips": 18573,
+      "buy_pct": 49.77364476111739,
+      "sell_pct": 50.22635523888261,
+      "mean_abs_distance_pct": 0.018408748207255334
+    },
+    {
+      "evaluation_id": "1bd64682c0f1a19187bf073c431b7e201dc9c25b7488417274ccd48916406818",
+      "model": "price_vs_sma_state",
+      "period": 1175,
+      "samples": 1901411,
+      "flips": 18323,
+      "buy_pct": 49.773142156009406,
+      "sell_pct": 50.226857843990594,
+      "mean_abs_distance_pct": 0.018598321513618454
+    },
+    {
+      "evaluation_id": "8f3bb1772a74e8930eccbd693e2ecf974aa8d370950981e3a4703a15fa3a5f08",
+      "model": "price_vs_sma_state",
+      "period": 1200,
+      "samples": 1901386,
+      "flips": 18029,
+      "buy_pct": 49.76979950415118,
+      "sell_pct": 50.23020049584882,
+      "mean_abs_distance_pct": 0.018785545310022175
+    },
+    {
+      "evaluation_id": "b225e22ee68871c587b99bdc41f5ead19dac1cd6941470fa45afa97749d24b12",
+      "model": "price_vs_sma_state",
+      "period": 1225,
+      "samples": 1901361,
+      "flips": 18031,
+      "buy_pct": 49.77303100252924,
+      "sell_pct": 50.226968997470756,
+      "mean_abs_distance_pct": 0.018970249645187853
+    },
+    {
+      "evaluation_id": "7dadeda8e67de81056c83a8e020da4d6ded88498114000e8bb87305a3dd55fe1",
+      "model": "price_vs_sma_state",
+      "period": 1250,
+      "samples": 1901336,
+      "flips": 17819,
+      "buy_pct": 49.77852415354256,
+      "sell_pct": 50.221475846457444,
+      "mean_abs_distance_pct": 0.019153213278999555
+    },
+    {
+      "evaluation_id": "eecd4d91fe1d50e91c3c8877cab3fb2ad967ac90faf09210397247b81095e54e",
+      "model": "price_vs_sma_state",
+      "period": 1275,
+      "samples": 1901311,
+      "flips": 17695,
+      "buy_pct": 49.76571428871973,
+      "sell_pct": 50.23428571128027,
+      "mean_abs_distance_pct": 0.01933462241786379
+    },
+    {
+      "evaluation_id": "1cde4cd1daec172806733da80c3c8d6a3ce6ccea67061f5701b036ff8363161f",
+      "model": "price_vs_sma_state",
+      "period": 1300,
+      "samples": 1901286,
+      "flips": 17467,
+      "buy_pct": 49.75968896841401,
+      "sell_pct": 50.240311031585996,
+      "mean_abs_distance_pct": 0.019514529107761743
+    },
+    {
+      "evaluation_id": "3934cc1dc963fef1b0c62458746d426f6b4ec21e53da1004d00826cc1e6acfba",
+      "model": "price_vs_sma_state",
+      "period": 1325,
+      "samples": 1901261,
+      "flips": 17151,
+      "buy_pct": 49.746931115717416,
+      "sell_pct": 50.25306888428259,
+      "mean_abs_distance_pct": 0.019692927294758154
+    },
+    {
+      "evaluation_id": "c3983e52a118f7dcd8cbe06caff400c8931175d17862bbf40924eda056848b61",
+      "model": "price_vs_sma_state",
+      "period": 1350,
+      "samples": 1901236,
+      "flips": 16955,
+      "buy_pct": 49.74106318205631,
+      "sell_pct": 50.2589368179437,
+      "mean_abs_distance_pct": 0.01986958418844796
+    },
+    {
+      "evaluation_id": "725f385f47bad8319360a5c985aa6e6e4e23375a945174bb4c9269bd0205edcf",
+      "model": "price_vs_sma_state",
+      "period": 1375,
+      "samples": 1901211,
+      "flips": 16931,
+      "buy_pct": 49.73808798707771,
+      "sell_pct": 50.261912012922295,
+      "mean_abs_distance_pct": 0.020044641083857423
+    },
+    {
+      "evaluation_id": "67666054d0566093b9eab52c557bb07c2d47736d63299002ad8311ee35b5c9f8",
+      "model": "price_vs_sma_state",
+      "period": 1400,
+      "samples": 1901186,
+      "flips": 16867,
+      "buy_pct": 49.72575013701974,
+      "sell_pct": 50.27424986298027,
+      "mean_abs_distance_pct": 0.02021859258063196
+    },
+    {
+      "evaluation_id": "450321b1597f085c3f6fe3344702bc428f8b2a62cff5b06c3cfdd9e47462c13b",
+      "model": "price_vs_sma_state",
+      "period": 1425,
+      "samples": 1901161,
+      "flips": 16871,
+      "buy_pct": 49.7172517214481,
+      "sell_pct": 50.28274827855189,
+      "mean_abs_distance_pct": 0.020391360125109528
+    },
+    {
+      "evaluation_id": "63b923bf20bf774d5932e5f937368b83437932c269551f397802421627034736",
+      "model": "price_vs_sma_state",
+      "period": 1450,
+      "samples": 1901136,
+      "flips": 16739,
+      "buy_pct": 49.70538667407276,
+      "sell_pct": 50.29461332592724,
+      "mean_abs_distance_pct": 0.0205628327306396
+    },
+    {
+      "evaluation_id": "2c8fe061deacb2148b6867690ca9958451aabca8a8e4e752eddd6bec2bb39608",
+      "model": "price_vs_sma_state",
+      "period": 1475,
+      "samples": 1901111,
+      "flips": 16547,
+      "buy_pct": 49.70083282880379,
+      "sell_pct": 50.29916717119621,
+      "mean_abs_distance_pct": 0.02073295835477611
+    },
+    {
+      "evaluation_id": "661897f9e970384ebca3d3d09066deed2f6d82b178153ee56d0596a2871f9cf0",
+      "model": "price_vs_sma_state",
+      "period": 1500,
+      "samples": 1901086,
+      "flips": 16517,
+      "buy_pct": 49.699855766651275,
+      "sell_pct": 50.30014423334873,
+      "mean_abs_distance_pct": 0.02090147887037768
+    }
+  ]
+}

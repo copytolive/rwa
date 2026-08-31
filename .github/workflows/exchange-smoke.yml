@@ -1,0 +1,199 @@
+name: RWA Exchange Core Smoke
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "exchange-core.js"
+      - "exchange-ui.js"
+      - "exchange-actions.js"
+      - "testnet-e2e.js"
+      - "wallet-core.js"
+      - "walletconnect.js"
+      - "execution-api.js"
+      - "execution-ops-bridge.js"
+      - "ops-suite.js"
+      - "risk-hardening.js"
+      - "suite-execution-patch.js"
+      - "suite-nav.js"
+      - "copy-24x7-client.js"
+      - "launch-status.js"
+      - "beta-proof-client.js"
+      - "launch/readiness.json"
+      - "index.html"
+      - "token/**"
+      - ".github/workflows/exchange-smoke.yml"
+permissions:
+  contents: read
+  statuses: write
+jobs:
+  exchange:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate source contracts
+        run: |
+          node --check wallet-core.js
+          node --check walletconnect.js
+          node --check execution-api.js
+          node --check execution-ops-bridge.js
+          node --check ops-suite.js
+          node --check risk-hardening.js
+          node --check suite-execution-patch.js
+          node --check suite-nav.js
+          node --check copy-24x7-client.js
+          node --check launch-status.js
+          node --check beta-proof-client.js
+          node --check exchange-core.js
+          node --check exchange-ui.js
+          node --check exchange-actions.js
+          node --check testnet-e2e.js
+          node --check token/deploy-guard.mjs
+          python -m json.tool token/config.json >/dev/null
+          python -m json.tool launch/readiness.json >/dev/null
+          test -s token/contracts/RWAToken.sol
+          test -s token/contracts/RWAVestingVault.sol
+          test -s token/deploy-guard.mjs
+
+          grep -Fq 'walletconnect.js?v=4' index.html
+          grep -Fq 'wallet-core.js?v=3' index.html
+          ! grep -Fq 'wallet-seamless.js' index.html
+          grep -Fq 'exchange-core.js?v=1' index.html
+          grep -Fq 'exchange-ui.js?v=1' index.html
+          grep -Fq 'testnet-e2e.js?v=1' index.html
+
+          grep -Fq "version:'4.0.0'" walletconnect.js
+          grep -Fq "version:'3.0.0'" wallet-core.js
+          grep -Fq 'Wallet account switched' wallet-core.js
+
+          grep -Fq "version:'2.0.0'" execution-api.js
+          grep -Fq "revision:'2.2.0'" execution-api.js
+          grep -Fq "hardening:'single-write-path-v1'" execution-api.js
+          grep -Fq "riskGate:'mandatory-internal-v1'" execution-api.js
+          grep -Fq "bracket:'atomic-normal-tpsl-v1'" execution-api.js
+          grep -Fq "grouping:'normalTpsl'" execution-api.js
+          grep -Fq "info('extraAgents'" execution-api.js
+          grep -Fq 'async function trigger' execution-api.js
+          grep -Fq 'async function bracket' execution-api.js
+
+          grep -Fq 'wallet-core.js?v=3' execution-ops-bridge.js
+          ! grep -Fq 'ExchangeClient' execution-ops-bridge.js
+          ! grep -Fq 'ExchangeClient' ops-suite.js
+          ! grep -Fq 'ExchangeClient' risk-hardening.js
+          ! grep -Fq 'ExchangeClient' suite-execution-patch.js
+          grep -Fq "path:'RWAExecutionAPI'" ops-suite.js
+
+          grep -Fq "execution-api.js?v=4" suite-nav.js
+          grep -Fq "execution-ops-bridge.js?v=4" suite-nav.js
+          grep -Fq "copy-24x7-client.js?v=2" suite-nav.js
+          grep -Fq "launch-status.js?v=2" suite-nav.js
+          grep -Fq "beta-proof-client.js?v=1" suite-nav.js
+          ! grep -Fq "load('wallet-auth.js" suite-nav.js
+          ! grep -Fq "load('walletconnect-auth-patch.js" suite-nav.js
+
+          grep -Fq "version:'1.1.0'" exchange-core.js
+          grep -Fq "safety:'wallet-and-global-launch-gate-v3'" exchange-core.js
+          grep -Fq "localE2EVerified()&&globalMainnetReady()" exchange-core.js
+          grep -Fq "status==='READY_FOR_MAINNET'" exchange-core.js
+          grep -Fq "protection:'atomic-normal-tpsl-v1'" exchange-core.js
+          grep -Fq "const state={env:'testnet'" exchange-core.js
+          grep -Fq 'orders.bracket' exchange-core.js
+
+          grep -Fq 'Run Testnet E2E Preflight' exchange-ui.js
+          grep -Fq 'Enable API Wallet' exchange-ui.js
+          grep -Fq 'OPEN POSITIONS' exchange-ui.js
+          grep -Fq 'OPEN ORDERS' exchange-ui.js
+          grep -Fq 'Trade History' exchange-ui.js
+          grep -Fq 'Get Testnet USDC' exchange-actions.js
+          grep -Fq 'data-ex-modify' exchange-actions.js
+          grep -Fq 'app.hyperliquid-testnet.xyz/drip' exchange-actions.js
+          ! grep -Fq 'RWATestnetE2E?.mark' exchange-actions.js
+
+          grep -Fq "version:'3.1.0'" testnet-e2e.js
+          grep -Fq 'ONE-CLICK REAL E2E' testnet-e2e.js
+          grep -Fq 'Publish E2E Proof' testnet-e2e.js
+          grep -Fq "status:'E2E_VERIFIED'" testnet-e2e.js
+          grep -Fq 'REAL E2E RESULT' testnet-e2e.js
+          grep -Fq 'Save Wallet E2E Gate' testnet-e2e.js
+          grep -Fq 'GLOBAL LAUNCH GATE' testnet-e2e.js
+          grep -Fq "const required=['wallet','collateral','agent','entry','position','tpsl','modify','cancel','close','history','pnl']" testnet-e2e.js
+
+          grep -Fq "version:'2.0.0'" copy-24x7-client.js
+          grep -Fq 'RWA 24/7 COPY AUTHORIZE V2' copy-24x7-client.js
+          grep -Fq 'sourceTestnet:false' copy-24x7-client.js
+          ! grep -Fq 'ExchangeClient' copy-24x7-client.js
+          grep -Fq "version:'2.0.0'" launch-status.js
+          grep -Fq 'Public beta' launch-status.js
+          grep -Fq "version:'1.0.0'" beta-proof-client.js
+          grep -Fq 'RWA BETA TESTNET PROOF' beta-proof-client.js
+
+          grep -Fq 'tgeEnabled' token/config.json
+          grep -Fq '"tgeEnabled": false' token/config.json
+          grep -Fq '"mainnetDeploymentEnabled": false' token/config.json
+          grep -Fq 'No private key is accepted or stored' token/deploy-guard.mjs
+          if node token/deploy-guard.mjs --network=testnet >/tmp/token-testnet.log 2>&1; then echo 'Token testnet guard unexpectedly allowed incomplete config'; cat /tmp/token-testnet.log; exit 1; else echo 'Token testnet guard correctly BLOCKED incomplete config'; fi
+          if node token/deploy-guard.mjs --network=mainnet >/tmp/token-mainnet.log 2>&1; then echo 'Token mainnet guard unexpectedly allowed deployment'; cat /tmp/token-mainnet.log; exit 1; else echo 'Token mainnet guard correctly BLOCKED'; fi
+
+      - name: Publish source status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/exchange-source' -f description='Atomic TP/SL + E2E 3.1 + global mainnet gate + 24x7 bridge verified'
+
+      - name: Verify GitHub Pages bundle
+        shell: bash
+        run: |
+          ok=0
+          for i in {1..120}; do
+            q="${GITHUB_RUN_ID}-${i}"
+            html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/?v=$q" || true)"
+            core="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/exchange-core.js?v=$q" || true)"
+            ui="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/exchange-ui.js?v=$q" || true)"
+            actions="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/exchange-actions.js?v=$q" || true)"
+            wallet="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/wallet-core.js?v=$q" || true)"
+            wc="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/walletconnect.js?v=$q" || true)"
+            execapi="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/execution-api.js?v=$q" || true)"
+            bridge="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/execution-ops-bridge.js?v=$q" || true)"
+            ops="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/ops-suite.js?v=$q" || true)"
+            suite="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/suite-nav.js?v=$q" || true)"
+            e2e="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/testnet-e2e.js?v=$q" || true)"
+            copy24="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/copy-24x7-client.js?v=$q" || true)"
+            launch="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/launch-status.js?v=$q" || true)"
+            beta="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/beta-proof-client.js?v=$q" || true)"
+            ready="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/launch/readiness.json?v=$q" || true)"
+            if grep -Fq 'walletconnect.js?v=4' <<<"$html" \
+              && grep -Fq 'wallet-core.js?v=3' <<<"$html" \
+              && ! grep -Fq 'wallet-seamless.js' <<<"$html" \
+              && grep -Fq "version:'4.0.0'" <<<"$wc" \
+              && grep -Fq "version:'3.0.0'" <<<"$wallet" \
+              && grep -Fq "hardening:'single-write-path-v1'" <<<"$execapi" \
+              && grep -Fq "riskGate:'mandatory-internal-v1'" <<<"$execapi" \
+              && grep -Fq "bracket:'atomic-normal-tpsl-v1'" <<<"$execapi" \
+              && grep -Fq "grouping:'normalTpsl'" <<<"$execapi" \
+              && ! grep -Fq 'ExchangeClient' <<<"$bridge" \
+              && ! grep -Fq 'ExchangeClient' <<<"$ops" \
+              && grep -Fq "copy-24x7-client.js?v=2" <<<"$suite" \
+              && grep -Fq "beta-proof-client.js?v=1" <<<"$suite" \
+              && grep -Fq "safety:'wallet-and-global-launch-gate-v3'" <<<"$core" \
+              && grep -Fq "localE2EVerified()&&globalMainnetReady()" <<<"$core" \
+              && grep -Fq "protection:'atomic-normal-tpsl-v1'" <<<"$core" \
+              && grep -Fq 'RWA EXCHANGE CORE' <<<"$ui" \
+              && grep -Fq 'Get Testnet USDC' <<<"$actions" \
+              && grep -Fq "version:'3.1.0'" <<<"$e2e" \
+              && grep -Fq 'Save Wallet E2E Gate' <<<"$e2e" \
+              && grep -Fq 'RWA 24/7 COPY AUTHORIZE V2' <<<"$copy24" \
+              && grep -Fq "version:'2.0.0'" <<<"$launch" \
+              && grep -Fq 'RWA BETA TESTNET PROOF' <<<"$beta" \
+              && grep -Eq '"status"[[:space:]]*:[[:space:]]*"(BLOCKED|READY_FOR_BETA|BETA_PASSED_AWAITING_MAINNET|READY_FOR_MAINNET)"' <<<"$ready"; then ok=1; break; fi
+            sleep 5
+          done
+          test "$ok" = "1"
+
+      - name: Publish live status
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/exchange-live' -f description='Live atomic TP/SL + E2E 3.1 + global mainnet lock + beta proof UI verified'
+      - name: Publish failure status
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/exchange-live' -f description='Exchange core live verification failed'

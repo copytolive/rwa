@@ -1,0 +1,93 @@
+name: RWA Live Browser Smoke
+
+on:
+  workflow_run:
+    workflows: ["Deploy RWA to GitHub Pages"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: rwa-live-browser-${{ github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EXPECTED_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+      RWA_TEST_URL: https://copytolive.github.io/rwa/
+    steps:
+      - name: Checkout exact deployed source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.EXPECTED_SHA }}
+
+      - name: Validate current live-test source
+        run: |
+          node --check tools/superapp-v5-browser.mjs
+          node --check tools/superapp-p16-p20-browser.mjs
+          node --check tools/superapp-v5-audit.mjs
+          node --check tools/superapp-p16-p20-audit.mjs
+          node --check tools/renko-production-report.mjs
+          node tools/superapp-v5-audit.mjs
+          node tools/superapp-p16-p20-audit.mjs
+
+      - name: Wait for exact Pages SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          ok=0
+          for i in $(seq 1 60); do
+            live_sha="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/deployment-sha.txt?v=${GITHUB_RUN_ID}-${i}" 2>/dev/null | tr -d '\r\n' || true)"
+            if [ "$live_sha" = "$EXPECTED_SHA" ]; then ok=1; break; fi
+            sleep 5
+          done
+          test "$ok" = "1"
+          echo "LIVE_EXACT_SHA=PASS:$EXPECTED_SHA"
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run full browser regression against live production
+        run: |
+          node tools/superapp-v5-browser.mjs
+          node tools/superapp-p16-p20-browser.mjs
+          echo 'LIVE_PRODUCT_BROWSER=PASS'
+          echo 'P6_RESEARCH_TERMINAL_BROWSER_LIVE=PASS'
+          echo 'RWA_LIVE_BROWSER_CURRENT=PASS'
+
+      - name: Capture RENKO production screenshots and immediate-first-screen report
+        run: node tools/renko-production-report.mjs
+
+      - name: Upload RENKO production browser report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: renko-production-report-${{ env.EXPECTED_SHA }}
+          path: artifacts/renko-production-report
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Publish live success statuses
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=success -f context='rwa/live-browser-smoke' -f description='Exact-SHA live browser + RENKO immediate-screen gate passed'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=success -f context='rwa/chart-wallet-smoke' -f description='Current Super App chart/workspace browser contract passed live'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=success -f context='rwa/execution-api-smoke' -f description='Current risk-gated execution navigation contract passed live'
+
+      - name: Publish live failure statuses
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${EXPECTED_SHA}" -f state=failure -f context='rwa/live-browser-smoke' -f description='Live browser or RENKO immediate-screen production gate failed'
