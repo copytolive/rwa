@@ -1,11 +1,13 @@
 @import "../styles/tokens.css";
 
 * { box-sizing: border-box; }
-html { background: var(--rwa-bg); max-width:100%; }
+html { background: var(--rwa-bg); width:100%; max-width:100%; overflow-x:clip; }
 body {
   margin: 0;
   min-height: 100vh;
+  width:100%;
   max-width:100%;
+  overflow-x:clip;
   background: var(--rwa-bg);
   color: var(--rwa-text);
   font-family: var(--rwa-font-sans);
@@ -20,6 +22,16 @@ a { color: inherit; }
 :focus-visible { outline: 0; box-shadow: var(--rwa-shadow-focus); }
 .soft-theme { filter: saturate(.86) brightness(1.08); }
 .sr-only { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; }
+
+/* FINAL_UI_GATE_DESKTOP_OVERFLOW */
+.app-shell,.rwa-public-shell{width:100%;max-width:100vw;overflow-x:clip}
+.app-shell main,.rwa-public-shell main{min-width:0;max-width:100%}
+.app-shell main :where(section,aside,article,div,nav,form,header,footer,label){min-width:0}
+.app-shell main [class*="table"],.app-shell main [class*="tabs"],.app-shell main [class*="toolbar"]{max-width:100%;overscroll-behavior-inline:contain}
+.app-shell main [class*="table"]{overflow-x:auto}
+.account-with-side,.transactions-page,.funds-page,.business-detail-page,.asset-detail-page,.trading-stage{max-width:100%;min-width:0}
+.acct-content,.portfolio-main,.portfolio-right,.business-detail-main,.business-detail-side,.asset-detail-main,.asset-detail-side{min-width:0;max-width:100%}
+button{scroll-margin-top:84px;scroll-margin-bottom:84px}
 
 @media(max-width:720px){
   html,body{width:100%;overflow-x:hidden}
