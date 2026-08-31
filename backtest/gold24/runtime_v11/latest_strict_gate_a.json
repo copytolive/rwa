@@ -9,7 +9,7 @@
   "duplicate_timestamp_rows": 0,
   "gap_threshold_hours": 168.0,
   "gate_a": "PASS",
-  "generated_at": "2026-08-31T17:26:55.131421+00:00",
+  "generated_at": "2026-08-31T18:27:41.010160+00:00",
   "max_gap_hours": 120.0,
   "monotonic_increasing": true,
   "nan_ohlcv_cells": 0,
