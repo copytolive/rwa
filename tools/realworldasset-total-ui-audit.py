@@ -108,10 +108,10 @@ with sync_playwright() as pw:
     try:
      href=links.nth(i).get_attribute('href') or ''
      if not href or href.startswith('javascript:'): broken_links.append({'vp':vpname,'route':route,'href':href,'reason':'empty-or-placeholder'}); continue
-   if href.startswith('#'):
-    target=href[1:]
-    if not target or page.locator(f'[id="{target}"]').count()<1: broken_links.append({'vp':vpname,'route':route,'href':href,'reason':'missing-anchor-target'})
-    continue
+     if href.startswith('#'):
+      target=href[1:]
+      if not target or page.locator(f'[id="{target}"]').count()<1: broken_links.append({'vp':vpname,'route':route,'href':href,'reason':'missing-anchor-target'})
+      continue
      absolute=page.evaluate('(h)=>new URL(h,location.href).href',href)
      nr=normalized_route_from_href(absolute)
      if nr and nr!='FILE' and nr not in route_set: broken_links.append({'vp':vpname,'route':route,'href':href,'normalized':nr,'reason':'missing-static-route'})
