@@ -1,4 +1,4 @@
-name: Deploy RWA System + Total Realworldasset UI
+name: Deploy RWA System + Canonical Realworldasset UI
 
 on:
   push:
@@ -85,34 +85,44 @@ jobs:
       - name: Checkout exact release SHA
         uses: actions/checkout@v4
 
-      - name: Verify synchronized total UI source
+      - name: Verify canonical migrated realworldasset UI source
         shell: bash
         run: |
           set -euo pipefail
           test -s UI_SYNC_MANIFEST.json
-          test -s ui/realworldasset/UPSTREAM_SHA.txt
-          test -s ui/realworldasset/package.json
-          test -s ui/realworldasset/next.config.js
-          test -s 'ui/realworldasset/src/app/[...slug]/page.tsx'
-          FILE_COUNT="$(git ls-files ui/realworldasset | wc -l | tr -d ' ')"
+          test -s REALWORLDASSET_MIGRATION_MANIFEST.json
+          test -s apps/realworldasset/UPSTREAM_SHA.txt
+          test -s apps/realworldasset/package.json
+          test -s apps/realworldasset/next.config.js
+          test -s 'apps/realworldasset/src/app/[...slug]/page.tsx'
+          FILE_COUNT="$(git ls-files apps/realworldasset | wc -l | tr -d ' ')"
           test "$FILE_COUNT" -gt 50
-          grep -Fq 'MerchantGrowthRoute' 'ui/realworldasset/src/app/[...slug]/page.tsx'
-          grep -Fq '"/rwa"' ui/realworldasset/next.config.js
-          echo "TOTAL_UI_SOURCE_PASS files=$FILE_COUNT upstream=$(cat ui/realworldasset/UPSTREAM_SHA.txt)"
+          grep -Fq 'MerchantGrowthRoute' 'apps/realworldasset/src/app/[...slug]/page.tsx'
+          grep -Fq '"/rwa"' apps/realworldasset/next.config.js
+          SOURCE_SHA="$(cat apps/realworldasset/UPSTREAM_SHA.txt)"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          source=Path('apps/realworldasset/UPSTREAM_SHA.txt').read_text().strip()
+          manifest=json.loads(Path('REALWORLDASSET_MIGRATION_MANIFEST.json').read_text())
+          assert source == manifest['sourceSha'], (source, manifest.get('sourceSha'))
+          print('CANONICAL_REALWORLDASSET_SOURCE_IDENTITY_PASS', source)
+          PY
+          echo "TOTAL_UI_SOURCE_PASS files=$FILE_COUNT upstream=$SOURCE_SHA"
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: ui/realworldasset/package.json
+          cache-dependency-path: apps/realworldasset/package.json
 
       - name: Install UI dependencies
-        working-directory: ui/realworldasset
+        working-directory: apps/realworldasset
         run: npm install --no-audit --no-fund
 
       - name: Verify total UI interactions
-        working-directory: ui/realworldasset
+        working-directory: apps/realworldasset
         run: |
           set -euo pipefail
           npm run verify:interactions
@@ -128,11 +138,11 @@ jobs:
           npm run verify:chat13
 
       - name: TypeScript verification
-        working-directory: ui/realworldasset
+        working-directory: apps/realworldasset
         run: npm run typecheck
 
-      - name: Build total UI at canonical /rwa base path
-        working-directory: ui/realworldasset
+      - name: Build realworldasset UI at canonical /rwa base path
+        working-directory: apps/realworldasset
         env:
           RWA_BASE_PATH: /rwa
           GITHUB_ACTIONS: "true"
@@ -142,7 +152,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          O=ui/realworldasset/out
+          O=apps/realworldasset/out
           test -s "$O/index.html"
           for route in markets merchant merchant/orders merchant/updates/new merchant/ads community settings checkout account/orders; do
             test -s "$O/$route/index.html"
@@ -152,16 +162,17 @@ jobs:
           cp -a renko "$O/renko"
           printf '%s\n' "$GITHUB_SHA" > "$O/deployment-sha.txt"
           printf '%s\n' "$GITHUB_SHA" > "$O/system-sha.txt"
-          cp ui/realworldasset/UPSTREAM_SHA.txt "$O/ui-source-sha.txt"
+          cp apps/realworldasset/UPSTREAM_SHA.txt "$O/ui-source-sha.txt"
           cp UI_SYNC_MANIFEST.json "$O/UI_SYNC_MANIFEST.json"
+          cp REALWORLDASSET_MIGRATION_MANIFEST.json "$O/REALWORLDASSET_MIGRATION_MANIFEST.json"
           touch "$O/.nojekyll"
           test -s "$O/renko/index.html"
-          echo SINGLE_RWA_PRODUCTION_ARTIFACT_PASS
+          echo SINGLE_RWA_REALWORLDASSET_PRODUCTION_ARTIFACT_PASS
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ui/realworldasset/out
+          path: apps/realworldasset/out
 
   deploy:
     needs: [verify-system, build-ui]
@@ -198,7 +209,7 @@ jobs:
             CODE="$(curl -sS -L -o /tmp/page.html -w '%{http_code}' --retry 4 --retry-delay 2 "$BASE$route")"
             test "$CODE" = 200
           done
-          echo "PUBLIC_SINGLE_RWA_PASS system=$GITHUB_SHA ui=$UI_SHA"
+          echo "PUBLIC_SINGLE_RWA_REALWORLDASSET_PASS system=$GITHUB_SHA ui=$UI_SHA"
 
       - name: Install Chromium
         run: |
@@ -227,8 +238,8 @@ jobs:
                   text=page.locator('body').inner_text()
                   assert '404' not in text[:120],route
               page.goto(base+'/',wait_until='networkidle',timeout=30000)
-              page.screenshot(path='production-proof/rwa-total-ui-1672x941.png',full_page=False)
-              Path('production-proof/result.txt').write_text(f'PUBLIC_CHROMIUM_PASS routes={len(routes)} runtimeErrors={len(errors)}\n')
+              page.screenshot(path='production-proof/rwa-realworldasset-1672x941.png',full_page=False)
+              Path('production-proof/result.txt').write_text(f'PUBLIC_CHROMIUM_REALWORLDASSET_PASS routes={len(routes)} runtimeErrors={len(errors)}\n')
               assert not errors,errors
               b.close()
           PY
@@ -236,6 +247,6 @@ jobs:
       - name: Upload public production proof
         uses: actions/upload-artifact@v4
         with:
-          name: rwa-total-ui-production-proof
+          name: rwa-realworldasset-production-proof
           path: production-proof/
           retention-days: 7
