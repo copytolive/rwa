@@ -1,0 +1,99 @@
+name: Deploy RWA to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "renko/**"
+      - "tools/renko*"
+      - ".github/workflows/renko*"
+      - ".github/workflows/renko-pages-deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: renko-canonical-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact RENKO release SHA
+        uses: actions/checkout@v4
+      - name: Validate RENKO production payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in \
+            renko/index.html \
+            renko/renko-tv.css \
+            renko/renko-tv-engine.js \
+            renko/renko-tv-app.js \
+            renko/renko-tv-fixed-1s.js \
+            renko/renko-tv-atr-control.js \
+            renko/renko-tv-atr-fixed1s.js \
+            renko/renko-tv-atr-ui-sync.js \
+            renko/renko-tv-traditional-control.js \
+            renko/renko-tv-locale-guard.js \
+            renko/renko-tv-total-history.js \
+            renko/renko-gold-origin-pack.js \
+            renko/history/renko-gold-xauusd-origin.json.gz \
+            renko/xaut-okx-1s-pack.csv.gz \
+            renko/xaut-okx-1s-pack.meta.json; do
+            test -s "$f"
+          done
+          for f in \
+            renko/renko-tv-engine.js \
+            renko/renko-tv-app.js \
+            renko/renko-tv-fixed-1s.js \
+            renko/renko-tv-atr-control.js \
+            renko/renko-tv-atr-fixed1s.js \
+            renko/renko-tv-atr-ui-sync.js \
+            renko/renko-tv-traditional-control.js \
+            renko/renko-tv-locale-guard.js \
+            renko/renko-tv-total-history.js \
+            renko/renko-gold-origin-pack.js; do
+            node --check "$f"
+          done
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('renko/xaut-okx-1s-pack.meta.json').read_text())
+          p=m.get('provenance') or {}
+          assert m['schema']=='renko-xaut-okx-1s-pack-v2',m
+          assert m['provider']=='OKX Spot' and m['instrument']=='XAUT-USDT',m
+          assert m['interval']=='1s' and m['intervalMs']==1000,m
+          assert m['rows']==1_005_000,m
+          assert p.get('sourceBar')=='1s' and p.get('sourceIntervalMs')==1000,p
+          assert p.get('upsampled') is False and p.get('synthetic1s') is False,p
+          print('RENKO_PAGES_PAYLOAD_PASS')
+          PY
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout exact release SHA
+        uses: actions/checkout@v4
+      - name: Stamp exact deployed SHA
+        run: |
+          printf '%s\n' "$GITHUB_SHA" > deployment-sha.txt
+          printf '%s\n' "$GITHUB_SHA" > renko-deployment-sha.txt
+          printf '%s\n' "$GITHUB_SHA" > renko/deployment-sha.txt
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
