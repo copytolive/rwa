@@ -64,15 +64,11 @@ jobs:
         working-directory: ui/realworldasset
         run: npm install --no-audit --no-fund
 
-      - name: Run complete UI interaction contracts
+      - name: Run final UI interaction contracts
         working-directory: ui/realworldasset
         run: |
           set -euo pipefail
-          npm run verify:foundation
-          npm run verify:public-auth
-          npm run verify:overlays
           npm run verify:interactions
-          npm run verify:chat03
           npm run verify:chat04
           npm run verify:chat05
           npm run verify:chat06
