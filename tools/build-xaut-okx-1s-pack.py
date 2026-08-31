@@ -13,6 +13,7 @@ import urllib.request
 ROOT='https://www.okx.com/api/v5/market/history-candles'
 INST='XAUT-USDT'
 BAR='1s'
+INTERVAL_MS=1000
 TARGET=1_005_000
 PAGE=300
 BATCH=10
@@ -52,6 +53,8 @@ def fmt(n):
 
 
 def main():
+    if BAR != '1s' or INTERVAL_MS != 1000:
+        raise SystemExit(f'fixed-1s contract changed: BAR={BAR} INTERVAL_MS={INTERVAL_MS}')
     now_ms=int(time.time()*1000)
     anchor=(now_ms//1000-2)*1000
     pages=math.ceil(TARGET/PAGE)+2
@@ -60,7 +63,7 @@ def main():
     for base in range(0,pages,BATCH):
         ids=list(range(base,min(pages,base+BATCH)))
         with cf.ThreadPoolExecutor(max_workers=len(ids)) as ex:
-            futs={ex.submit(get_page,anchor+1000-i*PAGE*1000):i for i in ids}
+            futs={ex.submit(get_page,anchor+1000-i*PAGE*INTERVAL_MS):i for i in ids}
             for fut in cf.as_completed(futs):
                 i=futs[fut]
                 rows=fut.result()
@@ -71,15 +74,17 @@ def main():
         time.sleep(1.05)
     rows=sorted(all_rows.values(),key=lambda x:x[0])
     if len(rows)<TARGET:
-        raise SystemExit(f'insufficient OKX 1s rows: {len(rows):,} < {TARGET:,}')
+        raise SystemExit(f'insufficient provider-native OKX 1s rows: {len(rows):,} < {TARGET:,}')
     rows=rows[-TARGET:]
+    if len(rows)!=TARGET:
+        raise SystemExit(f'expected exactly {TARGET:,} rows after trim, got {len(rows):,}')
     bad=[]
     for i in range(1,len(rows)):
-        if rows[i][0]-rows[i-1][0]!=1000:
+        if rows[i][0]-rows[i-1][0]!=INTERVAL_MS:
             bad.append((i,rows[i-1][0],rows[i][0]))
             if len(bad)>=5: break
     if bad:
-        raise SystemExit(f'non-contiguous OKX 1s pack: {bad}')
+        raise SystemExit(f'non-contiguous provider-native OKX 1s pack: {bad}')
     os.makedirs(os.path.dirname(PACK),exist_ok=True)
     sha=hashlib.sha256()
     with gzip.open(PACK,'wt',encoding='utf-8',newline='\n',compresslevel=9) as f:
@@ -87,15 +92,34 @@ def main():
             line=f'{t},{fmt(o)},{fmt(h)},{fmt(l)},{fmt(c)},{fmt(v)}\n'
             f.write(line); sha.update(line.encode())
     meta={
-        'schema':'renko-xaut-okx-1s-pack-v1','provider':'OKX Spot','instrument':INST,'interval':'1s',
-        'rows':len(rows),'fromMs':rows[0][0],'toMs':rows[-1][0],
+        'schema':'renko-xaut-okx-1s-pack-v2',
+        'provider':'OKX Spot',
+        'instrument':INST,
+        'interval':'1s',
+        'intervalMs':INTERVAL_MS,
+        'rows':len(rows),
+        'fromMs':rows[0][0],
+        'toMs':rows[-1][0],
         'fromUtc':dt.datetime.fromtimestamp(rows[0][0]/1000,dt.timezone.utc).isoformat(),
         'toUtc':dt.datetime.fromtimestamp(rows[-1][0]/1000,dt.timezone.utc).isoformat(),
-        'sha256UncompressedCsv':sha.hexdigest(),'builtAtUtc':dt.datetime.now(dt.timezone.utc).isoformat(),
-        'api':ROOT,'zeroVolumeBars':'provider-native OKX 1s candles; no synthetic gap fill'
+        'sha256UncompressedCsv':sha.hexdigest(),
+        'builtAtUtc':dt.datetime.now(dt.timezone.utc).isoformat(),
+        'api':ROOT,
+        'zeroVolumeBars':'provider-native OKX 1s candles; no synthetic gap fill',
+        'provenance':{
+            'sourceBar':'1s',
+            'sourceIntervalMs':INTERVAL_MS,
+            'upsampled':False,
+            'synthetic1s':False,
+            'continuity':'provider-native OKX 1s candles'
+        }
     }
-    with open(META,'w',encoding='utf-8') as f: json.dump(meta,f,indent=2,sort_keys=True); f.write('\n')
-    print(json.dumps(meta,indent=2),flush=True)
+    with open(META,'w',encoding='utf-8') as f:
+        json.dump(meta,f,indent=2,sort_keys=True)
+        f.write('\n')
+    print(json.dumps(meta,indent=2,sort_keys=True),flush=True)
     print(f'pack_bytes={os.path.getsize(PACK):,} elapsed={time.time()-started:.1f}s',flush=True)
 
-if __name__=='__main__': main()
+
+if __name__=='__main__':
+    main()
