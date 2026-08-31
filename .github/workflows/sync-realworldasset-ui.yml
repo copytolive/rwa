@@ -1,0 +1,93 @@
+name: Sync complete realworldasset UI into RWA
+
+on:
+  push:
+    branches: ["main", "integrate/total-ui-realworldasset-20260831-v2"]
+    paths:
+      - '.github/workflows/sync-realworldasset-ui.yml'
+      - '.ui-sync-trigger'
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: realworldasset-ui-sync-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.actor != 'github-actions[bot]' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout RWA system repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Pull complete UI source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/realworldasset-ui
+          git clone --quiet https://github.com/copytolive/realworldasset.git /tmp/realworldasset-ui
+          UI_SHA="$(git -C /tmp/realworldasset-ui rev-parse HEAD)"
+          test -s /tmp/realworldasset-ui/package.json
+          test -s /tmp/realworldasset-ui/next.config.js
+          test -d /tmp/realworldasset-ui/src/components
+          test -d /tmp/realworldasset-ui/scripts
+          test -d /tmp/realworldasset-ui/public
+          grep -Fq 'MerchantGrowthRoute' '/tmp/realworldasset-ui/src/app/[...slug]/page.tsx'
+
+          git rm -rf --ignore-unmatch apps/realworldasset .gitmodules || true
+          rm -rf ui/realworldasset
+          mkdir -p ui/realworldasset
+          rsync -a --delete --exclude='.git/' /tmp/realworldasset-ui/ ui/realworldasset/
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('ui/realworldasset/next.config.js')
+          s=p.read_text()
+          s=s.replace('const basePath = isGitHubPages ? "/realworldasset" : "";', 'const basePath = process.env.RWA_BASE_PATH || (isGitHubPages ? "/rwa" : "");')
+          p.write_text(s)
+          PY
+
+          printf '%s\n' "$UI_SHA" > ui/realworldasset/UPSTREAM_SHA.txt
+          python3 - <<PY
+          import json, pathlib
+          sha=${UI_SHA@Q}
+          data={
+            'schema':'rwa-ui-sync-v1',
+            'uiRepository':'copytolive/realworldasset',
+            'uiCommit':sha,
+            'systemRepository':'copytolive/rwa',
+            'canonicalPublicUrl':'https://copytolive.github.io/rwa/',
+            'vendoredPath':'ui/realworldasset'
+          }
+          pathlib.Path('UI_SYNC_MANIFEST.json').write_text(json.dumps(data,indent=2)+'\n')
+          PY
+
+          test -s ui/realworldasset/package.json
+          test -s ui/realworldasset/src/app/page.tsx
+          test -s ui/realworldasset/scripts/verify-all-interactions.mjs
+          grep -Fq '"/rwa"' ui/realworldasset/next.config.js
+          echo "UI_TOTAL_SYNC_READY source=$UI_SHA"
+
+      - name: Commit vendored UI if changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A ui/realworldasset UI_SYNC_MANIFEST.json .gitmodules apps/realworldasset 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo UI_ALREADY_IN_SYNC
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          UI_SHA="$(cat ui/realworldasset/UPSTREAM_SHA.txt)"
+          git commit -m "sync(ui): vendor complete realworldasset UI ${UI_SHA} [skip ci]"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
