@@ -63,13 +63,19 @@ def normalized_route_from_href(href):
  u=urlparse(href)
  base=urlparse(BASE)
  if u.scheme and (u.scheme,u.netloc)!=(base.scheme,base.netloc): return None
- path=u.path
+ original=u.path or '/'
  base_path=base.path.rstrip('/')
- if base_path and path.startswith(base_path): path=path[len(base_path):] or '/'
- if not path.startswith('/'): path='/'+path
- if '.' in Path(path).name: return 'FILE'
- if path!='/' and not path.endswith('/'): path+='/'
- return path
+ candidate=original
+ if base_path and candidate.startswith(base_path): candidate=candidate[len(base_path):] or '/'
+ def norm(path):
+  if not path.startswith('/'): path='/'+path
+  if '.' in Path(path).name: return 'FILE'
+  if path!='/' and not path.endswith('/'): path+='/'
+  return path
+ stripped=norm(candidate); raw=norm(original)
+ if stripped in route_set: return stripped
+ if raw in route_set: return raw
+ return stripped
 
 with sync_playwright() as pw:
  browser=pw.chromium.launch(headless=True,args=['--no-sandbox'])
@@ -101,7 +107,11 @@ with sync_playwright() as pw:
    for i in range(links.count()):
     try:
      href=links.nth(i).get_attribute('href') or ''
-     if not href or href.startswith('#') or href.startswith('javascript:'): broken_links.append({'vp':vpname,'route':route,'href':href,'reason':'empty-or-placeholder'}); continue
+     if not href or href.startswith('javascript:'): broken_links.append({'vp':vpname,'route':route,'href':href,'reason':'empty-or-placeholder'}); continue
+   if href.startswith('#'):
+    target=href[1:]
+    if not target or page.locator(f'[id="{target}"]').count()<1: broken_links.append({'vp':vpname,'route':route,'href':href,'reason':'missing-anchor-target'})
+    continue
      absolute=page.evaluate('(h)=>new URL(h,location.href).href',href)
      nr=normalized_route_from_href(absolute)
      if nr and nr!='FILE' and nr not in route_set: broken_links.append({'vp':vpname,'route':route,'href':href,'normalized':nr,'reason':'missing-static-route'})
@@ -114,7 +124,7 @@ with sync_playwright() as pw:
      b=buttons.nth(i); label=(b.get_attribute('aria-label') or b.inner_text()).strip(); label=re.sub(r'\s+',' ',label)[:120]
      cls=b.get_attribute('class') or ''
      key=(vpname,label,cls)
-     if key not in distinct: distinct[key]={'vp':vpname,'route':route,'index':i,'label':label,'class':cls,'disabled':b.is_disabled()}
+     if key not in distinct: distinct[key]={'vp':vpname,'route':route,'index':i,'label':label,'class':cls,'disabled':b.is_disabled(),'selected':b.get_attribute('data-active')=='true' or b.get_attribute('aria-pressed')=='true'}
     except Exception: pass
 
  for vpname,w,h in viewports:
@@ -140,6 +150,8 @@ with sync_playwright() as pw:
    before_url=page.url; before=clean_html(page)
    if b.is_disabled():
     locked_total+=1; locked_passed+=1; continue
+   if item.get('selected'):
+    active_total+=1; active_passed+=1; continue
    try: b.click(timeout=2000); page.wait_for_timeout(90)
    except PlaywrightTimeoutError:
     if is_locked: locked_total+=1; locked_fail.append({**item,'reason':'unclickable locked control'}); continue
