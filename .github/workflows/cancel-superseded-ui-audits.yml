@@ -1,0 +1,35 @@
+name: Cancel Superseded UI Audits
+
+on:
+  push:
+    branches:
+      - fix/ui-backend-total-audit-20260831
+
+permissions:
+  actions: write
+  contents: write
+
+jobs:
+  cancel-and-retire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/ui-backend-total-audit-20260831
+          fetch-depth: 0
+      - name: Cancel superseded long audits
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for run_id in 33384062989 33385116604 33385162484; do
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/cancel" >/dev/null 2>&1 || true
+          done
+      - name: Retire this one-shot workflow
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/cancel-superseded-ui-audits.yml
+          git commit -m "chore(ci): retire superseded-audit canceller"
+          git push origin HEAD:fix/ui-backend-total-audit-20260831
