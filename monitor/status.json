@@ -12,28 +12,28 @@
     },
     "binance_global": {
       "active": false,
-      "error": "<urlopen error [Errno 104] Connection reset by peer>",
+      "error": "HTTP Error 451: ",
       "ok": false
     },
     "binance_vision": {
       "active": true,
-      "latency_ms": 1843,
+      "latency_ms": 1915,
       "markets": 3688,
       "ok": true
     },
     "coinbase": {
-      "latency_ms": 116,
+      "latency_ms": 110,
       "ok": true
     },
     "hyperliquid": {
-      "latency_ms": 257,
+      "latency_ms": 211,
       "markets": 951,
       "ok": true
     },
     "kraken": {
-      "latency_ms": 163,
+      "latency_ms": 232,
       "ok": true
     }
   },
-  "updated_at": 1788158813148
+  "updated_at": 1788159334190
 }
