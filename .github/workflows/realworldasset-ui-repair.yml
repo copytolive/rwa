@@ -16,20 +16,17 @@ jobs:
         with:
           ref: fix/ui-backend-total-audit-20260831
           fetch-depth: 0
-      - name: Apply route, controls and audit repairs
+      - name: Apply route controls imagery and audit repairs
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
 
-          root=Path('.')
-          def save(path,text):
-            p=root/path
-            if p.read_text()!=text:
-              p.write_text(text)
+          def write_if_changed(path, text):
+            p=Path(path)
+            if p.read_text()!=text: p.write_text(text)
 
-          # Landing cards navigate to their real entity routes; image uses canonical Pages root.
-          p=root/'apps/realworldasset/src/app/page.tsx'; s=p.read_text()
+          p=Path('apps/realworldasset/src/app/page.tsx'); s=p.read_text()
           s=re.sub(r'const featured = \[.*?\] as const;', '''const featured = [
             ["Kopi Nusantara","F&B · Indonesia","KOPI","$248.5M","$2.48","+8.72%","/businesses/kopi-nusantara"],
             ["Marina Bay Residences","Real Estate · Singapore","MBR","$482.3M","$1.92","+6.31%","/rwa/marina-bay-residences"],
@@ -37,31 +34,20 @@ jobs:
             ["Private Credit Fund","Private Credit · Global","SSPC","$612.4M","$1.08","+4.51%","/rwa/seaside-private-credit-fund"],
           ] as const;''',s,count=1,flags=re.S)
           s=s.replace('src="/realworldasset/chat01/landing-dashboard.jpg"','src="/rwa/chat01/landing-dashboard.jpg"')
-          old='featured.map(([name,sector,symbol,cap,price,change])=><Link key={symbol} href={`/businesses/${symbol.toLowerCase()}`} className="rwa-market-card">'
-          new='featured.map(([name,sector,symbol,cap,price,change,href])=><Link key={symbol} href={href} className="rwa-market-card">'
-          if old not in s: raise SystemExit('landing featured map pattern not found')
-          s=s.replace(old,new,1); save(p,s)
+          s=s.replace('featured.map(([name,sector,symbol,cap,price,change])=><Link key={symbol} href={`/businesses/${symbol.toLowerCase()}`} className="rwa-market-card">','featured.map(([name,sector,symbol,cap,price,change,href])=><Link key={symbol} href={href} className="rwa-market-card">',1)
+          write_if_changed(p,s)
 
-          # Genuine dead trading controls now produce explicit UI feedback.
-          p=root/'apps/realworldasset/src/components/trading/TradingFlow.tsx'; s=p.read_text()
+          p=Path('apps/realworldasset/src/components/trading/TradingFlow.tsx'); s=p.read_text()
           s=s.replace('<LiveTradeChart asset={asset}/>','<LiveTradeChart asset={asset} onAction={setNotice}/>',1)
           s=s.replace('<RecentTrades asset={asset}/>','<RecentTrades asset={asset} onSelect={setNotice}/>',1)
-          old='function LiveTradeChart({asset}:{asset:TradeAsset}){const candles='
-          new='function LiveTradeChart({asset,onAction}:{asset:TradeAsset;onAction:(message:string)=>void}){const candles='
-          if old not in s: raise SystemExit('LiveTradeChart signature pattern not found')
-          s=s.replace(old,new,1)
+          s=s.replace('function LiveTradeChart({asset}:{asset:TradeAsset}){const candles=','function LiveTradeChart({asset,onAction}:{asset:TradeAsset;onAction:(message:string)=>void}){const candles=',1)
           s=s.replace('onClick={()=>{}} aria-label={`Chart tool ${i+1}`}', 'onClick={()=>onAction(`Chart tool ${i+1} selected`)} aria-label={`Chart tool ${i+1}`}',1)
-          old='function RecentTrades({asset}:{asset:TradeAsset}){return <div className="trade-panel recent-trades">'
-          new='function RecentTrades({asset,onSelect}:{asset:TradeAsset;onSelect:(message:string)=>void}){return <div className="trade-panel recent-trades">'
-          if old not in s: raise SystemExit('RecentTrades signature pattern not found')
-          s=s.replace(old,new,1)
+          s=s.replace('function RecentTrades({asset}:{asset:TradeAsset}){return <div className="trade-panel recent-trades">','function RecentTrades({asset,onSelect}:{asset:TradeAsset;onSelect:(message:string)=>void}){return <div className="trade-panel recent-trades">',1)
           s=s.replace('onClick={()=>{}}><em className={i%3===1?"negative":"positive"}', 'onClick={()=>onSelect(`Recent trade ${r[0]} selected`)}><em className={i%3===1?"negative":"positive"}',1)
-          save(p,s)
+          write_if_changed(p,s)
 
-          # Audit: disambiguate canonical basePath from logical /rwa routes, validate anchors,
-          # and recognize already-selected controls as valid idempotent interactions.
-          p=root/'tools/realworldasset-total-ui-audit.py'; s=p.read_text()
-          s=re.sub(r'def normalized_route_from_href\(href\):\n.*?\n return path\n', '''def normalized_route_from_href(href):
+          p=Path('tools/realworldasset-total-ui-audit.py'); s=p.read_text()
+          newfunc='''def normalized_route_from_href(href):
            u=urlparse(href)
            base=urlparse(BASE)
            if u.scheme and (u.scheme,u.netloc)!=(base.scheme,base.netloc): return None
@@ -77,37 +63,29 @@ jobs:
            stripped=norm(candidate); raw=norm(original)
            if stripped in route_set: return stripped
            if raw in route_set: return raw
-           return stripped
-          ''',s,count=1,flags=re.S)
+           return stripped'''
+          s,n=re.subn(r'def normalized_route_from_href\(href\):\n.*?\n\nwith sync_playwright',newfunc+'\n\nwith sync_playwright',s,count=1,flags=re.S)
+          if n!=1: raise SystemExit('normalizer replacement failed')
           old="if not href or href.startswith('#') or href.startswith('javascript:'): broken_links.append({'vp':vpname,'route':route,'href':href,'reason':'empty-or-placeholder'}); continue"
           new="""if not href or href.startswith('javascript:'): broken_links.append({'vp':vpname,'route':route,'href':href,'reason':'empty-or-placeholder'}); continue
              if href.startswith('#'):
               target=href[1:]
               if not target or page.locator(f'[id=\"{target}\"]').count()<1: broken_links.append({'vp':vpname,'route':route,'href':href,'reason':'missing-anchor-target'})
               continue"""
-          if old not in s: raise SystemExit('anchor audit pattern not found')
+          if old not in s: raise SystemExit('anchor replacement failed')
           s=s.replace(old,new,1)
           old="if key not in distinct: distinct[key]={'vp':vpname,'route':route,'index':i,'label':label,'class':cls,'disabled':b.is_disabled()}"
           new="if key not in distinct: distinct[key]={'vp':vpname,'route':route,'index':i,'label':label,'class':cls,'disabled':b.is_disabled(),'selected':b.get_attribute('data-active')=='true' or b.get_attribute('aria-pressed')=='true'}"
-          if old not in s: raise SystemExit('distinct audit pattern not found')
+          if old not in s: raise SystemExit('distinct replacement failed')
           s=s.replace(old,new,1)
-          old="""if b.is_disabled():
-            locked_total+=1; locked_passed+=1; continue
-           try: b.click(timeout=2000); page.wait_for_timeout(90)"""
-          new="""if b.is_disabled():
-            locked_total+=1; locked_passed+=1; continue
-           if item.get('selected'):
-            active_total+=1; active_passed+=1; continue
-           try: b.click(timeout=2000); page.wait_for_timeout(90)"""
-          if old not in s: raise SystemExit('selected control audit pattern not found')
-          s=s.replace(old,new,1)
-          save(p,s)
+          pat=r"(\n   if b\.is_disabled\(\):\n    locked_total\+=1; locked_passed\+=1; continue\n)(   try: b\.click)"
+          repl="\\1   if item.get('selected'):\n    active_total+=1; active_passed+=1; continue\n\\2"
+          s,n=re.subn(pat,repl,s,count=1)
+          if n!=1: raise SystemExit('selected-control insertion failed')
+          write_if_changed(p,s)
           PY
           git diff --check
-          if git diff --quiet; then
-            echo "No repair diff required"
-            exit 0
-          fi
+          if git diff --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add apps/realworldasset tools/realworldasset-total-ui-audit.py
