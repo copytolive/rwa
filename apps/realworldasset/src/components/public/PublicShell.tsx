@@ -29,6 +29,7 @@ export function PublicHeader({ authenticated = false }: { authenticated?: boolea
   const router = useRouter();
   const [walletOpen, setWalletOpen] = React.useState(false);
   const [connectedWallet, setConnectedWallet] = React.useState<string | null>(null);
+  const [notice, setNotice] = React.useState("");
 
   return (
     <>
@@ -46,16 +47,20 @@ export function PublicHeader({ authenticated = false }: { authenticated?: boolea
               <Button variant="secondary" onClick={() => router.push("/signup")}>Sign Up</Button>
             </>
           )}
-          <Button onClick={() => setWalletOpen(true)}>{connectedWallet ? connectedWallet : "Connect Wallet"}</Button>
+          <Button onClick={() => setWalletOpen(true)}>{connectedWallet ? connectedWallet : "Connect Wallet · Demo"}</Button>
         </div>
       </header>
+      <div className="rwa-demo-badge" role="status">UI DEMO · BACKEND OFFLINE</div>
+      {notice && <div className="rwa-demo-notice" role="alert">{notice}</div>}
       <ConnectWalletModal
         open={walletOpen}
         onOpenChange={setWalletOpen}
         wallets={["MetaMask", "Rabby Wallet", "WalletConnect", "Coinbase Wallet", "Trust Wallet", "OKX Wallet"]}
         onConnect={(wallet) => {
-          setConnectedWallet(wallet);
+          setConnectedWallet(`${wallet} · Demo`);
           setWalletOpen(false);
+          setNotice(`${wallet} selected for UI preview only — no wallet session was created.`);
+          window.setTimeout(() => setNotice(""), 4200);
         }}
       />
     </>
@@ -63,18 +68,23 @@ export function PublicHeader({ authenticated = false }: { authenticated?: boolea
 }
 
 export function PublicShell({ children, authenticated = false }: { children: React.ReactNode; authenticated?: boolean }) {
-  return <div className="rwa-public-shell"><PublicHeader authenticated={authenticated}/>{children}</div>;
+  return <div className="rwa-public-shell" data-ui-demo="true" data-backend-connected="false"><PublicHeader authenticated={authenticated}/>{children}</div>;
 }
 
 export function RoutePlaceholder({ title, path }: { title: string; path: string }) {
   return (
     <PublicShell authenticated>
       <main className="rwa-placeholder">
-        <span className="rwa-placeholder__eyebrow">Route-safe placeholder</span>
+        <span className="rwa-placeholder__eyebrow">Interactive UI Demo</span>
         <h1>{title}</h1>
-        <p><code>{path}</code> is already wired so buttons never dead-end. Its full screen arrives in a later RWA.MS batch.</p>
+        <p>This route is available as a realistic interface preview. Data is deterministic demo content; backend writes and financial execution remain locked until live services are connected.</p>
+        <section className="rwa-placeholder__mock-grid" aria-label="Demo route status">
+          <article><small>Route</small><strong>{path}</strong><span>Navigation ready</span></article>
+          <article><small>Backend</small><strong>Offline</strong><span>Fail-closed mode</span></article>
+          <article><small>Environment</small><strong>UI Demo</strong><span>No real transaction</span></article>
+        </section>
         <div className="rwa-placeholder__actions">
-          <Link className="rwa-link-button rwa-link-button--primary" href="/home">Go to Home</Link>
+          <Link className="rwa-link-button rwa-link-button--primary" href="/home">Open Demo Home</Link>
           <Link className="rwa-link-button" href="/">Public Landing</Link>
         </div>
       </main>
