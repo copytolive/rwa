@@ -74,17 +74,23 @@ jobs:
           test -s ui/realworldasset/src/app/page.tsx
           test -s ui/realworldasset/scripts/verify-all-interactions.mjs
           grep -Fq '"/rwa"' ui/realworldasset/next.config.js
-          echo "UI_TOTAL_SYNC_READY source=$UI_SHA"
+          FILE_COUNT="$(find ui/realworldasset -type f | wc -l | tr -d ' ')"
+          test "$FILE_COUNT" -gt 50
+          echo "UI_TOTAL_SYNC_READY source=$UI_SHA files=$FILE_COUNT"
 
       - name: Commit vendored UI if changed
         shell: bash
         run: |
           set -euo pipefail
-          git add -A ui/realworldasset UI_SYNC_MANIFEST.json .gitmodules apps/realworldasset 2>/dev/null || true
+          git add -f -A ui/realworldasset UI_SYNC_MANIFEST.json
+          git add -A .gitmodules apps/realworldasset 2>/dev/null || true
+          TRACKED_COUNT="$(git ls-files ui/realworldasset | wc -l | tr -d ' ')"
+          test "$TRACKED_COUNT" -gt 50
           if git diff --cached --quiet; then
-            echo UI_ALREADY_IN_SYNC
+            echo "UI_ALREADY_IN_SYNC tracked=$TRACKED_COUNT"
             exit 0
           fi
+          git diff --cached --name-only | grep -q '^ui/realworldasset/'
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           UI_SHA="$(cat ui/realworldasset/UPSTREAM_SHA.txt)"
