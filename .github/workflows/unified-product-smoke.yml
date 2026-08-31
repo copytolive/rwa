@@ -81,10 +81,11 @@ jobs:
           test -s apps/realworldasset/package.json
           test -s apps/realworldasset/src/app/page.tsx
           grep -Fq 'working-directory: apps/realworldasset' .github/workflows/pages.yml
-          grep -Fq "test ! -e ui/realworldasset" .github/workflows/pages.yml
-          grep -Fq 'cp -a "$UI_OUT"/. "$OUT"/' .github/workflows/pages.yml
-          grep -Fq 'cp -a "$REPO_ROOT/renko" "$OUT/renko"' .github/workflows/pages.yml
-          grep -Fq 'deployment-sha.txt' .github/workflows/pages.yml
+          grep -Fq 'test ! -e ui/realworldasset' .github/workflows/pages.yml
+          grep -Fq 'O=apps/realworldasset/out' .github/workflows/pages.yml
+          grep -Fq 'cp -a renko "$O/renko"' .github/workflows/pages.yml
+          grep -Fq 'echo "$GITHUB_SHA" > "$O/deployment-sha.txt"' .github/workflows/pages.yml
+          grep -Fq 'path: apps/realworldasset/out' .github/workflows/pages.yml
           grep -Fq 'PUBLIC_CHROMIUM_REALWORLDASSET_PASS' .github/workflows/pages.yml
       - name: Safety invariants preserved
         run: |
