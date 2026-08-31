@@ -3,10 +3,10 @@ import { PublicShell } from "@/components/public";
 import "./landing.css";
 
 const featured = [
-  ["Kopi Nusantara","F&B · Indonesia","SKOPI","$248.5M","$2.48","+8.72%"],
-  ["Marina Bay Residences","Real Estate · Singapore","SSEA","$482.3M","$1.92","+6.31%"],
-  ["Blue Ocean Shipping","Maritime · UAE","SSHIP","$356.8M","$1.35","+3.20%"],
-  ["Private Credit Fund","Private Credit · Global","PCST","$612.4M","$1.08","+4.51%"],
+  ["Kopi Nusantara","F&B · Indonesia","KOPI","$248.5M","$2.48","+8.72%","/businesses/kopi-nusantara"],
+  ["Marina Bay Residences","Real Estate · Singapore","MBR","$482.3M","$1.92","+6.31%","/rwa/marina-bay-residences"],
+  ["Blue Ocean Shipping","Maritime · Singapore","SHIP","$356.8M","$1.35","+3.20%","/businesses/blue-ocean-shipping"],
+  ["Private Credit Fund","Private Credit · Global","SSPC","$612.4M","$1.08","+4.51%","/rwa/seaside-private-credit-fund"],
 ] as const;
 
 const features = [
@@ -47,7 +47,7 @@ export default function LandingPage(){
           </div>
         </div>
         <Link href="/home" className="rwa-dashboard-preview" aria-label="Open authenticated home preview">
-          <img className="rwa-dashboard-reference" src="/realworldasset/chat01/landing-dashboard.jpg" alt="" aria-hidden="true"/>
+          <img className="rwa-dashboard-reference" src="/rwa/chat01/landing-dashboard.jpg" alt="" aria-hidden="true"/>
           <div className="preview-top"><span className="preview-logo">◈ RWA.MS</span><span className="preview-search">⌕ Search markets, businesses, tokens…</span><span className="preview-utility">♧　☾</span><span className="preview-connect">Connect Wallet</span></div>
           <div className="preview-grid">
             <aside><b>◉ Overview</b><span>▧ Markets</span><span>⌂ Businesses</span><span>◇ RWA</span><span>☆ Watchlist</span><span>▣ Portfolio</span><span>♢ Rewards</span></aside>
@@ -69,7 +69,7 @@ export default function LandingPage(){
       </section>
       <section className="rwa-featured">
         <div className="rwa-section-title"><h2>Featured Businesses & Assets</h2><Link href="/markets">View all markets →</Link></div>
-        <div className="rwa-featured-grid">{featured.map(([name,sector,symbol,cap,price,change])=><Link key={symbol} href={`/businesses/${symbol.toLowerCase()}`} className="rwa-market-card"><div><span className={`rwa-market-avatar avatar-${symbol.toLowerCase()}`}>{name[0]}</span><p><b>{name}</b><small>{sector} <i>{symbol}</i></small></p><em>● Verified Business</em></div><dl><div><dt>Market Cap</dt><dd>{cap}</dd></div><div><dt>Price</dt><dd>{price}</dd></div><div className="rwa-card-change"><Sparkline/><dt>24H</dt><dd className="positive">{change}</dd></div></dl></Link>)}</div>
+        <div className="rwa-featured-grid">{featured.map(([name,sector,symbol,cap,price,change,href])=><Link key={symbol} href={href} className="rwa-market-card"><div><span className={`rwa-market-avatar avatar-${symbol.toLowerCase()}`}>{name[0]}</span><p><b>{name}</b><small>{sector} <i>{symbol}</i></small></p><em>● Verified Business</em></div><dl><div><dt>Market Cap</dt><dd>{cap}</dd></div><div><dt>Price</dt><dd>{price}</dd></div><div className="rwa-card-change"><Sparkline/><dt>24H</dt><dd className="positive">{change}</dd></div></dl></Link>)}</div>
       </section>
       <section className="rwa-everything"><h2>Everything in One Platform</h2><div className="rwa-feature-grid">{features.map(([title,text,href,icon])=><Link key={title} href={href}><span>{icon}</span><div><b>{title}</b><p>{text}</p></div></Link>)}</div></section>
       <section className="rwa-trust"><b>Built on Trusted Infrastructure</b>{["Hyperliquid","Chainlink","Trust Wallet","CIRCLE","Fireblocks"].map((x,i)=><span className={`trust-${i}`} key={x}>◇ {x}</span>)}</section>

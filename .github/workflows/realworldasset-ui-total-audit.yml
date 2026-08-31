@@ -1,0 +1,105 @@
+name: Realworldasset UI Total Audit
+
+on:
+  push:
+    branches:
+      - main
+      - 'fix/ui-backend-total-audit-*'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: realworldasset-ui-total-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  total-ui-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact SHA
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/realworldasset/package.json
+
+      - name: Install UI dependencies
+        working-directory: apps/realworldasset
+        run: npm install --no-audit --no-fund
+
+      - name: Verify existing interaction contracts
+        working-directory: apps/realworldasset
+        run: |
+          set -euo pipefail
+          npm run verify:interactions
+          npm run verify:chat04
+          npm run verify:chat05
+          npm run verify:chat06
+          npm run verify:chat07
+          npm run verify:chat08
+          npm run verify:chat09
+          npm run verify:chat10
+          npm run verify:chat11
+          npm run verify:chat12
+          npm run verify:chat13
+          npm run typecheck
+
+      - name: Build canonical /rwa UI
+        working-directory: apps/realworldasset
+        env:
+          RWA_BASE_PATH: /rwa
+          GITHUB_ACTIONS: 'true'
+        run: npm run build
+
+      - name: Compose local GitHub Pages root
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/rwa-ui-site
+          mkdir -p /tmp/rwa-ui-site/rwa
+          cp -a apps/realworldasset/out/. /tmp/rwa-ui-site/rwa/
+          test -s /tmp/rwa-ui-site/rwa/index.html
+          if grep -R -n -E '["'"'"'(]/realworldasset/' /tmp/rwa-ui-site/rwa --include='*.html' --include='*.js' --include='*.css'; then
+            echo 'STALE_PUBLIC_ROOT_FOUND' >&2
+            exit 1
+          fi
+
+      - name: Install Playwright Chromium
+        run: |
+          python3 -m pip install --disable-pip-version-check playwright==1.55.0
+          python3 -m playwright install --with-deps chromium
+
+      - name: Start local static production
+        run: |
+          python3 -m http.server 4173 --directory /tmp/rwa-ui-site > /tmp/rwa-ui-server.log 2>&1 &
+          echo $! > /tmp/rwa-ui-server.pid
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/rwa-ui-server.log
+          exit 1
+
+      - name: Audit backend, all distinct controls, images, routes, desktop and mobile
+        run: |
+          set -euo pipefail
+          mkdir -p ui-total-audit
+          python3 tools/realworldasset-total-ui-audit.py \
+            --base http://127.0.0.1:4173/rwa/ \
+            --source apps/realworldasset/src \
+            --site-dir /tmp/rwa-ui-site/rwa \
+            --artifact ui-total-audit | tee ui-total-audit/console.txt
+
+      - name: Upload total audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: realworldasset-ui-total-audit-${{ github.sha }}
+          path: ui-total-audit/
+          retention-days: 14
