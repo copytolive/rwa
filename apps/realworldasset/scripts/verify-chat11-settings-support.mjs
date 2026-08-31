@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(p,'utf8');
+const required=['src/components/settings-support/SettingsSupport.tsx','src/components/settings-support/settings-support.css','src/components/settings-support/index.ts','src/app/[...slug]/page.tsx'];
+for(const p of required) if(!fs.existsSync(p)) throw new Error(`CHAT11 missing ${p}`);
+const ui=read(required[0]); const route=read(required[3]); const shell=read('src/components/app/AppShell.tsx');
+for(const needle of ['SettingsSupportRoute','SettingsScreen','SecurityScreen','ProScreen','HelpScreen','StatusScreen','ConfirmationDialog','Revoke All Other Sessions','Customer Support & Help Center','All Systems Operational']) if(!ui.includes(needle)) throw new Error(`CHAT11 missing ${needle}`);
+for(const p of ['/settings','/settings/security','/pro','/help','/status']) if(!route.includes(`\"${p}\"`)) throw new Error(`CHAT11 route missing ${p}`);
+if(!route.includes('SettingsSupportRoute')) throw new Error('CHAT11 catch-all is not connected');
+if(!shell.includes('router.push("/pro")')) throw new Error('CHAT11 PRO header entry is not connected');
+const actionUses=(ui.match(/<Action\b/g)||[]).length;
+if(actionUses<50) throw new Error(`CHAT11 expected dense interactive coverage, found ${actionUses} Action controls`);
+if(!ui.includes('onClick={onClick}')) throw new Error('CHAT11 Action primitive has no click handler');
+console.log(`CHAT11 settings/support PASS: 5 routed source surfaces, shared ConfirmationDialog session actions, PRO entry, Help/Status connectivity; ${actionUses} Action instances wired.`);

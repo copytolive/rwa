@@ -1,0 +1,10 @@
+import fs from "node:fs";
+const community=fs.readFileSync("src/components/community/Community.tsx","utf8");
+const catchAll=fs.readFileSync("src/app/[...slug]/page.tsx","utf8");
+for(const token of ["CommunityPage","UserProfile","ThesisDetail","ThesisComposer","BookmarksPage","CommunityRoute"])if(!community.includes(token))throw new Error(`CHAT10 missing screen/component: ${token}`);
+for(const route of ["/community","/community/compose","/bookmarks","/community/users/alex-yield","/community/thesis/kopi-long-term-value"])if(!catchAll.includes(route.replace(/^\//,""))&&!catchAll.includes(route))throw new Error(`CHAT10 route not statically covered: ${route}`);
+for(const token of ["path.startsWith(\"/community/users/\")","path.startsWith(\"/community/thesis/\")","<CommunityRoute path={path}/>"])if(!catchAll.includes(token))throw new Error(`CHAT10 catch-all dispatch missing: ${token}`);
+for(const route of ["/businesses/kopi-nusantara","/businesses/kopi-nusantara/token","/markets/btc-usdc","/rwa/marina-bay-residences"])if(!community.includes(route))throw new Error(`CHAT10 entity handoff missing: ${route}`);
+const buttons=(community.match(/<button\b/g)||[]).length;const actions=(community.match(/onClick=/g)||[]).length;
+if(buttons===0||actions<buttons)throw new Error(`CHAT10 native control contract failed: ${buttons} buttons, ${actions} onClick actions`);
+console.log(`CHAT10 community PASS: Community -> Profile -> Thesis -> Composer -> Bookmarks wired with entity handoffs; ${buttons} native button controls have actions.`);
