@@ -84,7 +84,8 @@ jobs:
 
       - name: Audit backend, all distinct controls, images, routes, desktop and mobile
         run: |
-          set -o pipefail
+          set -euo pipefail
+          mkdir -p ui-total-audit
           python3 tools/realworldasset-total-ui-audit.py \
             --base http://127.0.0.1:4173/rwa/ \
             --source apps/realworldasset/src \
