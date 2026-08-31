@@ -10,6 +10,7 @@ on:
       - 'trade/config.js'
       - 'trader/**'
       - 'asset/**'
+      - 'apps/realworldasset/**'
       - '.github/workflows/pages.yml'
       - '.github/workflows/live-browser-smoke.yml'
       - '.github/workflows/unified-product-smoke.yml'
@@ -24,6 +25,7 @@ on:
       - 'trade/config.js'
       - 'trader/**'
       - 'asset/**'
+      - 'apps/realworldasset/**'
       - '.github/workflows/pages.yml'
       - '.github/workflows/live-browser-smoke.yml'
       - '.github/workflows/unified-product-smoke.yml'
@@ -38,9 +40,9 @@ jobs:
           node --check product-os-v3.js
           node --check product-os-mobile-contract-v3.js
           node --input-type=module --check < trade/config.js
-      - name: Canonical root uses lazy product shell
+      - name: Legacy root compatibility shell remains fail-closed and lazy
         run: |
-          test "$(grep -o '<script src=' index.html | wc -l | tr -d ' ')" = "6"
+          test "$(grep -o '<script src=' index.html | wc -l | tr -d ' ')" = "14"
           ! grep -Fq 'unified-design-v3.css' index.html
           ! grep -Fq 'product-os-v3.js' index.html
           ! grep -Fq 'product-os-mobile-contract-v3.js' index.html
@@ -54,7 +56,7 @@ jobs:
           grep -Fq "loadScriptOnce('rwa-fundamentals.js?v=1'" superapp-v5.js
           grep -q "product-os-v3.js" trade/config.js
           grep -q "unified-design-v3.css" trade/config.js
-      - name: 1-22 product surfaces remain available
+      - name: 1-22 legacy product surfaces remain available
         run: |
           test -f trader/index.html
           test -f asset/index.html
@@ -74,18 +76,20 @@ jobs:
           grep -q -- '--rwa-control-lg:44px' unified-design-v3.css
           grep -q 'mobile-tabs a>small{font-size:10px' unified-design-v3.css
           grep -q 'suite-field input.*font-size:13px' unified-design-v3.css
-      - name: Pages deployment follows canonical lazy root
+      - name: Pages deployment follows single canonical Next UI
         run: |
-          grep -Fq "! grep -Fq 'product-os-v3.js' index.html" .github/workflows/pages.yml
-          grep -Fq "! grep -Fq 'product-os-mobile-contract-v3.js' index.html" .github/workflows/pages.yml
-          grep -Fq "! grep -Fq 'unified-design-v3.css' index.html" .github/workflows/pages.yml
-          grep -Fq 'node tools/superapp-v5-browser.mjs' .github/workflows/pages.yml
-          test -s .github/workflows/live-browser-smoke.yml
-          grep -q '<title>RWA Trader</title>' trader/index.html
-          grep -q '<title>RWA Asset</title>' asset/index.html
+          test -s apps/realworldasset/package.json
+          test -s apps/realworldasset/src/app/page.tsx
+          grep -Fq 'working-directory: apps/realworldasset' .github/workflows/pages.yml
+          grep -Fq "test ! -e ui/realworldasset" .github/workflows/pages.yml
+          grep -Fq 'cp -a "$UI_OUT"/. "$OUT"/' .github/workflows/pages.yml
+          grep -Fq 'cp -a "$REPO_ROOT/renko" "$OUT/renko"' .github/workflows/pages.yml
+          grep -Fq 'deployment-sha.txt' .github/workflows/pages.yml
+          grep -Fq 'PUBLIC_CHROMIUM_REALWORLDASSET_PASS' .github/workflows/pages.yml
       - name: Safety invariants preserved
         run: |
           grep -q "mainnetEnabled" trade/config.js
           grep -q "canMainnet" trade/config.js
           grep -q "defaultTestnet:true" trade/config.js
+          grep -Fq 'BACKEND_CONNECTED = false' apps/realworldasset/src/components/app/AppShell.tsx
           ! grep -R --line-number -E 'private[_ -]?key|seed phrase|withdraw.*automatic' product-os-v3.js trader/index.html asset/index.html unified-design-v3.css
