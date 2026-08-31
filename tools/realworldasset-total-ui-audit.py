@@ -10,12 +10,11 @@ p.add_argument('--source',required=True)
 p.add_argument('--site-dir',required=True)
 p.add_argument('--artifact',required=True)
 a=p.parse_args()
-BASE=a.base.rstrip('/')
+BASE=a.base.rstrip('/')+'/'
 SOURCE=Path(a.source)
 SITE=Path(a.site_dir)
 ART=Path(a.artifact); ART.mkdir(parents=True,exist_ok=True)
 
-# Source/backend evidence. A static UI is never called "connected" from labels alone.
 network_patterns={
  'fetch':re.compile(r'\bfetch\s*\('), 'axios':re.compile(r'\baxios\b'),
  'websocket':re.compile(r'\bWebSocket\b'), 'eventsource':re.compile(r'\bEventSource\b'),
@@ -34,7 +33,6 @@ for f in SOURCE.rglob('*'):
   if rx.search(text): source_hits[k].append(rel)
  if re.search(r'\bDEMO_|UI DEMO|Backend Offline|BACKEND_CONNECTED\s*=\s*false|const\s+[A-Z_]+\s*[:=].*\[',text,re.S): demo_hits.append(rel)
 
-# Build output routes.
 routes=[]
 for f in SITE.rglob('index.html'):
  rel=f.relative_to(SITE)
@@ -54,6 +52,9 @@ runtime_errors=[]; console_errors=[]; broken_images=[]; stale_paths=[]; overflow
 api_requests=[]; control_occurrences=0; distinct={}
 screens=[]
 current={'vp':'','route':''}
+
+def url_for(route):
+ return BASE + route.lstrip('/')
 
 def clean_html(page):
  return page.evaluate("""() => {const c=document.body.cloneNode(true); c.querySelectorAll('.sr-only,.app-safety-notice,.rwa-demo-notice').forEach(n=>n.remove()); return c.outerHTML;}""")
@@ -77,17 +78,16 @@ with sync_playwright() as pw:
  page.on('console',lambda m: console_errors.append({'vp':current['vp'],'route':current['route'],'text':m.text}) if m.type=='error' else None)
  page.on('request',lambda req: api_requests.append({'vp':current['vp'],'route':current['route'],'type':req.resource_type,'url':req.url}) if req.resource_type in ('xhr','fetch','websocket') else None)
 
- # Every generated route: desktop + mobile. Collect images, links, overflow, controls.
  for vpname,w,h in full_sweep:
   page.set_viewport_size({'width':w,'height':h})
   for route in routes:
    current.update(vp=vpname,route=route)
    try:
-    resp=page.goto(BASE+route.lstrip('/'),wait_until='domcontentloaded',timeout=15000)
+    resp=page.goto(url_for(route),wait_until='domcontentloaded',timeout=15000)
     page.wait_for_timeout(70)
    except Exception as e:
     runtime_errors.append({'vp':vpname,'route':route,'error':'navigation: '+str(e)}); continue
-   if resp and resp.status>=400: runtime_errors.append({'vp':vpname,'route':route,'error':f'HTTP {resp.status}'})
+   if resp and resp.status>=400 and route!='/404/': runtime_errors.append({'vp':vpname,'route':route,'error':f'HTTP {resp.status}'})
    dims=page.evaluate("() => ({sw:document.documentElement.scrollWidth,iw:window.innerWidth,bw:document.body.getBoundingClientRect().width})")
    if dims['sw']>dims['iw']+3: overflows.append({'vp':vpname,'route':route,**dims})
    for img in page.locator('img').all():
@@ -117,25 +117,23 @@ with sync_playwright() as pw:
      if key not in distinct: distinct[key]={'vp':vpname,'route':route,'index':i,'label':label,'class':cls,'disabled':b.is_disabled()}
     except Exception: pass
 
- # Screenshots at all requested desktop/mobile widths on core routes.
  for vpname,w,h in viewports:
   page.set_viewport_size({'width':w,'height':h})
   for route in core:
    current.update(vp=vpname,route=route)
    try:
-    page.goto(BASE+route.lstrip('/'),wait_until='domcontentloaded',timeout=15000); page.wait_for_timeout(120)
+    page.goto(url_for(route),wait_until='domcontentloaded',timeout=15000); page.wait_for_timeout(120)
     name=(route.strip('/').replace('/','-') or 'landing')
     out=ART/f'{vpname}-{name}.png'; page.screenshot(path=str(out),full_page=False); screens.append(str(out.name))
    except Exception as e: runtime_errors.append({'vp':vpname,'route':route,'error':'screenshot: '+str(e)})
 
- # Distinct visible button semantics on desktop and mobile. High-risk writes must fail closed.
  active_total=active_passed=locked_total=locked_passed=0; unexpected=[]; locked_fail=[]
  unsafe_rx=re.compile(r'confirm purchase|confirm (buy|sell)|execute (trade|order)|submit order|settle|withdraw|redeem|mint now|pay now',re.I)
  for item in distinct.values():
   vpname=item['vp']; w,h=next((w,h) for n,w,h in viewports if n==vpname)
   page.set_viewport_size({'width':w,'height':h}); route=item['route']; current.update(vp=vpname,route=route)
   try:
-   page.goto(BASE+route.lstrip('/'),wait_until='domcontentloaded',timeout=15000); page.wait_for_timeout(60)
+   page.goto(url_for(route),wait_until='domcontentloaded',timeout=15000); page.wait_for_timeout(60)
    buttons=page.locator('button:visible')
    if item['index']>=buttons.count(): continue
    b=buttons.nth(item['index']); label=item['label']; is_locked=b.is_disabled() or bool(unsafe_rx.search(label))
@@ -143,7 +141,7 @@ with sync_playwright() as pw:
    if b.is_disabled():
     locked_total+=1; locked_passed+=1; continue
    try: b.click(timeout=2000); page.wait_for_timeout(90)
-   except PlaywrightTimeoutError as e:
+   except PlaywrightTimeoutError:
     if is_locked: locked_total+=1; locked_fail.append({**item,'reason':'unclickable locked control'}); continue
     active_total+=1; unexpected.append({**item,'reason':'click timeout'}); continue
    after_url=page.url; after=clean_html(page); changed=(after_url!=before_url or hashlib.sha256(after.encode()).hexdigest()!=hashlib.sha256(before.encode()).hexdigest())
