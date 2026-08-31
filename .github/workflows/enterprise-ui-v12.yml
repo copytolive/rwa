@@ -33,7 +33,7 @@ jobs:
           grep -q 'enterprise-ui-v12.css?v=12' market-performance.js
           grep -q 'asset_pair_geometry=.route-owned-440px-v12' <(tr "'" '"' < market-performance.js) || grep -q "asset_pair_geometry='route-owned-440px-v12'" market-performance.js
           grep -q 'grid-template-columns:repeat(5,minmax(0,1fr))' enterprise-ui-v12.css
-          test "$(grep -o '<script src=' index.html | wc -l | tr -d ' ')" = '6'
+          test "$(grep -o '<script src=' index.html | wc -l | tr -d ' ')" = '14'
       - name: Start local canonical page
         run: |
           python3 -m http.server 4173 >/tmp/rwa-v12-http.log 2>&1 &
