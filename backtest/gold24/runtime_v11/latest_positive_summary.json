@@ -1,5 +1,5 @@
 {
-  "configs_archived": 63691,
+  "configs_archived": 63774,
   "correlation_rule": {
     "action": ">0.50 remove lower-quality method from final selection",
     "maximum": 0.5,
@@ -9,7 +9,7 @@
   "entry_ge_100_net_profit_ge_3000_usd_count": 0,
   "entry_profit_top200_count": 200,
   "positive_entry_ge_100_count": 51,
-  "positive_unique_count": 434,
+  "positive_unique_count": 435,
   "profit_top200_count": 200,
   "qualified_v11_count": 0,
   "report_filter": {
@@ -19,6 +19,6 @@
     "unit_policy": "canonical net_profit directly; x100 standard-lot conversion forbidden unless separately broker-validated"
   },
   "schema": "gold-v11-positive-ranking-summary-v3",
-  "source_run_id": "33357054104",
+  "source_run_id": "33360513871",
   "target_v11_count": 0
 }
