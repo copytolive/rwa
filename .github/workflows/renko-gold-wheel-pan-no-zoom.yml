@@ -32,7 +32,8 @@ jobs:
           grep -Fq 'mouseWheel:false' renko/renko-gold-wheel-pan-lock.js
           grep -Fq 'passive:false' renko/renko-gold-wheel-pan-lock.js
           grep -Fq 'stopImmediatePropagation' renko/renko-gold-wheel-pan-lock.js
-          grep -Fq "version:'1.1.0-owned-pan-wheel'" renko/renko-gold-wheel-pan-lock.js
+          grep -Fq 'scrollToPosition' renko/renko-gold-wheel-pan-lock.js
+          grep -Fq "version:'1.2.0-scroll-position-spacing-lock'" renko/renko-gold-wheel-pan-lock.js
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.55.0
@@ -76,7 +77,7 @@ jobs:
           for i in {1..180}; do
             js="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/renko-gold-wheel-pan-lock.js?wheel=$RANDOM" 2>/dev/null || true)"
             sha="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/deployment-sha.txt?wheel=$RANDOM" 2>/dev/null | tr -d '\r\n' || true)"
-            if printf '%s' "$js" | grep -Fq "1.1.0-owned-pan-wheel" && [[ "$sha" =~ ^[0-9a-f]{40}$ ]]; then echo "RENKO_GOLD_WHEEL_PUBLIC_RUNTIME_PASS $sha"; exit 0; fi
+            if printf '%s' "$js" | grep -Fq "1.2.0-scroll-position-spacing-lock" && [[ "$sha" =~ ^[0-9a-f]{40}$ ]]; then echo "RENKO_GOLD_WHEEL_PUBLIC_RUNTIME_PASS $sha"; exit 0; fi
             sleep 5
           done
           echo 'Pages did not publish wheel-fix runtime'
