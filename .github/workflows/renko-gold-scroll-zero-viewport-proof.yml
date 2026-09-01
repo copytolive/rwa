@@ -1,0 +1,133 @@
+name: RENKO GOLD Scroll Zero Viewport Proof
+
+on:
+  push:
+    branches:
+      - fix/renko-gold-scroll-zero-viewport-20260901
+    paths:
+      - 'renko/index.html'
+      - 'renko/renko-tv-scroll-zero-lock.js'
+      - 'renko/renko-gold-manual-viewport-lock.js'
+      - 'renko/renko-gold-prepend-zero-refresh.js'
+      - '.github/workflows/renko-gold-scroll-zero-viewport-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+
+      - name: Serve branch exactly under /rwa/renko
+        run: |
+          mkdir -p /tmp/renko-scroll-site/rwa
+          cp -R renko /tmp/renko-scroll-site/rwa/renko
+          nohup python3 -m http.server 8080 --directory /tmp/renko-scroll-site >/tmp/renko-scroll-http.log 2>&1 &
+          for i in $(seq 1 50); do curl -fsS http://127.0.0.1:8080/rwa/renko/ >/dev/null && exit 0; sleep .2; done
+          cat /tmp/renko-scroll-http.log
+          exit 1
+
+      - name: Prove repeated backward scroll never resets position or zoom
+        run: |
+          mkdir -p artifacts/renko-gold-scroll-zero
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { chromium } from 'playwright';
+          const browser=await chromium.launch({headless:true,args:['--disable-dev-shm-usage']});
+          const page=await browser.newPage({viewport:{width:1672,height:941},deviceScaleFactor:1});
+          const errors=[];
+          page.on('pageerror',e=>errors.push(String(e?.message||e)));
+          page.on('console',m=>{if(m.type()==='error'&&!/WebSocket|Binance|GOLD downloaded-only/i.test(m.text()))errors.push(m.text())});
+          await page.goto(`http://127.0.0.1:8080/rwa/renko/?gold=1&scrollZeroProof=1&v=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:60000});
+          await page.waitForFunction(()=>window.RENKO_GOLD_ONLY===true&&window.RWARenkoTV?.state?.symbol==='XAUUSD'&&window.RWARenkoTV?.state?.closedBars?.length>100&&window.RWARenkoGoldTotalHistory&&window.RWARenkoGoldManualViewport?.version==='3.3.0-history-time-owner'&&window.RWARenkoGoldPrependZeroRefresh?.version==='1.0.0-before-paint-time-range'&&window.RWARenkoScrollZeroLock?.version==='1.2.0-true-range-subscribers',null,{timeout:90000});
+          await page.evaluate(()=>window.RWARenkoGoldTotalHistory.loadManifest());
+
+          const cycles=[];
+          for(let cycle=1;cycle<=3;cycle++){
+            const before=await page.evaluate(cycle=>{
+              const H=RWARenkoGoldTotalHistory,M=RWARenkoGoldManualViewport,ts=__RWARenkoChart.timeScale(),T=RWARenkoTV;
+              M.lock(`proof-scroll-${cycle}`);
+              // Reproduce the operator dragging/scrolling to the left edge while keeping
+              // exactly the same 60-logical-bar zoom for every cycle.
+              ts.setVisibleLogicalRange({from:12,to:72});
+              T.state.following=false;
+              return {
+                cycle,
+                prepends:H.stats.prepends,
+                oldest:Number(T.state.closedBars[0].openTime),
+                newest:Number(T.state.closedBars.at(-1).closeTime),
+                time:ts.getVisibleRange(),
+                logical:ts.getVisibleLogicalRange(),
+                following:T.state.following,
+                manualRange:M.range,
+                maxZoom:document.documentElement.dataset.renkoGoldMaxZoom||'false'
+              };
+            },cycle);
+            await page.waitForFunction(n=>RWARenkoGoldTotalHistory.stats.prepends>n&&!RWARenkoGoldTotalHistory.busy,before.prepends,{timeout:120000});
+            await page.waitForTimeout(180);
+            const after=await page.evaluate(()=>{
+              const H=RWARenkoGoldTotalHistory,Z=RWARenkoGoldPrependZeroRefresh,M=RWARenkoGoldManualViewport,ts=__RWARenkoChart.timeScale(),T=RWARenkoTV;
+              return {
+                prepends:H.stats.prepends,
+                oldest:Number(T.state.closedBars[0].openTime),
+                newest:Number(T.state.closedBars.at(-1).closeTime),
+                time:ts.getVisibleRange(),
+                logical:ts.getVisibleLogicalRange(),
+                following:T.state.following,
+                zero:{...Z.stats},
+                manual:{...M.stats},
+                manualRange:M.range,
+                maxZoom:document.documentElement.dataset.renkoGoldMaxZoom||'false'
+              };
+            });
+            const tf=Math.abs(Number(after.time.from)-Number(before.time.from));
+            const tt=Math.abs(Number(after.time.to)-Number(before.time.to));
+            const bw=Number(before.logical.to)-Number(before.logical.from),aw=Number(after.logical.to)-Number(after.logical.from);
+            const row={cycle,before,after,timeFromDrift:tf,timeToDrift:tt,logicalWidthBefore:bw,logicalWidthAfter:aw,logicalWidthDrift:Math.abs(aw-bw)};
+            row.pass=after.prepends===before.prepends+1&&after.oldest<before.oldest&&tf<=1&&tt<=1&&row.logicalWidthDrift<=0.05&&after.following===false&&after.maxZoom!=='true'&&after.zero.tbtMs===0&&after.zero.immediateRestores>=cycle;
+            cycles.push(row);
+            await page.screenshot({path:`artifacts/renko-gold-scroll-zero/cycle-${cycle}.png`,fullPage:true});
+            if(!row.pass)throw new Error('viewport drift cycle '+cycle+' '+JSON.stringify(row));
+          }
+          const report={schema:'renko-gold-scroll-zero-viewport-proof-v1',generatedAt:new Date().toISOString(),cycles,errors,scrollZero:await page.evaluate(()=>({...RWARenkoScrollZeroLock.stats})),zeroRefresh:await page.evaluate(()=>({...RWARenkoGoldPrependZeroRefresh.stats})),manual:await page.evaluate(()=>({...RWARenkoGoldManualViewport.stats})),status:cycles.every(x=>x.pass)&&errors.length===0?'PASS':'FAIL'};
+          fs.writeFileSync('artifacts/renko-gold-scroll-zero/report.json',JSON.stringify(report,null,2));
+          console.log('RENKO_GOLD_SCROLL_ZERO_VIEWPORT_PROOF',JSON.stringify(report));
+          await browser.close();
+          if(report.status!=='PASS')process.exit(2);
+          NODE
+
+      - name: Enforce no-reset contract
+        run: |
+          python3 - <<'PY'
+          import json
+          r=json.load(open('artifacts/renko-gold-scroll-zero/report.json'))
+          assert r['status']=='PASS'
+          assert len(r['cycles'])==3
+          for x in r['cycles']:
+              assert x['timeFromDrift']<=1 and x['timeToDrift']<=1
+              assert x['logicalWidthDrift']<=0.05
+              assert x['after']['following'] is False
+              assert x['after']['zero']['tbtMs']==0
+          print('RENKO_GOLD_SCROLL_BACKWARD_NO_RESET_NO_ZOOM_TBT0_PASS')
+          PY
+
+      - name: Upload proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: renko-gold-scroll-zero-viewport-proof
+          path: artifacts/renko-gold-scroll-zero
+          retention-days: 14
