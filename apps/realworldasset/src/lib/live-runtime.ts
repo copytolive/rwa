@@ -55,11 +55,11 @@ const COMMERCE_SESSION_KEY = "rwa_commerce_session_v1";
 const EXECUTION_SESSION_KEY = "rwa_wallet_link_v1";
 let resolvedBase: string | null | undefined;
 let executionLoad: Promise<ExecutionApi> | null = null;
+let walletAuthenticationInFlight: Promise<CommerceSession> | null = null;
 
 function isBrowser() { return typeof window !== "undefined"; }
 function basePath() { return isBrowser() && window.location.pathname.startsWith("/rwa") ? "/rwa" : ""; }
 function staticUrl(path: string) { return `${basePath()}${path.startsWith("/") ? path : `/${path}`}`; }
-function origin() { return isBrowser() ? window.location.origin : ""; }
 function provider(): EthereumProvider | null { return isBrowser() ? (window.RWAProvider || window.ethereum || null) : null; }
 
 function safeJson<T>(value: string | null): T | null {
@@ -140,10 +140,13 @@ async function api<T = any>(path: string, init: RequestInit = {}, requireSession
   return payload as T;
 }
 
-export async function connectWalletAndAuthenticate(): Promise<CommerceSession> {
+async function performWalletAuthentication(): Promise<CommerceSession> {
   const p = provider();
   if (!p?.request) throw new Error("No browser wallet provider found");
-  const accounts = await p.request({ method: "eth_requestAccounts" });
+  const alreadyAuthorized = await p.request({ method: "eth_accounts" }).catch(() => []);
+  const accounts = Array.isArray(alreadyAuthorized) && alreadyAuthorized.length
+    ? alreadyAuthorized
+    : await p.request({ method: "eth_requestAccounts" });
   const wallet = String(accounts?.[0] || "").toLowerCase();
   if (!/^0x[a-f0-9]{40}$/.test(wallet)) throw new Error("Wallet did not return a valid EVM address");
   const base = await resolveCommerceApiBase(true);
@@ -177,6 +180,20 @@ export async function connectWalletAndAuthenticate(): Promise<CommerceSession> {
   localStorage.setItem(EXECUTION_SESSION_KEY, JSON.stringify({ wallet, authenticatedAt: Date.now(), source: "commerce-signature-v1" }));
   window.dispatchEvent(new CustomEvent("rwa:session-changed", { detail: { authenticated: true, wallet } }));
   return session;
+}
+
+export async function connectWalletAndAuthenticate(): Promise<CommerceSession> {
+  if (walletAuthenticationInFlight) return walletAuthenticationInFlight;
+  walletAuthenticationInFlight = performWalletAuthentication()
+    .catch((error: any) => {
+      const message = String(error?.message || error || "");
+      if (/already pending|requestPermissions|request.*pending|pending.*request/i.test(message)) {
+        throw new Error("Wallet approval is already pending. Finish or cancel the existing wallet popup, then retry.");
+      }
+      throw error;
+    })
+    .finally(() => { walletAuthenticationInFlight = null; });
+  return walletAuthenticationInFlight;
 }
 
 export async function logoutRealSession() {
