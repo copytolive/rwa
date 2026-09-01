@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import { ConnectWalletModal } from "@/components/overlays";
 import "./app-shell.css";
+import "./launch-responsive-fix.css";
 
 const nav = [
   ["Home", "/home"],
