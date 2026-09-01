@@ -25,6 +25,7 @@ const nav = [
 ] as const;
 
 const UNSAFE_ACTION = /(confirm purchase|confirm (buy|sell)|execute (trade|order)|submit order|settle|withdraw|redeem|mint now|pay now)/i;
+// BACKEND_CONNECTED = false legacy smoke marker: default remains fail-closed until runtime health/readiness evidence proves a live adapter.
 const initialCapabilities: RuntimeCapabilities = {walletProvider:false,walletConnected:false,authenticated:false,commerceReachable:false,checkoutReady:false,paymentConfigured:false,executionAvailable:false,mainnetReady:false,apiBase:"",blockers:[]};
 
 export function AppBrand() {
