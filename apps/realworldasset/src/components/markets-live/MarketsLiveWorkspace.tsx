@@ -97,7 +97,7 @@ export function MarketsLiveWorkspace() {
   return <AppShell><main className="pw-page markets-live-page" data-live-source="hyperliquid-public">
     <header className="pw-hero markets-live-hero">
       <div><small>RWA.MS / HYPERLIQUID PUBLIC VENUE</small><h1>Markets Directory</h1><p>Prices, 24-hour venue volume, open interest and funding are rendered only from successful Hyperliquid <code>metaAndAssetCtxs</code> responses. No local market values are substituted.</p></div>
-      <div className="pw-hero-actions"><span className="ml-live-badge" data-state={state}>{state === "LIVE" ? "LIVE VENUE DATA" : state}</span><Button variant="secondary" onClick={() => void load()}>Refresh Venue</Button></div>
+      <div className="pw-hero-actions"><span className="ml-live-badge live-feed-badge" data-state={state}>{state === "LIVE" ? "LIVE VENUE DATA" : state}</span><Button variant="secondary" onClick={() => void load()}>Refresh Venue</Button></div>
     </header>
 
     <section className="ml-summary" aria-label="Markets live summary">
