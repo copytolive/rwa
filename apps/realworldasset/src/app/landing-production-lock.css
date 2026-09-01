@@ -1,0 +1,44 @@
+/* Production landing flow lock.
+   The 1672px pixel-parity layer previously used fixed heights that were
+   shorter than their real content, so section headings and card metrics
+   visually overlapped even though there was no document overflow.
+   Keep the tuned desktop geometry, but let content establish block height. */
+@media (min-width:1360px){
+  html body .rwa-hero{
+    height:auto!important;
+    min-height:390px!important;
+    padding-bottom:18px!important;
+  }
+  html body .rwa-featured{
+    margin-top:18px!important;
+  }
+  html body .rwa-section-title{
+    height:auto!important;
+    min-height:30px!important;
+  }
+  html body .rwa-market-card{
+    height:auto!important;
+    min-height:132px!important;
+    overflow:visible!important;
+  }
+  html body .rwa-everything{
+    margin-top:20px!important;
+  }
+  html body .rwa-everything h2{
+    height:auto!important;
+    min-height:25px!important;
+    margin:0 0 10px!important;
+  }
+  html body .rwa-feature-grid>a{
+    height:auto!important;
+    min-height:104px!important;
+  }
+  html body .rwa-trust{
+    height:auto!important;
+    min-height:58px!important;
+  }
+  html body .rwa-footer{
+    height:auto!important;
+    min-height:148px!important;
+  }
+}
