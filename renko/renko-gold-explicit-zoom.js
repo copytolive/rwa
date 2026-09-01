@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 if(!window.RENKO_GOLD_ONLY||window.RWARenkoGoldExplicitZoom)return;
-const root=document.documentElement,MIN_WIDTH=12,MAX_WIDTH=2500,ZOOM_OUT_MIN_SPACING=.05,MAX_HISTORY_BURST=4;
+const root=document.documentElement,MIN_WIDTH=12,MAX_WIDTH=2500,DEEP_HISTORY_WIDTH=120,ZOOM_OUT_MIN_SPACING=.05,MAX_HISTORY_BURST=4;
 const stats={wheelZooms:0,pinchZooms:0,verticalZooms:0,buttonIntents:0,applies:0,manualUnlocks:0,deepZoomOuts:0,historyRequests:0,historySuccesses:0,historyPumpRuns:0,lastTargetWidth:null,last:null};
 const finite=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v));
 const chart=()=>window.__RWARenkoChart||null;
@@ -9,7 +9,7 @@ const ts=()=>chart()?.timeScale?.()||null;
 const logical=t=>{try{const r=t?.getVisibleLogicalRange?.();return r&&finite(r.from)&&finite(r.to)?{from:Number(r.from),to:Number(r.to)}:null}catch(_){return null}};
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
 function totalBricks(){const T=window.RWARenkoTV;return Math.max(0,Number(T?.state?.confirmedData?.length||0)+Number(T?.state?.projectionData?.length||0))}
-function publish(){Object.assign(root.dataset,{renkoGoldExplicitZoom:'true',renkoGoldExplicitZoomVersion:'1.0.0-explicit-zoom',renkoGoldExplicitZoomImplementation:'1.2.0-deep-zoom-history-demand',renkoGoldExplicitZoomRevision:'1.2.1-deficit-history-demand',renkoGoldExplicitZoomWheel:String(stats.wheelZooms),renkoGoldExplicitZoomPinch:String(stats.pinchZooms),renkoGoldExplicitZoomVertical:String(stats.verticalZooms),renkoGoldExplicitZoomButtons:String(stats.buttonIntents),renkoGoldExplicitZoomApplies:String(stats.applies),renkoGoldExplicitZoomHistoryRequests:String(stats.historyRequests),renkoGoldExplicitZoomHistorySuccesses:String(stats.historySuccesses),renkoGoldExplicitZoomMaxWidth:String(MAX_WIDTH),renkoGoldInteractionOwner:'zoom'})}
+function publish(){Object.assign(root.dataset,{renkoGoldExplicitZoom:'true',renkoGoldExplicitZoomVersion:'1.0.0-explicit-zoom',renkoGoldExplicitZoomImplementation:'1.2.0-deep-zoom-history-demand',renkoGoldExplicitZoomRevision:'1.2.2-deep-threshold-demand',renkoGoldExplicitZoomWheel:String(stats.wheelZooms),renkoGoldExplicitZoomPinch:String(stats.pinchZooms),renkoGoldExplicitZoomVertical:String(stats.verticalZooms),renkoGoldExplicitZoomButtons:String(stats.buttonIntents),renkoGoldExplicitZoomApplies:String(stats.applies),renkoGoldExplicitZoomHistoryRequests:String(stats.historyRequests),renkoGoldExplicitZoomHistorySuccesses:String(stats.historySuccesses),renkoGoldExplicitZoomMaxWidth:String(MAX_WIDTH),renkoGoldExplicitZoomHistoryThreshold:String(DEEP_HISTORY_WIDTH),renkoGoldInteractionOwner:'zoom'})}
 function releaseViewport(reason='zoom'){
   try{window.RWARenkoGoldViewportAuthority?.clear?.(reason)}catch(_){ }
   try{window.RWARenkoGoldWheelPanLock?.clearSizeLock?.(reason)}catch(_){ }
@@ -17,7 +17,7 @@ function releaseViewport(reason='zoom'){
   if(window.RWARenkoTV?.state)window.RWARenkoTV.state.following=false;
 }
 let desiredHistoryWidth=0,historyPump=false;
-function historyNeeded(targetWidth){const r=logical(ts()),total=totalBricks(),wanted=Math.max(0,Number(targetWidth)||0);if(!r||!wanted)return false;const coverageDeficit=wanted>total+8,blankLeft=Number(r.from)<-2&&wanted>Math.max(24,total*.9);return coverageDeficit||blankLeft}
+function historyNeeded(targetWidth){const r=logical(ts()),total=totalBricks(),wanted=Math.max(0,Number(targetWidth)||0);if(!r||wanted<DEEP_HISTORY_WIDTH)return false;const coverageDeficit=wanted>total+8,blankLeft=Number(r.from)<-2;return coverageDeficit||blankLeft}
 async function pumpHistory(){
   if(historyPump)return;historyPump=true;stats.historyPumpRuns++;publish();
   try{
@@ -68,5 +68,5 @@ document.addEventListener('click',e=>{
   zoomBy(id==='tvZoomOut'?1.6:.72,id);publish();
 },true);
 publish();
-window.RWARenkoGoldExplicitZoom={version:'1.0.0-explicit-zoom',implementation:'1.2.0-deep-zoom-history-demand',revision:'1.2.1-deficit-history-demand',rule:'Zoom is the sole logical-width owner. Intentional +, -, vertical-wheel, and Ctrl/Meta pinch can zoom from 12 to 2500 logical bricks. Zoom-out relaxes the minimum spacing constraint and demand-loads older canonical history only when the requested viewport has a real brick coverage deficit or enters meaningful blank-left space. Horizontal or mixed wheel remains pan-only in the downstream fixed-width controller.',stats,zoomBy,isZoomWheel,releaseViewport,requestOlderHistory,historyNeeded,get maxWidth(){return MAX_WIDTH},get historyPumpActive(){return historyPump}};
+window.RWARenkoGoldExplicitZoom={version:'1.0.0-explicit-zoom',implementation:'1.2.0-deep-zoom-history-demand',revision:'1.2.2-deep-threshold-demand',rule:'Zoom is the sole logical-width owner. Intentional +, -, vertical-wheel, and Ctrl/Meta pinch can zoom from 12 to 2500 logical bricks. Zoom-out remains instant at ordinary widths; only deep zoom at 120+ bricks can demand-load older canonical history when the requested viewport exceeds current coverage or enters blank-left space. Horizontal or mixed wheel remains pan-only in the downstream fixed-width controller.',stats,zoomBy,isZoomWheel,releaseViewport,requestOlderHistory,historyNeeded,get maxWidth(){return MAX_WIDTH},get deepHistoryWidth(){return DEEP_HISTORY_WIDTH},get historyPumpActive(){return historyPump}};
 })();
