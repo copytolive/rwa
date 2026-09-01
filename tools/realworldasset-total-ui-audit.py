@@ -63,6 +63,44 @@ def uniq(items,key_fn):
   seen.add(k); out.append(x)
  return out
 
+def button_label(b):
+ try:
+  label=(b.get_attribute('aria-label') or b.inner_text()).strip()
+  return re.sub(r'\s+',' ',label)[:120]
+ except Exception:
+  return ''
+
+def relocate_button(page,item):
+ buttons=page.locator('button:visible')
+ count=buttons.count()
+ if item['index'] < count:
+  candidate=buttons.nth(item['index'])
+  try:
+   if button_label(candidate)==item['label'] and (candidate.get_attribute('class') or '')==item['class']:
+    return candidate
+  except Exception:
+   pass
+ try:
+  match_index=buttons.evaluate_all("""(els,t)=>els.findIndex(e=>{const aria=e.getAttribute('aria-label');const raw=(aria||e.innerText||'').trim().replace(/\s+/g,' ').slice(0,120);return raw===t.label&&(e.getAttribute('class')||'')===t.cls})""",{'label':item['label'],'cls':item['class']})
+  if isinstance(match_index,int) and match_index>=0: return buttons.nth(match_index)
+ except Exception:
+  pass
+ return None
+
+def click_stable(page,item):
+ b=relocate_button(page,item)
+ if b is None: raise PlaywrightTimeoutError('control not found after hydration')
+ last=None
+ for settle,timeout in ((0,2600),(260,5000)):
+  try:
+   if settle: page.wait_for_timeout(settle); b=relocate_button(page,item) or b
+   b.scroll_into_view_if_needed(timeout=1800)
+   b.click(timeout=timeout)
+   return b
+  except PlaywrightTimeoutError as e:
+   last=e
+ raise last or PlaywrightTimeoutError('click timeout')
+
 with sync_playwright() as pw:
  browser=pw.chromium.launch(headless=True,args=['--no-sandbox'])
  context=browser.new_context(viewport={'width':1672,'height':941},device_scale_factor=1)
@@ -80,7 +118,7 @@ with sync_playwright() as pw:
   for route in routes:
    current.update(vp=vpname,route=route)
    try:
-    resp=page.goto(url_for(route),wait_until='domcontentloaded',timeout=12000); page.wait_for_timeout(35)
+    resp=page.goto(url_for(route),wait_until='domcontentloaded',timeout=12000); page.wait_for_timeout(120)
    except Exception as e:
     runtime_errors.append({'vp':vpname,'route':route,'error':'navigation: '+str(e)}); continue
    if resp and resp.status>=400 and route!='/404/': runtime_errors.append({'vp':vpname,'route':route,'error':f'HTTP {resp.status}'})
@@ -111,7 +149,7 @@ with sync_playwright() as pw:
    buttons=page.locator('button:visible'); control_occurrences+=buttons.count()
    for i in range(buttons.count()):
     try:
-     b=buttons.nth(i); label=(b.get_attribute('aria-label') or b.inner_text()).strip(); label=re.sub(r'\s+',' ',label)[:120]; cls=b.get_attribute('class') or ''
+     b=buttons.nth(i); label=button_label(b); cls=b.get_attribute('class') or ''
      key=(vpname,label,cls)
      if key not in distinct:
       distinct[key]={'vp':vpname,'route':route,'index':i,'label':label,'class':cls,'disabled':b.is_disabled(),'selected':b.get_attribute('data-active')=='true' or b.get_attribute('aria-pressed')=='true' or ' active' in f' {cls} ' or ' selected' in f' {cls} '}
@@ -122,7 +160,7 @@ with sync_playwright() as pw:
   for route in core:
    current.update(vp=vpname,route=route)
    try:
-    page.goto(url_for(route),wait_until='domcontentloaded',timeout=12000); page.wait_for_timeout(70)
+    page.goto(url_for(route),wait_until='domcontentloaded',timeout=12000); page.wait_for_timeout(160)
     name=route.strip('/').replace('/','-') or 'landing'; out=ART/f'{vpname}-{name}.png'; page.screenshot(path=str(out),full_page=False); screens.append(out.name)
    except Exception as e: runtime_errors.append({'vp':vpname,'route':route,'error':'screenshot: '+str(e)})
 
@@ -131,16 +169,18 @@ with sync_playwright() as pw:
  for item in distinct.values():
   vpname=item['vp']; w,h=next((w,h) for n,w,h in viewports if n==vpname); page.set_viewport_size({'width':w,'height':h}); route=item['route']; current.update(vp=vpname,route=route)
   try:
-   page.goto(url_for(route),wait_until='domcontentloaded',timeout=12000); page.wait_for_timeout(25); buttons=page.locator('button:visible')
-   if item['index']>=buttons.count(): continue
-   b=buttons.nth(item['index']); label=item['label']; is_locked=b.is_disabled() or bool(unsafe_rx.search(label)); before_url=page.url; before=clean_html(page); err_before=len(runtime_errors)
+   page.goto(url_for(route),wait_until='domcontentloaded',timeout=12000); page.wait_for_timeout(180)
+   b=relocate_button(page,item)
+   if b is None: continue
+   label=item['label']; is_locked=b.is_disabled() or bool(unsafe_rx.search(label)); before_url=page.url; before=clean_html(page); err_before=len(runtime_errors)
    if b.is_disabled(): locked_total+=1; locked_passed+=1; continue
    if item.get('selected'): active_total+=1; active_passed+=1; continue
    try:
-    b.scroll_into_view_if_needed(timeout=1400); b.click(timeout=2200); page.wait_for_timeout(35)
-   except PlaywrightTimeoutError:
-    if is_locked: locked_total+=1; locked_fail.append({**item,'reason':'unclickable locked control'}); continue
-    active_total+=1; unexpected.append({**item,'reason':'click timeout'}); continue
+    b=click_stable(page,item); page.wait_for_timeout(55)
+   except PlaywrightTimeoutError as e:
+    detail=str(e).split('\n')[0][:300]
+    if is_locked: locked_total+=1; locked_fail.append({**item,'reason':'unclickable locked control','detail':detail}); continue
+    active_total+=1; unexpected.append({**item,'reason':'click timeout','detail':detail}); continue
    after_url=page.url; after=clean_html(page); changed=after_url!=before_url or hashlib.sha256(after.encode()).hexdigest()!=hashlib.sha256(before.encode()).hexdigest()
    if is_locked:
     locked_total+=1; body=page.locator('body').inner_text(); unsafe_success=bool(re.search(r'order filled|purchase confirmed|transaction successful|settlement complete',body,re.I)) and not re.search(r'backend.*not connected|UI DEMO',body,re.I); safe_notice='backend/wallet execution is not connected' in body or 'UI DEMO' in body or b.is_disabled()
