@@ -83,6 +83,7 @@ jobs:
           rm -rf .every-page-preview every-page-live-proof
           mkdir -p .every-page-preview/rwa
           cp -a apps/realworldasset/out/. .every-page-preview/rwa/
+          printf '%s\n' "$GITHUB_SHA" > .every-page-preview/rwa/deployment-sha.txt
           python3 -m http.server 4199 --bind 127.0.0.1 --directory .every-page-preview >/tmp/rwa-every-page-http.log 2>&1 &
           echo $! > /tmp/rwa-every-page-http.pid
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4199/rwa/ >/dev/null && exit 0; sleep 1; done
