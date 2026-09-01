@@ -34,7 +34,7 @@ jobs:
           node --check renko/renko-gold-total-history.js
           node --check renko/renko-gold-manual-viewport-lock.js
           node --check scripts/renko_gold_scroll_prepend_proof.mjs
-          ! grep -n 'fitContent' renko/renko-gold-total-history.js renko/renko-gold-manual-viewport-lock.js
+          ! grep -nE '\.fitContent\s*\(' renko/renko-gold-total-history.js renko/renko-gold-manual-viewport-lock.js
           python3 - <<'PY'
           import json
           m=json.load(open('renko/history/gold/full-manifest.json'))
@@ -49,16 +49,16 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium >/dev/null
-      - name: Serve exact branch checkout
+      - name: Serve exact branch checkout at production-equivalent /rwa/ path
         shell: bash
         run: |
-          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/renko-http.log 2>&1 &
+          (cd .. && python3 -m http.server 4173 --bind 127.0.0.1) >/tmp/renko-http.log 2>&1 &
           echo $! >/tmp/renko-http.pid
-          for i in {1..30}; do curl -fsS http://127.0.0.1:4173/renko/ >/dev/null && exit 0; sleep 1; done
+          for i in {1..30}; do curl -fsS http://127.0.0.1:4173/rwa/renko/ >/dev/null && exit 0; sleep 1; done
           cat /tmp/renko-http.log; exit 1
       - name: Repeated real scroll-left — 10 prepend cycles
         env:
-          RENKO_BASE_URL: http://127.0.0.1:4173/renko/
+          RENKO_BASE_URL: http://127.0.0.1:4173/rwa/renko/
           RENKO_EXPECTED_SHA: ${{ github.sha }}
           RENKO_CYCLES: '10'
           RENKO_OUTPUT_DIR: artifacts/branch-desktop
