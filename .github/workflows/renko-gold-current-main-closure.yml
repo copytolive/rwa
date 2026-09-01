@@ -4,11 +4,12 @@ on:
   push:
     branches:
       - main
-      - fix/renko-gold-current-main-closure-20260901
     paths:
       - 'renko/**'
       - 'scripts/renko_gold_canonical_reader.py'
       - '.github/workflows/renko-gold-current-main-closure.yml'
+      - '.github/workflows/renko-traditional-control-all-pairs.yml'
+      - '.github/workflows/renko-atr-control-all-pairs.yml'
   workflow_dispatch:
 
 permissions:
@@ -33,6 +34,8 @@ jobs:
           node --check renko/renko-chart-bridge.js
           node --check renko/renko-gold-total-history.js
           node --check renko/renko-gold-total-history-worker.js
+          node --check renko/renko-tv-atr-control.js
+          node --check renko/renko-tv-traditional-control.js
           python3 -m py_compile scripts/renko_gold_canonical_reader.py
           test -s renko/history/gold/full-manifest.json
           test -s renko/history/gold/coverage.json
@@ -65,7 +68,9 @@ jobs:
           assert all(x['assetUrl'].startswith('https://media.githubusercontent.com/media/copytolive/rwa/') for x in months)
           assert m['dataVersion']==c['dataVersion']==s['dataVersion']
           assert isinstance(m['versionSha256'],str) and len(m['versionSha256'])==64
-          assert '<script src="renko-gold-total-history.js' in open('renko/index.html').read()
+          html=open('renko/index.html').read()
+          assert '<script src="renko-gold-total-history.js' in html
+          assert 'data-apply-method="atr"' in html and 'data-apply-method="traditional"' in html
           r=open('renko/renko-gold-total-history.js').read()
           assert 'history/gold/full-manifest.json' in r
           print('GOLD_CURRENT_MAIN_DATA_GATE_PASS',json.dumps({'months':len(months),'bars':c['barCount'],'bytes':c['compressedBytes'],'earliestSecond':c['earliestSecond'],'latestSecond':c['latestSecond'],'cutoff':c['cutoff'],'version':m['dataVersion'],'versionSha256':m['versionSha256']},separators=(',',':')))
@@ -143,6 +148,27 @@ jobs:
           if(x.symbol!=='XAUUSD'||x.provider!=='Dukascopy'||x.instrument!=='XAU-USD'||x.interval!=='1s'||x.side!=='bid'||!x.complete||x.bars>100000||!x.canvas||errors.length)throw new Error(JSON.stringify({x,errors}));
           console.log('GOLD_PUBLIC_MOBILE_CURRENT_MAIN_PASS',JSON.stringify({firstPaintMs:Date.now()-t,...x}));await browser.close();
           NODE
+      - name: GOLD Traditional + ATR Chromium method proof
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { chromium,devices } from 'playwright';
+          const browser=await chromium.launch({headless:true});
+          async function prove(opts,label){
+            const page=await browser.newPage(opts),errors=[];page.on('pageerror',e=>errors.push(String(e)));
+            await page.goto(`https://copytolive.github.io/rwa/renko/?gold=1&methodProof=1&v=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:60000});
+            await page.waitForFunction(()=>window.RENKO_GOLD_ONLY===true&&document.documentElement.dataset.renkoGoldRecent==='true'&&window.RWARenkoTV?.state?.symbol==='XAUUSD'&&document.querySelector('#chartHost canvas'),{timeout:60000});
+            await page.fill('#traditionalBox','1');await page.click('[data-apply-method="traditional"]');
+            await page.waitForFunction(()=>window.RWARenkoTV?.settings?.method==='traditional'&&Number(window.RWARenkoTV?.state?.box)>0,{timeout:15000});
+            const traditional=await page.evaluate(()=>({method:RWARenkoTV.settings.method,box:Number(RWARenkoTV.state.box),bars:RWARenkoTV.state.closedBars.length,interval:RWARenkoTV.settings.interval}));
+            await page.fill('#atrLength','14');await page.click('[data-apply-method="atr"]');
+            await page.waitForFunction(()=>window.RWARenkoTV?.settings?.method==='atr'&&Number(window.RWARenkoTV?.state?.box)>0,{timeout:15000});
+            const atr=await page.evaluate(async()=>{const T=RWARenkoTV,H=RWARenkoGoldTotalHistory,m=await H.loadManifest();return{method:T.settings.method,box:Number(T.state.box),atrLength:Number(T.settings.atrLength),bars:T.state.closedBars.length,interval:T.settings.interval,symbol:T.state.symbol,provider:m.provider,instrument:m.instrumentCode,complete:m.backfillComplete,canvas:!!document.querySelector('#chartHost canvas')}});
+            if(traditional.method!=='traditional'||!(traditional.box>0)||traditional.bars<100||traditional.interval!=='1s'||atr.method!=='atr'||!(atr.box>0)||atr.atrLength!==14||atr.bars<100||atr.interval!=='1s'||atr.symbol!=='XAUUSD'||atr.provider!=='Dukascopy'||atr.instrument!=='XAU-USD'||!atr.complete||!atr.canvas||errors.length)throw new Error(JSON.stringify({label,traditional,atr,errors}));
+            console.log('GOLD_TRADITIONAL_ATR_PUBLIC_CHROMIUM_PASS',JSON.stringify({label,traditional,atr}));await page.close();
+          }
+          await prove({viewport:{width:1672,height:941}},'desktop');await prove({...devices['iPhone 13']},'mobile');await browser.close();
+          NODE
 
   public-backtest-reader:
     needs: public-browser
@@ -185,3 +211,38 @@ jobs:
           assert count>10000 and cross and cross['atrTicks'] is not None and cross['stateCount']>14
           print('GOLD_PUBLIC_BACKTEST_SAME_DATASET_PASS',json.dumps({'bars':count,'first':first,'last':last,'crossYear':cross,'dataVersion':ident['dataVersion'],'versionSha256':ident['versionSha256'],'assets':len(ident['assets'])},separators=(',',':')))
           PY
+
+  final-no-drift:
+    if: github.ref == 'refs/heads/main'
+    needs:
+      - public-browser
+      - public-backtest-reader
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Final same-SHA public no-drift recertification
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote="$(git ls-remote https://github.com/copytolive/rwa.git refs/heads/main | awk '{print $1}')"
+          [ "$remote" = "$GITHUB_SHA" ] || { echo "main drift: $remote != $GITHUB_SHA"; exit 1; }
+          renko_sha="$(curl -fsS "https://copytolive.github.io/rwa/renko/deployment-sha.txt?cb=$RANDOM" | tr -d '\r\n')"
+          root_sha="$(curl -fsS "https://copytolive.github.io/rwa/deployment-sha.txt?cb=$RANDOM" | tr -d '\r\n')"
+          [ "$renko_sha" = "$GITHUB_SHA" ] || { echo "renko public drift: $renko_sha"; exit 1; }
+          [ "$root_sha" = "$GITHUB_SHA" ] || { echo "root public drift: $root_sha"; exit 1; }
+          curl -fsS "https://copytolive.github.io/rwa/renko/history/gold/full-manifest.json?cb=$RANDOM" -o /tmp/public-full-manifest.json
+          cmp -s renko/history/gold/full-manifest.json /tmp/public-full-manifest.json || { echo 'public manifest bytes drift'; exit 1; }
+          python3 - <<'PY'
+          import json
+          local=json.load(open('renko/history/gold/full-manifest.json'))
+          public=json.load(open('/tmp/public-full-manifest.json'))
+          assert local==public
+          assert public['provider']=='Dukascopy' and public['instrumentCode']=='XAU-USD' and public['symbol']=='XAUUSD'
+          assert public['interval']=='1s' and public['backfillComplete'] is True
+          assert public['months'][0]['earliestSecond']==1052092863
+          assert len(public['months'])==281
+          print('GOLD_FINAL_MANIFEST_IDENTITY_PASS',public['dataVersion'],public['versionSha256'],len(public['months']))
+          PY
+          echo "NO_EVIDENCE_MIXED_BETWEEN_SHAS $GITHUB_SHA"
+          echo "PUBLIC_PRODUCTION_PASS $GITHUB_SHA"
