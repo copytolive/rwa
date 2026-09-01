@@ -10,6 +10,6 @@
 #define MM_OFFSET_USD 0.75
 #define MM_EXPIRY_BARS 7
 #define MM_DIRECTION_MODE "LONG_ONLY"
-#define MM_MAGIC 24090204
-#define MM_TAG "GOLD24_MULTI_04"
+#define MM_MAGIC 24090205
+#define MM_TAG "GOLD24_MULTI_05"
 #include "multimethod_engine.mqh"
