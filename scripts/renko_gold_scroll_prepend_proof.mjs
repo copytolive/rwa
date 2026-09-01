@@ -44,7 +44,7 @@ await page.evaluate(()=>{
   }
 });
 
-async function state(){return page.evaluate(()=>{const H=RWARenkoGoldTotalHistory,M=RWARenkoGoldManualViewport,T=RWARenkoTV,ts=__RWARenkoChart.timeScale(),o=ts.options?.()||{};return{prepends:H.stats.prepends,busy:H.busy,oldest:Math.floor(T.state.closedBars[0].openTime/1000),newest:Math.floor(T.state.closedBars.at(-1).closeTime/1000),bars:T.state.closedBars.length,decoded:H.stats.decodedMonths,logical:ts.getVisibleLogicalRange?.()||null,time:ts.getVisibleRange?.()||null,barSpacing:Number(o.barSpacing),rightOffset:Number(o.rightOffset),wheelEvents:M.stats.wheelEvents,locked:M.locked,following:T.state.following,last:H.stats.lastPrepend,transactions:H.stats.prependTransactions.slice(),manual:M.stats,fitCalls:Number(window.__RENKO_SCROLL_FIT_CALLS||0),fitPatched:!!window.__RENKO_SCROLL_FIT_PATCHED};});}
+async function state(){return page.evaluate(()=>{const H=RWARenkoGoldTotalHistory,M=RWARenkoGoldManualViewport,T=RWARenkoTV,ts=__RWARenkoChart.timeScale(),o=ts.options?.()||{};return{prepends:H.stats.prepends,busy:H.busy,oldest:Math.floor(T.state.closedBars[0].openTime/1000),newest:Math.floor(T.state.closedBars.at(-1).closeTime/1000),bars:T.state.closedBars.length,decoded:H.stats.decodedMonths,workerBuilds:H.stats.workerBuilds,workerBuildFailures:H.stats.workerBuildFailures,logical:ts.getVisibleLogicalRange?.()||null,time:ts.getVisibleRange?.()||null,barSpacing:Number(o.barSpacing),rightOffset:Number(o.rightOffset),scrollPosition:Number(ts.scrollPosition?.()),wheelEvents:M.stats.wheelEvents,locked:M.locked,following:T.state.following,last:H.stats.lastPrepend,transactions:H.stats.prependTransactions.slice(),manual:M.stats,fitCalls:Number(window.__RENKO_SCROLL_FIT_CALLS||0),fitPatched:!!window.__RENKO_SCROLL_FIT_PATCHED};});}
 async function overlay(stage){
   const s=await state();const tx=s.last;const lines=[
     `RENKO GOLD SCROLL PREPEND ${stage}`,
@@ -86,12 +86,14 @@ for(let cycle=1;cycle<=cycles;cycle++){
   await wait(n=>!RWARenkoGoldTotalHistory.busy&&RWARenkoGoldTotalHistory.stats.prepends>=n,target,180000);
   await page.waitForTimeout(180);
   const s=await state(),tx=s.last;
+  console.log('RENKO_GOLD_SCROLL_CYCLE_METRICS',JSON.stringify({cycle,tx,current:{time:s.time,logical:s.logical,barSpacing:s.barSpacing,rightOffset:s.rightOffset,scrollPosition:s.scrollPosition,following:s.following,workerBuilds:s.workerBuilds,workerBuildFailures:s.workerBuildFailures}}));
   if(!tx||tx.index!==target)throw new Error(`missing transaction ${cycle}`);
   if(tx.panOlder!==false)throw new Error(`auto prepend unexpectedly panned viewport cycle ${cycle}`);
   if(!(tx.oldestAfter<tx.oldestBefore))throw new Error(`oldest did not decrease cycle ${cycle}: ${tx.oldestBefore} -> ${tx.oldestAfter}`);
   if(tx.sourceBars>140000||s.bars>140000)throw new Error(`source memory cap exceeded cycle ${cycle}`);
   if(tx.decodedMonths>2||s.decoded>2)throw new Error(`decoded LRU cap exceeded cycle ${cycle}`);
   if(Number(tx.tbtMs)!==0)throw new Error(`TBT drift cycle ${cycle}: ${tx.tbtMs}`);
+  if(Number(tx.preparedBuildCalls)!==1||s.workerBuilds<cycle||s.workerBuildFailures!==0)throw new Error(`worker/prepared rebuild contract failed cycle ${cycle}: ${JSON.stringify({preparedBuildCalls:tx.preparedBuildCalls,workerBuilds:s.workerBuilds,workerBuildFailures:s.workerBuildFailures})}`);
   if(s.fitCalls!==0)throw new Error(`fitContent called during prepend cycle ${cycle}: ${s.fitCalls}`);
   const v=tx.viewport||{};
   if(v.barSpacingDelta!=null&&Number(v.barSpacingDelta)>1e-9)throw new Error(`barSpacing drift cycle ${cycle}: ${v.barSpacingDelta}`);
@@ -101,7 +103,7 @@ for(let cycle=1;cycle<=cycles;cycle++){
   if(v.toDelta!=null&&Number(v.toDelta)>1)throw new Error(`visible to drift cycle ${cycle}: ${v.toDelta}s`);
   if(v.anchorDelta!=null&&Number(v.anchorDelta)>1)throw new Error(`time anchor drift cycle ${cycle}: ${v.anchorDelta}s`);
   if(s.following!==false)throw new Error(`following re-enabled during manual history cycle ${cycle}`);
-  rows.push({cycle,oldestBefore:tx.oldestBefore,oldestAfter:tx.oldestAfter,tbtMs:tx.tbtMs,maxLongTaskMs:tx.maxLongTaskMs,sourceBars:tx.sourceBars,decodedMonths:tx.decodedMonths,fitCalls:s.fitCalls,barSpacingDelta:v.barSpacingDelta,rightOffsetDelta:v.rightOffsetDelta,timeSpanDeltaPct:v.timeSpanDeltaPct,fromDelta:v.fromDelta,toDelta:v.toDelta,anchorDelta:v.anchorDelta});
+  rows.push({cycle,oldestBefore:tx.oldestBefore,oldestAfter:tx.oldestAfter,tbtMs:tx.tbtMs,maxLongTaskMs:tx.maxLongTaskMs,workerBuildMs:tx.workerBuildMs,renderMs:tx.renderMs,preparedBuildCalls:tx.preparedBuildCalls,sourceBars:tx.sourceBars,decodedMonths:tx.decodedMonths,fitCalls:s.fitCalls,barSpacingDelta:v.barSpacingDelta,rightOffsetDelta:v.rightOffsetDelta,timeSpanDeltaPct:v.timeSpanDeltaPct,fromDelta:v.fromDelta,toDelta:v.toDelta,anchorDelta:v.anchorDelta});
   if(cycle===Math.ceil(cycles/2))await shot('MID');
 }
 await shot('AFTER');
@@ -121,7 +123,7 @@ const methods=await page.evaluate(()=>({method:RWARenkoTV.settings.method,box:Nu
 if(methods.method!=='atr'||!(methods.box>0)||methods.atrLength!==14||methods.symbol!=='XAUUSD'||methods.interval!=='1s')throw new Error('ATR/Traditional regression '+JSON.stringify(methods));
 if(pageErrors.length)throw new Error('page errors '+JSON.stringify(pageErrors));
 
-const report={token:'RENKO_GOLD_SCROLL_PREPEND_ZERO_TBT_NO_DRIFT_PASS',label,sha:expectedSha||null,baseUrl,cycles,manifest,vector,rows,final:{oldest:final.oldest,newest:final.newest,bars:final.bars,decoded:final.decoded,wheelEvents:final.wheelEvents,fitCalls:final.fitCalls,fitPatched:final.fitPatched,manualHistoryMutations:final.manual.historyMutations,manualHistoryCorrections:final.manual.historyCorrections,suppressedRangeChanges:final.manual.suppressedRangeChanges},methods,consoleErrors:consoleErrors.slice(-20)};
+const report={token:'RENKO_GOLD_SCROLL_PREPEND_ZERO_TBT_NO_DRIFT_PASS',label,sha:expectedSha||null,baseUrl,cycles,manifest,vector,rows,final:{oldest:final.oldest,newest:final.newest,bars:final.bars,decoded:final.decoded,wheelEvents:final.wheelEvents,fitCalls:final.fitCalls,fitPatched:final.fitPatched,workerBuilds:final.workerBuilds,workerBuildFailures:final.workerBuildFailures,manualHistoryMutations:final.manual.historyMutations,manualHistoryCorrections:final.manual.historyCorrections,suppressedRangeChanges:final.manual.suppressedRangeChanges},methods,consoleErrors:consoleErrors.slice(-20)};
 await fs.writeFile(path.join(outDir,`RENKO_GOLD_SCROLL_${label}_report.json`),JSON.stringify(report,null,2));
 console.log(report.token,JSON.stringify(report));
 await browser.close();
