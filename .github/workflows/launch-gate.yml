@@ -84,11 +84,35 @@ jobs:
       - name: Publish readiness file
         if: github.event_name != 'pull_request'
         run: |
+          python - <<'PY'
+          import copy, json, pathlib, subprocess
+
+          path='launch/readiness.json'
+          try:
+              old=json.loads(subprocess.check_output(['git','show',f'HEAD:{path}'], text=True))
+          except Exception:
+              old={}
+          new=json.load(open(path))
+
+          def normalize(value):
+              x=copy.deepcopy(value)
+              if isinstance(x,dict):
+                  x.pop('generated_at',None)
+                  x.pop('updated_at',None)
+              return x
+
+          material = normalize(old) != normalize(new)
+          pathlib.Path('/tmp/readiness-material-change').write_text('1' if material else '0')
+          print(f'READINESS_MATERIAL_CHANGE={str(material).lower()}')
+          if not material:
+              subprocess.run(['git','checkout','--',path],check=True)
+          PY
+          if [ "$(cat /tmp/readiness-material-change)" != "1" ]; then exit 0; fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add launch/readiness.json
           if ! git diff --cached --quiet; then
-            git commit -m 'launch: refresh full-platform machine readiness'
+            git commit -m 'launch: refresh material full-platform machine readiness'
             git pull --rebase origin main
             git push origin HEAD:main
           fi
