@@ -30,16 +30,17 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: apps/realworldasset/package.json
+          cache-dependency-path: apps/realworldasset/package-lock.json
 
       - name: Install UI dependencies
         working-directory: apps/realworldasset
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Verify existing interaction contracts
         working-directory: apps/realworldasset
         run: |
           set -euo pipefail
+          test -s package-lock.json
           npm run verify:interactions
           npm run verify:chat04
           npm run verify:chat05

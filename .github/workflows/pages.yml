@@ -112,6 +112,7 @@ jobs:
           test -s REALWORLDASSET_MIGRATION_MANIFEST.json
           test -s apps/realworldasset/UPSTREAM_SHA.txt
           test -s apps/realworldasset/package.json
+          test -s apps/realworldasset/package-lock.json
           test -s apps/realworldasset/next.config.js
           test -s 'apps/realworldasset/src/app/[...slug]/page.tsx'
           FILE_COUNT="$(git ls-files apps/realworldasset | wc -l | tr -d ' ')"
@@ -140,11 +141,11 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: apps/realworldasset/package.json
+          cache-dependency-path: apps/realworldasset/package-lock.json
 
       - name: Install UI dependencies
         working-directory: apps/realworldasset
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Verify total UI interactions
         working-directory: apps/realworldasset
