@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - fix/renko-gold-restore-zoom-20260902
     paths:
       - 'renko/**'
       - 'scripts/renko_gold_wheel_pan_no_zoom_proof.mjs'
