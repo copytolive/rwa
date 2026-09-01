@@ -1,0 +1,181 @@
+name: RWA Final Public Drive Export
+
+on:
+  push:
+    branches:
+      - backup/rwa-public-final-73eb874
+    paths:
+      - .github/workflows/rwa-final-backup-export.yml
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact public RWA release
+        uses: actions/checkout@v4
+        with:
+          repository: copytolive/rwa
+          ref: 73eb87477ade96323a435d51989a28033ea002cd
+          fetch-depth: 0
+          path: src/rwa
+
+      - name: Checkout exact source repository
+        uses: actions/checkout@v4
+        with:
+          repository: copytolive/realworldasset
+          ref: dca45dfc1380444f0161e19a3ff1f4580e76735c
+          fetch-depth: 0
+          path: src/realworldasset
+
+      - name: Build complete classified backup
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out/{00_MANIFEST,01_IMPORTANT,02_OTHER,03_FULL_REPO_SNAPSHOTS,04_GIT_HISTORY,99_ALL_IN_ONE}
+
+          RWA_RELEASE='73eb87477ade96323a435d51989a28033ea002cd'
+          RWA_MAIN="$(git -C src/rwa ls-remote origin refs/heads/main | awk '{print $1}')"
+          REAL_MAIN="$(git -C src/realworldasset ls-remote origin refs/heads/main | awk '{print $1}')"
+          test -n "$RWA_MAIN"
+          test -n "$REAL_MAIN"
+          test "$(git -C src/rwa rev-parse HEAD)" = "$RWA_RELEASE"
+          test "$(git -C src/realworldasset rev-parse HEAD)" = 'dca45dfc1380444f0161e19a3ff1f4580e76735c'
+
+          git -C src/rwa archive --format=zip -o "$GITHUB_WORKSPACE/out/03_FULL_REPO_SNAPSHOTS/copytolive-rwa-public-release-73eb874.zip" "$RWA_RELEASE"
+          git -C src/realworldasset archive --format=zip -o "$GITHUB_WORKSPACE/out/03_FULL_REPO_SNAPSHOTS/copytolive-realworldasset-dca45df.zip" HEAD
+
+          git clone --mirror https://github.com/copytolive/rwa.git mirror-rwa.git
+          git clone --mirror https://github.com/copytolive/realworldasset.git mirror-realworldasset.git
+          git -C mirror-rwa.git bundle create "$GITHUB_WORKSPACE/out/04_GIT_HISTORY/copytolive-rwa-all-refs.bundle" --all
+          git -C mirror-realworldasset.git bundle create "$GITHUB_WORKSPACE/out/04_GIT_HISTORY/copytolive-realworldasset-all-refs.bundle" --all
+          git bundle verify "$GITHUB_WORKSPACE/out/04_GIT_HISTORY/copytolive-rwa-all-refs.bundle"
+          git bundle verify "$GITHUB_WORKSPACE/out/04_GIT_HISTORY/copytolive-realworldasset-all-refs.bundle"
+
+          python3 - <<'PY'
+          import hashlib, json, subprocess, zipfile
+          from pathlib import Path
+
+          root=Path.cwd()
+          out=root/'out'
+          rwa=root/'src/rwa'
+          real=root/'src/realworldasset'
+          release='73eb87477ade96323a435d51989a28033ea002cd'
+          real_sha='dca45dfc1380444f0161e19a3ff1f4580e76735c'
+
+          def tracked(repo):
+              return subprocess.check_output(['git','-C',str(repo),'ls-files','-z']).decode().split('\0')[:-1]
+          rwa_files=tracked(rwa)
+          real_files=tracked(real)
+
+          important_prefixes=(
+              '.github/','apps/realworldasset/','tools/','launch/','contracts/','packages/','services/',
+              'scripts/','renko/','evidence/','security/','monitor/','docs/'
+          )
+          important_exact={
+              'UI_SYNC_MANIFEST.json','REALWORLDASSET_MIGRATION_MANIFEST.json','package.json','package-lock.json',
+              'README.md','CNAME'
+          }
+          def is_important(p):
+              return p in important_exact or p.startswith(important_prefixes)
+
+          imp_rwa=[p for p in rwa_files if is_important(p)]
+          oth_rwa=[p for p in rwa_files if not is_important(p)]
+          imp_real=list(real_files)
+          assert len(imp_rwa)+len(oth_rwa)==len(rwa_files)
+          assert set(imp_rwa).isdisjoint(oth_rwa)
+
+          def make_zip(path, groups):
+              with zipfile.ZipFile(path,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as z:
+                  for prefix,repo,files in groups:
+                      for p in files:
+                          z.write(repo/p, f'{prefix}/{p}')
+          make_zip(out/'01_IMPORTANT'/'important-files.zip', [('rwa',rwa,imp_rwa),('realworldasset',real,imp_real)])
+          make_zip(out/'02_OTHER'/'other-files.zip', [('rwa',rwa,oth_rwa)])
+
+          checksum_rows=[]
+          for prefix,repo,files in [('rwa',rwa,rwa_files),('realworldasset',real,real_files)]:
+              for p in files:
+                  h=hashlib.sha256((repo/p).read_bytes()).hexdigest()
+                  checksum_rows.append(f'{h}\t{prefix}/{p}')
+          (out/'00_MANIFEST'/'TRACKED_FILES_SHA256.tsv').write_text('\n'.join(checksum_rows)+'\n')
+
+          manifest={
+              'backup_name':'1.1.1.1. RWA FINAL System',
+              'public_url':'https://copytolive.github.io/rwa/',
+              'public_release_sha':release,
+              'rwa_main_observed_during_export':subprocess.check_output(['git','-C',str(rwa),'ls-remote','origin','refs/heads/main']).decode().split()[0],
+              'realworldasset_main_sha':real_sha,
+              'pages_run_id':33506676753,
+              'production_proof_artifact_id':9799928831,
+              'production_proof_digest':'sha256:2dd544d366a4cb12222125161c0de15f41f2b14681ebcba57609abc370d0a91b',
+              'public_validation':{'routes':11,'viewports':2,'runtimeErrors':0,'failedResponses':0,'horizontalOverflow':0},
+              'tracked_counts':{
+                  'rwa':len(rwa_files),'realworldasset':len(real_files),'total':len(rwa_files)+len(real_files),
+                  'important_rwa':len(imp_rwa),'important_realworldasset':len(imp_real),'other_rwa':len(oth_rwa)
+              },
+              'classification_complete': len(imp_rwa)+len(oth_rwa)+len(imp_real)==len(rwa_files)+len(real_files),
+              'notes':'Public UI/demo/read-only release. Real backend, wallet execution and mainnet remain fail-closed until external evidence exists.'
+          }
+          (out/'00_MANIFEST'/'FINAL_BACKUP_MANIFEST.json').write_text(json.dumps(manifest,indent=2)+'\n')
+          (out/'00_MANIFEST'/'README_BACKUP.txt').write_text(
+              'RWA FINAL PUBLIC BACKUP\n'
+              f'Public release SHA: {release}\n'
+              f'Realworldasset source SHA: {real_sha}\n'
+              'Pages run: 33506676753\n'
+              'Production proof artifact: 9799928831\n'
+              'Restore Git history with: git clone <bundle-file> <directory>\n'
+              'IMPORTANT + OTHER is an exact disjoint partition of every tracked file in both release snapshots.\n'
+          )
+          print('BACKUP_CLASSIFICATION_PASS',json.dumps(manifest['tracked_counts'],sort_keys=True))
+          PY
+
+          (cd out && sha256sum 01_IMPORTANT/important-files.zip 02_OTHER/other-files.zip 03_FULL_REPO_SNAPSHOTS/* 04_GIT_HISTORY/* > 00_MANIFEST/PACKAGE_SHA256.txt)
+          (cd out && zip -qr -9 99_ALL_IN_ONE/RWA_FINAL_PUBLIC_SYSTEM_73eb874.zip 00_MANIFEST 01_IMPORTANT 02_OTHER 03_FULL_REPO_SNAPSHOTS 04_GIT_HISTORY)
+          (cd out && sha256sum 99_ALL_IN_ONE/RWA_FINAL_PUBLIC_SYSTEM_73eb874.zip >> 00_MANIFEST/PACKAGE_SHA256.txt)
+          echo "RWA_FINAL_BACKUP_EXPORT_PASS release=$RWA_RELEASE mainObserved=$RWA_MAIN realworldasset=$REAL_MAIN"
+
+      - name: Upload 00 manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: rwa-final-00-manifest-73eb874
+          path: out/00_MANIFEST/
+          retention-days: 14
+
+      - name: Upload 01 important
+        uses: actions/upload-artifact@v4
+        with:
+          name: rwa-final-01-important-73eb874
+          path: out/01_IMPORTANT/
+          retention-days: 14
+
+      - name: Upload 02 other
+        uses: actions/upload-artifact@v4
+        with:
+          name: rwa-final-02-other-73eb874
+          path: out/02_OTHER/
+          retention-days: 14
+
+      - name: Upload 03 snapshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: rwa-final-03-snapshots-73eb874
+          path: out/03_FULL_REPO_SNAPSHOTS/
+          retention-days: 14
+
+      - name: Upload 04 git history
+        uses: actions/upload-artifact@v4
+        with:
+          name: rwa-final-04-git-history-73eb874
+          path: out/04_GIT_HISTORY/
+          retention-days: 14
+
+      - name: Upload 99 all in one
+        uses: actions/upload-artifact@v4
+        with:
+          name: rwa-final-99-all-in-one-73eb874
+          path: out/99_ALL_IN_ONE/
+          retention-days: 14
