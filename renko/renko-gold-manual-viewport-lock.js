@@ -3,24 +3,43 @@
 let gold=false;try{gold=new URLSearchParams(location.search).get('gold')==='1'}catch(_){ }
 if(!gold||window.RWARenkoGoldManualViewport)return;
 
-const stats={locks:0,unlocks:0,rangeChanges:0,rebuilds:0,restores:0,zoomOutCommands:0,zoomInCommands:0,panCommands:0,wheelEvents:0,lastReason:'',lastRange:null};
-let locked=false,range=null,seq=0,rangeBound=false,rebuildWrapped=false,poll=0;
+const stats={locks:0,unlocks:0,rangeChanges:0,rebuilds:0,restores:0,zoomOutCommands:0,zoomInCommands:0,panCommands:0,wheelEvents:0,lastReason:'',lastRange:null,historyMutations:0,historyRestores:0,historyCorrections:0,suppressedRangeChanges:0,lastHistory:null};
+let locked=false,range=null,seq=0,rangeBound=false,rebuildWrapped=false,poll=0,historyDepth=0,suppressRangeChanges=0,historySeq=0;
 const T=()=>window.RWARenkoTV||null;
 const TS=()=>window.__RWARenkoChart?.timeScale?.()||null;
 const finite=r=>!!r&&Number.isFinite(Number(r.from))&&Number.isFinite(Number(r.to));
 const clone=r=>finite(r)?{from:Number(r.from),to:Number(r.to)}:null;
+const finiteNumber=v=>Number.isFinite(Number(v));
+const cloneTime=clone;
+const nextFrame=()=>new Promise(resolve=>requestAnimationFrame(()=>resolve()));
 function followingOff(){const t=T();if(t?.state)t.state.following=false}
+function scaleOptions(ts=TS()){
+  try{
+    const o=ts?.options?.()||{};
+    return {barSpacing:finiteNumber(o.barSpacing)?Number(o.barSpacing):null,rightOffset:finiteNumber(o.rightOffset)?Number(o.rightOffset):null};
+  }catch(_){return {barSpacing:null,rightOffset:null}}
+}
+function scrollPosition(ts=TS()){
+  try{const v=ts?.scrollPosition?.();return finiteNumber(v)?Number(v):null}catch(_){return null}
+}
+function viewportSnapshot(reason='history'){
+  const ts=TS(),time=cloneTime(ts?.getVisibleRange?.()),logical=clone(ts?.getVisibleLogicalRange?.()),opts=scaleOptions(ts),scroll=scrollPosition(ts);
+  const span=time?Number(time.to)-Number(time.from):null,anchor=time?(Number(time.from)+Number(time.to))/2:null;
+  return {reason,time,logical,barSpacing:opts.barSpacing,rightOffset:opts.rightOffset,scrollPosition:scroll,timeSpan:span,anchorTime:anchor,takenAt:performance.now()};
+}
 function dataset(){
   Object.assign(document.documentElement.dataset,{
     renkoGoldManualViewportLock:locked?'true':'false',
     renkoGoldManualViewportReason:String(stats.lastReason||''),
     renkoGoldManualViewportRestores:String(stats.restores),
-    renkoGoldManualViewportSeq:String(seq)
+    renkoGoldManualViewportSeq:String(seq),
+    renkoGoldHistoryMutationDepth:String(historyDepth),
+    renkoGoldHistoryMutationSuppress:String(suppressRangeChanges)
   });
   if(range)document.documentElement.dataset.renkoGoldManualViewportRange=`${range.from.toFixed(4)}:${range.to.toFixed(4)}`;
 }
 function store(r,reason='range'){
-  if(!locked||!finite(r))return false;
+  if(!locked||suppressRangeChanges>0||!finite(r)){if(suppressRangeChanges>0)stats.suppressedRangeChanges++;return false}
   range=clone(r);stats.rangeChanges++;stats.lastReason=reason;stats.lastRange=clone(range);followingOff();dataset();return true;
 }
 function lock(reason='user'){
@@ -35,9 +54,9 @@ function unlock(reason='latest'){
   dataset();return seq;
 }
 function restore(snapshot=range,token=seq){
-  const r=clone(snapshot);if(!locked||token!==seq||!r)return false;
+  const r=clone(snapshot);if(!locked||token!==seq||!r||historyDepth>0)return false;
   const apply=()=>{
-    if(!locked||token!==seq)return;
+    if(!locked||token!==seq||historyDepth>0)return;
     const t=TS();if(!t)return;
     try{t.setVisibleLogicalRange(clone(r));range=clone(r);stats.restores++;stats.lastRange=clone(range);followingOff();dataset()}catch(_){ }
   };
@@ -46,13 +65,77 @@ function restore(snapshot=range,token=seq){
   setTimeout(apply,0);setTimeout(apply,80);setTimeout(apply,220);
   return true;
 }
+function targetTimeRange(snapshot,panOlder=false){
+  const time=cloneTime(snapshot?.time);if(!time)return null;
+  if(!panOlder)return time;
+  const span=Math.max(60,Number(time.to)-Number(time.from));
+  return {from:Number(time.from)-span*.75,to:Number(time.to)-span*.75};
+}
+function viewportMetrics(snapshot,target=null){
+  const ts=TS(),afterTime=cloneTime(ts?.getVisibleRange?.()),afterLogical=clone(ts?.getVisibleLogicalRange?.()),afterOpts=scaleOptions(ts),afterScroll=scrollPosition(ts),wanted=target||cloneTime(snapshot?.time);
+  const beforeSpan=finiteNumber(snapshot?.timeSpan)?Number(snapshot.timeSpan):(snapshot?.time?Number(snapshot.time.to)-Number(snapshot.time.from):null);
+  const afterSpan=afterTime?Number(afterTime.to)-Number(afterTime.from):null;
+  const anchorBefore=wanted?(Number(wanted.from)+Number(wanted.to))/2:null;
+  const anchorAfter=afterTime?(Number(afterTime.from)+Number(afterTime.to))/2:null;
+  return {
+    beforeTime:cloneTime(snapshot?.time),targetTime:cloneTime(wanted),afterTime,
+    beforeLogical:clone(snapshot?.logical),afterLogical,
+    barSpacingBefore:snapshot?.barSpacing??null,barSpacingAfter:afterOpts.barSpacing,
+    rightOffsetBefore:snapshot?.rightOffset??null,rightOffsetAfter:afterOpts.rightOffset,
+    scrollPositionBefore:snapshot?.scrollPosition??null,scrollPositionAfter:afterScroll,
+    timeSpanBefore:beforeSpan,timeSpanAfter:afterSpan,
+    timeSpanDeltaPct:finiteNumber(beforeSpan)&&beforeSpan!==0&&finiteNumber(afterSpan)?Math.abs(afterSpan-beforeSpan)/Math.abs(beforeSpan)*100:null,
+    anchorTimeBefore:anchorBefore,anchorTimeAfter:anchorAfter,
+    anchorDelta:finiteNumber(anchorBefore)&&finiteNumber(anchorAfter)?Math.abs(anchorAfter-anchorBefore):null,
+    barSpacingDelta:finiteNumber(snapshot?.barSpacing)&&finiteNumber(afterOpts.barSpacing)?Math.abs(afterOpts.barSpacing-snapshot.barSpacing):null,
+    rightOffsetDelta:finiteNumber(snapshot?.rightOffset)&&finiteNumber(afterOpts.rightOffset)?Math.abs(afterOpts.rightOffset-snapshot.rightOffset):null
+  };
+}
+function applyHistorySnapshot(snapshot,{panOlder=false}={}){
+  const ts=TS(),target=targetTimeRange(snapshot,panOlder);if(!ts)return false;
+  try{
+    const options={};if(finiteNumber(snapshot?.barSpacing))options.barSpacing=Number(snapshot.barSpacing);if(finiteNumber(snapshot?.rightOffset))options.rightOffset=Number(snapshot.rightOffset);
+    if(Object.keys(options).length)ts.applyOptions?.(options);
+    if(target)ts.setVisibleRange(target);
+    const now=scaleOptions(ts),fix={};
+    if(finiteNumber(snapshot?.barSpacing)&&Math.abs(Number(now.barSpacing)-Number(snapshot.barSpacing))>1e-9)fix.barSpacing=Number(snapshot.barSpacing);
+    if(finiteNumber(snapshot?.rightOffset)&&Math.abs(Number(now.rightOffset)-Number(snapshot.rightOffset))>1e-9)fix.rightOffset=Number(snapshot.rightOffset);
+    if(Object.keys(fix).length)ts.applyOptions?.(fix);
+    if(target){
+      const current=cloneTime(ts.getVisibleRange?.());
+      const wantedSpan=Number(target.to)-Number(target.from),currentSpan=current?Number(current.to)-Number(current.from):NaN;
+      if(!current||!Number.isFinite(currentSpan)||Math.abs(currentSpan-wantedSpan)>Math.max(1e-9,Math.abs(wantedSpan)*1e-7))ts.setVisibleRange(target);
+    }
+    followingOff();stats.historyRestores++;return true;
+  }catch(_){return false}
+}
+function beginHistoryMutation(reason='history-prepend'){
+  if(!locked)lock(reason);else followingOff();
+  seq++;
+  historyDepth++;suppressRangeChanges++;stats.historyMutations++;stats.lastReason=reason;
+  const token={id:++historySeq,manualSeq:seq,reason,snapshot:viewportSnapshot(reason),startedAt:performance.now(),closed:false};
+  dataset();return token;
+}
+async function endHistoryMutation(token,{panOlder=false}={}){
+  if(!token||token.closed)return stats.lastHistory;
+  token.closed=true;const snapshot=token.snapshot||viewportSnapshot(token.reason),target=targetTimeRange(snapshot,panOlder);
+  applyHistorySnapshot(snapshot,{panOlder});
+  await nextFrame();
+  let metrics=viewportMetrics(snapshot,target);
+  const drift=(finiteNumber(metrics.barSpacingDelta)&&metrics.barSpacingDelta>1e-9)||(finiteNumber(metrics.rightOffsetDelta)&&metrics.rightOffsetDelta>1e-9)||(finiteNumber(metrics.timeSpanDeltaPct)&&metrics.timeSpanDeltaPct>0.01)||(finiteNumber(metrics.anchorDelta)&&metrics.anchorDelta>Math.max(0.001,Math.abs(Number(snapshot?.timeSpan)||0)*0.0001));
+  if(drift){stats.historyCorrections++;applyHistorySnapshot(snapshot,{panOlder});await nextFrame();metrics=viewportMetrics(snapshot,target)}
+  historyDepth=Math.max(0,historyDepth-1);suppressRangeChanges=Math.max(0,suppressRangeChanges-1);
+  const current=clone(TS()?.getVisibleLogicalRange?.());if(locked&&current){range=current;stats.lastRange=clone(current)}
+  followingOff();
+  stats.lastHistory={id:token.id,reason:token.reason,panOlder:!!panOlder,durationMs:performance.now()-token.startedAt,...metrics};
+  stats.lastReason=`${token.reason}-restored`;dataset();return stats.lastHistory;
+}
 function bindRange(){
   const t=TS();if(rangeBound||!t?.subscribeVisibleLogicalRangeChange)return false;
   rangeBound=true;
-  // This subscriber is intentionally installed after renko-tv-app.js. The app
-  // computes its own following flag first; manual ownership then wins last.
   t.subscribeVisibleLogicalRangeChange(r=>{
     if(!locked||!finite(r))return;
+    if(suppressRangeChanges>0){stats.suppressedRangeChanges++;followingOff();return}
     followingOff();store(r,'visible-range');
   });
   document.documentElement.dataset.renkoGoldManualViewportRangeObserver='true';return true;
@@ -62,8 +145,9 @@ function patchRebuild(){
   const prior=t.rebuild.bind(t);
   t.rebuild=(opts={})=>{
     if(!locked)return prior(opts);
-    const token=seq,snapshot=clone(TS()?.getVisibleLogicalRange?.())||clone(range);
     followingOff();stats.rebuilds++;
+    if(historyDepth>0)return prior({...opts,fit:false});
+    const token=seq,snapshot=clone(TS()?.getVisibleLogicalRange?.())||clone(range);
     const out=prior({...opts,fit:false});
     followingOff();if(snapshot)restore(snapshot,token);return out;
   };
@@ -72,9 +156,9 @@ function patchRebuild(){
 function ready(){bindRange();patchRebuild();if(locked)followingOff()}
 function commandEnd(reason){
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    if(!locked)return;followingOff();const r=clone(TS()?.getVisibleLogicalRange?.());if(r)store(r,reason);
+    if(!locked||suppressRangeChanges>0)return;followingOff();const r=clone(TS()?.getVisibleLogicalRange?.());if(r)store(r,reason);
   }));
-  setTimeout(()=>{if(locked){followingOff();const r=clone(TS()?.getVisibleLogicalRange?.());if(r)store(r,reason)}},120);
+  setTimeout(()=>{if(locked&&suppressRangeChanges===0){followingOff();const r=clone(TS()?.getVisibleLogicalRange?.());if(r)store(r,reason)}},120);
 }
 const chartTarget=e=>e.target?.closest?.('#chartWrap,#chartHost');
 document.addEventListener('wheel',e=>{if(chartTarget(e)){stats.wheelEvents++;lock('wheel');commandEnd('wheel-end')}},{capture:true,passive:true});
@@ -98,5 +182,5 @@ window.addEventListener('renko:gold-origin',()=>setTimeout(()=>{lock('origin-rea
 for(const ev of ['renko:chart-ready','renko:tv-ready','renko:gold-recent','renko:gold-total','renko:atr-control-applied','renko:traditional-applied'])window.addEventListener(ev,()=>{ready();if(locked)followingOff()});
 poll=setInterval(()=>{ready();if(rangeBound&&rebuildWrapped){clearInterval(poll);poll=0}},100);
 setTimeout(()=>{if(poll)clearInterval(poll)},15000);
-window.RWARenkoGoldManualViewport={version:'3.2.0-bidirectional-following-owner',rule:'real-user-visible-range-change-wins-after-app-following-callback-plus-rebuild-preservation-until-explicit-live-reset',stats,get locked(){return locked},get range(){return clone(range)},get sequence(){return seq},lock,unlock,store,restore,ready};
+window.RWARenkoGoldManualViewport={version:'4.0.0-history-transaction-owner',rule:'single timestamp viewport owner during GOLD history mutation; stale logical restores suppressed until transaction closes',stats,get locked(){return locked},get range(){return clone(range)},get sequence(){return seq},get inHistoryMutation(){return historyDepth>0},get suppressingRangeChanges(){return suppressRangeChanges>0},lock,unlock,store,restore,ready,viewportSnapshot,beginHistoryMutation,endHistoryMutation};
 })();
