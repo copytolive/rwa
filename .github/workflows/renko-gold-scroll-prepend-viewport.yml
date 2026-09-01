@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - fix/renko-gold-restore-zoom-20260902
     paths:
       - 'renko/**'
       - 'scripts/renko_gold_scroll_prepend_proof.mjs'
