@@ -28,7 +28,7 @@ export default async function LiveOnlyRoutePage({params}:{params:Promise<{slug:s
   if(path==="/merchant/tokenization")return <ProgramWorkspace kind="tokenization"/>;
   if(path==="/account/api")return <ProgramWorkspace kind="api"/>;
   if(path==="/account/billing")return <ProgramWorkspace kind="billing"/>;
-  if(path==="/account/activity")return <ProgramWorkspace kind="activity"/>;
+  if(path==="/account/activity")return <LiveRouteWorkspace title="Account Activity" path={path}/>;
   if(path==="/account/orders")return <LiveOrdersWorkspace/>;
   if(path==="/account/orders/refund")return <LiveOrdersWorkspace dispute/>;
   if(path==="/merchant/orders")return <SellerOrdersWorkspace/>;
