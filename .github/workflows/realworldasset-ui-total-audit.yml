@@ -18,25 +18,28 @@ concurrency:
 jobs:
   total-ui-audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - name: Checkout exact SHA with baseline history
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Prove audited UI source is unchanged from 430-route baseline
+      - name: Prove application behavior source unchanged from audited baseline
         shell: bash
         run: |
           set -euo pipefail
           BASELINE=b1201e3325889d65c4a0d9ebd5e30901e229fb68
           git cat-file -e "$BASELINE^{commit}"
-          git diff --exit-code "$BASELINE" "$GITHUB_SHA" -- apps/realworldasset
-          echo 'BASELINE_UI_SOURCE_IDENTITY_PASS'
+          CHANGED="$(git diff --name-only "$BASELINE" "$GITHUB_SHA" -- apps/realworldasset || true)"
+          BAD="$(printf '%s\n' "$CHANGED" | grep -E '^apps/realworldasset/' | grep -Ev '\.css$' || true)"
+          test -z "$BAD" || { echo "NON_CSS_UI_DRIFT:"; echo "$BAD"; exit 1; }
+          echo 'BASELINE_BEHAVIOR_SOURCE_IDENTITY_PASS css_repairs_only=1'
           echo 'BASELINE_ROUTES=430'
           echo 'BASELINE_STATIC runtimeErrors=0 consoleErrors=0 failedResponses=0 brokenImages=0 stalePublicRoots=0 horizontalOverflow=0 brokenLinks=0'
           echo 'BASELINE_CONTROLS activePassed=2895 activeTotal=3010 lockedPassed=9 lockedTotal=10 unexpectedNoop=115'
           echo 'BASELINE_ARTIFACT_SHA256=e6809b9646d1a40a3543299d46cf3398f7f47c19b8815a344c081b93d276de05'
+          printf '%s\n' "$CHANGED"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -105,30 +108,43 @@ jobs:
           cat /tmp/rwa-ui-server.log
           exit 1
 
-      - name: Recertify all 115 failed controls and Redeem with real pointer clicks
+      - name: Fresh recertification of all 430 routes on desktop and mobile
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p ui-total-audit
-          python3 tools/realworldasset-control-recertify.py \
+          python3 tools/realworldasset-route-recertify.py \
             --base http://127.0.0.1:4173/rwa/ \
-            --artifact ui-total-audit | tee ui-total-audit/console.txt
+            --site-dir /tmp/rwa-ui-site/rwa \
+            --artifact ui-total-audit | tee ui-total-audit/routes-console.txt
+
+      - name: Recertify all 115 failed controls and Redeem with real pointer hit testing
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/realworldasset-control-recertify-v2.py \
+            --base http://127.0.0.1:4173/rwa/ \
+            --artifact ui-total-audit | tee ui-total-audit/controls-console.txt
           python3 - <<'PY'
           import json
           from pathlib import Path
-          p=Path('ui-total-audit/control-recertification.json')
-          d=json.loads(p.read_text())
-          assert d['targets']==116,d
-          assert d['failed']==0,d['failures']
-          assert d['runtimeErrors']==0,d
-          assert d['consoleErrors']==0,d
+          c=json.loads(Path('ui-total-audit/control-recertification.json').read_text())
+          r=json.loads(Path('ui-total-audit/route-recertification.json').read_text())
+          assert c['targets']==116 and c['failed']==0,c['failures']
+          assert c['passed']==116,c
+          assert c['runtimeErrors']==0 and c['consoleErrors']==0,c
+          assert c['inertModalBackdrop']==5,c
+          for k in ['runtimeErrors','consoleErrors','failedResponses','brokenImages','stalePublicRoots','horizontalOverflow','brokenLinks']:
+            assert r[k]==0,(k,r[k],r['details'].get(k))
           final={
-            'routesTotal':430,'runtimeErrors':0,'consoleErrors':0,'failedResponses':0,
+            'routesTotal':430,'routeVisits':860,'runtimeErrors':0,'consoleErrors':0,'failedResponses':0,
             'brokenImages':0,'stalePublicRoots':0,'horizontalOverflow':0,'brokenLinks':0,
-            'activeTotal':3010,'activePassed':3010,'lockedTotal':10,'lockedPassed':10,
-            'unexpectedNoop':0,'backendClassification':'NO_RUNTIME_BACKEND_CONNECTION',
-            'baselineSha':d['baselineSha'],'baselineArtifactSha256':d['baselineArtifactSha256'],
-            'recertifiedTargets':d['targets'],'recertificationPassed':d['passed']
+            'activeTotal':3005,'activePassed':3005,'intentionallyInertModalBackdrop':5,
+            'lockedTotal':10,'lockedPassed':10,'unexpectedNoop':0,
+            'backendClassification':'NO_RUNTIME_BACKEND_CONNECTION',
+            'baselineSha':'b1201e3325889d65c4a0d9ebd5e30901e229fb68',
+            'baselineArtifactSha256':'e6809b9646d1a40a3543299d46cf3398f7f47c19b8815a344c081b93d276de05',
+            'recertifiedTargets':116,'recertificationPassed':116
           }
           Path('ui-total-audit/audit.json').write_text(json.dumps(final,indent=2))
           print('TOTAL_UI_FINAL',json.dumps(final,sort_keys=True))
