@@ -1,2 +1,2 @@
-import { AccountDashboardPage } from "@/components/account";
-export default function AccountPage(){return <AccountDashboardPage/>}
+import { LiveRouteWorkspace } from "@/components/live-dashboard";
+export default function AccountPage(){return <LiveRouteWorkspace title="Account" path="/account"/>}
