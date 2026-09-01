@@ -13,6 +13,8 @@ export function Brand({ compact = false }: { compact?: boolean }) {
 
 const publicNav = [["Markets","/markets"],["Businesses","/businesses"],["RWA","/rwa"],["Intelligence","/intelligence"],["About","/about"],["Docs","/docs"]] as const;
 const emptyCapabilities: RuntimeCapabilities = {walletProvider:false,walletConnected:false,authenticated:false,commerceReachable:false,checkoutReady:false,paymentConfigured:false,executionAvailable:false,mainnetReady:false,apiBase:"",blockers:[]};
+// UI DEMO · BACKEND OFFLINE is the default public truth marker when no live backend evidence is reachable.
+// data-backend-connected="false" is retained for legacy release gates; runtime may set the rendered value true only after health/readiness proof.
 
 export function PublicHeader({ authenticated = false, capabilities = emptyCapabilities, wallet = "", busy = false, onConnect, onLogout }: { authenticated?: boolean; capabilities?: RuntimeCapabilities; wallet?: string; busy?: boolean; onConnect?:()=>void; onLogout?:()=>void }) {
   const router=useRouter();
