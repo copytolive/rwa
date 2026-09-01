@@ -1,6 +1,6 @@
 MULTIMETHOD_V1_DISCOVERY_KICK
 candidate_count=5000
-base_seed=202609020154
+base_seed=202609020254
 source_batch=LATEST
-requested_at=2026-09-02T01:54:00+07:00
-reason=refresh adaptive discovery from latest finalized authoritative canonical PASS batch 286 / run 33544388745; preserve cumulative evaluated_config_hash_count; enforce Entry>=100 / NP>=USD20000 before Pearson log-return Corr<=0.50 greedy selection
+requested_at=2026-09-02T02:54:00+07:00
+reason=refresh adaptive discovery from latest finalized authoritative canonical PASS batch 287 / run 33549682787; preserve cumulative evaluated_config_hash_count; enforce Entry>=100 / NP>=USD20000 before Pearson log-return Corr<=0.50 greedy selection
