@@ -46,7 +46,7 @@ jobs:
         run: |
           set -euo pipefail
           for i in $(seq 1 100); do
-            live="$(curl -fsSL --max-time 8 "https://copytolive.github.io/rwa/renko-deployment-sha.txt?ts=$(date +%s%N)" 2>/dev/null | tr -d '\r\n' || true)"
+            live="$(curl -fsSL --max-time 8 "https://copytolive.github.io/rwa/renko/renko-deployment-sha.txt?ts=$(date +%s%N)" 2>/dev/null | tr -d '\r\n' || true)"
             if [ "$live" = "$GITHUB_SHA" ]; then exit 0; fi
             sleep 4
           done
