@@ -1,6 +1,5 @@
-import { KybFlow } from "@/components/compliance";
-import "@/components/compliance/compliance-parity-fixes.css";
+import { LiveCurrentRoutePage } from "@/components/live-dashboard";
 
-export default function KybPage(){
-  return <KybFlow/>;
+export default function LiveOnlyPage(){
+  return <LiveCurrentRoutePage/>;
 }

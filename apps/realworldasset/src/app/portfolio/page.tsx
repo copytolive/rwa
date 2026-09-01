@@ -1,2 +1,5 @@
-import { PortfolioOverviewPage } from "@/components/account";
-export default function PortfolioPage(){return <PortfolioOverviewPage/>}
+import { LiveCurrentRoutePage } from "@/components/live-dashboard";
+
+export default function LiveOnlyPage(){
+  return <LiveCurrentRoutePage/>;
+}

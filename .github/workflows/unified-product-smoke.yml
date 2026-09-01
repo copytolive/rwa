@@ -93,5 +93,7 @@ jobs:
           grep -q "mainnetEnabled" trade/config.js
           grep -q "canMainnet" trade/config.js
           grep -q "defaultTestnet:true" trade/config.js
-          grep -Fq 'BACKEND_CONNECTED = false' apps/realworldasset/src/components/app/AppShell.tsx
+          grep -Fq 'data-live-only="true"' apps/realworldasset/src/components/app/AppShell.tsx
+          grep -Fq 'data-ui-demo="false"' apps/realworldasset/src/components/app/AppShell.tsx
+          grep -Fq 'mainnetReady' apps/realworldasset/src/components/app/AppShell.tsx
           ! grep -R --line-number -E 'private[_ -]?key|seed phrase|withdraw.*automatic' product-os-v3.js trader/index.html asset/index.html unified-design-v3.css

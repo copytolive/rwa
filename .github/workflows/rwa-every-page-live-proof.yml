@@ -1,0 +1,113 @@
+name: RWA Every Page Live Proof
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/realworldasset/**'
+      - '.github/workflows/rwa-every-page-live-proof.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/realworldasset/**'
+      - '.github/workflows/rwa-every-page-live-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  every-page-live-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/realworldasset/package-lock.json
+
+      - name: Install canonical UI
+        working-directory: apps/realworldasset
+        run: npm ci --no-audit --no-fund
+
+      - name: Enforce live-only production truth
+        working-directory: apps/realworldasset
+        run: npm run verify:live-only
+
+      - name: Typecheck and build canonical Pages UI
+        working-directory: apps/realworldasset
+        env:
+          RWA_BASE_PATH: /rwa
+          GITHUB_ACTIONS: 'true'
+        run: |
+          npm run typecheck
+          npm run build
+
+      - name: Probe authoritative public venue
+        shell: bash
+        run: |
+          set +e
+          curl --fail --silent --show-error --max-time 12 \
+            -H 'content-type: application/json' \
+            -d '{"type":"metaAndAssetCtxs"}' \
+            https://api.hyperliquid.xyz/info > /tmp/hl.json
+          CURL_RC=$?
+          if [ "$CURL_RC" -eq 0 ]; then
+            python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/hl.json'))
+          assert isinstance(p,list) and len(p)>=2 and isinstance(p[1],list) and len(p[1])>0
+          print('PUBLIC_VENUE_PROBE=PASS')
+          PY
+            if [ "$?" -eq 0 ]; then echo 'EXPECT_PUBLIC_FEED=1' >> "$GITHUB_ENV"; else echo 'EXPECT_PUBLIC_FEED=0' >> "$GITHUB_ENV"; fi
+          else
+            echo 'PUBLIC_VENUE_PROBE=UNAVAILABLE'
+            echo 'EXPECT_PUBLIC_FEED=0' >> "$GITHUB_ENV"
+          fi
+          exit 0
+
+      - name: Install Chromium proof runtime
+        run: |
+          python3 -m pip install --disable-pip-version-check playwright==1.55.0 pillow
+          python3 -m playwright install --with-deps chromium
+
+      - name: Start canonical local production shape
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .every-page-preview every-page-live-proof
+          mkdir -p .every-page-preview/rwa
+          cp -a apps/realworldasset/out/. .every-page-preview/rwa/
+          python3 -m http.server 4199 --bind 127.0.0.1 --directory .every-page-preview >/tmp/rwa-every-page-http.log 2>&1 &
+          echo $! > /tmp/rwa-every-page-http.pid
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4199/rwa/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/rwa-every-page-http.log
+          exit 1
+
+      - name: Screenshot and analyze every exported page desktop and mobile
+        env:
+          EXPECT_PUBLIC_FEED: ${{ env.EXPECT_PUBLIC_FEED }}
+        run: |
+          python3 apps/realworldasset/scripts/every-page-live-proof.py \
+            --out apps/realworldasset/out \
+            --base http://127.0.0.1:4199/rwa \
+            --evidence every-page-live-proof
+
+      - name: Stop local production
+        if: always()
+        run: kill "$(cat /tmp/rwa-every-page-http.pid)" 2>/dev/null || true
+
+      - name: Upload every-page desktop/mobile proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rwa-every-page-live-proof-${{ github.sha }}
+          path: every-page-live-proof/
+          retention-days: 14
+          if-no-files-found: error
+          compression-level: 6

@@ -1,2 +1,5 @@
-import { BusinessDirectory } from "@/components/discovery";
-export default function BusinessesPage(){return <BusinessDirectory/>}
+import { LiveCurrentRoutePage } from "@/components/live-dashboard";
+
+export default function LiveOnlyPage(){
+  return <LiveCurrentRoutePage/>;
+}

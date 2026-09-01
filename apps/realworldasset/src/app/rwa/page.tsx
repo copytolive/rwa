@@ -1,2 +1,5 @@
-import { RwaDirectory } from "@/components/discovery";
-export default function RwaPage(){return <RwaDirectory/>}
+import { LiveCurrentRoutePage } from "@/components/live-dashboard";
+
+export default function LiveOnlyPage(){
+  return <LiveCurrentRoutePage/>;
+}

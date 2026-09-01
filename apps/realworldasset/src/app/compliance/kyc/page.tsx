@@ -1,6 +1,5 @@
-import { KycFlow } from "@/components/compliance";
-import "@/components/compliance/compliance-parity-fixes.css";
+import { LiveCurrentRoutePage } from "@/components/live-dashboard";
 
-export default function KycPage(){
-  return <KycFlow/>;
+export default function LiveOnlyPage(){
+  return <LiveCurrentRoutePage/>;
 }
