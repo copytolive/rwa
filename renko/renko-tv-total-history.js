@@ -36,7 +36,8 @@ async function discoverBinance(symbol){
   const firstRows=await fetchKlines(symbol,START_MONTH,1);if(!firstRows.length)throw Error(`${symbol} has no historical Binance 1s rows`);
   const earliestSourceMs=Number(firstRows[0].openTime),first=monthStart(earliestSourceMs);
   const checksum=(await textOk(checksumUrl(symbol,first))||'').trim();if(checksum.length<20)throw Error(`${symbol} origin checksum unavailable for ${monthKey(first)}`);
-  let last=addMonths(monthStart(Date.now()),-1),lastChecksum=(await textOk(checksumUrl(symbol,last))||'').trim();
+  // Monthly archive publication can lag the calendar boundary; begin at the latest safely finalized month so a normal first-of-month load never emits a speculative 404.
+  let last=addMonths(monthStart(Date.now()),-2),lastChecksum=(await textOk(checksumUrl(symbol,last))||'').trim();
   if(lastChecksum.length<20){last=addMonths(last,-1);lastChecksum=(await textOk(checksumUrl(symbol,last))||'').trim()}
   if(lastChecksum.length<20)throw Error(`${symbol} latest verified monthly checksum unavailable`);
   const span=Math.max(1,Math.round((last-first)/2629800000)+1);
