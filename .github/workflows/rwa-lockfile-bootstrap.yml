@@ -7,7 +7,7 @@ on:
       - ".github/workflows/rwa-lockfile-bootstrap.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   lockfile:
@@ -15,6 +15,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: fix/rwa-total-ready-screen-20260901
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -26,8 +28,17 @@ jobs:
         run: |
           test -s package-lock.json
           node -e "const p=require('./package-lock.json'); if(!p.lockfileVersion) process.exit(1); console.log('RWA_LOCKFILE_PASS',p.lockfileVersion)"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: rwa-realworldasset-package-lock
-          path: apps/realworldasset/package-lock.json
-          retention-days: 1
+      - name: Commit exact generated lockfile
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apps/realworldasset/package-lock.json
+          if git diff --cached --quiet; then
+            echo RWA_LOCKFILE_ALREADY_CURRENT
+            exit 0
+          fi
+          git commit -m 'build(rwa): lock canonical UI dependencies [skip ci]'
+          git push origin HEAD:fix/rwa-total-ready-screen-20260901
+          echo RWA_LOCKFILE_COMMITTED
