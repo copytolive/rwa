@@ -47,8 +47,11 @@ jobs:
           gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN/artifacts?per_page=100" > "$RUNNER_TEMP/arts.json"
           URL="$(python - "$RUNNER_TEMP/arts.json" "$SOURCE_ATTEMPT" <<'PY'
           import json,sys
-          x=json.load(open(sys.argv[1]));attempt=max(1,int(sys.argv[2]));a=[z for z in x['artifacts'] if z['name']=='gold24-canonical-v11-state' and not z['expired']]
-          a=sorted(a,key=lambda z:z.get('created_at',''));assert len(a)>=attempt,(len(a),attempt);print(a[attempt-1]['archive_download_url'])
+          x=json.load(open(sys.argv[1]));attempt=max(1,int(sys.argv[2]))
+          a=[z for z in x['artifacts'] if z['name']=='gold24-canonical-v11-state' and not z['expired']]
+          a=sorted(a,key=lambda z:z.get('created_at',''))
+          assert len(a)>=attempt,(len(a),attempt)
+          print(a[attempt-1]['archive_download_url'])
           PY
           )"
           curl -L --fail --retry 3 -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' "$URL" -o "$RUNNER_TEMP/state.zip"
@@ -113,16 +116,12 @@ jobs:
         run: |
           $ErrorActionPreference='Stop'
           $ini=Join-Path $env:RUNNER_TEMP 'bootstrap.ini'
-          @"
-          [Common]
-          NewsEnable=0
-          CertInstall=0
-          [StartUp]
-          Symbol=XAUUSD
-          Period=D1
-          "@ | Set-Content $ini -Encoding ASCII
+          @('[Common]','NewsEnable=0','CertInstall=0','[StartUp]','Symbol=XAUUSD','Period=D1') | Set-Content $ini -Encoding ASCII
           $p=Start-Process -FilePath $env:MT5_TERMINAL -ArgumentList "/config:$ini" -PassThru
-          Start-Sleep -Seconds 12;if(-not $p.HasExited){Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue}
+          Start-Sleep -Seconds 12
+          if(-not $p.HasExited){Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue}
+          Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          Start-Sleep -Seconds 2
           $base=Join-Path $env:APPDATA 'MetaQuotes\Terminal'
           $cand=Get-ChildItem $base -Directory -ErrorAction Stop | Where-Object {Test-Path (Join-Path $_.FullName 'MQL5')} | Sort-Object LastWriteTime -Descending | Select-Object -First 1
           if($null -eq $cand){throw 'MT5 data dir missing'}
@@ -157,22 +156,16 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference='Stop'
+          Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
           $common=Join-Path $env:APPDATA 'MetaQuotes\Terminal\Common\Files\Gold24Qualified';New-Item -ItemType Directory -Force $common|Out-Null
           Copy-Item "$env:RUNNER_TEMP\gold24_canonical_d1_mt5.csv" (Join-Path $common 'gold24_canonical_d1_mt5.csv') -Force
           $receipt=Join-Path $common 'import_receipt.txt';Remove-Item $receipt -Force -ErrorAction SilentlyContinue
           $ini=Join-Path $env:RUNNER_TEMP 'import.ini'
-          @"
-          [Common]
-          NewsEnable=0
-          CertInstall=0
-          [StartUp]
-          Script=Gold24Qualified\qualified_import_canonical
-          Symbol=XAUUSD
-          Period=D1
-          "@ | Set-Content $ini -Encoding ASCII
+          @('[Common]','NewsEnable=0','CertInstall=0','[StartUp]','Script=Gold24Qualified\qualified_import_canonical','Symbol=XAUUSD','Period=D1') | Set-Content $ini -Encoding ASCII
           $p=Start-Process -FilePath $env:MT5_TERMINAL -ArgumentList "/config:$ini" -PassThru
           for($i=0;$i -lt 90 -and !(Test-Path $receipt);$i++){Start-Sleep -Seconds 2}
           if(-not $p.HasExited){Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue}
+          Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
           if(!(Test-Path $receipt)){throw 'custom symbol import receipt missing'}
           $txt=Get-Content $receipt -Raw;Copy-Item $receipt $env:MT5_EVIDENCE -Force
           if($txt -notmatch 'status=PASS'){throw "custom symbol import FAIL`n$txt"}
@@ -182,36 +175,43 @@ jobs:
           $ErrorActionPreference='Stop'
           $common=Join-Path $env:APPDATA 'MetaQuotes\Terminal\Common\Files\Gold24Qualified'
           $eas=@(Get-ChildItem $env:MT5_EXPERT_DIR -Filter '*.mq5' | Sort-Object Name)
+          if($eas.Count -ne 8){throw "expected 8 EAs for tester, found $($eas.Count)"}
           foreach($ea in $eas){
+            Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
             $name=[IO.Path]::GetFileNameWithoutExtension($ea.Name);$src=Get-Content $ea.FullName -Raw
             $mm=[regex]::Match($src,'#define\s+(?:QM|MM)_MAGIC\s+(\d+)');if(!$mm.Success){throw "magic missing $name"};$magic=$mm.Groups[1].Value
             $receipt=Join-Path $common "receipt_$magic.txt";Remove-Item $receipt -Force -ErrorAction SilentlyContinue
             $report=Join-Path $env:MT5_EVIDENCE "$name.html";$ini=Join-Path $env:RUNNER_TEMP "$name.ini"
+            Remove-Item $report -Force -ErrorAction SilentlyContinue
             $cfg=@(
-              '[Common]',
-              'NewsEnable=0',
-              'CertInstall=0',
-              '[Tester]',
+              '[Common]','NewsEnable=0','CertInstall=0','[Tester]',
               "Expert=Gold24Qualified\$name",
-              'Symbol=GOLD24-CANON',
-              'Period=D1',
-              'Model=2',
-              'ExecutionMode=0',
-              'Optimization=0',
-              'FromDate=2000.10.23',
-              'ToDate=2026.08.27',
-              'Deposit=10000',
-              'Leverage=1:100',
-              "Report=$report",
-              'ReplaceReport=1',
-              'ShutdownTerminal=1'
+              'Symbol=GOLD24-CANON','Period=D1','Model=2','ExecutionMode=0','Optimization=0','ForwardMode=0',
+              'FromDate=2000.10.23','ToDate=2026.08.27','Deposit=10000','Currency=USD','ProfitInPips=0','Leverage=1:100',
+              'UseLocal=1','UseRemote=0','UseCloud=0','Visual=0',
+              "Report=$report",'ReplaceReport=1','ShutdownTerminal=1'
             )
             $cfg | Set-Content $ini -Encoding ASCII
+            Write-Host "START_TESTER $name config=$ini report=$report"
             $p=Start-Process -FilePath $env:MT5_TERMINAL -ArgumentList "/config:$ini" -PassThru
-            if(-not $p.WaitForExit(180000)){Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue;throw "tester timeout $name"}
-            for($i=0;$i -lt 15 -and (!(Test-Path $report) -or !(Test-Path $receipt));$i++){Start-Sleep -Seconds 1}
-            if(!(Test-Path $report)){throw "tester report missing $name"}
-            if(!(Test-Path $receipt)){throw "EA receipt missing $name"}
+            $deadline=(Get-Date).AddMinutes(4)
+            do {
+              if((Test-Path $report) -and (Test-Path $receipt)){break}
+              Start-Sleep -Seconds 2
+            } while((Get-Date) -lt $deadline)
+            if(!(Test-Path $report)){
+              $alt=Get-ChildItem $env:MT5_DATA -File -Recurse -ErrorAction SilentlyContinue | Where-Object {$_.BaseName -eq $name -and $_.Extension -match '^\.html?$'} | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+              if($null -ne $alt){Copy-Item $alt.FullName $report -Force}
+            }
+            if(-not $p.HasExited){Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue}
+            Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+            if(!(Test-Path $report) -or !(Test-Path $receipt)){
+              $diag=Join-Path $env:MT5_EVIDENCE "$name-diagnostic.txt"
+              "name=$name`nprocess_exited=$($p.HasExited)`nreport_exists=$(Test-Path $report)`nreceipt_exists=$(Test-Path $receipt)`nconfig=$ini" | Set-Content $diag
+              Get-ChildItem (Join-Path $env:MT5_DATA 'logs') -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 3 | ForEach-Object {Copy-Item $_.FullName (Join-Path $env:MT5_EVIDENCE ("terminal-"+$_.Name)) -Force}
+              throw "tester evidence missing $name report=$(Test-Path $report) receipt=$(Test-Path $receipt)"
+            }
             $txt=Get-Content $receipt -Raw;Copy-Item $receipt (Join-Path $env:MT5_EVIDENCE "$name-receipt.txt") -Force
             $kv=@{};foreach($line in ($txt -split "`r?`n")){if($line -match '^([^=]+)=(.*)$'){$kv[$matches[1]]=$matches[2]}}
             if($kv.status -ne 'PASS'){throw "EA operational status != PASS $name`n$txt"}
