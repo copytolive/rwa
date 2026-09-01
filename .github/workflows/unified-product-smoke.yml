@@ -87,7 +87,9 @@ jobs:
           grep -Fq 'printf' .github/workflows/pages.yml
           grep -Fq 'deployment-sha.txt' .github/workflows/pages.yml
           grep -Fq 'path: apps/realworldasset/out' .github/workflows/pages.yml
-          grep -Fq 'PUBLIC_CHROMIUM_REALWORLDASSET_PASS' .github/workflows/pages.yml
+          grep -Fq 'public-route-manifest.txt' .github/workflows/pages.yml
+          grep -Fq 'PUBLIC_EVERY_PAGE_LIVE_PROOF' .github/workflows/pages.yml
+          grep -Fq "page.screenshot(path=str(path),full_page=True)" .github/workflows/pages.yml
       - name: Safety invariants preserved
         run: |
           grep -q "mainnetEnabled" trade/config.js
