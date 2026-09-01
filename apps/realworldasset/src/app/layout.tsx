@@ -7,6 +7,8 @@ import "./pixel-parity-assets.css";
 import "./pixel-parity-chat03.css";
 import "./final-interaction-lock.css";
 import "./landing-production-lock.css";
+import "./layout-consistency-lock.css";
+import "./layout-consistency-lock-v2.css";
 
 export const metadata: Metadata = {
   title: "RWA.MS",
