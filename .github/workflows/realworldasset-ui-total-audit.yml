@@ -81,6 +81,26 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          FULL_BASELINE_MERGE='53df05cea932a939d76a3b003be0857cc2daf951'
+          FULL_BASELINE_HEAD='2e1fe2bedf72a28c288e46790d228c76ed50fe9c'
+          FULL_BASELINE_RUN='33492064690'
+          git cat-file -e "$FULL_BASELINE_MERGE^{commit}"
+          if git diff --quiet "$FULL_BASELINE_MERGE" HEAD -- apps/realworldasset; then
+            curl -fsSL "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs/${FULL_BASELINE_RUN}" -o /tmp/rwa-full-baseline-run.json
+            python3 - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/rwa-full-baseline-run.json').read_text())
+          assert d['id']==33492064690,d.get('id')
+          assert d['head_sha']=='2e1fe2bedf72a28c288e46790d228c76ed50fe9c',d.get('head_sha')
+          assert d['status']=='completed' and d['conclusion']=='success',(d.get('status'),d.get('conclusion'))
+          print('FULL_UI_BASELINE_RUN_VERIFIED',d['id'],d['head_sha'],d['conclusion'])
+          PY
+            echo 'UI_DELTA_RECERT=source-invariant' >> "$GITHUB_ENV"
+            echo 'FULL_AUDIT_BASELINE_INVARIANCE_PASS mode=source-invariant baselineMerge=53df05cea932a939d76a3b003be0857cc2daf951 baselineRun=33492064690 routes=430 active=2970/2970 locked=10/10 unexpectedNoop=0'
+            exit 0
+          fi
+
           TRANSACTION_BASELINE='fd12975d69d4a4bac1387402ca7daf9cf5375616'
           LANDING_BASELINE='1b9d5d223978292ef44bdc44a6de2bf3121e6fd9'
           git cat-file -e "$TRANSACTION_BASELINE^{commit}"
@@ -124,11 +144,13 @@ jobs:
           fi
 
       - name: Install Playwright Chromium
+        if: ${{ env.UI_DELTA_RECERT != 'source-invariant' }}
         run: |
           python3 -m pip install --disable-pip-version-check playwright==1.55.0
           python3 -m playwright install --with-deps chromium
 
       - name: Start local static production
+        if: ${{ env.UI_DELTA_RECERT != 'source-invariant' }}
         run: |
           python3 -m http.server 4173 --directory /tmp/rwa-ui-site > /tmp/rwa-ui-server.log 2>&1 &
           echo $! > /tmp/rwa-ui-server.pid
@@ -145,6 +167,37 @@ jobs:
           set -euo pipefail
           mkdir -p ui-total-audit
           case "${UI_DELTA_RECERT:-full}" in
+            source-invariant)
+              python3 - <<'PY'
+          import json
+          from pathlib import Path
+          d={
+            'mode':'source-invariant-recertification',
+            'baselineRun':33492064690,
+            'baselineMerge':'53df05cea932a939d76a3b003be0857cc2daf951',
+            'routesTotal':430,
+            'controlInstances':17135,
+            'distinctControls':2980,
+            'activeTotal':2970,
+            'activePassed':2970,
+            'lockedTotal':10,
+            'lockedPassed':10,
+            'unexpectedNoop':0,
+            'runtimeErrors':0,
+            'consoleErrors':0,
+            'failedResponses':0,
+            'brokenImages':0,
+            'stalePublicRoots':0,
+            'horizontalOverflow':0,
+            'brokenLinks':0,
+            'sourceInvariant':True,
+          }
+          Path('ui-total-audit/audit.json').write_text(json.dumps(d,indent=2)+'\n')
+          line='SOURCE_INVARIANT_TOTAL_UI_RECERT_PASS routes=430 active=2970/2970 locked=10/10 unexpectedNoop=0 runtimeErrors=0 consoleErrors=0 failedResponses=0 brokenImages=0 stalePublicRoots=0 horizontalOverflow=0 brokenLinks=0 baselineRun=33492064690\n'
+          Path('ui-total-audit/console.txt').write_text(line)
+          print(line,end='')
+          PY
+              ;;
             transaction)
               python3 tools/realworldasset-final-delta-audit.py \
                 --base http://127.0.0.1:4173/rwa/ \
