@@ -1,2 +1,2 @@
-import { WithdrawPage } from "@/components/account";
-export default function AccountWithdrawPage(){return <WithdrawPage/>}
+import { LiveFundsWorkspace } from "@/components/program-workspaces";
+export default function AccountWithdrawPage(){return <LiveFundsWorkspace mode="withdraw"/>}
