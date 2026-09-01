@@ -3,12 +3,19 @@ import fs from "node:fs";
 const read = p => fs.readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
 const route = read("src/app/[...slug]/page.tsx");
 const workspace = read("src/components/program-workspaces/ProgramWorkspaces.tsx");
+const markets = read("src/components/markets-live/MarketsLiveWorkspace.tsx");
+const trade = read("src/components/trade-live/TradeLiveWorkspace.tsx");
+const tradeRoute = read("src/app/trade/[asset]/page.tsx");
 const ops = read("src/lib/live-ops.ts");
 const deposit = read("src/app/account/deposit/page.tsx");
 const withdraw = read("src/app/account/withdraw/page.tsx");
 
 const requirements = [
-  [route.includes('path==="/markets"') && route.includes('kind="markets"'), "markets_workspace"],
+  [route.includes('path==="/markets"') && route.includes('<MarketsLiveWorkspace/>'), "markets_live_workspace"],
+  [markets.includes('https://api.hyperliquid.xyz/info') && markets.includes('metaAndAssetCtxs') && markets.includes('live-feed-badge'), "markets_authoritative_public_feed"],
+  [markets.includes('Successful responses:') && !markets.includes('Math.random('), "markets_real_tick_only"],
+  [tradeRoute.includes('TradeLiveWorkspace') && trade.includes('metaAndAssetCtxs') && trade.includes('l2Book') && trade.includes('candleSnapshot'), "trade_authoritative_market_terminal"],
+  [trade.includes('environment:"testnet"') && trade.includes('MAINNET LOCKED'), "trade_testnet_write_mainnet_lock"],
   [route.includes('path==="/intelligence"') && route.includes('kind="intelligence"'), "intelligence_workspace"],
   [route.includes('path==="/merchant/tokenization"') && route.includes('kind="tokenization"'), "tokenization_workspace"],
   [route.includes('path==="/account/api"') && route.includes('kind="api"'), "api_workspace"],
@@ -32,3 +39,6 @@ if (failed.length) {
   process.exit(1);
 }
 console.log("PROGRAM_WORKSPACE_GATE_PASS", requirements.length);
+console.log("MARKETS_SOURCE=HYPERLIQUID_META_AND_ASSET_CTXS");
+console.log("TRADE_READS=MARKET_CONTEXT_L2_BOOK_CANDLE_SNAPSHOT");
+console.log("TRADE_WRITES=HYPERLIQUID_TESTNET_ONLY");
