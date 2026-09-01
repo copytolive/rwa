@@ -22,7 +22,7 @@
     "verify:chat11": "node scripts/verify-chat11-settings-support.mjs && node scripts/verify-interaction-contract.mjs && node scripts/verify-all-interactions.mjs",
     "verify:chat12": "node scripts/verify-chat12-merchant-core.mjs && node scripts/verify-interaction-contract.mjs && node scripts/verify-all-interactions.mjs",
     "verify:chat13": "node scripts/verify-chat13-merchant-growth.mjs && node scripts/verify-interaction-contract.mjs && node scripts/verify-all-interactions.mjs",
-    "verify:interactions": "node scripts/verify-interaction-contract.mjs && node scripts/verify-all-interactions.mjs",
+    "verify:interactions": "node scripts/verify-interaction-contract.mjs && node scripts/verify-all-interactions.mjs && node scripts/verify-live-runtime.mjs",
     "verify:live-runtime": "node scripts/verify-live-runtime.mjs"
   },
   "dependencies": {
