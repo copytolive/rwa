@@ -235,7 +235,7 @@ function LiveContent({ title, subtitle, route }: { title: string; subtitle: stri
 }
 
 export function LivePublicLanding() {
-  return <PublicShell><LiveContent title="Where Businesses Become Markets" subtitle="Live public market observations and machine-readable runtime readiness. No demo market cap, sample users, synthetic business values, or decorative fake charts."/></PublicShell>;
+  return <PublicShell><LiveContent title="Where Businesses Become Markets" subtitle="Live public market observations and machine-readable runtime readiness. No fabricated market cap, sample identities, synthetic business values, or decorative fake charts."/></PublicShell>;
 }
 
 export function LiveHomeDashboard() {
