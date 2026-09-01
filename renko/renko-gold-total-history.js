@@ -13,16 +13,21 @@
 if(window.RWARenkoGoldTotalHistory)return;
 const MANIFEST_URL='history/gold/full-manifest.json';
 const DB_NAME='rwa-renko-gold-canonical-v1',STORE='assets',DB_VERSION=1;
-const BLOCK_BARS=65000,MAX_SOURCE_BARS=140000,MAX_DECODED_MONTHS=2,RETRIES=4;
+/* Keep every main-thread geometry rebuild below the browser long-task boundary.
+ * The old 65k prepend grew the first frame from ~64k to ~129k source bars and
+ * produced a 73ms synchronous rebuild. A 16k prepend with an 80k sliding bound
+ * keeps the same canonical history semantics while maintaining a stable viewport
+ * and bounded per-refresh CPU. */
+const BLOCK_BARS=16000,MAX_SOURCE_BARS=80000,MAX_DECODED_MONTHS=2,RETRIES=4;
 const inflight=new Map(),decoded=new Map();
 let manifest=null,dbPromise=null,busy=false,observerBound=false,lastAutoOldest=0,decodeSeq=0;
-const stats={manifestLoads:0,networkFetches:0,idbHits:0,idbWrites:0,shaChecks:0,retries:0,workerDecodes:0,prepends:0,prefetches:0,duplicateFetchAvoided:0,failures:0,lastError:'',oldestSecond:null,newestSecond:null,memorySourceBars:0,decodedMonths:0};
+const stats={manifestLoads:0,networkFetches:0,idbHits:0,idbWrites:0,shaChecks:0,retries:0,workerDecodes:0,prepends:0,prefetches:0,duplicateFetchAvoided:0,failures:0,lastError:'',oldestSecond:null,newestSecond:null,memorySourceBars:0,decodedMonths:0,blockBars:BLOCK_BARS,maxSourceBars:MAX_SOURCE_BARS};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const hex=b=>Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,'0')).join('');
 const monthKey=m=>`${m.year}-${String(m.month).padStart(2,'0')}`;
 const cacheKey=m=>`${manifest.dataVersion}:${monthKey(m)}`;
 function dispatch(name,detail){try{window.dispatchEvent(new CustomEvent(name,{detail}))}catch(_){}}
-function setDataset(extra={}){Object.assign(document.documentElement.dataset,{renkoGoldTotal:'true',renkoGoldTotalProvider:'Dukascopy',renkoGoldTotalInterval:'1s',...extra})}
+function setDataset(extra={}){Object.assign(document.documentElement.dataset,{renkoGoldTotal:'true',renkoGoldTotalProvider:'Dukascopy',renkoGoldTotalInterval:'1s',renkoGoldTotalBlockBars:String(BLOCK_BARS),renkoGoldTotalMaxSourceBars:String(MAX_SOURCE_BARS),...extra})}
 async function openDb(){
   if(dbPromise)return dbPromise;
   dbPromise=new Promise((resolve,reject)=>{
@@ -36,7 +41,7 @@ async function idbGet(key){
   const db=await openDb();return new Promise((resolve,reject)=>{const q=db.transaction(STORE,'readonly').objectStore(STORE).get(key);q.onsuccess=()=>resolve(q.result||null);q.onerror=()=>reject(q.error)});
 }
 async function idbPut(value){
-  const db=await openDb();return new Promise((resolve,reject)=>{const q=db.transaction(STORE,'readwrite').objectStore(STORE).put(value);q.onsuccess=()=>resolve();q.onerror=()=>reject(q.error)});
+  const db=await openDb();return new Promise((resolve,reject)=>{const q=db.transaction(STORE,'readwrite');q.objectStore(STORE).put(value);q.oncomplete=()=>resolve();q.onerror=()=>reject(q.error)});
 }
 async function idbDelete(key){
   const db=await openDb();return new Promise((resolve,reject)=>{const q=db.transaction(STORE,'readwrite').objectStore(STORE).delete(key);q.onsuccess=()=>resolve();q.onerror=()=>reject(q.error)});
@@ -135,15 +140,16 @@ function mergeUnique(left,right){
 function timeScale(){return window.__RWARenkoChart?.timeScale?.()||null}
 function preserveRange(fn,{panOlder=false}={}){
   const ts=timeScale(),range=ts?.getVisibleRange?.()||null;fn();
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    const t=timeScale();if(!t)return;
+  const apply=()=>{
+    const t=timeScale();if(!t||!range||!Number.isFinite(Number(range.from))||!Number.isFinite(Number(range.to)))return;
     try{
-      if(range&&Number.isFinite(Number(range.from))&&Number.isFinite(Number(range.to))){
-        if(panOlder){const span=Math.max(60,Number(range.to)-Number(range.from));t.setVisibleRange({from:Number(range.from)-span*.75,to:Number(range.to)-span*.75})}
-        else t.setVisibleRange(range);
-      }
+      if(panOlder){const span=Math.max(60,Number(range.to)-Number(range.from));t.setVisibleRange({from:Number(range.from)-span*.75,to:Number(range.to)-span*.75})}
+      else t.setVisibleRange(range);
+      const T=window.RWARenkoTV;if(T?.state)T.state.following=false;
     }catch(_){ }
-  }));
+  };
+  /* same-turn restore prevents a single reset frame from being painted */
+  apply();queueMicrotask(apply);requestAnimationFrame(apply);requestAnimationFrame(()=>requestAnimationFrame(apply));setTimeout(apply,0);setTimeout(apply,80);
 }
 function updateUi(T){
   const bars=T.state.closedBars||[],first=bars[0],last=bars.at(-1);if(!first||!last)return;
@@ -193,6 +199,6 @@ async function clearPersistentCache(){
   if(dbPromise){try{(await dbPromise).close()}catch(_){}}dbPromise=null;await new Promise((resolve,reject)=>{const q=indexedDB.deleteDatabase(DB_NAME);q.onsuccess=()=>resolve();q.onerror=()=>reject(q.error);q.onblocked=()=>resolve()});decoded.clear();stats.decodedMonths=0;
 }
 function init(){interceptOlderButtons();bindScrollObserver();window.addEventListener('renko:chart-ready',bindScrollObserver);window.addEventListener('renko:gold-recent',onRecent);const T=window.RWARenkoTV;if(T?.state?.symbol==='XAUUSD')void onRecent()}
-window.RWARenkoGoldTotalHistory={version:'1.0.0',rule:'dukascopy-xauusd-fixed1s-immutable-monthly-idb-bounded',stats,get manifest(){return manifest},get busy(){return busy},loadManifest,getBytes,decodeMonth,materializeBefore,prependOlder,prefetchPreviousFor,clearPersistentCache,init};
+window.RWARenkoGoldTotalHistory={version:'1.1.0-zero-refresh-bounded',rule:'dukascopy-xauusd-fixed1s-immutable-monthly-idb-16k-prepend-80k-sliding-bound-same-turn-time-range-restore',stats,get manifest(){return manifest},get busy(){return busy},loadManifest,getBytes,decodeMonth,materializeBefore,prependOlder,prefetchPreviousFor,clearPersistentCache,init};
 if(document.readyState!=='loading')setTimeout(init,0);else document.addEventListener('DOMContentLoaded',init,{once:true});
 })();
