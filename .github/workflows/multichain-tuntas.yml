@@ -1,12 +1,6 @@
-name: MULTI CHAIN Tuntas V4
+name: Legacy MULTI CHAIN Tuntas V4 (manual)
 
 on:
-  push:
-    branches:
-      - main
-      - fix/multichain-mainnet-go-v4-20260828
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -19,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate hardened source, provider rules and fail-closed gates
+      - name: Validate hardened legacy source, provider rules and fail-closed gates
         shell: bash
         run: |
           set -euxo pipefail
@@ -54,7 +48,7 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Run local MULTI CHAIN browser proofs
+      - name: Run local legacy MULTI CHAIN browser proofs
         env:
           RWA_TEST_URL: http://127.0.0.1:4173/rwa/
         shell: bash
@@ -72,11 +66,11 @@ jobs:
           RWA_PROOF_DIR=proof/multichain-v4-tuntas node tools/multichain-tuntas-browser.mjs
           RWA_PROOF_DIR=proof/multichain-v4-pilot node tools/multichain-pilot-browser.mjs
 
-      - name: Upload proof bundle
+      - name: Upload legacy proof bundle
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: multichain-tuntas-v4-${{ github.sha }}
+          name: legacy-multichain-tuntas-v4-${{ github.sha }}
           path: proof/
           retention-days: 30
           if-no-files-found: warn
