@@ -41,6 +41,7 @@ jobs:
           test -s UI_SYNC_MANIFEST.json
           test -s apps/realworldasset/UPSTREAM_SHA.txt
           test -s apps/realworldasset/package.json
+          test -s apps/realworldasset/package-lock.json
           test -s apps/realworldasset/next.config.js
           test -s apps/realworldasset/src/app/page.tsx
           test -s 'apps/realworldasset/src/app/[...slug]/page.tsx'
@@ -67,11 +68,11 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: apps/realworldasset/package.json
+          cache-dependency-path: apps/realworldasset/package-lock.json
 
       - name: Install UI dependencies
         working-directory: apps/realworldasset
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Run final UI interaction contracts
         working-directory: apps/realworldasset
