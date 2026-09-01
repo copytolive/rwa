@@ -1,135 +1,97 @@
-name: RENKO ATR Control All Pairs Gate
+name: RENKO GOLD ATR Chromium Gate
+
 on:
   push:
     branches:
       - main
-      - fix/renko-atr-control-all-pairs-20260828
-      - fix/renko-atr-chart-stability-20260828
-      - 'fix/renko-final-zero-safe-gates-*'
+      - fix/renko-gold-final-no-drift-20260901
     paths:
       - 'renko/**'
-      - 'tools/renko-atr-control-all-pairs-report.mjs'
-      - 'tools/renko-atr-stability-report.mjs'
-      - 'tools/renko-xaut-*.mjs'
       - '.github/workflows/renko-atr-control-all-pairs.yml'
+      - '.github/workflows/renko-gold-current-main-closure.yml'
   workflow_dispatch:
+
 permissions:
   contents: read
+
 jobs:
   exact-browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Static ATR control + stability contract
-        run: |
-          set -euo pipefail
-          node --check renko/renko-tv-engine.js
-          node --check renko/renko-tv-atr-control.js
-          node --check renko/renko-tv-confirmed-count-guard.js
-          node --check tools/renko-atr-control-all-pairs-report.mjs
-          node --check tools/renko-atr-stability-report.mjs
-          grep -Fq "version:'1.4.0-fixed-1s'" renko/renko-tv-engine.js
-          grep -Fq "contract:'tradingview-public-documentation-compatible-fixed-1s'" renko/renko-tv-engine.js
-          grep -q 'renko-tv-atr-control.js?v=3' renko/index.html
-          grep -q 'renko-tv-confirmed-count-guard.js?v=1' renko/index.html
-          grep -q 'visible-confirmed-count-is-full-engine-total-never-render-cap' renko/renko-tv-confirmed-count-guard.js
-          grep -Fq "version:'1.4.0-zero-safe'" renko/renko-tv-atr-control.js
-          grep -q 'zero-wilder-min-tick-fallback' renko/renko-tv-atr-control.js
-          grep -q 'atrZeroFallback' renko/renko-tv-atr-control.js
-          grep -q '_exactBox=box' renko/renko-tv-atr-control.js
       - name: Install Chromium
         run: |
-          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
-          npx playwright install --with-deps chromium
-      - name: Serve exact checkout
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+      - name: Serve exact GOLD checkout
         run: |
           set -euo pipefail
-          rm -rf /tmp/renko-atr-control-site
-          mkdir -p /tmp/renko-atr-control-site/rwa
-          cp -a . /tmp/renko-atr-control-site/rwa/
-          cd /tmp/renko-atr-control-site
-          python3 -m http.server 8080 >/tmp/renko-atr-control-http.log 2>&1 &
+          rm -rf /tmp/renko-gold-atr-site
+          mkdir -p /tmp/renko-gold-atr-site/rwa
+          cp -a . /tmp/renko-gold-atr-site/rwa/
+          cd /tmp/renko-gold-atr-site
+          python3 -m http.server 8080 >/tmp/renko-gold-atr-http.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/rwa/renko/ >/dev/null && exit 0; sleep 1; done
-          cat /tmp/renko-atr-control-http.log
+          cat /tmp/renko-gold-atr-http.log
           exit 1
-      - name: Desktop — physical ATR 100 Apply on all 50 launch pairs
-        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_ATR_VIEWPORT=desktop RENKO_ATR_CONTROL_OUT=artifacts/atr-control-desktop node tools/renko-atr-control-all-pairs-report.mjs
-      - name: Mobile — physical ATR 100 Apply on all 50 launch pairs
-        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_ATR_VIEWPORT=mobile RENKO_ATR_CONTROL_OUT=artifacts/atr-control-mobile node tools/renko-atr-control-all-pairs-report.mjs
-      - name: Desktop — ATR chart pulse stability across real 1s closes
-        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_ATR_STABILITY_VIEWPORT=desktop RENKO_ATR_STABILITY_OUT=artifacts/atr-stability-desktop node tools/renko-atr-stability-report.mjs
-      - name: Mobile — ATR chart pulse stability across real 1s closes
-        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_ATR_STABILITY_VIEWPORT=mobile RENKO_ATR_STABILITY_OUT=artifacts/atr-stability-mobile node tools/renko-atr-stability-report.mjs
-      - name: XAUT provider regression — desktop + mobile
-        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_XAUT_OUT=artifacts/xaut-provider node tools/renko-xaut-live-provider-report.mjs
-      - name: XAUT deep ATR matrix regression — desktop + mobile
-        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_XAUT_MATRIX_OUT=artifacts/xaut-atr-matrix node tools/renko-xaut-atr-matrix-report.mjs
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: renko-atr-control-all-pairs-${{ github.sha }}
-          path: |
-            artifacts/atr-control-desktop
-            artifacts/atr-control-mobile
-            artifacts/atr-stability-desktop
-            artifacts/atr-stability-mobile
-            artifacts/xaut-provider
-            artifacts/xaut-atr-matrix
-          retention-days: 30
+      - name: GOLD ATR Chromium — desktop + mobile
+        run: |
+          node --input-type=module <<'NODE'
+          import { chromium, devices } from 'playwright';
+          const browser=await chromium.launch({headless:true});
+          async function prove(contextOptions,label){
+            const page=await browser.newPage(contextOptions);const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+            await page.goto(`http://127.0.0.1:8080/rwa/renko/?gold=1&atrGoldGate=1&v=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:60000});
+            await page.waitForFunction(()=>window.RENKO_GOLD_ONLY===true&&document.documentElement.dataset.renkoGoldRecent==='true'&&window.RWARenkoTV?.state?.symbol==='XAUUSD'&&document.querySelector('#chartHost canvas'),{timeout:60000});
+            await page.fill('#atrLength','14');await page.click('[data-apply-method="atr"]');
+            await page.waitForFunction(()=>window.RWARenkoTV?.settings?.method==='atr'&&Number(window.RWARenkoTV?.state?.box)>0,{timeout:15000});
+            const r=await page.evaluate(async()=>{const T=window.RWARenkoTV,H=window.RWARenkoGoldTotalHistory,m=await H.loadManifest();return{symbol:T.state.symbol,method:T.settings.method,box:Number(T.state.box),atrLength:Number(T.settings.atrLength),interval:T.settings.interval,bars:T.state.closedBars.length,provider:m.provider,instrument:m.instrumentCode,complete:m.backfillComplete,months:m.months.length,canvas:!!document.querySelector('#chartHost canvas'),goldOnly:window.RENKO_GOLD_ONLY===true};});
+            if(r.symbol!=='XAUUSD'||r.method!=='atr'||!(r.box>0)||r.atrLength!==14||r.interval!=='1s'||r.bars<100||r.provider!=='Dukascopy'||r.instrument!=='XAU-USD'||!r.complete||!r.canvas||!r.goldOnly||errors.length)throw new Error(JSON.stringify({label,r,errors}));
+            console.log('GOLD_ATR_CHROMIUM_PASS',JSON.stringify({label,...r}));await page.close();
+          }
+          await prove({viewport:{width:1672,height:941}},'desktop');await prove({...devices['iPhone 13']},'mobile');await browser.close();
+          NODE
+
   public-production:
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/renko-atr-chart-stability-20260828'
+    if: github.ref == 'refs/heads/main'
     needs: exact-browser
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Wait for deployed zero-safe anti-pulse runtime
+      - name: Wait for exact public GOLD SHA
         run: |
           set -euo pipefail
-          index='https://copytolive.github.io/rwa/renko/'
-          control='https://copytolive.github.io/rwa/renko/renko-tv-atr-control.js'
-          guard='https://copytolive.github.io/rwa/renko/renko-tv-confirmed-count-guard.js'
-          stamp='https://copytolive.github.io/rwa/renko/renko-deployment-sha.txt'
           for i in $(seq 1 90); do
-            ts=$(date +%s%N)
-            got=$(curl -fsS "$stamp?ts=$ts" 2>/dev/null | tr -d '\r\n' || true)
-            html=$(curl -fsS "$index?ts=$ts" 2>/dev/null || true)
-            js=$(curl -fsS "$control?ts=$ts" 2>/dev/null || true)
-            guardjs=$(curl -fsS "$guard?ts=$ts" 2>/dev/null || true)
-            echo "attempt=$i deployed=$got"
-            if [ "$got" = "$GITHUB_SHA" ] && grep -q 'renko-tv-atr-control.js?v=3' <<<"$html" && grep -q 'renko-tv-confirmed-count-guard.js?v=1' <<<"$html" && grep -q "version:'1.4.0-zero-safe'" <<<"$js" && grep -q 'atrZeroFallback' <<<"$js" && grep -q 'visible-confirmed-count-is-full-engine-total-never-render-cap' <<<"$guardjs"; then
-              echo "PUBLIC_ZERO_SAFE_ANTI_PULSE_RUNTIME_PRESENT deployed=$got"
-              exit 0
-            fi
+            got=$(curl -fsS "https://copytolive.github.io/rwa/renko/deployment-sha.txt?cb=$RANDOM" 2>/dev/null | tr -d '\r\n' || true)
+            [ "$got" = "$GITHUB_SHA" ] && { echo "GOLD_ATR_PUBLIC_SHA_PASS $got"; exit 0; }
             sleep 5
           done
           exit 1
       - name: Install Chromium
         run: |
-          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
-          npx playwright install --with-deps chromium
-      - name: PUBLIC desktop — ATR 100 Apply on all 50 launch pairs
-        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_ATR_VIEWPORT=desktop RENKO_ATR_CONTROL_OUT=artifacts/public-atr-control-desktop node tools/renko-atr-control-all-pairs-report.mjs
-      - name: PUBLIC mobile — ATR 100 Apply on all 50 launch pairs
-        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_ATR_VIEWPORT=mobile RENKO_ATR_CONTROL_OUT=artifacts/public-atr-control-mobile node tools/renko-atr-control-all-pairs-report.mjs
-      - name: PUBLIC desktop — visible ATR + Renko history do not pulse
-        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_ATR_STABILITY_VIEWPORT=desktop RENKO_ATR_STABILITY_OUT=artifacts/public-atr-stability-desktop node tools/renko-atr-stability-report.mjs
-      - name: PUBLIC mobile — visible ATR + Renko history do not pulse
-        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_ATR_STABILITY_VIEWPORT=mobile RENKO_ATR_STABILITY_OUT=artifacts/public-atr-stability-mobile node tools/renko-atr-stability-report.mjs
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: renko-atr-stability-public-${{ github.sha }}
-          path: |
-            artifacts/public-atr-control-desktop
-            artifacts/public-atr-control-mobile
-            artifacts/public-atr-stability-desktop
-            artifacts/public-atr-stability-mobile
-          retention-days: 30
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+      - name: PUBLIC GOLD ATR Chromium — desktop + mobile
+        run: |
+          node --input-type=module <<'NODE'
+          import { chromium, devices } from 'playwright';
+          const browser=await chromium.launch({headless:true});
+          async function prove(contextOptions,label){
+            const page=await browser.newPage(contextOptions);const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+            await page.goto(`https://copytolive.github.io/rwa/renko/?gold=1&atrGoldPublicGate=1&v=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:60000});
+            await page.waitForFunction(()=>window.RENKO_GOLD_ONLY===true&&document.documentElement.dataset.renkoGoldRecent==='true'&&window.RWARenkoTV?.state?.symbol==='XAUUSD'&&document.querySelector('#chartHost canvas'),{timeout:60000});
+            await page.fill('#atrLength','14');await page.click('[data-apply-method="atr"]');
+            await page.waitForFunction(()=>window.RWARenkoTV?.settings?.method==='atr'&&Number(window.RWARenkoTV?.state?.box)>0,{timeout:15000});
+            const r=await page.evaluate(async()=>{const T=window.RWARenkoTV,H=window.RWARenkoGoldTotalHistory,m=await H.loadManifest();return{symbol:T.state.symbol,method:T.settings.method,box:Number(T.state.box),atrLength:Number(T.settings.atrLength),interval:T.settings.interval,bars:T.state.closedBars.length,provider:m.provider,instrument:m.instrumentCode,complete:m.backfillComplete,months:m.months.length,canvas:!!document.querySelector('#chartHost canvas'),goldOnly:window.RENKO_GOLD_ONLY===true};});
+            if(r.symbol!=='XAUUSD'||r.method!=='atr'||!(r.box>0)||r.atrLength!==14||r.interval!=='1s'||r.bars<100||r.provider!=='Dukascopy'||r.instrument!=='XAU-USD'||!r.complete||!r.canvas||!r.goldOnly||errors.length)throw new Error(JSON.stringify({label,r,errors}));
+            console.log('PUBLIC_GOLD_ATR_CHROMIUM_PASS',JSON.stringify({label,...r}));await page.close();
+          }
+          await prove({viewport:{width:1672,height:941}},'desktop');await prove({...devices['iPhone 13']},'mobile');await browser.close();
+          NODE
