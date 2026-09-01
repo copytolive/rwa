@@ -1,0 +1,1 @@
+Reference sync is architecture-only unless a source is explicitly licensed. Canonical CopyToLive GOLD data, engine identity, and acceptance tests remain authoritative.
