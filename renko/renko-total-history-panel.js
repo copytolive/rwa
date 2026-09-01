@@ -6,6 +6,7 @@ const $=id=>document.getElementById(id);
 const fmt=ms=>{const n=Number(ms);if(!(n>0))return'—';return new Date(n).toISOString().replace('.000Z','Z')};
 const fmtN=n=>Number(n||0).toLocaleString();
 const pending=new Map();
+const BINANCE_DATA='https://data-api.binance.vision',BINANCE_ARCHIVE='https://data.binance.vision',START_MONTH=Date.UTC(2017,7,1);
 let xautMeta=null,lastKey='',timer=0;
 
 function ensure(){
@@ -19,6 +20,28 @@ function ensure(){
   return panel
 }
 function normSymbol(s){return String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'')}
+function monthStart(ms){const d=new Date(ms);return Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),1)}
+function addMonths(ms,n){const d=new Date(ms);return Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+n,1)}
+function monthKey(ms){const d=new Date(ms);return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}`}
+function checksumUrl(symbol,ms){const ym=monthKey(ms);return `${BINANCE_ARCHIVE}/data/spot/monthly/klines/${symbol}/1s/${symbol}-1s-${ym}.zip.CHECKSUM`}
+function normTs(n){n=Number(n);return n>1e14?Math.floor(n/1000):n}
+async function checkedText(url){const r=await fetch(url,{cache:'force-cache',credentials:'omit'});if(!r.ok)throw Error(`history checksum HTTP ${r.status}`);const t=(await r.text()).trim();if(t.length<20)throw Error('history checksum invalid');return t}
+async function safeDiscoverBinance(symbol,H){
+  const existing=H.manifest?.get?.(symbol);if(existing?.earliestSourceMs&&existing?.integrityChecksum)return existing;
+  try{const saved=JSON.parse(localStorage.getItem(`renko-history-manifest-v3:${symbol}`)||'null');if(saved?.symbol===symbol&&saved?.interval==='1s'&&saved?.earliestSourceMs&&saved?.integrityChecksum){H.manifest?.set?.(symbol,saved);return saved}}catch{}
+  const q=new URLSearchParams({symbol,interval:'1s',limit:'1',startTime:String(START_MONTH)});
+  const r=await fetch(`${BINANCE_DATA}/api/v3/klines?${q}`,{cache:'no-store',credentials:'omit'});if(!r.ok)throw Error(`Binance 1s HTTP ${r.status}`);
+  const rows=await r.json();if(!Array.isArray(rows)||!rows.length)throw Error(`${symbol} has no historical Binance 1s rows`);
+  const earliestSourceMs=normTs(rows[0][0]),first=monthStart(earliestSourceMs);
+  const integrityChecksum=await checkedText(checksumUrl(symbol,first));
+  /* Monthly archive publication can lag the calendar boundary. Two completed
+     months back is intentionally used as the newest integrity anchor so first
+     paint never probes an unpublished archive month and emits a handled 404. */
+  const last=addMonths(monthStart(Date.now()),-2),latestIntegrityChecksum=await checkedText(checksumUrl(symbol,last));
+  const span=Math.max(1,Math.round((last-first)/2629800000)+1);
+  const m={symbol,provider:'Binance Spot',source:'Binance Data API historical 1s + Public Data checksum',interval:'1s',archive:'Binance Public Data / Data Vision',earliestSourceMs,archiveFirstMonth:monthKey(first),archiveFirstMonthMs:first,archiveLastVerifiedMonth:monthKey(last),archiveLastVerifiedMonthMs:last,archiveMonthSpan:span,totalSourceChunks:span,integrityChecksum,latestIntegrityChecksum,discoveredAt:Date.now(),publicationSafeChecksumLagMonths:2};
+  H.manifest?.set?.(symbol,m);try{localStorage.setItem(`renko-history-manifest-v3:${symbol}`,JSON.stringify(m))}catch{}return m
+}
 function apply(v){
   const p=ensure();if(!p)return;
   const earliest=Number(v.earliestMs)||0,latest=Number(v.latestMs)||0;
@@ -49,11 +72,11 @@ async function resolve(){
   }
   if(hm.provider==='Binance Spot'&&Number(hm.earliestAvailableMs)>0){const latest=Number(hm.latestAvailableMs)||Number(T.state?.closedBars?.at(-1)?.closeTime)||Date.now(),chunks=Number(hm.totalSourceChunks)||Number(hm.archiveMonthSpan)||0;apply({symbol:s,label:s,provider:'Binance Spot',earliestMs:hm.earliestAvailableMs,latestMs:latest,loaded,availableTotal:chunks,loadedText:`${fmtN(loaded)} loaded · ${fmtN(chunks)} verified source chunks`,status:'FULL HISTORY AVAILABLE · ORIGIN VERIFIED',synthetic:'NO',ready:true});return}
   apply({symbol:s,label:s,provider:'Binance Spot',loaded,loadedText:`${fmtN(loaded)} recent bars loaded`,status:'DISCOVERING FIXED-1s ORIGIN',synthetic:'NO',ready:false});
-  if(!pending.has(s))pending.set(s,Promise.resolve().then(()=>H.discoverBinance(s)).then(m=>{pending.delete(s);const latest=Number(T.state?.closedBars?.at(-1)?.closeTime)||Date.now(),chunks=Number(m.archiveMonthSpan)||Number(m.totalSourceChunks)||0;apply({symbol:s,label:s,provider:'Binance Spot',earliestMs:m.earliestSourceMs||m.earliestAvailableMs,latestMs:latest,loaded:Number(T.state?.closedBars?.length)||0,availableTotal:chunks,loadedText:`${fmtN(Number(T.state?.closedBars?.length)||0)} recent bars loaded · ${fmtN(chunks)} verified source chunks`,status:'FULL HISTORY AVAILABLE · ORIGIN READY',synthetic:'NO',ready:true});return m}).catch(()=>pending.delete(s)));
+  if(!pending.has(s))pending.set(s,Promise.resolve().then(()=>safeDiscoverBinance(s,H)).then(m=>{pending.delete(s);const latest=Number(T.state?.closedBars?.at(-1)?.closeTime)||Date.now(),chunks=Number(m.archiveMonthSpan)||Number(m.totalSourceChunks)||0;apply({symbol:s,label:s,provider:'Binance Spot',earliestMs:m.earliestSourceMs||m.earliestAvailableMs,latestMs:latest,loaded:Number(T.state?.closedBars?.length)||0,availableTotal:chunks,loadedText:`${fmtN(Number(T.state?.closedBars?.length)||0)} recent bars loaded · ${fmtN(chunks)} verified source chunks`,status:'FULL HISTORY AVAILABLE · ORIGIN READY',synthetic:'NO',ready:true});return m}).catch(()=>pending.delete(s)));
 }
 function refresh(){void resolve().catch(()=>{})}
 window.addEventListener('renko:history-origin',refresh);window.addEventListener('renko:symbol-switch-start',()=>setTimeout(refresh,0));window.addEventListener('renko:tv-ready',refresh);document.addEventListener('DOMContentLoaded',refresh,{once:true});
 timer=setInterval(()=>{const T=window.RWARenkoTV,s=normSymbol(T?.state?.symbol),mode=String(T?.state?.historyViewMode||''),bars=Number(T?.state?.closedBars?.length)||0,key=`${s}:${mode}:${bars}:${T?.state?.historyMeta?.earliestAvailableMs||0}`;if(key!==lastKey){lastKey=key;refresh()}},1000);
-window.RWARenkoTotalHistoryPanel={version:'1.0.0-launch-visible',rule:'visible-provider-origin-loaded-status-no-timeframe-substitution',ensure,refresh,resolve,getXaut,get timer(){return timer}};
+window.RWARenkoTotalHistoryPanel={version:'1.0.0-launch-visible',rule:'visible-provider-origin-loaded-status-no-timeframe-substitution',discovery:'provider-native-1s-publication-safe-monthly-checksum',ensure,refresh,resolve,getXaut,safeDiscoverBinance,get timer(){return timer}};
 ensure();refresh();
 })();
