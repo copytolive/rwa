@@ -17,6 +17,9 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
       - name: Validate critical source
         run: |
           for f in execution-api.js exchange-core.js suite-v2.js social-trade-monitor.js social-notification-defaults.js social-trading-pro.js \
@@ -34,6 +37,9 @@ jobs:
           node tools/storefront-ui-contract.mjs
           node tools/security-gate.mjs
           node tools/launch-gate-current.mjs --require-engineering
+          node tools/rwa-total-ready-screen.mjs --require-engineering
+          (cd apps/realworldasset && npm run verify:foundation)
+
       - name: Validate immutable safety, lazy runtime, commerce and MULTI CHAIN V2 markers
         shell: bash
         run: |
@@ -84,51 +90,91 @@ jobs:
           grep -Fq 'RWAMarginRuntime' trade/margin-runtime.js
           grep -Fq 'RWAChartTradeOverlay' trade/chart-overlays.js
           ! grep -Fq 'ExchangeClient' trade/margin-runtime.js trade/chart-overlays.js quick-actions.js social-trade-monitor.js social-trading-pro.js rwa-storefront.js rwa-storefront-safety-patch.js rwa-store-draft-ui.js rwa-home-commerce.js rwa-market-labels.js rwa-store-detail.js rwa-checkout-ui.js trade/ui-polish.js
-      - name: Verify exact canonical GitHub Pages release surfaces
+
+      - name: Verify canonical GitHub Pages release surfaces
         if: ${{ github.event_name != 'pull_request' }}
         shell: bash
         run: |
           set -euo pipefail
           base='https://copytolive.github.io/rwa'
-          ok=0
-          for i in $(seq 1 120); do
-            q="${GITHUB_RUN_ID}-${i}"
-            live_sha="$(curl --connect-timeout 5 --max-time 12 -fsSL "$base/deployment-sha.txt?v=$q" 2>/dev/null | tr -d '\r\n' || true)"
-            if [ "$live_sha" = "$GITHUB_SHA" ]; then ok=1; break; fi
-            sleep 5
+
+          deploy_relevant=0
+          if git rev-parse "$GITHUB_SHA^" >/dev/null 2>&1; then
+            while IFS= read -r p; do
+              case "$p" in
+                .github/workflows/pages.yml|apps/realworldasset/*|renko/*|index.html|app.js|styles.css|mobile.css|stable-shell.css|superapp-v5.js|superapp-v5.css|rwa-sw-v5.js|rwa-target-dashboard-v2.js|rwa-target-dashboard-v2.css|rwa-ecommerce-target-controller-v1.js|rwa-ecommerce-target-hardening-v1.js|manifest.webmanifest|UI_SYNC_MANIFEST.json|REALWORLDASSET_MIGRATION_MANIFEST.json)
+                  deploy_relevant=1
+                  ;;
+              esac
+            done < <(git diff --name-only "$GITHUB_SHA^" "$GITHUB_SHA")
+          else
+            deploy_relevant=1
+          fi
+
+          live_sha=''
+          if [ "$deploy_relevant" = 1 ]; then
+            for i in $(seq 1 120); do
+              q="${GITHUB_RUN_ID}-${i}"
+              live_sha="$(curl --connect-timeout 5 --max-time 12 -fsSL "$base/deployment-sha.txt?v=$q" 2>/dev/null | tr -d '\r\n' || true)"
+              if [ "$live_sha" = "$GITHUB_SHA" ]; then break; fi
+              sleep 5
+            done
+            test "$live_sha" = "$GITHUB_SHA"
+            echo "PUBLIC_EXACT_DEPLOYMENT_SHA_PASS=$live_sha"
+          else
+            live_sha="$(curl --connect-timeout 5 --max-time 20 -fsSL "$base/deployment-sha.txt?v=${GITHUB_RUN_ID}" | tr -d '\r\n')"
+            [[ "$live_sha" =~ ^[0-9a-f]{40}$ ]]
+            echo "PUBLIC_DEPLOYMENT_UNCHANGED_NON_UI_PUSH current=$GITHUB_SHA deployed=$live_sha"
+          fi
+
+          q="${GITHUB_RUN_ID}-canonical"
+          declare -A files=(
+            [root]="/"
+            [markets]="/markets/"
+            [merchant]="/merchant/"
+            [orders]="/merchant/orders/"
+            [community]="/community/"
+            [settings]="/settings/"
+            [checkout]="/checkout/"
+            [account_orders]="/account/orders/"
+            [renko]="/renko/"
+          )
+          for name in "${!files[@]}"; do
+            route="${files[$name]}"
+            code="$(curl --connect-timeout 5 --max-time 25 -sS -L -o "/tmp/rwa-$name.html" -w '%{http_code}' "$base$route?v=$q")"
+            test "$code" = 200
           done
-          test "$ok" = "1"
-          q="${GITHUB_RUN_ID}-release-v2"
-          curl --connect-timeout 5 --max-time 20 -fsSL "$base/?v=$q" -o /tmp/rwa-root.html
-          curl --connect-timeout 5 --max-time 20 -fsSL "$base/superapp-v5.js?v=$q" -o /tmp/rwa-superapp.js
-          curl --connect-timeout 5 --max-time 20 -fsSL "$base/rwa-multichain.js?v=$q" -o /tmp/rwa-multichain.js
-          curl --connect-timeout 5 --max-time 20 -fsSL "$base/rwa-multichain-engine.js?v=$q" -o /tmp/rwa-multichain-engine.js
-          curl --connect-timeout 5 --max-time 20 -fsSL "$base/rwa-multichain-registry.json?v=$q" -o /tmp/rwa-multichain.json
-          curl --connect-timeout 5 --max-time 20 -fsSL "$base/trade/?v=$q" -o /tmp/rwa-trade.html
-          curl --connect-timeout 5 --max-time 20 -fsSL "$base/trade/config.js?v=$q" -o /tmp/rwa-trade-config.js
-          grep -Fq 'market-performance.js?v=12' /tmp/rwa-root.html
-          grep -Fq 'superapp-v5.js?v=17' /tmp/rwa-root.html
-          grep -Fq 'rwaMultiChainLazyBootstrap' /tmp/rwa-root.html
-          grep -Fq "loadScriptOnce('social-notification-defaults.js?v=1','social-defaults')" /tmp/rwa-superapp.js
-          grep -Fq "loadScriptOnce('social-trading-pro.js?v=1','social-pro')" /tmp/rwa-superapp.js
-          grep -Fq "loadScriptOnce('quick-actions.js?v=1','quick-actions')" /tmp/rwa-superapp.js
-          grep -Fq "POLICY='chain-abstraction-fail-closed-v2'" /tmp/rwa-multichain.js
-          grep -Fq 'window.RWAMultiChain' /tmp/rwa-multichain.js
-          grep -Fq "const VERSION='2.0.0'" /tmp/rwa-multichain-engine.js
-          grep -Fq "const LIFI='https://li.quest/v1'" /tmp/rwa-multichain-engine.js
-          grep -Fq '"policy": "chain-abstraction-fail-closed-v2"' /tmp/rwa-multichain.json
-          grep -Fq '"id": "solana"' /tmp/rwa-multichain.json
-          grep -Fq '"id": "base"' /tmp/rwa-multichain.json
-          grep -Fq '"id": "monad"' /tmp/rwa-multichain.json
-          grep -Fq 'id="priceChart"' /tmp/rwa-trade.html
-          grep -Fq "version:'1.5.0'" /tmp/rwa-trade-config.js
-          grep -Fq "status==='READY_FOR_MAINNET'" /tmp/rwa-trade-config.js
-          echo "RELEASE_MULTICHAIN_V2_EXACT_SHA=PASS:$GITHUB_SHA"
+
+          grep -Fq 'UI DEMO' /tmp/rwa-root.html
+          grep -Fq 'BACKEND OFFLINE' /tmp/rwa-root.html
+          grep -Fq 'Connect Wallet' /tmp/rwa-root.html
+          grep -Fq 'Demo' /tmp/rwa-markets.html
+          grep -Fq 'Demo' /tmp/rwa-merchant.html
+
+          curl --connect-timeout 5 --max-time 20 -fsSL "$base/UI_SYNC_MANIFEST.json?v=$q" -o /tmp/rwa-sync.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/rwa-sync.json'))
+          assert d['canonicalPath']=='apps/realworldasset',d
+          assert d.get('compatibilityMirror') is None,d
+          assert d.get('syncMode')=='embedded-canonical-source',d
+          print('PUBLIC_CANONICAL_UI_MANIFEST_PASS')
+          PY
+
+          for retired in superapp-v5.js rwa-multichain.js rwa-multichain-engine.js rwa-multichain-registry.json trade/config.js; do
+            code="$(curl --connect-timeout 5 --max-time 15 -sS -L -o /dev/null -w '%{http_code}' "$base/$retired?v=$q")"
+            test "$code" != 200
+          done
+          legacy_code="$(curl --connect-timeout 5 --max-time 15 -sS -L -o /dev/null -w '%{http_code}' "$base/realworldasset/?v=$q")"
+          test "$legacy_code" != 200
+          echo "RELEASE_CANONICAL_REALWORLDASSET_PUBLIC_PASS deployed=$live_sha"
+
       - name: Publish release candidate status
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/release-candidate' -f description='Safety + lazy runtime + commerce + MULTI CHAIN V2 engineering contract verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/release-candidate' -f description='Canonical UI + safety + fail-closed engineering contract verified'
+
       - name: Publish release candidate failure
         if: failure()
         env:
