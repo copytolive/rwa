@@ -1,0 +1,101 @@
+# Exact-SHA regression for physical/mixed-trackpad GOLD back-scroll.
+name: RENKO GOLD Wheel Pan No Zoom
+
+on:
+  push:
+    branches:
+      - main
+      - fix/renko-gold-wheel-backscroll-no-zoom-20260902
+    paths:
+      - 'renko/**'
+      - 'scripts/renko_gold_wheel_pan_no_zoom_proof.mjs'
+      - '.github/workflows/renko-gold-wheel-pan-no-zoom.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  branch-local:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Static wheel pan-only guard
+        run: |
+          set -euo pipefail
+          node --check renko/renko-gold-wheel-pan-lock.js
+          node --check scripts/renko_gold_wheel_pan_no_zoom_proof.mjs
+          grep -Fq 'renko-gold-wheel-pan-lock.js?v=1' renko/index.html
+          grep -Fq 'mouseWheel:false' renko/renko-gold-wheel-pan-lock.js
+          grep -Fq 'passive:false' renko/renko-gold-wheel-pan-lock.js
+          grep -Fq 'stopImmediatePropagation' renko/renko-gold-wheel-pan-lock.js
+          ! grep -nE '\.scrollToPosition\s*\(' renko/renko-gold-wheel-pan-lock.js
+          grep -Fq "version:'1.3.0-full-prepend-size-lock'" renko/renko-gold-wheel-pan-lock.js
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+      - name: Serve branch at production-equivalent path
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/renko-wheel-site
+          mkdir -p /tmp/renko-wheel-site/rwa
+          ln -s "$GITHUB_WORKSPACE/renko" /tmp/renko-wheel-site/rwa/renko
+          cd /tmp/renko-wheel-site
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/renko-wheel-http.log 2>&1 &
+          for i in {1..40}; do curl -fsS http://127.0.0.1:4173/rwa/renko/ >/dev/null && exit 0; sleep .25; done
+          cat /tmp/renko-wheel-http.log
+          exit 1
+      - name: Traditional 10 mixed-trackpad back-scroll stays same size
+        env:
+          RENKO_BASE_URL: http://127.0.0.1:4173/rwa/renko/
+          RENKO_OUTPUT_DIR: artifacts/branch-wheel-no-zoom
+        run: node scripts/renko_gold_wheel_pan_no_zoom_proof.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-gold-wheel-no-zoom-branch-${{ github.sha }}
+          path: artifacts/branch-wheel-no-zoom
+          if-no-files-found: warn
+
+  public-production:
+    if: github.ref == 'refs/heads/main'
+    needs: branch-local
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait until Pages contains exact wheel-fix SHA
+        run: |
+          set -euo pipefail
+          for i in {1..180}; do
+            js="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/renko-gold-wheel-pan-lock.js?wheel=$RANDOM" 2>/dev/null || true)"
+            sha="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/deployment-sha.txt?wheel=$RANDOM" 2>/dev/null | tr -d '\r\n' || true)"
+            if printf '%s' "$js" | grep -Fq "1.3.0-full-prepend-size-lock" && [[ "$sha" =~ ^[0-9a-f]{40}$ ]] && [ "$sha" = "$GITHUB_SHA" ]; then echo "RENKO_GOLD_WHEEL_PUBLIC_EXACT_SHA_PASS $sha"; exit 0; fi
+            sleep 5
+          done
+          echo "Pages did not publish exact wheel-fix SHA $GITHUB_SHA"
+          exit 1
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+      - name: Public Traditional 10 mixed-trackpad back-scroll stays same size
+        env:
+          RENKO_BASE_URL: https://copytolive.github.io/rwa/renko/
+          RENKO_EXPECTED_SHA: ${{ github.sha }}
+          RENKO_OUTPUT_DIR: artifacts/public-wheel-no-zoom
+        run: node scripts/renko_gold_wheel_pan_no_zoom_proof.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-gold-wheel-no-zoom-public-${{ github.sha }}
+          path: artifacts/public-wheel-no-zoom
+          if-no-files-found: warn
