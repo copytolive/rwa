@@ -218,7 +218,7 @@ jobs:
   validate-public:
     needs: deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 18
     steps:
       - name: Wait for exact public deployment and validate routes
         shell: bash
@@ -252,41 +252,81 @@ jobs:
           set -euo pipefail
           mkdir -p production-proof
           python3 - <<'PY'
-          from playwright.sync_api import sync_playwright
           from pathlib import Path
+          import time
+          from playwright.sync_api import sync_playwright
+
           base='https://copytolive.github.io/rwa'
           routes=['/','/markets/','/merchant/','/merchant/orders/','/merchant/updates/new/','/merchant/ads/','/community/','/settings/','/checkout/','/account/orders/','/renko/']
+          transient_statuses={502,503,504}
           errors=[]
           overflows=[]
           failed=[]
-          with sync_playwright() as p:
-              b=p.chromium.launch(headless=True,args=['--no-sandbox'])
-              for name,width,height in [('desktop',1672,941),('mobile',390,844)]:
-                  page=b.new_page(viewport={'width':width,'height':height},device_scale_factor=1)
-                  current={'route':'/'}
-                  page.on('pageerror',lambda e,n=name,c=current: errors.append({'viewport':n,'route':c['route'],'error':str(e)}))
-                  page.on('response',lambda r,n=name,c=current: failed.append({'viewport':n,'route':c['route'],'status':r.status,'url':r.url}) if r.status>=400 else None)
-                  for route in routes:
-                      current['route']=route
+          retries=[]
+
+          def validate_route(browser, viewport_name, width, height, route):
+              last_errors=[]
+              last_failed=[]
+              last_overflow=None
+              for attempt in range(1,5):
+                  page=browser.new_page(viewport={'width':width,'height':height},device_scale_factor=1)
+                  attempt_errors=[]
+                  attempt_failed=[]
+                  page.on('pageerror',lambda e: attempt_errors.append(str(e)))
+                  page.on('response',lambda r: attempt_failed.append({'status':r.status,'url':r.url}) if r.status>=400 else None)
+                  try:
                       r=page.goto(base+route,wait_until='domcontentloaded',timeout=30000)
-                      assert r and r.status==200,(name,route,r.status if r else None)
-                      page.wait_for_timeout(150)
+                      status=r.status if r else None
+                      page.wait_for_timeout(500)
                       text=page.locator('body').inner_text()
-                      assert '404' not in text[:120],(name,route)
                       dims=page.evaluate('() => ({sw:document.documentElement.scrollWidth,iw:window.innerWidth})')
-                      if dims['sw']>dims['iw']+3:
-                          overflows.append({'viewport':name,'route':route,**dims})
-                  current['route']='/'
+                      last_overflow={'viewport':viewport_name,'route':route,**dims} if dims['sw']>dims['iw']+3 else None
+                      route_ok=(status==200 and '404' not in text[:120] and last_overflow is None)
+                  except Exception as exc:
+                      status=None
+                      route_ok=False
+                      attempt_errors.append(repr(exc))
+                  finally:
+                      page.close()
+
+                  last_errors=attempt_errors
+                  last_failed=attempt_failed
+                  transient_only=(
+                      bool(attempt_failed)
+                      and all(item['status'] in transient_statuses and item['url'].startswith(base) for item in attempt_failed)
+                  )
+                  if route_ok and not attempt_errors and not attempt_failed:
+                      if attempt>1:
+                          retries.append({'viewport':viewport_name,'route':route,'attempts':attempt})
+                      return
+                  if transient_only and attempt<4:
+                      time.sleep(1.5*attempt)
+                      continue
+                  if status is not None and status != 200:
+                      last_failed.append({'status':status,'url':base+route})
+                  errors.extend({'viewport':viewport_name,'route':route,'error':e} for e in last_errors)
+                  failed.extend({'viewport':viewport_name,'route':route,**item} for item in last_failed)
+                  if last_overflow:
+                      overflows.append(last_overflow)
+                  raise AssertionError({'viewport':viewport_name,'route':route,'attempt':attempt,'errors':last_errors,'failed':last_failed,'overflow':last_overflow})
+
+          with sync_playwright() as p:
+              browser=p.chromium.launch(headless=True,args=['--no-sandbox'])
+              for name,width,height in [('desktop',1672,941),('mobile',390,844)]:
+                  for route in routes:
+                      validate_route(browser,name,width,height,route)
+                  page=browser.new_page(viewport={'width':width,'height':height},device_scale_factor=1)
                   page.goto(base+'/',wait_until='networkidle',timeout=30000)
                   page.screenshot(path=f'production-proof/rwa-realworldasset-{width}x{height}.png',full_page=False)
                   page.close()
               Path('production-proof/result.txt').write_text(
-                  f'PUBLIC_CHROMIUM_REALWORLDASSET_PASS routes={len(routes)} viewports=2 runtimeErrors={len(errors)} failedResponses={len(failed)} horizontalOverflow={len(overflows)}\n'
+                  f'PUBLIC_CHROMIUM_REALWORLDASSET_PASS routes={len(routes)} viewports=2 runtimeErrors={len(errors)} failedResponses={len(failed)} horizontalOverflow={len(overflows)} transientRetries={len(retries)}\n'
               )
+              Path('production-proof/transient-retries.txt').write_text('\n'.join(map(str,retries))+'\n' if retries else 'NONE\n')
               assert not errors,errors
               assert not failed,failed
               assert not overflows,overflows
-              b.close()
+              browser.close()
           PY
 
       - name: Upload public production proof
