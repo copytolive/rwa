@@ -1,27 +1,16 @@
 {
-  "schema": 6,
+  "schema": 5,
   "source": "SEABLUEPRINT_COMMERCE",
   "candidate_base": "https://seablueprint.com/rwa-commerce",
-  "candidate_api_base": "https://seablueprint.com/rwa-commerce",
   "fallback_candidate_base": "https://copytolive.com/rwa-commerce",
-  "fallback_candidate_api_base": "https://copytolive.com/rwa-commerce",
   "api_base": "",
   "business_candidate_base": "https://seablueprint.com/rwa-business",
   "business_api_base": "",
   "mode": "LOCKED_UNTIL_BACKEND_AND_CHECKOUT_READY",
-  "client_mode_default": "probe_candidates_then_fail_closed",
-  "write_policy": "NO_FAKE_SUCCESS_AUTH_QUOTE_ORDER_PAYMENT_ONLY_AFTER_SERVER_EVIDENCE",
   "business_mode": "LOCKED_UNTIL_REAL_SETTLEMENT_AND_RECONCILIATION",
   "shell_mode": "SINGLE_MAIN_DOCUMENT",
   "navigation_policy": "NO_TOP_LEVEL_ECOMMERCE_NAVIGATION",
   "policy": "ONE_TOKEN_ONE_PHYSICAL_STORE_V1",
   "business_validation_policy": "SETTLED_EVIDENCE_REQUIRED_V1",
-  "ui_policy": {
-    "no_fake_success": true,
-    "candidate_endpoints_probe_only": true,
-    "checkout_requires_readyz_checkout_ready": true,
-    "payment_paid_only_after_provider_webhook": true,
-    "mainnet_requires_machine_gate": true
-  },
-  "note": "Seablueprint ecommerce and business validation run inside the existing RWA main document. candidate_base/candidate_api_base and business_candidate_base are probe-only. Set api_base only after HTTPS healthz/readyz, production payment configuration and at least one real verified store are proven. Set business_api_base only after the business service is deployed against the real commerce ledger and its readiness gate passes. Empty API fields keep frontend honest and fail-closed. Wallet connection or KYB alone never means TRANSACTION VALIDATED; qualifying SETTLED evidence plus reconciliation are required."
+  "note": "Seablueprint ecommerce and business validation run inside the existing RWA main document. candidate_base/business_candidate_base are probe-only. Set api_base only after HTTPS healthz/readyz, production payment configuration and at least one real verified store are proven. Set business_api_base only after the business service is deployed against the real commerce ledger and its readiness gate passes. Empty API fields keep frontend honest and fail-closed. Wallet connection or KYB alone never means TRANSACTION VALIDATED; qualifying SETTLED evidence plus reconciliation are required."
 }

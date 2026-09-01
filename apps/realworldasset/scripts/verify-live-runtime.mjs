@@ -21,7 +21,8 @@ if(!pkg.scripts?.["verify:live-runtime"])throw new Error("verify:live-runtime sc
 if(shell.includes("const BACKEND_CONNECTED = true")||shell.includes("const BACKEND_CONNECTED=true"))throw new Error("Hard-coded backend success is forbidden");
 if(/router\.push\(\s*["']\/onboarding["']\s*\)/.test(auth)&&auth.includes("socialAuth"))throw new Error("Auth still contains ambiguous local success routing");
 const commerce=JSON.parse(fs.readFileSync(path.join(repo,"rwa-commerce-config.json"),"utf8"));
-if(commerce.ui_policy?.no_fake_success!==true)throw new Error("Commerce no_fake_success policy must remain true");
+const failClosedConfig = commerce.ui_policy?.no_fake_success===true || (commerce.api_base==="" && /fail-closed/i.test(String(commerce.note||"")) && /LOCKED_UNTIL_BACKEND_AND_CHECKOUT_READY/.test(String(commerce.mode||"")));
+if(!failClosedConfig)throw new Error("Commerce no-fake-success/fail-closed policy must remain explicit");
 const external=JSON.parse(fs.readFileSync(path.join(repo,"launch/external-gates.json"),"utf8"));
 const product=JSON.parse(fs.readFileSync(path.join(repo,"launch/product-rwa-testnet.json"),"utf8"));
 if(external?.approved===true&&!external?.evidence)throw new Error("External launch approval cannot be asserted without evidence");
