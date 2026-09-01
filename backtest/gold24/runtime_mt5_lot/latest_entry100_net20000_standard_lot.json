@@ -226,9 +226,9 @@
   "removed_by_correlation_count": 0,
   "schema": "gold24-entry100-net20000-standard-lot-corr-v1",
   "simple_relabel_forbidden": true,
-  "source_batch": 283,
-  "source_candidate_cursor": 44642557,
-  "source_run_id": "33528218081",
+  "source_batch": 284,
+  "source_candidate_cursor": 45042557,
+  "source_run_id": "33533615294",
   "status": "PASS",
   "unit": "1.0 XAUUSD standard lot = 100 GOLD units; exact re-backtest under canonical stressed Hyperliquid cost model",
   "worst_year_definition": "minimum calendar-year net profit in USD from the exact standard-lot bar PnL"
