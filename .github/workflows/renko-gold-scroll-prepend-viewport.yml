@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - fix/renko-gold-scroll-prepend-viewport-lock-20260902
+      - fix/renko-gold-wheel-backscroll-no-zoom-20260902
     paths:
       - 'renko/**'
       - 'scripts/renko_gold_scroll_prepend_proof.mjs'
