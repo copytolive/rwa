@@ -1,0 +1,8 @@
+GOLD24_QUALIFIED_SCRIPT_CERTIFICATION_KICK
+source_batch=281
+source_run_id=33513845503
+strict_count=3
+multi_count=5
+total_pairs=8
+requested_at=2026-09-01T21:00:00+07:00
+reason=certify current 3 strict + 5 Multi Python/MT5 pairs against latest finalized canonical batch 281 after PowerShell-safe Strategy Tester fix
