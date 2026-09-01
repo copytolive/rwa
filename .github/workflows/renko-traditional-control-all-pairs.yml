@@ -1,119 +1,101 @@
-name: RENKO Traditional Control All Pairs Gate
+name: RENKO GOLD Traditional Chromium Gate
+
 on:
   push:
     branches:
       - main
-      - fix/renko-traditional-control-all-pairs-20260829
-      - fix/renko-traditional-first-frame-target-20260829
+      - fix/renko-gold-final-no-drift-20260901
     paths:
       - 'renko/**'
-      - 'tools/renko-traditional-*.mjs'
       - '.github/workflows/renko-traditional-control-all-pairs.yml'
+      - '.github/workflows/renko-gold-current-main-closure.yml'
   workflow_dispatch:
+
 permissions:
   contents: read
+
 jobs:
   exact-browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Static + engine Traditional contract
-        run: |
-          set -euo pipefail
-          node --check renko/renko-tv-engine.js
-          node --check renko/renko-tv-traditional-control.js
-          node --check tools/renko-traditional-engine-contract.mjs
-          node --check tools/renko-traditional-control-all-pairs-report.mjs
-          node --check tools/renko-traditional-stability-report.mjs
-          grep -q "traditionalRevision:'2.0.0-pair-safe'" renko/renko-tv-engine.js
-          grep -q "renko-tv-traditional-control.js?v=2" renko/index.html
-          grep -q "pair-aware-fixed-absolute-box-min-tick-positive-first-frame-target-no-atr-exact-ownership" renko/renko-tv-traditional-control.js
-          node tools/renko-traditional-engine-contract.mjs
       - name: Install Chromium
         run: |
-          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
-          npx playwright install --with-deps chromium
-      - name: Serve exact checkout
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+      - name: Serve exact GOLD checkout
         run: |
           set -euo pipefail
-          rm -rf /tmp/renko-traditional-site
-          mkdir -p /tmp/renko-traditional-site/rwa
-          cp -a . /tmp/renko-traditional-site/rwa/
-          cd /tmp/renko-traditional-site
-          python3 -m http.server 8080 >/tmp/renko-traditional-http.log 2>&1 &
+          rm -rf /tmp/renko-gold-traditional-site
+          mkdir -p /tmp/renko-gold-traditional-site/rwa
+          cp -a . /tmp/renko-gold-traditional-site/rwa/
+          cd /tmp/renko-gold-traditional-site
+          python3 -m http.server 8080 >/tmp/renko-gold-traditional-http.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/rwa/renko/ >/dev/null && exit 0; sleep 1; done
-          cat /tmp/renko-traditional-http.log
+          cat /tmp/renko-gold-traditional-http.log
           exit 1
-      - name: Desktop — Traditional Apply on all 50 launch pairs
-        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_TRADITIONAL_VIEWPORT=desktop RENKO_TRADITIONAL_OUT=artifacts/traditional-desktop node tools/renko-traditional-control-all-pairs-report.mjs
-      - name: Mobile — Traditional Apply on all 50 launch pairs
-        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_TRADITIONAL_VIEWPORT=mobile RENKO_TRADITIONAL_OUT=artifacts/traditional-mobile node tools/renko-traditional-control-all-pairs-report.mjs
-      - name: Desktop — Traditional fixed-box stability across real 1s closes
-        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_TRADITIONAL_STABILITY_VIEWPORT=desktop RENKO_TRADITIONAL_STABILITY_OUT=artifacts/traditional-stability-desktop node tools/renko-traditional-stability-report.mjs
-      - name: Mobile — Traditional fixed-box stability across real 1s closes
-        run: RWA_TEST_URL=http://127.0.0.1:8080/rwa RENKO_TRADITIONAL_STABILITY_VIEWPORT=mobile RENKO_TRADITIONAL_STABILITY_OUT=artifacts/traditional-stability-mobile node tools/renko-traditional-stability-report.mjs
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: renko-traditional-exact-${{ github.sha }}
-          path: |
-            artifacts/traditional-desktop
-            artifacts/traditional-mobile
-            artifacts/traditional-stability-desktop
-            artifacts/traditional-stability-mobile
-          retention-days: 30
+      - name: GOLD Traditional Chromium — desktop + mobile
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { chromium, devices } from 'playwright';
+          const browser=await chromium.launch({headless:true});
+          async function prove(contextOptions,label){
+            const page=await browser.newPage(contextOptions);const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+            await page.goto(`http://127.0.0.1:8080/rwa/renko/?gold=1&traditionalGoldGate=1&v=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:60000});
+            await page.waitForFunction(()=>window.RENKO_GOLD_ONLY===true&&document.documentElement.dataset.renkoGoldRecent==='true'&&window.RWARenkoTV?.state?.symbol==='XAUUSD'&&document.querySelector('#chartHost canvas'),{timeout:60000});
+            await page.fill('#traditionalBox','1');
+            await page.click('[data-apply-method="traditional"]');
+            await page.waitForFunction(()=>window.RWARenkoTV?.settings?.method==='traditional'&&Number(window.RWARenkoTV?.state?.box)>0,{timeout:15000});
+            const r=await page.evaluate(async()=>{const T=window.RWARenkoTV,H=window.RWARenkoGoldTotalHistory,m=await H.loadManifest();return{symbol:T.state.symbol,method:T.settings.method,box:Number(T.state.box),interval:T.settings.interval,bars:T.state.closedBars.length,provider:m.provider,instrument:m.instrumentCode,complete:m.backfillComplete,months:m.months.length,canvas:!!document.querySelector('#chartHost canvas'),goldOnly:window.RENKO_GOLD_ONLY===true};});
+            if(r.symbol!=='XAUUSD'||r.method!=='traditional'||!(r.box>0)||r.interval!=='1s'||r.bars<100||r.provider!=='Dukascopy'||r.instrument!=='XAU-USD'||!r.complete||!r.canvas||!r.goldOnly||errors.length)throw new Error(JSON.stringify({label,r,errors}));
+            console.log('GOLD_TRADITIONAL_CHROMIUM_PASS',JSON.stringify({label,...r}));await page.close();
+          }
+          await prove({viewport:{width:1672,height:941}},'desktop');
+          await prove({...devices['iPhone 13']},'mobile');
+          await browser.close();
+          NODE
+
   public-production:
     if: github.ref == 'refs/heads/main'
     needs: exact-browser
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Wait for exact GitHub Pages SHA + Traditional runtime
+      - name: Wait for exact public GOLD SHA
         run: |
           set -euo pipefail
-          index='https://copytolive.github.io/rwa/renko/'
-          runtime='https://copytolive.github.io/rwa/renko/renko-tv-traditional-control.js'
-          stamp='https://copytolive.github.io/rwa/renko/renko-deployment-sha.txt'
           for i in $(seq 1 90); do
-            ts=$(date +%s%N)
-            got=$(curl -fsS "$stamp?ts=$ts" 2>/dev/null | tr -d '\r\n' || true)
-            html=$(curl -fsS "$index?ts=$ts" 2>/dev/null || true)
-            js=$(curl -fsS "$runtime?ts=$ts" 2>/dev/null || true)
-            echo "attempt=$i deployed=$got"
-            if [ "$got" = "$GITHUB_SHA" ] && grep -q 'renko-tv-traditional-control.js?v=2' <<<"$html" && grep -q 'pair-aware-fixed-absolute-box-min-tick-positive-first-frame-target-no-atr-exact-ownership' <<<"$js"; then
-              echo "PUBLIC_TRADITIONAL_RUNTIME_PRESENT deployed=$got"
-              exit 0
-            fi
+            got=$(curl -fsS "https://copytolive.github.io/rwa/renko/deployment-sha.txt?cb=$RANDOM" 2>/dev/null | tr -d '\r\n' || true)
+            [ "$got" = "$GITHUB_SHA" ] && { echo "GOLD_TRADITIONAL_PUBLIC_SHA_PASS $got"; exit 0; }
             sleep 5
           done
           exit 1
       - name: Install Chromium
         run: |
-          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
-          npx playwright install --with-deps chromium
-      - name: PUBLIC desktop — Traditional on all 50 launch pairs
-        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_TRADITIONAL_VIEWPORT=desktop RENKO_TRADITIONAL_OUT=artifacts/public-traditional-desktop node tools/renko-traditional-control-all-pairs-report.mjs
-      - name: PUBLIC mobile — Traditional on all 50 launch pairs
-        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_TRADITIONAL_VIEWPORT=mobile RENKO_TRADITIONAL_OUT=artifacts/public-traditional-mobile node tools/renko-traditional-control-all-pairs-report.mjs
-      - name: PUBLIC desktop — Traditional fixed-box stability
-        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_TRADITIONAL_STABILITY_VIEWPORT=desktop RENKO_TRADITIONAL_STABILITY_OUT=artifacts/public-traditional-stability-desktop node tools/renko-traditional-stability-report.mjs
-      - name: PUBLIC mobile — Traditional fixed-box stability
-        run: RWA_TEST_URL=https://copytolive.github.io/rwa RENKO_TRADITIONAL_STABILITY_VIEWPORT=mobile RENKO_TRADITIONAL_STABILITY_OUT=artifacts/public-traditional-stability-mobile node tools/renko-traditional-stability-report.mjs
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: renko-traditional-public-${{ github.sha }}
-          path: |
-            artifacts/public-traditional-desktop
-            artifacts/public-traditional-mobile
-            artifacts/public-traditional-stability-desktop
-            artifacts/public-traditional-stability-mobile
-          retention-days: 30
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+      - name: PUBLIC GOLD Traditional Chromium — desktop + mobile
+        run: |
+          node --input-type=module <<'NODE'
+          import { chromium, devices } from 'playwright';
+          const browser=await chromium.launch({headless:true});
+          async function prove(contextOptions,label){
+            const page=await browser.newPage(contextOptions);const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+            await page.goto(`https://copytolive.github.io/rwa/renko/?gold=1&traditionalGoldPublicGate=1&v=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:60000});
+            await page.waitForFunction(()=>window.RENKO_GOLD_ONLY===true&&document.documentElement.dataset.renkoGoldRecent==='true'&&window.RWARenkoTV?.state?.symbol==='XAUUSD'&&document.querySelector('#chartHost canvas'),{timeout:60000});
+            await page.fill('#traditionalBox','1');await page.click('[data-apply-method="traditional"]');
+            await page.waitForFunction(()=>window.RWARenkoTV?.settings?.method==='traditional'&&Number(window.RWARenkoTV?.state?.box)>0,{timeout:15000});
+            const r=await page.evaluate(async()=>{const T=window.RWARenkoTV,H=window.RWARenkoGoldTotalHistory,m=await H.loadManifest();return{symbol:T.state.symbol,method:T.settings.method,box:Number(T.state.box),interval:T.settings.interval,bars:T.state.closedBars.length,provider:m.provider,instrument:m.instrumentCode,complete:m.backfillComplete,months:m.months.length,canvas:!!document.querySelector('#chartHost canvas'),goldOnly:window.RENKO_GOLD_ONLY===true};});
+            if(r.symbol!=='XAUUSD'||r.method!=='traditional'||!(r.box>0)||r.interval!=='1s'||r.bars<100||r.provider!=='Dukascopy'||r.instrument!=='XAU-USD'||!r.complete||!r.canvas||!r.goldOnly||errors.length)throw new Error(JSON.stringify({label,r,errors}));
+            console.log('PUBLIC_GOLD_TRADITIONAL_CHROMIUM_PASS',JSON.stringify({label,...r}));await page.close();
+          }
+          await prove({viewport:{width:1672,height:941}},'desktop');await prove({...devices['iPhone 13']},'mobile');await browser.close();
+          NODE
