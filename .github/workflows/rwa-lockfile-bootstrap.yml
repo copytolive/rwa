@@ -1,0 +1,33 @@
+name: RWA Lockfile Bootstrap
+
+on:
+  push:
+    branches: ["fix/rwa-total-ready-screen-20260901"]
+    paths:
+      - ".github/workflows/rwa-lockfile-bootstrap.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Generate canonical package lock
+        working-directory: apps/realworldasset
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Verify lockfile
+        working-directory: apps/realworldasset
+        run: |
+          test -s package-lock.json
+          node -e "const p=require('./package-lock.json'); if(!p.lockfileVersion) process.exit(1); console.log('RWA_LOCKFILE_PASS',p.lockfileVersion)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rwa-realworldasset-package-lock
+          path: apps/realworldasset/package-lock.json
+          retention-days: 1
