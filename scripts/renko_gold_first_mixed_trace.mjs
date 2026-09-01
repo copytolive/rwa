@@ -1,0 +1,31 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { chromium } from 'playwright';
+
+const base=process.env.RENKO_BASE_URL||'http://127.0.0.1:4173/rwa/renko/';
+const out=process.env.RENKO_TRACE_OUTPUT||'artifacts/first-mixed-trace';
+await fs.mkdir(out,{recursive:true});
+const browser=await chromium.launch({headless:true});
+const page=await browser.newPage({viewport:{width:1672,height:941}});
+const url=new URL(base);url.searchParams.set('gold','1');url.searchParams.set('traceMixed','1');url.searchParams.set('cb',Date.now());
+await page.goto(url.toString(),{waitUntil:'domcontentloaded',timeout:120000});
+await page.waitForFunction(()=>document.querySelector('#chartHost canvas')&&window.RWARenkoTV?.state?.symbol==='XAUUSD'&&window.RWARenkoGoldTotalHistory&&window.RWARenkoGoldWheelPanLock?.version==='1.3.0-full-prepend-size-lock'&&window.RWARenkoGoldExplicitZoom?.version==='1.0.0-explicit-zoom'&&document.documentElement.dataset.renkoGoldRecent==='true',{timeout:120000});
+await page.fill('#traditionalBox','10');await page.click('[data-apply-method="traditional"]');
+await page.waitForFunction(()=>window.RWARenkoTV?.settings?.method==='traditional'&&Math.abs(Number(window.RWARenkoTV?.state?.box)-10)<1e-9,{timeout:60000});
+const box=await page.locator('#chartHost').boundingBox();if(!box)throw new Error('chartHost missing');
+const state=()=>page.evaluate(()=>{const t=window.__RWARenkoChart?.timeScale?.(),o=t?.options?.()||{},r=t?.getVisibleLogicalRange?.(),H=window.RWARenkoGoldTotalHistory,W=window.RWARenkoGoldWheelPanLock,M=window.RWARenkoGoldManualViewport,A=window.RWARenkoGoldViewportAuthority,Z=window.RWARenkoGoldExplicitZoom,T=window.RWARenkoTV;return{now:performance.now(),spacing:Number(o.barSpacing),rightOffset:Number(o.rightOffset),logical:r?{from:Number(r.from),to:Number(r.to),width:Number(r.to)-Number(r.from)}:null,scroll:Number(t?.scrollPosition?.()),busy:!!H?.busy,prepends:Number(H?.stats?.prepends||0),autoTriggers:Number(H?.stats?.autoTriggers||0),oldest:Math.floor(Number(T?.state?.closedBars?.[0]?.openTime||0)/1000),following:!!T?.state?.following,interactionOwner:document.documentElement.dataset.renkoGoldInteractionOwner,pan:{sizeLockSpacing:W?.sizeLockSpacing??null,stats:{...(W?.stats||{})}},manual:{version:M?.version,locked:!!M?.locked,inHistoryMutation:!!M?.inHistoryMutation,suppressing:!!M?.suppressingRangeChanges,stats:{...(M?.stats||{})}},authority:{hold:A?.hold||null,stats:{...(A?.stats||{})}},zoom:{implementation:Z?.implementation,stats:{...(Z?.stats||{})}}}});
+const waitStable=async(stableMs=900,timeout=10000)=>{let last=null,since=Date.now(),start=Date.now();while(Date.now()-start<timeout){const s=await state();if(last===null||Math.abs(s.spacing-last)>1e-9){last=s.spacing;since=Date.now()}if(Date.now()-since>=stableMs&&!s.busy)return s;await page.waitForTimeout(75)}throw new Error('never stable')};
+await page.mouse.move(box.x+box.width*.55,box.y+box.height*.45);
+await page.click('#tvReset');await page.waitForTimeout(220);
+await page.click('#tvZoomIn');await page.waitForTimeout(220);await page.click('#tvZoomOut');await page.waitForTimeout(220);
+await page.click('#tvReset');await page.waitForTimeout(220);await page.mouse.move(box.x+box.width*.55,box.y+box.height*.45);await page.mouse.wheel(0,-120);await page.waitForTimeout(260);await page.mouse.wheel(0,120);await page.waitForTimeout(260);
+await page.click('#tvReset');await page.waitForTimeout(220);await page.mouse.move(box.x+box.width*.55,box.y+box.height*.45);await page.keyboard.down('Control');await page.mouse.wheel(0,-100);await page.keyboard.up('Control');await page.waitForTimeout(260);
+await page.click('#tvReset');await page.waitForTimeout(220);await page.click('#tvLive');await page.waitForTimeout(80);await waitStable();await page.waitForTimeout(1200);
+await page.mouse.move(box.x+box.width*.55,box.y+box.height*.45);
+const samples=[];samples.push({dt:-1,...await state()});
+const t0=Date.now();await page.mouse.wheel(-160,80);
+for(const ms of [0,16,50,100,200,350,550,800,1100,1500,2200]){const left=ms-(Date.now()-t0);if(left>0)await page.waitForTimeout(left);samples.push({dt:Date.now()-t0,...await state()})}
+const report={token:'RENKO_GOLD_FIRST_MIXED_TRACE',base,samples};
+await fs.writeFile(path.join(out,'trace.json'),JSON.stringify(report,null,2));
+console.log(report.token,JSON.stringify(report));
+await browser.close();
