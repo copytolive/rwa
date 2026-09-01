@@ -35,11 +35,13 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium >/dev/null
 
-      - name: Serve exact checkout
+      - name: Serve exact checkout at production base path
         run: |
-          python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/renko-scroll-http.log 2>&1 &
+          mkdir -p /tmp/renko-scroll-site/rwa
+          ln -s "$GITHUB_WORKSPACE/renko" /tmp/renko-scroll-site/rwa/renko
+          python3 -m http.server 8080 --bind 127.0.0.1 --directory /tmp/renko-scroll-site >/tmp/renko-scroll-http.log 2>&1 &
           echo $! >/tmp/renko-scroll-http.pid
-          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/renko/ >/dev/null && exit 0; sleep 1; done
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/rwa/renko/ >/dev/null && exit 0; sleep 1; done
           cat /tmp/renko-scroll-http.log
           exit 1
 
@@ -60,8 +62,13 @@ jobs:
             window.__scrollLongTasks=[];
             try{const po=new PerformanceObserver(list=>{for(const e of list.getEntries())window.__scrollLongTasks.push({start:e.startTime,duration:e.duration})});po.observe({type:'longtask',buffered:true})}catch{}
           });
-          await page.goto('http://127.0.0.1:8080/renko/?gold=1&scrollNoReset=1',{waitUntil:'domcontentloaded',timeout:60000});
-          await page.waitForFunction(()=>window.RENKO_GOLD_ONLY===true&&window.RWARenkoTV?.state?.symbol==='XAUUSD'&&window.RWARenkoTV?.state?.closedBars?.length>100&&window.RWARenkoGoldTotalHistory?.version==='2.0.0-zero-snap-atomic-prepend'&&window.RWARenkoGoldManualViewport?.version==='4.0.0-atomic-history-time-aware'&&document.querySelector('#chartHost canvas'),null,{timeout:90000});
+          await page.goto('http://127.0.0.1:8080/rwa/renko/?gold=1&scrollNoReset=1',{waitUntil:'domcontentloaded',timeout:60000});
+          try{
+            await page.waitForFunction(()=>window.RENKO_GOLD_ONLY===true&&window.RWARenkoTV?.state?.symbol==='XAUUSD'&&window.RWARenkoTV?.state?.closedBars?.length>100&&window.RWARenkoGoldTotalHistory?.version==='2.0.0-zero-snap-atomic-prepend'&&window.RWARenkoGoldManualViewport?.version==='4.0.0-atomic-history-time-aware'&&document.querySelector('#chartHost canvas'),null,{timeout:90000});
+          }catch(e){
+            console.log('BOOT_DIAGNOSTIC',await page.evaluate(()=>({href:location.href,gold:window.RENKO_GOLD_ONLY,tv:window.RWARenkoTV?{symbol:RWARenkoTV.state?.symbol,status:RWARenkoTV.state?.status,bars:RWARenkoTV.state?.closedBars?.length}:null,total:window.RWARenkoGoldTotalHistory?.version||null,manual:window.RWARenkoGoldManualViewport?.version||null,canvas:!!document.querySelector('#chartHost canvas'),load:document.querySelector('#tvLoadState')?.textContent||'',htmlDataset:{...document.documentElement.dataset}})));
+            throw e;
+          }
 
           const metric=()=>page.evaluate(()=>{
             const t=window.__RWARenkoChart.timeScale(),T=window.RWARenkoTV,H=window.RWARenkoGoldTotalHistory;
