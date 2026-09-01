@@ -34,38 +34,47 @@ jobs:
           node --check renko/renko-tv-engine.js
           echo SYSTEM_RUNTIME_PASS
 
-      - name: Verify complete vendored UI source
+      - name: Verify complete canonical UI source
         shell: bash
         run: |
           set -euo pipefail
           test -s UI_SYNC_MANIFEST.json
-          test -s ui/realworldasset/UPSTREAM_SHA.txt
-          test -s ui/realworldasset/package.json
-          test -s ui/realworldasset/next.config.js
-          test -s ui/realworldasset/src/app/page.tsx
-          test -s 'ui/realworldasset/src/app/[...slug]/page.tsx'
-          test -d ui/realworldasset/src/components
-          test -d ui/realworldasset/scripts
-          test -d ui/realworldasset/public
-          FILE_COUNT="$(git ls-files ui/realworldasset | wc -l | tr -d ' ')"
+          test -s apps/realworldasset/UPSTREAM_SHA.txt
+          test -s apps/realworldasset/package.json
+          test -s apps/realworldasset/next.config.js
+          test -s apps/realworldasset/src/app/page.tsx
+          test -s 'apps/realworldasset/src/app/[...slug]/page.tsx'
+          test -d apps/realworldasset/src/components
+          test -d apps/realworldasset/scripts
+          test -d apps/realworldasset/public
+          test ! -e ui/realworldasset
+          FILE_COUNT="$(git ls-files apps/realworldasset | wc -l | tr -d ' ')"
           test "$FILE_COUNT" -gt 50
-          grep -Fq 'MerchantGrowthRoute' 'ui/realworldasset/src/app/[...slug]/page.tsx'
-          grep -Fq '"/rwa"' ui/realworldasset/next.config.js
-          echo "TOTAL_UI_SOURCE_PASS files=$FILE_COUNT upstream=$(cat ui/realworldasset/UPSTREAM_SHA.txt)"
+          grep -Fq 'MerchantGrowthRoute' 'apps/realworldasset/src/app/[...slug]/page.tsx'
+          grep -Fq '"/rwa"' apps/realworldasset/next.config.js
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('UI_SYNC_MANIFEST.json').read_text())
+          assert m['canonicalPath']=='apps/realworldasset',m
+          assert m.get('compatibilityMirror') is None,m
+          assert m.get('syncMode')=='embedded-canonical-source',m
+          PY
+          echo "TOTAL_UI_SOURCE_PASS files=$FILE_COUNT upstream=$(cat apps/realworldasset/UPSTREAM_SHA.txt) canonical_only=1"
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: ui/realworldasset/package.json
+          cache-dependency-path: apps/realworldasset/package.json
 
       - name: Install UI dependencies
-        working-directory: ui/realworldasset
+        working-directory: apps/realworldasset
         run: npm install --no-audit --no-fund
 
       - name: Run final UI interaction contracts
-        working-directory: ui/realworldasset
+        working-directory: apps/realworldasset
         run: |
           set -euo pipefail
           npm run verify:interactions
@@ -81,11 +90,11 @@ jobs:
           npm run verify:chat13
 
       - name: TypeScript verification
-        working-directory: ui/realworldasset
+        working-directory: apps/realworldasset
         run: npm run typecheck
 
       - name: Build canonical /rwa static UI
-        working-directory: ui/realworldasset
+        working-directory: apps/realworldasset
         env:
           RWA_BASE_PATH: /rwa
           GITHUB_ACTIONS: "true"
@@ -95,7 +104,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          O=ui/realworldasset/out
+          O=apps/realworldasset/out
           test -s "$O/index.html"
           for route in markets merchant merchant/orders merchant/updates/new merchant/ads community settings checkout account/orders; do
             test -s "$O/$route/index.html"
@@ -114,7 +123,7 @@ jobs:
           set -euo pipefail
           rm -rf .combined-preview
           mkdir -p .combined-preview/rwa
-          cp -a ui/realworldasset/out/. .combined-preview/rwa/
+          cp -a apps/realworldasset/out/. .combined-preview/rwa/
           cp -a renko .combined-preview/rwa/renko
           python3 -m http.server 4197 --bind 127.0.0.1 --directory .combined-preview >/tmp/rwa-ui-http.log 2>&1 &
           echo $! > /tmp/rwa-ui-http.pid
@@ -125,16 +134,18 @@ jobs:
           errors=[]
           with sync_playwright() as p:
               b=p.chromium.launch(headless=True,args=['--no-sandbox'])
-              page=b.new_page(viewport={'width':1672,'height':941})
-              page.on('pageerror',lambda e: errors.append(str(e)))
-              for route in routes:
-                  r=page.goto(base+route,wait_until='domcontentloaded',timeout=20000)
-                  assert r and r.status==200,(route,r.status if r else None)
-                  page.wait_for_timeout(100)
-                  text=page.locator('body').inner_text()
-                  assert '404' not in text[:120],route
+              for width,height in [(1672,941),(390,844)]:
+                  page=b.new_page(viewport={'width':width,'height':height})
+                  page.on('pageerror',lambda e: errors.append(str(e)))
+                  for route in routes:
+                      r=page.goto(base+route,wait_until='domcontentloaded',timeout=20000)
+                      assert r and r.status==200,(route,r.status if r else None)
+                      page.wait_for_timeout(100)
+                      text=page.locator('body').inner_text()
+                      assert '404' not in text[:120],route
+                  page.close()
               assert not errors,errors
               b.close()
-          print('CHROMIUM_COMBINED_UI_PASS routes=',len(routes))
+          print('CHROMIUM_COMBINED_UI_PASS routes=',len(routes),'viewports=2')
           PY
           kill "$(cat /tmp/rwa-ui-http.pid)" || true

@@ -1,3 +1,0 @@
-RENKO public-production recertification marker.
-Base observed before write: 90e86d773831a99f1d07287b2e352e078fa8cd1c
-Purpose: trigger fresh RENKO production gates from current main without altering runtime behavior.

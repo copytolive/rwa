@@ -1,4 +1,0 @@
-RENKO public-production recertification marker.
-Base main before recertification: c4cc74c66b5b9e8d6dac300f9ecd923d63f27ed0
-Purpose: force fresh RENKO same-SHA certification after unrelated GOLD24 drift.
-Runtime behavior: unchanged.

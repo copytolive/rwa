@@ -1,0 +1,50 @@
+/* Final interaction reachability lock.
+ * Keeps the transaction search/filters in separate physical hit areas on desktop.
+ */
+@media (min-width: 721px) {
+  .account-with-side:has(> .transactions-page) > .transactions-page .txn-filters {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(118px, 1fr)) minmax(190px, 1.4fr) auto !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .account-with-side:has(> .transactions-page) > .transactions-page .txn-filters > button {
+    min-width: 0 !important;
+    width: auto !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    align-self: stretch !important;
+  }
+
+  .account-with-side:has(> .transactions-page) > .transactions-page .txn-filters > form {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 40px !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    height: 44px !important;
+    align-self: stretch !important;
+  }
+
+  .account-with-side:has(> .transactions-page) > .transactions-page .txn-filters > form > input {
+    min-width: 0 !important;
+    width: 100% !important;
+    height: 44px !important;
+  }
+
+  .account-with-side:has(> .transactions-page) > .transactions-page .txn-filters > form > .rwa-button {
+    width: 40px !important;
+    min-width: 40px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 !important;
+    align-self: stretch !important;
+  }
+
+  .account-with-side:has(> .transactions-page) > .transactions-page .txn-filters > .rwa-button {
+    min-width: max-content !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    white-space: nowrap !important;
+  }
+}

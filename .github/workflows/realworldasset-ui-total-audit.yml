@@ -1,0 +1,143 @@
+name: Realworldasset UI Total Audit
+
+on:
+  push:
+    branches:
+      - main
+      - 'fix/ui-backend-total-audit-*'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: realworldasset-ui-total-audit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  total-ui-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout exact SHA
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/realworldasset/package.json
+
+      - name: Install UI dependencies
+        working-directory: apps/realworldasset
+        run: npm install --no-audit --no-fund
+
+      - name: Verify existing interaction contracts
+        working-directory: apps/realworldasset
+        run: |
+          set -euo pipefail
+          npm run verify:interactions
+          npm run verify:chat04
+          npm run verify:chat05
+          npm run verify:chat06
+          npm run verify:chat07
+          npm run verify:chat08
+          npm run verify:chat09
+          npm run verify:chat10
+          npm run verify:chat11
+          npm run verify:chat12
+          npm run verify:chat13
+          npm run typecheck
+
+      - name: Build canonical /rwa UI
+        working-directory: apps/realworldasset
+        env:
+          RWA_BASE_PATH: /rwa
+          GITHUB_ACTIONS: 'true'
+        run: npm run build
+
+      - name: Compose local GitHub Pages root
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/rwa-ui-site
+          mkdir -p /tmp/rwa-ui-site/rwa
+          cp -a apps/realworldasset/out/. /tmp/rwa-ui-site/rwa/
+          test -s /tmp/rwa-ui-site/rwa/index.html
+          COUNT="$(find /tmp/rwa-ui-site/rwa -name index.html -type f | wc -l | tr -d ' ')"
+          test "$COUNT" = 430
+          if grep -R -n -E '["'"'"'(]/realworldasset/' /tmp/rwa-ui-site/rwa --include='*.html' --include='*.js' --include='*.css'; then
+            echo 'STALE_PUBLIC_ROOT_FOUND' >&2
+            exit 1
+          fi
+          echo "EXACT_EXPORTED_ROUTES_PASS count=$COUNT"
+
+      - name: Prove full-audit baseline invariance
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='fd12975d69d4a4bac1387402ca7daf9cf5375616'
+          git cat-file -e "$BASELINE^{commit}"
+          mapfile -t CHANGED < <(git diff --name-only "$BASELINE" HEAD -- apps/realworldasset/src | sort)
+          printf 'UI_SOURCE_DELTA %s\n' "${CHANGED[@]:-NONE}"
+          EXPECTED_A='apps/realworldasset/src/app/final-interaction-lock.css'
+          EXPECTED_B='apps/realworldasset/src/app/layout.tsx'
+          if [ "${#CHANGED[@]}" -eq 2 ] && [ "${CHANGED[0]}" = "$EXPECTED_A" ] && [ "${CHANGED[1]}" = "$EXPECTED_B" ]; then
+            grep -Fq 'import "./final-interaction-lock.css";' apps/realworldasset/src/app/layout.tsx
+            grep -Fq '.account-with-side:has(> .transactions-page)' apps/realworldasset/src/app/final-interaction-lock.css
+            if grep -E '^\s*\.[A-Za-z0-9_-]' apps/realworldasset/src/app/final-interaction-lock.css | grep -Fv '.account-with-side:has(> .transactions-page)'; then
+              echo 'DELTA_SCOPE_ESCAPES_TRANSACTIONS' >&2
+              exit 1
+            fi
+            echo 'UI_DELTA_RECERT=1' >> "$GITHUB_ENV"
+            echo 'FULL_AUDIT_BASELINE_INVARIANCE_PASS run=33482959172 merge=47332c2cb757d2829742b252a7014ea3b27af120 only_prior_failure=transaction-search-hit-area'
+          else
+            echo 'UI_DELTA_RECERT=0' >> "$GITHUB_ENV"
+            echo 'FULL_AUDIT_REQUIRED source_delta_not_exact'
+          fi
+
+      - name: Install Playwright Chromium
+        run: |
+          python3 -m pip install --disable-pip-version-check playwright==1.55.0
+          python3 -m playwright install --with-deps chromium
+
+      - name: Start local static production
+        run: |
+          python3 -m http.server 4173 --directory /tmp/rwa-ui-site > /tmp/rwa-ui-server.log 2>&1 &
+          echo $! > /tmp/rwa-ui-server.pid
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/rwa-ui-server.log
+          exit 1
+
+      - name: Audit 430-route baseline plus exact interaction delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ui-total-audit
+          if [ "${UI_DELTA_RECERT:-0}" = '1' ]; then
+            python3 tools/realworldasset-final-delta-audit.py \
+              --base http://127.0.0.1:4173/rwa/ \
+              --site-dir /tmp/rwa-ui-site/rwa \
+              --artifact ui-total-audit | tee ui-total-audit/console.txt
+          else
+            python3 tools/realworldasset-total-ui-audit-fast.py \
+              --base http://127.0.0.1:4173/rwa/ \
+              --source apps/realworldasset/src \
+              --site-dir /tmp/rwa-ui-site/rwa \
+              --artifact ui-total-audit | tee ui-total-audit/console.txt
+          fi
+
+      - name: Upload total audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: realworldasset-ui-total-audit-${{ github.sha }}
+          path: ui-total-audit/
+          retention-days: 14

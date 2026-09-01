@@ -1,10 +1,13 @@
 @import "../styles/tokens.css";
 
 * { box-sizing: border-box; }
-html { background: var(--rwa-bg); }
+html { background: var(--rwa-bg); width:100%; max-width:100%; overflow-x:clip; }
 body {
   margin: 0;
   min-height: 100vh;
+  width:100%;
+  max-width:100%;
+  overflow-x:clip;
   background: var(--rwa-bg);
   color: var(--rwa-text);
   font-family: var(--rwa-font-sans);
@@ -19,3 +22,123 @@ a { color: inherit; }
 :focus-visible { outline: 0; box-shadow: var(--rwa-shadow-focus); }
 .soft-theme { filter: saturate(.86) brightness(1.08); }
 .sr-only { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; }
+
+/* FINAL_UI_GATE_DESKTOP_OVERFLOW */
+.app-shell,.rwa-public-shell{width:100%;max-width:100vw;overflow-x:clip}
+.app-shell main,.rwa-public-shell main{min-width:0;max-width:100%}
+.app-shell main :where(section,aside,article,div,nav,form,header,footer,label){min-width:0}
+.app-shell main [class*="table"],.app-shell main [class*="tabs"],.app-shell main [class*="toolbar"]{max-width:100%;overscroll-behavior-inline:contain}
+.app-shell main [class*="table"]{overflow-x:auto}
+.account-with-side,.transactions-page,.funds-page,.business-detail-page,.asset-detail-page,.trading-stage{max-width:100%;min-width:0}
+.acct-content,.portfolio-main,.portfolio-right,.business-detail-main,.business-detail-side,.asset-detail-main,.asset-detail-side{min-width:0;max-width:100%}
+button{scroll-margin-top:84px;scroll-margin-bottom:84px}
+
+/* Desktop pointer coordinates must never be generated outside the real viewport. */
+@media(min-width:1360px){
+  .app-shell>main.detail-page-pad,.app-shell>main.asset-detail-page,.app-shell>main.business-detail-page{
+    width:100vw!important;max-width:100vw!important;margin-left:0!important;margin-right:0!important;
+  }
+  .asset-detail-page,.business-detail-page{grid-template-columns:minmax(0,1fr) minmax(300px,360px)!important}
+}
+
+/* Transactions/funds put their route marker on the center SECTION, not on MAIN. */
+@media(min-width:721px){
+  .account-with-side:has(>.transactions-page){grid-template-columns:265px minmax(0,1fr) minmax(330px,410px)!important}
+  .account-with-side:has(>.funds-page){grid-template-columns:280px minmax(0,1fr) minmax(320px,370px)!important}
+  .account-with-side:has(>.transactions-page)>.selected-order{min-width:0;max-width:100%;margin-right:12px!important}
+}
+
+@media(max-width:720px){
+  html,body{width:100%;overflow-x:hidden}
+  .app-shell,.rwa-public-shell{width:100%;max-width:100%;overflow-x:hidden}
+  .app-header{width:100%;max-width:100%;padding-inline:10px!important;gap:8px!important}
+  .app-header .app-nav{display:none!important}
+  .app-header-actions{margin-left:auto!important;gap:5px!important}
+  .app-header-actions .mode-toggle,.app-header-actions .profile-button,.app-header-actions .icon-button,.app-header-actions>.rwa-button:not(:last-child){display:none!important}
+  .app-header-actions>.rwa-button:last-child{max-width:150px;white-space:normal;line-height:1.2;height:auto;min-height:36px;padding:7px 10px}
+  .app-brand{flex:0 0 auto}.app-brand>span:last-child{display:none!important}
+  main{max-width:100%!important;min-width:0!important}
+  main[class*="-page"],main[class*="workspace"],main[class*="-layout"],main.trading-stage,main.detail-page-pad{display:block!important;width:100%!important;max-width:100%!important;padding-left:10px!important;padding-right:10px!important;margin-left:0!important;margin-right:0!important}
+  main>section,main>aside,main>article,main>div{width:100%!important;max-width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important}
+  main :where(section,aside,article,div,nav,form,header,footer,label){min-width:0;max-width:100%}
+  main [class*="-grid"],main [class*="_grid"],main [class*="three-grid"],main [class*="two-grid"],main [class*="detail-side-split"],main [class*="checkout-delivery"],main [class*="checkout-contact"]{grid-template-columns:1fr!important}
+  main [class*="tabs"],main [class*="pills"],main [class*="toolbar"],main [class*="stepper"]{max-width:100%!important;overflow-x:auto!important;overscroll-behavior-inline:contain;scrollbar-width:thin}
+  main table,main [class*="table"],main [class*="record-panel"],main [class*="checkout-table"],main [class*="balance-table"]{max-width:100%!important;overflow-x:auto!important;overscroll-behavior-inline:contain}
+  main img,main svg{max-width:100%}
+  .commerce-page.store-layout,.commerce-page.product-layout,.commerce-page.checkout-layout{display:block!important;padding:8px 10px 54px!important}
+  .store-filter,.store-side,.product-buy,.checkout-side{width:100%!important;margin:10px 0!important;padding:0!important}
+  .store-center,.product-gallery,.product-info,.checkout-main{width:100%!important;max-width:100%!important}
+  .commerce-product-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;padding-inline:0!important}
+  .store-tabs,.store-category-tabs,.store-toolbar,.thumb-row,.detail-tabs>div{overflow-x:auto!important;max-width:100%!important}
+  .store-hero{height:auto!important;min-height:140px!important;padding:14px!important}.store-badges{flex-wrap:wrap}
+  .product-main-art{height:300px!important}.commerce-art-large{min-height:300px!important}
+  .reviews-box,.spec-grid{grid-template-columns:1fr!important}
+  .app-footer{padding:12px!important}.app-footer>nav{display:none!important}
+
+  /* Account routes: keep every interactive surface in normal mobile document flow. */
+  .account-with-side,.account-workspace{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;overflow:visible!important}
+  .account-with-side>.acct-side,.account-with-side>.acct-content,.account-with-side>.selected-order,
+  .account-workspace>.account-side,.account-workspace>.account-main,.account-workspace>.account-right{
+    width:100%!important;max-width:100%!important;min-width:0!important;position:static!important;margin:0 0 10px!important;
+  }
+  .transactions-page{padding:10px!important}
+  .transactions-page .txn-stats{grid-template-columns:1fr 1fr!important}
+  .transactions-page .txn-filters{display:grid!important;grid-template-columns:1fr!important;gap:7px!important}
+  .transactions-page .txn-filters>button,.transactions-page .txn-filters>form{width:100%!important;min-width:0!important}
+  .transactions-page .table-pager{height:auto!important;min-height:0!important;display:grid!important;grid-template-columns:1fr!important;gap:7px!important;padding:8px!important;align-items:start!important}
+  .transactions-page .table-pager>div{width:100%!important;max-width:100%!important;display:flex!important;overflow-x:auto!important;gap:4px!important}
+  .transactions-page .table-pager>button{width:100%!important}
+  .selected-order{width:100%!important;max-width:100%!important}
+  .selected-order .selected-actions{display:grid!important;grid-template-columns:1fr!important;gap:7px!important}
+
+  /* Trading toolbar: timeframes and chart tools use separate scrollable rows. */
+  .trading-stage .chart-tools{height:auto!important;min-height:0!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:3px!important;padding:4px 6px!important;overflow:visible!important}
+  .trading-stage .chart-tools>div{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;max-width:100%!important;gap:3px!important}
+  .trading-stage .chart-tools button{flex:0 0 auto!important;min-height:32px!important}
+
+  /* Order-detail desktop four-up cards must become one column on phones. */
+  .account-workspace .detail-four{display:grid!important;grid-template-columns:1fr!important;gap:8px!important}
+  .account-workspace .detail-four>.info-card{width:100%!important;max-width:100%!important;position:static!important;height:auto!important;min-height:0!important}
+  .account-workspace .info-card button{width:100%!important;position:static!important}
+
+  /* Commerce order receipt: merchant and metadata cards may not occupy the same cells. */
+  .orders-layout .receipt>header{display:grid!important;grid-template-columns:1fr!important;gap:9px!important;height:auto!important;min-height:0!important;align-items:start!important}
+  .orders-layout .receipt>header>*{width:100%!important;max-width:100%!important;position:static!important;margin:0!important}
+  .orders-layout .receipt-merchant{display:flex!important;flex-wrap:wrap!important;gap:8px!important;height:auto!important}
+  .orders-layout .receipt-meta{display:grid!important;height:auto!important;min-height:0!important}
+
+  /* Dispute form/side panels: eliminate desktop fixed geometry and overlap on phones. */
+  .dispute-layout{display:block!important;width:100%!important;max-width:100%!important;padding:8px 10px 54px!important}
+  .dispute-layout>.dispute-nav,.dispute-layout>.dispute-main,.dispute-layout>.dispute-side{
+    width:100%!important;max-width:100%!important;position:static!important;margin:0 0 10px!important;height:auto!important;min-height:0!important;
+  }
+  .dispute-layout .issue-block,.dispute-layout .description-block,.dispute-layout .evidence-block,
+  .dispute-layout .case-status,.dispute-layout .quick-case,.dispute-layout .support-person{position:static!important;height:auto!important;min-height:0!important;max-height:none!important}
+  .dispute-layout .issue-block>div,.dispute-layout .description-block{display:grid!important;grid-template-columns:1fr!important;gap:8px!important;width:100%!important}
+  .dispute-layout .issue-block>div>button,.dispute-layout .description-block>label,.dispute-layout textarea{width:100%!important;max-width:100%!important;position:static!important}
+  .dispute-layout .support-person{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:8px!important}
+  .dispute-layout .support-person>button{width:100%!important}
+
+  /* The PRO screen is a modal over a decorative blurred preview. Background controls are intentionally inert. */
+  .ss-pro-page{min-height:auto!important;overflow:visible!important;padding-bottom:16px}
+  .ss-pro-backdrop{pointer-events:none!important;user-select:none!important}
+  .ss-pro-modal{width:calc(100% - 20px)!important;margin:10px auto!important;padding:16px 12px!important}
+  .ss-pro-compare{grid-template-columns:1fr!important;gap:10px!important}
+  .ss-mode-preview{height:auto!important;min-height:126px!important}
+  .ss-default-row,.ss-pro-modal>footer{align-items:stretch!important;gap:8px!important;flex-direction:column!important}
+  .ss-pro-modal footer>div{flex-wrap:wrap!important}
+
+  /* Rewards status ticker stays one physical row at the bottom; horizontal reach is scrollable. */
+  .reward-ticker{height:42px!important;min-height:42px!important;max-height:42px!important;grid-template-columns:165px minmax(360px,1.8fr) repeat(4,minmax(150px,.75fr))!important;overflow-x:auto!important;overflow-y:hidden!important;align-items:stretch!important}
+  .reward-ticker button{height:42px!important;min-height:42px!important;max-height:42px!important;white-space:nowrap!important;padding:0 10px!important;overflow:hidden!important;text-overflow:ellipsis!important}
+
+  /* Avoid fixed-height mobile cards pinning later interactive sections over earlier controls. */
+  .community-page [class*="hero"],.community-page [class*="composer"],.community-page [class*="feed"],
+  .commerce-page [class*="hero"],.commerce-page [class*="detail"],.commerce-page [class*="card"],
+  .trading-stage [class*="toolbar"],.trading-stage [class*="panel"]{height:auto!important;min-height:0}
+}
+
+@media(max-width:430px){
+  .commerce-product-grid{grid-template-columns:1fr!important}
+  main [class*="kpi"],main [class*="metric-grid"]{grid-template-columns:1fr 1fr!important}
+}

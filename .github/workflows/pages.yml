@@ -3,6 +3,25 @@ name: Deploy RWA System + Canonical Realworldasset UI
 on:
   push:
     branches: ["main"]
+    paths:
+      - ".github/workflows/pages.yml"
+      - "apps/realworldasset/**"
+      - "renko/**"
+      - "index.html"
+      - "app.js"
+      - "styles.css"
+      - "mobile.css"
+      - "stable-shell.css"
+      - "superapp-v5.js"
+      - "superapp-v5.css"
+      - "rwa-sw-v5.js"
+      - "rwa-target-dashboard-v2.js"
+      - "rwa-target-dashboard-v2.css"
+      - "rwa-ecommerce-target-controller-v1.js"
+      - "rwa-ecommerce-target-hardening-v1.js"
+      - "manifest.webmanifest"
+      - "UI_SYNC_MANIFEST.json"
+      - "REALWORLDASSET_MIGRATION_MANIFEST.json"
   workflow_dispatch:
 
 permissions:
@@ -11,8 +30,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: rwa-pages-${{ github.ref }}
-  cancel-in-progress: true
+  group: rwa-pages-production
+  cancel-in-progress: false
 
 jobs:
   verify-system:
@@ -105,10 +124,16 @@ jobs:
           from pathlib import Path
           source=Path('apps/realworldasset/UPSTREAM_SHA.txt').read_text().strip()
           manifest=json.loads(Path('REALWORLDASSET_MIGRATION_MANIFEST.json').read_text())
+          sync=json.loads(Path('UI_SYNC_MANIFEST.json').read_text())
           assert source == manifest['sourceSha'], (source, manifest.get('sourceSha'))
+          assert sync['canonicalPath']=='apps/realworldasset', sync
+          assert sync.get('compatibilityMirror') is None, sync
+          assert sync.get('syncMode')=='embedded-canonical-source', sync
           print('CANONICAL_REALWORLDASSET_SOURCE_IDENTITY_PASS', source)
           PY
-          echo "TOTAL_UI_SOURCE_PASS files=$FILE_COUNT upstream=$SOURCE_SHA"
+          test ! -e ui/realworldasset
+          test ! -e .github/workflows/sync-realworldasset-ui.yml
+          echo "TOTAL_UI_SOURCE_PASS files=$FILE_COUNT upstream=$SOURCE_SHA canonical_only=1"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -216,7 +241,7 @@ jobs:
           python3 -m pip install --disable-pip-version-check playwright==1.55.0
           python3 -m playwright install --with-deps chromium
 
-      - name: Chromium production validation and screenshot
+      - name: Chromium production validation desktop and mobile
         shell: bash
         run: |
           set -euo pipefail
@@ -227,20 +252,35 @@ jobs:
           base='https://copytolive.github.io/rwa'
           routes=['/','/markets/','/merchant/','/merchant/orders/','/merchant/updates/new/','/merchant/ads/','/community/','/settings/','/checkout/','/account/orders/','/renko/']
           errors=[]
+          overflows=[]
+          failed=[]
           with sync_playwright() as p:
               b=p.chromium.launch(headless=True,args=['--no-sandbox'])
-              page=b.new_page(viewport={'width':1672,'height':941},device_scale_factor=1)
-              page.on('pageerror',lambda e: errors.append(str(e)))
-              for route in routes:
-                  r=page.goto(base+route,wait_until='domcontentloaded',timeout=30000)
-                  assert r and r.status==200,(route,r.status if r else None)
-                  page.wait_for_timeout(150)
-                  text=page.locator('body').inner_text()
-                  assert '404' not in text[:120],route
-              page.goto(base+'/',wait_until='networkidle',timeout=30000)
-              page.screenshot(path='production-proof/rwa-realworldasset-1672x941.png',full_page=False)
-              Path('production-proof/result.txt').write_text(f'PUBLIC_CHROMIUM_REALWORLDASSET_PASS routes={len(routes)} runtimeErrors={len(errors)}\n')
+              for name,width,height in [('desktop',1672,941),('mobile',390,844)]:
+                  page=b.new_page(viewport={'width':width,'height':height},device_scale_factor=1)
+                  current={'route':'/'}
+                  page.on('pageerror',lambda e,n=name,c=current: errors.append({'viewport':n,'route':c['route'],'error':str(e)}))
+                  page.on('response',lambda r,n=name,c=current: failed.append({'viewport':n,'route':c['route'],'status':r.status,'url':r.url}) if r.status>=400 else None)
+                  for route in routes:
+                      current['route']=route
+                      r=page.goto(base+route,wait_until='domcontentloaded',timeout=30000)
+                      assert r and r.status==200,(name,route,r.status if r else None)
+                      page.wait_for_timeout(150)
+                      text=page.locator('body').inner_text()
+                      assert '404' not in text[:120],(name,route)
+                      dims=page.evaluate('() => ({sw:document.documentElement.scrollWidth,iw:window.innerWidth})')
+                      if dims['sw']>dims['iw']+3:
+                          overflows.append({'viewport':name,'route':route,**dims})
+                  current['route']='/'
+                  page.goto(base+'/',wait_until='networkidle',timeout=30000)
+                  page.screenshot(path=f'production-proof/rwa-realworldasset-{width}x{height}.png',full_page=False)
+                  page.close()
+              Path('production-proof/result.txt').write_text(
+                  f'PUBLIC_CHROMIUM_REALWORLDASSET_PASS routes={len(routes)} viewports=2 runtimeErrors={len(errors)} failedResponses={len(failed)} horizontalOverflow={len(overflows)}\n'
+              )
               assert not errors,errors
+              assert not failed,failed
+              assert not overflows,overflows
               b.close()
           PY
 

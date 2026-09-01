@@ -13,15 +13,20 @@ export function generateStaticParams() {
     "community","community/compose","bookmarks","community/thesis/alex-kopi-buy","community/thesis/kopi-bali-update",
     "community/thesis/kopi-long-term-value","community/thesis/ssea-hidden-gem","community/thesis/marina-prime",
     "community/users/alex-morgan","community/users/alex-yield","docs","docs/security",
-    "help","help/contact","intelligence","listing-request","markets","merchant","merchant/create","merchant/products","merchant/customers","merchant/analytics","merchant/orders","merchant/updates/new","merchant/ads","portfolio/holdings",
+    "help","help/contact","intelligence","listing-request","markets","merchant","merchant/create","merchant/products","merchant/customers","merchant/analytics","merchant/orders","merchant/updates/new","merchant/ads","merchant/tokenization","portfolio/holdings",
     "portfolio/orders","portfolio/transactions","portfolio/allocation","press","privacy","pro",
     "risk-disclosure","settings","settings/security","status","terms","rwa/kopi/alerts",
-    "positions/POS-KOPI-001/risk","rwa/kopi/activity","checkout","account/orders",
+    "positions/POS-KOPI-001/risk","rwa/kopi/activity","rwa/kopi/documents","checkout","account/orders",
     "account/orders/RWA-ORD-20240516-9F7A2B/dispute",
+    "rewards/history","rewards/how-it-works","rewards/missions","security","home/products",
+    "merchant/rwa","merchant/rewards","merchant/settings","merchant/transactions","merchant/support","merchant/business","merchant/kyb","merchant/rwa/requests","merchant/settings/branding",
+    "community/users/andreas-wijaya","community/users/jessica-santoso","community/users/michael-tanuwijaya",
     ...[1,2,3].map(i => `intelligence/btc-${i}`),
+    ...[1,2,3].map(i => `intelligence/research-${i}`),
     ...[1,2,3,4].map(i => `community/thesis/btc-${i}`),
+    ...[1,2,3].map(i => `community/thesis/kopi-${i}`),
   ];
-  const businesses = ["kopi-nusantara","seablue-estate","harbourview-asset-management"];
+  const businesses = ["kopi-nusantara","seablue-estate","harbourview-asset-management","blue-ocean-shipping","maple-finance","green-city-living","seaside-villas"];
   const businessRoutes = businesses.flatMap(b => [
     `businesses/${b}/store`,`businesses/${b}/updates`,
     `businesses/${b}/transparency`,`businesses/${b}/about`,`businesses/${b}/store/locations`,
@@ -30,9 +35,9 @@ export function generateStaticParams() {
     ...[1,2,3,4,5,6,7,8].map(i => `businesses/${b}/store/products/${i}`),
     ...[1,2,3].map(i => `businesses/${b}/updates/${i}`),
   ]);
-  const rwaAssets = ["marina-bay-residences","marina-bay-residences-regulated","seaside-private-credit-fund"];
+  const rwaAssets = ["marina-bay-residences","marina-bay-residences-regulated","seaside-private-credit-fund","treasury-income-note","gold-reserve-trust","blue-port-logistics-infrastructure","green-energy-fund"];
   const rwaRoutes = rwaAssets.flatMap(a => [
-    ...["activity","underlying-asset","underlying","documents","cashflows","legal","valuation","terms"].map(x => `rwa/${a}/${x}`),
+    ...["activity","underlying-asset","underlying","documents","cashflows","legal","valuation","terms","disclosures","restricted"].map(x => `rwa/${a}/${x}`),
     ...[1,2,3,4,5].map(i => `rwa/${a}/documents/${i}`),
   ]);
   const marketRoutes = [

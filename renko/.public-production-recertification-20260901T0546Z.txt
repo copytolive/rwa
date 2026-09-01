@@ -1,3 +1,0 @@
-fresh same-SHA public production recertification trigger; no runtime semantics changed.
-source-main-before-marker: 590ca65809bd308ac88d61bb853cb0860b409698
-scope: RENKO public production evidence only

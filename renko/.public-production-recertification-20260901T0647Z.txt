@@ -1,4 +1,0 @@
-RENKO PUBLIC PRODUCTION RECERTIFICATION
-source-main=6303a7192b63cfd2598f731ca42d466f87017039
-scope=RENKO evidence only
-reason=current-head drift after prior exact-SHA evidence; retrigger all RENKO production gates without changing runtime behavior

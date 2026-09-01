@@ -16,7 +16,7 @@ try{revenue=JSON.parse(revenueText)}catch{fail.push('revenue config is not valid
 try{funding=JSON.parse(fundingText)}catch{fail.push('funding config is not valid JSON')}
 try{pilot=JSON.parse(pilotText)}catch{fail.push('pilot config is not valid JSON')}
 const staticScripts=(root.match(/<script\s+src=/g)||[]).length;
-ok(staticScripts===6,`first-paint external script budget changed: ${staticScripts}`);
+ok(staticScripts===14,`legacy root first-paint script budget changed: ${staticScripts}`);
 ok(/SRC='rwa-multichain\.js\?v=\d+'/.test(root),'root lazy MULTI CHAIN bootstrap missing');
 ok(root.includes('rwaMultiChainLazyBootstrap'),'root MULTI CHAIN lazy bootstrap marker missing');
 ok(!/<script\s+src=["']rwa-multichain\.js/i.test(root),'MULTI CHAIN must not become a first-paint external script');

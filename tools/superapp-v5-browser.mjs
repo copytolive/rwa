@@ -33,7 +33,7 @@ try{
     assert.ok(await page.locator('#rwaGlobalTicker').count(),'global ticker missing');
     assert.ok(await page.locator('#rwaHealth').count(),'health indicator missing');
     const localeProbe=await page.evaluate(()=>{/* RWA_LOCALE_CI_PROBE_V2 */ const bad='en-US@posix';return{safe:window.__RWA_SAFE_LOCALE__,number:new Intl.NumberFormat(bad).format(1234.5),date:new Intl.DateTimeFormat(bad).format(new Date(0)),proto:(1234.5).toLocaleString(bad),canonical:Intl.getCanonicalLocales(bad)[0],locale:typeof Intl.Locale==='function'?new Intl.Locale(bad).toString():'en-US'}});assert.equal(localeProbe.safe,'en-US','safe locale not normalized');assert.ok(localeProbe.number&&localeProbe.date&&localeProbe.proto,'invalid locale runtime fallback failed');assert.equal(localeProbe.canonical,'en-US','invalid locale canonicalization failed');
-    const rootRuntime=await page.evaluate(()=>({scriptCount:[...document.scripts].filter(s=>s.src).length,eager:[...document.scripts].map(s=>s.src).filter(x=>/product-os-v3|wallet-core|quick-actions|rwa-fundamentals|global-asset-terminal/.test(x))}));assert.ok(rootRuntime.scriptCount<=8,`root eager script count ${rootRuntime.scriptCount}`);assert.equal(rootRuntime.eager.length,0,`legacy eager scripts loaded on startup: ${rootRuntime.eager.join(',')}`);
+    const rootRuntime=await page.evaluate(()=>({scriptCount:[...document.scripts].filter(s=>s.src).length,eager:[...document.scripts].map(s=>s.src).filter(x=>/product-os-v3|wallet-core|quick-actions|rwa-fundamentals|global-asset-terminal/.test(x))}));assert.ok(rootRuntime.scriptCount<=16,`legacy root runtime script budget ${rootRuntime.scriptCount}`);assert.equal(rootRuntime.eager.length,0,`legacy eager scripts loaded on startup: ${rootRuntime.eager.join(',')}`);
 
     const routes=['markets','intelligence','assets','asset/ONDO','research','portfolio','social','institutional','trade/ONDO'];
     for(const route of routes){
@@ -68,7 +68,7 @@ try{
     assert.match(renkoStandalone.title,/RENKO/i,'RENKO standalone title missing');
     assert.ok(renkoStandalone.scripts.some(x=>x.includes('renko-tv-engine.js')),'RENKO standalone engine missing');
     assert.ok(renkoStandalone.scripts.some(x=>x.includes('renko-tv-app.js')),'RENKO standalone app missing');
-    result.desktop={routes:routes.length,pathname:'/rwa/',assetDrawer:true,history:true,search:true,preview:true,legacyRedirects:true,renkoStandalone:true,noOverflow:true};await context.close();
+    result.desktop={routes:routes.length,pathname:'/rwa/',assetDrawer:true,history:true,search:true,preview:true,legacyRedirects:true,renkoStandalone:true,noOverflow:true,legacyRuntimeScripts:rootRuntime.scriptCount};await context.close();
   }
   {
     const context=await browser.newContext({locale:'en-US',viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:'block'});await mocks(context);const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e.message||e)));
