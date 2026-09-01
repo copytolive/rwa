@@ -187,25 +187,26 @@ jobs:
             $mm=[regex]::Match($src,'#define\s+(?:QM|MM)_MAGIC\s+(\d+)');if(!$mm.Success){throw "magic missing $name"};$magic=$mm.Groups[1].Value
             $receipt=Join-Path $common "receipt_$magic.txt";Remove-Item $receipt -Force -ErrorAction SilentlyContinue
             $report=Join-Path $env:MT5_EVIDENCE "$name.html";$ini=Join-Path $env:RUNNER_TEMP "$name.ini"
-            @"
-            [Common]
-            NewsEnable=0
-            CertInstall=0
-            [Tester]
-            Expert=Gold24Qualified\$name
-            Symbol=GOLD24-CANON
-            Period=D1
-            Model=2
-            ExecutionMode=0
-            Optimization=0
-            FromDate=2000.10.23
-            ToDate=2026.08.27
-            Deposit=10000
-            Leverage=1:100
-            Report=$report
-            ReplaceReport=1
-            ShutdownTerminal=1
-            "@ | Set-Content $ini -Encoding ASCII
+            $cfg=@(
+              '[Common]',
+              'NewsEnable=0',
+              'CertInstall=0',
+              '[Tester]',
+              "Expert=Gold24Qualified\$name",
+              'Symbol=GOLD24-CANON',
+              'Period=D1',
+              'Model=2',
+              'ExecutionMode=0',
+              'Optimization=0',
+              'FromDate=2000.10.23',
+              'ToDate=2026.08.27',
+              'Deposit=10000',
+              'Leverage=1:100',
+              "Report=$report",
+              'ReplaceReport=1',
+              'ShutdownTerminal=1'
+            )
+            $cfg | Set-Content $ini -Encoding ASCII
             $p=Start-Process -FilePath $env:MT5_TERMINAL -ArgumentList "/config:$ini" -PassThru
             if(-not $p.WaitForExit(180000)){Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue;throw "tester timeout $name"}
             for($i=0;$i -lt 15 -and (!(Test-Path $report) -or !(Test-Path $receipt));$i++){Start-Sleep -Seconds 1}
