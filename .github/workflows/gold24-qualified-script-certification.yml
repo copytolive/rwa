@@ -127,7 +127,7 @@ jobs:
           $cand=Get-ChildItem $base -Directory -ErrorAction Stop | Where-Object {Test-Path (Join-Path $_.FullName 'MQL5')} | Sort-Object LastWriteTime -Descending | Select-Object -First 1
           if($null -eq $cand){throw 'MT5 data dir missing'}
           "MT5_DATA=$($cand.FullName)"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-      - name: Compile all 9 qualified EAs in native MetaEditor
+      - name: Compile all 8 qualified EAs in native MetaEditor
         shell: powershell
         run: |
           $ErrorActionPreference='Stop'
@@ -151,7 +151,7 @@ jobs:
           }
           Compile (Join-Path $script 'qualified_import_canonical.mq5')
           $eas=@(Get-ChildItem $expert -Filter '*.mq5' | Sort-Object Name)
-          if($eas.Count -ne 9){throw "expected 9 EAs, found $($eas.Count)"}
+          if($eas.Count -ne 8){throw "expected 8 EAs, found $($eas.Count)"}
           foreach($ea in $eas){Compile $ea.FullName}
       - name: Import exact canonical D1 series as MT5 custom symbol
         shell: powershell
@@ -176,7 +176,7 @@ jobs:
           if(!(Test-Path $receipt)){throw 'custom symbol import receipt missing'}
           $txt=Get-Content $receipt -Raw;Copy-Item $receipt $env:MT5_EVIDENCE -Force
           if($txt -notmatch 'status=PASS'){throw "custom symbol import FAIL`n$txt"}
-      - name: Native MT5 Strategy Tester operational smoke for all 9 EAs
+      - name: Native MT5 Strategy Tester operational smoke for all 8 EAs
         shell: powershell
         run: |
           $ErrorActionPreference='Stop'
