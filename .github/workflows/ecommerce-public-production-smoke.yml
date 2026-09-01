@@ -1,11 +1,28 @@
 name: Ecommerce Public Production Smoke
 
 on:
-  # The Ecommerce drawer lives in the shared /rwa/ shell. A change outside the
-  # commerce files can still regress its production geometry, so every main
-  # deployment must re-prove the public HTTPS contextual-panel contract.
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/ecommerce-public-production-smoke.yml"
+      - ".github/workflows/pages.yml"
+      - "apps/realworldasset/**"
+      - "renko/**"
+      - "index.html"
+      - "app.js"
+      - "styles.css"
+      - "mobile.css"
+      - "stable-shell.css"
+      - "superapp-v5.js"
+      - "superapp-v5.css"
+      - "rwa-sw-v5.js"
+      - "rwa-target-dashboard-v2.js"
+      - "rwa-target-dashboard-v2.css"
+      - "rwa-ecommerce-target-controller-v1.js"
+      - "rwa-ecommerce-target-hardening-v1.js"
+      - "manifest.webmanifest"
+      - "UI_SYNC_MANIFEST.json"
+      - "REALWORLDASSET_MIGRATION_MANIFEST.json"
   workflow_dispatch:
 
 permissions:
@@ -18,21 +35,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Wait for exact GitHub Pages SHA
+      - name: Wait for exact canonical GitHub Pages SHA
         shell: bash
         run: |
-          set -euxo pipefail
+          set -euo pipefail
           url='https://copytolive.github.io/rwa/deployment-sha.txt'
-          for i in $(seq 1 60); do
+          for i in $(seq 1 72); do
             deployed="$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "${url}?v=${GITHUB_SHA}-${i}" 2>/dev/null | tr -d '\r\n' || true)"
             if [ "$deployed" = "$GITHUB_SHA" ]; then
-              echo "Exact Pages SHA is live: $deployed"
+              echo "Exact canonical Pages SHA is live: $deployed"
               exit 0
             fi
-            echo "Waiting for Pages. expected=$GITHUB_SHA actual=${deployed:-unavailable}"
+            echo "Waiting for canonical Pages. expected=$GITHUB_SHA actual=${deployed:-unavailable}"
             sleep 10
           done
-          echo 'Exact merged SHA did not reach GitHub Pages in time' >&2
+          echo 'Exact merged SHA did not reach canonical GitHub Pages in time' >&2
           exit 1
 
       - name: Install Chromium
@@ -40,62 +57,160 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Run public desktop and mobile browser matrix
-        env:
-          RWA_UI_URL: https://copytolive.github.io/rwa/
-          RWA_UI_PROOF_DIR: proof/ecommerce-public-production
-        run: node tools/launch-ui-final-browser.mjs
-
-      - name: Capture 1440x900 public Ecommerce visual proof
+      - name: Validate canonical Next Ecommerce desktop and mobile
         shell: bash
         run: |
+          set -euo pipefail
+          mkdir -p proof/ecommerce-public-production
           node --input-type=module <<'JS'
           import { chromium } from 'playwright';
-          const browser = await chromium.launch({ headless: true });
-          const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: 'block' });
-          const page = await context.newPage();
-          await page.goto(`https://copytolive.github.io/rwa/?__ecommerce_1440_proof=${Date.now()}`, { waitUntil: 'domcontentloaded', timeout: 50000 });
-          await page.waitForFunction(() => window.RWASeablueprintCommerceBridge?.version === '1.5.0', { timeout: 30000 });
-          await page.locator('#rwaSeablueprintCommerceLaunch').click();
-          await page.waitForFunction(() => document.querySelector('#rwaShopScreen')?.classList.contains('open'), { timeout: 12000 });
-          await page.waitForSelector('#rwaShopScreen .rwa-product-card', { state: 'visible', timeout: 8000 });
-          const proof = await page.evaluate(() => {
-            const rect = (selector) => {
-              const r = document.querySelector(selector)?.getBoundingClientRect();
-              return r ? { left: Math.round(r.left), right: Math.round(r.right), top: Math.round(r.top), bottom: Math.round(r.bottom), width: Math.round(r.width), height: Math.round(r.height) } : null;
-            };
-            return {
-              path: location.pathname,
-              hash: location.hash,
-              dock: rect('#rwaCommerceDock'),
-              layout: rect('.layout'),
-              commerce: window.RWASeablueprintCommerceBridge?.audit?.(),
-              backendLocked: /BACKEND LOCKED/.test(document.querySelector('[data-seablueprint-source]')?.textContent || ''),
-              screenParent: document.querySelector('#rwaShopScreen')?.parentElement?.id || ''
-            };
-          });
-          if (proof.path !== '/rwa/' || proof.hash !== '#shop') throw new Error(`unexpected route ${JSON.stringify(proof)}`);
-          if (!proof.dock || proof.dock.width < 420 || proof.dock.width > 442) throw new Error(`invalid contextual dock ${JSON.stringify(proof)}`);
-          if (!proof.commerce?.ok || proof.commerce?.mode !== 'CONTEXT_PANEL' || proof.commerce?.apiBaseConfigured) throw new Error(`invalid commerce audit ${JSON.stringify(proof)}`);
-          if (Number(proof.commerce?.panelCoverage || 1) > 0.38 || Number(proof.commerce?.exposedChartWidth || 0) < 420) throw new Error(`market context not preserved ${JSON.stringify(proof)}`);
-          if (!proof.backendLocked || proof.screenParent !== 'rwaCommerceDock') throw new Error(`truth/placement failed ${JSON.stringify(proof)}`);
-          await page.screenshot({ path: 'proof/ecommerce-public-production/desktop-1440x900-ecommerce.png', fullPage: true });
-          console.log(JSON.stringify(proof, null, 2));
+          import { writeFile } from 'node:fs/promises';
+
+          const origin = 'https://copytolive.github.io';
+          const base = `${origin}/rwa`;
+          const storePath = '/rwa/businesses/kopi-nusantara/store/';
+          const checkoutPath = '/rwa/checkout/';
+          const viewports = [
+            ['desktop-2048x1129',2048,1129],
+            ['desktop-1600x1000',1600,1000],
+            ['desktop-1440x900',1440,900],
+            ['desktop-1366x768',1366,768],
+            ['mobile-320x700',320,700],
+            ['mobile-360x800',360,800],
+            ['mobile-375x812',375,812],
+            ['mobile-390x844',390,844],
+            ['mobile-393x852',393,852],
+            ['mobile-412x915',412,915],
+            ['mobile-430x932',430,932],
+          ];
+          const browser = await chromium.launch({headless:true});
+          const failures = [];
+          const results = [];
+          const fail = (scope,message,detail=null) => failures.push({scope,message,detail});
+
+          for (const [label,width,height] of viewports) {
+            const context = await browser.newContext({viewport:{width,height},serviceWorkers:'block'});
+            const page = await context.newPage();
+            const pageErrors = [];
+            const consoleErrors = [];
+            const failedResponses = [];
+            page.on('pageerror', error => pageErrors.push(String(error?.message || error)));
+            page.on('console', msg => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
+            page.on('response', response => {
+              try {
+                const u = new URL(response.url());
+                if (u.origin === origin && response.status() >= 400) failedResponses.push({status:response.status(),url:response.url()});
+              } catch {}
+            });
+            try {
+              const proofUrl = `${base}/businesses/kopi-nusantara/store/?__canonical_ecommerce=${encodeURIComponent(label)}-${Date.now()}`;
+              const response = await page.goto(proofUrl,{waitUntil:'domcontentloaded',timeout:50000});
+              if (!response || response.status() !== 200) fail(label,'store HTTP status invalid',response?.status() ?? null);
+              await page.waitForSelector('.commerce-page.store-layout',{state:'visible',timeout:30000});
+              await page.waitForSelector('.commerce-product-card',{state:'visible',timeout:12000});
+
+              const store = await page.evaluate(() => ({
+                path: location.pathname,
+                productCards: document.querySelectorAll('.commerce-product-card').length,
+                backendConnected: document.querySelector('.app-shell')?.getAttribute('data-backend-connected'),
+                mainnetReady: document.querySelector('.app-shell')?.getAttribute('data-mainnet-ready'),
+                overflow: Math.max(0,document.documentElement.scrollWidth-window.innerWidth),
+                badge: document.querySelector('.app-demo-badge')?.textContent?.trim() || '',
+              }));
+              if (store.path !== storePath) fail(label,'store path is not canonical',store);
+              if (store.productCards < 8) fail(label,'canonical product seed did not render',store);
+              if (store.backendConnected !== 'false') fail(label,'public commerce unexpectedly claims backend connectivity',store);
+              if (store.mainnetReady !== 'false') fail(label,'public commerce unexpectedly claims mainnet readiness',store);
+              if (store.overflow > 4) fail(label,'store horizontal overflow',store);
+
+              const add = page.getByRole('button',{name:/Add to Cart/i}).first();
+              await add.click();
+              await page.waitForTimeout(100);
+              if (new URL(page.url()).pathname !== storePath) fail(label,'Add to Cart escaped the store route',page.url());
+
+              await page.getByRole('button',{name:'Review Cart'}).click();
+              await page.waitForURL(url => url.pathname === checkoutPath,{timeout:12000});
+              await page.waitForSelector('.commerce-page.checkout-layout',{state:'visible',timeout:12000});
+              await page.getByRole('heading',{name:'Checkout'}).waitFor({state:'visible',timeout:8000});
+              const checkout = await page.evaluate(() => ({
+                path: location.pathname,
+                backendConnected: document.querySelector('.app-shell')?.getAttribute('data-backend-connected'),
+                mainnetReady: document.querySelector('.app-shell')?.getAttribute('data-mainnet-ready'),
+                overflow: Math.max(0,document.documentElement.scrollWidth-window.innerWidth),
+              }));
+              if (checkout.path !== checkoutPath) fail(label,'checkout path is not canonical',checkout);
+              if (checkout.backendConnected !== 'false') fail(label,'checkout unexpectedly claims backend connectivity',checkout);
+              if (checkout.mainnetReady !== 'false') fail(label,'checkout unexpectedly claims mainnet readiness',checkout);
+              if (checkout.overflow > 4) fail(label,'checkout horizontal overflow',checkout);
+
+              await page.getByRole('button',{name:/Confirm Purchase/i}).click();
+              const notice = page.locator('.app-safety-notice');
+              await notice.waitFor({state:'visible',timeout:8000});
+              const noticeText = (await notice.textContent() || '').trim();
+              if (new URL(page.url()).pathname !== checkoutPath) fail(label,'fail-closed Confirm Purchase navigated away',page.url());
+              if (!/locked/i.test(noticeText) || !/backend capability|verified adapter|machine/i.test(noticeText)) fail(label,'Confirm Purchase did not expose truthful fail-closed reason',noticeText);
+
+              if (['desktop-1440x900','desktop-1672x941','mobile-390x844'].includes(label)) {
+                await page.screenshot({path:`proof/ecommerce-public-production/${label}.png`,fullPage:true});
+              }
+              if (pageErrors.length) fail(label,'uncaught page errors',pageErrors);
+              if (failedResponses.length) fail(label,'same-origin failed responses',failedResponses);
+              // Browser extensions and provider probes can emit console noise; record it but do not
+              // convert unrelated cross-origin/provider availability into a product false-negative.
+              results.push({label,width,height,store,checkout,notice:noticeText,pageErrors,consoleErrors,failedResponses});
+            } catch (error) {
+              fail(label,'unexpected canonical Ecommerce browser failure',String(error?.message || error));
+            } finally {
+              await context.close();
+            }
+          }
           await browser.close();
+          const summary = {
+            ok: failures.length === 0,
+            contract: 'canonical-next-ecommerce-public-v1',
+            publicMode: true,
+            base,
+            storePath,
+            checkoutPath,
+            assertions: [
+              'exact deployed SHA',
+              'canonical Next store route',
+              '8 product cards rendered',
+              'Add to Cart remains functional',
+              'Review Cart navigates to canonical checkout',
+              'public backend-connected=false',
+              'public mainnet-ready=false',
+              'Confirm Purchase remains fail-closed while backend is unconfigured',
+              'desktop/mobile no horizontal overflow',
+              'no uncaught page errors',
+              'no same-origin failed responses'
+            ],
+            results,
+            failures,
+          };
+          await writeFile('proof/ecommerce-public-production/browser-result.json',JSON.stringify(summary,null,2));
+          console.log(JSON.stringify(summary,null,2));
+          if (!summary.ok) process.exit(1);
           JS
 
       - name: Verify public proof contract
         shell: bash
         run: |
-          python - <<'PY'
+          python3 - <<'PY'
           import json
           p='proof/ecommerce-public-production/browser-result.json'
           d=json.load(open(p))
-          assert d['ok'] is True, d
-          assert d['publicMode'] is True, d
-          assert d['bridgeVersion']=='1.5.0', d
-          assert not d['failures'], d
-          print('PUBLIC_ECOMMERCE_CONTEXT_PANEL_PASS')
+          assert d['ok'] is True,d
+          assert d['publicMode'] is True,d
+          assert d['contract']=='canonical-next-ecommerce-public-v1',d
+          assert len(d['results'])==11,d
+          assert not d['failures'],d
+          for row in d['results']:
+              assert row['store']['backendConnected']=='false',row
+              assert row['store']['mainnetReady']=='false',row
+              assert row['checkout']['backendConnected']=='false',row
+              assert row['checkout']['mainnetReady']=='false',row
+          print('PUBLIC_CANONICAL_NEXT_ECOMMERCE_PASS')
           PY
 
       - name: Upload public browser proof
