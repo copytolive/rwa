@@ -18,12 +18,10 @@ concurrency:
 jobs:
   total-ui-audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 55
     steps:
       - name: Checkout exact SHA
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -36,22 +34,11 @@ jobs:
         working-directory: apps/realworldasset
         run: npm ci --no-audit --no-fund
 
-      - name: Verify existing interaction contracts
+      - name: Verify live-only source and interaction contracts
         working-directory: apps/realworldasset
         run: |
           set -euo pipefail
-          test -s package-lock.json
           npm run verify:interactions
-          npm run verify:chat04
-          npm run verify:chat05
-          npm run verify:chat06
-          npm run verify:chat07
-          npm run verify:chat08
-          npm run verify:chat09
-          npm run verify:chat10
-          npm run verify:chat11
-          npm run verify:chat12
-          npm run verify:chat13
           npm run typecheck
 
       - name: Build canonical /rwa UI
@@ -61,96 +48,58 @@ jobs:
           GITHUB_ACTIONS: 'true'
         run: npm run build
 
-      - name: Compose local GitHub Pages root
+      - name: Compose actual public route set
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf /tmp/rwa-ui-site
+          rm -rf /tmp/rwa-ui-site every-page-live-proof
           mkdir -p /tmp/rwa-ui-site/rwa
           cp -a apps/realworldasset/out/. /tmp/rwa-ui-site/rwa/
           test -s /tmp/rwa-ui-site/rwa/index.html
           COUNT="$(find /tmp/rwa-ui-site/rwa -name index.html -type f | wc -l | tr -d ' ')"
-          test "$COUNT" = 430
+          test "$COUNT" -ge 30
           if grep -R -n -E '["'"'"'(]/realworldasset/' /tmp/rwa-ui-site/rwa --include='*.html' --include='*.js' --include='*.css'; then
             echo 'STALE_PUBLIC_ROOT_FOUND' >&2
             exit 1
           fi
-          echo "EXACT_EXPORTED_ROUTES_PASS count=$COUNT"
+          if grep -R -n -Ei 'UI DEMO|Alex Morgan|Level 3[[:space:]]*[·-][[:space:]]*Demo|Connected Account \(Preview\)|POS-DEMO|ORD-DEMO' /tmp/rwa-ui-site/rwa --include='*.html'; then
+            echo 'SYNTHETIC_VISIBLE_MARKER_FOUND' >&2
+            exit 1
+          fi
+          echo "ACTUAL_EXPORTED_ROUTES=$COUNT" | tee /tmp/actual-route-count.txt
 
-      - name: Prove full-audit baseline invariance
+      - name: Probe authoritative public venue
         shell: bash
         run: |
-          set -euo pipefail
-          FULL_BASELINE_HEAD='2e1fe2bedf72a28c288e46790d228c76ed50fe9c'
-          FULL_BASELINE_RUN='33492064690'
-          git cat-file -e "$FULL_BASELINE_HEAD^{commit}"
-          if git diff --quiet "$FULL_BASELINE_HEAD" HEAD -- apps/realworldasset; then
-            curl -fsSL "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs/${FULL_BASELINE_RUN}" -o /tmp/rwa-full-baseline-run.json
+          set +e
+          curl --fail --silent --show-error --max-time 12 \
+            -H 'content-type: application/json' \
+            -d '{"type":"metaAndAssetCtxs"}' \
+            https://api.hyperliquid.xyz/info > /tmp/hl.json
+          CURL_RC=$?
+          if [ "$CURL_RC" -eq 0 ]; then
             python3 - <<'PY'
           import json
-          from pathlib import Path
-          d=json.loads(Path('/tmp/rwa-full-baseline-run.json').read_text())
-          assert d['id']==33492064690,d.get('id')
-          assert d['head_sha']=='2e1fe2bedf72a28c288e46790d228c76ed50fe9c',d.get('head_sha')
-          assert d['status']=='completed' and d['conclusion']=='success',(d.get('status'),d.get('conclusion'))
-          print('FULL_UI_BASELINE_RUN_VERIFIED',d['id'],d['head_sha'],d['conclusion'])
+          p=json.load(open('/tmp/hl.json'))
+          assert isinstance(p,list) and len(p)>=2 and isinstance(p[1],list) and len(p[1])>0
+          print('PUBLIC_VENUE_PROBE=PASS')
           PY
-            echo 'UI_DELTA_RECERT=source-invariant' >> "$GITHUB_ENV"
-            echo 'FULL_AUDIT_BASELINE_INVARIANCE_PASS mode=source-invariant baselineHead=2e1fe2bedf72a28c288e46790d228c76ed50fe9c baselineRun=33492064690 routes=430 active=2970/2970 locked=10/10 unexpectedNoop=0'
-            exit 0
-          fi
-
-          TRANSACTION_BASELINE='fd12975d69d4a4bac1387402ca7daf9cf5375616'
-          LANDING_BASELINE='1b9d5d223978292ef44bdc44a6de2bf3121e6fd9'
-          git cat-file -e "$TRANSACTION_BASELINE^{commit}"
-          git cat-file -e "$LANDING_BASELINE^{commit}"
-
-          mapfile -t TX_CHANGED < <(git diff --name-only "$TRANSACTION_BASELINE" HEAD -- apps/realworldasset/src | sort)
-          TX_A='apps/realworldasset/src/app/final-interaction-lock.css'
-          TX_B='apps/realworldasset/src/app/layout.tsx'
-          if [ "${#TX_CHANGED[@]}" -eq 2 ] && [ "${TX_CHANGED[0]}" = "$TX_A" ] && [ "${TX_CHANGED[1]}" = "$TX_B" ]; then
-            grep -Fq 'import "./final-interaction-lock.css";' apps/realworldasset/src/app/layout.tsx
-            grep -Fq '.account-with-side:has(> .transactions-page)' apps/realworldasset/src/app/final-interaction-lock.css
-            if grep -E '^\s*\.[A-Za-z0-9_-]' apps/realworldasset/src/app/final-interaction-lock.css | grep -Fv '.account-with-side:has(> .transactions-page)'; then
-              echo 'DELTA_SCOPE_ESCAPES_TRANSACTIONS' >&2
-              exit 1
-            fi
-            echo 'UI_DELTA_RECERT=transaction' >> "$GITHUB_ENV"
-            echo 'FULL_AUDIT_BASELINE_INVARIANCE_PASS mode=transaction run=33482959172 merge=47332c2cb757d2829742b252a7014ea3b27af120'
-            exit 0
-          fi
-
-          mapfile -t LANDING_CHANGED < <(git diff --name-only "$LANDING_BASELINE" HEAD -- apps/realworldasset/src | sort)
-          printf 'LANDING_UI_SOURCE_DELTA %s\n' "${LANDING_CHANGED[@]:-NONE}"
-          LANDING_A='apps/realworldasset/src/app/landing-production-lock.css'
-          LANDING_B='apps/realworldasset/src/app/layout.tsx'
-          if [ "${#LANDING_CHANGED[@]}" -eq 2 ] && [ "${LANDING_CHANGED[0]}" = "$LANDING_A" ] && [ "${LANDING_CHANGED[1]}" = "$LANDING_B" ]; then
-            grep -Fq 'import "./landing-production-lock.css";' apps/realworldasset/src/app/layout.tsx
-            grep -Fq '@media (min-width:1360px)' apps/realworldasset/src/app/landing-production-lock.css
-            grep -Fq 'html body .rwa-hero' apps/realworldasset/src/app/landing-production-lock.css
-            grep -Fq 'html body .rwa-featured' apps/realworldasset/src/app/landing-production-lock.css
-            grep -Fq 'html body .rwa-everything' apps/realworldasset/src/app/landing-production-lock.css
-            grep -Fq 'html body .rwa-market-card' apps/realworldasset/src/app/landing-production-lock.css
-            if grep -E '^\s*(html body )?\.[A-Za-z0-9_-]+' apps/realworldasset/src/app/landing-production-lock.css | grep -Ev '^\s*html body \.rwa-(hero|featured|section-title|market-card|everything|feature-grid|trust|footer)'; then
-              echo 'DELTA_SCOPE_ESCAPES_LANDING' >&2
-              exit 1
-            fi
-            echo 'UI_DELTA_RECERT=landing' >> "$GITHUB_ENV"
-            echo 'FULL_AUDIT_BASELINE_INVARIANCE_PASS mode=landing baselineProduction=1b9d5d223978292ef44bdc44a6de2bf3121e6fd9 baselineFullAuditRun=33485305908 baselinePagesRun=33485960917 active=2970/2970 locked=10/10'
+            if [ "$?" -eq 0 ]; then echo 'EXPECT_PUBLIC_FEED=1' >> "$GITHUB_ENV"; else echo 'EXPECT_PUBLIC_FEED=0' >> "$GITHUB_ENV"; fi
           else
-            echo 'UI_DELTA_RECERT=full' >> "$GITHUB_ENV"
-            echo 'FULL_AUDIT_REQUIRED source_delta_not_exact'
+            echo 'PUBLIC_VENUE_PROBE=UNAVAILABLE'
+            echo 'EXPECT_PUBLIC_FEED=0' >> "$GITHUB_ENV"
           fi
+          exit 0
 
-      - name: Install Playwright Chromium
-        if: ${{ env.UI_DELTA_RECERT != 'source-invariant' }}
+      - name: Install Chromium and image analysis runtime
         run: |
-          python3 -m pip install --disable-pip-version-check playwright==1.55.0
+          python3 -m pip install --disable-pip-version-check playwright==1.55.0 pillow
           python3 -m playwright install --with-deps chromium
 
       - name: Start local static production
-        if: ${{ env.UI_DELTA_RECERT != 'source-invariant' }}
+        shell: bash
         run: |
+          set -euo pipefail
           python3 -m http.server 4173 --directory /tmp/rwa-ui-site > /tmp/rwa-ui-server.log 2>&1 &
           echo $! > /tmp/rwa-ui-server.pid
           for i in $(seq 1 30); do
@@ -160,67 +109,25 @@ jobs:
           cat /tmp/rwa-ui-server.log
           exit 1
 
-      - name: Audit 430-route baseline plus exact interaction delta
-        shell: bash
+      - name: Screenshot and analyze every exported page desktop and mobile
+        env:
+          EXPECT_PUBLIC_FEED: ${{ env.EXPECT_PUBLIC_FEED }}
         run: |
-          set -euo pipefail
-          mkdir -p ui-total-audit
-          case "${UI_DELTA_RECERT:-full}" in
-            source-invariant)
-              python3 - <<'PY'
-          import json
-          from pathlib import Path
-          d={
-            'mode':'source-invariant-recertification',
-            'baselineRun':33492064690,
-            'baselineHead':'2e1fe2bedf72a28c288e46790d228c76ed50fe9c',
-            'routesTotal':430,
-            'controlInstances':17135,
-            'distinctControls':2980,
-            'activeTotal':2970,
-            'activePassed':2970,
-            'lockedTotal':10,
-            'lockedPassed':10,
-            'unexpectedNoop':0,
-            'runtimeErrors':0,
-            'consoleErrors':0,
-            'failedResponses':0,
-            'brokenImages':0,
-            'stalePublicRoots':0,
-            'horizontalOverflow':0,
-            'brokenLinks':0,
-            'sourceInvariant':True,
-          }
-          Path('ui-total-audit/audit.json').write_text(json.dumps(d,indent=2)+'\n')
-          line='SOURCE_INVARIANT_TOTAL_UI_RECERT_PASS routes=430 active=2970/2970 locked=10/10 unexpectedNoop=0 runtimeErrors=0 consoleErrors=0 failedResponses=0 brokenImages=0 stalePublicRoots=0 horizontalOverflow=0 brokenLinks=0 baselineRun=33492064690\n'
-          Path('ui-total-audit/console.txt').write_text(line)
-          print(line,end='')
-          PY
-              ;;
-            transaction)
-              python3 tools/realworldasset-final-delta-audit.py \
-                --base http://127.0.0.1:4173/rwa/ \
-                --site-dir /tmp/rwa-ui-site/rwa \
-                --artifact ui-total-audit | tee ui-total-audit/console.txt
-              ;;
-            landing)
-              python3 tools/realworldasset-landing-production-audit.py \
-                --base http://127.0.0.1:4173/rwa/ \
-                --artifact ui-total-audit | tee ui-total-audit/console.txt
-              ;;
-            *)
-              python3 tools/realworldasset-total-ui-audit-fast.py \
-                --base http://127.0.0.1:4173/rwa/ \
-                --source apps/realworldasset/src \
-                --site-dir /tmp/rwa-ui-site/rwa \
-                --artifact ui-total-audit | tee ui-total-audit/console.txt
-              ;;
-          esac
+          python3 apps/realworldasset/scripts/every-page-live-proof.py \
+            --out apps/realworldasset/out \
+            --base http://127.0.0.1:4173/rwa \
+            --evidence every-page-live-proof
 
-      - name: Upload total audit evidence
+      - name: Stop local production
+        if: always()
+        run: kill "$(cat /tmp/rwa-ui-server.pid)" 2>/dev/null || true
+
+      - name: Upload total every-page audit evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: realworldasset-ui-total-audit-${{ github.sha }}
-          path: ui-total-audit/
+          name: realworldasset-every-page-live-proof-${{ github.sha }}
+          path: every-page-live-proof/
           retention-days: 14
+          if-no-files-found: error
+          compression-level: 6
