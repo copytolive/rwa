@@ -40,9 +40,11 @@ jobs:
           node --check renko/renko-gold-wheel-pan-lock.js
           node --check scripts/renko_gold_scroll_prepend_proof.mjs
           grep -Fq "version:'1.0.0-explicit-zoom'" renko/renko-gold-explicit-zoom.js
-          grep -Fq '2.0.0-position-only-pan' renko/renko-gold-wheel-pan-lock.js
-          grep -Fq 'scrollToPosition' renko/renko-gold-wheel-pan-lock.js
-          ! grep -Fq 'setVisibleLogicalRange' renko/renko-gold-wheel-pan-lock.js
+          grep -Fq '1.1.0-controller-owned-zoom' renko/renko-gold-explicit-zoom.js
+          grep -Fq '4.3.0-pan-spacing-authority' renko/renko-gold-manual-viewport-lock.js
+          grep -Fq '2.1.0-dense-fixed-width-logical-pan' renko/renko-gold-wheel-pan-lock.js
+          grep -Fq 'setVisibleLogicalRange' renko/renko-gold-wheel-pan-lock.js
+          ! grep -Fq 'scrollToPosition' renko/renko-gold-wheel-pan-lock.js
           ! grep -nE '\.fitContent\s*\(' renko/renko-gold-total-history.js renko/renko-gold-manual-viewport-lock.js
           python3 - <<'PY'
           import json
