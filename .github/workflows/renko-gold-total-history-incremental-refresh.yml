@@ -1,0 +1,205 @@
+name: RENKO GOLD Total History Incremental Refresh
+
+on:
+  push:
+    branches:
+      - feat/renko-gold-total-history-2003-2026
+    paths:
+      - '.github/workflows/renko-gold-total-history-incremental-refresh.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: renko-gold-total-history-incremental-refresh
+  cancel-in-progress: true
+
+env:
+  BASELINE_RUN_ID: '33328376895'
+  YEAR_HTTP_WORKERS: '16'
+  DATA_BRANCH: 'renko-gold-lfs-2026-08-09'
+
+jobs:
+  refresh-tail:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock current closed-hour cutoff
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/renko_gold_full_backfill.py scripts/renko_gold_full_year_job.py scripts/renko_gold_audit.py
+          side="$(python3 -c 'import json;print(json.load(open("renko/history/gold/calibration.json"))["priceSide"])')"
+          test "$side" = bid
+          cutoff="$(date -u -d '1 hour ago' '+%Y-%m-%dT%H:59:59Z')"
+          test "$(date -u -d "$cutoff" '+%Y')" = 2026
+          test "$(date -u -d "$cutoff" '+%m')" = 09
+          echo "CUTOFF=$cutoff" >> "$GITHUB_ENV"
+          echo "GOLD_INCREMENTAL_CUTOFF_PASS $cutoff"
+
+      - name: Rebuild only mutable August and September tail
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf shard
+          mkdir -p shard
+          python3 scripts/renko_gold_full_year_job.py \
+            --year 2026 \
+            --side bid \
+            --start '2026-08-01T00:00:00Z' \
+            --end "$CUTOFF" \
+            --workers "$YEAR_HTTP_WORKERS" \
+            --output-dir shard
+          python3 scripts/renko_gold_audit.py audit-year \
+            --summary shard/summary-2026.json \
+            --data-dir shard \
+            --output shard/audit-2026.json \
+            --write-summary
+          python3 - <<'PY'
+          import json
+          x=json.load(open('shard/summary-2026.json'))
+          months=[int(m['month']) for m in x['months']]
+          assert months == [8,9], months
+          assert x['sourceStatusAccountingPass'] is True
+          assert x['sourceUnavailableHours'] == 0
+          assert all(m['auditPass'] is True for m in x['months'])
+          assert all(m['sourceStatusAccountingPass'] is True for m in x['months'])
+          assert all(m['sourceUnavailableHours'] == 0 for m in x['months'])
+          print('GOLD_INCREMENTAL_TAIL_AUDIT_PASS',months,x['barCount'])
+          PY
+
+      - name: Download retained audited baseline shard metadata
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/gold-baseline
+          mkdir -p /tmp/gold-baseline
+          gh run download "$BASELINE_RUN_ID" -R "$GITHUB_REPOSITORY" --pattern 'gold-shard-*' -D /tmp/gold-baseline
+          count="$(find /tmp/gold-baseline -type f -name 'summary-*.json' | wc -l | tr -d ' ')"
+          test "$count" -ge 60
+          echo "GOLD_BASELINE_ARTIFACTS_PASS summaries=$count"
+
+      - name: Preserve fresh tail outside worktree
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/gold-data /tmp/gold-meta
+          mkdir -p /tmp/gold-data /tmp/gold-meta
+          cp shard/xauusd-s1-*.csv.gz /tmp/gold-data/
+          cp shard/summary-2026.json /tmp/gold-meta/summary-2026-08-09.json
+          cp shard/audit-2026.json /tmp/gold-meta/audit-2026-08-09.json
+          test "$(find /tmp/gold-data -maxdepth 1 -name '*.csv.gz' | wc -l | tr -d ' ')" = 2
+
+      - name: Publish refreshed August-September monthly assets as immutable LFS objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name copytolive
+          git config user.email copytolive@gmail.com
+          git lfs install --local
+          if git ls-remote --exit-code --heads origin "$DATA_BRANCH" >/dev/null 2>&1; then
+            git fetch origin "$DATA_BRANCH:$DATA_BRANCH"
+            GIT_LFS_SKIP_SMUDGE=1 git checkout "$DATA_BRANCH"
+            git rm -rf . >/dev/null 2>&1 || true
+            git clean -fdx >/dev/null 2>&1 || true
+          else
+            git checkout --orphan "$DATA_BRANCH"
+            git rm -rf . >/dev/null 2>&1 || true
+            git clean -fdx >/dev/null 2>&1 || true
+          fi
+          git lfs track '*.csv.gz'
+          cp /tmp/gold-data/*.csv.gz .
+          git add .gitattributes *.csv.gz
+          git commit -m 'data(renko): refresh canonical GOLD 2026-08-09 via LFS' || true
+          git push origin "HEAD:$DATA_BRANCH"
+          DATA_SHA="$(git rev-parse HEAD)"
+          for f in *.csv.gz; do test "$(git cat-file -s "HEAD:$f")" -lt 1000; done
+          python3 - "$DATA_SHA" <<'PY'
+          import json,pathlib,sys
+          sha=sys.argv[1]
+          p=pathlib.Path('/tmp/gold-meta/summary-2026-08-09.json')
+          x=json.loads(p.read_text())
+          x['dataBranch']='renko-gold-lfs-2026-08-09'
+          x['dataCommitSha']=sha
+          x['storage']='git-lfs-media'
+          for m in x['months']:
+              m['dataCommitSha']=sha
+              m['storage']='git-lfs-media'
+              m['assetUrl']=f'https://media.githubusercontent.com/media/copytolive/rwa/{sha}/{m["asset"]}'
+          p.write_text(json.dumps(x,indent=2)+'\n')
+          print('GOLD_INCREMENTAL_LFS_POINTER_PASS',sha,len(x['months']))
+          PY
+
+      - name: Restore source branch and rebuild complete manifest from audited baseline plus refreshed tail
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin feat/renko-gold-total-history-2003-2026
+          GIT_LFS_SKIP_SMUDGE=1 git checkout -B feat/renko-gold-total-history-2003-2026 origin/feat/renko-gold-total-history-2003-2026
+          rm -rf summaries generated
+          mkdir -p summaries generated
+          find /tmp/gold-baseline -type f -name 'summary-*.json' -exec cp {} summaries/ \;
+          python3 - <<'PY'
+          import json,pathlib
+          candidates=list(pathlib.Path('summaries').glob('summary-2026-05-08.json'))
+          assert len(candidates)==1, candidates
+          p=candidates[0]
+          x=json.loads(p.read_text())
+          x['months']=[m for m in x['months'] if int(m['month']) <= 7]
+          assert [int(m['month']) for m in x['months']] == [5,6,7]
+          p.write_text(json.dumps(x,indent=2)+'\n')
+          print('GOLD_BASELINE_TRIM_PASS',[int(m['month']) for m in x['months']])
+          PY
+          cp /tmp/gold-meta/summary-2026-08-09.json summaries/
+          python3 scripts/renko_gold_audit.py build-manifest \
+            --summaries-dir summaries \
+            --cutoff "$CUTOFF" \
+            --output-dir generated
+          python3 - <<'PY'
+          import json
+          m=json.load(open('generated/full-manifest.json'))
+          c=json.load(open('generated/coverage.json'))
+          k=json.load(open('generated/checksums.json'))
+          keys=[f"{int(x['year']):04d}-{int(x['month']):02d}" for x in m['months']]
+          assert keys[0]=='2003-05' and keys[-1]=='2026-09'
+          assert len(keys)==len(set(keys))==281
+          assert c['expectedMonths']==c['publishedMonths']==281
+          assert c['missingMonths']==[] and c['extraMonths']==[] and c['overlaps']==[]
+          assert c['duplicateSeconds']==0 and c['conflictingOHLC']==0
+          assert c['sourceUnavailableHours']==0
+          assert c['originWitnessSatisfied'] is True
+          assert c['allMonthlyAuditsPass'] is True and c['sourceStatusAccountingPass'] is True
+          assert c['backfillComplete'] is True and m['backfillComplete'] is True
+          assert len(k['assets'])==281
+          assert m['dataVersion']==c['dataVersion']==k['dataVersion']
+          print('GOLD_INCREMENTAL_FULL_COVERAGE_PASS',c['dataVersion'],c['barCount'],c['earliestSecond'],c['latestSecond'],c['cutoff'])
+          PY
+
+      - name: Commit refreshed canonical manifest metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name copytolive
+          git config user.email copytolive@gmail.com
+          git pull --rebase origin feat/renko-gold-total-history-2003-2026
+          cp generated/full-manifest.json renko/history/gold/full-manifest.json
+          cp generated/coverage.json renko/history/gold/coverage.json
+          cp generated/checksums.json renko/history/gold/checksums.json
+          cp generated/checksums.sha256 renko/history/gold/checksums.sha256
+          git add renko/history/gold/full-manifest.json renko/history/gold/coverage.json renko/history/gold/checksums.json renko/history/gold/checksums.sha256
+          git commit -m 'data(renko): refresh audited GOLD total history through current closed hour'
+          git push origin HEAD:feat/renko-gold-total-history-2003-2026
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: renko-gold-total-history-incremental-refresh
+          path: generated/
+          retention-days: 90
