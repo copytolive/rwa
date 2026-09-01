@@ -1,6 +1,6 @@
 {
   "schema": "renko-gold-s1-checksums-v1",
-  "dataVersion": "dukascopy-xauusd-s1-2e29a58fe33d0a8b",
+  "dataVersion": "dukascopy-xauusd-s1-f25a24e5d7994131",
   "assets": [
     {
       "year": 2003,
@@ -2517,10 +2517,19 @@
       "year": 2026,
       "month": 8,
       "asset": "xauusd-s1-2026-08.csv.gz",
-      "bytes": 10919195,
-      "barCount": 1317014,
-      "assetSha256": "3d4a26e7aeacb89a72afebdc6a03b2d45da28d80de387336e58b5a26eb18bb8c",
-      "sourceDigestSha256": "e9427392b9f050f3ce9f1aed6087d27c697e23837909c860470eaf30dd7b9997"
+      "bytes": 11545559,
+      "barCount": 1391335,
+      "assetSha256": "1847bdc6bb334f73170970150860d8b7521b922c17dab345b3af9b59a097b3d2",
+      "sourceDigestSha256": "280678981237f19e1cb0944746bb8bcc9fee095eafe2da4956bac38130168fec"
+    },
+    {
+      "year": 2026,
+      "month": 9,
+      "asset": "xauusd-s1-2026-09.csv.gz",
+      "bytes": 417908,
+      "barCount": 47823,
+      "assetSha256": "ac2ee9c698b648bb848ee41ba6d32c0a5ca46c4e6878bac4c007dedbf6efd5ea",
+      "sourceDigestSha256": "2e73866c4666331bce792ed2d872f7136937a3d40afabce63a4c4460c50814da"
     }
   ]
 }
