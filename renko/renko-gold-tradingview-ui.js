@@ -1,5 +1,11 @@
 (()=>{
 'use strict';
+if(!window.RENKO_GOLD_ONLY||window.RWARenkoGoldHistoryGeometryStitch||document.getElementById('renkoGoldGeometryStitchScript'))return;
+const s=document.createElement('script');s.id='renkoGoldGeometryStitchScript';s.src='renko-gold-history-geometry-stitch.js?v=1';s.async=false;document.head.appendChild(s);
+})();
+
+(()=>{
+'use strict';
 if(!window.RENKO_GOLD_ONLY||window.RWARenkoGoldTradingViewUI)return;
 const root=document.documentElement;
 const legacyLocks=new WeakMap();
@@ -70,14 +76,12 @@ const skinChart=()=>{
     return true;
   }catch(_){return false}
 };
-const canonicalize=()=>{
-  try{const target='/rwa/renko';if(location.pathname!==target||location.search||location.hash)history.replaceState(null,'',target);root.dataset.renkoCanonicalUrl=location.pathname+location.search}catch(_){ }
-};
+const canonicalize=()=>{try{const target='/rwa/renko';if(location.pathname!==target||location.search||location.hash)history.replaceState(null,'',target);root.dataset.renkoCanonicalUrl=location.pathname+location.search}catch(_){ }};
 let syncQueued=false;
 const sync=()=>{if(syncQueued)return;syncQueued=true;requestAnimationFrame(()=>{syncQueued=false;hideNonGold();skinChart()})};
 const start=()=>{hideNonGold();skinChart();installLegacyObserver();requestAnimationFrame(hideLegacyChartOverlays);setTimeout(hideLegacyChartOverlays,250);setTimeout(hideLegacyChartOverlays,1000);setTimeout(canonicalize,100)};
 for(const ev of ['renko:chart-ready','renko:tv-ready','renko:gold-recent','renko:gold-total','renko:gold-origin','renko:atr-control-applied','renko:traditional-applied'])window.addEventListener(ev,()=>{sync();installLegacyObserver();if(ev==='renko:gold-recent')setTimeout(canonicalize,0)});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 window.addEventListener('load',()=>{sync();installLegacyObserver();setTimeout(hideLegacyChartOverlays,0);setTimeout(canonicalize,0)},{once:true});
-window.RWARenkoGoldTradingViewUI={version:'1.4.0-gold-only-tv-hard-legacy-lock',sync,skinChart,canonicalize,hideNonGold,hideLegacyChartOverlays,installLegacyObserver};
+window.RWARenkoGoldTradingViewUI={version:'1.4.1-gold-geometry-loader',sync,skinChart,canonicalize,hideNonGold,hideLegacyChartOverlays,installLegacyObserver};
 })();
