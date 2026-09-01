@@ -26,7 +26,7 @@ const LABELS: Record<WorkspaceKind, { title: string; subtitle: string }> = {
   tokenization: { title: "Merchant Tokenization", subtitle: "Tokenization launch controls are evidence-gated. Mint and transfer stay locked until verified asset and testnet receipts exist." },
   api: { title: "API Access", subtitle: "Runtime connectivity and session state are shown here. API credentials are not fabricated when no issuance service is configured." },
   billing: { title: "Billing & Settlement", subtitle: "Checkout capability reflects the authoritative commerce readiness endpoint and payment-provider configuration." },
-  activity: { title: "Account Activity", subtitle: "Authenticated wallet activity can be read from Hyperliquid TESTNET. Demo account history is not presented as live." },
+  activity: { title: "Account Activity", subtitle: "Authenticated wallet activity can be read from Hyperliquid TESTNET. Synthetic account history is not generated." },
 };
 
 function shortWallet(wallet?: string) {
