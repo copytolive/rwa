@@ -1,2 +1,2 @@
-import { DepositPage } from "@/components/account";
-export default function AccountDepositPage(){return <DepositPage/>}
+import { LiveFundsWorkspace } from "@/components/program-workspaces";
+export default function AccountDepositPage(){return <LiveFundsWorkspace mode="deposit"/>}

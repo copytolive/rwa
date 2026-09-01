@@ -4,6 +4,7 @@ import { CommunityRoute } from "@/components/community";
 import { SettingsSupportRoute } from "@/components/settings-support";
 import { MerchantRoute } from "@/components/merchant";
 import { MerchantGrowthRoute } from "@/components/merchant-growth";
+import { LiveOrdersWorkspace, ProgramWorkspace, SellerOrdersWorkspace } from "@/components/program-workspaces";
 
 export const dynamicParams = false;
 
@@ -50,10 +51,19 @@ export function generateStaticParams() {
 function titleCase(parts:string[]){return parts.map(part=>part.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase())).join(" / ")}
 export default async function PlaceholderPage({params}:{params:Promise<{slug:string[]}>}){
   const {slug}=await params; const path=`/${slug.join("/")}`;
-  if(["/merchant/orders","/merchant/updates/new","/merchant/ads"].includes(path))return <MerchantGrowthRoute path={path}/>;
+  if(path==="/markets")return <ProgramWorkspace kind="markets"/>;
+  if(path==="/intelligence")return <ProgramWorkspace kind="intelligence"/>;
+  if(path==="/merchant/tokenization")return <ProgramWorkspace kind="tokenization"/>;
+  if(path==="/account/api")return <ProgramWorkspace kind="api"/>;
+  if(path==="/account/billing")return <ProgramWorkspace kind="billing"/>;
+  if(path==="/account/activity")return <ProgramWorkspace kind="activity"/>;
+  if(path==="/account/orders")return <LiveOrdersWorkspace/>;
+  if(path.includes("/account/orders/")&&path.endsWith("/dispute"))return <LiveOrdersWorkspace dispute/>;
+  if(path==="/merchant/orders")return <SellerOrdersWorkspace/>;
+  if(["/merchant/updates/new","/merchant/ads"].includes(path))return <MerchantGrowthRoute path={path}/>;
   if(path==="/merchant"||["/merchant/create","/merchant/products","/merchant/customers","/merchant/analytics"].includes(path))return <MerchantRoute path={path}/>;
   if(["/settings","/settings/security","/pro","/help","/status"].includes(path))return <SettingsSupportRoute path={path}/>;
   if(path==="/community"||path==="/community/compose"||path==="/bookmarks"||path.startsWith("/community/users/")||path.startsWith("/community/thesis/"))return <CommunityRoute path={path}/>;
-  if(path==="/checkout"||path==="/account/orders"||path.includes("/account/orders/")&&path.endsWith("/dispute")||path.match(/^\/businesses\/[^/]+\/store(?:\/products\/[^/]+)?$/))return <CommerceRoute path={path}/>;
+  if(path==="/checkout"||path.match(/^\/businesses\/[^/]+\/store(?:\/products\/[^/]+)?$/))return <CommerceRoute path={path}/>;
   return <RoutePlaceholder title={titleCase(slug)} path={path}/>;
 }

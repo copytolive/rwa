@@ -16,6 +16,9 @@ for(const token of ["Password authentication is not connected","No session was c
 for(const token of ["Connect Wallet · Live","Log Out","data-backend-connected"]){if(!publicShell.includes(token))throw new Error(`Public live truth contract missing ${token}`)}
 for(const token of ["Authoritative Checkout","Pay with Verified Checkout","Payment is NOT marked paid","Hyperliquid Execution","Authorize TESTNET Agent","MAINNET remains machine-locked"]){if(!center.includes(token))throw new Error(`Live action center missing ${token}`)}
 for(const token of ["execution-api.js","rwa-execution-config.json","rwa-commerce-config.json","readiness.json","e2e-registry.json","live-runtime-manifest.json"]){if(!postbuild.includes(token))throw new Error(`Postbuild live packaging missing ${token}`)}
+if(!postbuild.includes("commerceSource.candidate_api_base||commerceSource.candidate_base"))throw new Error("Legacy candidate_base is not mapped into the browser commerce runtime");
+if(!postbuild.includes("commerceSource.fallback_candidate_api_base||commerceSource.fallback_candidate_base"))throw new Error("Legacy fallback_candidate_base compatibility mapping is missing");
+if(!live.includes("candidate_api_base"))throw new Error("Browser runtime does not consume packaged commerce candidate_api_base");
 if(!String(pkg.scripts?.build||"").includes("postbuild-live-runtime.mjs"))throw new Error("Build does not package live runtime");
 if(!pkg.scripts?.["verify:live-runtime"])throw new Error("verify:live-runtime script missing");
 if(shell.includes("const BACKEND_CONNECTED = true")||shell.includes("const BACKEND_CONNECTED=true"))throw new Error("Hard-coded backend success is forbidden");
