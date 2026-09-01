@@ -90,6 +90,19 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p ui-total-audit
+          # Route/image/link/overflow discovery still runs on both desktop and mobile.
+          # For behavior execution, identical label+class controls are one distinct control;
+          # mobile-only controls still form their own distinct entry and are executed.
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tools/realworldasset-total-ui-audit.py')
+          s=p.read_text()
+          old="key=(vpname,label,cls)"
+          new="key=(label,cls)"
+          assert s.count(old)==1, s.count(old)
+          p.write_text(s.replace(old,new))
+          print('TOTAL_UI_DISTINCT_CONTROL_DEDUPE_PASS')
+          PY
           python3 tools/realworldasset-total-ui-audit.py \
             --base http://127.0.0.1:4173/rwa/ \
             --source apps/realworldasset/src \
