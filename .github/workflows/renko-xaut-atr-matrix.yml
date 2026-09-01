@@ -86,7 +86,7 @@ jobs:
       - name: Wait for exact GitHub Pages SHA
         run: |
           set -euo pipefail
-          url='https://copytolive.github.io/rwa/renko-deployment-sha.txt'
+          url='https://copytolive.github.io/rwa/renko/renko-deployment-sha.txt'
           for i in $(seq 1 90); do
             got=$(curl -fsS "$url?ts=$(date +%s%N)" 2>/dev/null | tr -d '\r\n' || true)
             echo "attempt=$i expected=$GITHUB_SHA got=$got"
