@@ -64,7 +64,7 @@ jobs:
           set -euo pipefail
           ok=0
           for i in $(seq 1 72); do
-            live_sha="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/renko-deployment-sha.txt?v=${GITHUB_RUN_ID}-${i}" 2>/dev/null | tr -d '\r\n' || true)"
+            live_sha="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/renko/renko-deployment-sha.txt?v=${GITHUB_RUN_ID}-${i}" 2>/dev/null | tr -d '\r\n' || true)"
             if [ "$live_sha" = "$GITHUB_SHA" ]; then ok=1; break; fi
             sleep 5
           done
