@@ -21,18 +21,23 @@ if(executionOutput.includes(originalConfig)||executionOutput.includes(originalLa
 fs.writeFileSync(path.join(out,"execution-api.js"),executionOutput);
 
 copy(path.join(repoRoot,"rwa-execution-config.json"),path.join(out,"rwa-execution-config.json"));
-copy(path.join(repoRoot,"rwa-commerce-config.json"),path.join(out,"rwa-commerce-config.json"));
+const commerceSource=JSON.parse(fs.readFileSync(must(path.join(repoRoot,"rwa-commerce-config.json")),"utf8"));
+const commerce={
+  ...commerceSource,
+  candidate_api_base:String(commerceSource.candidate_api_base||commerceSource.candidate_base||""),
+  fallback_candidate_api_base:String(commerceSource.fallback_candidate_api_base||commerceSource.fallback_candidate_base||""),
+};
+fs.writeFileSync(path.join(out,"rwa-commerce-config.json"),JSON.stringify(commerce,null,2)+"\n");
 for(const name of ["readiness.json","e2e-registry.json","external-gates.json","product-rwa-testnet.json"]){
   copy(path.join(repoRoot,"launch",name),path.join(out,"launch",name));
 }
 
-const commerce=JSON.parse(fs.readFileSync(path.join(out,"rwa-commerce-config.json"),"utf8"));
 const execution=JSON.parse(fs.readFileSync(path.join(out,"rwa-execution-config.json"),"utf8"));
 const readiness=JSON.parse(fs.readFileSync(path.join(out,"launch","readiness.json"),"utf8"));
 const manifest={
   schema:"realworldasset-live-runtime-v1",
   generated_at:new Date().toISOString(),
-  commerce:{api_base:String(commerce.api_base||""),candidate_api_base:String(commerce.candidate_api_base||""),write_policy:String(commerce.write_policy||"")},
+  commerce:{api_base:String(commerce.api_base||""),candidate_api_base:String(commerce.candidate_api_base||""),fallback_candidate_api_base:String(commerce.fallback_candidate_api_base||""),write_policy:String(commerce.write_policy||"")},
   execution:{venue:String(execution.venue||""),mainnetApi:String(execution.mainnetApi||""),testnetApi:String(execution.testnetApi||"")},
   mainnet_gate:{status:String(readiness.status||"UNKNOWN"),mainnet_ready:readiness.mainnet_ready===true},
   safety:"candidate endpoints are probe-only; mainnet remains machine-gated"
