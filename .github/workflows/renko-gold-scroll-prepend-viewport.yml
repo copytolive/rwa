@@ -41,7 +41,8 @@ jobs:
           node --check scripts/renko_gold_scroll_prepend_proof.mjs
           grep -Fq "version:'1.0.0-explicit-zoom'" renko/renko-gold-explicit-zoom.js
           grep -Fq '1.2.0-deep-zoom-history-demand' renko/renko-gold-explicit-zoom.js
-          grep -Fq '1.2.1-deficit-history-demand' renko/renko-gold-explicit-zoom.js
+          grep -Fq '1.2.2-deep-threshold-demand' renko/renko-gold-explicit-zoom.js
+          grep -Fq 'DEEP_HISTORY_WIDTH=120' renko/renko-gold-explicit-zoom.js
           grep -Fq '4.4.0-synchronous-history-scale' renko/renko-gold-manual-viewport-lock.js
           grep -Fq 'synchronousRebuildScaleWrites' renko/renko-gold-manual-viewport-lock.js
           grep -Fq '2.1.0-dense-fixed-width-logical-pan' renko/renko-gold-wheel-pan-lock.js
