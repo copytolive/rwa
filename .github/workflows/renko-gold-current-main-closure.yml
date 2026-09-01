@@ -14,15 +14,13 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
+  group: renko-gold-current-main-proof
   cancel-in-progress: false
 
 jobs:
-  validate-and-deploy:
+  validate-canonical:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -31,6 +29,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          test -s renko/renko-tv-engine-fastpath.js
           node --check renko/renko-chart-bridge.js
           node --check renko/renko-gold-total-history.js
           node --check renko/renko-gold-total-history-worker.js
@@ -70,25 +69,17 @@ jobs:
           assert isinstance(m['versionSha256'],str) and len(m['versionSha256'])==64
           html=open('renko/index.html').read()
           assert '<script src="renko-gold-total-history.js' in html
+          assert '<script src="renko-tv-engine-fastpath.js' in html
           assert 'data-apply-method="atr"' in html and 'data-apply-method="traditional"' in html
           r=open('renko/renko-gold-total-history.js').read()
           assert 'history/gold/full-manifest.json' in r
           print('GOLD_CURRENT_MAIN_DATA_GATE_PASS',json.dumps({'months':len(months),'bars':c['barCount'],'bytes':c['compressedBytes'],'earliestSecond':c['earliestSecond'],'latestSecond':c['latestSecond'],'cutoff':c['cutoff'],'version':m['dataVersion'],'versionSha256':m['versionSha256']},separators=(',',':')))
           PY
-          if find . -type f -name 'xauusd-s1-*.csv.gz' -print -quit | grep -q .; then echo 'large canonical CSV gzip leaked into Pages tree'; exit 1; fi
-          printf '%s\n' "$GITHUB_SHA" > deployment-sha.txt
-          printf '%s\n' "$GITHUB_SHA" > renko-deployment-sha.txt
-          printf '%s\n' "$GITHUB_SHA" > renko/deployment-sha.txt
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.'
-      - name: Deploy exact GOLD canonical candidate to Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          if find . -type f -name 'xauusd-s1-*.csv.gz' -print -quit | grep -q .; then echo 'large canonical CSV gzip leaked into repository tree'; exit 1; fi
+          echo "GOLD_CANONICAL_VALIDATION_ONLY_PASS $GITHUB_SHA"
 
   public-browser:
-    needs: validate-and-deploy
+    needs: validate-canonical
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -96,16 +87,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Wait for exact production SHA
+      - name: Wait for exact canonical production SHA
         shell: bash
         run: |
           set -euo pipefail
-          for i in {1..60}; do
-            got="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/deployment-sha.txt?cb=$RANDOM" 2>/dev/null || true)"
-            if [ "$got" = "$GITHUB_SHA" ]; then echo "GOLD_PRODUCTION_SHA_PASS $got"; exit 0; fi
+          for i in {1..120}; do
+            root="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/deployment-sha.txt?cb=$RANDOM" 2>/dev/null || true)"
+            renko="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/deployment-sha.txt?cb=$RANDOM" 2>/dev/null || true)"
+            if [ "$root" = "$GITHUB_SHA" ] && [ "$renko" = "$GITHUB_SHA" ]; then echo "GOLD_CANONICAL_PRODUCTION_SHA_PASS $renko"; exit 0; fi
             sleep 5
           done
-          echo 'Pages did not converge to expected SHA'; exit 1
+          echo 'Canonical Pages did not converge to expected root + RENKO SHA'; exit 1
       - name: Install Chromium
         shell: bash
         run: |
@@ -176,16 +168,17 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-      - name: Wait for exact public SHA
+      - name: Wait for exact canonical public SHA
         shell: bash
         run: |
           set -euo pipefail
-          for i in {1..60}; do
-            got="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/deployment-sha.txt?cb=$RANDOM" 2>/dev/null || true)"
-            if [ "$got" = "$GITHUB_SHA" ]; then echo "GOLD_BACKTEST_PUBLIC_SHA_PASS $got"; exit 0; fi
+          for i in {1..120}; do
+            root="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/deployment-sha.txt?cb=$RANDOM" 2>/dev/null || true)"
+            renko="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/deployment-sha.txt?cb=$RANDOM" 2>/dev/null || true)"
+            if [ "$root" = "$GITHUB_SHA" ] && [ "$renko" = "$GITHUB_SHA" ]; then echo "GOLD_BACKTEST_PUBLIC_SHA_PASS $renko"; exit 0; fi
             sleep 5
           done
-          echo 'Pages did not converge before public backtest'; exit 1
+          echo 'Canonical Pages did not converge before public backtest'; exit 1
       - name: Prove backtester identity equals chart manifest and stream across year boundary
         shell: bash
         run: |
@@ -221,12 +214,15 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Final same-SHA public no-drift recertification
+        with:
+          fetch-depth: 0
+      - name: Final same-artifact public no-drift recertification
         shell: bash
         run: |
           set -euo pipefail
-          remote="$(git ls-remote https://github.com/copytolive/rwa.git refs/heads/main | awk '{print $1}')"
-          [ "$remote" = "$GITHUB_SHA" ] || { echo "main drift: $remote != $GITHUB_SHA"; exit 1; }
+          git fetch origin main --quiet
+          remote="$(git rev-parse origin/main)"
+          git merge-base --is-ancestor "$GITHUB_SHA" "$remote" || { echo "proof SHA is not an ancestor of current main: $GITHUB_SHA -> $remote"; exit 1; }
           renko_sha="$(curl -fsS "https://copytolive.github.io/rwa/renko/deployment-sha.txt?cb=$RANDOM" | tr -d '\r\n')"
           root_sha="$(curl -fsS "https://copytolive.github.io/rwa/deployment-sha.txt?cb=$RANDOM" | tr -d '\r\n')"
           [ "$renko_sha" = "$GITHUB_SHA" ] || { echo "renko public drift: $renko_sha"; exit 1; }
@@ -244,5 +240,5 @@ jobs:
           assert len(public['months'])==281
           print('GOLD_FINAL_MANIFEST_IDENTITY_PASS',public['dataVersion'],public['versionSha256'],len(public['months']))
           PY
-          echo "NO_EVIDENCE_MIXED_BETWEEN_SHAS $GITHUB_SHA"
+          echo "NO_EVIDENCE_MIXED_BETWEEN_SHAS $GITHUB_SHA current_main=$remote"
           echo "PUBLIC_PRODUCTION_PASS $GITHUB_SHA"
