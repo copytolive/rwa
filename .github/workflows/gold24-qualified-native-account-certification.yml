@@ -1,0 +1,268 @@
+name: GOLD24 Qualified Native MT5 Account Certification
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/gold24-qualified-native-account-certification.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: gold24-qualified-native-account-certification
+  cancel-in-progress: true
+
+env:
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  canonical-python-parity:
+    name: canonical-python-parity-9of9
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      STATE_DIR: ${{ github.workspace }}/.gold24-canonical-v11
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install GOLD24 dependencies
+        run: python -m pip install -r backtest/gold24/requirements.txt
+      - name: Restore exact latest canonical state
+        shell: bash
+        run: |
+          set -euo pipefail
+          read -r SOURCE_RUN SOURCE_BATCH < <(python - <<'PY'
+          import json,pathlib
+          x=json.loads(pathlib.Path('backtest/gold24/runtime_v11/latest_validation_summary.json').read_text())
+          assert x['validation']=='PASS'
+          assert x['gate_a_strict']['gate_a']=='PASS'
+          assert x['strategy_engine']=='RUNNING'
+          print(x['github_run_id'],x['batch'])
+          PY
+          )
+          echo "CANONICAL_SOURCE_RUN=$SOURCE_RUN" >> "$GITHUB_ENV"
+          echo "CANONICAL_SOURCE_BATCH=$SOURCE_BATCH" >> "$GITHUB_ENV"
+          rm -rf "$STATE_DIR"; mkdir -p "$STATE_DIR"
+          gh run download "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" -n gold24-canonical-v11-state -D "$STATE_DIR"
+          test -s "$STATE_DIR/gold24-v11.db"
+          test -s "$STATE_DIR/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv"
+          test -s "$STATE_DIR/gate_a/gate_a_receipt.json"
+      - name: Exact canonical Python parity for all 9 selected methods
+        run: python backtest/gold24/qualified_scripts/validate_qualified_scripts.py --state-dir "$STATE_DIR" --out "$RUNNER_TEMP/qualified_scripts_validation.json"
+      - name: Enforce 3 strict + 6 Multi = 9 pairs
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'qualified_scripts_validation.json'
+          x=json.loads(p.read_text())
+          assert x['status']=='PASS',x
+          assert x['strict_count']==3,x
+          assert x['multi_count']==6,x
+          assert x['total_method_pairs']==9,x
+          assert len(x['checks'])==9,x
+          assert all(c.get('canonical_python_parity')=='PASS' and not c.get('errors') for c in x['checks']),x
+          print('PYTHON_PARITY_9_OF_9=PASS')
+          PY
+      - name: Upload canonical parity evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold24-account-python-parity-${{ github.run_id }}
+          path: ${{ runner.temp }}/qualified_scripts_validation.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Publish exact canonical D1
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold24-account-canonical-d1-${{ github.run_id }}
+          path: ${{ env.STATE_DIR }}/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv
+          if-no-files-found: error
+          retention-days: 2
+
+  native-mt5-account-tester:
+    name: native-mt5-account-tester-9of9
+    needs: canonical-python-parity
+    runs-on: windows-2022
+    timeout-minutes: 90
+    env:
+      MT5_LOGIN: ${{ secrets.MT5_LOGIN }}
+      MT5_PASSWORD: ${{ secrets.MT5_PASSWORD }}
+      MT5_SERVER: ${{ secrets.MT5_SERVER }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Require existing MT5 account context secrets
+        shell: powershell
+        run: |
+          if([string]::IsNullOrWhiteSpace($env:MT5_LOGIN) -or [string]::IsNullOrWhiteSpace($env:MT5_PASSWORD) -or [string]::IsNullOrWhiteSpace($env:MT5_SERVER)){throw 'ACCOUNT_CONTEXT_MISSING'}
+          Write-Host 'ACCOUNT_CONTEXT_PRESENT=PASS'
+      - name: Download exact certified canonical D1
+        uses: actions/download-artifact@v4
+        with:
+          name: gold24-account-canonical-d1-${{ github.run_id }}
+          path: ${{ runner.temp }}/canonical
+      - name: Prepare MT5 canonical CSV
+        shell: powershell
+        run: |
+          $dataset=Join-Path $env:RUNNER_TEMP 'canonical\GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv'
+          if(!(Test-Path $dataset)){throw 'canonical dataset missing'}
+          python backtest/gold24/qualified_scripts/prepare_mt5_canonical.py --input $dataset --output "$env:RUNNER_TEMP\gold24_canonical_d1_mt5.csv" --expected-rows 6500
+      - name: Install official Exness MT5 and locate MetaEditor
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          $setup=Join-Path $env:RUNNER_TEMP 'exness5setup.exe'
+          Invoke-WebRequest -UseBasicParsing 'https://download.terminal.free/cdn/web/exness.technologies.ltd/mt5/exness5setup.exe' -OutFile $setup
+          Start-Process -FilePath $setup -ArgumentList '/auto' -Wait
+          Start-Sleep -Seconds 12
+          $c=@();foreach($r in @('C:\Program Files','C:\Program Files (x86)',"$env:LOCALAPPDATA\Programs")){if(Test-Path $r){$c+=Get-ChildItem $r -Filter terminal64.exe -File -Recurse -ErrorAction SilentlyContinue}}
+          $terminal=($c|Sort-Object LastWriteTime -Descending|Select-Object -First 1).FullName
+          if([string]::IsNullOrWhiteSpace($terminal)){throw 'terminal64.exe not found'}
+          $meta=Join-Path (Split-Path $terminal) 'metaeditor64.exe';if(!(Test-Path $meta)){throw 'metaeditor64.exe missing'}
+          "MT5_TERMINAL=$terminal"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "MT5_META=$meta"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Authenticate terminal account context safely
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          $auth=Join-Path $env:RUNNER_TEMP 'gold24-auth.ini'
+          @(
+            '[Common]',
+            "Login=$env:MT5_LOGIN",
+            "Password=$env:MT5_PASSWORD",
+            "Server=$env:MT5_SERVER",
+            'KeepPrivate=1','NewsEnable=0','CertInstall=0',
+            '[Experts]','AllowLiveTrading=0','AllowDllImport=0','Enabled=0'
+          ) | Set-Content $auth -Encoding ASCII
+          $p=Start-Process -FilePath $env:MT5_TERMINAL -ArgumentList @("/login:$env:MT5_LOGIN","/config:$auth") -PassThru
+          Start-Sleep -Seconds 55
+          if(-not $p.HasExited){Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue}
+          Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          Start-Sleep -Seconds 3
+          $base=Join-Path $env:APPDATA 'MetaQuotes\Terminal'
+          $cand=Get-ChildItem $base -Directory -ErrorAction Stop | Where-Object {Test-Path (Join-Path $_.FullName 'MQL5')} | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if($null -eq $cand){throw 'MT5 data dir missing'}
+          "MT5_DATA=$($cand.FullName)"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          $logs=Join-Path $cand.FullName 'logs'
+          $recent=@(Get-ChildItem $logs -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 3)
+          if($recent.Count -eq 0){throw 'ACCOUNT_AUTH_NO_TERMINAL_LOG'}
+          $text=($recent | ForEach-Object {Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue}) -join "`n"
+          if($text -match 'invalid account|authorization failed|failed to connect|no connection'){throw 'ACCOUNT_AUTH_FAIL'}
+          if($text -match 'account is not specified'){throw 'ACCOUNT_AUTH_NOT_SELECTED'}
+          Remove-Item $auth -Force -ErrorAction SilentlyContinue
+          Write-Host 'ACCOUNT_AUTH_BOOTSTRAP=PASS'
+      - name: Compile importer and all 9 qualified EAs natively
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          $expert=Join-Path $env:MT5_DATA 'MQL5\Experts\Gold24Qualified';$script=Join-Path $env:MT5_DATA 'MQL5\Scripts\Gold24Qualified';$evidence=Join-Path $env:RUNNER_TEMP 'mt5-account-evidence'
+          New-Item -ItemType Directory -Force $expert,$script,$evidence | Out-Null
+          "MT5_EXPERT_DIR=$expert"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "MT5_EVIDENCE=$evidence"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          Copy-Item 'backtest/gold24/qualified_scripts/qualified_engine.mqh' $expert -Force
+          Copy-Item 'backtest/gold24/qualified_scripts/multimethod_engine.mqh' $expert -Force
+          Get-ChildItem 'backtest/gold24/qualified_scripts' -Filter '*.mq5' | Where-Object {$_.Name -notmatch '^qualified_import_'} | Copy-Item -Destination $expert -Force
+          Copy-Item 'backtest/gold24/qualified_scripts/qualified_import_canonical.mq5' $script -Force
+          function Compile([string]$p){
+            $log=[IO.Path]::ChangeExtension($p,'.log');$ex5=[IO.Path]::ChangeExtension($p,'.ex5');Remove-Item $log,$ex5 -Force -ErrorAction SilentlyContinue
+            $proc=Start-Process -FilePath $env:MT5_META -ArgumentList @("/compile:$p",'/log') -PassThru
+            if(-not $proc.WaitForExit(120000)){Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue;throw 'MetaEditor timeout'}
+            for($i=0;$i -lt 20 -and (!(Test-Path $log) -or !(Test-Path $ex5));$i++){Start-Sleep -Milliseconds 500}
+            if(Test-Path $log){Copy-Item $log $env:MT5_EVIDENCE -Force;$txt=Get-Content $log -Raw}else{$txt='NO COMPILE LOG'}
+            if(!(Test-Path $ex5) -or !(Test-Path $log) -or $txt -notmatch '0 errors, 0 warnings'){throw "NATIVE_COMPILE_FAIL $($p | Split-Path -Leaf)"}
+          }
+          Compile (Join-Path $script 'qualified_import_canonical.mq5')
+          $eas=@(Get-ChildItem $expert -Filter '*.mq5' | Sort-Object Name)
+          if($eas.Count -ne 9){throw "expected 9 EAs, found $($eas.Count)"}
+          foreach($ea in $eas){Compile $ea.FullName}
+          Write-Host 'NATIVE_COMPILE_9_OF_9=PASS'
+      - name: Import exact 6500-row canonical D1 custom symbol
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          $common=Join-Path $env:APPDATA 'MetaQuotes\Terminal\Common\Files\Gold24Qualified';New-Item -ItemType Directory -Force $common|Out-Null
+          Copy-Item "$env:RUNNER_TEMP\gold24_canonical_d1_mt5.csv" (Join-Path $common 'gold24_canonical_d1_mt5.csv') -Force
+          $receipt=Join-Path $common 'import_receipt.txt';Remove-Item $receipt -Force -ErrorAction SilentlyContinue
+          $ini=Join-Path $env:RUNNER_TEMP 'import-auth.ini'
+          @(
+            '[Common]',"Login=$env:MT5_LOGIN","Password=$env:MT5_PASSWORD","Server=$env:MT5_SERVER",'KeepPrivate=1','NewsEnable=0','CertInstall=0',
+            '[Experts]','AllowLiveTrading=0','AllowDllImport=0',
+            '[StartUp]','Script=Gold24Qualified\qualified_import_canonical','Symbol=XAUUSD','Period=D1'
+          ) | Set-Content $ini -Encoding ASCII
+          $p=Start-Process -FilePath $env:MT5_TERMINAL -ArgumentList @("/login:$env:MT5_LOGIN","/config:$ini") -PassThru
+          for($i=0;$i -lt 90 -and !(Test-Path $receipt);$i++){Start-Sleep -Seconds 2}
+          if(-not $p.HasExited){Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue}
+          Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          Remove-Item $ini -Force -ErrorAction SilentlyContinue
+          if(!(Test-Path $receipt)){throw 'CUSTOM_SYMBOL_IMPORT_RECEIPT_MISSING'}
+          $txt=Get-Content $receipt -Raw;Copy-Item $receipt $env:MT5_EVIDENCE -Force
+          if($txt -notmatch 'status=PASS'){throw 'CUSTOM_SYMBOL_IMPORT_FAIL'}
+          Write-Host 'CUSTOM_SYMBOL_IMPORT_6500=PASS'
+      - name: Native Strategy Tester report and receipt for all 9 EAs
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          $common=Join-Path $env:APPDATA 'MetaQuotes\Terminal\Common\Files\Gold24Qualified'
+          $eas=@(Get-ChildItem $env:MT5_EXPERT_DIR -Filter '*.mq5' | Sort-Object Name)
+          if($eas.Count -ne 9){throw "expected 9 EAs for tester, found $($eas.Count)"}
+          $pass=0
+          foreach($ea in $eas){
+            Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
+            $name=[IO.Path]::GetFileNameWithoutExtension($ea.Name);$src=Get-Content $ea.FullName -Raw
+            $mm=[regex]::Match($src,'#define\s+(?:QM|MM)_MAGIC\s+(\d+)');if(!$mm.Success){throw "magic missing $name"};$magic=$mm.Groups[1].Value
+            $receipt=Join-Path $common "receipt_$magic.txt";Remove-Item $receipt -Force -ErrorAction SilentlyContinue
+            $report=Join-Path $env:MT5_EVIDENCE "$name.html";$ini=Join-Path $env:RUNNER_TEMP "$name.ini";Remove-Item $report -Force -ErrorAction SilentlyContinue
+            @(
+              '[Common]',"Login=$env:MT5_LOGIN","Password=$env:MT5_PASSWORD","Server=$env:MT5_SERVER",'KeepPrivate=1','NewsEnable=0','CertInstall=0',
+              '[Experts]','AllowLiveTrading=0','AllowDllImport=0',
+              '[Tester]',"Expert=Gold24Qualified\$name",'Symbol=GOLD24-CANON','Period=D1','Model=2','ExecutionMode=0','Optimization=0','ForwardMode=0',
+              'FromDate=2000.10.23','ToDate=2026.08.27','Deposit=10000','Currency=USD','ProfitInPips=0','Leverage=1:100','UseLocal=1','UseRemote=0','UseCloud=0','Visual=0',
+              "Report=$report",'ReplaceReport=1','ShutdownTerminal=1'
+            ) | Set-Content $ini -Encoding ASCII
+            Write-Host "START_TESTER $name"
+            $p=Start-Process -FilePath $env:MT5_TERMINAL -ArgumentList @("/login:$env:MT5_LOGIN","/config:$ini") -PassThru
+            $deadline=(Get-Date).AddMinutes(4)
+            do {if((Test-Path $report) -and (Test-Path $receipt)){break};Start-Sleep -Seconds 2} while((Get-Date) -lt $deadline)
+            if(!(Test-Path $report)){
+              $alt=Get-ChildItem $env:MT5_DATA -File -Recurse -ErrorAction SilentlyContinue | Where-Object {$_.BaseName -eq $name -and $_.Extension -match '^\.html?$'} | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+              if($null -ne $alt){Copy-Item $alt.FullName $report -Force}
+            }
+            if(-not $p.HasExited){Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue}
+            Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+            Remove-Item $ini -Force -ErrorAction SilentlyContinue
+            if(!(Test-Path $report) -or !(Test-Path $receipt)){
+              $logs=Join-Path $env:MT5_DATA 'logs';Get-ChildItem $logs -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 3 | ForEach-Object {Copy-Item $_.FullName (Join-Path $env:MT5_EVIDENCE ("terminal-"+$_.Name)) -Force}
+              throw "TESTER_EVIDENCE_MISSING $name report=$(Test-Path $report) receipt=$(Test-Path $receipt)"
+            }
+            $txt=Get-Content $receipt -Raw
+            Copy-Item $receipt (Join-Path $env:MT5_EVIDENCE "$name-receipt.txt") -Force
+            if($txt -notmatch '(?m)^status=PASS$'){throw "TESTER_RECEIPT_FAIL $name"}
+            $bars=[int64]([regex]::Match($txt,'(?m)^bars=(\d+)$').Groups[1].Value)
+            $signals=[int64]([regex]::Match($txt,'(?m)^signals=(\d+)$').Groups[1].Value)
+            $attempts=[int64]([regex]::Match($txt,'(?m)^order_attempts=(\d+)$').Groups[1].Value)
+            $accepted=[int64]([regex]::Match($txt,'(?m)^order_accepted=(\d+)$').Groups[1].Value)
+            $errors=[int64]([regex]::Match($txt,'(?m)^trade_errors=(\d+)$').Groups[1].Value)
+            if($bars -lt 6000 -or $signals -le 0 -or $attempts -le 0 -or $accepted -le 0 -or $errors -ne 0){throw "TESTER_OPERATIONAL_GATE_FAIL $name bars=$bars signals=$signals attempts=$attempts accepted=$accepted errors=$errors"}
+            $pass++
+            Write-Host "TESTER_PASS $name"
+          }
+          if($pass -ne 9){throw "TESTER_PASS_COUNT=$pass expected=9"}
+          "native_strategy_tester=PASS`nmethod_pairs=9`nreports=9`nreceipts=9`naccount_context=MT5_ACTIONS_SECRET`nlive_trading=DISABLED" | Set-Content (Join-Path $env:MT5_EVIDENCE 'FINAL_NATIVE_RECEIPT.txt')
+          Write-Host 'NATIVE_STRATEGY_TESTER_9_OF_9=PASS'
+      - name: Upload native MT5 evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold24-qualified-native-account-mt5-${{ github.run_id }}
+          path: ${{ env.MT5_EVIDENCE }}
+          if-no-files-found: warn
+          retention-days: 90
