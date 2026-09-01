@@ -52,8 +52,8 @@ jobs:
           git clone --mirror https://github.com/copytolive/realworldasset.git mirror-realworldasset.git
           git -C mirror-rwa.git bundle create "$GITHUB_WORKSPACE/out/04_GIT_HISTORY/copytolive-rwa-all-refs.bundle" --all
           git -C mirror-realworldasset.git bundle create "$GITHUB_WORKSPACE/out/04_GIT_HISTORY/copytolive-realworldasset-all-refs.bundle" --all
-          git bundle verify "$GITHUB_WORKSPACE/out/04_GIT_HISTORY/copytolive-rwa-all-refs.bundle"
-          git bundle verify "$GITHUB_WORKSPACE/out/04_GIT_HISTORY/copytolive-realworldasset-all-refs.bundle"
+          git -C mirror-rwa.git bundle verify "$GITHUB_WORKSPACE/out/04_GIT_HISTORY/copytolive-rwa-all-refs.bundle"
+          git -C mirror-realworldasset.git bundle verify "$GITHUB_WORKSPACE/out/04_GIT_HISTORY/copytolive-realworldasset-all-refs.bundle"
 
           python3 - <<'PY'
           import hashlib, json, subprocess, zipfile
