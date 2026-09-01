@@ -207,25 +207,35 @@ int CanonicalSignal()
    int n=ArraySize(r),warmup=MathMax(150,SLOW+2);
    if(n<=warmup) return 0;
    bool longSig=false,shortSig=false;
-#if QM_FAMILY_CODE == 1
-   if(n<SLOW+1) return 0;
-   double rsi=SimpleRollingRSI(r,FAST);
-   double rh=-DBL_MAX,rl=DBL_MAX;
-   for(int i=n-2;i>=n-SLOW-1;i--){if(r[i].high>rh)rh=r[i].high;if(r[i].low<rl)rl=r[i].low;}
-   double closeNow=r[n-1].close;
-   longSig=(closeNow>rh && rsi>50.0);
-   shortSig=(closeNow<rl && rsi<50.0);
-#elif QM_FAMILY_CODE == 2
-   if(n<3) return 0;
-   MqlRates cur=r[n-1],prev=r[n-2];
-   bool bull=(cur.close>cur.open && prev.close<prev.open && cur.close>=prev.open && cur.open<=prev.close);
-   bool bear=(cur.close<cur.open && prev.close>prev.open && cur.close<=prev.open && cur.open>=prev.close);
-   double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
-   longSig=(bull && emaFast>emaSlow);
-   shortSig=(bear && emaFast<emaSlow);
-#else
-   #error Unsupported QM_FAMILY_CODE
-#endif
+
+   // MetaEditor/MQL5 does not support C-style #if expressions. QM_FAMILY_CODE is
+   // a wrapper-defined numeric macro, so branch on it as a normal constant expression.
+   if(QM_FAMILY_CODE==1)
+   {
+      if(n<SLOW+1) return 0;
+      double rsi=SimpleRollingRSI(r,FAST);
+      double rh=-DBL_MAX,rl=DBL_MAX;
+      for(int i=n-2;i>=n-SLOW-1;i--){if(r[i].high>rh)rh=r[i].high;if(r[i].low<rl)rl=r[i].low;}
+      double closeNow=r[n-1].close;
+      longSig=(closeNow>rh && rsi>50.0);
+      shortSig=(closeNow<rl && rsi<50.0);
+   }
+   else if(QM_FAMILY_CODE==2)
+   {
+      if(n<3) return 0;
+      MqlRates cur=r[n-1],prev=r[n-2];
+      bool bull=(cur.close>cur.open && prev.close<prev.open && cur.close>=prev.open && cur.open<=prev.close);
+      bool bear=(cur.close<cur.open && prev.close>prev.open && cur.close<=prev.open && cur.open>=prev.close);
+      double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
+      longSig=(bull && emaFast>emaSlow);
+      shortSig=(bear && emaFast<emaSlow);
+   }
+   else
+   {
+      PrintFormat("GOLD24_SIGNAL_FAIL unsupported family code=%d",QM_FAMILY_CODE);
+      return 0;
+   }
+
    if(DIRECTION_MODE=="LONG_ONLY") shortSig=false;
    if(DIRECTION_MODE=="SHORT_ONLY") longSig=false;
    if(longSig && !shortSig) return 1;
