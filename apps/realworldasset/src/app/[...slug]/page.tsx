@@ -1,5 +1,6 @@
 import { LiveRouteWorkspace } from "@/components/live-dashboard";
 import { ProgramWorkspace, LiveOrdersWorkspace, SellerOrdersWorkspace } from "@/components/program-workspaces";
+import { CriticalLiveWorkspace } from "@/components/critical-workspaces/CriticalWorkspaces";
 
 export const dynamicParams=false;
 
@@ -25,10 +26,12 @@ export default async function LiveOnlyRoutePage({params}:{params:Promise<{slug:s
   const path=`/${slug.join("/")}`;
   if(path==="/markets")return <ProgramWorkspace kind="markets"/>;
   if(path==="/intelligence")return <ProgramWorkspace kind="intelligence"/>;
+  if(path==="/merchant")return <CriticalLiveWorkspace kind="merchant"/>;
+  if(path==="/checkout")return <CriticalLiveWorkspace kind="checkout"/>;
   if(path==="/merchant/tokenization")return <ProgramWorkspace kind="tokenization"/>;
   if(path==="/account/api")return <ProgramWorkspace kind="api"/>;
   if(path==="/account/billing")return <ProgramWorkspace kind="billing"/>;
-  if(path==="/account/activity")return <div className="activity-live-program"><style>{`.activity-live-program .pw-hero p{display:none!important}.activity-live-program .pw-hero>div:first-child:after{content:'Authenticated wallet activity is read from Hyperliquid TESTNET when a signed session is active.';display:block;max-width:780px;color:#9cb0ca;line-height:1.55;margin-top:8px}`}</style><ProgramWorkspace kind="activity"/></div>;
+  if(path==="/account/activity")return <ProgramWorkspace kind="activity"/>;
   if(path==="/account/orders")return <LiveOrdersWorkspace/>;
   if(path==="/account/orders/refund")return <LiveOrdersWorkspace dispute/>;
   if(path==="/merchant/orders")return <SellerOrdersWorkspace/>;
