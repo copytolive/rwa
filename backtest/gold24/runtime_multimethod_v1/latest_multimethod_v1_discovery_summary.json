@@ -1,16 +1,20 @@
 {
   "active_count": 1,
   "base_seed": 2026083102,
-  "cheap_pass_count_this_run": 155,
-  "combined_pre_corr_count": 53,
+  "cheap_pass_count_this_run": 130,
+  "combined_pre_corr_count": 50,
+  "economic_floor_max_corr": 0.5,
+  "economic_floor_min_entry": 100,
+  "economic_floor_min_net_profit_usd": 20000.0,
+  "economic_floor_removed_count": 1,
   "elite_count": 0,
-  "evaluated_config_hash_count_cumulative": 67000,
-  "exact_full_metrics_pre_corr_new_this_run": 48,
+  "evaluated_config_hash_count_cumulative": 72000,
+  "exact_full_metrics_pre_corr_new_this_run": 44,
   "execution_duplicate_rejected_this_run": 0,
-  "existing_selected_count": 4,
-  "library_count": 6,
-  "new_selected_count": 2,
-  "removed_by_correlation_count": 47,
+  "existing_selected_count": 5,
+  "library_count": 5,
+  "new_selected_count": 0,
+  "removed_by_correlation_count": 44,
   "schema": "gold24-multimethod-v1-adaptive-discovery-v1",
   "simulated_new_configs_this_run": 5000,
   "source_archive_total": 65021,
@@ -20,7 +24,7 @@
   "status": "PASS",
   "tier_counts": {
     "ACTIVE": 1,
-    "LIBRARY": 5
+    "LIBRARY": 4
   },
   "workers": 3
 }
