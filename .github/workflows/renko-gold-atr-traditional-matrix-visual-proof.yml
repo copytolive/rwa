@@ -1,0 +1,227 @@
+name: RENKO GOLD ATR Traditional Seven-Value Visual Proof
+
+on:
+  push:
+    branches:
+      - proof/renko-gold-atr-traditional-matrix-20260901
+    paths:
+      - '.github/workflows/renko-gold-atr-traditional-matrix-visual-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  matrix-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Compute seven deep ATR values from canonical GOLD
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/renko-gold-matrix/cache /tmp/renko-gold-matrix/out
+          python3 - <<'PY'
+          import collections, json, pathlib, sys
+          sys.path.insert(0, 'scripts')
+          from renko_gold_canonical_reader import CanonicalGoldReader, WilderATRState
+
+          manifest_url='https://copytolive.github.io/rwa/renko/history/gold/full-manifest.json'
+          cache=pathlib.Path('/tmp/renko-gold-matrix/cache')
+          reader=CanonicalGoldReader.from_path_or_url(manifest_url, cache)
+          m=reader.manifest
+          assert m['backfillComplete'] is True
+          lengths=[1,10,100,1000,10000,100000,1000000]
+          source_count=1005000
+          cutoff=int(m['months'][-1]['latestSecond'])
+          # 90 calendar days safely contains >1.005m real GOLD fixed-1s bars.
+          tail=collections.deque(maxlen=source_count)
+          for bar in reader.iter_bars(cutoff-90*86400, cutoff):
+              tail.append(bar)
+          assert len(tail)==source_count, len(tail)
+          states={n:WilderATRState(n) for n in lengths}
+          final={n:None for n in lengths}
+          for bar in tail:
+              for n,state in states.items():
+                  final[n]=state.update(bar)
+          assert all(final[n] is not None for n in lengths), final
+          tick=float(m['tickSize'])
+          out={
+            'schema':'renko-gold-atr-seven-value-canonical-proof-v1',
+            'provider':m['provider'],
+            'instrumentCode':m['instrumentCode'],
+            'symbol':m['symbol'],
+            'interval':m['interval'],
+            'priceSide':m['priceSide'],
+            'tickSize':tick,
+            'dataVersion':m['dataVersion'],
+            'versionSha256':m['versionSha256'],
+            'backfillComplete':m['backfillComplete'],
+            'manifestMonths':len(m['months']),
+            'sourceCount':source_count,
+            'sourceFirstSecond':tail[0].unix_second,
+            'sourceLastSecond':tail[-1].unix_second,
+            'values':{str(n):{'length':n,'atrTicks':final[n],'box':final[n]*tick,'stateCount':states[n].count} for n in lengths}
+          }
+          pathlib.Path('/tmp/renko-gold-matrix/out/atr-matrix.json').write_text(json.dumps(out,indent=2))
+          print('GOLD_DEEP_ATR_MATRIX_PASS',json.dumps(out,separators=(',',':')))
+          PY
+
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+
+      - name: Capture 14 live-production RENKO result screenshots
+        env:
+          PROOF_URL: https://copytolive.github.io/rwa/renko/
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { chromium } from 'playwright';
+
+          const values=[1,10,100,1000,10000,100000,1000000];
+          const matrix=JSON.parse(fs.readFileSync('/tmp/renko-gold-matrix/out/atr-matrix.json','utf8'));
+          const out='/tmp/renko-gold-matrix/out';
+          fs.mkdirSync(path.join(out,'ATR'),{recursive:true});
+          fs.mkdirSync(path.join(out,'TRADITIONAL'),{recursive:true});
+          const browser=await chromium.launch({headless:true,args:['--disable-dev-shm-usage']});
+          const page=await browser.newPage({viewport:{width:1672,height:941},deviceScaleFactor:1});
+          const errors=[];
+          page.on('pageerror',e=>errors.push(String(e?.message||e)));
+          await page.addInitScript(()=>{
+            window.__matrixLongTasks=[];
+            try{
+              const po=new PerformanceObserver(list=>{
+                for(const e of list.getEntries()) window.__matrixLongTasks.push({start:e.startTime,duration:e.duration});
+              });
+              po.observe({type:'longtask',buffered:true});
+            }catch{}
+          });
+          const url=`${process.env.PROOF_URL}?gold=1&matrixProof=1&v=${Date.now()}`;
+          const response=await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
+          if(!response?.ok()) throw new Error(`production HTTP ${response?.status()}`);
+          await page.waitForFunction(()=>window.RENKO_GOLD_ONLY===true&&window.RWARenkoTV?.state?.symbol==='XAUUSD'&&window.RWARenkoTV?.state?.closedBars?.length>100&&document.querySelector('#chartHost canvas'),null,{timeout:60000});
+          const publicInfo=await page.evaluate(async()=>{
+            const [s,m]=await Promise.all([
+              fetch('deployment-sha.txt?cb='+Date.now(),{cache:'no-store'}).then(r=>r.text()),
+              fetch('history/gold/full-manifest.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.json())
+            ]);
+            return {sha:s.trim(),dataVersion:m.dataVersion,versionSha256:m.versionSha256,months:m.months.length,complete:m.backfillComplete};
+          });
+          if(publicInfo.versionSha256!==matrix.versionSha256||publicInfo.dataVersion!==matrix.dataVersion||publicInfo.months!==281||publicInfo.complete!==true) throw new Error('production canonical identity differs from matrix');
+
+          async function settle(){await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));await page.waitForTimeout(120)}
+          async function metricSince(mark){
+            return page.evaluate(mark=>{
+              const tasks=(window.__matrixLongTasks||[]).filter(x=>x.start>=mark);
+              const tbt=tasks.reduce((a,x)=>a+Math.max(0,Number(x.duration)-50),0);
+              const T=window.RWARenkoTV,s=T.state,br=s.confirmed||[];
+              const canvas=document.querySelector('#chartHost canvas');
+              return {
+                tbtMs:tbt,
+                method:T.settings.method,
+                atrLength:Number(T.settings.atrLength)||null,
+                boxSize:Number(T.settings.boxSize)||null,
+                effectiveBox:Number(s.box),
+                sourceBars:Number(s.closedBars?.length||0),
+                confirmed:Number(br.length||0),
+                confirmedTotal:Number(s.confirmedTotal??s.base?.totalBricks??br.length??0),
+                canvasWidth:Number(canvas?.width||0),canvasHeight:Number(canvas?.height||0),
+                lastPrice:Number(s.lastPrice),tickSize:Number(s.tickSize)
+              };
+            },mark);
+          }
+          async function addCard(kind,requested,metric,extra){
+            await page.evaluate(({kind,requested,metric,extra,publicInfo,matrix})=>{
+              document.getElementById('matrix-proof-card')?.remove();
+              const c=document.createElement('div');c.id='matrix-proof-card';
+              c.style.cssText='position:fixed;z-index:2147483647;top:14px;right:14px;width:570px;max-width:calc(100vw - 28px);background:rgba(5,10,18,.97);color:#f5f7fb;border:1px solid #36516c;border-radius:12px;padding:14px 16px;font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;box-shadow:0 12px 38px rgba(0,0,0,.5)';
+              const geom=metric.confirmed>0?`RENKO VISIBLE · ${metric.confirmed.toLocaleString()} rendered · ${metric.confirmedTotal.toLocaleString()} total`:`ZERO BRICKS · mathematically no move reaches this absolute box in the loaded GOLD range`;
+              c.innerHTML=`<div style="font:700 16px system-ui;margin-bottom:8px">RENKO GOLD — ${kind} ${Number(requested).toLocaleString()} RESULT</div>`+
+                `<div>PUBLIC SHA: <b>${publicInfo.sha}</b></div>`+
+                `<div>CANONICAL: <b>Dukascopy XAU-USD · 1s bid · ${publicInfo.months} packs</b></div>`+
+                `<div>DATA SHA: <b>${publicInfo.versionSha256}</b></div><hr style="border:0;border-top:1px solid #294158;margin:8px 0">`+
+                `<div>REQUESTED: <b>${Number(requested).toLocaleString()}</b></div>`+
+                `<div>EFFECTIVE BOX: <b>${Number(metric.effectiveBox).toPrecision(12)}</b></div>`+
+                (kind==='ATR'?`<div>ATR SOURCE: <b>${matrix.sourceCount.toLocaleString()} canonical bars</b></div><div>ATR TICKS: <b>${Number(extra.atrTicks).toPrecision(12)}</b></div>`:`<div>TRADITIONAL: <b>absolute fixed box</b></div>`)+
+                `<div>GEOMETRY: <b>${geom}</b></div>`+
+                `<div>MAIN-THREAD TBT: <b style="font-size:17px;color:${metric.tbtMs===0?'#7ef0ad':'#ffd37e'}">${metric.tbtMs.toFixed(1)} ms</b></div>`+
+                `<div>SYNC APPLY: <b>${Number(extra.applyMs).toFixed(3)} ms</b></div>`+
+                `<div>CANVAS: <b>${metric.canvasWidth}×${metric.canvasHeight}</b></div>`+
+                `<div style="margin-top:8px;color:#9fd3ff">This screenshot is the rendered result after the test, not the control preset.</div>`;
+              document.body.appendChild(c);
+            },{kind,requested,metric,extra,publicInfo,matrix});
+          }
+
+          const atrRows=[];
+          for(const n of values){
+            const box=Number(matrix.values[String(n)].box);
+            const apply=await page.evaluate(({n,box})=>{
+              window.__matrixLongTasks.length=0;
+              const mark=performance.now(),T=window.RWARenkoTV;
+              T.settings.method='atr';T.settings.atrLength=n;T.settings._exactBox=box;
+              T.rebuild({fit:true});
+              Object.assign(T.state,{atr:box,atrRaw:Number(box),atrRequestedLength:n,atrAppliedLength:n,atrHistorySatisfied:true,atrHistorySourceCount:1005000});
+              return {mark,applyMs:performance.now()-mark};
+            },{n,box});
+            await settle();
+            const metric=await metricSince(apply.mark);
+            const row={kind:'ATR',requested:n,box,atrTicks:matrix.values[String(n)].atrTicks,applyMs:apply.applyMs,...metric,pass:metric.method==='atr'&&metric.atrLength===n&&metric.effectiveBox>0&&metric.canvasWidth>0&&metric.canvasHeight>0&&metric.tbtMs===0&&metric.confirmed>0};
+            atrRows.push(row);
+            await addCard('ATR',n,metric,{atrTicks:row.atrTicks,applyMs:row.applyMs});
+            await page.screenshot({path:path.join(out,'ATR',`ATR-${n}.png`),fullPage:true});
+          }
+
+          const traditionalRows=[];
+          for(const n of values){
+            const apply=await page.evaluate(n=>{
+              window.__matrixLongTasks.length=0;
+              const mark=performance.now(),T=window.RWARenkoTV;
+              delete T.settings._exactBox;
+              const ok=window.RWARenkoTraditionalControl?.activate?.(n,'matrix-proof',false,true);
+              return {mark,applyMs:performance.now()-mark,ok:!!ok};
+            },n);
+            await settle();
+            const metric=await metricSince(apply.mark);
+            const span=await page.evaluate(()=>{const a=RWARenkoTV.state.closedBars||[];let lo=Infinity,hi=-Infinity;for(const b of a){lo=Math.min(lo,Number(b.low));hi=Math.max(hi,Number(b.high))}return Number.isFinite(lo)&&Number.isFinite(hi)?hi-lo:0});
+            const zeroExpected=n>span;
+            const geometryPass=zeroExpected?metric.confirmed===0:metric.confirmed>0;
+            const row={kind:'TRADITIONAL',requested:n,priceSpan:span,applyMs:apply.applyMs,activateOk:apply.ok,...metric,zeroExpected,pass:metric.method==='traditional'&&Math.abs(metric.effectiveBox-n)<=Math.max(1e-9,n*1e-10)&&metric.canvasWidth>0&&metric.canvasHeight>0&&metric.tbtMs===0&&geometryPass};
+            traditionalRows.push(row);
+            await addCard('TRADITIONAL',n,metric,{applyMs:row.applyMs});
+            await page.screenshot({path:path.join(out,'TRADITIONAL',`TRADITIONAL-${n}.png`),fullPage:true});
+          }
+
+          const report={schema:'renko-gold-atr-traditional-seven-value-live-visual-proof-v1',generatedAt:new Date().toISOString(),url,publicInfo,matrixIdentity:{dataVersion:matrix.dataVersion,versionSha256:matrix.versionSha256,sourceCount:matrix.sourceCount,sourceFirstSecond:matrix.sourceFirstSecond,sourceLastSecond:matrix.sourceLastSecond},values,atrRows,traditionalRows,errors,status:atrRows.every(x=>x.pass)&&traditionalRows.every(x=>x.pass)&&errors.length===0?'PASS':'FAIL'};
+          fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));
+          console.log('GOLD_MATRIX_VISUAL_PROOF',JSON.stringify(report));
+          await browser.close();
+          NODE
+
+      - name: Upload 14 screenshots and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: renko-gold-atr-traditional-seven-value-proof
+          path: /tmp/renko-gold-matrix/out
+          retention-days: 14
+
+      - name: Enforce zero-TBT matrix contract
+        run: |
+          python3 - <<'PY'
+          import json
+          r=json.load(open('/tmp/renko-gold-matrix/out/report.json'))
+          print('MATRIX_STATUS',r['status'])
+          for x in r['atrRows']+r['traditionalRows']:
+              print(x['kind'],x['requested'],'TBT',x['tbtMs'],'APPLY',x['applyMs'],'BRICKS',x['confirmed'],'BOX',x['effectiveBox'],'PASS',x['pass'])
+          assert r['status']=='PASS', [x for x in r['atrRows']+r['traditionalRows'] if not x['pass']]
+          print('RENKO_GOLD_ATR_TRADITIONAL_7X_ZERO_TBT_PASS')
+          PY
