@@ -1,0 +1,11 @@
+batch=285
+source_run=33538050602
+source_candidate_cursor=45442557
+source_finalized=65061
+multi_run=33540207217
+multi_cumulative=82000
+script_sync_commit=98ab31630e9e764cf587d57d3cf193626a931154
+expected_strict=3
+expected_multi=5
+expected_total_pairs=8
+requested_at=2026-09-02T00:49:00+07:00
