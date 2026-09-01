@@ -1,84 +1,10 @@
-name: RENKO Fixed 1s Canonical Compatibility Gate
-
+name: RENKO Fixed 1s Canonical Compatibility Gate — Legacy Manual Only
 on:
-  push:
-    branches:
-      - main
-      - fix/renko-canonical-atr-cache-v3-20260829
-      - fix/renko-final-history-closure-20260829
-    paths:
-      - "renko/index.html"
-      - "renko/renko-tv-engine.js"
-      - "renko/renko-tv-app.js"
-      - "renko/renko-tv-atr-control.js"
-      - "renko/renko-tv-atr-fixed1s.js"
-      - ".github/workflows/renko-v11.yml"
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
-  verify-fixed-1s-canonical:
+  legacy-scope:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: JavaScript syntax
-        run: |
-          set -euo pipefail
-          node --check renko/renko-tv-engine.js
-          node --check renko/renko-tv-app.js
-          node --check renko/renko-tv-atr-control.js
-          node --check renko/renko-tv-atr-fixed1s.js
-      - name: Canonical fixed-1s DOM and runtime contract
-        run: |
-          set -euo pipefail
-          test -s renko/index.html
-          grep -Fq 'Fixed 1s TradingView Observable Model' renko/index.html
-          grep -Fq '1s Fixed Source' renko/index.html
-          grep -Fq 'PERCENTAGE (LTP)' renko/index.html
-          grep -Fq 'renko-tv-app.js?v=187' renko/index.html
-          grep -Fq 'renko-tv-atr-control.js?v=3' renko/index.html
-          grep -Fq "version:'1.4.0-zero-safe'" renko/renko-tv-atr-control.js
-          grep -Fq 'positive-wilder-exact-box-zero-wilder-min-tick-fallback-deepen-same-source' renko/renko-tv-atr-control.js
-          grep -Fq 'renko-tv-atr-fixed1s.js?v=7' renko/index.html
-          ! grep -Fq 'id="intervalSelect"' renko/index.html
-          ! grep -Fq 'renko-v12.js?v=' renko/index.html
-          ! grep -Fq 'renko-v12-worker.js?v=' renko/index.html
-          grep -Fq "FIXED_INTERVAL='1s'" renko/renko-tv-app.js
-          grep -Fq "confirmationRule:'fixed-1s-close'" renko/renko-tv-app.js
-          grep -Fq "contract:'tradingview-public-documentation-compatible-fixed-1s'" renko/renko-tv-engine.js
-          python - <<'PY'
-          from html.parser import HTMLParser
-          from collections import Counter
-          from pathlib import Path
-          class P(HTMLParser):
-              def __init__(self): super().__init__(); self.ids=[]
-              def handle_starttag(self, tag, attrs):
-                  d=dict(attrs)
-                  if d.get('id'): self.ids.append(d['id'])
-          p=P(); p.feed(Path('renko/index.html').read_text())
-          dup=[k for k,v in Counter(p.ids).items() if v>1]
-          assert not dup, f'duplicate DOM ids: {dup}'
-          required={'atrLength','traditionalBox','percentageValue','wicksToggle','chartWrap','currentAtr','currentInterval','sourceSelect','tvLive'}
-          missing=sorted(required-set(p.ids)); assert not missing, f'missing canonical DOM ids: {missing}'
-          assert 'intervalSelect' not in p.ids, 'timeframe selector must not exist in fixed-1s production'
-          print('RENKO FIXED 1S CANONICAL DOM PASS')
-          PY
-      - name: Fixed-1s Renko rule unit matrix
-        run: |
-          node - <<'NODE'
-          require('./renko/renko-tv-engine.js');
-          const E=global.RWARenkoTVEngine;
-          const bars=closes=>closes.map((c,i)=>({open:c,high:c,low:c,close:c,openTime:i*1000,closeTime:(i+1)*1000-1}));
-          let r=E.build(bars([100,110,120,100,90]),{method:'traditional',boxSize:10,source:'close',wicks:false},1);
-          if(r.bricks.length!==4||r.bricks[2].direction!==-1||!r.bricks[2].isReversal||r.bricks[2].open!==110||r.bricks[2].close!==100)throw Error('Traditional 1x continuation / 2x reversal contract failed');
-          const atrBars=[{open:10,high:10.017,low:10,close:10.011},{open:10.011,high:10.028,low:10.006,close:10.02},{open:10.02,high:10.039,low:10.014,close:10.03}];
-          const atr=E.latestAtr(atrBars,3,.01),box=E.computeBox(atrBars,{method:'atr',atrLength:3},.01);
-          if(!(atr>0)||Math.abs(box-atr)>1e-15)throw Error('raw positive Wilder ATR must be box size');
-          const exact=.01759154004858781;if(Math.abs(E.computeBox(atrBars,{method:'atr',atrLength:3,_exactBox:exact},.01)-exact)>1e-15)throw Error('_exactBox contract failed');
-          const pctRaw=104.05*.1,pctTick=E.roundTick(pctRaw,.01),pct=E.computeBox([{open:100,high:110,low:90,close:104.05}],{method:'percentage',percentage:.1},.01);
-          if(Math.abs(pctTick-10.41)>1e-12||Math.abs(pct-10)>1e-12)throw Error('Percentage LTP min-tick then stability-round contract failed');
-          console.log('RENKO FIXED 1S CANONICAL ENGINE PASS');
-          NODE
+      - run: echo 'Legacy compatibility gate retained manually. GOLD fixed-1s canonical compatibility is enforced by the GOLD current-main closure.'

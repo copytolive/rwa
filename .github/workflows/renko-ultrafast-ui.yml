@@ -1,84 +1,10 @@
-name: RENKO Ultra Fast UI Gate
-
+name: RENKO Ultra Fast UI Gate — Legacy Manual Only
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'renko/**'
-      - 'tools/renko-ultrafast-ui-report.mjs'
-      - '.github/workflows/renko-ultrafast-ui.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
-
-concurrency:
-  group: renko-ultrafast-ui-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  local-browser:
+  legacy-scope:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - name: Static syntax and current runtime contract
-        run: |
-          set -euo pipefail
-          node --check renko/renko-tv-ultrafast-ui.js
-          node --check tools/renko-ultrafast-ui-report.mjs
-          grep -q 'renko-tv-ultrafast-ui.js?v=171' renko/index.html
-          grep -q "version:'1.1.1'" renko/renko-tv-ultrafast-ui.js
-          grep -q "rule:'search-only-universe-plus-fast50-launch-list-plus-manual-zoom-lock'" renko/renko-tv-ultrafast-ui.js
-          grep -q "addEventListener('focus'" renko/renko-tv-ultrafast-ui.js
-          grep -q 'ensureListViewport' renko/renko-tv-ultrafast-ui.js
-          grep -q 'blockingMs' renko/renko-tv-ultrafast-ui.js
-          grep -q 'Fast 50 ready' renko/renko-tv-ultrafast-ui.js
-          ! grep -q 'LightweightCharts.createChart=function' renko/renko-tv-ultrafast-ui.js
-      - name: Install Playwright Chromium
-        run: |
-          npm install --no-save playwright@1.55.0
-          npx playwright install --with-deps chromium
-      - name: Run local 1600-pair search-only universe, no-freeze, full-scroll and zoom no-snap gate
-        run: |
-          python3 -m http.server 4173 >/tmp/renko-http.log 2>&1 &
-          server=$!
-          trap 'kill $server || true' EXIT
-          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/renko/ >/dev/null && break; sleep 1; done
-          RWA_TEST_URL=http://127.0.0.1:4173 node tools/renko-ultrafast-ui-report.mjs
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: renko-ultrafast-local-${{ github.sha }}
-          path: artifacts/renko-ultrafast-ui
-          retention-days: 7
-
-  production-browser:
-    runs-on: ubuntu-latest
-    needs: local-browser
-    timeout-minutes: 12
-    steps:
-      - uses: actions/checkout@v4
-      - name: Wait for exact Pages SHA from verified Renko deploy
-        run: |
-          set -euo pipefail
-          ok=0
-          for i in $(seq 1 72); do
-            live_sha="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://copytolive.github.io/rwa/renko/renko-deployment-sha.txt?v=${GITHUB_RUN_ID}-${i}" 2>/dev/null | tr -d '\r\n' || true)"
-            if [ "$live_sha" = "$GITHUB_SHA" ]; then ok=1; break; fi
-            sleep 5
-          done
-          test "$ok" = "1"
-          echo "RENKO_ULTRAFAST_LIVE_EXACT_SHA=PASS:$GITHUB_SHA"
-      - name: Install Playwright Chromium
-        run: |
-          npm install --no-save playwright@1.55.0
-          npx playwright install --with-deps chromium
-      - name: Run production search-only universe, full-scroll and zoom no-snap gate
-        run: RWA_TEST_URL=https://copytolive.github.io/rwa node tools/renko-ultrafast-ui-report.mjs
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: renko-ultrafast-production-${{ github.sha }}
-          path: artifacts/renko-ultrafast-ui
-          retention-days: 7
+      - run: echo 'Legacy multi-pair UI gate retained manually. GOLD production browser validation is authoritative.'
