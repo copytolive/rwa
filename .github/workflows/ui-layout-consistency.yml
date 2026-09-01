@@ -57,7 +57,9 @@ jobs:
           rm -rf /tmp/rwa-layout-site
           mkdir -p /tmp/rwa-layout-site/rwa
           cp -a apps/realworldasset/out/. /tmp/rwa-layout-site/rwa/
+          printf '%s\n' "$GITHUB_SHA" > /tmp/rwa-layout-site/rwa/deployment-sha.txt
           test -s /tmp/rwa-layout-site/rwa/index.html
+          test "$(cat /tmp/rwa-layout-site/rwa/deployment-sha.txt)" = "$GITHUB_SHA"
           COUNT="$(find /tmp/rwa-layout-site/rwa -name index.html -type f | wc -l | tr -d ' ')"
           test "$COUNT" -ge 30
           echo "LAYOUT_ACTUAL_ROUTE_SET=$COUNT"
