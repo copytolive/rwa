@@ -41,6 +41,13 @@ button{scroll-margin-top:84px;scroll-margin-bottom:84px}
   .asset-detail-page,.business-detail-page{grid-template-columns:minmax(0,1fr) minmax(300px,360px)!important}
 }
 
+/* Transactions/funds put their route marker on the center SECTION, not on MAIN. */
+@media(min-width:721px){
+  .account-with-side:has(>.transactions-page){grid-template-columns:265px minmax(0,1fr) minmax(330px,410px)!important}
+  .account-with-side:has(>.funds-page){grid-template-columns:280px minmax(0,1fr) minmax(320px,370px)!important}
+  .account-with-side:has(>.transactions-page)>.selected-order{min-width:0;max-width:100%;margin-right:12px!important}
+}
+
 @media(max-width:720px){
   html,body{width:100%;overflow-x:hidden}
   .app-shell,.rwa-public-shell{width:100%;max-width:100%;overflow-x:hidden}
@@ -68,6 +75,50 @@ button{scroll-margin-top:84px;scroll-margin-bottom:84px}
   .reviews-box,.spec-grid{grid-template-columns:1fr!important}
   .app-footer{padding:12px!important}.app-footer>nav{display:none!important}
 
+  /* Account routes: keep every interactive surface in normal mobile document flow. */
+  .account-with-side,.account-workspace{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;overflow:visible!important}
+  .account-with-side>.acct-side,.account-with-side>.acct-content,.account-with-side>.selected-order,
+  .account-workspace>.account-side,.account-workspace>.account-main,.account-workspace>.account-right{
+    width:100%!important;max-width:100%!important;min-width:0!important;position:static!important;margin:0 0 10px!important;
+  }
+  .transactions-page{padding:10px!important}
+  .transactions-page .txn-stats{grid-template-columns:1fr 1fr!important}
+  .transactions-page .txn-filters{display:grid!important;grid-template-columns:1fr!important;gap:7px!important}
+  .transactions-page .txn-filters>button,.transactions-page .txn-filters>form{width:100%!important;min-width:0!important}
+  .transactions-page .table-pager{height:auto!important;min-height:0!important;display:grid!important;grid-template-columns:1fr!important;gap:7px!important;padding:8px!important;align-items:start!important}
+  .transactions-page .table-pager>div{width:100%!important;max-width:100%!important;display:flex!important;overflow-x:auto!important;gap:4px!important}
+  .transactions-page .table-pager>button{width:100%!important}
+  .selected-order{width:100%!important;max-width:100%!important}
+  .selected-order .selected-actions{display:grid!important;grid-template-columns:1fr!important;gap:7px!important}
+
+  /* Trading toolbar: timeframes and chart tools use separate scrollable rows. */
+  .trading-stage .chart-tools{height:auto!important;min-height:0!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:3px!important;padding:4px 6px!important;overflow:visible!important}
+  .trading-stage .chart-tools>div{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;max-width:100%!important;gap:3px!important}
+  .trading-stage .chart-tools button{flex:0 0 auto!important;min-height:32px!important}
+
+  /* Order-detail desktop four-up cards must become one column on phones. */
+  .account-workspace .detail-four{display:grid!important;grid-template-columns:1fr!important;gap:8px!important}
+  .account-workspace .detail-four>.info-card{width:100%!important;max-width:100%!important;position:static!important;height:auto!important;min-height:0!important}
+  .account-workspace .info-card button{width:100%!important;position:static!important}
+
+  /* Commerce order receipt: merchant and metadata cards may not occupy the same cells. */
+  .orders-layout .receipt>header{display:grid!important;grid-template-columns:1fr!important;gap:9px!important;height:auto!important;min-height:0!important;align-items:start!important}
+  .orders-layout .receipt>header>*{width:100%!important;max-width:100%!important;position:static!important;margin:0!important}
+  .orders-layout .receipt-merchant{display:flex!important;flex-wrap:wrap!important;gap:8px!important;height:auto!important}
+  .orders-layout .receipt-meta{display:grid!important;height:auto!important;min-height:0!important}
+
+  /* Dispute form/side panels: eliminate desktop fixed geometry and overlap on phones. */
+  .dispute-layout{display:block!important;width:100%!important;max-width:100%!important;padding:8px 10px 54px!important}
+  .dispute-layout>.dispute-nav,.dispute-layout>.dispute-main,.dispute-layout>.dispute-side{
+    width:100%!important;max-width:100%!important;position:static!important;margin:0 0 10px!important;height:auto!important;min-height:0!important;
+  }
+  .dispute-layout .issue-block,.dispute-layout .description-block,.dispute-layout .evidence-block,
+  .dispute-layout .case-status,.dispute-layout .quick-case,.dispute-layout .support-person{position:static!important;height:auto!important;min-height:0!important;max-height:none!important}
+  .dispute-layout .issue-block>div,.dispute-layout .description-block{display:grid!important;grid-template-columns:1fr!important;gap:8px!important;width:100%!important}
+  .dispute-layout .issue-block>div>button,.dispute-layout .description-block>label,.dispute-layout textarea{width:100%!important;max-width:100%!important;position:static!important}
+  .dispute-layout .support-person{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:8px!important}
+  .dispute-layout .support-person>button{width:100%!important}
+
   /* The PRO screen is a modal over a decorative blurred preview. Background controls are intentionally inert. */
   .ss-pro-page{min-height:auto!important;overflow:visible!important;padding-bottom:16px}
   .ss-pro-backdrop{pointer-events:none!important;user-select:none!important}
@@ -76,6 +127,10 @@ button{scroll-margin-top:84px;scroll-margin-bottom:84px}
   .ss-mode-preview{height:auto!important;min-height:126px!important}
   .ss-default-row,.ss-pro-modal>footer{align-items:stretch!important;gap:8px!important;flex-direction:column!important}
   .ss-pro-modal footer>div{flex-wrap:wrap!important}
+
+  /* Rewards status ticker stays one physical row at the bottom; horizontal reach is scrollable. */
+  .reward-ticker{height:42px!important;min-height:42px!important;max-height:42px!important;grid-template-columns:165px minmax(360px,1.8fr) repeat(4,minmax(150px,.75fr))!important;overflow-x:auto!important;overflow-y:hidden!important;align-items:stretch!important}
+  .reward-ticker button{height:42px!important;min-height:42px!important;max-height:42px!important;white-space:nowrap!important;padding:0 10px!important;overflow:hidden!important;text-overflow:ellipsis!important}
 
   /* Avoid fixed-height mobile cards pinning later interactive sections over earlier controls. */
   .community-page [class*="hero"],.community-page [class*="composer"],.community-page [class*="feed"],
