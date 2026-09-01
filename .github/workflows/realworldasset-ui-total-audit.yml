@@ -55,7 +55,9 @@ jobs:
           rm -rf /tmp/rwa-ui-site every-page-live-proof
           mkdir -p /tmp/rwa-ui-site/rwa
           cp -a apps/realworldasset/out/. /tmp/rwa-ui-site/rwa/
+          printf '%s\n' "$GITHUB_SHA" > /tmp/rwa-ui-site/rwa/deployment-sha.txt
           test -s /tmp/rwa-ui-site/rwa/index.html
+          test "$(cat /tmp/rwa-ui-site/rwa/deployment-sha.txt)" = "$GITHUB_SHA"
           COUNT="$(find /tmp/rwa-ui-site/rwa -name index.html -type f | wc -l | tr -d ' ')"
           test "$COUNT" -ge 30
           if grep -R -n -E '["'"'"'(]/realworldasset/' /tmp/rwa-ui-site/rwa --include='*.html' --include='*.js' --include='*.css'; then
