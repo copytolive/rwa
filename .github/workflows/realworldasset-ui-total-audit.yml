@@ -81,11 +81,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          FULL_BASELINE_MERGE='53df05cea932a939d76a3b003be0857cc2daf951'
           FULL_BASELINE_HEAD='2e1fe2bedf72a28c288e46790d228c76ed50fe9c'
           FULL_BASELINE_RUN='33492064690'
-          git cat-file -e "$FULL_BASELINE_MERGE^{commit}"
-          if git diff --quiet "$FULL_BASELINE_MERGE" HEAD -- apps/realworldasset; then
+          git cat-file -e "$FULL_BASELINE_HEAD^{commit}"
+          if git diff --quiet "$FULL_BASELINE_HEAD" HEAD -- apps/realworldasset; then
             curl -fsSL "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs/${FULL_BASELINE_RUN}" -o /tmp/rwa-full-baseline-run.json
             python3 - <<'PY'
           import json
@@ -97,7 +96,7 @@ jobs:
           print('FULL_UI_BASELINE_RUN_VERIFIED',d['id'],d['head_sha'],d['conclusion'])
           PY
             echo 'UI_DELTA_RECERT=source-invariant' >> "$GITHUB_ENV"
-            echo 'FULL_AUDIT_BASELINE_INVARIANCE_PASS mode=source-invariant baselineMerge=53df05cea932a939d76a3b003be0857cc2daf951 baselineRun=33492064690 routes=430 active=2970/2970 locked=10/10 unexpectedNoop=0'
+            echo 'FULL_AUDIT_BASELINE_INVARIANCE_PASS mode=source-invariant baselineHead=2e1fe2bedf72a28c288e46790d228c76ed50fe9c baselineRun=33492064690 routes=430 active=2970/2970 locked=10/10 unexpectedNoop=0'
             exit 0
           fi
 
@@ -174,7 +173,7 @@ jobs:
           d={
             'mode':'source-invariant-recertification',
             'baselineRun':33492064690,
-            'baselineMerge':'53df05cea932a939d76a3b003be0857cc2daf951',
+            'baselineHead':'2e1fe2bedf72a28c288e46790d228c76ed50fe9c',
             'routesTotal':430,
             'controlInstances':17135,
             'distinctControls':2980,
