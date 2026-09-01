@@ -9,6 +9,7 @@ on:
     paths:
       - 'renko/**'
       - 'scripts/renko_gold_wheel_pan_no_zoom_proof.mjs'
+      - 'scripts/renko_gold_first_mixed_trace.mjs'
       - '.github/workflows/renko-gold-wheel-pan-no-zoom.yml'
   workflow_dispatch:
 
@@ -31,6 +32,7 @@ jobs:
           node --check renko/renko-gold-explicit-zoom.js
           node --check renko/renko-gold-manual-viewport-lock.js
           node --check scripts/renko_gold_wheel_pan_no_zoom_proof.mjs
+          node --check scripts/renko_gold_first_mixed_trace.mjs
           grep -Fq 'renko-gold-explicit-zoom.js?v=1' renko/index.html
           grep -Fq 'renko-gold-wheel-pan-lock.js?v=1' renko/index.html
           grep -Fq "version:'1.0.0-explicit-zoom'" renko/renko-gold-explicit-zoom.js
@@ -60,6 +62,11 @@ jobs:
           for i in {1..40}; do curl -fsS http://127.0.0.1:4173/rwa/renko/ >/dev/null && exit 0; sleep .25; done
           cat /tmp/renko-wheel-http.log
           exit 1
+      - name: Trace first mixed-wheel ownership race
+        env:
+          RENKO_BASE_URL: http://127.0.0.1:4173/rwa/renko/
+          RENKO_TRACE_OUTPUT: artifacts/first-mixed-trace
+        run: node scripts/renko_gold_first_mixed_trace.mjs
       - name: Traditional 10 pan stays locked while zoom remains functional
         env:
           RENKO_BASE_URL: http://127.0.0.1:4173/rwa/renko/
@@ -69,7 +76,9 @@ jobs:
         if: always()
         with:
           name: renko-gold-pan-and-zoom-branch-${{ github.sha }}
-          path: artifacts/branch-pan-and-zoom
+          path: |
+            artifacts/first-mixed-trace
+            artifacts/branch-pan-and-zoom
           if-no-files-found: warn
 
   public-production:
