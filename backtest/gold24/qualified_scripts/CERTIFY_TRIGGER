@@ -1,0 +1,8 @@
+GOLD24_QUALIFIED_CERTIFICATION_TRIGGER
+source_batch=286
+source_run=33544388745
+multi_run=33546669924
+multi_cumulative=87000
+selected_pairs=9
+requested_at=2026-09-02
+reason=final native MT5 certification after batch286 method-set freeze; no strategy/data mutation
