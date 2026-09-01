@@ -150,16 +150,16 @@ export function AppShell({ children, className = "" }: { children: React.ReactNo
       ? "LIVE DATA · WALLET AUTH · CHECKOUT READY · MAINNET LOCKED"
       : capabilities.commerceReachable
         ? "LIVE DATA · COMMERCE BACKEND REACHABLE · WRITES GATED"
-        : "LIVE ONLY · COMMERCE BACKEND UNAVAILABLE · WRITES LOCKED";
+        : "LIVE DATA · COMMERCE BACKEND UNAVAILABLE · WRITES LOCKED";
   const footerStatus = `● ${badge}`;
-  const walletLabel = wallet ? `${wallet.slice(0,6)}…${wallet.slice(-4)}` : "Connect Wallet · Live";
+  const walletLabel = wallet ? `${wallet.slice(0,6)}…${wallet.slice(-4)}` : "Connect Wallet";
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return <div className={`app-shell ${className}`.trim()} onClickCapture={handleButtonCapture} data-live-only="true" data-ui-demo="false" data-backend-connected={capabilities.commerceReachable ? "true" : "false"} data-mainnet-ready={capabilities.mainnetReady ? "true" : "false"}>
-    <div className="app-demo-badge" role="status">{badge}</div>
     <header className="app-header">
       <AppBrand/>
       <nav className="app-nav" aria-label="Authenticated primary navigation">
-        {nav.map(([label, href]) => <Link key={href} href={href} data-active={pathname === href ? "true" : undefined}>{label}</Link>)}
+        {nav.map(([label, href]) => <Link key={href} href={href} data-active={isActive(href) ? "true" : undefined}>{label}</Link>)}
       </nav>
       <form className="app-header-search" onSubmit={submitSearch} role="search">
         <input aria-label="Search RWA.MS" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search" />
@@ -173,6 +173,10 @@ export function AppShell({ children, className = "" }: { children: React.ReactNo
         {wallet && <Button size="sm" variant="ghost" onClick={logout} disabled={authBusy}>Log Out</Button>}
       </div>
     </header>
+    <nav className="app-mobile-nav" aria-label="Mobile primary navigation">
+      {nav.map(([label, href]) => <Link key={href} href={href} data-active={isActive(href) ? "true" : undefined}>{label}</Link>)}
+      <Link href="/account" data-active={isActive("/account") ? "true" : undefined}>Account</Link>
+    </nav>
     {children}
     {safetyNotice && <div className="app-safety-notice" role="alert">{safetyNotice}</div>}
     <span className="sr-only" role="status" aria-live="polite">{interactionStatus}</span>
