@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - fix/renko-gold-prepend-before-pan-20260902
     paths:
       - 'renko/**'
       - 'scripts/renko_gold_scroll_prepend_proof.mjs'
@@ -36,8 +37,10 @@ jobs:
           node --check renko/renko-gold-history-geometry-stitch.js
           node --check renko/renko-gold-tradingview-ui.js
           node --check renko/renko-gold-explicit-zoom.js
+          node --check renko/renko-gold-wheel-pan-lock.js
           node --check scripts/renko_gold_scroll_prepend_proof.mjs
           grep -Fq "version:'1.0.0-explicit-zoom'" renko/renko-gold-explicit-zoom.js
+          grep -Fq '1.8.0-prepend-before-pan' renko/renko-gold-wheel-pan-lock.js
           ! grep -nE '\.fitContent\s*\(' renko/renko-gold-total-history.js renko/renko-gold-manual-viewport-lock.js
           python3 - <<'PY'
           import json
