@@ -88,10 +88,13 @@ jobs:
           test -s apps/realworldasset/next.config.js
           test -s 'apps/realworldasset/src/app/[...slug]/page.tsx'
           test -s apps/realworldasset/scripts/every-page-live-proof.py
+          test -s apps/realworldasset/src/components/markets-live/MarketsLiveWorkspace.tsx
+          test -s apps/realworldasset/src/components/trade-live/TradeLiveWorkspace.tsx
           FILE_COUNT="$(git ls-files apps/realworldasset | wc -l | tr -d ' ')"
           test "$FILE_COUNT" -gt 50
           grep -Fq 'LiveRouteWorkspace' 'apps/realworldasset/src/app/[...slug]/page.tsx'
-          grep -Fq 'ProgramWorkspace kind="markets"' 'apps/realworldasset/src/app/[...slug]/page.tsx'
+          grep -Fq 'MarketsLiveWorkspace' 'apps/realworldasset/src/app/[...slug]/page.tsx'
+          grep -Fq 'TradeLiveWorkspace' 'apps/realworldasset/src/app/trade/[asset]/page.tsx'
           grep -Fq '"/rwa"' apps/realworldasset/next.config.js
           SOURCE_SHA="$(cat apps/realworldasset/UPSTREAM_SHA.txt)"
           python3 - <<'PY'
