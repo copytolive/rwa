@@ -17,10 +17,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
   props: ButtonProps,
   ref: React.ForwardedRef<HTMLButtonElement>,
 ) {
-  const { className, variant = "primary", size = "md", loading = false, leadingIcon, trailingIcon, disabled, children, ...buttonProps } = props;
+  const { className, variant = "primary", size = "md", loading = false, leadingIcon, trailingIcon, disabled, children, type = "button", ...buttonProps } = props;
   return (
     <button
       ref={ref}
+      type={type}
       className={cn("rwa-button", `rwa-button--${variant}`, `rwa-button--${size}`, className)}
       disabled={disabled || loading}
       aria-busy={loading || undefined}

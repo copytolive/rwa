@@ -28,7 +28,16 @@ const tokens = fs.readFileSync(path.join(root, "src/styles/tokens.css"), "utf8")
 for (const token of ["--rwa-primary", "--rwa-bg", "--rwa-surface", "--rwa-border", "--rwa-text", "--rwa-space-4", "--rwa-radius-md", "--rwa-container-max"]) {
   if (!tokens.includes(token)) throw new Error(`Missing token ${token}`);
 }
-const appDir = path.join(root, "src/app");
-const prohibited = fs.readdirSync(appDir).filter(name => name === "page.tsx" || name === "page.jsx" || name === "page.js");
-if (prohibited.length) throw new Error("CHAT 00A must not create a screenshot-derived route/page");
-console.log(`Foundation verified: ${mustExist.length} required modules, centralized tokens, no page route.`);
+
+// CHAT 00A originally prohibited routes while the foundation-only slice was being built.
+// In the integrated final application a real landing route is mandatory. Keep the
+// anti-screenshot intent by requiring composed UI source and explicit demo truth.
+const pagePath = path.join(root, "src/app/page.tsx");
+if (!fs.existsSync(pagePath)) throw new Error("Integrated final app is missing src/app/page.tsx");
+const page = fs.readFileSync(pagePath, "utf8");
+if (!page.includes('PublicShell')) throw new Error("Landing page must compose the canonical PublicShell");
+if (!page.includes('Market figures shown in this public preview are deterministic demo data')) throw new Error("Landing page must preserve explicit demo-data disclosure");
+if (/export\s+default\s+function\s+\w+\s*\(\s*\)\s*\{?\s*return\s*<img\b/i.test(page)) throw new Error("Screenshot-only landing route is prohibited");
+if (page.includes('dangerouslySetInnerHTML')) throw new Error("Landing page must not inject screenshot-derived HTML");
+
+console.log(`Foundation verified: ${mustExist.length} required modules, centralized tokens, composed final landing route, demo truth preserved.`);
