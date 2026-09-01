@@ -1,5 +1,5 @@
-import { LivePublicLanding } from "@/components/live-dashboard";
+import { LiveRouteWorkspace } from "@/components/live-dashboard";
 
 export default function LandingPage(){
-  return <LivePublicLanding/>;
+  return <LiveRouteWorkspace title="Where Businesses Become Markets" path="/"/>;
 }
