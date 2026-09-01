@@ -1,0 +1,141 @@
+name: GOLD24 MT5 Real 1Y DONCHIAN Validation V2
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/gold24-mt5-real-1y-donchian-v2.yml'
+
+permissions:
+  contents: read
+
+env:
+  MT5_LOGIN: ${{ secrets.MT5_LOGIN }}
+  MT5_PASSWORD: ${{ secrets.MT5_PASSWORD }}
+  MT5_SERVER: ${{ secrets.MT5_SERVER }}
+
+jobs:
+  mt5-real-1y-v2:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Exness MT5 and dependencies
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          if([string]::IsNullOrWhiteSpace($env:MT5_LOGIN) -or [string]::IsNullOrWhiteSpace($env:MT5_PASSWORD) -or [string]::IsNullOrWhiteSpace($env:MT5_SERVER)){throw 'MT5_ACCOUNT_CONTEXT_MISSING'}
+          python -m pip install MetaTrader5 beautifulsoup4
+          $setup=Join-Path $env:RUNNER_TEMP 'exness5setup.exe'
+          Invoke-WebRequest -UseBasicParsing 'https://download.terminal.free/cdn/web/exness.technologies.ltd/mt5/exness5setup.exe' -OutFile $setup
+          Start-Process -FilePath $setup -ArgumentList '/auto' -Wait
+          Start-Sleep -Seconds 12
+          $c=@();foreach($r in @('C:\Program Files','C:\Program Files (x86)',"$env:LOCALAPPDATA\Programs")){if(Test-Path $r){$c+=Get-ChildItem $r -Filter terminal64.exe -File -Recurse -ErrorAction SilentlyContinue}}
+          $terminal=($c|Sort-Object LastWriteTime -Descending|Select-Object -First 1).FullName
+          if([string]::IsNullOrWhiteSpace($terminal)){throw 'TERMINAL_NOT_FOUND'}
+          $meta=Join-Path (Split-Path $terminal) 'metaeditor64.exe';if(!(Test-Path $meta)){throw 'METAEDITOR_NOT_FOUND'}
+          "MT5_TERMINAL=$terminal"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "MT5_METAEDITOR=$meta"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Probe authenticated broker history
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          $py=Join-Path $env:RUNNER_TEMP 'probe.py'
+          @'
+          import json, os
+          from datetime import datetime, timezone
+          import MetaTrader5 as mt5
+          if not mt5.initialize(path=os.environ['MT5_TERMINAL'],login=int(os.environ['MT5_LOGIN']),password=os.environ['MT5_PASSWORD'],server=os.environ['MT5_SERVER'],timeout=60000): raise SystemExit(str(mt5.last_error()))
+          a=mt5.account_info(); syms=[s.name for s in (mt5.symbols_get() or []) if 'XAUUSD' in s.name.upper()]
+          if not syms: raise SystemExit('NO_XAUUSD_SYMBOL')
+          symbol='XAUUSD' if 'XAUUSD' in syms else sorted(syms,key=lambda x:(len(x),x))[0]
+          mt5.symbol_select(symbol,True)
+          r=mt5.copy_rates_range(symbol,mt5.TIMEFRAME_D1,datetime(2025,9,2,tzinfo=timezone.utc),datetime(2026,9,2,23,59,59,tzinfo=timezone.utc))
+          if r is None or len(r)<200: raise SystemExit('D1_HISTORY_INSUFFICIENT')
+          d={'status':'PASS','symbol':symbol,'d1_rows':len(r),'first_d1_utc':datetime.fromtimestamp(int(r[0]['time']),timezone.utc).isoformat(),'last_d1_utc':datetime.fromtimestamp(int(r[-1]['time']),timezone.utc).isoformat(),'company':a.company,'currency':a.currency,'leverage':a.leverage}
+          open(os.path.join(os.environ['RUNNER_TEMP'],'broker_probe.json'),'w').write(json.dumps(d,indent=2));print(json.dumps(d,indent=2));mt5.shutdown()
+          '@|Set-Content $py -Encoding UTF8
+          python $py
+          if($LASTEXITCODE -ne 0){throw 'BROKER_PROBE_FAIL'}
+          $d=Get-Content (Join-Path $env:RUNNER_TEMP 'broker_probe.json') -Raw|ConvertFrom-Json
+          "BROKER_SYMBOL=$($d.symbol)"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Prepare data dir and compile exact DONCHIAN EA
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue|Stop-Process -Force -ErrorAction SilentlyContinue
+          $p=Start-Process $env:MT5_TERMINAL -PassThru;Start-Sleep 15;if(-not $p.HasExited){Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue}
+          $base=Join-Path $env:APPDATA 'MetaQuotes\Terminal';$data=Get-ChildItem $base -Directory|Where-Object {Test-Path (Join-Path $_.FullName 'MQL5')}|Sort-Object LastWriteTime -Descending|Select-Object -First 1
+          if($null -eq $data){throw 'DATA_DIR_MISSING'}
+          $expert=Join-Path $data.FullName 'MQL5\Experts\Gold24Real1Y';New-Item -ItemType Directory -Force $expert|Out-Null
+          Copy-Item 'backtest/gold24/qualified_scripts/multi_rank01_donchian_f3_s89_off4_75_exp3.mq5' $expert -Force
+          Copy-Item 'backtest/gold24/qualified_scripts/multimethod_engine.mqh' $expert -Force
+          Copy-Item 'backtest/gold24/qualified_scripts/qualified_engine.mqh' $expert -Force
+          $engine=Join-Path $expert 'qualified_engine.mqh';$t=Get-Content $engine -Raw
+          $t=$t.Replace('input string InpSignalSymbol = "XAUUSD";','input string InpSignalSymbol = "'+$env:BROKER_SYMBOL+'";').Replace('input string InpTradeSymbol  = "XAUUSD";','input string InpTradeSymbol  = "'+$env:BROKER_SYMBOL+'";')
+          Set-Content $engine $t -Encoding UTF8
+          $ea=Join-Path $expert 'multi_rank01_donchian_f3_s89_off4_75_exp3.mq5';$cl=Join-Path $env:RUNNER_TEMP 'compile.log'
+          $q=Start-Process $env:MT5_METAEDITOR -ArgumentList @("/compile:$ea","/log:$cl") -PassThru;if(-not $q.WaitForExit(120000)){throw 'COMPILE_TIMEOUT'};Start-Sleep 2
+          if(!(Test-Path ([IO.Path]::ChangeExtension($ea,'.ex5')))){throw 'EX5_MISSING'}
+          if(Test-Path $cl){$x=Get-Content $cl -Raw;if($x -notmatch '0 errors, 0 warnings'){throw "COMPILE_FAIL $x"}}
+          "MT5_DATA=$($data.FullName)"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host 'COMPILE=PASS'
+
+      - name: Authenticate terminal context
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          $ini=Join-Path $env:RUNNER_TEMP 'auth.ini'
+          @('[Common]',"Login=$env:MT5_LOGIN","Password=$env:MT5_PASSWORD","Server=$env:MT5_SERVER",'NewsEnable=0','[Experts]','Enabled=0','AllowLiveTrading=0','AllowDllImport=0')|Set-Content $ini -Encoding ASCII
+          $p=Start-Process $env:MT5_TERMINAL -ArgumentList "/config:$ini" -PassThru;Start-Sleep 30;if(-not $p.HasExited){Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue};Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue|Stop-Process -Force -ErrorAction SilentlyContinue
+
+      - name: Run real-tick tester and collect diagnostics
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Continue'
+          $out=Join-Path $env:RUNNER_TEMP 'mt5-real-1y';New-Item -ItemType Directory -Force $out|Out-Null
+          Copy-Item (Join-Path $env:RUNNER_TEMP 'broker_probe.json') $out -Force
+          $common=Join-Path $env:APPDATA 'MetaQuotes\Terminal\Common\Files\Gold24Qualified';New-Item -ItemType Directory -Force $common|Out-Null
+          $receipt=Join-Path $common 'receipt_24090201.txt';Remove-Item $receipt -Force -ErrorAction SilentlyContinue
+          $ini=Join-Path $env:RUNNER_TEMP 'tester.ini'
+          @('[Common]',"Login=$env:MT5_LOGIN","Password=$env:MT5_PASSWORD","Server=$env:MT5_SERVER",'NewsEnable=0','[Tester]','Expert=Gold24Real1Y\multi_rank01_donchian_f3_s89_off4_75_exp3.ex5',"Symbol=$env:BROKER_SYMBOL",'Period=D1','Model=4','Optimization=0','FromDate=2025.09.02','ToDate=2026.09.02','ForwardMode=0','Deposit=100000','Currency=USD','Leverage=100','Visual=0','Report=Gold24Real1YReport','ReplaceReport=1','ShutdownTerminal=1')|Set-Content $ini -Encoding ASCII
+          Copy-Item $ini (Join-Path $out 'tester_redacted.ini') -Force
+          (Get-Content (Join-Path $out 'tester_redacted.ini')) -replace '^Login=.*$','Login=MASKED' -replace '^Password=.*$','Password=MASKED' -replace '^Server=.*$','Server=MASKED' | Set-Content (Join-Path $out 'tester_redacted.ini') -Encoding ASCII
+          $p=Start-Process $env:MT5_TERMINAL -ArgumentList "/config:$ini" -PassThru
+          if(-not $p.WaitForExit(900000)){Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue;'TIMEOUT'|Set-Content (Join-Path $out 'tester_status.txt')}
+          Start-Sleep 5
+          if(Test-Path $receipt){Copy-Item $receipt $out -Force}
+          $roots=@($env:MT5_DATA,(Split-Path $env:MT5_TERMINAL),$env:RUNNER_TEMP)
+          $found=@();foreach($r in $roots){if(Test-Path $r){$found+=Get-ChildItem $r -File -Recurse -ErrorAction SilentlyContinue|Where-Object {$_.Name -like 'Gold24Real1YReport*' -or $_.Name -like 'mt5_real_1y_report*'}}}
+          $found|Select-Object -Unique|ForEach-Object {Copy-Item $_.FullName (Join-Path $out $_.Name) -Force -ErrorAction SilentlyContinue}
+          foreach($lp in @((Join-Path $env:MT5_DATA 'logs'),(Join-Path $env:MT5_DATA 'Tester\logs'))){if(Test-Path $lp){Get-ChildItem $lp -Filter '*.log' -File -ErrorAction SilentlyContinue|Sort-Object LastWriteTime -Descending|Select-Object -First 3|ForEach-Object {Copy-Item $_.FullName (Join-Path $out ("diag_"+$_.Name)) -Force}}}
+          Get-ChildItem (Join-Path $env:MT5_DATA 'Tester') -Filter '*.log' -File -Recurse -ErrorAction SilentlyContinue|Sort-Object LastWriteTime -Descending|Select-Object -First 8|ForEach-Object {Copy-Item $_.FullName (Join-Path $out ("tester_"+$_.Name)) -Force -ErrorAction SilentlyContinue}
+          $report=Get-ChildItem $out -File|Where-Object {$_.Name -like 'Gold24Real1YReport*' -or $_.Name -like 'mt5_real_1y_report*'}|Select-Object -First 1
+          if($null -eq $report){Write-Host 'REPORT_NOT_FOUND_DIAGNOSTICS_CAPTURED';exit 1}
+          Copy-Item $report.FullName (Join-Path $out 'mt5_real_1y_report.htm') -Force
+          if(!(Test-Path $receipt)){Write-Host 'EA_RECEIPT_MISSING';exit 1}
+          $rt=Get-Content $receipt -Raw;if($rt -notmatch '(?m)^status=PASS'){Write-Host $rt;exit 1}
+          Write-Host 'MT5_REAL_TICKS_1Y_TESTER=PASS'
+
+      - name: Parse MT5 report
+        if: success()
+        shell: powershell
+        run: |
+          $out=Join-Path $env:RUNNER_TEMP 'mt5-real-1y'
+          python backtest/gold24/mt5_real_1y/parse_mt5_report.py --report (Join-Path $out 'mt5_real_1y_report.htm') --out-dir $out
+          if($LASTEXITCODE -ne 0){throw 'PARSE_FAIL'}
+
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gold24-mt5-real-1y-v2-${{ github.run_id }}
+          path: ${{ runner.temp }}/mt5-real-1y
+          if-no-files-found: warn
+          retention-days: 90

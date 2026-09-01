@@ -1,10 +1,10 @@
 {
   "authoritative": true,
-  "batch": 287,
-  "candidate_cursor": 46242557,
+  "batch": 288,
+  "candidate_cursor": 46642557,
   "cumulative_baseline_qualified": 0,
-  "cumulative_configs_archived": 65088,
-  "cumulative_sample_rankable": 39584,
+  "cumulative_configs_archived": 65102,
+  "cumulative_sample_rankable": 39591,
   "cumulative_target_pf_2_to_8": 0,
   "gate_a": "PASS",
   "global_exact_ledger_dedupe_executed": true,
@@ -23,7 +23,7 @@
   "single_writer_promotion": true,
   "strategy_engine": "RUNNING",
   "timeframe": "D1",
-  "updated_at": "2026-09-01T19:45:41.180647+00:00",
+  "updated_at": "2026-09-01T20:51:24.069824+00:00",
   "worker": "GOLD_V11_PARALLEL_CANONICAL_20",
   "worker_mode": "20_SHARDS_SINGLE_WRITER_PROMOTION"
 }
