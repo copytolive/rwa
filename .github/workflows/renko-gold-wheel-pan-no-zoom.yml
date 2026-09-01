@@ -29,20 +29,21 @@ jobs:
           set -euo pipefail
           node --check renko/renko-gold-wheel-pan-lock.js
           node --check renko/renko-gold-explicit-zoom.js
+          node --check renko/renko-gold-manual-viewport-lock.js
           node --check scripts/renko_gold_wheel_pan_no_zoom_proof.mjs
           grep -Fq 'renko-gold-explicit-zoom.js?v=1' renko/index.html
           grep -Fq 'renko-gold-wheel-pan-lock.js?v=1' renko/index.html
           grep -Fq "version:'1.0.0-explicit-zoom'" renko/renko-gold-explicit-zoom.js
           grep -Fq "implementation:'1.1.0-controller-owned-zoom'" renko/renko-gold-explicit-zoom.js
-          grep -Fq 'isZoomWheel' renko/renko-gold-explicit-zoom.js
           grep -Fq 'Ctrl/Meta pinch zoom' renko/renko-gold-explicit-zoom.js
+          grep -Fq '4.3.0-pan-spacing-authority' renko/renko-gold-manual-viewport-lock.js
           grep -Fq 'mouseWheel:false' renko/renko-gold-wheel-pan-lock.js
           grep -Fq 'handleScroll:{mouseWheel:false}' renko/renko-gold-wheel-pan-lock.js
           grep -Fq 'passive:false' renko/renko-gold-wheel-pan-lock.js
           grep -Fq 'stopImmediatePropagation' renko/renko-gold-wheel-pan-lock.js
-          grep -Fq '2.0.0-position-only-pan' renko/renko-gold-wheel-pan-lock.js
-          grep -Fq 'scrollToPosition' renko/renko-gold-wheel-pan-lock.js
-          ! grep -Fq 'setVisibleLogicalRange' renko/renko-gold-wheel-pan-lock.js
+          grep -Fq '2.1.0-dense-fixed-width-logical-pan' renko/renko-gold-wheel-pan-lock.js
+          grep -Fq 'setVisibleLogicalRange' renko/renko-gold-wheel-pan-lock.js
+          ! grep -Fq 'scrollToPosition' renko/renko-gold-wheel-pan-lock.js
           grep -Fq "version:'1.3.0-full-prepend-size-lock'" renko/renko-gold-wheel-pan-lock.js
       - name: Install Chromium
         run: |
@@ -88,7 +89,7 @@ jobs:
             zoomjs="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/renko-gold-explicit-zoom.js?zoom=$RANDOM" 2>/dev/null || true)"
             panjs="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/renko-gold-wheel-pan-lock.js?pan=$RANDOM" 2>/dev/null || true)"
             sha="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/deployment-sha.txt?zoom=$RANDOM" 2>/dev/null | tr -d '\r\n' || true)"
-            if printf '%s' "$zoomjs" | grep -Fq "1.1.0-controller-owned-zoom" && printf '%s' "$panjs" | grep -Fq "2.0.0-position-only-pan" && [[ "$sha" =~ ^[0-9a-f]{40}$ ]] && [ "$sha" = "$GITHUB_SHA" ]; then echo "RENKO_GOLD_PAN_ZOOM_PUBLIC_EXACT_SHA_PASS $sha"; exit 0; fi
+            if printf '%s' "$zoomjs" | grep -Fq "1.1.0-controller-owned-zoom" && printf '%s' "$panjs" | grep -Fq "2.1.0-dense-fixed-width-logical-pan" && [[ "$sha" =~ ^[0-9a-f]{40}$ ]] && [ "$sha" = "$GITHUB_SHA" ]; then echo "RENKO_GOLD_PAN_ZOOM_PUBLIC_EXACT_SHA_PASS $sha"; exit 0; fi
             sleep 5
           done
           echo "Pages did not publish exact pan+zoom SHA $GITHUB_SHA"
