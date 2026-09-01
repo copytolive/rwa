@@ -1,0 +1,164 @@
+name: RENKO GOLD Scroll Back Zero Snap
+
+on:
+  push:
+    branches:
+      - fix/renko-gold-scroll-no-reset-20260901
+      - main
+    paths:
+      - 'renko/renko-gold-total-history.js'
+      - 'renko/renko-gold-manual-viewport-lock.js'
+      - '.github/workflows/renko-gold-scroll-no-reset.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scroll-no-reset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Syntax gate
+        run: |
+          node --check renko/renko-gold-total-history.js
+          node --check renko/renko-gold-manual-viewport-lock.js
+
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+
+      - name: Serve exact checkout
+        run: |
+          python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/renko-scroll-http.log 2>&1 &
+          echo $! >/tmp/renko-scroll-http.pid
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/renko/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/renko-scroll-http.log
+          exit 1
+
+      - name: Chromium repeated scroll-back invariant
+        run: |
+          mkdir -p artifacts/renko-gold-scroll-no-reset
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { chromium } from 'playwright';
+
+          const out='artifacts/renko-gold-scroll-no-reset';
+          const browser=await chromium.launch({headless:true,args:['--disable-dev-shm-usage']});
+          const page=await browser.newPage({viewport:{width:1672,height:941},deviceScaleFactor:1});
+          const errors=[];
+          page.on('pageerror',e=>errors.push(String(e?.message||e)));
+          page.on('console',m=>{if(m.type()==='error'&&!/WebSocket|Failed to load resource|non-downloaded market source blocked/i.test(m.text()))errors.push(m.text())});
+          await page.addInitScript(()=>{
+            window.__scrollLongTasks=[];
+            try{const po=new PerformanceObserver(list=>{for(const e of list.getEntries())window.__scrollLongTasks.push({start:e.startTime,duration:e.duration})});po.observe({type:'longtask',buffered:true})}catch{}
+          });
+          await page.goto('http://127.0.0.1:8080/renko/?gold=1&scrollNoReset=1',{waitUntil:'domcontentloaded',timeout:60000});
+          await page.waitForFunction(()=>window.RENKO_GOLD_ONLY===true&&window.RWARenkoTV?.state?.symbol==='XAUUSD'&&window.RWARenkoTV?.state?.closedBars?.length>100&&window.RWARenkoGoldTotalHistory?.version==='2.0.0-zero-snap-atomic-prepend'&&window.RWARenkoGoldManualViewport?.version==='4.0.0-atomic-history-time-aware'&&document.querySelector('#chartHost canvas'),null,{timeout:90000});
+
+          const metric=()=>page.evaluate(()=>{
+            const t=window.__RWARenkoChart.timeScale(),T=window.RWARenkoTV,H=window.RWARenkoGoldTotalHistory;
+            const time=t.getVisibleRange?.(),logical=t.getVisibleLogicalRange?.(),opts=t.options?.()||{};
+            return {
+              time:time?{from:Number(time.from),to:Number(time.to)}:null,
+              logical:logical?{from:Number(logical.from),to:Number(logical.to)}:null,
+              logicalWidth:logical?Number(logical.to)-Number(logical.from):null,
+              barSpacing:Number(opts.barSpacing),rightOffset:Number(opts.rightOffset),
+              oldest:Number(T.state.closedBars?.[0]?.openTime||0),newest:Number(T.state.closedBars?.at(-1)?.closeTime||0),
+              sourceBars:Number(T.state.closedBars?.length||0),bricks:Number(T.state.confirmed?.length||0),
+              prepends:Number(H.stats.prepends||0),autoLoads:Number(H.stats.autoLoads||0),
+              viewportRestores:Number(H.stats.viewportRestores||0),viewportDriftFailures:Number(H.stats.viewportDriftFailures||0),
+              following:!!T.state.following,manualLocked:!!window.RWARenkoGoldManualViewport?.locked,autoArmed:!!H.autoArmed
+            };
+          });
+          const drift=(a,b)=>Math.max(Math.abs(Number(a.from)-Number(b.from)),Math.abs(Number(a.to)-Number(b.to)));
+          const longTbt=mark=>page.evaluate(mark=>(window.__scrollLongTasks||[]).filter(x=>x.start>=mark).reduce((s,x)=>s+Math.max(0,Number(x.duration)-50),0),mark);
+          async function waitStage(){
+            await page.waitForFunction(()=>{
+              const T=RWARenkoTV,H=RWARenkoGoldTotalHistory,oldest=Math.floor(Number(T.state.closedBars?.[0]?.openTime||0)/1000);
+              return H.staged?.beforeSec===oldest&&H.staged?.bars?.length>0;
+            },null,{timeout:120000});
+          }
+          async function settle(){await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));await page.waitForTimeout(300)}
+          async function setLogical(from,to){await page.evaluate(({from,to})=>{RWARenkoGoldManualViewport.lock('regression-scroll');RWARenkoTV.state.following=false;window.__RWARenkoChart.timeScale().setVisibleLogicalRange({from,to})},{from,to});await settle()}
+          function assertStable(label,before,after,tbt){
+            if(!before.time||!after.time)throw new Error(label+' missing visible time range');
+            const timeDrift=drift(before.time,after.time);
+            const widthDrift=Math.abs(Number(before.logicalWidth)-Number(after.logicalWidth));
+            const spacingDrift=Number.isFinite(before.barSpacing)&&Number.isFinite(after.barSpacing)?Math.abs(before.barSpacing-after.barSpacing):0;
+            if(timeDrift>2)throw new Error(`${label} time drift ${timeDrift}s`);
+            if(widthDrift>2)throw new Error(`${label} logical-width drift ${widthDrift}`);
+            if(spacingDrift>0.75)throw new Error(`${label} bar-spacing drift ${spacingDrift}`);
+            if(tbt!==0)throw new Error(`${label} TBT ${tbt}ms`);
+            if(after.following)throw new Error(label+' following unexpectedly re-enabled');
+            return{timeDrift,widthDrift,spacingDrift,tbt};
+          }
+
+          await waitStage();
+          await setLogical(150,215);
+          const directBefore=await metric();
+          await page.screenshot({path:`${out}/01-before-direct.png`,fullPage:true});
+          const directMark=await page.evaluate(()=>performance.now());
+          const directPre=directBefore.prepends;
+          const directOk=await page.evaluate(()=>RWARenkoGoldTotalHistory.prependOlder({panOlder:false}));
+          if(!directOk)throw new Error('direct prepend returned false');
+          await settle();
+          const directAfter=await metric(),directTbt=await longTbt(directMark);
+          const directStable=assertStable('direct',directBefore,directAfter,directTbt);
+          if(directAfter.prepends!==directPre+1)throw new Error('direct prepend count mismatch');
+          await page.screenshot({path:`${out}/02-after-direct.png`,fullPage:true});
+
+          await waitStage();
+          await setLogical(180,245);
+          await page.waitForFunction(()=>RWARenkoGoldTotalHistory.autoArmed===true,null,{timeout:10000});
+          const auto1Pre=(await metric()).prepends;
+          const auto1Mark=await page.evaluate(()=>performance.now());
+          await setLogical(10,75);
+          const auto1Trigger=await metric();
+          await page.waitForFunction(n=>RWARenkoGoldTotalHistory.stats.prepends===n+1,auto1Pre,{timeout:120000});
+          await settle();
+          const auto1After=await metric(),auto1Tbt=await longTbt(auto1Mark);
+          const auto1Stable=assertStable('auto1',auto1Trigger,auto1After,auto1Tbt);
+          await page.waitForTimeout(1800);
+          const auto1NoLoop=await metric();
+          if(auto1NoLoop.prepends!==auto1Pre+1)throw new Error(`auto1 looped prepends ${auto1NoLoop.prepends}/${auto1Pre+1}`);
+          await page.screenshot({path:`${out}/03-after-auto1.png`,fullPage:true});
+
+          await waitStage();
+          await setLogical(180,245);
+          await page.waitForFunction(()=>RWARenkoGoldTotalHistory.autoArmed===true,null,{timeout:10000});
+          const auto2Pre=(await metric()).prepends;
+          const auto2Mark=await page.evaluate(()=>performance.now());
+          await setLogical(10,75);
+          const auto2Trigger=await metric();
+          await page.waitForFunction(n=>RWARenkoGoldTotalHistory.stats.prepends===n+1,auto2Pre,{timeout:120000});
+          await settle();
+          const auto2After=await metric(),auto2Tbt=await longTbt(auto2Mark);
+          const auto2Stable=assertStable('auto2',auto2Trigger,auto2After,auto2Tbt);
+          await page.waitForTimeout(1800);
+          const final=await metric();
+          if(final.prepends!==auto2Pre+1)throw new Error(`auto2 looped prepends ${final.prepends}/${auto2Pre+1}`);
+          if(final.viewportDriftFailures!==0)throw new Error(`runtime viewport drift failures ${final.viewportDriftFailures}`);
+          if(errors.length)throw new Error('browser errors: '+errors.join(' | '));
+          await page.screenshot({path:`${out}/04-after-auto2.png`,fullPage:true});
+
+          const report={status:'PASS',direct:{before:directBefore,after:directAfter,...directStable},auto1:{trigger:auto1Trigger,after:auto1After,noLoop:auto1NoLoop,...auto1Stable},auto2:{trigger:auto2Trigger,after:auto2After,...auto2Stable},final,errors};
+          fs.writeFileSync(`${out}/report.json`,JSON.stringify(report,null,2));
+          console.log('RENKO_GOLD_SCROLL_NO_RESET_PASS',JSON.stringify(report));
+          await browser.close();
+          NODE
+
+      - name: Upload scroll proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: renko-gold-scroll-no-reset-proof
+          path: artifacts/renko-gold-scroll-no-reset
+          retention-days: 14
