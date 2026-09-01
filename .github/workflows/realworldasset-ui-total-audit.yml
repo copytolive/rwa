@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: realworldasset-ui-total-audit-${{ github.sha }}
+  group: realworldasset-ui-total-audit-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
