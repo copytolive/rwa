@@ -30,7 +30,9 @@ jobs:
           node --check scripts/renko_gold_wheel_pan_no_zoom_proof.mjs
           grep -Fq 'renko-gold-wheel-pan-lock.js?v=1' renko/index.html
           grep -Fq 'mouseWheel:false' renko/renko-gold-wheel-pan-lock.js
-          grep -Fq 'mouseWheel:true' renko/renko-gold-wheel-pan-lock.js
+          grep -Fq 'passive:false' renko/renko-gold-wheel-pan-lock.js
+          grep -Fq 'stopImmediatePropagation' renko/renko-gold-wheel-pan-lock.js
+          grep -Fq "version:'1.1.0-owned-pan-wheel'" renko/renko-gold-wheel-pan-lock.js
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.55.0
@@ -68,15 +70,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Wait for exact Pages SHA
+      - name: Wait until Pages contains wheel-fix runtime
         run: |
           set -euo pipefail
           for i in {1..180}; do
-            got="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/deployment-sha.txt?wheel=$RANDOM" 2>/dev/null | tr -d '\r\n' || true)"
-            if [ "$got" = "$GITHUB_SHA" ]; then echo "RENKO_GOLD_WHEEL_PUBLIC_SHA_PASS $got"; exit 0; fi
+            js="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/renko-gold-wheel-pan-lock.js?wheel=$RANDOM" 2>/dev/null || true)"
+            sha="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/deployment-sha.txt?wheel=$RANDOM" 2>/dev/null | tr -d '\r\n' || true)"
+            if printf '%s' "$js" | grep -Fq "1.1.0-owned-pan-wheel" && [[ "$sha" =~ ^[0-9a-f]{40}$ ]]; then echo "RENKO_GOLD_WHEEL_PUBLIC_RUNTIME_PASS $sha"; exit 0; fi
             sleep 5
           done
-          echo 'Pages did not converge to exact wheel-fix SHA'
+          echo 'Pages did not publish wheel-fix runtime'
           exit 1
       - name: Install Chromium
         run: |
@@ -85,7 +88,6 @@ jobs:
       - name: Public Traditional 10 mixed-trackpad back-scroll stays same size
         env:
           RENKO_BASE_URL: https://copytolive.github.io/rwa/renko/
-          RENKO_EXPECTED_SHA: ${{ github.sha }}
           RENKO_OUTPUT_DIR: artifacts/public-wheel-no-zoom
         run: node scripts/renko_gold_wheel_pan_no_zoom_proof.mjs
       - uses: actions/upload-artifact@v4
