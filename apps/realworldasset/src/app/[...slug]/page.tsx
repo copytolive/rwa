@@ -1,6 +1,7 @@
 import { LiveRouteWorkspace } from "@/components/live-dashboard";
 import { ProgramWorkspace, LiveOrdersWorkspace, SellerOrdersWorkspace } from "@/components/program-workspaces";
 import { CriticalLiveWorkspace } from "@/components/critical-workspaces/CriticalWorkspaces";
+import { MarketsLiveWorkspace } from "@/components/markets-live/MarketsLiveWorkspace";
 
 export const dynamicParams=false;
 
@@ -24,7 +25,7 @@ function titleCase(parts:string[]){return parts.map(part=>part.replace(/-/g," ")
 export default async function LiveOnlyRoutePage({params}:{params:Promise<{slug:string[]}>}){
   const {slug}=await params;
   const path=`/${slug.join("/")}`;
-  if(path==="/markets")return <ProgramWorkspace kind="markets"/>;
+  if(path==="/markets")return <MarketsLiveWorkspace/>;
   if(path==="/intelligence")return <ProgramWorkspace kind="intelligence"/>;
   if(path==="/merchant")return <CriticalLiveWorkspace kind="merchant"/>;
   if(path==="/checkout")return <CriticalLiveWorkspace kind="checkout"/>;
