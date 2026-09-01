@@ -40,8 +40,8 @@ jobs:
           grep -Fq 'PERCENTAGE (LTP)' renko/index.html
           grep -Fq 'renko-tv-app.js?v=187' renko/index.html
           grep -Fq 'renko-tv-atr-control.js?v=3' renko/index.html
-          grep -Fq "version:'1.3.2'" renko/renko-tv-atr-control.js
-          grep -Fq 'positive-wilder-deepen-same-source' renko/renko-tv-atr-control.js
+          grep -Fq "version:'1.4.0-zero-safe'" renko/renko-tv-atr-control.js
+          grep -Fq 'positive-wilder-exact-box-zero-wilder-min-tick-fallback-deepen-same-source' renko/renko-tv-atr-control.js
           grep -Fq 'renko-tv-atr-fixed1s.js?v=7' renko/index.html
           ! grep -Fq 'id="intervalSelect"' renko/index.html
           ! grep -Fq 'renko-v12.js?v=' renko/index.html
