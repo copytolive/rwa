@@ -29,9 +29,10 @@ jobs:
           node --check renko/renko-gold-total-visible.js
           node --check scripts/renko_gold_total_visible_proof.mjs
           grep -Fq 'renko-gold-total-visible.js?v=1' renko/index.html
-          grep -Fq "1.0.0-total-visible-autoload" renko/renko-gold-total-visible.js
+          grep -Fq "1.0.1-total-visible-autoload-proof-isolated" renko/renko-gold-total-visible.js
           grep -Fq 'BOOT_BLOCK_BARS=65000' renko/renko-gold-total-visible.js
           grep -Fq 'MAX_SOURCE_BARS=140000' renko/renko-gold-total-visible.js
+          grep -Fq 'proofSuppressed' renko/renko-gold-total-visible.js
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.55.0
@@ -75,7 +76,7 @@ jobs:
           for i in {1..240}; do
             js="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/renko-gold-total-visible.js?total=$RANDOM" 2>/dev/null || true)"
             sha="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/deployment-sha.txt?total=$RANDOM" 2>/dev/null | tr -d '\r\n' || true)"
-            if printf '%s' "$js" | grep -Fq '1.0.0-total-visible-autoload' && [[ "$sha" =~ ^[0-9a-f]{40}$ ]] && [ "$sha" = "$GITHUB_SHA" ]; then echo "RENKO_GOLD_TOTAL_VISIBLE_PUBLIC_EXACT_SHA_PASS $sha"; exit 0; fi
+            if printf '%s' "$js" | grep -Fq '1.0.1-total-visible-autoload-proof-isolated' && [[ "$sha" =~ ^[0-9a-f]{40}$ ]] && [ "$sha" = "$GITHUB_SHA" ]; then echo "RENKO_GOLD_TOTAL_VISIBLE_PUBLIC_EXACT_SHA_PASS $sha"; exit 0; fi
             sleep 5
           done
           exit 1
