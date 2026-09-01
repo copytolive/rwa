@@ -1,5 +1,5 @@
-import { LiveCurrentRoutePage } from "@/components/live-dashboard";
+import { CriticalLiveWorkspace } from "@/components/critical-workspaces/CriticalWorkspaces";
 
-export default function LiveOnlyPage(){
-  return <LiveCurrentRoutePage/>;
+export default function BusinessesPage(){
+  return <CriticalLiveWorkspace kind="businesses"/>;
 }
