@@ -99,8 +99,8 @@ jobs:
 
           git -C src-rwa bundle create "$OUT/04_GIT_HISTORY/copytolive-rwa-all-refs.bundle" --all
           git -C src-realworldasset bundle create "$OUT/04_GIT_HISTORY/copytolive-realworldasset-all-refs.bundle" --all
-          git bundle verify "$OUT/04_GIT_HISTORY/copytolive-rwa-all-refs.bundle"
-          git bundle verify "$OUT/04_GIT_HISTORY/copytolive-realworldasset-all-refs.bundle"
+          git -C src-rwa bundle verify "$OUT/04_GIT_HISTORY/copytolive-rwa-all-refs.bundle"
+          git -C src-realworldasset bundle verify "$OUT/04_GIT_HISTORY/copytolive-realworldasset-all-refs.bundle"
 
           cat > "$OUT/00_MANIFEST/README_BACKUP.txt" <<EOF
           1.1.1.1. RWA FINAL System
