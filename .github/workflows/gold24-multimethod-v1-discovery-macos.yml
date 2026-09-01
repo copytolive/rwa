@@ -124,6 +124,26 @@ jobs:
           print(json.dumps(x, indent=2, sort_keys=True))
           PY
 
+      - name: Enforce Entry100 USD20k and Corr selection contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python backtest/gold24/multimethod_v1_finalize_strict.py --out-dir "$OUT_DIR"
+          python - <<'PY'
+          import csv, json, os, pathlib
+          out=pathlib.Path(os.environ['OUT_DIR'])
+          rows=list(csv.DictReader((out/'latest_multimethod_v1_discovery.csv').open()))
+          summary=json.loads((out/'latest_multimethod_v1_discovery_summary.json').read_text())
+          assert rows
+          assert len(rows)==int(summary['library_count'])
+          for row in rows:
+              assert int(row['total_entry']) >= 100
+              assert float(row['standard_lot_net_profit_usd_same_cost_model']) >= 20000.0
+              assert abs(float(row['correlation_max'])) <= 0.50 + 1e-12
+              assert row['correlation_gate']=='PASS'
+          print(f"economic selection PASS final={len(rows)} cumulative={summary['evaluated_config_hash_count_cumulative']}")
+          PY
+
       - name: Publish discovery result race-safe
         shell: bash
         run: |
