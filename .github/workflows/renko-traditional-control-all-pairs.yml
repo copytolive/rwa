@@ -81,7 +81,7 @@ jobs:
           set -euo pipefail
           index='https://copytolive.github.io/rwa/renko/'
           runtime='https://copytolive.github.io/rwa/renko/renko-tv-traditional-control.js'
-          stamp='https://copytolive.github.io/rwa/renko-deployment-sha.txt'
+          stamp='https://copytolive.github.io/rwa/renko/renko-deployment-sha.txt'
           for i in $(seq 1 90); do
             ts=$(date +%s%N)
             got=$(curl -fsS "$stamp?ts=$ts" 2>/dev/null | tr -d '\r\n' || true)
