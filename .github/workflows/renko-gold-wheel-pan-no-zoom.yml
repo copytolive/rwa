@@ -33,7 +33,9 @@ jobs:
           grep -Fq 'renko-gold-explicit-zoom.js?v=1' renko/index.html
           grep -Fq 'renko-gold-wheel-pan-lock.js?v=1' renko/index.html
           grep -Fq "version:'1.0.0-explicit-zoom'" renko/renko-gold-explicit-zoom.js
-          grep -Fq 'vertical-only wheel and ctrl/meta pinch wheel' renko/renko-gold-explicit-zoom.js
+          grep -Fq "implementation:'1.1.0-controller-owned-zoom'" renko/renko-gold-explicit-zoom.js
+          grep -Fq 'isZoomWheel' renko/renko-gold-explicit-zoom.js
+          grep -Fq 'Ctrl/Meta pinch zoom' renko/renko-gold-explicit-zoom.js
           grep -Fq 'mouseWheel:false' renko/renko-gold-wheel-pan-lock.js
           grep -Fq 'handleScroll:{mouseWheel:false}' renko/renko-gold-wheel-pan-lock.js
           grep -Fq 'passive:false' renko/renko-gold-wheel-pan-lock.js
@@ -86,7 +88,7 @@ jobs:
             zoomjs="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/renko-gold-explicit-zoom.js?zoom=$RANDOM" 2>/dev/null || true)"
             panjs="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/renko-gold-wheel-pan-lock.js?pan=$RANDOM" 2>/dev/null || true)"
             sha="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/deployment-sha.txt?zoom=$RANDOM" 2>/dev/null | tr -d '\r\n' || true)"
-            if printf '%s' "$zoomjs" | grep -Fq "1.0.0-explicit-zoom" && printf '%s' "$panjs" | grep -Fq "2.0.0-position-only-pan" && [[ "$sha" =~ ^[0-9a-f]{40}$ ]] && [ "$sha" = "$GITHUB_SHA" ]; then echo "RENKO_GOLD_PAN_ZOOM_PUBLIC_EXACT_SHA_PASS $sha"; exit 0; fi
+            if printf '%s' "$zoomjs" | grep -Fq "1.1.0-controller-owned-zoom" && printf '%s' "$panjs" | grep -Fq "2.0.0-position-only-pan" && [[ "$sha" =~ ^[0-9a-f]{40}$ ]] && [ "$sha" = "$GITHUB_SHA" ]; then echo "RENKO_GOLD_PAN_ZOOM_PUBLIC_EXACT_SHA_PASS $sha"; exit 0; fi
             sleep 5
           done
           echo "Pages did not publish exact pan+zoom SHA $GITHUB_SHA"
