@@ -1,4 +1,4 @@
-import { AssetDetail, getRwaAsset } from "@/components/details";
+import { LiveRouteWorkspace } from "@/components/live-dashboard";
 
 export const dynamicParams = false;
 export function generateStaticParams() {
@@ -15,5 +15,5 @@ export function generateStaticParams() {
 
 export default async function RwaAssetPage({params}:{params:Promise<{asset:string}>}){
   const {asset}=await params;
-  return <AssetDetail asset={getRwaAsset(asset)}/>;
+  return <LiveRouteWorkspace title={asset.replace(/-/g," ")} path={`/rwa/${asset}`}/>;
 }
