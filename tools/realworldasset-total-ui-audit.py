@@ -91,10 +91,12 @@ def click_stable(page,item):
  b=relocate_button(page,item)
  if b is None: raise PlaywrightTimeoutError('control not found after hydration')
  last=None
- for settle,timeout in ((0,2600),(260,5000)):
+ for settle,timeout in ((0,3200),(220,5200)):
   try:
    if settle: page.wait_for_timeout(settle); b=relocate_button(page,item) or b
-   b.scroll_into_view_if_needed(timeout=1800)
+   b.evaluate("el=>el.scrollIntoView({block:'center',inline:'center',behavior:'instant'})")
+   page.wait_for_timeout(90)
+   b=relocate_button(page,item) or b
    b.click(timeout=timeout)
    return b
   except PlaywrightTimeoutError as e:
@@ -178,9 +180,12 @@ with sync_playwright() as pw:
    try:
     b=click_stable(page,item); page.wait_for_timeout(55)
    except PlaywrightTimeoutError as e:
-    detail=str(e).split('\n')[0][:300]
-    if is_locked: locked_total+=1; locked_fail.append({**item,'reason':'unclickable locked control','detail':detail}); continue
-    active_total+=1; unexpected.append({**item,'reason':'click timeout','detail':detail}); continue
+    detail=str(e)[:1400]
+    diag={}
+    try: diag=b.evaluate("el=>{const r=el.getBoundingClientRect();const x=r.left+r.width/2,y=r.top+r.height/2;const top=document.elementFromPoint(x,y);return {rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height},center:{x,y},topTag:top?.tagName||'',topClass:String(top?.className||'').slice(0,200),topText:(top?.textContent||'').trim().replace(/\\s+/g,' ').slice(0,160)}}")
+    except Exception: pass
+    if is_locked: locked_total+=1; locked_fail.append({**item,'reason':'unclickable locked control','detail':detail,'diagnostic':diag}); continue
+    active_total+=1; unexpected.append({**item,'reason':'click timeout','detail':detail,'diagnostic':diag}); continue
    after_url=page.url; after=clean_html(page); changed=after_url!=before_url or hashlib.sha256(after.encode()).hexdigest()!=hashlib.sha256(before.encode()).hexdigest()
    if is_locked:
     locked_total+=1; body=page.locator('body').inner_text(); unsafe_success=bool(re.search(r'order filled|purchase confirmed|transaction successful|settlement complete',body,re.I)) and not re.search(r'backend.*not connected|UI DEMO',body,re.I); safe_notice='backend/wallet execution is not connected' in body or 'UI DEMO' in body or b.is_disabled()
