@@ -85,6 +85,8 @@ function viewportMetrics(snapshot,target=null){
     scrollPositionBefore:snapshot?.scrollPosition??null,scrollPositionAfter:afterScroll,
     timeSpanBefore:beforeSpan,timeSpanAfter:afterSpan,
     timeSpanDeltaPct:finiteNumber(beforeSpan)&&beforeSpan!==0&&finiteNumber(afterSpan)?Math.abs(afterSpan-beforeSpan)/Math.abs(beforeSpan)*100:null,
+    fromDelta:wanted&&afterTime?Math.abs(Number(afterTime.from)-Number(wanted.from)):null,
+    toDelta:wanted&&afterTime?Math.abs(Number(afterTime.to)-Number(wanted.to)):null,
     anchorTimeBefore:anchorBefore,anchorTimeAfter:anchorAfter,
     anchorDelta:finiteNumber(anchorBefore)&&finiteNumber(anchorAfter)?Math.abs(anchorAfter-anchorBefore):null,
     barSpacingDelta:finiteNumber(snapshot?.barSpacing)&&finiteNumber(afterOpts.barSpacing)?Math.abs(afterOpts.barSpacing-snapshot.barSpacing):null,
@@ -104,7 +106,8 @@ function applyHistorySnapshot(snapshot,{panOlder=false}={}){
     if(target){
       const current=cloneTime(ts.getVisibleRange?.());
       const wantedSpan=Number(target.to)-Number(target.from),currentSpan=current?Number(current.to)-Number(current.from):NaN;
-      if(!current||!Number.isFinite(currentSpan)||Math.abs(currentSpan-wantedSpan)>Math.max(1e-9,Math.abs(wantedSpan)*1e-7))ts.setVisibleRange(target);
+      const edgeDrift=!current||Math.abs(Number(current.from)-Number(target.from))>1||Math.abs(Number(current.to)-Number(target.to))>1;
+      if(!current||!Number.isFinite(currentSpan)||Math.abs(currentSpan-wantedSpan)>Math.max(1e-9,Math.abs(wantedSpan)*1e-7)||edgeDrift)ts.setVisibleRange(target);
     }
     followingOff();stats.historyRestores++;return true;
   }catch(_){return false}
@@ -122,7 +125,7 @@ async function endHistoryMutation(token,{panOlder=false}={}){
   applyHistorySnapshot(snapshot,{panOlder});
   await nextFrame();
   let metrics=viewportMetrics(snapshot,target);
-  const drift=(finiteNumber(metrics.barSpacingDelta)&&metrics.barSpacingDelta>1e-9)||(finiteNumber(metrics.rightOffsetDelta)&&metrics.rightOffsetDelta>1e-9)||(finiteNumber(metrics.timeSpanDeltaPct)&&metrics.timeSpanDeltaPct>0.01)||(finiteNumber(metrics.anchorDelta)&&metrics.anchorDelta>Math.max(0.001,Math.abs(Number(snapshot?.timeSpan)||0)*0.0001));
+  const drift=(finiteNumber(metrics.barSpacingDelta)&&metrics.barSpacingDelta>1e-9)||(finiteNumber(metrics.rightOffsetDelta)&&metrics.rightOffsetDelta>1e-9)||(finiteNumber(metrics.timeSpanDeltaPct)&&metrics.timeSpanDeltaPct>0.01)||(finiteNumber(metrics.fromDelta)&&metrics.fromDelta>1)||(finiteNumber(metrics.toDelta)&&metrics.toDelta>1)||(finiteNumber(metrics.anchorDelta)&&metrics.anchorDelta>1);
   if(drift){stats.historyCorrections++;applyHistorySnapshot(snapshot,{panOlder});await nextFrame();metrics=viewportMetrics(snapshot,target)}
   historyDepth=Math.max(0,historyDepth-1);suppressRangeChanges=Math.max(0,suppressRangeChanges-1);
   const current=clone(TS()?.getVisibleLogicalRange?.());if(locked&&current){range=current;stats.lastRange=clone(current)}
@@ -182,5 +185,5 @@ window.addEventListener('renko:gold-origin',()=>setTimeout(()=>{lock('origin-rea
 for(const ev of ['renko:chart-ready','renko:tv-ready','renko:gold-recent','renko:gold-total','renko:atr-control-applied','renko:traditional-applied'])window.addEventListener(ev,()=>{ready();if(locked)followingOff()});
 poll=setInterval(()=>{ready();if(rangeBound&&rebuildWrapped){clearInterval(poll);poll=0}},100);
 setTimeout(()=>{if(poll)clearInterval(poll)},15000);
-window.RWARenkoGoldManualViewport={version:'4.0.0-history-transaction-owner',rule:'single timestamp viewport owner during GOLD history mutation; stale logical restores suppressed until transaction closes',stats,get locked(){return locked},get range(){return clone(range)},get sequence(){return seq},get inHistoryMutation(){return historyDepth>0},get suppressingRangeChanges(){return suppressRangeChanges>0},lock,unlock,store,restore,ready,viewportSnapshot,beginHistoryMutation,endHistoryMutation};
+window.RWARenkoGoldManualViewport={version:'4.0.1-history-transaction-edge-proof',rule:'single timestamp viewport owner during GOLD history mutation; stale logical restores suppressed until transaction closes',stats,get locked(){return locked},get range(){return clone(range)},get sequence(){return seq},get inHistoryMutation(){return historyDepth>0},get suppressingRangeChanges(){return suppressRangeChanges>0},lock,unlock,store,restore,ready,viewportSnapshot,beginHistoryMutation,endHistoryMutation};
 })();
