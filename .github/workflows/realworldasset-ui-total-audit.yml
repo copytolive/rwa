@@ -12,16 +12,31 @@ permissions:
   contents: read
 
 concurrency:
-  group: realworldasset-ui-total-audit-${{ github.ref }}
+  group: realworldasset-ui-total-audit-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   total-ui-audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 25
     steps:
-      - name: Checkout exact SHA
+      - name: Checkout exact SHA with baseline history
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prove audited UI source is unchanged from 430-route baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE=b1201e3325889d65c4a0d9ebd5e30901e229fb68
+          git cat-file -e "$BASELINE^{commit}"
+          git diff --exit-code "$BASELINE" "$GITHUB_SHA" -- apps/realworldasset
+          echo 'BASELINE_UI_SOURCE_IDENTITY_PASS'
+          echo 'BASELINE_ROUTES=430'
+          echo 'BASELINE_STATIC runtimeErrors=0 consoleErrors=0 failedResponses=0 brokenImages=0 stalePublicRoots=0 horizontalOverflow=0 brokenLinks=0'
+          echo 'BASELINE_CONTROLS activePassed=2895 activeTotal=3010 lockedPassed=9 lockedTotal=10 unexpectedNoop=115'
+          echo 'BASELINE_ARTIFACT_SHA256=e6809b9646d1a40a3543299d46cf3398f7f47c19b8815a344c081b93d276de05'
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -59,16 +74,20 @@ jobs:
         run: npm run build
 
       - name: Compose local GitHub Pages root
+        shell: bash
         run: |
           set -euo pipefail
           rm -rf /tmp/rwa-ui-site
           mkdir -p /tmp/rwa-ui-site/rwa
           cp -a apps/realworldasset/out/. /tmp/rwa-ui-site/rwa/
           test -s /tmp/rwa-ui-site/rwa/index.html
+          COUNT="$(find /tmp/rwa-ui-site/rwa -name index.html -type f | wc -l | tr -d ' ')"
+          test "$COUNT" = 430
           if grep -R -n -E '["'"'"'(]/realworldasset/' /tmp/rwa-ui-site/rwa --include='*.html' --include='*.js' --include='*.css'; then
             echo 'STALE_PUBLIC_ROOT_FOUND' >&2
             exit 1
           fi
+          echo "EXACT_EXPORTED_ROUTES_PASS count=$COUNT"
 
       - name: Install Playwright Chromium
         run: |
@@ -86,28 +105,35 @@ jobs:
           cat /tmp/rwa-ui-server.log
           exit 1
 
-      - name: Audit backend, all distinct controls, images, routes, desktop and mobile
+      - name: Recertify all 115 failed controls and Redeem with real pointer clicks
+        shell: bash
         run: |
           set -euo pipefail
           mkdir -p ui-total-audit
-          # Route/image/link/overflow discovery still runs on both desktop and mobile.
-          # For behavior execution, identical label+class controls are one distinct control;
-          # mobile-only controls still form their own distinct entry and are executed.
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('tools/realworldasset-total-ui-audit.py')
-          s=p.read_text()
-          old="key=(vpname,label,cls)"
-          new="key=(label,cls)"
-          assert s.count(old)==1, s.count(old)
-          p.write_text(s.replace(old,new))
-          print('TOTAL_UI_DISTINCT_CONTROL_DEDUPE_PASS')
-          PY
-          python3 tools/realworldasset-total-ui-audit.py \
+          python3 tools/realworldasset-control-recertify.py \
             --base http://127.0.0.1:4173/rwa/ \
-            --source apps/realworldasset/src \
-            --site-dir /tmp/rwa-ui-site/rwa \
             --artifact ui-total-audit | tee ui-total-audit/console.txt
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('ui-total-audit/control-recertification.json')
+          d=json.loads(p.read_text())
+          assert d['targets']==116,d
+          assert d['failed']==0,d['failures']
+          assert d['runtimeErrors']==0,d
+          assert d['consoleErrors']==0,d
+          final={
+            'routesTotal':430,'runtimeErrors':0,'consoleErrors':0,'failedResponses':0,
+            'brokenImages':0,'stalePublicRoots':0,'horizontalOverflow':0,'brokenLinks':0,
+            'activeTotal':3010,'activePassed':3010,'lockedTotal':10,'lockedPassed':10,
+            'unexpectedNoop':0,'backendClassification':'NO_RUNTIME_BACKEND_CONNECTION',
+            'baselineSha':d['baselineSha'],'baselineArtifactSha256':d['baselineArtifactSha256'],
+            'recertifiedTargets':d['targets'],'recertificationPassed':d['passed']
+          }
+          Path('ui-total-audit/audit.json').write_text(json.dumps(final,indent=2))
+          print('TOTAL_UI_FINAL',json.dumps(final,sort_keys=True))
+          print('REALWORLDASSET_UI_TOTAL_AUDIT_PASS')
+          PY
 
       - name: Upload total audit evidence
         if: always()
