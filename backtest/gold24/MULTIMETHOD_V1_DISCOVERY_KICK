@@ -1,6 +1,6 @@
 MULTIMETHOD_V1_DISCOVERY_KICK
 candidate_count=5000
-base_seed=2026090119
+base_seed=2026090120
 source_batch=LATEST
-requested_at=2026-09-01T19:04:00+07:00
-reason=refresh adaptive discovery from latest finalized authoritative canonical PASS batch 279 / run 33502780902; preserve cumulative discovered selections; enforce Entry>=100 / NP>=USD20000 and Corr<=0.50 authority
+requested_at=2026-09-01T20:17:00+07:00
+reason=refresh adaptive discovery from latest finalized authoritative canonical PASS batch 280 / run 33508656416; preserve cumulative discovered selections; enforce Entry>=100 / NP>=USD20000 and Corr<=0.50 authority
