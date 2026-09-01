@@ -40,7 +40,7 @@ jobs:
           node --check renko/renko-gold-wheel-pan-lock.js
           node --check scripts/renko_gold_scroll_prepend_proof.mjs
           grep -Fq "version:'1.0.0-explicit-zoom'" renko/renko-gold-explicit-zoom.js
-          grep -Fq '1.8.0-prepend-before-pan' renko/renko-gold-wheel-pan-lock.js
+          grep -Fq '1.9.0-fixed-width-logical-pan' renko/renko-gold-wheel-pan-lock.js
           ! grep -nE '\.fitContent\s*\(' renko/renko-gold-total-history.js renko/renko-gold-manual-viewport-lock.js
           python3 - <<'PY'
           import json
