@@ -16,7 +16,7 @@ FORBIDDEN = [
     re.compile(r"POS-DEMO|ORD-DEMO", re.I),
 ]
 
-REPRESENTATIVE_LIVE = {"/", "/home/", "/markets/", "/intelligence/", "/businesses/", "/rwa/"}
+REPRESENTATIVE_LIVE = {"/", "/home/", "/markets/", "/trade/btc-usdc/", "/intelligence/", "/businesses/", "/rwa/"}
 
 
 def parse_args():
@@ -129,9 +129,9 @@ def main():
                     if live_dashboard and route in REPRESENTATIVE_LIVE:
                         try:
                             page.wait_for_function("""() => {
-                              const el=document.querySelector('.live-feed-badge');
-                              return el && !/CONNECTING/i.test(el.textContent||'');
-                            }""", timeout=7000)
+                              const el=document.querySelector('.live-feed-badge, .tl-feed');
+                              return el && /LIVE VENUE DATA/i.test(el.textContent||'');
+                            }""", timeout=9000)
                         except PlaywrightTimeoutError:
                             pass
                     body_text = page.locator("body").inner_text(timeout=5000)
@@ -158,7 +158,7 @@ def main():
                     feed_text = ""
                     tick_count = None
                     if live_dashboard:
-                        badge = page.locator(".live-feed-badge")
+                        badge = page.locator(".live-feed-badge, .tl-feed")
                         if badge.count(): feed_text = badge.first.inner_text()
                         tick = page.locator(".live-hero-state")
                         if tick.count():
