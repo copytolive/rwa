@@ -1,1 +1,0 @@
-Do not copy source from reviewed external RENKO repositories that did not declare a license. Use only independently implemented architectural concepts. FinPulse-AI was MIT at review time.

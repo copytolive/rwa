@@ -1,1 +1,0 @@
-PR scope is limited to RENKO interaction/runtime certification and reference-sync documentation.
