@@ -6,6 +6,7 @@ on:
       - main
       - fix/renko-gold-prepend-before-pan-20260902
       - fix/renko-gold-total-history-visual-reveal-20260902
+      - fix/renko-gold-total-visual-cache-bust-20260902
     paths:
       - 'renko/**'
       - 'scripts/renko_gold_total_visible_proof.mjs'
@@ -31,7 +32,7 @@ jobs:
           node --check scripts/renko_gold_total_visible_proof.mjs
           node --check scripts/renko_gold_wheel_pan_no_zoom_proof.mjs
           node --check scripts/renko_gold_scroll_prepend_proof.mjs
-          grep -Fq 'renko-gold-total-visible.js?v=1' renko/index.html
+          grep -Fq 'renko-gold-total-visible.js?v=2' renko/index.html
           grep -Fq "1.0.1-total-visible-autoload-proof-isolated" renko/renko-gold-total-visible.js
           grep -Fq "visualRevision:'1.1.0-all-rendered-logical-range'" renko/renko-gold-total-visible.js
           grep -Fq 'revealHistory' renko/renko-gold-total-visible.js
@@ -94,9 +95,10 @@ jobs:
         run: |
           set -euo pipefail
           for i in {1..240}; do
+            html="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/?total=$RANDOM" 2>/dev/null || true)"
             js="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/renko-gold-total-visible.js?total=$RANDOM" 2>/dev/null || true)"
             sha="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/deployment-sha.txt?total=$RANDOM" 2>/dev/null | tr -d '\r\n' || true)"
-            if printf '%s' "$js" | grep -Fq '1.1.0-all-rendered-logical-range' && [[ "$sha" =~ ^[0-9a-f]{40}$ ]] && [ "$sha" = "$GITHUB_SHA" ]; then echo "RENKO_GOLD_TOTAL_VISUAL_PUBLIC_EXACT_SHA_PASS $sha"; exit 0; fi
+            if printf '%s' "$html" | grep -Fq 'renko-gold-total-visible.js?v=2' && printf '%s' "$js" | grep -Fq '1.1.0-all-rendered-logical-range' && [[ "$sha" =~ ^[0-9a-f]{40}$ ]] && [ "$sha" = "$GITHUB_SHA" ]; then echo "RENKO_GOLD_TOTAL_VISUAL_PUBLIC_EXACT_SHA_PASS $sha"; exit 0; fi
             sleep 5
           done
           exit 1
