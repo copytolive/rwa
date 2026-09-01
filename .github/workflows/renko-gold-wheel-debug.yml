@@ -1,0 +1,30 @@
+name: RENKO GOLD Wheel Debug Trace
+on:
+  push:
+    branches: [fix/renko-gold-wheel-backscroll-no-zoom-20260902]
+    paths:
+      - 'scripts/renko_gold_wheel_debug_once.mjs'
+      - '.github/workflows/renko-gold-wheel-debug.yml'
+permissions:
+  contents: read
+jobs:
+  trace:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+      - run: |
+          rm -rf /tmp/renko-wheel-debug
+          mkdir -p /tmp/renko-wheel-debug/rwa
+          ln -s "$GITHUB_WORKSPACE/renko" /tmp/renko-wheel-debug/rwa/renko
+          cd /tmp/renko-wheel-debug
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/renko-wheel-debug-http.log 2>&1 &
+          for i in {1..40}; do curl -fsS http://127.0.0.1:4173/rwa/renko/ >/dev/null && exit 0; sleep .25; done
+          exit 1
+      - run: node scripts/renko_gold_wheel_debug_once.mjs
