@@ -2,9 +2,10 @@
  * - Locale safety for POSIX-like browser locale tags.
  * - XAUT/USDT adapter: OKX Spot XAUT-USDT, fixed 1-second candles only.
  *   Browser bootstrap reads the repository's same-origin provider-native OKX 1s
- *   pack, closes any stale-pack gap with official OKX history-candles 1s, then
- *   continues realtime on the official OKX candle1s WebSocket.
- *   No synthetic bars, interpolation, timeframe substitution, or upsampling.
+ *   pack. Official OKX history-candles 1s catch-up is best-effort only because
+ *   browser CORS policy can block it; realtime continues on the official OKX
+ *   candle1s WebSocket. No synthetic bars, interpolation, timeframe
+ *   substitution, or upsampling.
  */
 (()=>{
 'use strict';
@@ -16,7 +17,7 @@ if(window.RWARenkoXAUTProvider)return;
 const NF=window.fetch.bind(window),NWS=window.WebSocket;
 const SYMBOL='XAUTUSDT',INST='XAUT-USDT',WS='wss://ws.okx.com:8443/ws/v5/public',REST='https://www.okx.com/api/v5/market/history-candles',STEP=1000,TAIL=6000;
 const PACK='xaut-okx-1s-pack.csv.gz?v=2',META='xaut-okx-1s-pack.meta.json?v=2';
-const stats={restRequests:0,restErrors:0,wsConnections:0,wsMessages:0,lastRestAt:0,lastWsAt:0,lastError:'',provider:'okx-spot',instrument:INST,interval:'1s',bootstrap:'same-origin-provider-native-pack+official-okx-rest-catchup',packRows:0,packFrom:0,packTo:0,bootstrapRows:0,catchupRequests:0,catchupRows:0,catchupFrom:0,catchupTo:0};
+const stats={restRequests:0,restErrors:0,wsConnections:0,wsMessages:0,lastRestAt:0,lastWsAt:0,lastError:'',provider:'okx-spot',instrument:INST,interval:'1s',bootstrap:'same-origin-provider-native-pack+best-effort-official-okx-rest-catchup',packRows:0,packFrom:0,packTo:0,bootstrapRows:0,catchupRequests:0,catchupRows:0,catchupFrom:0,catchupTo:0,catchupStatus:'idle'};
 let packPromise=null,atrWarmWrapped=false;
 function urlOf(input){try{return new URL(typeof input==='string'?input:input?.url,location.href)}catch{return null}}
 function isX(u){return !!u&&(/(^|\.)binance\.vision$/i.test(u.hostname)||/(^|\.)binance\.com$/i.test(u.hostname))&&String(u.searchParams.get('symbol')||'').toUpperCase()===SYMBOL}
@@ -57,7 +58,7 @@ async function fetchCatchup(packTo){
   if(!rows.length)throw new Error(`XAUT OKX 1s catch-up unavailable after ${target}`);
   if(Number(rows[0][0])!==target+STEP)throw new Error(`XAUT OKX 1s catch-up gap ${target} -> ${rows[0][0]}`);
   for(let i=1;i<rows.length;i++)if(Number(rows[i][0])-Number(rows[i-1][0])!==STEP)throw new Error(`XAUT OKX provider-native 1s catch-up discontinuity at ${rows[i][0]}`);
-  stats.catchupRows=rows.length;stats.catchupFrom=Number(rows[0][0]);stats.catchupTo=Number(rows.at(-1)[0]);
+  stats.catchupRows=rows.length;stats.catchupFrom=Number(rows[0][0]);stats.catchupTo=Number(rows.at(-1)[0]);stats.catchupStatus='ok';
   return rows;
 }
 async function readPack(){
@@ -74,7 +75,8 @@ async function readPack(){
     if(count!==Number(meta.rows))throw new Error(`XAUT pack row mismatch ${count} != ${meta.rows}`);
     lines=lines.slice(-TAIL);const staticRows=lines.map(parseLine).filter(Boolean).sort((a,b)=>Number(a[0])-Number(b[0]));if(staticRows.length<TAIL)throw new Error(`XAUT bootstrap history incomplete ${staticRows.length}/${TAIL}`);
     for(let i=1;i<staticRows.length;i++)if(Number(staticRows[i][0])-Number(staticRows[i-1][0])!==STEP)throw new Error(`XAUT provider-native 1s discontinuity at ${staticRows[i][0]}`);
-    const catchup=await fetchCatchup(Number(meta.toMs));
+    let catchup=[];
+    try{stats.catchupStatus='attempting';catchup=await fetchCatchup(Number(meta.toMs));if(!catchup.length)stats.catchupStatus='not-needed'}catch(e){stats.restErrors++;stats.lastError=String(e?.message||e);stats.catchupStatus='unavailable-cors-or-network';catchup=[];console.warn('[RENKO XAUT OKX catch-up unavailable; using verified native pack]',e)}
     const merged=new Map(staticRows.map(r=>[Number(r[0]),r]));for(const r of catchup)merged.set(Number(r[0]),r);
     const rows=[...merged.values()].sort((a,b)=>Number(a[0])-Number(b[0]));
     for(let i=1;i<rows.length;i++)if(Number(rows[i][0])-Number(rows[i-1][0])!==STEP)throw new Error(`XAUT provider-native bootstrap discontinuity at ${rows[i][0]}`);
@@ -101,7 +103,7 @@ class OWS{
 }
 function WSP(url,protocols){const s=String(url||'');if(/xautusdt@kline_/i.test(s)&&/binance\.(vision|com)/i.test(s)){if(!/kline_1s/i.test(s))throw new Error('RENKO XAUT production timeframe is fixed to 1s');return new OWS(s)}return protocols===undefined?new NWS(url):new NWS(url,protocols)}
 for(const k of ['CONNECTING','OPEN','CLOSING','CLOSED'])Object.defineProperty(WSP,k,{value:NWS[k]});WSP.prototype=NWS.prototype;window.WebSocket=WSP;
-window.RWARenkoXAUTProvider={version:'2.2.0',symbol:SYMBOL,instrument:INST,provider:'OKX Spot',bootstrap:'same-origin provider-native OKX 1s pack + official OKX 1s REST catch-up',rest:REST,ws:WS,stats,intervals:['1s'],fixedInterval:'1s',synthetic1s:false,upsampled:false,catchupBars:async()=>{const p=await readPack();return p.catchupBars.slice()}};
+window.RWARenkoXAUTProvider={version:'2.2.1-cors-safe',symbol:SYMBOL,instrument:INST,provider:'OKX Spot',bootstrap:'same-origin provider-native OKX 1s pack; official OKX 1s REST catch-up best-effort; live candle1s WebSocket',rest:REST,ws:WS,stats,intervals:['1s'],fixedInterval:'1s',synthetic1s:false,upsampled:false,catchupBars:async()=>{const p=await readPack();return p.catchupBars.slice()}};
 function wrapATRWarm(){
   if(atrWarmWrapped)return;const A=window.RWARenkoATRFixed1s;if(!A||typeof A.warm!=='function')return;const native=A.warm.bind(A);
   A.warm=async function(T=window.RWARenkoTV){
@@ -113,6 +115,6 @@ function wrapATRWarm(){
   };
   atrWarmWrapped=true;
 }
-function mark(){const T=window.RWARenkoTV;if(!T||T.state?.symbol!==SYMBOL)return;document.documentElement.dataset.marketProvider='okx-spot';document.documentElement.dataset.fixedInterval='1s';document.documentElement.dataset.xautBootstrap='provider-native-pack-rest-catchup';const s=document.querySelector('.pair-title span');if(s)s.textContent='OKX SPOT';const x=document.getElementById('sourceText');if(x&&!x.textContent.includes('OKX XAUT/USDT'))x.textContent=`OKX XAUT/USDT Spot · provider-native 1s pack + REST catch-up + live candle1s · ${x.textContent}`}
+function mark(){const T=window.RWARenkoTV;if(!T||T.state?.symbol!==SYMBOL)return;document.documentElement.dataset.marketProvider='okx-spot';document.documentElement.dataset.fixedInterval='1s';document.documentElement.dataset.xautBootstrap=stats.catchupRows>0?'provider-native-pack-rest-catchup':'provider-native-pack';const s=document.querySelector('.pair-title span');if(s)s.textContent='OKX SPOT';const x=document.getElementById('sourceText');if(x&&!x.textContent.includes('OKX XAUT/USDT'))x.textContent=`OKX XAUT/USDT Spot · provider-native 1s pack + live candle1s${stats.catchupRows>0?' · REST catch-up verified':''} · ${x.textContent}`}
 window.addEventListener('renko:tv-ready',()=>{wrapATRWarm();mark()});setInterval(()=>{wrapATRWarm();mark()},1000);
 })();
