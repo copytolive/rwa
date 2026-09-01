@@ -1,0 +1,196 @@
+name: RWA Final Drive Backup
+
+on:
+  push:
+    branches:
+      - backup/rwa-final-drive-20260901
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout backup workflow branch
+        uses: actions/checkout@v4
+        with:
+          path: workflow-repo
+
+      - name: Checkout exact RWA snapshot
+        uses: actions/checkout@v4
+        with:
+          repository: copytolive/rwa
+          ref: 6fff32ac071b89541e93c0d7facc72e4f64ce0ca
+          fetch-depth: 0
+          path: src-rwa
+
+      - name: Checkout exact Realworldasset snapshot
+        uses: actions/checkout@v4
+        with:
+          repository: copytolive/realworldasset
+          ref: dca45dfc1380444f0161e19a3ff1f4580e76735c
+          fetch-depth: 0
+          path: src-realworldasset
+
+      - name: Build complete classified backup
+        shell: bash
+        run: |
+          set -euo pipefail
+          RWA_SHA='6fff32ac071b89541e93c0d7facc72e4f64ce0ca'
+          REAL_SHA='dca45dfc1380444f0161e19a3ff1f4580e76735c'
+          OUT="$GITHUB_WORKSPACE/RWA_FINAL"
+          mkdir -p "$OUT"/{00_MANIFEST,01_IMPORTANT,02_OTHER,03_FULL_REPO_SNAPSHOTS,04_GIT_HISTORY,99_ALL_IN_ONE}
+
+          test "$(git -C src-rwa rev-parse HEAD)" = "$RWA_SHA"
+          test "$(git -C src-realworldasset rev-parse HEAD)" = "$REAL_SHA"
+
+          git -C src-rwa fetch --force --prune origin '+refs/heads/*:refs/remotes/origin/*' '+refs/tags/*:refs/tags/*'
+          git -C src-realworldasset fetch --force --prune origin '+refs/heads/*:refs/remotes/origin/*' '+refs/tags/*:refs/tags/*'
+
+          mkdir -p "$OUT/01_IMPORTANT/copytolive-rwa" "$OUT/02_OTHER/copytolive-rwa"
+          mkdir -p "$OUT/01_IMPORTANT/copytolive-realworldasset"
+
+          is_rwa_important() {
+            case "$1" in
+              apps/realworldasset/*|.github/*|launch/*|tools/*|contracts/*|commerce/*|worker/*|src/*|public/*|rwa/*|README*|LICENSE*|package.json|package-lock.json|pnpm-lock.yaml|yarn.lock|UI_SYNC_MANIFEST.json|index.html|app.js|styles.css) return 0 ;;
+              *) return 1 ;;
+            esac
+          }
+
+          : > "$OUT/00_MANIFEST/inventory.csv"
+          printf 'repository,category,path,size_bytes,sha256\n' >> "$OUT/00_MANIFEST/inventory.csv"
+
+          while IFS= read -r -d '' p; do
+            if is_rwa_important "$p"; then
+              dest="$OUT/01_IMPORTANT/copytolive-rwa/$p"
+              category='IMPORTANT'
+            else
+              dest="$OUT/02_OTHER/copytolive-rwa/$p"
+              category='OTHER'
+            fi
+            mkdir -p "$(dirname "$dest")"
+            cp -p "src-rwa/$p" "$dest"
+            size=$(stat -c '%s' "src-rwa/$p")
+            sum=$(sha256sum "src-rwa/$p" | awk '{print $1}')
+            printf 'copytolive/rwa,%s,%q,%s,%s\n' "$category" "$p" "$size" "$sum" >> "$OUT/00_MANIFEST/inventory.csv"
+          done < <(git -C src-rwa ls-tree -r -z --name-only "$RWA_SHA")
+
+          while IFS= read -r -d '' p; do
+            dest="$OUT/01_IMPORTANT/copytolive-realworldasset/$p"
+            mkdir -p "$(dirname "$dest")"
+            cp -p "src-realworldasset/$p" "$dest"
+            size=$(stat -c '%s' "src-realworldasset/$p")
+            sum=$(sha256sum "src-realworldasset/$p" | awk '{print $1}')
+            printf 'copytolive/realworldasset,IMPORTANT,%q,%s,%s\n' "$p" "$size" "$sum" >> "$OUT/00_MANIFEST/inventory.csv"
+          done < <(git -C src-realworldasset ls-tree -r -z --name-only "$REAL_SHA")
+
+          RWA_COUNT=$(git -C src-rwa ls-tree -r --name-only "$RWA_SHA" | wc -l | tr -d ' ')
+          REAL_COUNT=$(git -C src-realworldasset ls-tree -r --name-only "$REAL_SHA" | wc -l | tr -d ' ')
+          CLASSIFIED_RWA=$(find "$OUT/01_IMPORTANT/copytolive-rwa" "$OUT/02_OTHER/copytolive-rwa" -type f | wc -l | tr -d ' ')
+          CLASSIFIED_REAL=$(find "$OUT/01_IMPORTANT/copytolive-realworldasset" -type f | wc -l | tr -d ' ')
+          test "$RWA_COUNT" = "$CLASSIFIED_RWA"
+          test "$REAL_COUNT" = "$CLASSIFIED_REAL"
+
+          git -C src-rwa archive --format=tar.gz --output="$OUT/03_FULL_REPO_SNAPSHOTS/copytolive-rwa-${RWA_SHA}.tar.gz" "$RWA_SHA"
+          git -C src-realworldasset archive --format=tar.gz --output="$OUT/03_FULL_REPO_SNAPSHOTS/copytolive-realworldasset-${REAL_SHA}.tar.gz" "$REAL_SHA"
+
+          git -C src-rwa bundle create "$OUT/04_GIT_HISTORY/copytolive-rwa-all-refs.bundle" --all
+          git -C src-realworldasset bundle create "$OUT/04_GIT_HISTORY/copytolive-realworldasset-all-refs.bundle" --all
+          git bundle verify "$OUT/04_GIT_HISTORY/copytolive-rwa-all-refs.bundle"
+          git bundle verify "$OUT/04_GIT_HISTORY/copytolive-realworldasset-all-refs.bundle"
+
+          cat > "$OUT/00_MANIFEST/README_BACKUP.txt" <<EOF
+          1.1.1.1. RWA FINAL System
+          Created: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
+
+          SOURCE 1: https://github.com/copytolive/rwa
+          Exact SHA: $RWA_SHA
+          Git-tracked file count: $RWA_COUNT
+
+          SOURCE 2: https://github.com/copytolive/realworldasset
+          Exact SHA: $REAL_SHA
+          Git-tracked file count: $REAL_COUNT
+
+          01_IMPORTANT:
+          - Entire copytolive/realworldasset repository.
+          - Canonical RWA app, GitHub workflows, launch, tools, contracts, commerce, worker, src/public/RWA and root runtime/config files from copytolive/rwa.
+
+          02_OTHER:
+          - Every remaining Git-tracked file from copytolive/rwa, including noncanonical/adjacent subsystems such as RENKO/GOLD/backtest when not classified as core RWA.
+
+          03_FULL_REPO_SNAPSHOTS:
+          - Exact immutable source archives for both repositories.
+
+          04_GIT_HISTORY:
+          - Git bundles containing fetched branches/tags/history for disaster recovery.
+
+          Verification:
+          - Every Git-tracked file at both exact SHAs is represented exactly once in IMPORTANT/OTHER classification.
+          - Full repository snapshots are also included independently.
+          - SHA256 inventory/checksums included.
+          EOF
+
+          (
+            cd "$OUT"
+            find 01_IMPORTANT 02_OTHER 03_FULL_REPO_SNAPSHOTS 04_GIT_HISTORY -type f -print0 | sort -z | xargs -0 sha256sum > 00_MANIFEST/BACKUP_SHA256SUMS.txt
+          )
+
+          cat > "$OUT/00_MANIFEST/COUNTS.txt" <<EOF
+          copytolive/rwa git files=$RWA_COUNT
+          copytolive/rwa classified files=$CLASSIFIED_RWA
+          copytolive/realworldasset git files=$REAL_COUNT
+          copytolive/realworldasset classified files=$CLASSIFIED_REAL
+          total git files=$((RWA_COUNT + REAL_COUNT))
+          EOF
+
+          tar -C "$OUT" -czf "$OUT/99_ALL_IN_ONE/1.1.1.1.-RWA-FINAL-System.tar.gz" 00_MANIFEST 01_IMPORTANT 02_OTHER 03_FULL_REPO_SNAPSHOTS 04_GIT_HISTORY
+          sha256sum "$OUT/99_ALL_IN_ONE/1.1.1.1.-RWA-FINAL-System.tar.gz" > "$OUT/99_ALL_IN_ONE/1.1.1.1.-RWA-FINAL-System.tar.gz.sha256"
+
+          echo '=== COUNTS ==='
+          cat "$OUT/00_MANIFEST/COUNTS.txt"
+          echo 'BACKUP_BUILD_PASS'
+
+      - name: Upload manifest artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RWA-FINAL-00-MANIFEST
+          path: RWA_FINAL/00_MANIFEST/
+          retention-days: 30
+
+      - name: Upload important artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RWA-FINAL-01-IMPORTANT
+          path: RWA_FINAL/01_IMPORTANT/
+          retention-days: 30
+
+      - name: Upload other artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RWA-FINAL-02-OTHER
+          path: RWA_FINAL/02_OTHER/
+          retention-days: 30
+
+      - name: Upload full snapshots artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RWA-FINAL-03-FULL-SNAPSHOTS
+          path: RWA_FINAL/03_FULL_REPO_SNAPSHOTS/
+          retention-days: 30
+
+      - name: Upload git history artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RWA-FINAL-04-GIT-HISTORY
+          path: RWA_FINAL/04_GIT_HISTORY/
+          retention-days: 30
+
+      - name: Upload all in one artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RWA-FINAL-99-ALL-IN-ONE
+          path: RWA_FINAL/99_ALL_IN_ONE/
+          retention-days: 30
