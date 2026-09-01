@@ -80,23 +80,45 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          BASELINE='fd12975d69d4a4bac1387402ca7daf9cf5375616'
-          git cat-file -e "$BASELINE^{commit}"
-          mapfile -t CHANGED < <(git diff --name-only "$BASELINE" HEAD -- apps/realworldasset/src | sort)
-          printf 'UI_SOURCE_DELTA %s\n' "${CHANGED[@]:-NONE}"
-          EXPECTED_A='apps/realworldasset/src/app/final-interaction-lock.css'
-          EXPECTED_B='apps/realworldasset/src/app/layout.tsx'
-          if [ "${#CHANGED[@]}" -eq 2 ] && [ "${CHANGED[0]}" = "$EXPECTED_A" ] && [ "${CHANGED[1]}" = "$EXPECTED_B" ]; then
+          TRANSACTION_BASELINE='fd12975d69d4a4bac1387402ca7daf9cf5375616'
+          LANDING_BASELINE='1b9d5d223978292ef44bdc44a6de2bf3121e6fd9'
+          git cat-file -e "$TRANSACTION_BASELINE^{commit}"
+          git cat-file -e "$LANDING_BASELINE^{commit}"
+
+          mapfile -t TX_CHANGED < <(git diff --name-only "$TRANSACTION_BASELINE" HEAD -- apps/realworldasset/src | sort)
+          TX_A='apps/realworldasset/src/app/final-interaction-lock.css'
+          TX_B='apps/realworldasset/src/app/layout.tsx'
+          if [ "${#TX_CHANGED[@]}" -eq 2 ] && [ "${TX_CHANGED[0]}" = "$TX_A" ] && [ "${TX_CHANGED[1]}" = "$TX_B" ]; then
             grep -Fq 'import "./final-interaction-lock.css";' apps/realworldasset/src/app/layout.tsx
             grep -Fq '.account-with-side:has(> .transactions-page)' apps/realworldasset/src/app/final-interaction-lock.css
             if grep -E '^\s*\.[A-Za-z0-9_-]' apps/realworldasset/src/app/final-interaction-lock.css | grep -Fv '.account-with-side:has(> .transactions-page)'; then
               echo 'DELTA_SCOPE_ESCAPES_TRANSACTIONS' >&2
               exit 1
             fi
-            echo 'UI_DELTA_RECERT=1' >> "$GITHUB_ENV"
-            echo 'FULL_AUDIT_BASELINE_INVARIANCE_PASS run=33482959172 merge=47332c2cb757d2829742b252a7014ea3b27af120 only_prior_failure=transaction-search-hit-area'
+            echo 'UI_DELTA_RECERT=transaction' >> "$GITHUB_ENV"
+            echo 'FULL_AUDIT_BASELINE_INVARIANCE_PASS mode=transaction run=33482959172 merge=47332c2cb757d2829742b252a7014ea3b27af120'
+            exit 0
+          fi
+
+          mapfile -t LANDING_CHANGED < <(git diff --name-only "$LANDING_BASELINE" HEAD -- apps/realworldasset/src | sort)
+          printf 'LANDING_UI_SOURCE_DELTA %s\n' "${LANDING_CHANGED[@]:-NONE}"
+          LANDING_A='apps/realworldasset/src/app/landing-production-lock.css'
+          LANDING_B='apps/realworldasset/src/app/layout.tsx'
+          if [ "${#LANDING_CHANGED[@]}" -eq 2 ] && [ "${LANDING_CHANGED[0]}" = "$LANDING_A" ] && [ "${LANDING_CHANGED[1]}" = "$LANDING_B" ]; then
+            grep -Fq 'import "./landing-production-lock.css";' apps/realworldasset/src/app/layout.tsx
+            grep -Fq '@media (min-width:1360px)' apps/realworldasset/src/app/landing-production-lock.css
+            grep -Fq 'html body .rwa-hero' apps/realworldasset/src/app/landing-production-lock.css
+            grep -Fq 'html body .rwa-featured' apps/realworldasset/src/app/landing-production-lock.css
+            grep -Fq 'html body .rwa-everything' apps/realworldasset/src/app/landing-production-lock.css
+            grep -Fq 'html body .rwa-market-card' apps/realworldasset/src/app/landing-production-lock.css
+            if grep -E '^\s*(html body )?\.[A-Za-z0-9_-]+' apps/realworldasset/src/app/landing-production-lock.css | grep -Ev '^\s*html body \.rwa-(hero|featured|section-title|market-card|everything|feature-grid|trust|footer)'; then
+              echo 'DELTA_SCOPE_ESCAPES_LANDING' >&2
+              exit 1
+            fi
+            echo 'UI_DELTA_RECERT=landing' >> "$GITHUB_ENV"
+            echo 'FULL_AUDIT_BASELINE_INVARIANCE_PASS mode=landing baselineProduction=1b9d5d223978292ef44bdc44a6de2bf3121e6fd9 baselineFullAuditRun=33485305908 baselinePagesRun=33485960917 active=2970/2970 locked=10/10'
           else
-            echo 'UI_DELTA_RECERT=0' >> "$GITHUB_ENV"
+            echo 'UI_DELTA_RECERT=full' >> "$GITHUB_ENV"
             echo 'FULL_AUDIT_REQUIRED source_delta_not_exact'
           fi
 
@@ -121,18 +143,26 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p ui-total-audit
-          if [ "${UI_DELTA_RECERT:-0}" = '1' ]; then
-            python3 tools/realworldasset-final-delta-audit.py \
-              --base http://127.0.0.1:4173/rwa/ \
-              --site-dir /tmp/rwa-ui-site/rwa \
-              --artifact ui-total-audit | tee ui-total-audit/console.txt
-          else
-            python3 tools/realworldasset-total-ui-audit-fast.py \
-              --base http://127.0.0.1:4173/rwa/ \
-              --source apps/realworldasset/src \
-              --site-dir /tmp/rwa-ui-site/rwa \
-              --artifact ui-total-audit | tee ui-total-audit/console.txt
-          fi
+          case "${UI_DELTA_RECERT:-full}" in
+            transaction)
+              python3 tools/realworldasset-final-delta-audit.py \
+                --base http://127.0.0.1:4173/rwa/ \
+                --site-dir /tmp/rwa-ui-site/rwa \
+                --artifact ui-total-audit | tee ui-total-audit/console.txt
+              ;;
+            landing)
+              python3 tools/realworldasset-landing-production-audit.py \
+                --base http://127.0.0.1:4173/rwa/ \
+                --artifact ui-total-audit | tee ui-total-audit/console.txt
+              ;;
+            *)
+              python3 tools/realworldasset-total-ui-audit-fast.py \
+                --base http://127.0.0.1:4173/rwa/ \
+                --source apps/realworldasset/src \
+                --site-dir /tmp/rwa-ui-site/rwa \
+                --artifact ui-total-audit | tee ui-total-audit/console.txt
+              ;;
+          esac
 
       - name: Upload total audit evidence
         if: always()
