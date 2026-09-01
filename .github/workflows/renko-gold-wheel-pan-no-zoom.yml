@@ -35,9 +35,11 @@ jobs:
           grep -Fq "version:'1.0.0-explicit-zoom'" renko/renko-gold-explicit-zoom.js
           grep -Fq 'vertical-only wheel and ctrl/meta pinch wheel' renko/renko-gold-explicit-zoom.js
           grep -Fq 'mouseWheel:false' renko/renko-gold-wheel-pan-lock.js
+          grep -Fq 'handleScroll:{mouseWheel:false}' renko/renko-gold-wheel-pan-lock.js
           grep -Fq 'passive:false' renko/renko-gold-wheel-pan-lock.js
           grep -Fq 'stopImmediatePropagation' renko/renko-gold-wheel-pan-lock.js
-          grep -Fq '1.8.0-prepend-before-pan' renko/renko-gold-wheel-pan-lock.js
+          grep -Fq '1.9.0-fixed-width-logical-pan' renko/renko-gold-wheel-pan-lock.js
+          grep -Fq 'setVisibleLogicalRange' renko/renko-gold-wheel-pan-lock.js
           ! grep -nE '\.scrollToPosition\s*\(' renko/renko-gold-wheel-pan-lock.js
           grep -Fq "version:'1.3.0-full-prepend-size-lock'" renko/renko-gold-wheel-pan-lock.js
       - name: Install Chromium
@@ -84,7 +86,7 @@ jobs:
             zoomjs="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/renko-gold-explicit-zoom.js?zoom=$RANDOM" 2>/dev/null || true)"
             panjs="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/renko-gold-wheel-pan-lock.js?pan=$RANDOM" 2>/dev/null || true)"
             sha="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/deployment-sha.txt?zoom=$RANDOM" 2>/dev/null | tr -d '\r\n' || true)"
-            if printf '%s' "$zoomjs" | grep -Fq "1.0.0-explicit-zoom" && printf '%s' "$panjs" | grep -Fq "1.8.0-prepend-before-pan" && [[ "$sha" =~ ^[0-9a-f]{40}$ ]] && [ "$sha" = "$GITHUB_SHA" ]; then echo "RENKO_GOLD_PAN_ZOOM_PUBLIC_EXACT_SHA_PASS $sha"; exit 0; fi
+            if printf '%s' "$zoomjs" | grep -Fq "1.0.0-explicit-zoom" && printf '%s' "$panjs" | grep -Fq "1.9.0-fixed-width-logical-pan" && [[ "$sha" =~ ^[0-9a-f]{40}$ ]] && [ "$sha" = "$GITHUB_SHA" ]; then echo "RENKO_GOLD_PAN_ZOOM_PUBLIC_EXACT_SHA_PASS $sha"; exit 0; fi
             sleep 5
           done
           echo "Pages did not publish exact pan+zoom SHA $GITHUB_SHA"
