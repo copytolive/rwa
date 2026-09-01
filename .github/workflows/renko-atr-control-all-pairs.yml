@@ -96,7 +96,7 @@ jobs:
           index='https://copytolive.github.io/rwa/renko/'
           control='https://copytolive.github.io/rwa/renko/renko-tv-atr-control.js'
           guard='https://copytolive.github.io/rwa/renko/renko-tv-confirmed-count-guard.js'
-          stamp='https://copytolive.github.io/rwa/renko-deployment-sha.txt'
+          stamp='https://copytolive.github.io/rwa/renko/renko-deployment-sha.txt'
           for i in $(seq 1 90); do
             ts=$(date +%s%N)
             got=$(curl -fsS "$stamp?ts=$ts" 2>/dev/null | tr -d '\r\n' || true)
