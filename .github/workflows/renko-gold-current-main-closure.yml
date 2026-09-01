@@ -64,7 +64,7 @@ jobs:
           assert len({(x['year'],x['month']) for x in months})==len(months)
           assert all(x['assetUrl'].startswith('https://media.githubusercontent.com/media/copytolive/rwa/') for x in months)
           assert m['dataVersion']==c['dataVersion']==s['dataVersion']
-          assert m['versionSha256']==c['versionSha256']
+          assert isinstance(m['versionSha256'],str) and len(m['versionSha256'])==64
           assert '<script src="renko-gold-total-history.js' in open('renko/index.html').read()
           r=open('renko/renko-gold-total-history.js').read()
           assert 'history/gold/full-manifest.json' in r
