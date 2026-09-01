@@ -1,0 +1,6 @@
+html,body{background:#030812!important;color-scheme:dark}.app-shell,.rwa-public-shell{background:#030812!important}.soft-theme{filter:none!important}
+:where(.app-shell,.rwa-public-shell) :where(.panel,.card,[class*="__panel"],[class*="-panel"],[class*="__card"],[class*="-card"],[class*="sidebar"],[class*="drawer"],[class*="modal"],[class*="popover"],[class*="summary"],[class*="receipt"],[class*="table"],[class*="form"],[class*="preview"]){background-color:#07111f!important;border-color:#1a3150!important}
+:where(.app-shell,.rwa-public-shell) :where(input,select,textarea){background:#040b15!important;color:#edf4ff!important;border-color:#1b3b63!important}
+:where(.app-shell,.rwa-public-shell) :where(input,select,textarea)::placeholder{color:#607b9e!important}
+:where(.app-shell,.rwa-public-shell) :where([style*="background: white"],[style*="background:white"],[style*="background-color: white"],[style*="background-color:white"],[style*="background: #fff"],[style*="background:#fff"],[style*="background-color: #fff"],[style*="background-color:#fff"],[style*="background: #ffffff"],[style*="background:#ffffff"]){background:#07111f!important}
+:where(.app-shell,.rwa-public-shell) :where(.rwa-button--primary,.rwa-link-button--primary,[class*="primary"]){background-color:#0a64ff!important;border-color:#2779ff!important;color:#fff!important}
