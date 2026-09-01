@@ -1,0 +1,8 @@
+GOLD24_LATEST_SCRIPT_PARITY_KICK
+source_batch=291
+source_run_id=33571013143
+strict_count=3
+multi_count=7
+total_pairs=10
+requested_at=2026-09-02T06:53:00+07:00
+reason=certify latest batch291 selected 3 strict + 7 Multi scripts after Multi run33572746123 SUCCESS; require exact canonical Python parity, wrapper config/hash parity, and native MetaEditor clean compile for all selected EAs
