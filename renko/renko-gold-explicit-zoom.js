@@ -7,7 +7,7 @@ const finite=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v));
 const chart=()=>window.__RWARenkoChart||null;
 const ts=()=>chart()?.timeScale?.()||null;
 const logical=t=>{try{const r=t?.getVisibleLogicalRange?.();return r&&finite(r.from)&&finite(r.to)?{from:Number(r.from),to:Number(r.to)}:null}catch(_){return null}};
-function publish(){Object.assign(root.dataset,{renkoGoldExplicitZoom:'true',renkoGoldExplicitZoomVersion:'1.1.0-controller-owned-zoom',renkoGoldExplicitZoomWheel:String(stats.wheelZooms),renkoGoldExplicitZoomPinch:String(stats.pinchZooms),renkoGoldExplicitZoomVertical:String(stats.verticalZooms),renkoGoldExplicitZoomButtons:String(stats.buttonIntents),renkoGoldExplicitZoomApplies:String(stats.applies),renkoGoldInteractionOwner:'zoom'})}
+function publish(){Object.assign(root.dataset,{renkoGoldExplicitZoom:'true',renkoGoldExplicitZoomVersion:'1.0.0-explicit-zoom',renkoGoldExplicitZoomImplementation:'1.1.0-controller-owned-zoom',renkoGoldExplicitZoomWheel:String(stats.wheelZooms),renkoGoldExplicitZoomPinch:String(stats.pinchZooms),renkoGoldExplicitZoomVertical:String(stats.verticalZooms),renkoGoldExplicitZoomButtons:String(stats.buttonIntents),renkoGoldExplicitZoomApplies:String(stats.applies),renkoGoldInteractionOwner:'zoom'})}
 function releaseViewport(reason='zoom'){
   try{window.RWARenkoGoldViewportAuthority?.clear?.(reason)}catch(_){ }
   try{window.RWARenkoGoldWheelPanLock?.clearSizeLock?.(reason)}catch(_){ }
@@ -59,5 +59,5 @@ document.addEventListener('click',e=>{
   publish();
 },true);
 publish();
-window.RWARenkoGoldExplicitZoom={version:'1.1.0-controller-owned-zoom',rule:'Zoom is the sole logical-width owner. Before an intentional button, vertical-wheel, or Ctrl/Meta pinch zoom, stale history/manual viewport ownership and pan size locks are released. Horizontal or mixed wheel remains pan-only in the downstream position controller.',stats,zoomBy,isZoomWheel,releaseViewport};
+window.RWARenkoGoldExplicitZoom={version:'1.0.0-explicit-zoom',implementation:'1.1.0-controller-owned-zoom',rule:'Zoom is the sole logical-width owner. Before an intentional button, vertical-wheel, or Ctrl/Meta pinch zoom, stale history/manual viewport ownership and pan size locks are released. Horizontal or mixed wheel remains pan-only in the downstream position controller.',stats,zoomBy,isZoomWheel,releaseViewport};
 })();
