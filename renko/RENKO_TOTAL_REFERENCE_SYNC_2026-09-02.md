@@ -29,10 +29,10 @@ CopyToLive mapping:
 Reference pattern: chart controller/UI concerns are separated from data and chart-style selection.
 
 CopyToLive mapping:
-- `renko-gold-explicit-zoom.js` owns intentional logical-width changes only.
-- `renko-gold-wheel-pan-lock.js` owns horizontal/mixed-trackpad position changes only.
-- `renko-gold-manual-viewport-lock.js` owns user/history viewport persistence.
-- zoom releases stale manual/history ownership before changing logical width; pan never writes logical width.
+- `renko-gold-explicit-zoom.js` exclusively owns intentional logical-width changes.
+- `renko-gold-wheel-pan-lock.js` owns horizontal/mixed-trackpad translation on the dense logical brick axis while preserving the existing width exactly.
+- `renko-gold-manual-viewport-lock.js` owns user/history viewport persistence and accepts the trusted pan spacing as the scale authority during direct prepend.
+- zoom releases stale manual/history ownership before changing logical width; pan may translate logical `from/to` but must preserve `to-from` exactly and may never intentionally change zoom.
 - ATR and Traditional remain explicit method selectors without changing canonical GOLD identity.
 
 ### Soham-Moholkar/NSE-TradeHub-Pro
@@ -53,9 +53,9 @@ CopyToLive mapping:
 
 1. Horizontal or mixed wheel/trackpad gesture: PAN owner.
    - native wheel scale/scroll is disabled.
-   - pan uses `timeScale.scrollToPosition`, not `setVisibleLogicalRange`.
+   - pan uses a bounded `setVisibleLogicalRange` translation on the dense brick axis while preserving the pre-gesture logical width exactly.
    - at the older edge, the impulse is consumed and history prepend starts before entering blank space.
-   - bar spacing is held through prepend settle.
+   - pre-gesture bar spacing is the scale authority and is held through prepend settle.
 
 2. Vertical-only wheel or Ctrl/Meta pinch: ZOOM owner.
    - bounded logical width change.
@@ -65,6 +65,7 @@ CopyToLive mapping:
 
 4. History prepend: HISTORY owner.
    - immutable viewport snapshot.
+   - when a trusted pan size lock exists, that pre-gesture spacing overrides a chart-clamped spacing in the history snapshot.
    - exactly one prepared worker/engine build per prepend.
    - no `fitContent()`.
    - barSpacing, rightOffset, time span, from/to and anchor are restored with strict drift thresholds.
