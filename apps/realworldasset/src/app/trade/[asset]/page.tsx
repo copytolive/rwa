@@ -1,9 +1,9 @@
-import { LiveRouteWorkspace } from "@/components/live-dashboard";
+import { CriticalLiveWorkspace } from "@/components/critical-workspaces/CriticalWorkspaces";
 
 export const dynamicParams=false;
 export function generateStaticParams(){return [{asset:"btc-usdc"}];}
 
-export default async function TradeAssetLivePage({params}:{params:Promise<{asset:string}>}){
+export default async function TradeAssetPage({params}:{params:Promise<{asset:string}>}){
   const {asset}=await params;
-  return <LiveRouteWorkspace title="BTC Trade Live Truth" path={`/trade/${asset}`}/>;
+  return <CriticalLiveWorkspace kind="trade" asset={asset}/>;
 }
