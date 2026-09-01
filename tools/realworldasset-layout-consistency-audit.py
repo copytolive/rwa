@@ -57,7 +57,7 @@ with sync_playwright() as pw:
    current.update(vp=vpname,route=route)
    try:
     resp=page.goto(BASE+route.lstrip('/'),wait_until='domcontentloaded',timeout=15000)
-    page.wait_for_timeout(120)
+    page.wait_for_timeout(180)
    except Exception as e:
     add('navigation',detail=str(e)[:700]); continue
    if resp and resp.status>=400: add('route-http',status=resp.status)
@@ -87,24 +87,28 @@ with sync_playwright() as pw:
      except Exception: pass
    if clipped: add('clipped-visible-elements',items=clipped[:12],count=len(clipped))
 
-   if mobile and route=='/merchant/':
-    side=rect(page,'.merchant-sidebar'); content=rect(page,'.merchant-content')
-    if not side: add('merchant-sidebar-missing')
+   # The canonical merchant route now uses the live critical workspace, not the retired
+   # legacy sidebar/content DOM. Verify the current workspace is present and contained.
+   if route=='/merchant/':
+    workspace=rect(page,'[data-critical-live-workspace="merchant"]')
+    if not workspace:
+     add('merchant-live-workspace-missing')
     else:
-     if side['width'] < w-4: add('merchant-sidebar-not-full-width',rect=side)
-     if side['height']>130: add('merchant-sidebar-too-tall',rect=side)
-    if not content: add('merchant-content-missing')
-    elif content['width'] < w-4: add('merchant-content-squeezed',rect=content,viewport=w)
-    panels=page.locator('.merchant-kpis .merchant-panel:visible')
-    widths=[]
-    for i in range(panels.count()):
-     b=panels.nth(i).bounding_box()
-     if b: widths.append(b['width'])
-    if widths and min(widths)<145: add('merchant-kpi-too-narrow',widths=widths)
+     if workspace['left'] < -2 or workspace['right'] > w+2:
+      add('merchant-workspace-offscreen',rect=workspace)
+     if mobile and workspace['width'] < w*0.90:
+      add('merchant-workspace-squeezed',rect=workspace,viewport=w)
+    if mobile:
+     panels=page.locator('[data-critical-live-workspace="merchant"] .pw-panel:visible')
+     widths=[]
+     for i in range(panels.count()):
+      b=panels.nth(i).bounding_box()
+      if b: widths.append(b['width'])
+     if widths and min(widths)<min(300,w-32): add('merchant-panel-too-narrow',widths=widths,viewport=w)
 
    metrics.append({'vp':vpname,'route':route,'document':dims,'header':hdr})
-   if route in ('/','/markets/','/businesses/','/businesses/provider-required/','/rwa/provider-required/','/trade/btc-usdc/','/checkout/','/account/orders/','/community/','/merchant/','/settings/'):
-    page.screenshot(path=str(ART/f'{vpname}-{safe_name(route)}.png'),full_page=False)
+   if route in ('/','/markets/','/businesses/','/businesses/provider-required/','/rwa/','/rwa/provider-required/','/trade/btc-usdc/','/checkout/','/account/orders/','/community/','/merchant/','/settings/'):
+    page.screenshot(path=str(ART/f'{vpname}-{safe_name(route)}.png'),full_page=True)
 
  browser.close()
 
