@@ -1,4 +1,4 @@
 GOLD Canonical v11 recovery kick
 requested_by=ChatGPT
-reason=Batch 240 published successfully, but canonical workflow regressed again to V2 Gate A Guard; restored GOLD Canonical v11 Recovery Continuation and continue authoritative search from batch 240.
-utc=2026-08-30T18:49:18Z
+reason=Continue authoritative GOLD24 search from latest finalized PASS batch 281 / run 33513845503 because the user requested a fresh update. Preserve cumulative DB, cursor, exact-ledger dedupe, Gate A, 20 logical workers, and single-writer promotion; do not reset canonical state.
+utc=2026-09-01T14:05:00Z
