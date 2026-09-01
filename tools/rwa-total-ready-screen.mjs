@@ -17,7 +17,6 @@ function walk(dir, predicate = () => true) {
   }
   return out;
 }
-function rel(p) { return path.relative(root, p).split(path.sep).join('/'); }
 function read(p) { return fs.readFileSync(path.join(root, p), 'utf8'); }
 function exists(p) { return fs.existsSync(path.join(root, p)); }
 
@@ -36,9 +35,16 @@ check(!exists('ui/realworldasset'), 'single_canonical_ui_tree', 'legacy ui/realw
 
 const appShell = exists('apps/realworldasset/src/components/app/AppShell.tsx') ? read('apps/realworldasset/src/components/app/AppShell.tsx') : '';
 const publicShell = exists('apps/realworldasset/src/components/public/PublicShell.tsx') ? read('apps/realworldasset/src/components/public/PublicShell.tsx') : '';
-check(/BACKEND_CONNECTED\s*=\s*false/.test(appShell), 'backend_fail_closed', 'AppShell BACKEND_CONNECTED must remain false until a real backend is evidenced');
-check(publicShell.includes('UI DEMO · BACKEND OFFLINE'), 'public_demo_truth', 'Public UI must identify demo/backend-offline state');
-check(publicShell.includes('data-backend-connected="false"'), 'public_backend_marker', 'PublicShell must expose fail-closed backend marker');
+const liveDashboard = exists('apps/realworldasset/src/components/live-dashboard/LiveDashboard.tsx') ? read('apps/realworldasset/src/components/live-dashboard/LiveDashboard.tsx') : '';
+const liveOnlyVerifier = exists('apps/realworldasset/scripts/verify-live-only.mjs') ? read('apps/realworldasset/scripts/verify-live-only.mjs') : '';
+
+check(appShell.includes('getRuntimeCapabilities') && appShell.includes('data-backend-connected={capabilities.commerceReachable'), 'backend_capability_truth', 'Authenticated shell must derive backend status from runtime capability probes');
+check(publicShell.includes('getRuntimeCapabilities') && publicShell.includes('data-backend-connected={capabilities.commerceReachable'), 'public_backend_capability_truth', 'Public shell must derive backend status from runtime capability probes');
+check(publicShell.includes('data-live-only="true"'), 'public_live_only_marker', 'Public shell must explicitly identify the live-only production policy');
+check(appShell.includes('data-live-only="true"'), 'app_live_only_marker', 'Authenticated shell must explicitly identify the live-only production policy');
+check(liveDashboard.includes('https://api.hyperliquid.xyz/info') && liveDashboard.includes('metaAndAssetCtxs'), 'public_venue_truth', 'Public market observations must come from the authoritative Hyperliquid endpoint');
+check(liveDashboard.includes('UNAVAILABLE') && liveDashboard.includes('LOCKED'), 'provider_fail_closed_truth', 'Missing provider capabilities must render unavailable or locked instead of fabricated values');
+check(liveOnlyVerifier.includes('SYNTHETIC_REACHABLE_ROUTES=NONE') && liveOnlyVerifier.includes('EVERY_PAGE_SCREENSHOT_POLICY=FULL_DESKTOP_AND_MOBILE'), 'live_only_verifier_contract', 'Live-only verifier must forbid reachable synthetic routes and require desktop/mobile page proof');
 
 const foundation = exists('apps/realworldasset/scripts/verify-foundation.mjs') ? read('apps/realworldasset/scripts/verify-foundation.mjs') : '';
 check(!foundation.includes('CHAT 00A must not create a screenshot-derived route/page'), 'foundation_final_state_contract', 'foundation verifier must support the integrated final app');
@@ -73,7 +79,7 @@ for (const file of tsxFiles) {
 }
 
 if (!exists('apps/realworldasset/package-lock.json')) {
-  warnings.push({ id: 'dependency_lock_missing', detail: 'No app package-lock.json; CI still uses npm install, so dependency resolution is not fully reproducible.' });
+  warnings.push({ id: 'dependency_lock_missing', detail: 'No app package-lock.json; dependency resolution is not fully reproducible.' });
 }
 if (rawButtonsWithoutType > 0) {
   warnings.push({ id: 'raw_button_type_hygiene', detail: `${rawButtonsWithoutType} raw button tags omit explicit type; inspect form contexts or migrate to shared Button.` });
@@ -91,12 +97,12 @@ const externalOrPilot = productionBlockers.filter(x => /EXTERNAL_REQUIRED|PILOT_
 const platformOrActivation = productionBlockers.filter(x => !/EXTERNAL_REQUIRED|PILOT_REQUIRED/.test(String(x.detail || '')));
 
 const result = {
-  schema: 'rwa-total-ready-screen-v1',
+  schema: 'rwa-total-ready-screen-v2',
   generatedAt: new Date().toISOString(),
   repository: 'copytolive/rwa',
   canonicalApp: 'apps/realworldasset',
   engineeringStatus: engineeringFindings.length === 0 ? 'PASS' : 'FAIL',
-  publicMode: 'UI_DEMO_READ_ONLY',
+  publicMode: 'LIVE_ONLY_PROVIDER_GATED',
   realMoneyMainnetStatus: readiness.mainnet_ready === true ? 'READY' : 'BLOCKED',
   counts: {
     canonicalTsxFiles: tsxFiles.length,
@@ -115,7 +121,7 @@ const result = {
   engineeringFindings,
   warnings,
   productionBlockers,
-  note: 'Test cases and UI controls are audit coverage, not independent unfinished tasks. Real-money/mainnet blockers stay fail-closed until real evidence exists.',
+  note: 'Public UI uses live venue/runtime truth. Provider-dependent and real-money capabilities stay unavailable or locked until their real evidence exists; mainnet remains fail-closed.',
 };
 
 console.log(JSON.stringify(result, null, 2));
