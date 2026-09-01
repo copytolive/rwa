@@ -1,37 +1,18 @@
-name: Persistent Market Workspaces
+name: Legacy Persistent Market Workspaces (manual)
+
 on:
-  pull_request:
-    paths:
-      - 'market-performance.js'
-      - 'persistent-market-shell-v3.css'
-      - 'persistent-market-operability-patch-v1.css'
-      - 'superapp-v5.js'
-      - 'superapp-v5.css'
-      - 'suite-nav.js'
-      - 'tools/persistent-market-shell-v3-browser.mjs'
-      - 'tools/superapp-v5-browser.mjs'
-      - 'tools/superapp-p16-p20-browser.mjs'
-      - '.github/workflows/persistent-market-workspaces.yml'
-  push:
-    branches: [main]
-    paths:
-      - 'market-performance.js'
-      - 'persistent-market-shell-v3.css'
-      - 'persistent-market-operability-patch-v1.css'
-      - 'superapp-v5.js'
-      - 'superapp-v5.css'
-      - 'suite-nav.js'
-      - 'tools/persistent-market-shell-v3-browser.mjs'
-      - 'tools/superapp-v5-browser.mjs'
-      - 'tools/superapp-p16-p20-browser.mjs'
-      - '.github/workflows/persistent-market-workspaces.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
   persistent-market:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: V3 source contract
+      - name: V3 legacy source contract
         run: |
           set -euo pipefail
           node --check market-performance.js
@@ -46,7 +27,7 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Serve canonical path
+      - name: Serve legacy path
         run: |
           mkdir -p /tmp/rwa-pm-site/rwa
           cp -a . /tmp/rwa-pm-site/rwa/
@@ -55,17 +36,17 @@ jobs:
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && exit 0; sleep 1; done
           cat /tmp/rwa-pm-http.log
           exit 1
-      - name: Market shell never leaves browser acceptance
+      - name: Legacy market shell never leaves browser acceptance
         env:
           RWA_TEST_URL: http://127.0.0.1:4173/rwa/
         run: node tools/persistent-market-shell-v3-browser.mjs
-      - name: P1-P15 static audit
+      - name: P1-P15 legacy static audit
         run: node tools/superapp-v5-audit.mjs
-      - name: P16-P20 static audit
+      - name: P16-P20 legacy static audit
         run: node tools/superapp-p16-p20-audit.mjs
-      - name: Security gate
+      - name: Legacy security gate
         run: node tools/security-gate.mjs
-      - name: Existing browser regression
+      - name: Existing legacy browser regression
         env:
           RWA_TEST_URL: http://127.0.0.1:4173/rwa/
         run: |
