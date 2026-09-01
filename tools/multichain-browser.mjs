@@ -9,7 +9,7 @@ const SOL='11111111111111111111111111111111';
 const chainIds=[1,42161,8453,56,137,43114,143];
 await mkdir(OUT,{recursive:true});
 const browser=await chromium.launch({headless:true});
-const report={contract:'rwa-multichain-browser-v2',url:URL,ok:true,viewports:[],errors:[]};
+const report={contract:'rwa-multichain-browser-v2.2-context-lifecycle',url:URL,ok:true,viewports:[],errors:[]};
 
 function chain(id){
   const symbol=id===56?'BNB':id===137?'POL':id===43114?'AVAX':id===143?'MON':'ETH';
@@ -23,10 +23,12 @@ async function diagnostics(page,label){
   return page.evaluate(label=>({
     label,
     hash:location.hash,
+    commerceOpen:!!document.querySelector('#rwaShopScreen.open'),
     runtime:window.RWAMultiChain?.version||null,
     engine:window.RWAMultiChainEngine?.version||null,
     status:window.RWAMultiChain?.status?.()||null,
     lazy:[...document.querySelectorAll('script[data-rwa-lazy]')].map(x=>({kind:x.dataset.rwaLazy,src:x.src})),
+    launcher:document.getElementById('rwaMultiChainLaunch')?{parent:document.getElementById('rwaMultiChainLaunch').parentElement?.className||document.getElementById('rwaMultiChainLaunch').parentElement?.tagName,display:getComputedStyle(document.getElementById('rwaMultiChainLaunch')).display,visibility:getComputedStyle(document.getElementById('rwaMultiChainLaunch')).visibility}:null,
     panel:document.getElementById('rwaMultiChainPanel')?{hidden:document.getElementById('rwaMultiChainPanel').hidden,text:document.getElementById('rwaMultiChainPanel').innerText.slice(0,500)}:null
   }),label);
 }
@@ -83,7 +85,21 @@ async function runViewport(width,height,label){
   await page.route('**/launch/readiness.json',r=>r.fulfill({json:{status:'BLOCKED',mainnet_ready:false}}));
 
   await page.goto(URL,{waitUntil:'domcontentloaded',timeout:45000});
-  await page.waitForSelector('#rwaMultiChainLaunch',{state:'visible',timeout:15000});
+  await page.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.6.0'||document.querySelector('#rwaMultiChainLaunch'),null,{timeout:15000});
+  /* Context panels are mutually exclusive. The canonical root intentionally requests #shop on first paint.
+     Wait for that Ecommerce lifecycle to settle before closing it; this mirrors a user-visible Close action
+     and prevents testing a pre-paint race that no user can click through. */
+  const commerceRequested=await page.evaluate(()=>location.hash==='#shop'||document.body.classList.contains('rwa-seablueprint-commerce-open')||!!document.querySelector('#rwaShopScreen.open'));
+  let commerceWasOpen=false;
+  if(commerceRequested){
+    await page.waitForFunction(()=>window.RWASeablueprintCommerceBridge?.version==='1.6.0',null,{timeout:15000});
+    await page.waitForSelector('#rwaShopScreen.open',{state:'visible',timeout:15000});
+    commerceWasOpen=true;
+    await page.waitForSelector('#rwaMultiChainLaunch',{state:'attached',timeout:15000});
+    await page.evaluate(()=>window.RWASeablueprintCommerceBridge.close({restore:false}));
+    await page.waitForFunction(()=>location.hash!=='#shop'&&!document.body.classList.contains('rwa-seablueprint-commerce-open')&&!document.querySelector('#rwaShopScreen')?.classList.contains('open'),null,{timeout:8000});
+  }
+  try{await page.waitForSelector('#rwaMultiChainLaunch',{state:'visible',timeout:15000})}catch(e){throw Error(`${label}: peer launcher did not return after Ecommerce close: ${JSON.stringify(await diagnostics(page,label))}`)}
   const before=await page.evaluate(()=>({runtime:window.RWAMultiChain?.version||null,staticScripts:document.querySelectorAll('body > script[src]').length}));
   if(before.runtime)throw Error(`${label}: runtime must be lazy before first click`);
   if(before.staticScripts!==6)throw Error(`${label}: first-paint external script budget changed: ${before.staticScripts}`);
@@ -140,7 +156,7 @@ async function runViewport(width,height,label){
   const closedChart=await page.evaluate(token=>document.querySelector('.chart-wrap')?.dataset.multichainProof===token,chartToken);
   if(!closedChart)throw Error(`${label}: chart changed after close`);
   if(width<=680&&!(await page.locator('#rwaMultiChainLaunch').isVisible()))throw Error(`${label}: mobile launcher must return after close`);
-  report.viewports.push({label,width,height,cards,panelWidth:panelBox.width,policy:status.policy,engine:status.engine,quote:'Base→Solana USDC',mainnetLocked:true,firstPaintStaticScripts:before.staticScripts,pageErrors,consoleErrors,directWrites,chartSurvived:true});
+  report.viewports.push({label,width,height,cards,panelWidth:panelBox.width,policy:status.policy,engine:status.engine,quote:'Base→Solana USDC',mainnetLocked:true,firstPaintStaticScripts:before.staticScripts,commerceWasOpen,pageErrors,consoleErrors,directWrites,chartSurvived:true});
   if(pageErrors.length)report.errors.push(...pageErrors.map(x=>`${label}: ${x}`));
   const benignConsole=/Failed to load resource|Cannot listen to the event from the provided iframe, contentWindow is not available/;
   if(consoleErrors.length)report.errors.push(...consoleErrors.filter(x=>!benignConsole.test(x)).map(x=>`${label} console: ${x}`));

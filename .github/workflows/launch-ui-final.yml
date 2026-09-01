@@ -12,9 +12,11 @@ on:
       - 'rwa-target-dashboard-v2-hardening.css'
       - 'rwa-seablueprint-commerce-bridge.js'
       - 'rwa-seablueprint-commerce-bridge.css'
+      - 'rwa-ecommerce-target-controller-v1.js'
+      - 'rwa-ecommerce-target-hardening-v1.js'
       - 'rwa-ecommerce-production-visual-v1.js'
+      - 'rwa-ecommerce-parity-finish-v2.js'
       - 'rwa-commerce-config.json'
-      - 'rwa-storefront.js'
       - 'superapp-v5.js'
       - 'superapp-v5.css'
       - 'ui-layout-integrity-v15.js'
@@ -34,9 +36,11 @@ on:
       - 'rwa-target-dashboard-v2-hardening.css'
       - 'rwa-seablueprint-commerce-bridge.js'
       - 'rwa-seablueprint-commerce-bridge.css'
+      - 'rwa-ecommerce-target-controller-v1.js'
+      - 'rwa-ecommerce-target-hardening-v1.js'
       - 'rwa-ecommerce-production-visual-v1.js'
+      - 'rwa-ecommerce-parity-finish-v2.js'
       - 'rwa-commerce-config.json'
-      - 'rwa-storefront.js'
       - 'superapp-v5.js'
       - 'superapp-v5.css'
       - 'ui-layout-integrity-v15.js'
@@ -65,15 +69,25 @@ jobs:
           node --check rwa-target-dashboard-v2.js
           node --check rwa-target-dashboard-v2-hardening.js
           node --check rwa-seablueprint-commerce-bridge.js
+          node --check rwa-ecommerce-target-controller-v1.js
+          node --check rwa-ecommerce-target-hardening-v1.js
+          node --check rwa-ecommerce-production-visual-v1.js
+          node --check rwa-ecommerce-parity-finish-v2.js
           node --check superapp-v5.js
           node --check tools/launch-ui-final-browser.mjs
           node --check tools/seablueprint-commerce-single-shell-browser.mjs
           node --check tools/ecommerce-first-paint-browser.mjs
-          grep -Fq "const VERSION='1.5.0',MODE='CONTEXT_PANEL'" rwa-seablueprint-commerce-bridge.js
+          grep -Fq "const VERSION='1.6.0',MODE='CONTEXT_PANEL'" rwa-seablueprint-commerce-bridge.js
           grep -Fq "screen.dataset.seablueprintPlacement='context-right-panel'" rwa-seablueprint-commerce-bridge.js
-          grep -Fq "window.addEventListener('click',captureClick,true)" rwa-seablueprint-commerce-bridge.js
-          grep -Fq "rwa-seablueprint-commerce-bridge.js?v=1.5.1" chart-core.js
-          grep -Fq "rwa-target-dashboard-v2-hardening.js?v=2.1.0" chart-core.js
+          grep -Fq "contentOwner:'RWAEcommerceTargetController'" rwa-seablueprint-commerce-bridge.js
+          grep -Fq "commerceContentWriter:false" rwa-target-dashboard-v2.js
+          grep -Fq "polling:false" rwa-ecommerce-target-hardening-v1.js
+          ! grep -Fq "setInterval(ensure" rwa-ecommerce-target-hardening-v1.js
+          ! grep -Fq "rwa-storefront.js" rwa-seablueprint-commerce-bridge.js
+          grep -Fq "rwa-seablueprint-commerce-bridge.js?v=" chart-core.js
+          grep -Fq "rwa-target-dashboard-v2-hardening.js?v=" chart-core.js
+          grep -Fq "rwa-ecommerce-target-controller-v1.js?v=" chart-core.js
+          grep -Fq "rwa-ecommerce-production-visual-v1.js?v=" chart-core.js
           grep -Fq "rwa-target-prepaint-shop" index.html
           grep -Fq "history.replaceState(history.state,'',location.pathname+location.search+'#shop')" index.html
           grep -Fq "document.body?.classList.contains('rwa-target-dashboard-v2')" superapp-v5.js
