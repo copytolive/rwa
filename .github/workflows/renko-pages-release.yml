@@ -11,8 +11,6 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: renko-pages-main
@@ -63,26 +61,24 @@ jobs:
           echo RENKO_RELEASE_PAYLOAD_PASS
 
   deploy:
-    if: github.event_name != 'pull_request'
     needs: validate
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - name: Stamp exact RENKO release SHA
+      - name: Wait for canonical RWA Pages exact RENKO witness
+        shell: bash
         run: |
-          printf '%s\n' "$GITHUB_SHA" > renko-deployment-sha.txt
-          printf '%s\n' "$GITHUB_SHA" > renko/deployment-sha.txt
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          set -euo pipefail
+          BASE='https://copytolive.github.io/rwa'
+          ok=0
+          for i in $(seq 1 180); do
+            system_sha="$(curl --connect-timeout 5 --max-time 12 -fsSL -H 'Cache-Control: no-cache' "$BASE/deployment-sha.txt?sha=$GITHUB_SHA&n=$i" 2>/dev/null | tr -d '\r\n' || true)"
+            renko_sha="$(curl --connect-timeout 5 --max-time 12 -fsSL -H 'Cache-Control: no-cache' "$BASE/renko/renko-deployment-sha.txt?sha=$GITHUB_SHA&n=$i" 2>/dev/null | tr -d '\r\n' || true)"
+            if [ "$system_sha" = "$GITHUB_SHA" ] && [ "$renko_sha" = "$GITHUB_SHA" ]; then ok=1; break; fi
+            sleep 5
+          done
+          test "$ok" = 1
+          echo "RENKO_CANONICAL_PAGES_EXACT_SHA=PASS:$GITHUB_SHA"
 
   public-browser:
     needs: deploy
@@ -100,11 +96,13 @@ jobs:
           BASE='https://copytolive.github.io/rwa'
           ok=0
           for i in $(seq 1 60); do
-            got="$(curl -fsSL -H 'Cache-Control: no-cache' "$BASE/renko-deployment-sha.txt?sha=$GITHUB_SHA&n=$i" 2>/dev/null | tr -d '\r\n' || true)"
-            if [ "$got" = "$GITHUB_SHA" ]; then ok=1; break; fi
+            system_sha="$(curl --connect-timeout 5 --max-time 12 -fsSL -H 'Cache-Control: no-cache' "$BASE/deployment-sha.txt?sha=$GITHUB_SHA&n=$i" 2>/dev/null | tr -d '\r\n' || true)"
+            renko_sha="$(curl --connect-timeout 5 --max-time 12 -fsSL -H 'Cache-Control: no-cache' "$BASE/renko/renko-deployment-sha.txt?sha=$GITHUB_SHA&n=$i" 2>/dev/null | tr -d '\r\n' || true)"
+            if [ "$system_sha" = "$GITHUB_SHA" ] && [ "$renko_sha" = "$GITHUB_SHA" ]; then ok=1; break; fi
             sleep 5
           done
           test "$ok" = 1
+          echo "PUBLIC_WITNESS system=$GITHUB_SHA renko=$GITHUB_SHA"
           for f in renko/index.html renko/renko-tv-stable-chart-v2.js renko/renko-tv-total-history.js renko/renko-gold-origin-pack.js renko/history/renko-gold-xauusd-origin.json.gz; do
             local_sha="$(sha256sum "$f" | awk '{print $1}')"
             remote_sha="$(curl -fsSL -H 'Cache-Control: no-cache' "$BASE/$f?sha=$GITHUB_SHA" | sha256sum | awk '{print $1}')"
