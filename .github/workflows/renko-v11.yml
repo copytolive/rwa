@@ -42,7 +42,7 @@ jobs:
           grep -Fq 'renko-tv-atr-control.js?v=3' renko/index.html
           grep -Fq "version:'1.3.2'" renko/renko-tv-atr-control.js
           grep -Fq 'positive-wilder-deepen-same-source' renko/renko-tv-atr-control.js
-          grep -Fq 'renko-tv-atr-fixed1s.js?v=4' renko/index.html
+          grep -Fq 'renko-tv-atr-fixed1s.js?v=7' renko/index.html
           ! grep -Fq 'id="intervalSelect"' renko/index.html
           ! grep -Fq 'renko-v12.js?v=' renko/index.html
           ! grep -Fq 'renko-v12-worker.js?v=' renko/index.html
