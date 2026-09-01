@@ -16,8 +16,8 @@ viewports=[
  ('430x932',430,932),('390x844',390,844),('360x800',360,800),
 ]
 routes=[
- '/', '/markets/', '/markets/btc-usdc/', '/businesses/', '/businesses/kopi-nusantara/',
- '/businesses/kopi-nusantara/store/', '/trade/kopi/', '/checkout/', '/account/orders/',
+ '/', '/markets/', '/markets/btc-usdc/', '/businesses/', '/businesses/provider-required/',
+ '/rwa/', '/rwa/provider-required/', '/trade/btc-usdc/', '/checkout/', '/account/orders/',
  '/community/', '/merchant/', '/settings/', '/intelligence/', '/merchant/tokenization/',
  '/account/api/', '/account/billing/', '/account/activity/'
 ]
@@ -72,8 +72,6 @@ with sync_playwright() as pw:
     if not (48<=hdr['height']<=70): add('header-height-sanity',rect=hdr)
     if hdr['left']<-2 or hdr['right']>w+2: add('header-offscreen',rect=hdr)
 
-   # Headings and interactive controls may not be physically clipped by the viewport unless
-   # they intentionally live inside a local horizontal scroll container.
    selectors=['h1:visible','h2:visible','h3:visible','button:visible','input:visible','select:visible','textarea:visible']
    clipped=[]
    for sel in selectors:
@@ -105,20 +103,17 @@ with sync_playwright() as pw:
     if widths and min(widths)<145: add('merchant-kpi-too-narrow',widths=widths)
 
    metrics.append({'vp':vpname,'route':route,'document':dims,'header':hdr})
-   if route in ('/','/markets/','/businesses/kopi-nusantara/','/businesses/kopi-nusantara/store/','/trade/kopi/','/checkout/','/account/orders/','/community/','/merchant/','/settings/'):
+   if route in ('/','/markets/','/businesses/','/businesses/provider-required/','/rwa/provider-required/','/trade/btc-usdc/','/checkout/','/account/orders/','/community/','/merchant/','/settings/'):
     page.screenshot(path=str(ART/f'{vpname}-{safe_name(route)}.png'),full_page=False)
 
  browser.close()
 
-# A shared app shell should not change height as the user moves between sectors at the
-# same viewport. This measures consistency rather than imposing one arbitrary pixel value.
 for vpname,samples in header_samples.items():
  if len(samples)>1:
   heights=[x['height'] for x in samples]
   if max(heights)-min(heights)>2:
    failures.append({'kind':'header-height-inconsistent','vp':vpname,'route':'*','min':min(heights),'max':max(heights),'samples':samples})
 
-# De-duplicate noisy response events.
 seen=set(); br=[]
 for x in bad_responses:
  k=(x['vp'],x['route'],x['status'],x['url'])
