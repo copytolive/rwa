@@ -8,7 +8,7 @@ export function generateStaticParams(){
     "about","account/activity","account/api","account/billing","api","blog","careers",
     "community","docs","docs/security","help","help/contact","intelligence","listing-request",
     "markets","merchant","merchant/create","merchant/products","merchant/customers","merchant/analytics",
-    "merchant/orders","merchant/tokenization","merchant/rwa","merchant/rewards","merchant/settings",
+    "merchant/orders","merchant/updates/new","merchant/ads","merchant/tokenization","merchant/rwa","merchant/rewards","merchant/settings",
     "merchant/transactions","merchant/support","merchant/business","merchant/kyb","merchant/rwa/requests",
     "merchant/settings/branding","portfolio/holdings","portfolio/orders","portfolio/transactions",
     "portfolio/allocation","press","privacy","pro","risk-disclosure","settings","settings/security",
