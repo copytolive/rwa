@@ -33,6 +33,9 @@ jobs:
           set -euo pipefail
           node --check renko/renko-gold-total-history.js
           node --check renko/renko-gold-manual-viewport-lock.js
+          node --check renko/renko-gold-display-guard.js
+          node --check renko/renko-gold-history-geometry-stitch.js
+          node --check renko/renko-gold-tradingview-ui.js
           node --check scripts/renko_gold_scroll_prepend_proof.mjs
           ! grep -nE '\.fitContent\s*\(' renko/renko-gold-total-history.js renko/renko-gold-manual-viewport-lock.js
           python3 - <<'PY'
