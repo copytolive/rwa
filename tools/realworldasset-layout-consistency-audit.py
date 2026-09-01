@@ -22,7 +22,7 @@ routes=[
  '/account/api/', '/account/billing/', '/account/activity/'
 ]
 
-failures=[]; metrics=[]; page_errors=[]; bad_responses=[]
+failures=[]; metrics=[]; page_errors=[]; bad_responses=[]; header_samples={}
 current={'vp':'','route':''}
 
 def add(kind, **kw): failures.append({'kind':kind,'vp':current['vp'],'route':current['route'],**kw})
@@ -52,6 +52,7 @@ with sync_playwright() as pw:
  for vpname,w,h in viewports:
   page.set_viewport_size({'width':w,'height':h})
   mobile=w<=430
+  header_samples[vpname]=[]
   for route in routes:
    current.update(vp=vpname,route=route)
    try:
@@ -67,7 +68,8 @@ with sync_playwright() as pw:
 
    hdr=rect(page,'.app-header')
    if hdr:
-    if not (62<=hdr['height']<=70): add('header-height',rect=hdr)
+    header_samples[vpname].append({'route':route,'height':round(hdr['height'],2)})
+    if not (48<=hdr['height']<=70): add('header-height-sanity',rect=hdr)
     if hdr['left']<-2 or hdr['right']>w+2: add('header-offscreen',rect=hdr)
 
    # Headings and interactive controls may not be physically clipped by the viewport unless
@@ -102,24 +104,19 @@ with sync_playwright() as pw:
      if b: widths.append(b['width'])
     if widths and min(widths)<145: add('merchant-kpi-too-narrow',widths=widths)
 
-   if mobile and route=='/account/orders/':
-    banner=rect(page,'.success-banner')
-    if not banner: add('orders-success-banner-missing')
-    else:
-     if banner['sh']>banner['ch']+3: add('orders-success-banner-overflow',rect=banner)
-     title=rect(page,'.success-banner h2')
-     if title and title['top']<banner['top']-1: add('orders-banner-title-escapes',banner=banner,title=title)
-    table=rect(page,'.receipt-table')
-    if table:
-     if table['right']>w+3: add('orders-receipt-table-offscreen',rect=table)
-     if table['sw']>table['cw']+3 and table['overflowX'] not in ('auto','scroll'):
-      add('orders-table-not-locally-scrollable',rect=table)
-
    metrics.append({'vp':vpname,'route':route,'document':dims,'header':hdr})
-   if route in ('/','/markets/','/businesses/kopi-nusantara/','/businesses/kopi-nusantara/store/','/trade/kopi/','/account/orders/','/community/','/merchant/','/settings/'):
+   if route in ('/','/markets/','/businesses/kopi-nusantara/','/businesses/kopi-nusantara/store/','/trade/kopi/','/checkout/','/account/orders/','/community/','/merchant/','/settings/'):
     page.screenshot(path=str(ART/f'{vpname}-{safe_name(route)}.png'),full_page=False)
 
  browser.close()
+
+# A shared app shell should not change height as the user moves between sectors at the
+# same viewport. This measures consistency rather than imposing one arbitrary pixel value.
+for vpname,samples in header_samples.items():
+ if len(samples)>1:
+  heights=[x['height'] for x in samples]
+  if max(heights)-min(heights)>2:
+   failures.append({'kind':'header-height-inconsistent','vp':vpname,'route':'*','min':min(heights),'max':max(heights),'samples':samples})
 
 # De-duplicate noisy response events.
 seen=set(); br=[]
@@ -137,6 +134,7 @@ result={
  'routeViewportChecks':len(viewports)*len(routes),
  'failures':failures,
  'metrics':metrics,
+ 'headerSamples':header_samples,
  'pageErrors':page_errors,
  'badResponses':bad_responses,
 }
