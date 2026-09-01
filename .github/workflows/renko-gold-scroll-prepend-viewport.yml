@@ -1,0 +1,121 @@
+name: RENKO GOLD Scroll Prepend Viewport Regression
+
+on:
+  push:
+    branches:
+      - main
+      - fix/renko-gold-scroll-prepend-viewport-lock-20260902
+    paths:
+      - 'renko/**'
+      - 'scripts/renko_gold_scroll_prepend_proof.mjs'
+      - '.github/workflows/renko-gold-scroll-prepend-viewport.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: renko-gold-scroll-prepend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  branch-local-desktop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Static GOLD viewport and canonical guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check renko/renko-gold-total-history.js
+          node --check renko/renko-gold-manual-viewport-lock.js
+          node --check scripts/renko_gold_scroll_prepend_proof.mjs
+          ! grep -nE '\.fitContent\s*\(' renko/renko-gold-total-history.js renko/renko-gold-manual-viewport-lock.js
+          python3 - <<'PY'
+          import json
+          m=json.load(open('renko/history/gold/full-manifest.json'))
+          assert m['provider']=='Dukascopy' and m['instrumentCode']=='XAU-USD' and m['symbol']=='XAUUSD'
+          assert m['interval']=='1s' and m['priceSide']=='bid' and float(m['tickSize'])==0.001
+          assert m['dataVersion']=='dukascopy-xauusd-s1-f25a24e5d7994131'
+          assert m['versionSha256']=='f25a24e5d7994131ada7b69c237d355794e73e86d642d4630307035b8417790f'
+          assert len(m['months'])==281 and m['backfillComplete'] is True
+          print('RENKO_GOLD_SCROLL_CANONICAL_IDENTITY_PASS')
+          PY
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+      - name: Serve exact branch checkout at production-equivalent /rwa/ path
+        shell: bash
+        run: |
+          (cd .. && python3 -m http.server 4173 --bind 127.0.0.1) >/tmp/renko-http.log 2>&1 &
+          echo $! >/tmp/renko-http.pid
+          for i in {1..30}; do curl -fsS http://127.0.0.1:4173/rwa/renko/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/renko-http.log; exit 1
+      - name: Repeated real scroll-left — 10 prepend cycles
+        env:
+          RENKO_BASE_URL: http://127.0.0.1:4173/rwa/renko/
+          RENKO_EXPECTED_SHA: ${{ github.sha }}
+          RENKO_CYCLES: '10'
+          RENKO_OUTPUT_DIR: artifacts/branch-desktop
+        run: node scripts/renko_gold_scroll_prepend_proof.mjs
+      - name: Upload branch BEFORE MID AFTER evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: renko-gold-scroll-branch-${{ github.sha }}
+          path: artifacts/branch-desktop
+          if-no-files-found: warn
+
+  public-production:
+    if: github.ref == 'refs/heads/main'
+    needs: branch-local-desktop
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for Pages exact SHA from canonical closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in {1..150}; do
+            got="$(curl -fsS --max-time 10 "https://copytolive.github.io/rwa/renko/deployment-sha.txt?cb=$RANDOM" 2>/dev/null | tr -d '\r\n' || true)"
+            if [[ "$got" =~ ^[0-9a-f]{40}$ ]] && [ "$got" = "$GITHUB_SHA" ]; then echo "RENKO_GOLD_SCROLL_PUBLIC_SHA_PASS $got"; exit 0; fi
+            sleep 5
+          done
+          echo 'Pages did not converge to exact SHA'; exit 1
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+      - name: Public desktop repeated real scroll-left — 10 cycles
+        env:
+          RENKO_BASE_URL: https://copytolive.github.io/rwa/renko/
+          RENKO_EXPECTED_SHA: ${{ github.sha }}
+          RENKO_CYCLES: '10'
+          RENKO_OUTPUT_DIR: artifacts/public-desktop
+        run: node scripts/renko_gold_scroll_prepend_proof.mjs
+      - name: Public mobile core scroll smoke — 3 cycles
+        env:
+          RENKO_BASE_URL: https://copytolive.github.io/rwa/renko/
+          RENKO_EXPECTED_SHA: ${{ github.sha }}
+          RENKO_CYCLES: '3'
+          RENKO_MOBILE: '1'
+          RENKO_OUTPUT_DIR: artifacts/public-mobile
+        run: node scripts/renko_gold_scroll_prepend_proof.mjs
+      - name: Upload public BEFORE MID AFTER evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: renko-gold-scroll-public-${{ github.sha }}
+          path: |
+            artifacts/public-desktop
+            artifacts/public-mobile
+          if-no-files-found: warn
