@@ -68,6 +68,7 @@ jobs:
             renko/index.html \
             renko/renko-tv.css \
             renko/renko-tv-engine.js \
+            renko/renko-tv-engine-fastpath.js \
             renko/renko-tv-app.js \
             renko/renko-tv-fixed-1s.js \
             renko/renko-tv-atr-control.js \
@@ -187,12 +188,14 @@ jobs:
           rm -rf "$O/renko"
           cp -a renko "$O/renko"
           printf '%s\n' "$GITHUB_SHA" > "$O/deployment-sha.txt"
+          printf '%s\n' "$GITHUB_SHA" > "$O/renko/deployment-sha.txt"
           printf '%s\n' "$GITHUB_SHA" > "$O/system-sha.txt"
           cp apps/realworldasset/UPSTREAM_SHA.txt "$O/ui-source-sha.txt"
           cp UI_SYNC_MANIFEST.json "$O/UI_SYNC_MANIFEST.json"
           cp REALWORLDASSET_MIGRATION_MANIFEST.json "$O/REALWORLDASSET_MIGRATION_MANIFEST.json"
           touch "$O/.nojekyll"
           test -s "$O/renko/index.html"
+          test -s "$O/renko/deployment-sha.txt"
           echo SINGLE_RWA_REALWORLDASSET_PRODUCTION_ARTIFACT_PASS
 
       - name: Upload Pages artifact
@@ -225,7 +228,8 @@ jobs:
           PASS=0
           for i in $(seq 1 36); do
             SHA="$(curl -fsSL --retry 2 "$BASE/deployment-sha.txt" 2>/dev/null || true)"
-            if [ "$SHA" = "$GITHUB_SHA" ]; then PASS=1; break; fi
+            RENKO_SHA="$(curl -fsSL --retry 2 "$BASE/renko/deployment-sha.txt" 2>/dev/null || true)"
+            if [ "$SHA" = "$GITHUB_SHA" ] && [ "$RENKO_SHA" = "$GITHUB_SHA" ]; then PASS=1; break; fi
             sleep 5
           done
           test "$PASS" = 1
@@ -235,7 +239,7 @@ jobs:
             CODE="$(curl -sS -L -o /tmp/page.html -w '%{http_code}' --retry 4 --retry-delay 2 "$BASE$route")"
             test "$CODE" = 200
           done
-          echo "PUBLIC_SINGLE_RWA_REALWORLDASSET_PASS system=$GITHUB_SHA ui=$UI_SHA"
+          echo "PUBLIC_SINGLE_RWA_REALWORLDASSET_PASS system=$GITHUB_SHA renko=$GITHUB_SHA ui=$UI_SHA"
 
       - name: Install Chromium
         run: |
