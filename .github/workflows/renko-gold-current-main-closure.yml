@@ -71,6 +71,7 @@ jobs:
           print('GOLD_CURRENT_MAIN_DATA_GATE_PASS',json.dumps({'months':len(months),'bars':c['barCount'],'bytes':c['compressedBytes'],'earliestSecond':c['earliestSecond'],'latestSecond':c['latestSecond'],'cutoff':c['cutoff'],'version':m['dataVersion'],'versionSha256':m['versionSha256']},separators=(',',':')))
           PY
           if find . -type f -name 'xauusd-s1-*.csv.gz' -print -quit | grep -q .; then echo 'large canonical CSV gzip leaked into Pages tree'; exit 1; fi
+          printf '%s\n' "$GITHUB_SHA" > deployment-sha.txt
           printf '%s\n' "$GITHUB_SHA" > renko-deployment-sha.txt
           printf '%s\n' "$GITHUB_SHA" > renko/deployment-sha.txt
       - uses: actions/configure-pages@v5
