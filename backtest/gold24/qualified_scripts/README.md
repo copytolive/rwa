@@ -1,35 +1,18 @@
-# GOLD24 strict-qualified scripts
+# GOLD24 Qualified Scripts
 
-This directory contains one runnable Python parity script and one MT5 Expert Advisor translation for every method currently in the strict report:
+This directory contains the executable script pair for every currently selected GOLD24 method:
 
-- Total Entry >= 100
-- standard-lot Net Profit >= USD 20,000
-- Corr Max <= 0.50
-- correlation = absolute Pearson(log-return equity), per-symbol greedy; PF first, then net profit, lower DD, larger sample.
+- 3 strict methods from `runtime_mt5_lot/latest_entry100_net20000_standard_lot.csv`.
+- 6 selected Multi-Method v1 methods from `runtime_multimethod_v1/latest_multimethod_v1_discovery.csv`.
 
-## Accuracy contract
+Each method has one Python (`.py`) canonical verifier and one MT5 (`.mq5`) Expert Advisor wrapper.
 
-### Python
-The Python method files import `backtest/gold24/core.py` directly and run `backtest_candidate(..., flat_lot=100.0)` on the canonical Gate-A D1 dataset. They also assert the frozen strict config hash and key reference metrics. This is the authoritative same-model parity path.
+## Certification contract
 
-Example:
+`validate_qualified_scripts.py` requires the script method order, config hash, SL/TP, trades, WR, PF, Net Profit, EV, Max DD and SQN to match the published runtime CSVs, then re-runs every candidate through the same canonical `core.py` backtester at qty=100 GOLD units.
 
-```bash
-python backtest/gold24/qualified_scripts/rank01_donchian_f3_s89_off3_exp4.py \
-  --state-dir .gold24-canonical-v11
-```
+`.github/workflows/gold24-qualified-script-certification.yml` then installs official Exness MT5/MetaEditor on Windows, requires all 9 EAs plus the canonical importer to compile cleanly with `0 errors, 0 warnings`, imports the 6,500-row canonical D1 series into `GOLD24-CANON`, and runs every EA through native MT5 Strategy Tester with operational receipts.
 
-### MT5
-The `.mq5` files translate the same D1 signal math, direction, LIMIT offset, fixed SL/TP, and bar-count expiry. Donchian uses the same shifted rolling channel and simple rolling RSI as `core.py`; engulfing uses the same candle definition and an explicit pandas-compatible `ewm(adjust=False)` EMA.
+The Python result is exact same-engine canonical parity. Native MT5 certification proves that the translated signal/order configuration compiles and operates on the canonical series. It does **not** claim that broker-specific PnL will be numerically identical to the canonical stressed Hyperliquid cost model, because broker spread, commission, swap, tick ordering and fills can differ.
 
-The canonical strict report itself states that the audited figures use the **canonical stressed Hyperliquid cost model and are not broker-specific MT5/Exness cost parity**. Therefore identical MT5 PnL requires the same canonical OHLC history plus a parity execution/cost environment. Broker XAUUSD spread, commission, swap, tick sequencing, pending-order touch behavior, and fills can change results.
-
-For signal-data parity in MT5, import the canonical D1 CSV as a custom symbol and set `InpSignalSymbol` to that custom symbol.
-
-## Current strict methods
-
-| Rank | Method | Python | MT5 |
-|---:|---|---|---|
-| 1 | DONCHIAN f3/s89 p1=66 p2=55 p3=1 off=3 exp=4 | `rank01_donchian_f3_s89_off3_exp4.py` | `rank01_donchian_f3_s89_off3_exp4.mq5` |
-| 2 | CANDLE_ENGULFING f34/s144 p1=66 p2=58 p3=1 off=2.75 exp=8 | `rank02_candle_engulfing_f34_s144_off2_75_exp8.py` | `rank02_candle_engulfing_f34_s144_off2_75_exp8.mq5` |
-| 3 | DONCHIAN f3/s100 p1=55 p2=58 p3=1 off=1 exp=7 | `rank03_donchian_f3_s100_off1_exp7.py` | `rank03_donchian_f3_s100_off1_exp7.mq5` |
+SL/TP values shown in the reporting tables are pips (`0.01` USD per XAUUSD pip under the report convention); EA engine constants use the equivalent USD price distances.
