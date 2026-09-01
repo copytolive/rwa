@@ -1,0 +1,28 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { chromium } from 'playwright';
+
+const base=process.env.RENKO_BASE_URL||'http://127.0.0.1:4173/rwa/renko/';
+const out=process.env.RENKO_OUTPUT_DIR||'artifacts/renko-total-visible';
+await fs.mkdir(out,{recursive:true});
+const browser=await chromium.launch({headless:true});
+const page=await browser.newPage({viewport:{width:1672,height:941}});
+const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+const url=new URL(base);url.searchParams.set('gold','1');url.searchParams.set('totalHistoryProof','1');url.searchParams.set('cb',Date.now());
+await page.goto(url.toString(),{waitUntil:'domcontentloaded',timeout:120000});
+await page.waitForFunction(()=>document.querySelector('#chartHost canvas')&&document.documentElement.dataset.renkoGoldRecent==='true'&&window.RWARenkoGoldTotalHistory&&window.RWARenkoGoldTotalVisible?.version==='1.0.0-total-visible-autoload',{timeout:120000});
+await page.waitForFunction(()=>window.RWARenkoGoldTotalVisible?.stats?.bootSuccesses>=1&&window.RWARenkoGoldTotalHistory?.stats?.prepends>=1&&!window.RWARenkoGoldTotalHistory?.busy&&window.RWARenkoTV?.state?.historyViewMode==='gold-total',{timeout:180000});
+await page.waitForTimeout(500);
+const s=await page.evaluate(()=>{const V=window.RWARenkoGoldTotalVisible,H=window.RWARenkoGoldTotalHistory,T=window.RWARenkoTV,c=document.getElementById('tvCoverage'),b=document.getElementById('tvGoldTotal'),feed=document.querySelector('#feedPill b'),src=document.getElementById('sourceText');return{visibleVersion:V?.version,stats:{...V?.stats},prepends:H?.stats?.prepends,months:H?.manifest?.months?.length,backfillComplete:H?.manifest?.backfillComplete,bars:T?.state?.closedBars?.length,mode:T?.state?.historyViewMode,status:T?.state?.status,coverageText:c?.textContent||'',coverageVisible:!!c&&!c.hidden&&getComputedStyle(c).display!=='none'&&c.getBoundingClientRect().width>0,buttonVisible:!!b&&getComputedStyle(b).display!=='none'&&b.getBoundingClientRect().width>0,buttonText:b?.textContent||'',feed:feed?.textContent||'',sourceText:src?.textContent||'',dataset:{...document.documentElement.dataset}}});
+if(s.months!==281)throw new Error(`total manifest months ${s.months}`);
+if(s.backfillComplete!==true)throw new Error('total manifest not backfillComplete');
+if(!(s.stats.bootBeforeBars>0&&s.stats.bootAfterBars>s.stats.bootBeforeBars))throw new Error(`boot did not add source history ${JSON.stringify(s.stats)}`);
+if(Number(s.stats.bootAfterNewest)!==Number(s.stats.bootBeforeNewest))throw new Error(`boot lost newest history ${s.stats.bootBeforeNewest} -> ${s.stats.bootAfterNewest}`);
+if(s.mode!=='gold-total'||s.status!=='history-gold-total')throw new Error(`total mode missing ${s.mode}/${s.status}`);
+if(!s.coverageVisible||!s.coverageText.includes('TOTAL HISTORY'))throw new Error(`TOTAL HISTORY coverage not visible ${JSON.stringify(s)}`);
+if(!s.buttonVisible||s.buttonText!=='TOTAL')throw new Error('TOTAL button not visible');
+if(s.feed!=='TOTAL')throw new Error(`feed pill not TOTAL: ${s.feed}`);
+if(!/TOTAL canonical history/i.test(s.sourceText))throw new Error(`source total identity not visible: ${s.sourceText}`);
+if(errors.length)throw new Error(`page errors ${JSON.stringify(errors)}`);
+await page.screenshot({path:path.join(out,'TOTAL_HISTORY_VISIBLE.png'),fullPage:true});
+const report={token:'RENKO_GOLD_TOTAL_HISTORY_VISIBLE_PASS',base,state:s};await fs.writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(report.token,JSON.stringify(report));await browser.close();
