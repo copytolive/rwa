@@ -138,7 +138,7 @@ jobs:
           matched=0
           stamp=''
           for attempt in $(seq 1 120); do
-            stamp=$(curl -fsSL --retry 2 --retry-delay 1 -H 'Cache-Control: no-cache' "$PUBLIC_BASE/renko-deployment-sha.txt?fixed1s=${GITHUB_SHA}-${attempt}" 2>/dev/null | tr -d '\r\n' || true)
+            stamp=$(curl -fsSL --retry 2 --retry-delay 1 -H 'Cache-Control: no-cache' "$PUBLIC_BASE/renko/renko-deployment-sha.txt?fixed1s=${GITHUB_SHA}-${attempt}" 2>/dev/null | tr -d '\r\n' || true)
             ok=1
             if ! [[ "$stamp" =~ ^[0-9a-f]{40}$ ]]; then
               ok=0
