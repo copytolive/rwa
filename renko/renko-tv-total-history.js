@@ -36,9 +36,8 @@ async function discoverBinance(symbol){
   const firstRows=await fetchKlines(symbol,START_MONTH,1);if(!firstRows.length)throw Error(`${symbol} has no historical Binance 1s rows`);
   const earliestSourceMs=Number(firstRows[0].openTime),first=monthStart(earliestSourceMs);
   const checksum=(await textOk(checksumUrl(symbol,first))||'').trim();if(checksum.length<20)throw Error(`${symbol} origin checksum unavailable for ${monthKey(first)}`);
-  let last=addMonths(monthStart(Date.now()),-1),lastChecksum=(await textOk(checksumUrl(symbol,last))||'').trim();
-  if(lastChecksum.length<20){last=addMonths(last,-1);lastChecksum=(await textOk(checksumUrl(symbol,last))||'').trim()}
-  if(lastChecksum.length<20)throw Error(`${symbol} latest verified monthly checksum unavailable`);
+  const last=addMonths(monthStart(Date.now()),-2),lastChecksum=(await textOk(checksumUrl(symbol,last))||'').trim();
+  if(lastChecksum.length<20)throw Error(`${symbol} latest publication-lag-safe monthly checksum unavailable for ${monthKey(last)}`);
   const span=Math.max(1,Math.round((last-first)/2629800000)+1);
   const m={symbol,provider:'Binance Spot',source:'Binance Data API historical 1s + Public Data checksum',interval:'1s',archive:'Binance Public Data / Data Vision',earliestSourceMs,archiveFirstMonth:monthKey(first),archiveFirstMonthMs:first,archiveLastVerifiedMonth:monthKey(last),archiveLastVerifiedMonthMs:last,archiveMonthSpan:span,totalSourceChunks:span,integrityChecksum:checksum,latestIntegrityChecksum:lastChecksum,discoveredAt:Date.now()};
   manifest.set(symbol,m);try{localStorage.setItem(`renko-history-manifest-v3:${symbol}`,JSON.stringify(m))}catch{}return m
