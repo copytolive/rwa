@@ -18,7 +18,7 @@ env:
   GH_TOKEN: ${{ github.token }}
 
 jobs:
-  native-mt5-9of9:
+  native-mt5-10of10:
     runs-on: windows-2022
     timeout-minutes: 90
     env:
@@ -31,27 +31,30 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Require account context and exact batch286 source
+      - name: Require account context and exact batch287 source
         shell: powershell
         run: |
           $ErrorActionPreference='Stop'
           if([string]::IsNullOrWhiteSpace($env:MT5_LOGIN) -or [string]::IsNullOrWhiteSpace($env:MT5_PASSWORD) -or [string]::IsNullOrWhiteSpace($env:MT5_SERVER)){throw 'ACCOUNT_CONTEXT_MISSING'}
           $s=Get-Content 'backtest/gold24/runtime_v11/latest_validation_summary.json' -Raw | ConvertFrom-Json
           if($s.validation -ne 'PASS' -or $s.gate_a_strict.gate_a -ne 'PASS' -or $s.strategy_engine -ne 'RUNNING'){throw 'CANONICAL_NOT_READY'}
-          if([int]$s.batch -ne 286){throw "CANONICAL_MOVED batch=$($s.batch); refresh tables/scripts before certification"}
+          if([int]$s.batch -ne 287){throw "CANONICAL_MOVED batch=$($s.batch); refresh tables/scripts before certification"}
           "SOURCE_RUN=$($s.github_run_id)" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           Write-Host 'ACCOUNT_CONTEXT_PRESENT=PASS'
           Write-Host "CANONICAL_BATCH=$($s.batch) SOURCE_RUN=$($s.github_run_id)"
 
-      - name: Restore exact canonical state and prepare 6500-row MT5 CSV
+      - name: Restore exact canonical state and verify Python parity 10 of 10
         shell: powershell
         run: |
           $ErrorActionPreference='Stop'
+          python -m pip install -r backtest/gold24/requirements.txt
           $state=Join-Path $env:RUNNER_TEMP 'gold24-state';Remove-Item $state -Recurse -Force -ErrorAction SilentlyContinue;New-Item -ItemType Directory -Force $state|Out-Null
           gh run download $env:SOURCE_RUN --repo $env:GITHUB_REPOSITORY -n gold24-canonical-v11-state -D $state
           $dataset=Join-Path $state 'gate_a\GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv'
           if(!(Test-Path $dataset)){throw 'CANONICAL_DATASET_MISSING'}
+          python backtest/gold24/qualified_scripts/validate_qualified_scripts.py --state-dir $state --out "$env:RUNNER_TEMP\qualified_scripts_validation.json"
           python backtest/gold24/qualified_scripts/prepare_mt5_canonical.py --input $dataset --output "$env:RUNNER_TEMP\gold24_canonical_d1_mt5.csv" --expected-rows 6500
+          Write-Host 'PYTHON_PARITY_10_OF_10=PASS'
 
       - name: Install official Exness MT5 and initialize data directory
         shell: powershell
@@ -73,12 +76,13 @@ jobs:
           $cand=Get-ChildItem $base -Directory -ErrorAction Stop|Where-Object {Test-Path (Join-Path $_.FullName 'MQL5')}|Sort-Object LastWriteTime -Descending|Select-Object -First 1
           if($null -eq $cand){throw 'MT5_DATA_DIR_MISSING'}
           $evidence=Join-Path $env:RUNNER_TEMP 'gold24-native-v2-evidence';New-Item -ItemType Directory -Force $evidence|Out-Null
+          Copy-Item "$env:RUNNER_TEMP\qualified_scripts_validation.json" $evidence -Force
           "MT5_TERMINAL=$terminal"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "MT5_META=$meta"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "MT5_DATA=$($cand.FullName)"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "MT5_EVIDENCE=$evidence"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Native compile importer plus exactly 9 EAs
+      - name: Native compile importer plus exactly 10 EAs
         shell: powershell
         run: |
           $ErrorActionPreference='Stop'
@@ -99,9 +103,9 @@ jobs:
           }
           Compile (Join-Path $script 'qualified_import_canonical.mq5')
           $eas=@(Get-ChildItem $expert -Filter '*.mq5'|Sort-Object Name)
-          if($eas.Count -ne 9){throw "EA_COUNT_FAIL found=$($eas.Count) expected=9"}
+          if($eas.Count -ne 10){throw "EA_COUNT_FAIL found=$($eas.Count) expected=10"}
           foreach($ea in $eas){Compile $ea.FullName}
-          Write-Host 'NATIVE_COMPILE_9_OF_9=PASS'
+          Write-Host 'NATIVE_COMPILE_10_OF_10=PASS'
 
       - name: Import canonical custom symbol before account authentication
         shell: powershell
@@ -142,13 +146,13 @@ jobs:
           if($text -match 'account is not specified'){throw 'ACCOUNT_AUTH_NOT_SELECTED'}
           Write-Host 'ACCOUNT_AUTH_BOOTSTRAP=PASS'
 
-      - name: Native Strategy Tester 9 of 9 with report plus receipt
+      - name: Native Strategy Tester 10 of 10 with report plus receipt
         shell: powershell
         run: |
           $ErrorActionPreference='Stop'
           $common=Join-Path $env:APPDATA 'MetaQuotes\Terminal\Common\Files\Gold24Qualified'
           $eas=@(Get-ChildItem $env:MT5_EXPERT_DIR -Filter '*.mq5'|Sort-Object Name)
-          if($eas.Count -ne 9){throw "EA_COUNT_BEFORE_TESTER_FAIL $($eas.Count)"}
+          if($eas.Count -ne 10){throw "EA_COUNT_BEFORE_TESTER_FAIL $($eas.Count)"}
           $pass=0
           foreach($ea in $eas){
             Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue|Stop-Process -Force -ErrorAction SilentlyContinue;Start-Sleep -Seconds 2
@@ -184,9 +188,9 @@ jobs:
             if($bars -lt 6000 -or $signals -le 0 -or $attempts -le 0 -or $accepted -le 0 -or $errors -ne 0){throw "TESTER_OPERATIONAL_GATE_FAIL $name bars=$bars signals=$signals attempts=$attempts accepted=$accepted errors=$errors"}
             $pass++;Write-Host "TESTER_PASS $name bars=$bars signals=$signals attempts=$attempts accepted=$accepted"
           }
-          if($pass -ne 9){throw "TESTER_PASS_COUNT=$pass expected=9"}
-          @('native_strategy_tester=PASS','method_pairs=9','reports=9','receipts=9','canonical_batch=286','canonical_rows=6500','account_context=MT5_ACTIONS_SECRET','live_trading=DISABLED')|Set-Content (Join-Path $env:MT5_EVIDENCE 'FINAL_NATIVE_RECEIPT.txt')
-          Write-Host 'NATIVE_STRATEGY_TESTER_9_OF_9=PASS'
+          if($pass -ne 10){throw "TESTER_PASS_COUNT=$pass expected=10"}
+          @('native_strategy_tester=PASS','method_pairs=10','reports=10','receipts=10','canonical_batch=287','canonical_rows=6500','account_context=MT5_ACTIONS_SECRET','live_trading=DISABLED')|Set-Content (Join-Path $env:MT5_EVIDENCE 'FINAL_NATIVE_RECEIPT.txt')
+          Write-Host 'NATIVE_STRATEGY_TESTER_10_OF_10=PASS'
 
       - name: Upload native evidence even on failure
         if: always()
