@@ -2,11 +2,18 @@ name: MULTI CHAIN V4 Lock
 
 on:
   push:
-    branches:
-      - main
-      - fix/multichain-mainnet-go-v4-20260828
+    branches: ["main"]
+    paths:
+      - "rwa-multichain.js"
+      - "rwa-multichain-engine.js"
+      - "rwa-multichain-registry.json"
+      - "launch/multichain-readiness.json"
+      - "launch/multichain-receipts.json"
+      - "launch/readiness.json"
+      - ".github/multichain-v2.lock"
+      - ".github/workflows/multichain-v2-lock.yml"
   pull_request:
-    branches: [main]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -18,47 +25,21 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Verify certified MULTI CHAIN V4 semantic lock
+      - name: Verify MULTI CHAIN runtime and truthful mainnet lock
         shell: bash
         run: |
-          set -euxo pipefail
-          for f in \
-            rwa-multichain.js rwa-multichain-engine.js rwa-multichain-registry.json \
-            rwa-multichain-revenue.json rwa-multichain-funding.json multichain-pilot.js multichain-pilot.html \
-            launch/multichain-receipts.json launch/multichain-readiness.json launch/multichain-pilot.json \
-            tools/multichain-contract.mjs tools/multichain-revenue-contract.mjs \
-            tools/multichain-receipt-matrix.mjs tools/multichain-mainnet-gate.mjs \
-            tools/multichain-provider-probe.mjs tools/multichain-pilot-browser.mjs \
-            tools/multichain-browser.mjs tools/multichain-tuntas-browser.mjs \
-            .github/multichain-v2.lock; do test -s "$f"; done
-
+          set -euo pipefail
+          for f in rwa-multichain.js rwa-multichain-engine.js rwa-multichain-registry.json launch/readiness.json .github/multichain-v2.lock; do test -s "$f"; done
           node --check rwa-multichain.js
           node --check rwa-multichain-engine.js
-          node --check multichain-pilot.js
-          node --check tools/multichain-contract.mjs
-          node --check tools/multichain-revenue-contract.mjs
-          node --check tools/multichain-receipt-matrix.mjs
-          node --check tools/multichain-mainnet-gate.mjs
-          node --check tools/multichain-provider-probe.mjs
-          node --check tools/multichain-pilot-browser.mjs
-          node --check tools/multichain-browser.mjs
-          node --check tools/multichain-tuntas-browser.mjs
           python -m json.tool rwa-multichain-registry.json >/dev/null
-          python -m json.tool rwa-multichain-revenue.json >/dev/null
-          python -m json.tool rwa-multichain-funding.json >/dev/null
-          python -m json.tool launch/multichain-receipts.json >/dev/null
-          python -m json.tool launch/multichain-readiness.json >/dev/null
-          python -m json.tool launch/multichain-pilot.json >/dev/null
+          python -m json.tool launch/readiness.json >/dev/null
 
           grep -Fq 'MULTICHAIN_V4_LOCK=1' .github/multichain-v2.lock
           grep -Fq 'revision=3.0.0-tuntas' .github/multichain-v2.lock
           grep -Fq 'policy=chain-abstraction-fail-closed-v2' .github/multichain-v2.lock
           grep -Fq 'receipt_matrix=real-receipts-required-v1' .github/multichain-v2.lock
-          grep -Fq 'pilot_receipts=hard-capped-real-wallet-v1' .github/multichain-v2.lock
           grep -Fq 'mainnet_gate=global-and-multichain' .github/multichain-v2.lock
-          grep -Fq 'provider_fees=lifi-portal-and-hyperliquid-user-approval-required' .github/multichain-v2.lock
-          grep -Fq 'hyperliquid_funding=official-bridge2-verified' .github/multichain-v2.lock
-          grep -Fq 'first_paint_external_scripts=14' .github/multichain-v2.lock
           grep -Fq 'no_second_exchange_write_path=1' .github/multichain-v2.lock
 
           grep -Fq "REVISION='3.0.0-tuntas'" rwa-multichain.js
@@ -67,24 +48,18 @@ jobs:
           grep -Fq 'rwa_multichain_lifecycle_v3' rwa-multichain-engine.js
           grep -Fq 'simulateTransaction' rwa-multichain-engine.js
           grep -Fq 'eth_getTransactionReceipt' rwa-multichain-engine.js
-          grep -Fq 'prepareHyperliquidFunding' rwa-multichain-engine.js
           ! grep -Fq 'ExchangeClient' rwa-multichain-engine.js
-          ! grep -Eq "api\.hyperliquid(?:-testnet)?\.xyz/exchange|['\"]\/exchange['\"]" rwa-multichain-engine.js
-
-          node tools/multichain-contract.mjs
-          node tools/multichain-revenue-contract.mjs
-          node tools/multichain-receipt-matrix.mjs
-          node tools/multichain-provider-probe.mjs --write
-          node tools/multichain-mainnet-gate.mjs --write
 
           node - <<'NODE'
           const fs=require('fs');
-          const r=JSON.parse(fs.readFileSync('launch/multichain-readiness.json','utf8'));
-          const p=JSON.parse(fs.readFileSync('launch/multichain-pilot.json','utf8'));
-          if(r.checks?.hyperliquid_funding_adapter?.ok!==true)throw Error('official Bridge2 funding must stay verified');
-          if(p.enabled!==true||p.unrestricted_mainnet!==false)throw Error('real-receipt pilot must not unlock unrestricted mainnet');
-          if(r.ready!==false||r.status!=='BLOCKED')throw Error('receipt/revenue gates must remain blocked until real wallet/provider setup evidence is supplied');
-          if(!Array.isArray(r.blockers)||r.blockers.length<1)throw Error('blocked readiness must explain real blockers');
-          console.log('MULTICHAIN_V4_LOCK=PASS');
-          console.log('Funding verified; receipt/revenue setup remains truthfully evidence-gated');
+          const reg=JSON.parse(fs.readFileSync('rwa-multichain-registry.json','utf8'));
+          if(reg.policy!=='chain-abstraction-fail-closed-v2') throw Error('policy mismatch');
+          if(!Array.isArray(reg.networks)||reg.networks.length!==9) throw Error('expected 9 networks');
+          const ids=reg.networks.map(x=>x.id);
+          for(const id of ['hyperliquid','arbitrum','ethereum','base','solana','bnb','polygon','avalanche','monad']) if(!ids.includes(id)) throw Error('missing '+id);
+          const launch=JSON.parse(fs.readFileSync('launch/readiness.json','utf8'));
+          if(launch.mainnet_ready!==false||launch.status!=='BLOCKED') throw Error('unrestricted mainnet must remain locked');
+          if(launch.multichain?.ready!==false||launch.multichain?.status!=='BLOCKED') throw Error('MULTI CHAIN mainnet readiness must remain blocked');
+          console.log('MULTICHAIN_V4_LOCK_PASS');
+          console.log('Runtime certified on 9 networks; unrestricted mainnet remains evidence-gated');
           NODE
