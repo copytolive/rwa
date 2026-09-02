@@ -1,6 +1,6 @@
 MULTIMETHOD_V1_DISCOVERY_KICK
 candidate_count=5000
-base_seed=202609030048
+base_seed=202609030105
 source_batch=LATEST
-requested_at=2026-09-03T00:48:00+07:00
-reason=refresh adaptive discovery from latest finalized authoritative canonical PASS batch 309 / run 33661370832; preserve cumulative evaluated_config_hash_count; enforce Entry>=100 / NP>=USD20000 before absolute Pearson(log-return equity) per-symbol greedy Corr<=0.50; remove lower-quality method when >0.50
+requested_at=2026-09-03T01:05:00+07:00
+reason=validate new family-balanced discovery policy against latest finalized canonical state; preserve cumulative evaluated_config_hash_count; target equal candidate counts across every implemented family; keep Entry>=100 + NP>=USD20000 before Corr<=0.50; do not reset DB/archive/history
