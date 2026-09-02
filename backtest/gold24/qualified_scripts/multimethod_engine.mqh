@@ -5,6 +5,15 @@
 #define QM_FAMILY_CODE MM_FAMILY_CODE
 #define QM_FAST MM_FAST
 #define QM_SLOW MM_SLOW
+#ifdef MM_P1
+#define QM_P1 MM_P1
+#endif
+#ifdef MM_P2
+#define QM_P2 MM_P2
+#endif
+#ifdef MM_P3
+#define QM_P3 MM_P3
+#endif
 #define QM_SL_USD MM_SL_USD
 #define QM_TP_USD MM_TP_USD
 #define QM_OFFSET_USD MM_OFFSET_USD
