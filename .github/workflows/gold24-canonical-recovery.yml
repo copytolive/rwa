@@ -16,7 +16,7 @@ permissions:
 
 concurrency:
   group: gold24-canonical-v11
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   GOLD24_TIMEFRAME: D1
