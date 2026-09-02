@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
-if(window.RWALiveHome?.version==='3.1.0')return;
-const VERSION='3.1.0',$=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)];
+if(window.RWALiveHome?.version==='3.2.0')return;
+const VERSION='3.2.0',$=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const num=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
 const money=v=>Number.isFinite(Number(v))?'$'+Number(v).toLocaleString(undefined,{maximumFractionDigits:2}):'—';
@@ -33,16 +33,16 @@ function setSvg(button,kind){if(!button||button.dataset.rwaSvg===kind)return;con
 function bindHeader(){
  const box=$('.rwa-target-icon-actions');
  if(box){const btns=[...box.querySelectorAll('button')];[['alerts','Alerts'],['help','Operational help'],['theme','Toggle theme']].forEach(([kind,title],i)=>{const x=btns[i];if(!x)return;x.dataset.liveTopAction=kind;x.title=title;x.setAttribute('aria-label',title);setSvg(x,kind)})}
- const n=$('.topnav');if(n&&!n.dataset.liveBound){n.dataset.liveBound='1';n.addEventListener('click',e=>{
-   const btn=e.target.closest('[data-rwa-target-nav]');if(!btn)return;
-   e.preventDefault();e.stopImmediatePropagation();
-   const k=btn.dataset.rwaTargetNav;
-   if(k==='markets'){closeWorkspace();setNavActive('markets');try{history.replaceState(history.state,'',location.pathname+location.search+'#markets')}catch{};return}
-   if(k==='intelligence'){openIntelligence();return}
-   if(k==='portfolio'){openPortfolio();return}
-   if(k==='orders'){openOrders();return}
-   if(k==='reports'){openReports();return}
- },true)}
+}
+function navAction(e){
+ const btn=e.target.closest?.('.topnav [data-rwa-target-nav]');if(!btn)return;
+ e.preventDefault();e.stopImmediatePropagation();
+ const k=btn.dataset.rwaTargetNav;
+ if(k==='markets'){closeWorkspace();setNavActive('markets');try{history.replaceState(history.state,'',location.pathname+location.search+'#markets')}catch{};return}
+ if(k==='intelligence'){openIntelligence();return}
+ if(k==='portfolio'){openPortfolio();return}
+ if(k==='orders'){openOrders();return}
+ if(k==='reports'){openReports();return}
 }
 function setNavActive(key){qa('.topnav [data-rwa-target-nav]').forEach(b=>b.classList.toggle('active',b.dataset.rwaTargetNav===key))}
 async function syncWallet(){const b=$('.signin');if(!b)return;await ensureWallet().catch(()=>{});const auth=window.RWAWalletAuth,s=auth?.session?.(),logged=auth?.isLoggedIn?.()===true;if(!logged||!s?.wallet){b.textContent='Connect Wallet';b.title='Connect a non-custodial wallet';return}let chain=s.chain||'';try{chain=await auth.provider?.()?.request?.({method:'eth_chainId'})||chain}catch{}const label=chainNames[String(chain).toLowerCase()]||String(chain||'CHAIN').toUpperCase();b.textContent=s.wallet.slice(0,6)+'…'+s.wallet.slice(-4)+' · '+label;b.title='Connected '+s.wallet+' · '+label+' · click to disconnect'}
@@ -143,7 +143,7 @@ async function topAction(e){if(e.target.closest('[data-live-help-close]')){$('#r
 function restoreTheme(){let t='dark';try{t=localStorage.getItem('rwa_theme_v3')||'dark'}catch{};document.documentElement.dataset.rwaTheme=t==='contrast'?'contrast':'dark'}
 function bindInstrumentActions(){const host=$('.instrument-actions');if(!host||host.dataset.liveBound)return;host.dataset.liveBound='1';host.querySelectorAll('button').forEach(b=>b.removeAttribute('onclick'));const run=async fn=>{try{if(!window.RWAQuickActions)await loadScript('quick-actions.js?v=2','RWAQuickActions');await window.RWAQuickActions?.[fn]?.()}catch(e){toast(String(e?.message||e))}};const [w,a,s]=host.querySelectorAll('button');if(w)w.onclick=()=>run('watch');if(a)a.onclick=()=>run('alert');if(s)s.onclick=()=>run('share')}
 function apply(){cleanupHome();lockDesktopGeometry();bindHeader();bindInstrumentActions();decorateTokens();marketCard();orderTicket();depthMeter();syncWallet();syncMultiChain();document.documentElement.dataset.rwaLiveNoMock='ready'}
-function boot(){restoreTheme();document.addEventListener('click',topAction,true);apply();ensureWallet().then(syncWallet).catch(()=>{});fetchLaunch(true).then(syncMultiChain);window.addEventListener('rwa:wallet-login',()=>{syncWallet();ensureExecution().then(c=>c.refresh()).catch(()=>{})});window.addEventListener('rwa:wallet-logout',()=>{syncWallet();renderWorkspace();syncOrderTicket()});window.addEventListener('rwa:wallet-chain',syncWallet);window.addEventListener('rwa:exchange-state',()=>{syncOrderTicket();renderWorkspace()});window.addEventListener('rwa:multichain-select',syncMultiChain);document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeWorkspace();$('#rwaLiveHelp')?.classList.remove('open');$('#rwaTradeConfirm')?.remove()}});let n=0;const timer=setInterval(()=>{apply();if(++n>720)clearInterval(timer)},1000);new MutationObserver(()=>queueMicrotask(()=>{cleanupHome();bindHeader()})).observe(document.documentElement,{subtree:true,childList:true})}
-window.RWALiveHome={version:VERSION,apply,lockDesktopGeometry,openIntelligence,openPortfolio,openOrders,openReports,closeWorkspace,audit:()=>({ready:document.documentElement.dataset.rwaLiveNoMock==='ready',marketPairs:marketState()?.pairs?.length||0,contextBrief:!!$('#rwaContextBrief'),ordersPanel:!$('#rwaTradingWorkspace')?.hidden,theme:document.documentElement.dataset.rwaTheme||'dark',mainnetReady:launchState?.mainnet_ready===true,screenshotMock:!!$('#rwaScreenshotParity')})};
+function boot(){restoreTheme();document.addEventListener('click',topAction,true);document.addEventListener('click',navAction,true);apply();ensureWallet().then(syncWallet).catch(()=>{});fetchLaunch(true).then(syncMultiChain);window.addEventListener('rwa:wallet-login',()=>{syncWallet();ensureExecution().then(c=>c.refresh()).catch(()=>{})});window.addEventListener('rwa:wallet-logout',()=>{syncWallet();renderWorkspace();syncOrderTicket()});window.addEventListener('rwa:wallet-chain',syncWallet);window.addEventListener('rwa:exchange-state',()=>{syncOrderTicket();renderWorkspace()});window.addEventListener('rwa:multichain-select',syncMultiChain);document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeWorkspace();$('#rwaLiveHelp')?.classList.remove('open');$('#rwaTradeConfirm')?.remove()}});let n=0;const timer=setInterval(()=>{apply();if(++n>720)clearInterval(timer)},1000);new MutationObserver(()=>queueMicrotask(()=>{cleanupHome();bindHeader()})).observe(document.documentElement,{subtree:true,childList:true})}
+window.RWALiveHome={version:VERSION,apply,lockDesktopGeometry,navAction,openIntelligence,openPortfolio,openOrders,openReports,closeWorkspace,audit:()=>({ready:document.documentElement.dataset.rwaLiveNoMock==='ready',marketPairs:marketState()?.pairs?.length||0,contextBrief:!!$('#rwaContextBrief'),ordersPanel:!$('#rwaTradingWorkspace')?.hidden,theme:document.documentElement.dataset.rwaTheme||'dark',mainnetReady:launchState?.mainnet_ready===true,screenshotMock:!!$('#rwaScreenshotParity')})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
