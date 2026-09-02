@@ -191,27 +191,47 @@ jobs:
           }
           function SelectByName([string]$regex,[string]$type='ControlType.RadioButton'){
             $el=FindElement $regex $type
-            if($null -eq $el){return $false}
-            try{
-              $p=$el.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
-              if($p.Current.IsSelected){Write-Host "SELECT_ALREADY_ACTIVE regex=$regex";return $true}
-              if(-not $el.Current.IsEnabled){Write-Host "SELECT_DISABLED_NOT_ACTIVE regex=$regex";return $false}
-              $p.Select()
-              return $true
-            }catch{
+            if($null -ne $el){
               try{
-                if($el.Current.ControlType -eq [System.Windows.Automation.ControlType]::RadioButton){
-                  $click=$el.GetClickablePoint()
-                  [System.Windows.Forms.Cursor]::Position=New-Object System.Drawing.Point([int]$click.X,[int]$click.Y)
-                  [System.Windows.Forms.SendKeys]::SendWait(' ')
-                  Start-Sleep -Milliseconds 500
-                  $p2=$el.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
-                  if($p2.Current.IsSelected){Write-Host "SELECT_FALLBACK_ACTIVE regex=$regex";return $true}
-                }
-              }catch{}
-              Write-Host "SELECT_FAIL regex=$regex error=$($_.Exception.Message)"
-              return $false
+                $p=$el.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
+                if($p.Current.IsSelected){Write-Host "SELECT_ALREADY_ACTIVE regex=$regex";return $true}
+                if($el.Current.IsEnabled){$p.Select();return $true}
+                Write-Host "SELECT_NAMED_DUPLICATE_DISABLED regex=$regex id=$($el.Current.AutomationId)"
+              }catch{Write-Host "SELECT_NAMED_ERROR regex=$regex error=$($_.Exception.Message)"}
             }
+            if($regex -match 'demo account|virtual money'){
+              $demoText=FindElement 'Open a demo account to trade virtual money without risk' 'ControlType.Text'
+              foreach($candidate in (Elements)){
+                try{
+                  if($candidate.Current.ControlType -ne [System.Windows.Automation.ControlType]::RadioButton){continue}
+                  $p2=$candidate.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
+                  $id=$candidate.Current.AutomationId
+                  if($p2.Current.IsSelected -and $id -eq '10468'){
+                    Write-Host "DEMO_SELECTED_BY_ID id=$id"
+                    return $true
+                  }
+                  if($p2.Current.IsSelected -and $null -ne $demoText){
+                    $rr=$candidate.Current.BoundingRectangle;$tr=$demoText.Current.BoundingRectangle
+                    if([Math]::Abs($rr.Top-$tr.Top) -lt 40){
+                      Write-Host "DEMO_SELECTED_BY_POSITION id=$id"
+                      return $true
+                    }
+                  }
+                }catch{}
+              }
+              foreach($candidate in (Elements)){
+                try{
+                  if($candidate.Current.ControlType -ne [System.Windows.Automation.ControlType]::RadioButton){continue}
+                  if($candidate.Current.AutomationId -ne '10468'){continue}
+                  if(-not $candidate.Current.IsEnabled){continue}
+                  $p3=$candidate.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
+                  $p3.Select();Start-Sleep -Milliseconds 500
+                  if($p3.Current.IsSelected){Write-Host 'DEMO_SELECTED_BY_ID_ACTION';return $true}
+                }catch{}
+              }
+            }
+            Write-Host "SELECT_FAIL regex=$regex"
+            return $false
           }
           Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
           $p=Start-Process -FilePath $env:MT5_TERMINAL -PassThru
