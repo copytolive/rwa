@@ -1,4 +1,5 @@
 name: Deploy RWA Trading + MULTI CHAIN
+# FINAL_TRADING_NO_ECOMMERCE_CERT
 
 on:
   push:
@@ -62,7 +63,7 @@ jobs:
           grep -Fq 'id="tvHost"' index.html
           grep -Fq 'rwaMultiChainLazyBootstrap' index.html
           grep -Fq "rwa-live-orderbook-v1.css" chart-core.js
-          grep -Fq "rwa-live-home-v1.js?v=2.0.0" chart-core.js
+          grep -Fq "rwa-live-home-v1.js?v=2.0.1" chart-core.js
           grep -Fq "Hyperliquid Testnet" rwa-live-home-v1.js
           grep -Fq "Mainnet locked" rwa-live-home-v1.js
           grep -Fq "POLICY='chain-abstraction-fail-closed-v2'" rwa-multichain.js
