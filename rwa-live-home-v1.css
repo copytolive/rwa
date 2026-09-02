@@ -25,3 +25,110 @@ body.rwa-target-dashboard-v2{padding-bottom:58px!important}.topbar{height:56px!i
 .rwa-target-order-ticket{overflow:visible!important}.rwa-target-trade-nav,.rwa-target-order-modes{padding:0 9px!important}.rwa-trade-trust,.rwa-target-order-modes>span{display:none!important}.rwa-target-order-grid{grid-template-columns:1fr!important;padding:9px!important}.rwa-target-swap{display:none!important}.rwa-target-order-side label{height:44px!important;font-size:11px!important}.rwa-target-order-side input{font-size:12px!important}.rwa-target-order-side>button{height:46px!important;font-size:12px!important}.rwa-order-advanced>div{grid-template-columns:1fr!important}.rwa-trading-workspace{top:56px!important;bottom:0!important;width:100vw!important;border-left:0!important}.rwa-work-row{grid-template-columns:55px 45px 1fr 1fr 60px!important;font-size:8px!important}.rwa-work-row button{grid-column:1/-1;width:100%;height:32px}.rwa-report-grid{grid-template-columns:1fr 1fr!important}.rwa-confirm-grid,.rwa-live-help-grid{grid-template-columns:1fr!important}.rwa-trade-confirm,.rwa-live-help{padding:8px!important}.rwa-trade-confirm>section,.rwa-live-help>section{width:100%!important;max-height:calc(100vh - 16px)!important}
 }
 /* FINAL_LAYOUT_CERT_V3_1 */
+
+/* REFERENCE_PARITY_V4 — target visual language, trading-only */
+/* The reference had Ecommerce/Seablueprint. Those surfaces remain intentionally removed. */
+body.rwa-target-dashboard-v2{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;letter-spacing:0!important}
+body.rwa-target-dashboard-v2 button,body.rwa-target-dashboard-v2 input,body.rwa-target-dashboard-v2 select{font-family:inherit!important}
+body.rwa-target-dashboard-v2 .brand{min-width:290px!important;gap:11px!important}
+body.rwa-target-dashboard-v2 .brandmark{width:34px!important;height:34px!important;border-radius:0!important;background-color:transparent!important}
+body.rwa-target-dashboard-v2 .brandcopy strong{font-size:19px!important;font-weight:700!important;letter-spacing:-.015em!important}
+body.rwa-target-dashboard-v2 .brandcopy small{display:none!important}
+body.rwa-target-dashboard-v2 .topnav{gap:4px!important}
+body.rwa-target-dashboard-v2 .topnav button{height:38px!important;padding:0 16px!important;border-radius:6px!important;font-size:12px!important;font-weight:560!important;color:#adb8ca!important}
+body.rwa-target-dashboard-v2 .topnav button.active{background:#101a33!important;color:#fff!important;box-shadow:inset 0 -2px 0 #7584ff!important}
+body.rwa-target-dashboard-v2 .top-actions .signin{min-width:148px!important;height:37px!important;border-radius:7px!important;font-size:11px!important;background:linear-gradient(180deg,#5265df,#3345b0)!important;border-color:#6474ea!important}
+body.rwa-target-dashboard-v2 #rwaMultiChainLaunch{height:36px!important;min-width:140px!important;border:1px solid #0b684b!important;border-radius:12px!important;background:#032017!important;color:#35dfa2!important}
+body.rwa-target-dashboard-v2 #rwaMultiChainLaunch b{font-size:8px!important;color:#43e5ac!important}
+body.rwa-target-dashboard-v2 #rwaMultiChainLaunch small{font-size:6.5px!important;color:#70cdb0!important}
+body.rwa-target-dashboard-v2 .rwa-target-icon-actions button{width:35px!important;height:35px!important;border-radius:50%!important;color:#cad3df!important}
+
+@media(min-width:1121px){
+ body.rwa-target-dashboard-v2 .layout{grid-template-columns:290px minmax(0,1fr) 250px!important}
+ body.rwa-target-dashboard-v2 .layout>.left{width:290px!important;min-width:290px!important;max-width:290px!important}
+ body.rwa-target-dashboard-v2 .layout>.right{width:250px!important;min-width:250px!important;max-width:250px!important}
+ body.rwa-target-dashboard-v2 .terminal-header{padding:7px 13px!important;justify-content:flex-start!important;gap:13px!important}
+ body.rwa-target-dashboard-v2 .instrument{min-width:190px!important}
+ body.rwa-target-dashboard-v2 .instrument .tokenicon{width:40px!important;height:40px!important;border-radius:50%!important;font-size:15px!important}
+ body.rwa-target-dashboard-v2 .instrument-line b{font-size:17px!important;font-weight:650!important}
+ body.rwa-target-dashboard-v2 .instrument-copy>small{font-size:9.5px!important}
+ body.rwa-target-dashboard-v2 .quickstats{margin-left:10px!important;gap:22px!important;flex:1 1 auto!important;justify-content:flex-start!important}
+ body.rwa-target-dashboard-v2 .qstat small{font-size:7.5px!important;font-weight:600!important;letter-spacing:.02em!important}
+ body.rwa-target-dashboard-v2 .qstat b{font-size:10px!important;font-weight:620!important}
+ body.rwa-target-dashboard-v2 .price-stat{min-width:108px!important;padding-right:14px!important;border-right:1px solid #17273b!important}
+ body.rwa-target-dashboard-v2 .price-stat small{display:none!important}
+ body.rwa-target-dashboard-v2 .price-stat b{font-size:20px!important;color:#24d99a!important;font-weight:650!important}
+ body.rwa-target-dashboard-v2 .instrument-actions{display:flex!important;margin-left:auto!important}
+ body.rwa-target-dashboard-v2 .instrument-actions button{height:31px!important;padding:0 9px!important;font-size:9px!important;border-radius:6px!important}
+ body.rwa-target-dashboard-v2 .aside-label{height:44px!important}
+ body.rwa-target-dashboard-v2 .market-head{padding:10px!important}
+ body.rwa-target-dashboard-v2 .search{height:39px!important;border-radius:8px!important}
+ body.rwa-target-dashboard-v2 .filters{margin-top:8px!important}
+ body.rwa-target-dashboard-v2 .filter{height:28px!important;padding:0 9px!important;font-size:9px!important;font-weight:620!important}
+ body.rwa-target-dashboard-v2 .paircount{font-size:9px!important;margin-top:8px!important}
+ body.rwa-target-dashboard-v2 .pairrow{min-height:56px!important;padding:7px 11px!important}
+ body.rwa-target-dashboard-v2 .pairrow .tokenicon{width:31px!important;height:31px!important;border-radius:50%!important;font-size:12px!important;font-weight:750!important}
+ body.rwa-target-dashboard-v2 .pairrow .pairmeta b{font-size:12px!important;font-weight:600!important}
+ body.rwa-target-dashboard-v2 .pairrow .pairmeta small{font-size:9px!important}
+ body.rwa-target-dashboard-v2 .pairrow .pairprice b{font-size:11.5px!important;font-weight:600!important}
+ body.rwa-target-dashboard-v2 .pairrow .chg{font-size:9.5px!important}
+ body.rwa-target-dashboard-v2 .pairlist{min-height:0!important}
+ body.rwa-target-dashboard-v2 #rwaTargetMarketCard{flex:0 0 226px!important;min-height:226px!important;height:226px!important;margin:8px!important;padding:12px!important;border-radius:8px!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;background:linear-gradient(160deg,#071426,#040d19)!important}
+ body.rwa-target-dashboard-v2 #rwaTargetMarketCard .rwa-market-card-head{display:flex!important;align-items:flex-start!important;justify-content:space-between!important}
+ body.rwa-target-dashboard-v2 #rwaTargetMarketCard small{font-size:8px!important;color:#8c9db2!important}
+ body.rwa-target-dashboard-v2 #rwaTargetMarketCard b{font-size:20px!important;margin-top:7px!important}
+ body.rwa-target-dashboard-v2 #rwaTargetMarketCard [data-rwa-live-count]{font-size:9px!important;color:#4adca9!important}
+ body.rwa-target-dashboard-v2 #rwaTargetMarketCard .rwa-market-window{font-size:8px!important;color:#a6b4c7!important;border:1px solid #24364e!important;border-radius:6px!important;padding:5px 8px!important}
+ body.rwa-target-dashboard-v2 #rwaTargetMarketCard .rwa-target-market-spark{height:112px!important;min-height:112px!important;margin-top:auto!important;border-top:1px solid rgba(54,78,108,.25)!important;padding-top:10px!important}
+ body.rwa-target-dashboard-v2 #rwaTargetMarketCard svg{display:block!important;width:100%!important;height:100%!important;overflow:visible!important}
+ body.rwa-target-dashboard-v2 #rwaTargetMarketCard .spark-area{fill:rgba(70,112,255,.12)!important}
+ body.rwa-target-dashboard-v2 #rwaTargetMarketCard .spark-line{fill:none!important;stroke:#6685ff!important;stroke-width:2!important;vector-effect:non-scaling-stroke!important}
+ body.rwa-target-dashboard-v2 .right-title{height:43px!important}
+ body.rwa-target-dashboard-v2 .right-title span{font-size:12px!important;font-weight:650!important}
+ body.rwa-target-dashboard-v2 .book-head{height:29px!important;font-size:8.5px!important}
+ body.rwa-target-dashboard-v2 .bookrow{height:25px!important;min-height:25px!important;font-size:9px!important;font-weight:500!important}
+ body.rwa-target-dashboard-v2 .midprice{height:56px!important;min-height:56px!important;font-size:16px!important}
+ body.rwa-target-dashboard-v2 .rwa-live-depth-meter{margin:8px 9px!important;padding:8px!important}
+ body.rwa-target-dashboard-v2 .rwa-target-trade-nav{height:39px!important}
+ body.rwa-target-dashboard-v2 .rwa-target-trade-nav button{height:38px!important;font-size:9.5px!important}
+ body.rwa-target-dashboard-v2 .rwa-target-order-modes{height:38px!important}
+ body.rwa-target-dashboard-v2 .rwa-target-order-grid{gap:12px!important;padding:8px 12px 6px!important}
+ body.rwa-target-dashboard-v2 .rwa-target-order-side{gap:6px!important}
+ body.rwa-target-dashboard-v2 .rwa-target-order-side label{height:36px!important;border-radius:5px!important;font-size:9.5px!important}
+ body.rwa-target-dashboard-v2 .rwa-target-order-side>button{height:38px!important;border-radius:4px!important;font-size:11px!important}
+ body.rwa-target-dashboard-v2 .rwa-order-percent{display:grid!important;gap:5px!important}
+ body.rwa-target-dashboard-v2 .rwa-order-percent input[type="range"]{width:100%!important;max-width:none!important;accent-color:#6b85ff!important}
+ body.rwa-target-dashboard-v2 .rwa-order-percent-labels{display:flex!important;justify-content:space-between!important;color:#76869b!important;font-size:7.5px!important}
+ body.rwa-target-dashboard-v2 .rwa-order-advanced summary{font-size:8.5px!important;padding:6px 9px!important}
+ body.rwa-target-dashboard-v2 .rwa-target-trade-note{font-size:7.5px!important}
+}
+
+/* Full page nav workspaces: these must be real pages, not narrow drawers over Markets. */
+body.rwa-super-workspace-open #rwaSuperWorkspace{
+ display:block!important;position:fixed!important;z-index:14000!important;left:0!important;right:0!important;top:59px!important;bottom:38px!important;width:100vw!important;height:auto!important;overflow:auto!important;background:#030812!important;padding:0!important
+}
+body.rwa-super-workspace-open #rwaSuperWorkspace .rwa-super-workspace-head{position:sticky!important;top:0!important;z-index:4!important;min-height:92px!important;padding:18px 22px!important;background:#06101bf5!important;border-bottom:1px solid #1b2a40!important}
+body.rwa-super-workspace-open #rwaSuperWorkspace .rwa-super-body{max-width:1480px!important;margin:0 auto!important;padding:18px 22px 28px!important}
+body.rwa-super-suite-open #suite{
+ display:block!important;position:fixed!important;z-index:14000!important;left:0!important;right:0!important;top:59px!important;bottom:38px!important;width:100vw!important;max-width:none!important;height:auto!important;max-height:none!important;overflow:auto!important;margin:0!important;border:0!important;border-radius:0!important;background:#030812!important
+}
+body.rwa-super-suite-open #suite .suite-head{position:sticky!important;top:0!important;z-index:5!important;padding:14px 20px!important;background:#06101bf7!important;border-bottom:1px solid #1b2a40!important}
+body.rwa-super-suite-open #suite .suite-tabs{position:sticky!important;top:62px!important;z-index:4!important;background:#050d17f7!important;padding:0 18px!important}
+body.rwa-super-suite-open #suite .suite-panel{max-width:1480px!important;margin:0 auto!important;padding:18px 22px 28px!important}
+body.rwa-trading-page-open #rwaTradingWorkspace{left:0!important;right:0!important;top:59px!important;bottom:38px!important;width:100vw!important;max-width:none!important;border-left:0!important;box-shadow:none!important;background:#030812!important}
+body.rwa-trading-page-open #rwaTradingWorkspace>header{height:78px!important;padding:0 22px!important}
+body.rwa-trading-page-open #rwaTradingWorkspace [data-workspace-body]{max-width:1480px!important;margin:0 auto!important;padding:18px 22px 28px!important}
+body.rwa-trading-page-open .rwa-work-empty{min-height:240px!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;padding:28px!important}
+body.rwa-trading-page-open .rwa-report-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+
+.rwa-token-btc{background:#f7931a!important;color:#fff!important}.rwa-token-eth{background:#e7e9ee!important;color:#31384b!important}.rwa-token-sol{background:linear-gradient(145deg,#00ffa3,#7c4dff)!important;color:#081019!important}.rwa-token-xrp{background:#10151d!important;color:#fff!important}.rwa-token-usdc{background:#2775ca!important;color:#fff!important}.rwa-token-bnb{background:#f3ba2f!important;color:#161616!important}.rwa-token-zec{background:#f4b728!important;color:#111!important}.rwa-token-uni{background:#ff007a!important;color:#fff!important}.rwa-token-default{background:#172231!important;color:#dfe8f5!important}
+
+/* mobile keeps the same real order ticket but preserves compact navigation */
+@media(max-width:680px){
+ body.rwa-super-workspace-open #rwaSuperWorkspace,body.rwa-super-suite-open #suite,body.rwa-trading-page-open #rwaTradingWorkspace{top:56px!important;bottom:0!important}
+ body.rwa-super-workspace-open #rwaSuperWorkspace .rwa-super-body,body.rwa-super-suite-open #suite .suite-panel,body.rwa-trading-page-open #rwaTradingWorkspace [data-workspace-body]{padding:12px!important}
+ body.rwa-target-dashboard-v2 #rwaTargetMarketCard{display:none!important}
+ body.rwa-target-dashboard-v2 .brandmark{width:31px!important;height:31px!important}
+ body.rwa-target-dashboard-v2 .brandcopy strong{font-size:16px!important}
+}
+/* END_REFERENCE_PARITY_V4 */
