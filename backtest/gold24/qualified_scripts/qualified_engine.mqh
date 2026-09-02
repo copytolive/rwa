@@ -14,6 +14,15 @@ CTrade trade;
 #ifndef QM_SLOW
 #error QM_SLOW must be defined by wrapper
 #endif
+#ifndef QM_P1
+#define QM_P1 0.0
+#endif
+#ifndef QM_P2
+#define QM_P2 0.0
+#endif
+#ifndef QM_P3
+#define QM_P3 0.0
+#endif
 #ifndef QM_SL_USD
 #error QM_SL_USD must be defined by wrapper
 #endif
@@ -47,6 +56,9 @@ input int    InpDeviationPoints = 50;
 const datetime CANONICAL_START = D'2000.10.23 00:00';
 const int FAST=QM_FAST;
 const int SLOW=QM_SLOW;
+const double P1=QM_P1;
+const double P2=QM_P2;
+const double P3=QM_P3;
 const double SL_USD=QM_SL_USD;
 const double TP_USD=QM_TP_USD;
 const double OFFSET_USD=QM_OFFSET_USD;
@@ -217,6 +229,36 @@ double SimpleRollingRSI(MqlRates &r[],int period)
    return 100.0-100.0/(1.0+rs);
 }
 
+double TrueRangeAt(MqlRates &r[],int idx)
+{
+   if(idx<=0) return r[idx].high-r[idx].low;
+   double a=r[idx].high-r[idx].low;
+   double b=MathAbs(r[idx].high-r[idx-1].close);
+   double c=MathAbs(r[idx].low-r[idx-1].close);
+   return MathMax(a,MathMax(b,c));
+}
+
+double RollingATRAt(MqlRates &r[],int period,int endIdx)
+{
+   if(period<=0 || endIdx-period+1<1) return EMPTY_VALUE;
+   double sum=0.0;
+   for(int i=endIdx-period+1;i<=endIdx;i++) sum+=TrueRangeAt(r,i);
+   return sum/period;
+}
+
+void PriorRange(MqlRates &r[],int lookback,int signalIdx,double &rh,double &rl)
+{
+   rh=-DBL_MAX; rl=DBL_MAX;
+   int start=signalIdx-lookback;
+   int end=signalIdx-1;
+   if(start<0) start=0;
+   for(int i=start;i<=end;i++)
+   {
+      if(r[i].high>rh) rh=r[i].high;
+      if(r[i].low<rl) rl=r[i].low;
+   }
+}
+
 int CanonicalSignal()
 {
    MqlRates r[]; if(!LoadCanonicalRates(r)) return 0;
@@ -245,6 +287,29 @@ int CanonicalSignal()
       double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
       longSig=(bull && emaFast>emaSlow);
       shortSig=(bear && emaFast<emaSlow);
+   }
+   else if(QM_FAMILY_CODE==3)
+   {
+      // Python CHART_PATTERN parity:
+      // near current support/resistance AND prior bar touched its own prior range,
+      // tolerance = rolling ATR(FAST) * P1, confirmed by current candle and EMA(FAST).
+      if(n<=MathMax(SLOW+2,FAST+2)) return 0;
+      int curIdx=n-1,prevIdx=n-2;
+      double curRh,curRl,prevRh,prevRl;
+      PriorRange(r,SLOW,curIdx,curRh,curRl);
+      PriorRange(r,SLOW,prevIdx,prevRh,prevRl);
+      double atrCur=RollingATRAt(r,FAST,curIdx);
+      double atrPrev=RollingATRAt(r,FAST,prevIdx);
+      if(atrCur==EMPTY_VALUE || atrPrev==EMPTY_VALUE) return 0;
+      double tolCur=MathMax(atrCur*P1,1e-9);
+      double tolPrev=MathMax(atrPrev*P1,1e-9);
+      bool nearSupport=(MathAbs(r[curIdx].low-curRl)<=tolCur);
+      bool nearResistance=(MathAbs(r[curIdx].high-curRh)<=tolCur);
+      bool priorSupportTouch=(MathAbs(r[prevIdx].low-prevRl)<=tolPrev);
+      bool priorResistanceTouch=(MathAbs(r[prevIdx].high-prevRh)<=tolPrev);
+      double emaFast=PandasEMA(r,FAST);
+      longSig=(nearSupport && priorSupportTouch && r[curIdx].close>r[curIdx].open && r[curIdx].close>emaFast);
+      shortSig=(nearResistance && priorResistanceTouch && r[curIdx].close<r[curIdx].open && r[curIdx].close<emaFast);
    }
    else
    {
