@@ -1,59 +1,14 @@
-/* Ecommerce target: keep the canonical Order Book rail visible and remove unrelated right-rail cards while #shop is open. */
+/* Live order book only; percentages are injected from real aggTrade flow. */
 @media(min-width:681px){
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right,
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right{
-    overflow:hidden!important;
-    background:#030a13!important;
-  }
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right>.mover-section,
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right>.activity-section,
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right>.institutional-card,
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right>.order-section~*,
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right>.mover-section,
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right>.activity-section,
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right>.institutional-card,
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right>.order-section~*{
-    display:none!important;visibility:hidden!important;pointer-events:none!important;
-  }
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right>.order-section,
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right>.order-section{
-    display:flex!important;visibility:visible!important;opacity:1!important;
-    flex-direction:column!important;align-items:stretch!important;
-    height:auto!important;min-height:0!important;max-height:none!important;
-    overflow:visible!important;padding:0 10px 12px!important;margin:0!important;
-    border:0!important;background:#030a13!important;
-  }
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right>.order-section .right-title,
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right>.order-section .right-title{
-    min-height:45px!important;height:45px!important;padding:0!important;display:flex!important;align-items:center!important;
-    border-bottom:1px solid #18283c!important;
-  }
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right .book-head,
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right .book-head{
-    min-height:31px!important;height:31px!important;display:grid!important;align-items:center!important;
-  }
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right #asks,
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right #bids,
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right #asks,
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right #bids{
-    display:block!important;visibility:visible!important;opacity:1!important;height:auto!important;overflow:visible!important;
-  }
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right .bookrow,
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right .bookrow{
-    min-height:27px!important;height:27px!important;display:grid!important;align-items:center!important;
-    font-size:10px!important;line-height:1!important;
-  }
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right #midPrice,
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right #midPrice{
-    display:flex!important;align-items:center!important;min-height:48px!important;height:48px!important;
-    margin:0!important;padding:0 2px!important;border-top:1px solid #173047!important;border-bottom:1px solid #173047!important;
-    color:#28e0a0!important;font-size:17px!important;font-weight:800!important;
-  }
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right>.order-section:after,
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right>.order-section:after{
-    content:'B 56%                              44% S';
-    display:block!important;box-sizing:border-box!important;margin-top:10px!important;padding:10px 7px!important;
-    border:1px solid #153348!important;border-radius:5px!important;color:#24d99d!important;background:linear-gradient(90deg,rgba(24,185,133,.20) 0 56%,rgba(237,64,84,.18) 56% 100%)!important;
-    font-size:10px!important;font-weight:800!important;white-space:pre!important;
-  }
+html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right{overflow:hidden!important;background:#030a13!important}
+html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right>.mover-section,
+html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right>.activity-section,
+html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right>.institutional-card{display:none!important}
+html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right>.order-section{display:flex!important;flex-direction:column!important;height:100%!important;min-height:0!important;overflow:hidden!important;padding:0!important;margin:0!important;border:0!important;background:#030a13!important}
+html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right .right-title{height:43px!important;min-height:43px!important;padding:0 11px!important;border-bottom:1px solid #17263a!important}
+html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right .book-head{height:29px!important;min-height:29px!important;padding:0 10px!important}
+html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right #asks,
+html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right #bids{display:block!important;height:auto!important;overflow:hidden!important}
+html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right .bookrow{height:24px!important;min-height:24px!important;padding:0 10px!important;display:grid!important;align-items:center!important;font-size:8px!important;line-height:1!important}
+html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout>.right #midPrice{height:65px!important;min-height:65px!important;margin:0!important;padding:0 10px!important;display:flex!important;align-items:center!important;border-top:1px solid #17263a!important;border-bottom:1px solid #17263a!important;background:#07131d!important;color:#25e3a0!important;font-size:15px!important;font-weight:850!important}
 }
