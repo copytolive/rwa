@@ -468,28 +468,50 @@ jobs:
             $name=[IO.Path]::GetFileNameWithoutExtension($ea.Name);$src=Get-Content $ea.FullName -Raw
             $mm=[regex]::Match($src,'#define\s+(?:QM|MM)_MAGIC\s+(\d+)');if(!$mm.Success){throw "magic missing $name"};$magic=$mm.Groups[1].Value
             $receipt=Join-Path $common "receipt_$magic.txt";Remove-Item $receipt -Force -ErrorAction SilentlyContinue
-            $report=Join-Path $env:MT5_EVIDENCE "$name.html";$ini=Join-Path $env:RUNNER_TEMP "$name.ini";Remove-Item $report -Force -ErrorAction SilentlyContinue
+            $reportName="$name.htm"
+            $report=Join-Path $env:MT5_DATA $reportName
+            $reportEvidence=Join-Path $env:MT5_EVIDENCE $reportName
+            $ini=Join-Path $env:RUNNER_TEMP "$name.ini"
+            Remove-Item $report,$reportEvidence -Force -ErrorAction SilentlyContinue
             @(
               '[Common]',"Login=$env:MT5_LOGIN","Server=$env:MT5_SERVER",'NewsEnable=0','CertInstall=0','[Tester]',
               "Expert=Gold24Qualified\$name",'Symbol=GOLD24-CANON','Period=D1','Model=2','ExecutionMode=0','Optimization=0','ForwardMode=0',
               'FromDate=2000.10.23','ToDate=2026.08.27','Deposit=10000','Currency=USD','ProfitInPips=0','Leverage=1:100',
-              'UseLocal=1','UseRemote=0','UseCloud=0','Visual=0',"Report=$report",'ReplaceReport=1','ShutdownTerminal=1'
+              'UseLocal=1','UseRemote=0','UseCloud=0','Visual=0',"Report=$reportName",'ReplaceReport=1','ShutdownTerminal=1'
             ) | Set-Content $ini -Encoding ASCII
-            Write-Host "START_TESTER $name"
+            Write-Host "START_TESTER $name report=$reportName"
             $p=Start-Process -FilePath $env:MT5_TERMINAL -ArgumentList "/config:$ini" -PassThru
             $deadline=(Get-Date).AddMinutes(4)
-            do {if((Test-Path $report) -and (Test-Path $receipt)){break};Start-Sleep -Seconds 2} while((Get-Date) -lt $deadline)
-            if(!(Test-Path $report)){
-              $alt=Get-ChildItem $env:MT5_DATA -File -Recurse -ErrorAction SilentlyContinue | Where-Object {$_.BaseName -eq $name -and $_.Extension -match '^\.html?$'} | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-              if($null -ne $alt){Copy-Item $alt.FullName $report -Force}
-            }
+            do {
+              if(!(Test-Path $report)){
+                $alt=Get-ChildItem $env:MT5_DATA -File -Recurse -ErrorAction SilentlyContinue | Where-Object {$_.BaseName -eq $name -and $_.Extension -match '^\.html?
+            $kv=@{};foreach($line in ($txt -split "`r?`n")){if($line -match '^([^=]+)=(.*)$'){$kv[$matches[1]]=$matches[2]}}
+            if($kv.status -ne 'PASS'){throw "EA operational status != PASS $name`n$txt"}
+            if([int64]$kv.bars -lt 6000 -or [int64]$kv.signals -le 0 -or [int64]$kv.order_attempts -le 0 -or [int64]$kv.order_accepted -le 0 -or [int64]$kv.trade_errors -ne 0){throw "EA operational counters FAIL $name`n$txt"}
+            Write-Host "MT5_OPERATIONAL_PASS $name bars=$($kv.bars) signals=$($kv.signals) accepted=$($kv.order_accepted)"
+          }
+      - name: Upload native MetaQuotes MT5 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold24-qualified-metaquotes-mt5-${{ github.run_id }}
+          path: ${{ env.MT5_EVIDENCE }}
+          if-no-files-found: warn
+          retention-days: 90
+} | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+                if($null -ne $alt){$report=$alt.FullName}
+              }
+              if((Test-Path $report) -and (Test-Path $receipt)){break}
+              Start-Sleep -Seconds 2
+            } while((Get-Date) -lt $deadline)
             if(-not $p.HasExited){Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue}
             Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
             if(!(Test-Path $report) -or !(Test-Path $receipt)){
-              $diag=Join-Path $env:MT5_EVIDENCE "$name-diagnostic.txt";"name=$name`nreport_exists=$(Test-Path $report)`nreceipt_exists=$(Test-Path $receipt)`nconfig=$ini"|Set-Content $diag
+              $diag=Join-Path $env:MT5_EVIDENCE "$name-diagnostic.txt";"name=$name`nreport_path=$report`nreport_exists=$(Test-Path $report)`nreceipt_exists=$(Test-Path $receipt)`nconfig=$ini"|Set-Content $diag
               Get-ChildItem (Join-Path $env:MT5_DATA 'logs') -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 3 | ForEach-Object {Copy-Item $_.FullName (Join-Path $env:MT5_EVIDENCE ("terminal-"+$_.Name)) -Force}
               throw "tester evidence missing $name report=$(Test-Path $report) receipt=$(Test-Path $receipt)"
             }
+            Copy-Item $report $reportEvidence -Force
             $txt=Get-Content $receipt -Raw;Copy-Item $receipt (Join-Path $env:MT5_EVIDENCE "$name-receipt.txt") -Force
             $kv=@{};foreach($line in ($txt -split "`r?`n")){if($line -match '^([^=]+)=(.*)$'){$kv[$matches[1]]=$matches[2]}}
             if($kv.status -ne 'PASS'){throw "EA operational status != PASS $name`n$txt"}
