@@ -9,7 +9,7 @@ if str(GOLD24) not in sys.path: sys.path.insert(0,str(GOLD24))
 from core import audit_dataset,backtest_candidate  # noqa:E402
 
 STRICT=['rank01_donchian_f3_s89_off3_exp4','rank02_candle_engulfing_f34_s144_off2_75_exp8','rank03_donchian_f3_s100_off1_exp7']
-MULTI=['multi_rank01_donchian_f3_s89_off4_75_exp3','multi_rank02_candle_engulfing_f100_s144_off5_exp4','multi_chart_pattern_f3_s34_off1_25_exp8','multi_rank03_candle_engulfing_f26_s144_off2_exp5','multi_rank04_candle_engulfing_f26_s144_off2_75_exp7','multi_rank05_candle_engulfing_f34_s144_off4_5_exp8','multi_rank06_candle_engulfing_f34_s144_off1_25_exp8','multi_rank07_candle_engulfing_f55_s100_off3_25_exp8','multi_rank08_candle_engulfing_f26_s144_off1_75_exp8','multi_adaptive_trend_f20_s144_off5_exp5']
+MULTI=['multi_rank01_donchian_f3_s89_off4_75_exp3','multi_rank02_candle_engulfing_f100_s144_off5_exp4','multi_chart_pattern_f3_s34_off1_25_exp8','multi_bollinger_reversion_v2_f3_s14_off1_25_exp4','multi_rank03_candle_engulfing_f26_s144_off2_exp5','multi_volume_f50_s100_off1_exp5','multi_rank04_candle_engulfing_f26_s144_off2_75_exp7','multi_rank05_candle_engulfing_f34_s144_off4_5_exp8','multi_rank06_candle_engulfing_f34_s144_off1_25_exp8','multi_rank07_candle_engulfing_f55_s100_off3_25_exp8','multi_rank08_candle_engulfing_f26_s144_off1_75_exp8','multi_adaptive_trend_f20_s144_off5_exp5']
 ALL=STRICT+MULTI
 METRICS={'trades':('trades',0.0),'win_rate_pct':('wr',1e-9),'profit_factor':('profit_factor',1e-9),'net_profit_usd':('net_profit',1e-6),'ev_per_trade_usd':('expectancy',1e-9),'max_dd_pct':('max_dd_pct',1e-9),'sqn':('sqn',1e-9)}
 CSV_METRICS={'trades':'total_entry','win_rate_pct':'standard_lot_win_rate_pct','profit_factor':'standard_lot_profit_factor_same_cost_model','net_profit_usd':'standard_lot_net_profit_usd_same_cost_model','ev_per_trade_usd':'standard_lot_ev_per_trade_usd_same_cost_model','max_dd_pct':'standard_lot_max_dd_pct_starting_equity_10000','sqn':'standard_lot_sqn_same_cost_model','sl_pips':'sl_pips','tp_pips':'tp_pips'}
@@ -25,11 +25,11 @@ def macro(text,name):
 
 def check_wrapper(stem,m):
     text=(HERE/f'{stem}.mq5').read_text(encoding='utf-8');pref='MM' if stem.startswith('multi_') else 'QM';c=m.CANDIDATE;e=m.EXPECTED
-    family_codes={'DONCHIAN':'1','CANDLE_ENGULFING':'2','CHART_PATTERN':'3','ADAPTIVE_TREND':'4'}
+    family_codes={'DONCHIAN':'1','CANDLE_ENGULFING':'2','CHART_PATTERN':'3','ADAPTIVE_TREND':'4','BOLLINGER_REVERSION_V2':'5','VOLUME':'6'}
     if c.family not in family_codes:
         return [f'unsupported selected MT5 family mapping: {c.family}']
     expected={f'{pref}_FAMILY_CODE':family_codes[c.family],f'{pref}_FAST':str(c.fast),f'{pref}_SLOW':str(c.slow),f'{pref}_SL_USD':str(float(c.sl)),f'{pref}_TP_USD':str(float(c.tp)),f'{pref}_OFFSET_USD':str(float(c.offset)),f'{pref}_EXPIRY_BARS':str(c.expiry),f'{pref}_DIRECTION_MODE':f'"{c.direction_mode}"'}
-    if c.family in {'CHART_PATTERN','ADAPTIVE_TREND'}:
+    if c.family in {'CHART_PATTERN','ADAPTIVE_TREND','BOLLINGER_REVERSION_V2','VOLUME'}:
         expected.update({f'{pref}_P1':str(float(c.p1)),f'{pref}_P2':str(float(c.p2)),f'{pref}_P3':str(float(c.p3))})
     errors=[]
     for k,v in expected.items():
@@ -67,6 +67,6 @@ def main():
             record['canonical_python_parity']='PASS' if not errs else 'FAIL';record['dataset_rows']=audit.get('rows')
         if errs:raise SystemExit(json.dumps(record,indent=2))
         results.append(record)
-    payload={'status':'PASS','strict_count':len(STRICT),'multi_count':len(MULTI),'total_method_pairs':len(ALL),'checks':results,'contract':{'python':'exact canonical core.py qty=100 parity','mt5':'native MetaEditor clean compile plus custom-symbol Strategy Tester operational certification; wrapper config/hash must match Python candidate','family_parameter_note':'DONCHIAN/CANDLE p1/p2/p3 remain identity-only; selected CHART_PATTERN and ADAPTIVE_TREND consume p1 and their MT5 wrappers carry exact p1/p2/p3 macros','broker_pnl_note':'broker-specific spread/commission/swap/tick sequence can differ from canonical stressed cost model'}}
+    payload={'status':'PASS','strict_count':len(STRICT),'multi_count':len(MULTI),'total_method_pairs':len(ALL),'checks':results,'contract':{'python':'exact canonical core.py qty=100 parity','mt5':'native MetaEditor clean compile plus custom-symbol Strategy Tester operational certification; wrapper config/hash must match Python candidate','family_parameter_note':'DONCHIAN/CANDLE p1/p2/p3 remain identity-only; selected CHART_PATTERN, ADAPTIVE_TREND, BOLLINGER_REVERSION_V2 and VOLUME consume family parameters and their MT5 wrappers carry exact p1/p2/p3 macros','broker_pnl_note':'broker-specific spread/commission/swap/tick sequence can differ from canonical stressed cost model'}}
     Path(a.out).write_text(json.dumps(payload,indent=2)+'\n',encoding='utf-8');print(json.dumps(payload,indent=2))
 if __name__=='__main__':main()
