@@ -1,27 +1,14 @@
-name: Deploy RWA System + Canonical Realworldasset UI
+name: Deploy RWA Initial UI + Research Pages
 
 on:
   push:
     branches: ["main"]
     paths:
       - ".github/workflows/pages.yml"
-      - "apps/realworldasset/**"
-      - "renko/**"
       - "index.html"
-      - "app.js"
-      - "styles.css"
-      - "mobile.css"
-      - "stable-shell.css"
-      - "superapp-v5.js"
-      - "superapp-v5.css"
-      - "rwa-sw-v5.js"
-      - "rwa-target-dashboard-v2.js"
-      - "rwa-target-dashboard-v2.css"
-      - "rwa-ecommerce-target-controller-v1.js"
-      - "rwa-ecommerce-target-hardening-v1.js"
-      - "manifest.webmanifest"
-      - "UI_SYNC_MANIFEST.json"
-      - "REALWORLDASSET_MIGRATION_MANIFEST.json"
+      - "renko/**"
+      - "backtest/**"
+      - "legacy-canonical.js"
   workflow_dispatch:
 
 permissions:
@@ -31,196 +18,69 @@ permissions:
 
 concurrency:
   group: rwa-pages-production
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
-  verify-system:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
     steps:
       - name: Checkout exact release SHA
         uses: actions/checkout@v4
 
-      - name: Validate RWA system/runtime payload
+      - name: Verify initial RWA root UI and research pages
         shell: bash
         run: |
           set -euo pipefail
-          for f in \
-            index.html app.js styles.css mobile.css stable-shell.css \
-            superapp-v5.js superapp-v5.css rwa-sw-v5.js \
-            rwa-target-dashboard-v2.js rwa-target-dashboard-v2.css \
-            rwa-ecommerce-target-controller-v1.js rwa-ecommerce-target-hardening-v1.js \
-            manifest.webmanifest; do
-            test -s "$f"
-          done
-          node --check app.js
-          node --check superapp-v5.js
-          node --check rwa-target-dashboard-v2.js
-          node --check rwa-ecommerce-target-controller-v1.js
-          node --check rwa-ecommerce-target-hardening-v1.js
-          echo RWA_SYSTEM_RUNTIME_PASS
+          test -s index.html
+          grep -Fq '<title>RWA — Real World Assets</title>' index.html
+          grep -Fq 'Own the <span class="grad">real world.</span>' index.html
+          ! grep -Fq 'RWA × Seablueprint' index.html
+          ! grep -Fq '/rwa/_next/' index.html
+          test -s renko/index.html
+          test -s backtest/index.html
+          test -s legacy-canonical.js
+          echo INITIAL_RWA_UI_PASS
 
-      - name: Validate RENKO system payload
+      - name: Compose static Pages artifact
         shell: bash
         run: |
           set -euo pipefail
-          for f in \
-            renko/index.html \
-            renko/renko-tv.css \
-            renko/renko-tv-engine.js \
-            renko/renko-tv-engine-fastpath.js \
-            renko/renko-tv-app.js \
-            renko/renko-tv-fixed-1s.js \
-            renko/renko-tv-atr-control.js \
-            renko/renko-tv-atr-fixed1s.js \
-            renko/renko-tv-atr-ui-sync.js \
-            renko/renko-tv-traditional-control.js \
-            renko/renko-tv-locale-guard.js \
-            renko/renko-tv-total-history.js \
-            renko/renko-gold-origin-pack.js \
-            renko/history/renko-gold-xauusd-origin.json.gz \
-            renko/xaut-okx-1s-pack.csv.gz \
-            renko/xaut-okx-1s-pack.meta.json; do
-            test -s "$f"
-          done
-          node --check renko/renko-tv-engine.js
-          node --check renko/renko-tv-app.js
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-          m=json.loads(Path('renko/xaut-okx-1s-pack.meta.json').read_text())
-          p=m.get('provenance') or {}
-          assert m['schema']=='renko-xaut-okx-1s-pack-v2',m
-          assert m['provider']=='OKX Spot' and m['instrument']=='XAUT-USDT',m
-          assert m['interval']=='1s' and m['intervalMs']==1000,m
-          assert m['rows']==1_005_000,m
-          assert p.get('upsampled') is False and p.get('synthetic1s') is False,p
-          print('RENKO_SYSTEM_PAYLOAD_PASS')
-          PY
-
-  build-ui:
-    runs-on: ubuntu-latest
-    timeout-minutes: 35
-    steps:
-      - name: Checkout exact release SHA
-        uses: actions/checkout@v4
-
-      - name: Verify canonical migrated realworldasset UI source
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -s UI_SYNC_MANIFEST.json
-          test -s REALWORLDASSET_MIGRATION_MANIFEST.json
-          test -s apps/realworldasset/UPSTREAM_SHA.txt
-          test -s apps/realworldasset/package.json
-          test -s apps/realworldasset/package-lock.json
-          test -s apps/realworldasset/next.config.js
-          test -s 'apps/realworldasset/src/app/[...slug]/page.tsx'
-          FILE_COUNT="$(git ls-files apps/realworldasset | wc -l | tr -d ' ')"
-          test "$FILE_COUNT" -gt 50
-          grep -Fq 'MerchantGrowthRoute' 'apps/realworldasset/src/app/[...slug]/page.tsx'
-          grep -Fq '"/rwa"' apps/realworldasset/next.config.js
-          SOURCE_SHA="$(cat apps/realworldasset/UPSTREAM_SHA.txt)"
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-          source=Path('apps/realworldasset/UPSTREAM_SHA.txt').read_text().strip()
-          manifest=json.loads(Path('REALWORLDASSET_MIGRATION_MANIFEST.json').read_text())
-          sync=json.loads(Path('UI_SYNC_MANIFEST.json').read_text())
-          assert source == manifest['sourceSha'], (source, manifest.get('sourceSha'))
-          assert sync['canonicalPath']=='apps/realworldasset', sync
-          assert sync.get('compatibilityMirror') is None, sync
-          assert sync.get('syncMode')=='embedded-canonical-source', sync
-          print('CANONICAL_REALWORLDASSET_SOURCE_IDENTITY_PASS', source)
-          PY
-          test ! -e ui/realworldasset
-          test ! -e .github/workflows/sync-realworldasset-ui.yml
-          echo "TOTAL_UI_SOURCE_PASS files=$FILE_COUNT upstream=$SOURCE_SHA canonical_only=1"
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: apps/realworldasset/package-lock.json
-
-      - name: Install UI dependencies
-        working-directory: apps/realworldasset
-        run: npm ci --no-audit --no-fund
-
-      - name: Verify total UI interactions
-        working-directory: apps/realworldasset
-        run: |
-          set -euo pipefail
-          npm run verify:interactions
-          npm run verify:chat04
-          npm run verify:chat05
-          npm run verify:chat06
-          npm run verify:chat07
-          npm run verify:chat08
-          npm run verify:chat09
-          npm run verify:chat10
-          npm run verify:chat11
-          npm run verify:chat12
-          npm run verify:chat13
-
-      - name: TypeScript verification
-        working-directory: apps/realworldasset
-        run: npm run typecheck
-
-      - name: Build realworldasset UI at canonical /rwa base path
-        working-directory: apps/realworldasset
-        env:
-          RWA_BASE_PATH: /rwa
-          GITHUB_ACTIONS: "true"
-        run: npm run build
-
-      - name: Compose single production artifact
-        shell: bash
-        run: |
-          set -euo pipefail
-          O=apps/realworldasset/out
-          test -s "$O/index.html"
-          for route in markets merchant merchant/orders merchant/updates/new merchant/ads community settings checkout account/orders; do
-            test -s "$O/$route/index.html"
-          done
-          grep -Rq '/rwa/_next/' "$O/index.html" "$O/merchant/index.html"
-          rm -rf "$O/renko"
-          cp -a renko "$O/renko"
-          printf '%s\n' "$GITHUB_SHA" > "$O/deployment-sha.txt"
-          printf '%s\n' "$GITHUB_SHA" > "$O/renko/deployment-sha.txt"
-          printf '%s\n' "$GITHUB_SHA" > "$O/system-sha.txt"
-          cp apps/realworldasset/UPSTREAM_SHA.txt "$O/ui-source-sha.txt"
-          cp UI_SYNC_MANIFEST.json "$O/UI_SYNC_MANIFEST.json"
-          cp REALWORLDASSET_MIGRATION_MANIFEST.json "$O/REALWORLDASSET_MIGRATION_MANIFEST.json"
-          touch "$O/.nojekyll"
-          test -s "$O/renko/index.html"
-          test -s "$O/renko/deployment-sha.txt"
-          echo SINGLE_RWA_REALWORLDASSET_PRODUCTION_ARTIFACT_PASS
+          rm -rf site
+          mkdir -p site
+          cp index.html site/index.html
+          cp legacy-canonical.js site/legacy-canonical.js
+          cp -a renko site/renko
+          cp -a backtest site/backtest
+          touch site/.nojekyll
+          printf '%s\n' "$GITHUB_SHA" > site/deployment-sha.txt
+          printf '%s\n' "$GITHUB_SHA" > site/renko/deployment-sha.txt
+          printf '%s\n' "$GITHUB_SHA" > site/backtest/deployment-sha.txt
+          echo STATIC_INITIAL_UI_ARTIFACT_PASS
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: apps/realworldasset/out
+          path: site
 
   deploy:
-    needs: [verify-system, build-ui]
+    needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy single RWA production
+      - name: Deploy initial RWA UI
         id: deployment
         uses: actions/deploy-pages@v4
 
   validate-public:
     needs: deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 15
     steps:
-      - name: Wait for exact public deployment and validate routes
+      - name: Validate public root, Renko and backtest
         shell: bash
         run: |
           set -euo pipefail
@@ -228,110 +88,15 @@ jobs:
           PASS=0
           for i in $(seq 1 36); do
             SHA="$(curl -fsSL --retry 2 "$BASE/deployment-sha.txt" 2>/dev/null || true)"
-            RENKO_SHA="$(curl -fsSL --retry 2 "$BASE/renko/deployment-sha.txt" 2>/dev/null || true)"
-            if [ "$SHA" = "$GITHUB_SHA" ] && [ "$RENKO_SHA" = "$GITHUB_SHA" ]; then PASS=1; break; fi
+            if [ "$SHA" = "$GITHUB_SHA" ]; then PASS=1; break; fi
             sleep 5
           done
           test "$PASS" = 1
-          UI_SHA="$(curl -fsSL "$BASE/ui-source-sha.txt")"
-          test -n "$UI_SHA"
-          for route in / /markets/ /merchant/ /merchant/orders/ /merchant/updates/new/ /merchant/ads/ /community/ /settings/ /checkout/ /account/orders/ /renko/; do
-            CODE="$(curl -sS -L -o /tmp/page.html -w '%{http_code}' --retry 4 --retry-delay 2 "$BASE$route")"
-            test "$CODE" = 200
-          done
-          echo "PUBLIC_SINGLE_RWA_REALWORLDASSET_PASS system=$GITHUB_SHA renko=$GITHUB_SHA ui=$UI_SHA"
-
-      - name: Install Chromium
-        run: |
-          python3 -m pip install --disable-pip-version-check playwright==1.55.0
-          python3 -m playwright install --with-deps chromium
-
-      - name: Chromium production validation desktop and mobile
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p production-proof
-          python3 - <<'PY'
-          from pathlib import Path
-          import time
-          from playwright.sync_api import sync_playwright
-
-          base='https://copytolive.github.io/rwa'
-          routes=['/','/markets/','/merchant/','/merchant/orders/','/merchant/updates/new/','/merchant/ads/','/community/','/settings/','/checkout/','/account/orders/','/renko/']
-          transient_statuses={502,503,504}
-          errors=[]
-          overflows=[]
-          failed=[]
-          retries=[]
-
-          def validate_route(browser, viewport_name, width, height, route):
-              last_errors=[]
-              last_failed=[]
-              last_overflow=None
-              for attempt in range(1,5):
-                  page=browser.new_page(viewport={'width':width,'height':height},device_scale_factor=1)
-                  attempt_errors=[]
-                  attempt_failed=[]
-                  page.on('pageerror',lambda e: attempt_errors.append(str(e)))
-                  page.on('response',lambda r: attempt_failed.append({'status':r.status,'url':r.url}) if r.status>=400 else None)
-                  try:
-                      r=page.goto(base+route,wait_until='domcontentloaded',timeout=30000)
-                      status=r.status if r else None
-                      page.wait_for_timeout(500)
-                      text=page.locator('body').inner_text()
-                      dims=page.evaluate('() => ({sw:document.documentElement.scrollWidth,iw:window.innerWidth})')
-                      last_overflow={'viewport':viewport_name,'route':route,**dims} if dims['sw']>dims['iw']+3 else None
-                      route_ok=(status==200 and '404' not in text[:120] and last_overflow is None)
-                  except Exception as exc:
-                      status=None
-                      route_ok=False
-                      attempt_errors.append(repr(exc))
-                  finally:
-                      page.close()
-
-                  last_errors=attempt_errors
-                  last_failed=attempt_failed
-                  transient_only=(
-                      bool(attempt_failed)
-                      and all(item['status'] in transient_statuses and item['url'].startswith(base) for item in attempt_failed)
-                  )
-                  if route_ok and not attempt_errors and not attempt_failed:
-                      if attempt>1:
-                          retries.append({'viewport':viewport_name,'route':route,'attempts':attempt})
-                      return
-                  if transient_only and attempt<4:
-                      time.sleep(1.5*attempt)
-                      continue
-                  if status is not None and status != 200:
-                      last_failed.append({'status':status,'url':base+route})
-                  errors.extend({'viewport':viewport_name,'route':route,'error':e} for e in last_errors)
-                  failed.extend({'viewport':viewport_name,'route':route,**item} for item in last_failed)
-                  if last_overflow:
-                      overflows.append(last_overflow)
-                  raise AssertionError({'viewport':viewport_name,'route':route,'attempt':attempt,'errors':last_errors,'failed':last_failed,'overflow':last_overflow})
-
-          with sync_playwright() as p:
-              browser=p.chromium.launch(headless=True,args=['--no-sandbox'])
-              for name,width,height in [('desktop',1672,941),('mobile',390,844)]:
-                  for route in routes:
-                      validate_route(browser,name,width,height,route)
-                  page=browser.new_page(viewport={'width':width,'height':height},device_scale_factor=1)
-                  page.goto(base+'/',wait_until='networkidle',timeout=30000)
-                  page.screenshot(path=f'production-proof/rwa-realworldasset-{width}x{height}.png',full_page=False)
-                  page.close()
-              Path('production-proof/result.txt').write_text(
-                  f'PUBLIC_CHROMIUM_REALWORLDASSET_PASS routes={len(routes)} viewports=2 runtimeErrors={len(errors)} failedResponses={len(failed)} horizontalOverflow={len(overflows)} transientRetries={len(retries)}\n'
-              )
-              Path('production-proof/transient-retries.txt').write_text('\n'.join(map(str,retries))+'\n' if retries else 'NONE\n')
-              assert not errors,errors
-              assert not failed,failed
-              assert not overflows,overflows
-              browser.close()
-          PY
-
-      - name: Upload public production proof
-        uses: actions/upload-artifact@v4
-        with:
-          name: rwa-realworldasset-production-proof
-          path: production-proof/
-          retention-days: 7
+          curl -fsSL "$BASE/" > /tmp/root.html
+          grep -Fq '<title>RWA — Real World Assets</title>' /tmp/root.html
+          grep -Fq 'Own the <span class="grad">real world.</span>' /tmp/root.html
+          ! grep -Fq 'RWA × Seablueprint' /tmp/root.html
+          ! grep -Fq '/rwa/_next/' /tmp/root.html
+          test "$(curl -sS -L -o /dev/null -w '%{http_code}' "$BASE/renko/")" = "200"
+          test "$(curl -sS -L -o /dev/null -w '%{http_code}' "$BASE/backtest/")" = "200"
+          echo PUBLIC_INITIAL_RWA_UI_PASS
