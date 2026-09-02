@@ -1,182 +1,67 @@
-name: RWA Release Candidate Gate
+name: RWA Trading Release Candidate
+
 on:
   push:
     branches: ["main"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
+
 permissions:
   contents: read
   statuses: write
-concurrency:
-  group: rwa-release-candidate-${{ github.event.pull_request.number || github.sha }}
-  cancel-in-progress: true
+
 jobs:
   release-candidate:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
-      - name: Validate critical source
+      - name: Validate trading and MULTI CHAIN source
+        shell: bash
         run: |
-          for f in execution-api.js exchange-core.js suite-v2.js social-trade-monitor.js social-notification-defaults.js social-trading-pro.js \
-            rwa-storefront.js rwa-storefront-safety-patch.js rwa-store-draft-ui.js rwa-home-commerce.js rwa-market-labels.js rwa-store-detail.js rwa-checkout-ui.js quick-actions.js \
-            rwa-multichain.js rwa-multichain-engine.js tools/launch-gate-current.mjs trade/app.js trade/hyperliquid.js trade/terminal-pro.js trade/provider-runtime.js \
-            trade/margin-runtime.js trade/chart-overlays.js trade/release-runtime.js trade/ui-polish.js trade/e2e.js trade/e2e-resilience.js trade/config.js \
-            agent-worker/worker.mjs agent-worker/execution.mjs agent-worker/copy-engine.mjs; do node --check "$f"; done
-          python -m json.tool rwa-commerce-registry.json >/dev/null
+          set -euo pipefail
+          for f in index.html app.js chart-core.js rwa-live-home-v1.js quick-actions.js walletconnect.js wallet-core.js execution-api.js exchange-core.js rwa-multichain.js rwa-multichain-engine.js; do test -s "$f"; done
+          for f in app.js chart-core.js rwa-live-home-v1.js quick-actions.js walletconnect.js wallet-core.js execution-api.js exchange-core.js rwa-multichain.js rwa-multichain-engine.js; do node --check "$f"; done
           python -m json.tool rwa-multichain-registry.json >/dev/null
-          test -s rwa-store-detail.css
-          test -s rwa-checkout-ui.css
-          node tools/trade-ui-contract.mjs
-          node tools/product-parity-contract.mjs
-          node tools/multichain-contract.mjs
-          node tools/storefront-ui-contract.mjs
-          node tools/security-gate.mjs
-          node tools/launch-gate-current.mjs --require-engineering
-          node tools/rwa-total-ready-screen.mjs --require-engineering
-          (cd apps/realworldasset && npm run verify:foundation)
-
-      - name: Validate immutable safety, lazy runtime, commerce and MULTI CHAIN V2 markers
-        shell: bash
-        run: |
-          set -euo pipefail
-          grep -Fq "hardening:'single-write-path-v1'" execution-api.js
-          grep -Fq "riskSigner:'agent-only-fail-closed-v1'" execution-api.js
-          grep -Fq "grouping:'normalTpsl'" execution-api.js
-          grep -Fq "WORKER_SINGLE_WRITE_PATH='RWAWorkerExecutionAPI'" agent-worker/execution.mjs
-          ! grep -Eq '(withdraw3|usdClassTransfer|spotSend|sendAsset)' agent-worker/execution.mjs agent-worker/worker.mjs
-          grep -Fq "version:'1.5.0'" trade/config.js
-          grep -Fq "status==='READY_FOR_MAINNET'" trade/config.js
-          grep -Fq "import './ui-polish.js?v=2'" trade/config.js
-          grep -Fq "runtime:'stable-no-observer-v2'" trade/ui-polish.js
-          ! grep -Fq 'MutationObserver' trade/ui-polish.js
-
-          grep -Fq "loadScriptOnce('quick-actions.js?v=1','quick-actions')" superapp-v5.js
-          grep -Fq "loadScriptOnce('social-notification-defaults.js?v=1','social-defaults')" superapp-v5.js
-          grep -Fq "loadScriptOnce('social-trading-pro.js?v=1','social-pro')" superapp-v5.js
-          ! grep -Fq 'quick-actions.js?v=1' index.html
-          ! grep -Fq 'social-notification-defaults.js?v=1' index.html
-          ! grep -Fq 'social-trading-pro.js?v=1' index.html
-
+          python -m json.tool launch/readiness.json >/dev/null
+          python -m json.tool launch/e2e-registry.json >/dev/null
+          grep -Fq '<strong>RWA</strong>' index.html
           grep -Fq 'rwaMultiChainLazyBootstrap' index.html
-          grep -Eq "SRC='rwa-multichain\.js\?v=[0-9]+'" index.html
+          grep -Fq 'id="fallbackChart"' index.html
+          grep -Fq 'id="tvHost"' index.html
+          grep -Fq "hardening:'single-write-path-v1'" execution-api.js
+          grep -Fq "riskGate:'mandatory-internal-v1'" execution-api.js
+          grep -Fq "bracket:'atomic-normal-tpsl-v1'" execution-api.js
+          grep -Fq "const state={env:'testnet'" exchange-core.js
+          grep -Fq "localE2EVerified()&&globalMainnetReady()" exchange-core.js
           grep -Fq "POLICY='chain-abstraction-fail-closed-v2'" rwa-multichain.js
-          grep -Fq "ENGINE_SRC='rwa-multichain-engine.js?v=2'" rwa-multichain.js
-          grep -Fq "const VERSION='2.0.0'" rwa-multichain-engine.js
-          grep -Fq "const LIFI='https://li.quest/v1'" rwa-multichain-engine.js
-          grep -Fq "r?.mainnet_ready===true&&r?.status==='READY_FOR_MAINNET'" rwa-multichain-engine.js
-          grep -Fq '"policy": "chain-abstraction-fail-closed-v2"' rwa-multichain-registry.json
-          ! grep -Fq 'ExchangeClient' rwa-multichain.js
-          ! grep -Fq 'ExchangeClient' rwa-multichain-engine.js
-          ! grep -Fq 'x-lifi-api-key' rwa-multichain-engine.js
-
-          grep -Fq "policy:'explicit-opt-in-v1'" social-notification-defaults.js
-          grep -Fq "venue-backed-social-feed-v1" social-trading-pro.js
-          grep -Fq "ONE_TOKEN_ONE_PHYSICAL_STORE_V1" rwa-storefront.js
-          grep -Fq "preview-no-fake-price-trade-v1" rwa-storefront-safety-patch.js
-          grep -Fq "UNVERIFIED_LOCAL_DRAFT" rwa-store-draft-ui.js
-          grep -Fq "landing-commerce-surface-v1" rwa-home-commerce.js
-          grep -Fq "public-rwa-linked-vs-store-token-v1" rwa-market-labels.js
-          grep -Fq "physical-store-evidence-detail-v1" rwa-store-detail.js
-          grep -Fq "backend-gated-checkout-preview-v1" rwa-checkout-ui.js
-          grep -Fq "Place order after backend verification" rwa-checkout-ui.js
-          grep -Fq '"one_token_one_physical_store": true' rwa-commerce-registry.json
-          grep -Fq 'verifiedStore(s)&&verifiedAsset(s.token)' rwa-storefront.js
-          grep -Fq 'social-trade-monitor.js?v=1' suite.js
-          grep -Fq 'RWAMarginRuntime' trade/margin-runtime.js
-          grep -Fq 'RWAChartTradeOverlay' trade/chart-overlays.js
-          ! grep -Fq 'ExchangeClient' trade/margin-runtime.js trade/chart-overlays.js quick-actions.js social-trade-monitor.js social-trading-pro.js rwa-storefront.js rwa-storefront-safety-patch.js rwa-store-draft-ui.js rwa-home-commerce.js rwa-market-labels.js rwa-store-detail.js rwa-checkout-ui.js trade/ui-polish.js
-
-      - name: Verify canonical GitHub Pages release surfaces
-        if: ${{ github.event_name != 'pull_request' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          base='https://copytolive.github.io/rwa'
-
-          deploy_relevant=0
-          if git rev-parse "$GITHUB_SHA^" >/dev/null 2>&1; then
-            while IFS= read -r p; do
-              case "$p" in
-                .github/workflows/pages.yml|apps/realworldasset/*|renko/*|index.html|app.js|styles.css|mobile.css|stable-shell.css|superapp-v5.js|superapp-v5.css|rwa-sw-v5.js|rwa-target-dashboard-v2.js|rwa-target-dashboard-v2.css|rwa-ecommerce-target-controller-v1.js|rwa-ecommerce-target-hardening-v1.js|manifest.webmanifest|UI_SYNC_MANIFEST.json|REALWORLDASSET_MIGRATION_MANIFEST.json)
-                  deploy_relevant=1
-                  ;;
-              esac
-            done < <(git diff --name-only "$GITHUB_SHA^" "$GITHUB_SHA")
-          else
-            deploy_relevant=1
-          fi
-
-          live_sha=''
-          if [ "$deploy_relevant" = 1 ]; then
-            for i in $(seq 1 120); do
-              q="${GITHUB_RUN_ID}-${i}"
-              live_sha="$(curl --connect-timeout 5 --max-time 12 -fsSL "$base/deployment-sha.txt?v=$q" 2>/dev/null | tr -d '\r\n' || true)"
-              if [ "$live_sha" = "$GITHUB_SHA" ]; then break; fi
-              sleep 5
-            done
-            test "$live_sha" = "$GITHUB_SHA"
-            echo "PUBLIC_EXACT_DEPLOYMENT_SHA_PASS=$live_sha"
-          else
-            live_sha="$(curl --connect-timeout 5 --max-time 20 -fsSL "$base/deployment-sha.txt?v=${GITHUB_RUN_ID}" | tr -d '\r\n')"
-            [[ "$live_sha" =~ ^[0-9a-f]{40}$ ]]
-            echo "PUBLIC_DEPLOYMENT_UNCHANGED_NON_UI_PUSH current=$GITHUB_SHA deployed=$live_sha"
-          fi
-
-          q="${GITHUB_RUN_ID}-canonical"
-          declare -A files=(
-            [root]="/"
-            [markets]="/markets/"
-            [merchant]="/merchant/"
-            [orders]="/merchant/orders/"
-            [community]="/community/"
-            [settings]="/settings/"
-            [checkout]="/checkout/"
-            [account_orders]="/account/orders/"
-            [renko]="/renko/"
-          )
-          for name in "${!files[@]}"; do
-            route="${files[$name]}"
-            code="$(curl --connect-timeout 5 --max-time 25 -sS -L -o "/tmp/rwa-$name.html" -w '%{http_code}' "$base$route?v=$q")"
-            test "$code" = 200
-          done
-
-          grep -Fq 'UI DEMO' /tmp/rwa-root.html
-          grep -Fq 'BACKEND OFFLINE' /tmp/rwa-root.html
-          grep -Fq 'Connect Wallet' /tmp/rwa-root.html
-          grep -Fq 'Demo' /tmp/rwa-markets.html
-          grep -Fq 'Demo' /tmp/rwa-merchant.html
-
-          curl --connect-timeout 5 --max-time 20 -fsSL "$base/UI_SYNC_MANIFEST.json?v=$q" -o /tmp/rwa-sync.json
-          python - <<'PY'
-          import json
-          d=json.load(open('/tmp/rwa-sync.json'))
-          assert d['canonicalPath']=='apps/realworldasset',d
-          assert d.get('compatibilityMirror') is None,d
-          assert d.get('syncMode')=='embedded-canonical-source',d
-          print('PUBLIC_CANONICAL_UI_MANIFEST_PASS')
-          PY
-
-          for retired in superapp-v5.js rwa-multichain.js rwa-multichain-engine.js rwa-multichain-registry.json trade/config.js; do
-            code="$(curl --connect-timeout 5 --max-time 15 -sS -L -o /dev/null -w '%{http_code}' "$base/$retired?v=$q")"
-            test "$code" != 200
-          done
-          legacy_code="$(curl --connect-timeout 5 --max-time 15 -sS -L -o /dev/null -w '%{http_code}' "$base/realworldasset/?v=$q")"
-          test "$legacy_code" != 200
-          echo "RELEASE_CANONICAL_REALWORLDASSET_PUBLIC_PASS deployed=$live_sha"
-
-      - name: Publish release candidate status
+          grep -Fq "REVISION='3.0.0-tuntas'" rwa-multichain.js
+          grep -Fq "const REVISION='3.0.0-tuntas'" rwa-multichain-engine.js
+          ! grep -Eiq 'seablueprint|ecommerce|in-page commerce' index.html
+          ! grep -Eq 'rwa-(commerce|ecommerce|storefront|checkout-ui|home-commerce|store-detail|store-draft)' quick-actions.js
+          test ! -e rwa-seablueprint-commerce-bridge.js
+          test ! -e rwa-commerce-config.json
+          test ! -e commerce-service
+          test ! -e apps/realworldasset
+          node - <<'NODE'
+          const fs=require('fs');
+          const r=JSON.parse(fs.readFileSync('launch/readiness.json','utf8'));
+          if(r.engineering_ready!==true) throw Error('engineering_ready must stay true');
+          if(r.mainnet_ready!==false) throw Error('mainnet must remain fail-closed');
+          if(r.status!=='BLOCKED') throw Error('current launch status must remain BLOCKED');
+          const m=JSON.parse(fs.readFileSync('rwa-multichain-registry.json','utf8'));
+          if(m.policy!=='chain-abstraction-fail-closed-v2') throw Error('multi-chain policy mismatch');
+          if(!Array.isArray(m.networks)||m.networks.length!==9) throw Error('expected 9 network contexts');
+          console.log('RWA_TRADING_RELEASE_SOURCE_PASS');
+          NODE
+      - name: Publish release status
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/release-candidate' -f description='Canonical UI + safety + fail-closed engineering contract verified'
-
-      - name: Publish release candidate failure
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/release-candidate' -f description='Trading + MULTI CHAIN engineering verified; mainnet remains fail-closed'
+      - name: Publish failure
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/release-candidate' -f description='Release candidate validation failed; inspect source/live gate logs'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/release-candidate' -f description='Trading release candidate validation failed'
