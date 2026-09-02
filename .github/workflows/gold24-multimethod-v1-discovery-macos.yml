@@ -15,6 +15,9 @@ on:
     paths:
       - '.github/workflows/gold24-multimethod-v1-discovery-macos.yml'
       - 'backtest/gold24/MULTIMETHOD_V1_DISCOVERY_KICK'
+      - 'backtest/gold24/core.py'
+      - 'backtest/gold24/MASTER_METHOD_UNIVERSE.json'
+      - 'backtest/gold24/multimethod_v1_discovery.py'
       - 'backtest/gold24/multimethod_v1_discovery_strict.py'
       - 'backtest/gold24/multimethod_v1_finalize_strict.py'
 
@@ -122,6 +125,14 @@ jobs:
           assert int(x['source_candidate_cursor'])==int(os.environ['SOURCE_CURSOR'])
           assert int(x['source_archive_total'])==int(os.environ['SOURCE_ARCHIVED'])
           assert int(x['simulated_new_configs_this_run'])==int(os.environ['CANDIDATE_COUNT'])
+          assert int(x['implemented_category_count']) == 20
+          assert x['all_implemented_categories_sampled'] is True
+          assert len(x['generated_category_counts_this_run']) == 20
+          assert all(int(v) > 0 for v in x['generated_category_counts_this_run'].values())
+          assert int(x['implemented_family_count']) == 24
+          family_counts={str(k):int(v) for k,v in x['generated_family_counts_this_run'].items()}
+          assert len(family_counts)==24
+          assert max(family_counts.values())-min(family_counts.values()) <= 1
           assert int(x['library_count']) >= 1
           print(json.dumps(x, indent=2, sort_keys=True))
           PY
@@ -138,6 +149,8 @@ jobs:
           summary=json.loads((out/'latest_multimethod_v1_discovery_summary.json').read_text())
           assert rows
           assert len(rows)==int(summary['library_count'])
+          assert int(summary['implemented_category_count']) == 20
+          assert summary['all_implemented_categories_sampled'] is True
           for row in rows:
               assert int(row['total_entry']) >= 100
               assert float(row['standard_lot_net_profit_usd_same_cost_model']) >= 20000.0
