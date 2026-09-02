@@ -7,7 +7,7 @@ const browser=await chromium.launch({headless:true});
 const failures=[],errors=[];const fail=(m,d=null)=>failures.push({message:m,detail:d});
 async function ready(page){
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:50000});
-  await page.waitForFunction(()=>window.RWALiveHome?.version==='3.1.0'&&window.RWAMarketRuntime?.state?.().pairs?.length>50,{timeout:35000});
+  await page.waitForFunction(()=>window.RWALiveHome?.version==='3.2.0'&&window.RWAMarketRuntime?.state?.().pairs?.length>50,{timeout:35000});
   await page.waitForFunction(()=>document.querySelectorAll('#bids .bookrow').length>0&&document.querySelectorAll('#asks .bookrow').length>0,{timeout:30000});
   await page.waitForFunction(()=>document.querySelector('#rwaTargetOrderTicket'),{timeout:15000});
   await page.waitForTimeout(500);
