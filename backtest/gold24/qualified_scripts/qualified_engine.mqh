@@ -64,6 +64,16 @@ long gOrderAttempts=0;
 long gOrderAccepted=0;
 long gTradeErrors=0;
 long gGapMarketFills=0;
+string gTradeErrorDetails="";
+
+void AppendTradeError(const string action,const uint rc,const string desc,const int err)
+{
+   if(StringLen(gTradeErrorDetails)>7000) return;
+   string clean=desc;
+   StringReplace(clean,"\r"," ");
+   StringReplace(clean,"\n"," ");
+   gTradeErrorDetails+=StringFormat("%s:%u:%s:%d|",action,rc,clean,err);
+}
 
 string ReceiptPath(){ return StringFormat("Gold24Qualified\\receipt_%I64u.txt",InpMagic); }
 
@@ -72,8 +82,8 @@ void WriteReceipt(const string status,const int reason)
    int h=FileOpen(ReceiptPath(),FILE_WRITE|FILE_TXT|FILE_ANSI|FILE_COMMON);
    if(h==INVALID_HANDLE) return;
    FileWriteString(h,StringFormat(
-      "status=%s\nmagic=%I64u\nsignal_symbol=%s\ntrade_symbol=%s\nparity_mode=%s\nbars=%I64d\nsignals=%I64d\norder_attempts=%I64d\norder_accepted=%I64d\ntrade_errors=%I64d\ngap_market_fills=%I64d\ndeinit_reason=%d\n",
-      status,InpMagic,gSignalSymbol,gTradeSymbol,gParity?"true":"false",gBarsSeen,gSignals,gOrderAttempts,gOrderAccepted,gTradeErrors,gGapMarketFills,reason));
+      "status=%s\nmagic=%I64u\nsignal_symbol=%s\ntrade_symbol=%s\nparity_mode=%s\nbars=%I64d\nsignals=%I64d\norder_attempts=%I64d\norder_accepted=%I64d\ntrade_errors=%I64d\ngap_market_fills=%I64d\ntrade_error_details=%s\ndeinit_reason=%d\n",
+      status,InpMagic,gSignalSymbol,gTradeSymbol,gParity?"true":"false",gBarsSeen,gSignals,gOrderAttempts,gOrderAccepted,gTradeErrors,gGapMarketFills,gTradeErrorDetails,reason));
    FileClose(h);
 }
 
@@ -89,7 +99,10 @@ bool RecordTradeResult(const bool ok,const string action)
    bool accepted=ok && RetcodeAccepted(rc);
    if(accepted){ gOrderAccepted++; return true; }
    gTradeErrors++;
-   PrintFormat("GOLD24_TRADE_FAIL action=%s ok=%s retcode=%u desc=%s last_error=%d",action,ok?"true":"false",rc,trade.ResultRetcodeDescription(),GetLastError());
+   int err=GetLastError();
+   string desc=trade.ResultRetcodeDescription();
+   AppendTradeError(action,rc,desc,err);
+   PrintFormat("GOLD24_TRADE_FAIL action=%s ok=%s retcode=%u desc=%s last_error=%d",action,ok?"true":"false",rc,desc,err);
    return false;
 }
 
@@ -162,7 +175,10 @@ void CancelExpiredPending()
       if(!(ok && RetcodeAccepted(rc)))
       {
          gTradeErrors++;
-         PrintFormat("GOLD24_DELETE_FAIL ticket=%I64u retcode=%u desc=%s err=%d",ticket,rc,trade.ResultRetcodeDescription(),GetLastError());
+         int err=GetLastError();
+         string desc=trade.ResultRetcodeDescription();
+         AppendTradeError("DELETE",rc,desc,err);
+         PrintFormat("GOLD24_DELETE_FAIL ticket=%I64u retcode=%u desc=%s err=%d",ticket,rc,desc,err);
       }
    }
 }
@@ -260,7 +276,10 @@ bool ModifyStopsAfterMarket(const int side)
    uint rc=trade.ResultRetcode();
    if(ok && RetcodeAccepted(rc)) return true;
    gTradeErrors++;
-   PrintFormat("GOLD24_STOP_MODIFY_FAIL retcode=%u desc=%s err=%d",rc,trade.ResultRetcodeDescription(),GetLastError());
+   int err=GetLastError();
+   string desc=trade.ResultRetcodeDescription();
+   AppendTradeError("STOP_MODIFY",rc,desc,err);
+   PrintFormat("GOLD24_STOP_MODIFY_FAIL retcode=%u desc=%s err=%d",rc,desc,err);
    return false;
 }
 
