@@ -60,14 +60,18 @@ async function desktop(){
   const buyBox=page.locator('[data-order-side="BUY"]');await buyBox.locator('[data-live-amount]').fill('0.001');await buyBox.locator('[data-live-trade="BUY"]').click();await page.waitForTimeout(700);
   const note=await page.locator('#rwaTargetOrderTicket .rwa-target-trade-note').innerText();if(/Order accepted/i.test(note))fail('headless execution succeeded without a wallet',note);
 
-  const g={topbar:await r('.topbar'),left:await r('.layout>.left'),main:await r('.layout>.main'),right:await r('.layout>.right'),footer:await r('#rwaGlobalTicker')};
-  if(Math.abs(g.topbar.height-59)>2)fail('topbar geometry',g.topbar);if(Math.abs(g.left.width-291)>3)fail('left geometry',g.left);if(Math.abs(g.right.width-280)>3)fail('right geometry',g.right);if(Math.abs(g.footer.height-38)>2)fail('ticker geometry',g.footer);
+  const g={topbar:await r('.topbar'),layout:await r('.layout'),left:await r('.layout>.left'),main:await r('.layout>.main'),right:await r('.layout>.right'),header:await r('.terminal-header'),chart:await r('.chart-wrap'),footer:await r('#rwaGlobalTicker')};
+  const vw=await page.evaluate(()=>document.documentElement.clientWidth),vh=941,mainW=vw-291-280;
+  const expect={topbar:{left:0,top:0,width:vw,height:59},layout:{left:0,top:59,width:vw,height:vh-59-38},left:{left:0,top:59,width:291,height:vh-59-38},main:{left:291,top:59,width:mainW,height:vh-59-38},right:{left:vw-280,top:59,width:280,height:vh-59-38},header:{left:291,top:59,width:mainW,height:72},footer:{left:0,top:vh-38,width:vw,height:38}};
+  for(const [k,w] of Object.entries(expect)){const a=g[k];if(!a){fail('missing geometry '+k);continue}for(const p of Object.keys(w))if(Math.abs(Number(a[p])-Number(w[p]))>3)fail('placement mismatch '+k+'.'+p,{want:w[p],got:a[p],full:a})}
+  if(!g.chart||Math.abs(g.chart.top-(59+72))>4)fail('chart must begin below terminal header',g.chart);
   await page.screenshot({path:proof+'/desktop-1672x941.png',fullPage:false});await ctx.close();return{data,g,note};
 }
 async function mobile(width,height,name){
   const ctx=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,serviceWorkers:'block'});const page=await ctx.newPage();page.on('pageerror',e=>errors.push(name+': '+String(e?.message||e)));await ready(page);
-  const m=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,multichain:!!document.querySelector('#rwaMultiChainLaunch'),ticket:!!document.querySelector('#rwaTargetOrderTicket'),commerce:/seablueprint|ecommerce|in-page commerce/i.test(document.body.innerText),buyH:document.querySelector('[data-order-side="BUY"]>button')?.getBoundingClientRect().height||0,inputH:document.querySelector('[data-order-side="BUY"] label')?.getBoundingClientRect().height||0}));
-  if(m.sw>m.cw+2)fail(name+' horizontal overflow',m);if(!m.multichain||!m.ticket)fail(name+' core controls missing',m);if(m.commerce)fail(name+' commerce visible');if(m.buyH<44||m.inputH<42)fail(name+' touch targets too small',m);
+  await page.locator('#rwaTargetOrderTicket').scrollIntoViewIfNeeded();await page.waitForTimeout(100);
+  const m=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,multichain:!!document.querySelector('#rwaMultiChainLaunch'),ticket:!!document.querySelector('#rwaTargetOrderTicket'),commerce:/seablueprint|ecommerce|in-page commerce/i.test(document.body.innerText),buyH:document.querySelector('[data-order-side="BUY"]>button')?.getBoundingClientRect().height||0,inputH:document.querySelector('[data-order-side="BUY"] label')?.getBoundingClientRect().height||0,ticketDisplay:getComputedStyle(document.querySelector('#rwaTargetOrderTicket')).display}));
+  if(m.sw>m.cw+2)fail(name+' horizontal overflow',m);if(!m.multichain||!m.ticket||m.ticketDisplay==='none')fail(name+' core controls missing',m);if(m.commerce)fail(name+' commerce visible');if(m.buyH<44||m.inputH<42)fail(name+' touch targets too small',m);
   await page.locator('#rwaMultiChainLaunch').click();await page.waitForFunction(()=>window.RWAMultiChain?.status?.().open===true,{timeout:15000});const pw=await page.locator('#rwaMultiChainPanel').evaluate(el=>Math.round(el.getBoundingClientRect().width));if(Math.abs(pw-width)>3)fail(name+' MULTI CHAIN width',{width,pw});await page.locator('#rwaMultiChainPanel .rwa-mc-close').click();
   await page.screenshot({path:proof+'/'+name+'.png',fullPage:false});await ctx.close();return m;
 }
