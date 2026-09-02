@@ -484,21 +484,7 @@ jobs:
             $deadline=(Get-Date).AddMinutes(4)
             do {
               if(!(Test-Path $report)){
-                $alt=Get-ChildItem $env:MT5_DATA -File -Recurse -ErrorAction SilentlyContinue | Where-Object {$_.BaseName -eq $name -and $_.Extension -match '^\.html?
-            $kv=@{};foreach($line in ($txt -split "`r?`n")){if($line -match '^([^=]+)=(.*)$'){$kv[$matches[1]]=$matches[2]}}
-            if($kv.status -ne 'PASS'){throw "EA operational status != PASS $name`n$txt"}
-            if([int64]$kv.bars -lt 6000 -or [int64]$kv.signals -le 0 -or [int64]$kv.order_attempts -le 0 -or [int64]$kv.order_accepted -le 0 -or [int64]$kv.trade_errors -ne 0){throw "EA operational counters FAIL $name`n$txt"}
-            Write-Host "MT5_OPERATIONAL_PASS $name bars=$($kv.bars) signals=$($kv.signals) accepted=$($kv.order_accepted)"
-          }
-      - name: Upload native MetaQuotes MT5 evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gold24-qualified-metaquotes-mt5-${{ github.run_id }}
-          path: ${{ env.MT5_EVIDENCE }}
-          if-no-files-found: warn
-          retention-days: 90
-} | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+                $alt=Get-ChildItem $env:MT5_DATA -File -Recurse -ErrorAction SilentlyContinue | Where-Object {$_.BaseName -eq $name -and $_.Extension -match '^\.html?$'} | Sort-Object LastWriteTime -Descending | Select-Object -First 1
                 if($null -ne $alt){$report=$alt.FullName}
               }
               if((Test-Path $report) -and (Test-Path $receipt)){break}
