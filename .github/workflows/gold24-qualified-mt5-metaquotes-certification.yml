@@ -102,14 +102,30 @@ jobs:
           $ErrorActionPreference='Stop'
           $setup=Join-Path $env:RUNNER_TEMP 'mt5setup.exe'
           Invoke-WebRequest -UseBasicParsing 'https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe' -OutFile $setup
-          Start-Process -FilePath $setup -ArgumentList '/auto' -Wait
-          Start-Sleep -Seconds 12
-          $c=@()
-          foreach($r in @('C:\Program Files','C:\Program Files (x86)',"$env:LOCALAPPDATA\Programs")){
-            if(Test-Path $r){$c+=Get-ChildItem $r -Filter terminal64.exe -File -Recurse -ErrorAction SilentlyContinue}
+          $installer=Start-Process -FilePath $setup -ArgumentList '/auto' -PassThru
+          $terminal=$null
+          $deadline=(Get-Date).AddMinutes(4)
+          do {
+            Start-Sleep -Seconds 10
+            $c=@()
+            foreach($r in @('C:\Program Files','C:\Program Files (x86)',"$env:LOCALAPPDATA\Programs")){
+              if(Test-Path $r){$c+=Get-ChildItem $r -Filter terminal64.exe -File -Recurse -ErrorAction SilentlyContinue}
+            }
+            $terminal=($c|Sort-Object LastWriteTime -Descending|Select-Object -First 1).FullName
+            if(-not [string]::IsNullOrWhiteSpace($terminal)){break}
+          } while((-not $installer.HasExited) -and (Get-Date) -lt $deadline)
+          if(-not $installer.HasExited){
+            Write-Host 'MetaQuotes installer bootstrap exceeded bounded wait; stopping installer process after terminal discovery/check'
+            Stop-Process -Id $installer.Id -Force -ErrorAction SilentlyContinue
           }
-          $terminal=($c|Sort-Object LastWriteTime -Descending|Select-Object -First 1).FullName
-          if([string]::IsNullOrWhiteSpace($terminal)){throw 'MetaQuotes terminal64.exe not found'}
+          if([string]::IsNullOrWhiteSpace($terminal)){
+            $c=@()
+            foreach($r in @('C:\Program Files','C:\Program Files (x86)',"$env:LOCALAPPDATA\Programs")){
+              if(Test-Path $r){$c+=Get-ChildItem $r -Filter terminal64.exe -File -Recurse -ErrorAction SilentlyContinue}
+            }
+            $terminal=($c|Sort-Object LastWriteTime -Descending|Select-Object -First 1).FullName
+          }
+          if([string]::IsNullOrWhiteSpace($terminal)){throw 'MetaQuotes terminal64.exe not found after bounded installer bootstrap'}
           $meta=Join-Path (Split-Path $terminal) 'metaeditor64.exe'
           if(!(Test-Path $meta)){throw 'MetaQuotes metaeditor64.exe missing'}
           "MT5_TERMINAL=$terminal"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
