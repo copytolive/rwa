@@ -1,33 +1,13 @@
-name: Deploy RWA Screenshot Baseline + Research Pages
+name: Deploy RWA to GitHub Pages
 
 on:
   push:
     branches: ["main"]
-    paths:
-      - ".github/workflows/pages.yml"
-      - "index.html"
-      - "app.js"
-      - "realtime-core.js"
-      - "styles.css"
-      - "mobile.css"
-      - "stable-shell.css"
-      - "superapp-v5.css"
-      - "superapp-v5.js"
-      - "chart-core.js"
-      - "market-performance.js"
-      - "mobile.js"
-      - "rwa-target-dashboard-v2.css"
-      - "rwa-target-dashboard-v2-hardening.css"
-      - "rwa-target-dashboard-v2.js"
-      - "rwa-target-dashboard-v2-hardening.js"
-      - "rwa-ecommerce-target-controller-v1.js"
-      - "rwa-ecommerce-target-hardening-v1.js"
-      - "rwa-ecommerce-parity-finish-v2.js"
-      - "rwa-ecommerce-production-visual-v1.js"
-      - "rwa-seablueprint-commerce-bridge.css"
-      - "rwa-seablueprint-commerce-bridge.js"
-      - "renko/**"
-      - "backtest/**"
+    paths-ignore:
+      - "monitor/status.json"
+      - "docs/workflow-archive/**"
+  pull_request:
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -36,93 +16,200 @@ permissions:
   id-token: write
 
 concurrency:
-  group: rwa-pages-production
+  group: rwa-pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Verify screenshot baseline and root isolation
+      - name: Validate current Super App, MULTI CHAIN Tuntas and safety contracts
         shell: bash
         run: |
-          set -euo pipefail
-          test -s index.html
-          grep -Fq 'RWA × Seablueprint' index.html
-          grep -Fq 'IN-PAGE COMMERCE' index.html
-          grep -Fq 'data-rwa-target-nav="markets"' index.html
-          grep -Fq 'data-rwa-target-nav="ecommerce"' index.html
-          grep -Fq 'id="fallbackChart"' index.html
-          grep -Fq 'id="tvHost"' index.html
-          ! grep -Eiq 'renko' index.html
-          ! grep -Fq '/rwa/_next/' index.html
-          test ! -e apps/realworldasset
-          test ! -e REALWORLDASSET_MIGRATION_MANIFEST.json
-          test ! -e UI_SYNC_MANIFEST.json
-          echo RWA_SCREENSHOT_BASELINE_PASS
+          set -euxo pipefail
+          for f in \
+            index.html superapp-v5.js superapp-v5.css rwa-sw-v5.js suite-nav.js \
+            execution-api.js execution-ops-bridge.js exchange-core.js \
+            rwa-execution-config.json token/config.json manifest.webmanifest rwa-discovery-catalog.json \
+            rwa-multichain.js rwa-multichain-engine.js rwa-multichain-registry.json rwa-multichain-revenue.json rwa-multichain-funding.json \
+            launch/multichain-receipts.json launch/multichain-readiness.json \
+            persistent-market-shell-v3.css persistent-market-operability-patch-v1.css enterprise-ui-v12.css market-performance.js \
+            tools/superapp-v5-audit.mjs tools/superapp-v5-browser.mjs \
+            tools/superapp-p16-p20-audit.mjs tools/superapp-p16-p20-browser.mjs \
+            tools/multichain-contract.mjs tools/multichain-browser.mjs tools/multichain-tuntas-browser.mjs \
+            tools/multichain-receipt-matrix.mjs tools/multichain-mainnet-gate.mjs tools/security-gate.mjs \
+            renko/index.html renko/renko-tv.css renko/renko-tv-engine.js renko/renko-tv-app.js \
+            renko/renko-tv-atr-parity.js renko/renko-tv-locale-guard.js renko/renko-tv-fetch-guard.js \
+            renko/renko-tv-ultrafast-ui.js; do test -s "$f"; done
 
-      - name: Compose static site
+          for f in superapp-v5.js rwa-sw-v5.js suite-nav.js execution-api.js execution-ops-bridge.js exchange-core.js market-performance.js \
+            rwa-multichain.js rwa-multichain-engine.js tools/superapp-v5-audit.mjs tools/superapp-v5-browser.mjs \
+            tools/superapp-p16-p20-audit.mjs tools/superapp-p16-p20-browser.mjs tools/multichain-contract.mjs tools/multichain-browser.mjs \
+            tools/multichain-tuntas-browser.mjs tools/multichain-receipt-matrix.mjs tools/multichain-mainnet-gate.mjs \
+            tools/security-gate.mjs renko/renko-tv-engine.js renko/renko-tv-app.js renko/renko-tv-atr-parity.js \
+            renko/renko-tv-locale-guard.js renko/renko-tv-fetch-guard.js renko/renko-tv-ultrafast-ui.js; do node --check "$f"; done
+
+          for f in rwa-execution-config.json token/config.json manifest.webmanifest rwa-discovery-catalog.json \
+            rwa-multichain-registry.json rwa-multichain-revenue.json rwa-multichain-funding.json \
+            launch/multichain-receipts.json launch/multichain-readiness.json; do python -m json.tool "$f" >/dev/null; done
+
+          test "$(grep -o '<script src=' index.html | wc -l | tr -d ' ')" = "6"
+          SUPER_CSS_REF="$(grep -oE 'superapp-v5\.css\?v=[0-9]+' index.html | head -1)"
+          SUPER_JS_REF="$(grep -oE 'superapp-v5\.js\?v=[0-9]+' index.html | head -1)"
+          MARKET_JS_REF="$(grep -oE 'market-performance\.js\?v=[0-9]+' index.html | head -1)"
+          test -n "$SUPER_CSS_REF"; test -n "$SUPER_JS_REF"; test -n "$MARKET_JS_REF"
+          grep -Fq "./$SUPER_CSS_REF" rwa-sw-v5.js
+          grep -Fq "./$SUPER_JS_REF" rwa-sw-v5.js
+          grep -Fq "./$MARKET_JS_REF" rwa-sw-v5.js
+          grep -Fq "u.pathname===ROOT+'rwa-multichain.js'" rwa-sw-v5.js
+          grep -Fq "u.pathname===ROOT+'rwa-multichain-engine.js'" rwa-sw-v5.js
+          grep -Fq 'realtime-core.js?v=3' index.html
+          grep -Fq 'market-performance.js?v=12' index.html
+          grep -Fq 'rwaMultiChainLazyBootstrap' index.html
+          grep -Eq "SRC='rwa-multichain\.js\?v=[0-9]+'" index.html
+          ! grep -Fq '<script src="rwa-multichain.js' index.html
+          grep -Fq "POLICY='chain-abstraction-fail-closed-v2'" rwa-multichain.js
+          grep -Fq "REVISION='3.0.0-tuntas'" rwa-multichain.js
+          grep -Fq "const REVISION='3.0.0-tuntas'" rwa-multichain-engine.js
+          grep -Fq "const LIFI='https://li.quest/v1'" rwa-multichain-engine.js
+          grep -Fq '"policy": "chain-abstraction-fail-closed-v2"' rwa-multichain-registry.json
+          grep -Fq '"legacy_bridge_direct_write": false' rwa-multichain-funding.json
+          ! grep -Fq 'ExchangeClient' rwa-multichain.js
+          ! grep -Fq 'ExchangeClient' rwa-multichain-engine.js
+
+          grep -Fq 'persistent-market-operability-patch-v1.css?v=11' market-performance.js
+          grep -Fq 'enterprise-ui-v12.css?v=12' market-performance.js
+          grep -Fq 'SINGLE RIGHT DOCK CONTRACT V12.2' enterprise-ui-v12.css
+          grep -Fq -- '--rwa-context-panel:440px' enterprise-ui-v12.css
+          ! grep -Fq 'product-os-v3.js' index.html
+          ! grep -Fq 'product-os-mobile-contract-v3.js' index.html
+          ! grep -Fq 'walletconnect.js' index.html
+          ! grep -Fq 'wallet-core.js' index.html
+          ! grep -Fq 'unified-design-v3.css' index.html
+          ! grep -Fq 'browser-recovery.js' index.html
+
+          grep -Fq 'walletconnect.js?v=4' suite-nav.js
+          grep -Fq 'execution-api.js?v=4' suite-nav.js
+          grep -Fq 'execution-ops-bridge.js?v=4' suite-nav.js
+          grep -Fq 'suite-execution-patch.js?v=6' suite-nav.js
+          grep -Fq '"enabled": false' rwa-execution-config.json
+          grep -Fq '"tgeEnabled": false' token/config.json
+          grep -Fq '"mainnetDeploymentEnabled": false' token/config.json
+          ! grep -Fq 'ExchangeClient' execution-ops-bridge.js
+
+          RENKO_ENGINE_REF="$(grep -oE 'renko-tv-engine\.js\?v=[0-9]+' renko/index.html | tail -1)"
+          RENKO_APP_REF="$(grep -oE 'renko-tv-app\.js\?v=[0-9]+' renko/index.html | tail -1)"
+          RENKO_ATR_REF="$(grep -oE 'renko-tv-atr-parity\.js\?v=[0-9]+' renko/index.html | tail -1)"
+          test -n "$RENKO_ENGINE_REF"; test -n "$RENKO_APP_REF"; test -n "$RENKO_ATR_REF"
+          grep -Fq 'ATR LENGTH' renko/index.html
+
+          node tools/superapp-v5-audit.mjs
+          node tools/superapp-p16-p20-audit.mjs
+          node tools/multichain-contract.mjs
+          node tools/multichain-receipt-matrix.mjs
+          node tools/multichain-mainnet-gate.mjs --write
+          node tools/security-gate.mjs
+
+      - name: Install browser runtime
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run current Super App and MULTI CHAIN browser regressions locally
+        env:
+          RWA_TEST_URL: http://127.0.0.1:4173/rwa/
         shell: bash
         run: |
-          set -euo pipefail
-          rm -rf site
-          mkdir -p site
-          rsync -a \
-            --exclude='.git' \
-            --exclude='.github' \
-            --exclude='apps' \
-            --exclude='tools' \
-            --exclude='docs' \
-            --exclude='qa' \
-            ./ site/
-          touch site/.nojekyll
-          printf '%s\n' "$GITHUB_SHA" > site/deployment-sha.txt
-          test -s site/index.html
-          test -s site/renko/index.html
-          test -s site/backtest/index.html
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
+          set -euxo pipefail
+          mkdir -p /tmp/rwa-superapp-site/rwa
+          cp -a . /tmp/rwa-superapp-site/rwa/
+          cd /tmp/rwa-superapp-site
+          python -m http.server 4173 >/tmp/rwa-superapp-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
+          cd "$GITHUB_WORKSPACE"
+          node tools/superapp-v5-browser.mjs
+          node tools/superapp-p16-p20-browser.mjs
+          RWA_PROOF_DIR=proof/multichain-v3-pages-local node tools/multichain-browser.mjs
+          RWA_PROOF_DIR=proof/multichain-v3-tuntas-pages-local node tools/multichain-tuntas-browser.mjs
 
   deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    if: github.event_name != 'pull_request'
+    needs: verify
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
-
-  validate-public:
-    needs: deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
-      - name: Validate public screenshot baseline
+      - name: Checkout exact release SHA
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify V12.2, V11 and MULTI CHAIN Tuntas release payload
         shell: bash
         run: |
-          set -euo pipefail
-          BASE='https://copytolive.github.io/rwa'
-          PASS=0
-          for i in $(seq 1 36); do
-            SHA="$(curl -fsSL --retry 2 "$BASE/deployment-sha.txt" 2>/dev/null || true)"
-            if [ "$SHA" = "$GITHUB_SHA" ]; then PASS=1; break; fi
-            sleep 5
-          done
-          test "$PASS" = 1
-          curl -fsSL "$BASE/" > /tmp/root.html
-          grep -Fq 'RWA × Seablueprint' /tmp/root.html
-          grep -Fq 'IN-PAGE COMMERCE' /tmp/root.html
-          grep -Fq 'id="fallbackChart"' /tmp/root.html
-          grep -Fq 'id="tvHost"' /tmp/root.html
-          ! grep -Eiq 'renko' /tmp/root.html
-          ! grep -Fq '/rwa/_next/' /tmp/root.html
-          test "$(curl -sS -L -o /dev/null -w '%{http_code}' "$BASE/renko/")" = "200"
-          test "$(curl -sS -L -o /dev/null -w '%{http_code}' "$BASE/backtest/")" = "200"
-          echo PUBLIC_RWA_SCREENSHOT_BASELINE_PASS
+          set -euxo pipefail
+          test "$(grep -o '<script src=' index.html | wc -l | tr -d ' ')" = "6"
+          grep -Fq 'market-performance.js?v=12' index.html
+          grep -Fq 'persistent-market-operability-patch-v1.css?v=11' market-performance.js
+          grep -Fq 'enterprise-ui-v12.css?v=12' market-performance.js
+          grep -Fq 'WORKFLOW VIEWPORT PARITY V10' persistent-market-operability-patch-v1.css
+          grep -Fq 'ACTION ZERO-FLICKER TRANSITION LOCK V11' persistent-market-operability-patch-v1.css
+          grep -Fq 'SINGLE RIGHT DOCK CONTRACT V12.2' enterprise-ui-v12.css
+          grep -Fq -- '--rwa-context-panel:440px' enterprise-ui-v12.css
+          grep -Fq 'rwaMultiChainLazyBootstrap' index.html
+          grep -Fq "REVISION='3.0.0-tuntas'" rwa-multichain.js
+          grep -Fq "const REVISION='3.0.0-tuntas'" rwa-multichain-engine.js
+          grep -Fq '"policy": "chain-abstraction-fail-closed-v2"' rwa-multichain-registry.json
+          node tools/multichain-contract.mjs
+          node tools/multichain-receipt-matrix.mjs
+          node tools/multichain-mainnet-gate.mjs --write
+          test -n "$(grep -oE 'renko-tv-engine\.js\?v=[0-9]+' renko/index.html | tail -1)"
+          test -n "$(grep -oE 'renko-tv-app\.js\?v=[0-9]+' renko/index.html | tail -1)"
+
+      - name: Stamp exact deployed SHA
+        run: |
+          printf '%s\n' "$GITHUB_SHA" > deployment-sha.txt
+          printf '%s\n' "$GITHUB_SHA" > renko-deployment-sha.txt
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Build failover backup package
+        if: success()
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git fetch --prune --tags --force origin '+refs/heads/*:refs/remotes/origin/*'
+          mkdir -p backup
+          git archive --format=zip --output=backup/repo.zip "$GITHUB_SHA"
+          git bundle create backup/repo.bundle --all
+          git show-ref | sort > backup/refs.txt
+          python - <<'PY'
+          import json, os, datetime
+          receipt={"name":"RWA-LIVE-SYNC","version":"15.0-multichain-tuntas-v3","timestamp":datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d-%H%M%S'),"sha":os.environ['GITHUB_SHA'],"remote":"https://github.com/copytolive/rwa.git","pages":"https://copytolive.github.io/rwa/","gate":"pages-deploy-success+multichain-tuntas-v3"}
+          open('backup/receipt.json','w').write(json.dumps(receipt,separators=(',',':'))+'\n')
+          PY
+          (cd backup && sha256sum repo.zip repo.bundle refs.txt receipt.json > SHA256SUMS.txt)
+          git bundle verify backup/repo.bundle
+
+      - name: Upload failover backup artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rwa-live-sync-${{ github.sha }}
+          path: backup/
+          retention-days: 30
+          if-no-files-found: error
