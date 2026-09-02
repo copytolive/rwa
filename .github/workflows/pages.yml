@@ -1,4 +1,4 @@
-name: Deploy RWA Screenshot Baseline
+name: Deploy RWA Live No-Mock HOME
 
 on:
   push:
@@ -26,11 +26,11 @@ on:
       - "rwa-ecommerce-production-visual-v1.js"
       - "rwa-seablueprint-commerce-bridge.css"
       - "rwa-seablueprint-commerce-bridge.js"
-      - "rwa-golden-home-integration-v1.js"
-      - "rwa-screenshot-parity-v1.js"
-      - "rwa-screenshot-parity-v1.css"
-      - "rwa-screenshot-parity-interaction-v1.css"
-      - "rwa-screenshot-parity-visual-v2.css"
+      - "rwa-live-home-v1.js"
+      - "app.js"
+      - "chart-core.js"
+      - "rwa-storefront.js"
+      - "rwa-commerce-registry.json"
       - "assets/ecommerce/**"
   workflow_dispatch:
 
@@ -50,7 +50,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify screenshot baseline and root isolation
+      - name: Verify live no-mock HOME
         shell: bash
         run: |
           set -euo pipefail
@@ -61,14 +61,15 @@ jobs:
           grep -Fq 'data-rwa-target-nav="ecommerce"' index.html
           grep -Fq 'id="fallbackChart"' index.html
           grep -Fq 'id="tvHost"' index.html
-          grep -Fq 'rwa-golden-home-integration-v1.js' index.html
-          grep -Fq 'rwa-screenshot-parity-v1.css' index.html
           ! grep -Eiq 'renko' index.html
           ! grep -Fq '/rwa/_next/' index.html
           test ! -e apps/realworldasset
           test ! -e REALWORLDASSET_MIGRATION_MANIFEST.json
           test ! -e UI_SYNC_MANIFEST.json
-          echo RWA_SCREENSHOT_BASELINE_PASS
+          ! grep -Fq 'rwa-golden-home-integration-v1.js' index.html
+          ! grep -Fq 'rwa-screenshot-parity-v1.js' index.html
+          grep -Fq 'rwa-live-home-v1.js' chart-core.js
+          echo RWA_LIVE_NO_MOCK_PASS
 
       - name: Compose static site
         shell: bash
@@ -103,7 +104,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Validate public screenshot baseline
+      - name: Validate public live no-mock HOME
         shell: bash
         run: |
           set -euo pipefail
@@ -120,8 +121,8 @@ jobs:
           grep -Fq 'IN-PAGE COMMERCE' /tmp/root.html
           grep -Fq 'id="fallbackChart"' /tmp/root.html
           grep -Fq 'id="tvHost"' /tmp/root.html
-          grep -Fq 'rwa-golden-home-integration-v1.js' /tmp/root.html
-          grep -Fq 'rwa-screenshot-parity-v1.css' /tmp/root.html
           ! grep -Eiq 'renko' /tmp/root.html
           ! grep -Fq '/rwa/_next/' /tmp/root.html
-          echo PUBLIC_RWA_SCREENSHOT_BASELINE_PASS
+          ! grep -Fq 'rwa-golden-home-integration-v1.js' /tmp/root.html
+          ! grep -Fq 'rwa-screenshot-parity-v1.js' /tmp/root.html
+          echo PUBLIC_RWA_LIVE_NO_MOCK_PASS

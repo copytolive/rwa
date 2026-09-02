@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "policy": "ONE_TOKEN_ONE_PHYSICAL_STORE_V1",
-  "updated_at": "2026-08-24",
-  "mode": "FRONTEND_READY_BACKEND_PENDING",
+  "updated_at": "2026-09-03",
+  "mode": "LIVE_ONLY_BACKEND_PENDING",
   "currency": "USD",
   "rules": {
     "one_token_one_physical_store": true,
@@ -23,30 +23,8 @@
   },
   "stores": [],
   "ui_preview": {
-    "enabled": true,
-    "label": "UI PREVIEW — NOT A LIVE STORE",
-    "blueprints": [
-      {
-        "token": "RWA-STORE-001",
-        "name": "Retail Flagship",
-        "category": "Retail",
-        "location": "Real address appears only after verification",
-        "products": ["Signature Product", "Member Bundle", "Local Pickup Item"]
-      },
-      {
-        "token": "RWA-STORE-002",
-        "name": "Warehouse Commerce",
-        "category": "Industrial",
-        "location": "Real address appears only after verification",
-        "products": ["Inventory Unit", "Bulk Pack", "Verified Stock Item"]
-      },
-      {
-        "token": "RWA-STORE-003",
-        "name": "Health & Lifestyle Store",
-        "category": "Health",
-        "location": "Real address appears only after verification",
-        "products": ["Featured Item", "Care Bundle", "Store Pickup Item"]
-      }
-    ]
+    "enabled": false,
+    "label": "DISABLED",
+    "blueprints": []
   }
 }
