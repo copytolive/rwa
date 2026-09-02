@@ -9,7 +9,7 @@ if str(GOLD24) not in sys.path: sys.path.insert(0,str(GOLD24))
 from core import audit_dataset,backtest_candidate  # noqa:E402
 
 STRICT=['rank01_donchian_f3_s89_off3_exp4','rank02_candle_engulfing_f34_s144_off2_75_exp8','rank03_donchian_f3_s100_off1_exp7']
-MULTI=['multi_rank01_donchian_f3_s89_off4_75_exp3','multi_rank02_candle_engulfing_f100_s144_off5_exp4','multi_rank03_candle_engulfing_f26_s144_off2_exp5','multi_rank04_candle_engulfing_f26_s144_off2_75_exp7','multi_rank05_candle_engulfing_f34_s144_off4_5_exp8','multi_rank06_candle_engulfing_f34_s144_off1_25_exp8','multi_rank07_candle_engulfing_f50_s100_off3_75_exp8','multi_rank08_candle_engulfing_f26_s144_off1_75_exp8']
+MULTI=['multi_rank01_donchian_f3_s89_off4_75_exp3','multi_rank02_candle_engulfing_f100_s144_off5_exp4','multi_rank03_candle_engulfing_f26_s144_off2_exp5','multi_rank04_candle_engulfing_f26_s144_off2_75_exp7','multi_rank05_candle_engulfing_f34_s144_off4_5_exp8','multi_rank06_candle_engulfing_f34_s144_off1_25_exp8','multi_rank07_candle_engulfing_f55_s100_off3_25_exp8','multi_rank08_candle_engulfing_f26_s144_off1_75_exp8']
 ALL=STRICT+MULTI
 METRICS={'trades':('trades',0.0),'win_rate_pct':('wr',1e-9),'profit_factor':('profit_factor',1e-9),'net_profit_usd':('net_profit',1e-6),'ev_per_trade_usd':('expectancy',1e-9),'max_dd_pct':('max_dd_pct',1e-9),'sqn':('sqn',1e-9)}
 CSV_METRICS={'trades':'total_entry','win_rate_pct':'standard_lot_win_rate_pct','profit_factor':'standard_lot_profit_factor_same_cost_model','net_profit_usd':'standard_lot_net_profit_usd_same_cost_model','ev_per_trade_usd':'standard_lot_ev_per_trade_usd_same_cost_model','max_dd_pct':'standard_lot_max_dd_pct_starting_equity_10000','sqn':'standard_lot_sqn_same_cost_model','sl_pips':'sl_pips','tp_pips':'tp_pips'}
