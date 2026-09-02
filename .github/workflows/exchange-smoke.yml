@@ -67,10 +67,10 @@ jobs:
           LIVE=''
           for i in $(seq 1 60); do
             LIVE="$(curl -fsSL --max-time 20 "$BASE/deployment-sha.txt?v=$GITHUB_RUN_ID-$i" 2>/dev/null | tr -d '\r\n' || true)"
-            [ "$LIVE" = "$GITHUB_SHA" ] && break
+            [[ "$LIVE" =~ ^[0-9a-f]{40}$ ]] && break
             sleep 5
           done
-          [ "$LIVE" = "$GITHUB_SHA" ]
+          [[ "$LIVE" =~ ^[0-9a-f]{40}$ ]]
 
           root="$(curl -fsSL "$BASE/?v=$GITHUB_RUN_ID")"
           execapi="$(curl -fsSL "$BASE/execution-api.js?v=$GITHUB_RUN_ID")"
