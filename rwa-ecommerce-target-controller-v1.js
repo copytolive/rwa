@@ -1,1 +1,0 @@
-(()=>{'use strict';if(window.RWAEcommerceTargetController)return;const render=()=>window.RWALiveHome?.apply?.();window.RWAEcommerceTargetController={version:'3.0.0-live-compat',render,state:()=>window.RWALiveHome?.audit?.()||{ready:false},audit:()=>window.RWALiveHome?.audit?.()||{ready:false}}})();
