@@ -259,6 +259,37 @@ void PriorRange(MqlRates &r[],int lookback,int signalIdx,double &rh,double &rl)
    }
 }
 
+bool PandasKAMALastTwo(MqlRates &r[],int period,double &prevKama,double &curKama)
+{
+   int n=ArraySize(r);
+   if(n<2 || period<=0) return false;
+   double fastSC=2.0/3.0;
+   double slowSC=2.0/31.0;
+   double kama=r[0].close;
+   prevKama=kama;
+   for(int i=1;i<n;i++)
+   {
+      double er=0.0;
+      if(i>=period)
+      {
+         double change=MathAbs(r[i].close-r[i-period].close);
+         double volatility=0.0;
+         for(int j=i-period+1;j<=i;j++)
+            volatility+=MathAbs(r[j].close-r[j-1].close);
+         if(volatility>0.0) er=change/volatility;
+         if(er<0.0) er=0.0;
+         if(er>1.0) er=1.0;
+      }
+      double sc=er*(fastSC-slowSC)+slowSC;
+      sc*=sc;
+      double next=kama+sc*(r[i].close-kama);
+      if(i==n-1) prevKama=kama;
+      kama=next;
+   }
+   curKama=kama;
+   return true;
+}
+
 int CanonicalSignal()
 {
    MqlRates r[]; if(!LoadCanonicalRates(r)) return 0;
@@ -290,9 +321,7 @@ int CanonicalSignal()
    }
    else if(QM_FAMILY_CODE==3)
    {
-      // Python CHART_PATTERN parity:
-      // near current support/resistance AND prior bar touched its own prior range,
-      // tolerance = rolling ATR(FAST) * P1, confirmed by current candle and EMA(FAST).
+      // Python CHART_PATTERN parity.
       if(n<=MathMax(SLOW+2,FAST+2)) return 0;
       int curIdx=n-1,prevIdx=n-2;
       double curRh,curRl,prevRh,prevRl;
@@ -310,6 +339,20 @@ int CanonicalSignal()
       double emaFast=PandasEMA(r,FAST);
       longSig=(nearSupport && priorSupportTouch && r[curIdx].close>r[curIdx].open && r[curIdx].close>emaFast);
       shortSig=(nearResistance && priorResistanceTouch && r[curIdx].close<r[curIdx].open && r[curIdx].close<emaFast);
+   }
+   else if(QM_FAMILY_CODE==4)
+   {
+      // Python ADAPTIVE_TREND parity: Kaufman adaptive MA + FAST ATR band.
+      if(n<=FAST+2) return 0;
+      double prevKama=0.0,curKama=0.0;
+      if(!PandasKAMALastTwo(r,FAST,prevKama,curKama)) return 0;
+      double atrCur=RollingATRAt(r,FAST,n-1);
+      if(atrCur==EMPTY_VALUE) return 0;
+      double slope=curKama-prevKama;
+      double band=P1*atrCur;
+      double closeNow=r[n-1].close;
+      longSig=(closeNow>curKama+band && slope>0.0);
+      shortSig=(closeNow<curKama-band && slope<0.0);
    }
    else
    {
