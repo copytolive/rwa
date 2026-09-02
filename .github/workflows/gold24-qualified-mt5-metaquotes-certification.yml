@@ -191,6 +191,36 @@ jobs:
             if($null -eq $el){return $false}
             $p=$el.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern);$p.SetValue($value);return $true
           }
+          function FindByAutomationId([string]$id,[System.Windows.Automation.ControlType]$controlType=$null){
+            foreach($el in (Elements)){
+              try{
+                if($el.Current.AutomationId -ne $id){continue}
+                if($null -ne $controlType -and $el.Current.ControlType -ne $controlType){continue}
+                return $el
+              }catch{}
+            }
+            return $null
+          }
+          function SetEditById([string]$id,[string]$value){
+            $el=FindByAutomationId $id ([System.Windows.Automation.ControlType]::Edit)
+            if($null -eq $el){throw "edit control not found id=$id"}
+            $p=$el.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
+            $p.SetValue($value)
+            Write-Host "EDIT_SET id=$id value=$value"
+          }
+          function SelectListItemExact([string]$name){
+            foreach($el in (Elements)){
+              try{
+                if($el.Current.ControlType -ne [System.Windows.Automation.ControlType]::ListItem){continue}
+                if($el.Current.Name -ne $name){continue}
+                $p=$el.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
+                $p.Select()
+                Write-Host "LIST_SELECTED name=$name"
+                return $true
+              }catch{}
+            }
+            return $false
+          }
           function SelectByName([string]$regex,[string]$type='ControlType.RadioButton'){
             $el=FindElement $regex $type
             if($null -ne $el){
@@ -258,17 +288,21 @@ jobs:
           InvokeButton 'Next|Continue'
           Start-Sleep -Seconds 5
           DumpUi 'registration'
-          $named=0
-          if(SetEditByName 'First name|Name' 'GOLD24'){$named++}
-          if(SetEditByName 'Last name|Surname' 'Certification'){$named++}
-          if(SetEditByName 'E-mail|Email' 'gold24-ci@copytolive.com'){$named++}
-          if(SetEditByName 'Phone|Mobile' '+12025550123'){$named++}
-          if($named -lt 4){
-            $edits=@()
-            foreach($el in (Elements)){try{if($el.Current.ControlType -eq [System.Windows.Automation.ControlType]::Edit){$edits+=$el}}catch{}}
-            $vals=@('GOLD24','Certification','gold24-ci@copytolive.com','2025550123')
-            for($i=0;$i -lt [Math]::Min(4,$edits.Count);$i++){try{$vp=$edits[$i].GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern);$vp.SetValue($vals[$i])}catch{}}
-          }
+          SetEditById '10022' 'Gold'
+          SetEditById '10728' 'Certification'
+          SetEditById '10032' 'gold24-ci@copytolive.com'
+          $phoneCombo=FindByAutomationId '10682' ([System.Windows.Automation.ControlType]::ComboBox)
+          if($null -eq $phoneCombo){throw 'phone country combo id=10682 not found'}
+          try{
+            $ep=$phoneCombo.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern)
+            if($ep.Current.ExpandCollapseState -ne [System.Windows.Automation.ExpandCollapseState]::Expanded){$ep.Expand();Start-Sleep -Milliseconds 500}
+          }catch{}
+          if(-not (SelectListItemExact '+1 United States')){throw 'phone country +1 United States not found'}
+          try{
+            $ep=$phoneCombo.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern)
+            if($ep.Current.ExpandCollapseState -eq [System.Windows.Automation.ExpandCollapseState]::Expanded){$ep.Collapse()}
+          }catch{}
+          SetEditById '10031' '2025550123'
           $dateEl=$null
           foreach($candidate in (Elements)){
             try{
