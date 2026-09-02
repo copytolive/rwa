@@ -68,10 +68,9 @@ jobs:
           set -euo pipefail
           rm -rf site
           mkdir -p site
-          rsync -a             --exclude='.git'             --exclude='.github'             --exclude='apps'             --exclude='tools'             --exclude='docs'             --exclude='qa'             ./ site/
+          rsync -a --exclude='.git' --exclude='.github' --exclude='apps' --exclude='tools' --exclude='docs' --exclude='qa' ./ site/
           touch site/.nojekyll
-          printf '%s
-' "$GITHUB_SHA" > site/deployment-sha.txt
+          echo "$GITHUB_SHA" > site/deployment-sha.txt
           test -s site/index.html
           test -s site/renko/index.html
           test -s site/backtest/index.html
