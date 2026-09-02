@@ -171,8 +171,10 @@
     {
       "id": "CHART_PATTERN",
       "name": "Chart Pattern",
-      "status": "PLANNED",
-      "engine_families": [],
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "CHART_PATTERN"
+      ],
       "methods": [
         "Double Top",
         "Double Bottom",
@@ -188,8 +190,10 @@
     {
       "id": "MARKET_STRUCTURE",
       "name": "Market Structure",
-      "status": "PLANNED",
-      "engine_families": [],
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "MARKET_STRUCTURE"
+      ],
       "methods": [
         "Higher High/Low",
         "Lower High/Low",
@@ -202,8 +206,10 @@
     {
       "id": "SUPPORT_RESISTANCE",
       "name": "Support / Resistance",
-      "status": "PLANNED",
-      "engine_families": [],
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "SUPPORT_RESISTANCE"
+      ],
       "methods": [
         "Horizontal S/R",
         "Previous High/Low",
@@ -215,8 +221,10 @@
     {
       "id": "FIBONACCI",
       "name": "Fibonacci",
-      "status": "PLANNED",
-      "engine_families": [],
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "FIBONACCI"
+      ],
       "methods": [
         "38.2 Pullback",
         "50 Pullback",
@@ -228,8 +236,10 @@
     {
       "id": "VOLATILITY",
       "name": "Volatility",
-      "status": "PLANNED",
-      "engine_families": [],
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "VOLATILITY"
+      ],
       "methods": [
         "ATR Expansion",
         "ATR Compression",
@@ -241,8 +251,10 @@
     {
       "id": "BAND_HYBRID",
       "name": "Keltner / Bollinger Hybrid",
-      "status": "PLANNED",
-      "engine_families": [],
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "BAND_HYBRID"
+      ],
       "methods": [
         "BB inside Keltner Squeeze",
         "Keltner Expansion",
@@ -253,8 +265,10 @@
     {
       "id": "ICHIMOKU",
       "name": "Ichimoku",
-      "status": "PLANNED",
-      "engine_families": [],
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "ICHIMOKU"
+      ],
       "methods": [
         "Tenkan/Kijun Cross",
         "Kumo Breakout",
@@ -265,8 +279,10 @@
     {
       "id": "ADAPTIVE_TREND",
       "name": "SuperTrend / Adaptive Trend",
-      "status": "PLANNED",
-      "engine_families": [],
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "ADAPTIVE_TREND"
+      ],
       "methods": [
         "SuperTrend",
         "ATR SuperTrend",
@@ -278,8 +294,10 @@
     {
       "id": "DIVERGENCE",
       "name": "Divergence",
-      "status": "PLANNED",
-      "engine_families": [],
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "DIVERGENCE"
+      ],
       "methods": [
         "RSI Divergence",
         "MACD Divergence",
@@ -291,8 +309,10 @@
     {
       "id": "VOLUME",
       "name": "Volume",
-      "status": "PLANNED",
-      "engine_families": [],
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "VOLUME"
+      ],
       "methods": [
         "Volume Breakout",
         "Volume Spike",
@@ -306,8 +326,10 @@
     {
       "id": "VWAP",
       "name": "VWAP",
-      "status": "PLANNED",
-      "engine_families": [],
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "VWAP"
+      ],
       "methods": [
         "VWAP Reversion",
         "VWAP Breakout",
@@ -318,8 +340,10 @@
     {
       "id": "STATISTICAL",
       "name": "Statistical",
-      "status": "PLANNED",
-      "engine_families": [],
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "STATISTICAL"
+      ],
       "methods": [
         "Z-Score",
         "Rolling Regression",
@@ -331,24 +355,35 @@
     {
       "id": "RELATIVE_STRENGTH",
       "name": "Relative Strength",
-      "status": "PLANNED",
-      "engine_families": [],
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "RELATIVE_STRENGTH"
+      ],
       "methods": [
         "Price vs MA Relative Strength",
-        "Cross-Asset Relative Strength",
-        "Gold vs USD/DXY Filter"
-      ]
+        "Rolling Momentum Relative Strength"
+      ],
+      "implementation_note": "Current implementation is single-asset price-vs-MA relative strength because no canonical DXY/cross-asset series is present in the repo/Drive source set."
     },
     {
       "id": "MULTI_TIMEFRAME",
       "name": "Multi-Timeframe",
-      "status": "PLANNED",
-      "engine_families": [],
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "MULTI_TIMEFRAME"
+      ],
       "methods": [
-        "D1 Trend + H4 Entry",
-        "D1 Trend + H1 Entry",
-        "H4 Structure + H1 Confirmation"
-      ]
+        "Completed 5D Higher-Timeframe Regime + D1 Entry",
+        "D1 trend confirmed by completed higher-timeframe aggregate"
+      ],
+      "implementation_note": "Current canonical source has D1 only. Multi-timeframe backtest uses a causal completed 5-business-day aggregate derived from D1; no H1/H4 data is fabricated. Native H1/H4 variant remains a future data upgrade."
     }
-  ]
+  ],
+  "implemented_engine_family_count": 24,
+  "implemented_category_count": 20,
+  "all_required_categories_backtestable": true,
+  "implementation_notes": {
+    "multi_timeframe": "Causal completed 5D aggregate + D1 entry; no fabricated H1/H4.",
+    "relative_strength": "Price-vs-MA relative strength until canonical DXY/cross-asset series is added."
+  }
 }
