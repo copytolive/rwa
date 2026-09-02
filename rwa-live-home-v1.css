@@ -1,0 +1,53 @@
+/* Live target geometry only. All displayed values come from runtime/verified backend state. */
+@media(min-width:1121px){
+body.rwa-target-dashboard-v2{padding-bottom:60px!important}
+body.rwa-target-dashboard-v2 .app{padding-top:59px!important;padding-bottom:0!important}
+body.rwa-target-dashboard-v2 .topbar{position:fixed!important;inset:0 0 auto 0!important;width:100%!important;height:59px!important;min-height:59px!important;max-height:59px!important;padding:0 17px!important;gap:16px!important}
+body.rwa-target-dashboard-v2 .brand{min-width:270px!important;gap:10px!important}
+body.rwa-target-dashboard-v2 .brandmark{width:34px!important;height:34px!important}
+body.rwa-target-dashboard-v2 .brandcopy strong{font-size:18px!important}
+body.rwa-target-dashboard-v2 .topnav{gap:5px!important}
+body.rwa-target-dashboard-v2 .topnav button{height:39px!important;padding:0 17px!important;font-size:13px!important;border-radius:6px!important}
+body.rwa-target-dashboard-v2 .rwa-target-inpage{width:145px!important;min-width:145px!important;height:37px!important;border-radius:12px!important}
+body.rwa-target-dashboard-v2 .top-actions .signin{width:156px!important;min-width:156px!important;height:38px!important;font-size:12px!important}
+body.rwa-target-dashboard-v2 .layout{width:100vw!important;max-width:100vw!important;height:calc(100vh - 119px)!important;min-height:calc(100vh - 119px)!important;grid-template-columns:291px minmax(0,1fr) 239px!important;align-items:stretch!important;margin:0!important}
+body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout{width:calc(100vw - 460px)!important;max-width:calc(100vw - 460px)!important;grid-template-columns:291px minmax(0,1fr) 239px!important}
+body.rwa-target-dashboard-v2 .left,body.rwa-target-dashboard-v2 .right{top:59px!important;height:calc(100vh - 119px)!important;max-height:calc(100vh - 119px)!important}
+body.rwa-target-dashboard-v2 .left{width:291px!important}
+body.rwa-target-dashboard-v2 .right{width:239px!important}
+body.rwa-target-dashboard-v2 .main{height:calc(100vh - 119px)!important;min-height:0!important;overflow:hidden!important}
+body.rwa-target-dashboard-v2 .aside-label{height:45px!important}
+body.rwa-target-dashboard-v2 .pairrow{min-height:57px!important;padding:7px 12px!important}
+body.rwa-target-dashboard-v2 .terminal-header{height:72px!important;min-height:72px!important;padding:0 13px!important}
+body.rwa-target-dashboard-v2 .chart-wrap{height:433px!important;min-height:433px!important;max-height:433px!important}
+body.rwa-target-dashboard-v2 .rwa-target-order-ticket{height:316px!important;min-height:316px!important;max-height:316px!important;overflow:hidden!important}
+body.rwa-target-dashboard-v2 .rwa-global-ticker{height:60px!important;min-height:60px!important;bottom:0!important}
+.rwa-commerce-dock{top:59px!important;bottom:60px!important;width:460px!important;max-width:460px!important}
+.rwa-commerce-dock #rwaShopScreen .rwa-shop-shell{padding:0!important;background:#030a13!important}
+.rwa-commerce-dock #rwaShopScreen .rwa-shop-head{height:58px!important;min-height:58px!important;padding:0 12px!important;background:#050d17!important;border-bottom:1px solid #1d2b3e!important}
+.rwa-commerce-dock .rwa-ecom-head-title{display:flex!important;align-items:center!important;gap:9px!important;min-width:0!important}
+.rwa-commerce-dock .rwa-ecom-head-icon{width:32px!important;height:32px!important;display:grid!important;place-items:center!important;border:1px solid #24466f!important;border-radius:8px!important;background:#07182c!important;color:#6495ff!important;font-size:16px!important}
+.rwa-commerce-dock .rwa-ecom-head-title b{display:block!important;font-size:12px!important;color:#f2f6fc!important}
+.rwa-commerce-dock .rwa-ecom-head-title small{display:block!important;margin-top:3px!important;font-size:7px!important;color:#8695aa!important}
+.rwa-commerce-dock .rwa-ecom-head-actions{display:flex!important;align-items:center!important;gap:6px!important;margin-left:auto!important}
+.rwa-commerce-dock .rwa-ecom-inpage{padding:4px 8px!important;border:1px solid #0a744c!important;border-radius:999px!important;background:#032117!important;color:#31e89c!important;font-size:6px!important;font-weight:900!important}
+.rwa-commerce-dock .rwa-ecom-close{width:28px!important;height:28px!important;border:0!important;background:transparent!important;color:#8998ad!important;font-size:16px!important}
+.rwa-commerce-dock .rwa-ecom-target{min-height:100%!important;background:#030a13!important;color:#eaf1fb!important}
+.rwa-commerce-dock .rwa-ecom-tabs{height:44px!important;display:grid!important;grid-template-columns:repeat(3,1fr)!important;border-bottom:1px solid #18283c!important;background:#040c16!important}
+.rwa-commerce-dock .rwa-ecom-tabs button{border:0!important;border-bottom:2px solid transparent!important;background:transparent!important;color:#9aa7ba!important;font-size:9px!important}
+.rwa-commerce-dock .rwa-ecom-tabs button.active{border-bottom-color:#3977ff!important;color:#72a2ff!important}
+.rwa-commerce-dock .rwa-ecom-content{padding:9px 10px 12px!important}
+.rwa-commerce-dock .rwa-ecom-store,.rwa-commerce-dock .rwa-ecom-detail{border:1px solid #21324a!important;border-radius:9px!important;background:#06111e!important;overflow:hidden!important}
+.rwa-commerce-dock .rwa-ecom-store-main{display:grid!important;grid-template-columns:46px minmax(0,1fr)!important;gap:9px!important;padding:10px 10px 7px!important}
+.rwa-commerce-dock .rwa-ecom-logo{width:44px!important;height:44px!important;border-radius:50%!important;display:grid!important;place-items:center!important;border:1px solid #3e596f!important;background:linear-gradient(145deg,#e8eef2,#93b5c8)!important;color:#1574ad!important;font-size:21px!important;font-weight:950!important}
+.rwa-commerce-dock .rwa-ecom-store h3,.rwa-commerce-dock .rwa-ecom-detail h3{margin:0!important;color:#f5f8fc!important;font-size:11px!important}
+.rwa-commerce-dock .rwa-ecom-store p,.rwa-commerce-dock .rwa-ecom-detail p{margin:5px 0 0!important;color:#7f90a8!important;font-size:7px!important;line-height:1.45!important}
+.rwa-commerce-dock .rwa-ecom-store-metrics{display:grid!important;grid-template-columns:repeat(3,1fr)!important;border-top:1px solid #1c2c40!important;border-bottom:1px solid #1c2c40!important}
+.rwa-commerce-dock .rwa-ecom-store-metrics span{text-align:center!important;padding:8px 3px!important;border-right:1px solid #1c2c40!important}
+.rwa-commerce-dock .rwa-ecom-store-metrics b{display:block!important;font-size:10px!important}
+.rwa-commerce-dock .rwa-ecom-store-metrics small{display:block!important;margin-top:2px!important;color:#718198!important;font-size:5.5px!important}
+.rwa-commerce-dock .rwa-ecom-store-footer{padding:8px 10px!important;display:flex!important;justify-content:flex-end!important}
+.rwa-commerce-dock .rwa-ecom-primary{height:28px!important;padding:0 18px!important;border:1px solid #5069d8!important;border-radius:5px!important;background:#2846bd!important;color:#fff!important;font-size:7px!important;font-weight:850!important}
+}
+.rwa-live-depth-meter{margin:10px;border:1px solid #18324a;border-radius:5px;background:#061621;padding:8px;display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;font-size:8px}
+.rwa-live-depth-meter>div:first-child b{color:#2ce2a1}.rwa-live-depth-meter>div:last-child b{color:#ff5364}.rwa-live-depth-meter span{display:block;margin-top:2px;color:#76879f;font-size:6px}.rwa-live-depth-bar{height:7px;border-radius:9px;background:#38151d;overflow:hidden}.rwa-live-depth-bar i{display:block;height:100%;width:0;background:#1ca36f}
