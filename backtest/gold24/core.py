@@ -384,16 +384,16 @@ def signal_series(d: pd.DataFrame, cnd: Candidate) -> np.ndarray:
         short = prev_squeeze & (close < bb_lower) & (fast < slow)
 
     elif cnd.family == "ICHIMOKU":
-        conv_hi = hs.rolling(cnd.fast).max().bfill().to_numpy(float)
-        conv_lo = ls.rolling(cnd.fast).min().bfill().to_numpy(float)
-        base_hi = hs.rolling(cnd.slow).max().bfill().to_numpy(float)
-        base_lo = ls.rolling(cnd.slow).min().bfill().to_numpy(float)
+        conv_hi = hs.rolling(cnd.fast, min_periods=1).max().to_numpy(float)
+        conv_lo = ls.rolling(cnd.fast, min_periods=1).min().to_numpy(float)
+        base_hi = hs.rolling(cnd.slow, min_periods=1).max().to_numpy(float)
+        base_lo = ls.rolling(cnd.slow, min_periods=1).min().to_numpy(float)
         conv = (conv_hi + conv_lo) * 0.5
         base = (base_hi + base_lo) * 0.5
         span_a = (conv + base) * 0.5
         span_b_n = min(max(cnd.slow * 2, cnd.slow + 1), max(cnd.slow + 1, len(d) - 1))
-        span_b_hi = hs.rolling(span_b_n).max().bfill().to_numpy(float)
-        span_b_lo = ls.rolling(span_b_n).min().bfill().to_numpy(float)
+        span_b_hi = hs.rolling(span_b_n, min_periods=1).max().to_numpy(float)
+        span_b_lo = ls.rolling(span_b_n, min_periods=1).min().to_numpy(float)
         span_b = (span_b_hi + span_b_lo) * 0.5
         cloud_hi = np.maximum(span_a, span_b)
         cloud_lo = np.minimum(span_a, span_b)
@@ -459,7 +459,10 @@ def signal_series(d: pd.DataFrame, cnd: Candidate) -> np.ndarray:
         out[out < 0] = 0
     elif cnd.direction_mode == "SHORT_ONLY":
         out[out > 0] = 0
-    out[: max(150, cnd.slow + 2)] = 0
+    warmup = max(150, cnd.slow + 2)
+    if cnd.family == "ICHIMOKU":
+        warmup = max(warmup, cnd.slow * 2 + 2)
+    out[: min(warmup, len(out))] = 0
     return out
 
 def _cost(entry: float, exit_: float, qty: float) -> float:
