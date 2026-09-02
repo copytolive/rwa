@@ -638,8 +638,6 @@ function init(){
   addEventListener('popstate',routeFromHash);
   patchLegacyAPIs();bootTimers();updateTicker();
   loadCatalog().catch(()=>{});loadAssets().catch(()=>{});
-  const warmGlobal=()=>ensureGlobalAssetTerminal().catch(()=>{});
-  if('requestIdleCallback' in window)requestIdleCallback(warmGlobal,{timeout:2500});else setTimeout(warmGlobal,1800);
   state.symbol=selectedBase();
   window.RWAProductOS={
     version:'5.0.0',
