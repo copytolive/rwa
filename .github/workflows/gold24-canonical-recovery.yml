@@ -5,6 +5,8 @@ on:
     - cron: '25 * * * *'
   workflow_dispatch:
   push:
+    branches:
+      - main
     paths:
       - 'backtest/gold24/GITHUB_RUNNER_KICK'
 
