@@ -26,6 +26,8 @@ SUMMARY_KEYS = [
     "cheap_pass_count_this_run", "execution_duplicate_rejected_this_run", "exact_full_metrics_pre_corr_new_this_run",
     "combined_pre_corr_count", "removed_by_correlation_count", "library_count", "new_selected_count",
     "existing_selected_count", "active_count", "elite_count", "tier_counts",
+    "implemented_family_count", "generated_family_counts_this_run", "selected_family_counts",
+    "selected_distinct_family_count", "max_selected_family_share", "portfolio_ready",
 ]
 
 
@@ -77,6 +79,39 @@ def main() -> int:
         tier = str(row.get("tier_v1", "LIBRARY"))
         tiers[tier] = tiers.get(tier, 0) + 1
     payload["tier_counts"] = tiers
+
+    selected_family_counts: dict[str, int] = {}
+    for row in kept:
+        family = str(row.get("family") or "")
+        if not family:
+            continue
+        selected_family_counts[family] = selected_family_counts.get(family, 0) + 1
+    distinct_family_count = len(selected_family_counts)
+    max_family_share = (
+        max(selected_family_counts.values()) / len(kept)
+        if kept else 0.0
+    )
+
+    universe_path = Path(__file__).resolve().with_name("MASTER_METHOD_UNIVERSE.json")
+    universe = json.loads(universe_path.read_text(encoding="utf-8"))
+    policy = universe.get("diversification_policy", {})
+    min_families = int(policy.get("portfolio_ready_min_distinct_families", 6))
+    max_share = float(policy.get("portfolio_ready_max_single_family_share", 0.25))
+    portfolio_ready = (
+        distinct_family_count >= min_families
+        and max_family_share <= max_share + 1e-12
+    )
+    payload["selected_family_counts"] = selected_family_counts
+    payload["selected_distinct_family_count"] = distinct_family_count
+    payload["max_selected_family_share"] = max_family_share
+    payload["portfolio_ready"] = portfolio_ready
+    payload["portfolio_diversification_gate"] = {
+        "min_distinct_families": min_families,
+        "max_single_family_share": max_share,
+        "library_may_exceed_family_cap": bool(policy.get("library_may_exceed_family_cap", True)),
+        "status": "PASS" if portfolio_ready else "NOT_READY",
+    }
+
     payload["economic_selection_rule"] = {
         "min_entry": MIN_ENTRY,
         "min_net_profit_usd": MIN_NET_PROFIT_USD,
