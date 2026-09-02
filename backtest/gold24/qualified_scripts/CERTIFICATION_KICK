@@ -1,8 +1,8 @@
 GOLD24_QUALIFIED_SCRIPT_CERTIFICATION_KICK
-source_batch=283
-source_run_id=33528218081
+source_batch=300
+source_run_id=33609229071
 strict_count=3
-multi_count=5
-total_pairs=8
-requested_at=2026-09-01T23:53:00+07:00
-reason=certify current 3 strict + 5 Multi Python/MT5 pairs against latest finalized authoritative canonical batch 283; preserve state; require Python parity + native MetaEditor compile + native MT5 Strategy Tester operational PASS for all 8 EAs
+multi_count=8
+total_pairs=11
+requested_at=2026-09-02T16:41:00+07:00
+reason=certify current batch300 selected 3 strict + 8 Multi Python/MT5 pairs after Multi run33614883205 SUCCESS; preserve canonical and cumulative state; require exact Python/config/hash/metric parity, native MetaEditor clean compile, and native MT5 Strategy Tester operational receipts for all 11 selected EAs
