@@ -1,0 +1,35 @@
+name: RWA Public Page-by-Page Visual Audit
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "tools/page-by-page-audit.mjs"
+      - ".github/workflows/page-by-page-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Capture every public page state
+        env:
+          RWA_UI_URL: https://copytolive.github.io/rwa/
+          RWA_UI_PROOF_DIR: proof/page-by-page-audit
+        run: node tools/page-by-page-audit.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rwa-page-by-page-audit-${{ github.sha }}
+          path: proof/page-by-page-audit/
+          if-no-files-found: error
+          retention-days: 30
