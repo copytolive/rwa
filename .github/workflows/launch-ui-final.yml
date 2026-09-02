@@ -1,131 +1,51 @@
-name: RWA Launch UI Final
+name: RWA Trading UI Final
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - 'index.html'
-      - 'chart-core.js'
-      - 'rwa-target-dashboard-v2.js'
-      - 'rwa-target-dashboard-v2.css'
-      - 'rwa-target-dashboard-v2-hardening.js'
-      - 'rwa-target-dashboard-v2-hardening.css'
-      - 'rwa-seablueprint-commerce-bridge.js'
-      - 'rwa-seablueprint-commerce-bridge.css'
-      - 'rwa-ecommerce-production-visual-v1.js'
-      - 'rwa-commerce-config.json'
-      - 'rwa-storefront.js'
-      - 'superapp-v5.js'
-      - 'superapp-v5.css'
-      - 'ui-layout-integrity-v15.js'
-      - 'ui-layout-integrity-v15.css'
-      - 'tools/launch-ui-final-browser.mjs'
-      - 'tools/seablueprint-commerce-single-shell-browser.mjs'
-      - 'tools/ecommerce-first-paint-browser.mjs'
-      - '.github/workflows/launch-ui-final.yml'
   push:
-    branches: [main]
+    branches: ["main"]
     paths:
-      - 'index.html'
-      - 'chart-core.js'
-      - 'rwa-target-dashboard-v2.js'
-      - 'rwa-target-dashboard-v2.css'
-      - 'rwa-target-dashboard-v2-hardening.js'
-      - 'rwa-target-dashboard-v2-hardening.css'
-      - 'rwa-seablueprint-commerce-bridge.js'
-      - 'rwa-seablueprint-commerce-bridge.css'
-      - 'rwa-ecommerce-production-visual-v1.js'
-      - 'rwa-commerce-config.json'
-      - 'rwa-storefront.js'
-      - 'superapp-v5.js'
-      - 'superapp-v5.css'
-      - 'ui-layout-integrity-v15.js'
-      - 'ui-layout-integrity-v15.css'
-      - 'tools/launch-ui-final-browser.mjs'
-      - 'tools/seablueprint-commerce-single-shell-browser.mjs'
-      - 'tools/ecommerce-first-paint-browser.mjs'
-      - '.github/workflows/launch-ui-final.yml'
+      - "index.html"
+      - "app.js"
+      - "chart-core.js"
+      - "rwa-live-home-v1.js"
+      - "rwa-live-home-v1.css"
+      - "rwa-live-orderbook-v1.css"
+      - "rwa-multichain.js"
+      - "rwa-multichain-engine.js"
+      - "rwa-multichain-registry.json"
+      - "execution-api.js"
+      - "exchange-core.js"
+      - ".github/workflows/launch-ui-final.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  browser-matrix:
+  ui-final:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-
-      - name: Static launch contracts
+      - name: Validate trading-only UI
         shell: bash
         run: |
-          set -euxo pipefail
+          set -euo pipefail
+          node --check app.js
           node --check chart-core.js
-          node --check rwa-target-dashboard-v2.js
-          node --check rwa-target-dashboard-v2-hardening.js
-          node --check rwa-seablueprint-commerce-bridge.js
-          node --check superapp-v5.js
-          node --check tools/launch-ui-final-browser.mjs
-          node --check tools/seablueprint-commerce-single-shell-browser.mjs
-          node --check tools/ecommerce-first-paint-browser.mjs
-          grep -Fq "const VERSION='1.5.0',MODE='CONTEXT_PANEL'" rwa-seablueprint-commerce-bridge.js
-          grep -Fq "screen.dataset.seablueprintPlacement='context-right-panel'" rwa-seablueprint-commerce-bridge.js
-          grep -Fq "window.addEventListener('click',captureClick,true)" rwa-seablueprint-commerce-bridge.js
-          grep -Fq "rwa-seablueprint-commerce-bridge.js?v=1.5.1" chart-core.js
-          grep -Fq "rwa-target-dashboard-v2-hardening.js?v=2.1.0" chart-core.js
-          grep -Fq "rwa-target-prepaint-shop" index.html
-          grep -Fq "history.replaceState(history.state,'',location.pathname+location.search+'#shop')" index.html
-          grep -Fq "document.body?.classList.contains('rwa-target-dashboard-v2')" superapp-v5.js
-          node - <<'NODE'
-          const c=require('./rwa-commerce-config.json');
-          if(c.shell_mode!=='SINGLE_MAIN_DOCUMENT') throw Error('shell_mode');
-          if(c.navigation_policy!=='NO_TOP_LEVEL_ECOMMERCE_NAVIGATION') throw Error('navigation_policy');
-          if(c.source!=='SEABLUEPRINT_COMMERCE') throw Error('source');
-          if(c.api_base!=='') throw Error('api_base must remain fail-closed before real backend proof');
-          NODE
-          test "$(grep -o '<script src=' index.html | wc -l | tr -d ' ')" = "6"
-
-      - name: Install Chromium
-        run: |
-          npm install --no-save playwright@1.55.0
-          npx playwright install --with-deps chromium
-
-      - name: Serve exact PR/main tree
-        shell: bash
-        run: |
-          set -euxo pipefail
-          mkdir -p /tmp/rwa-launch-ui/rwa
-          cp -a . /tmp/rwa-launch-ui/rwa/
-          cd /tmp/rwa-launch-ui
-          python -m http.server 4173 >/tmp/rwa-launch-ui-http.log 2>&1 &
-          echo $! > /tmp/rwa-launch-ui.pid
-          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && exit 0; sleep 1; done
-          exit 1
-
-      - name: Prove root first paint has no legacy shell
-        env:
-          RWA_UI_URL: http://127.0.0.1:4173/rwa/
-          RWA_UI_PROOF_DIR: proof/launch-ui-first-paint
-        run: node tools/ecommerce-first-paint-browser.mjs
-
-      - name: Run full desktop mobile stress startup matrix
-        env:
-          RWA_UI_URL: http://127.0.0.1:4173/rwa/
-          RWA_UI_PROOF_DIR: proof/launch-ui-final
-        run: node tools/launch-ui-final-browser.mjs
-
-      - name: Stop local server
-        if: always()
-        run: kill "$(cat /tmp/rwa-launch-ui.pid)" 2>/dev/null || true
-
-      - name: Upload final browser matrix proof
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: launch-ui-final-${{ github.sha }}
-          path: |
-            proof/launch-ui-first-paint/
-            proof/launch-ui-final/
-          if-no-files-found: error
-          retention-days: 30
+          node --check rwa-live-home-v1.js
+          node --check rwa-multichain.js
+          node --check rwa-multichain-engine.js
+          grep -Fq '<strong>RWA</strong>' index.html
+          grep -Fq 'Markets</button>' index.html
+          grep -Fq 'Intelligence</button>' index.html
+          grep -Fq 'Portfolio</button>' index.html
+          grep -Fq 'Orders</button>' index.html
+          grep -Fq 'Reports</button>' index.html
+          grep -Fq 'rwaMultiChainLazyBootstrap' index.html
+          grep -Fq 'Hyperliquid Testnet' rwa-live-home-v1.js
+          grep -Fq 'Mainnet locked' rwa-live-home-v1.js
+          ! grep -Eiq 'seablueprint|ecommerce|in-page commerce' index.html
+          test ! -e commerce-service
+          test ! -e rwa-commerce-config.json
+          echo RWA_TRADING_UI_FINAL_PASS
