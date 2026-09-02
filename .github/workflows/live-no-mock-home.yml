@@ -1,5 +1,6 @@
 name: RWA Trading + MULTI CHAIN Browser Gate
 # FINAL_TRADING_NO_ECOMMERCE_CERT
+# MULTICHAIN_VISIBLE_V202
 
 on:
   push:
