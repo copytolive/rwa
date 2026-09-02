@@ -11,9 +11,8 @@ await page.goto(base,{waitUntil:'domcontentloaded',timeout:50000});
 await page.waitForFunction(()=>window.RWALiveHome?.version==='3.0.0'&&window.RWAMarketRuntime?.state?.().pairs?.length>50,{timeout:35000});
 await page.waitForTimeout(700);
 await snap('01-markets-desktop');
-for(const [name,key] of [['02-intelligence-desktop','intelligence'],['03-portfolio-desktop','portfolio']]){
- const b=page.locator('[data-rwa-target-nav="'+key+'"]').first();if(await b.count()){await b.click();await page.waitForTimeout(700);await snap(name)}
-}
+const intel=page.locator('[data-rwa-target-nav="intelligence"]').first();if(await intel.count()){await intel.click();await page.waitForSelector('#rwaSuperWorkspace:not([hidden])',{timeout:12000});await snap('02-intelligence-desktop');await page.locator('[data-rwa-target-nav="markets"]').first().click();await page.waitForTimeout(200)}
+const portfolio=page.locator('[data-rwa-target-nav="portfolio"]').first();if(await portfolio.count()){await portfolio.click();await page.waitForSelector('#suite',{state:'visible',timeout:15000});await snap('03-portfolio-desktop');await page.locator('#suite [data-suite-close]').click().catch(()=>{});await page.waitForTimeout(200)}
 const orders=page.locator('[data-rwa-target-nav="orders"]').first();if(await orders.count()){await orders.click();await page.waitForSelector('#rwaTradingWorkspace:not([hidden])',{timeout:10000});await snap('04-orders-desktop');await page.locator('[data-workspace-close]').click()}
 const reports=page.locator('[data-rwa-target-nav="reports"]').first();if(await reports.count()){await reports.click();await page.waitForSelector('#rwaTradingWorkspace:not([hidden])',{timeout:10000});await snap('05-reports-desktop');await page.locator('[data-workspace-close]').click()}
 await page.locator('[data-rwa-target-nav="markets"]').first().click().catch(()=>{});
