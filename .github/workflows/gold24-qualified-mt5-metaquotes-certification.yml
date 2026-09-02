@@ -148,6 +148,8 @@ jobs:
           public class NativeGold24 {
             [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
             [DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
+            [DllImport("user32.dll")] public static extern bool SetCursorPos(int X, int Y);
+            [DllImport("user32.dll")] public static extern void mouse_event(uint flags, uint dx, uint dy, uint data, UIntPtr extra);
           }
           '@
           function Elements {
@@ -287,13 +289,20 @@ jobs:
           }
           if(-not $dateSet){
             try{
-              $dateEl.SetFocus()
+              $rr=$dateEl.Current.BoundingRectangle
+              $x=[int]($rr.Left + [Math]::Min(45.0,[Math]::Max(12.0,$rr.Width/4.0)))
+              $y=[int]($rr.Top + $rr.Height/2.0)
+              [NativeGold24]::SetCursorPos($x,$y)|Out-Null
+              [NativeGold24]::mouse_event(0x0002,0,0,0,[UIntPtr]::Zero)
+              [NativeGold24]::mouse_event(0x0004,0,0,0,[UIntPtr]::Zero)
+              Start-Sleep -Milliseconds 300
               [System.Windows.Forms.SendKeys]::SendWait('^a')
               [System.Windows.Forms.SendKeys]::SendWait('01/01/1990')
               [System.Windows.Forms.SendKeys]::SendWait('{TAB}')
               Start-Sleep -Seconds 1
               $dateSet=$true
-            }catch{}
+              Write-Host "DOB_MOUSE_KEYBOARD_SET x=$x y=$y"
+            }catch{Write-Host "DOB_MOUSE_KEYBOARD_FAIL $($_.Exception.Message)"}
           }
           if(-not $dateSet){throw 'unable to set valid date of birth'}
           $agree=FindElement 'Data protection policy|agree|terms|personal data' 'ControlType.CheckBox'
@@ -301,6 +310,7 @@ jobs:
           $toggle=$agree.GetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern)
           if($toggle.Current.ToggleState -ne [System.Windows.Automation.ToggleState]::On){$toggle.Toggle()}
           Start-Sleep -Seconds 1
+          DumpUi 'registration-filled'
           InvokeButton 'Next|Continue'
           Start-Sleep -Seconds 20
           DumpUi 'created'
