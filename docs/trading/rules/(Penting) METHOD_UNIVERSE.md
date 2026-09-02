@@ -1,97 +1,207 @@
-# (Penting) GOLD24 MASTER METHOD UNIVERSE
+# 🟨 GOLD24 — MASTER METHOD / VALIDATION POLICY
 
-Status: **AUTHORITATIVE METHOD/DIVERSIFICATION REFERENCE**
+Status: **AUTHORITATIVE — 2026-09-03**
 
 Machine-readable source: `backtest/gold24/MASTER_METHOD_UNIVERSE.json`
 
-## 1. Purpose
+## 1. Canonical total
 
-This document prevents GOLD24 discovery from repeatedly concentrating search budget and portfolio selection in one already-successful family.
+- Only finalized canonical backtests count as Total Backtest.
+- Candidate cursor is not Total Backtest.
+- Strict / Multi / Screening views must never be double-counted when they refer to the same candidate.
+- Historical canonical archive is preserved when discovery policy evolves.
 
-The canonical archive, candidate cursor, execution ledger, Gate A evidence, historical checkpoints, and cumulative Multi discovery state MUST NOT be reset when this policy evolves.
+## 2. Candidate Gate
 
-## 2. Candidate execution rules
+A method is CANDIDATE PASS only when all are true:
 
-- Symbol: GOLD
-- Allowed TF: H1 / H4 / D1; current canonical GOLD production: D1
-- Pending order only: STOP / LIMIT
-- Direction: LONG_ONLY / SHORT_ONLY / BOTH
-- Flat-lot backtest; no compounding
-- Fixed SL: USD 5–25
-- Fixed TP: USD 5–25
-- GOLD pip convention: USD 0.01 / pip
-- Therefore SL/TP search range: **500–2,500 pips**
-- Canonical stressed round-trip cost floor: 0.32%
-
-## 3. Selection labels
-
-### CANDIDATE PASS
-Required:
-- Entry >= 100
+- Total Entry >= 100
 - Net Profit >= USD 20,000
-- abs Pearson(log-return equity) Corr <= 0.50
-- Correlation selection is per-symbol greedy; when >0.50 remove the lower-quality/ranking method.
+- global per-symbol Corr Max <= 0.50
 
-### VALIDATED
-A separate higher label. CANDIDATE PASS does not imply VALIDATED.
-Full BACKTEST_RULES quality, sample, OOS, robustness, execution, and risk gates remain required.
+Correlation is **absolute Pearson(log-return equity)** and is evaluated across the complete selected set. Selection is quality-ordered greedy; if correlation exceeds 0.50, remove the lower-quality/ranking method.
 
-### PORTFOLIO_READY
-A selected library may be concentrated while research is incomplete, but it MUST NOT be labeled PORTFOLIO_READY unless:
-- at least **6 distinct engine families** are represented; and
-- **no single family exceeds 25%** of the final portfolio.
+Candidate PASS is not HARD PASS.
 
-## 4. Discovery policy
+## 3. Units
 
-Discovery is **family-balanced** across every engine family marked IMPLEMENTED.
+- GOLD pip size = USD 0.01
+- SL / TP table values = pips
+- Net Profit / EV = USD
+- WR / Max DD / MC95 DD / Positive Year = %
+- PF / Recovery / SQN / OOS PF / Corr = unitless ratios
+- Entry / Max Consecutive Loss = counts
+- History = years
+- Worst Year = calendar year
 
-For N implemented families and a 5,000-candidate run, candidate generation must differ by no more than one candidate between families.
+Backtest remains flat-lot, no compounding, pending-order only (STOP/LIMIT), fixed SL/TP USD 5–25 = 500–2,500 pips.
 
-Seed exploitation is permitted only inside the currently targeted family. A strong Candle seed may not consume the discovery budget allocated to ATR, Bollinger, Momentum, Z-Score, etc.
+## 4. Final 28 columns
 
-A workflow run must fail if the engine's implemented family set differs from the implemented family set registered in `MASTER_METHOD_UNIVERSE.json`.
+Metode → TF → Order → Direction → SL → TP → Total Entry → WR → PF Net → Net Profit → EV/Trade → Avg Win/Loss → Max DD → Recovery Factor → Max Consecutive Loss → SQN → OOS PF → Monte Carlo Pass → MC 95% DD → Positive Year → Worst Year → Periode Backtest → History → Sample v11 → Corr Max → Corr Gate → Python Script → MT5 Script.
 
-## 5. Master method universe
+## 5. Real script contract
 
-| # | Category | Status | Engine family now | Method universe |
-|---:|---|---|---|---|
-| 1 | Moving Average / Trend | IMPLEMENTED | TREND_EMA | SMA Cross, EMA Cross, WMA Cross, HMA Trend, EMA Slope, Triple MA, MA Pullback |
-| 2 | Channel / Breakout | IMPLEMENTED | ATR_BREAKOUT, KELTNER_BREAKOUT, PRICE_STRUCTURE, DONCHIAN | Donchian, N-Bar High/Low, Price Structure, ATR/Keltner/Bollinger Breakout |
-| 3 | Momentum | IMPLEMENTED | MOMENTUM_RSI_ROC | RSI Momentum, ROC, Stochastic, MACD, CCI, Williams %R, TSI |
-| 4 | Mean Reversion | IMPLEMENTED | BOLLINGER_REVERSION, ZSCORE_REVERSION | Bollinger, Z-Score, RSI/Keltner/MA/VWAP deviation |
-| 5 | Candlestick | IMPLEMENTED | CANDLE_ENGULFING | Engulfing, Pin Bar, Inside/Outside Bar, Doji, Harami, Morning/Evening Star, 3 Soldiers/Crows |
-| 6 | Hybrid / Ensemble | IMPLEMENTED | HYBRID | Trend+Momentum, Trend+Breakout, Mean Reversion+Volatility, Structure+Momentum |
-| 7 | Chart Pattern | PLANNED | — | Double Top/Bottom, H&S, Triangle, Wedge, Flag, Pennant, Rectangle |
-| 8 | Market Structure | PLANNED | — | HH/HL, LH/LL, Swing Break, BOS, CHoCH, Range Break |
-| 9 | Support / Resistance | PLANNED | — | Horizontal, Previous/Daily/Weekly High-Low, Dynamic S/R |
-| 10 | Fibonacci | PLANNED | — | 38.2/50/61.8/78.6 pullback, extension breakout |
-| 11 | Volatility | PLANNED | — | ATR expansion/compression, Bollinger width, contraction/expansion |
-| 12 | Keltner / Bollinger Hybrid | PLANNED | — | Squeeze, expansion, BB+ATR breakout, re-entry |
-| 13 | Ichimoku | PLANNED | — | Tenkan/Kijun, Kumo breakout/trend, Chikou |
-| 14 | SuperTrend / Adaptive Trend | PLANNED | — | SuperTrend, ATR SuperTrend, KAMA, VIDYA |
-| 15 | Divergence | PLANNED | — | RSI/MACD/Stochastic/CCI/Hidden divergence |
-| 16 | Volume | PLANNED | — | Volume breakout/spike, OBV, MFI, price+volume |
-| 17 | VWAP | PLANNED | — | VWAP reversion/breakout, Anchored VWAP, trend/pullback |
-| 18 | Statistical | PLANNED | — | Z-Score, rolling regression, regression channel, percentile breakout |
-| 19 | Relative Strength | PLANNED | — | Price/MA RS, cross-asset RS, Gold vs USD/DXY |
-| 20 | Multi-Timeframe | PLANNED | — | D1+H4, D1+H1, H4+H1 confirmation |
+Every displayed final method must have an exact Python/MT5 pair.
 
-## 6. Rollout rule for PLANNED methods
+### Python
+- real `.py` file in GitHub
+- real CANDIDATE + EXPECTED
+- config hash
+- exact canonical replay
+- same quantity as the reported backtest
+- metric parity PASS
 
-A PLANNED method does not enter production merely because it is named here.
+### MT5
+- real `.mq5` file in GitHub
+- not mockup
+- parameters identical to Python
+- identical config hash
+- real engine/include
+- native MetaEditor compile PASS
+- native MT5 Strategy Tester PASS
 
-For each new engine family:
-1. implement deterministic signal logic with no future leakage;
-2. add parameter-generation rules and candidate validation;
-3. add unit/smoke tests and exact execution-hash checks;
-4. run canonical backtest under the same cost/order/SL/TP rules;
-5. pass economic floor before correlation;
-6. pass correlation authority;
-7. generate exact Python and MT5 wrappers if selected;
-8. pass native MetaQuotes certification before being considered tradable.
+If either side fails, the method must not be labeled VERIFIED.
 
-## 7. Current known concentration
+## 6. Required categories
 
-At the policy rollout checkpoint, the Multi library was still concentrated in two families and therefore **NOT PORTFOLIO_READY**.
+All 20 categories remain mandatory:
 
-The library is preserved. Family-balanced discovery is responsible for finding alternatives; useful existing rows are not deleted merely to make the portfolio look diversified.
+1. Moving Average / Trend
+2. Channel / Breakout
+3. Momentum
+4. Mean Reversion
+5. Candlestick
+6. Hybrid / Ensemble
+7. Chart Pattern
+8. Market Structure
+9. Support / Resistance
+10. Fibonacci
+11. Volatility
+12. Keltner / Bollinger Hybrid
+13. Ichimoku
+14. SuperTrend / Adaptive Trend
+15. Divergence
+16. Volume
+17. VWAP
+18. Statistical
+19. Relative Strength
+20. Multi-Timeframe
+
+## 7. Family expansion
+
+Previous implemented engine set: **24 families**.
+
+2026-09-03 expansion adds **22 causal D1-real families**:
+
+- ADX_TREND
+- TURTLE_BREAKOUT
+- ATR_CHANNEL
+- EMA_PULLBACK
+- MACD_MOMENTUM
+- RSI_MOMENTUM
+- RSI_REVERSION
+- BOLLINGER_REVERSION_V2
+- BOLLINGER_SQUEEZE
+- KELTNER_SQUEEZE
+- FRACTAL_BREAKOUT
+- BOS_CHOCH
+- PIVOT_SR
+- FIB_PULLBACK
+- ICHIMOKU_KUMO_BREAKOUT
+- ICHIMOKU_PULLBACK
+- SUPERTREND_ATR
+- CHANDELIER_TREND
+- ROLLING_ZSCORE
+- LINEAR_REGRESSION
+- VOLATILITY_REGIME
+- TREND_MEANREV_ENSEMBLE
+
+Current implemented engine set: **46 families**.
+
+Two additional registered target families remain **DATA_BLOCKED**:
+
+- H4_D1_MTF_NATIVE
+- D1_H4_PULLBACK_NATIVE
+
+They MUST NOT be simulated by resampling D1 and then labeled native H4. They become implemented only after real canonical H4 data is imported and independently Gate-A audited.
+
+Target registry: **48 = 46 implemented + 2 data-blocked**.
+
+## 8. Real dataset policy
+
+Every published result must be traceable to:
+
+- provider
+- symbol
+- timeframe
+- rows/bars
+- period
+- dataset SHA256
+- cost model
+- quantity/lot
+- starting equity
+- config hash
+- execution hash
+
+Synthetic/resampled H1/H4 must never be presented as real native H1/H4.
+
+## 9. HARD PASS
+
+HARD PASS requires Candidate PASS plus all 8 gates:
+
+1. Total Entry >= 300
+2. PF Net >= 1.20
+3. Max DD <= 25%
+4. EV/Trade > 0
+5. OOS PF >= 1.00
+6. Monte Carlo PASS / probability-positive >= 95%
+7. Positive Year >= 60%
+8. Corr Max <= 0.50
+
+Classification:
+
+- HARD PASS = Candidate PASS + 8/8
+- WATCH = Candidate PASS + >=5/8
+- FAIL = otherwise
+
+## 10. Portfolio Gate
+
+After all candidate sources are combined:
+
+- compute global per-symbol correlation across the complete selected set
+- apply quality-ordered greedy Corr <= 0.50
+- minimum 6 distinct families
+- target >=10 distinct families
+- maximum one-family share 25%
+- ideal one-family share <=20%
+- reduce Candle concentration
+- compute portfolio DD and diagnostic PnL
+- do not label LIVE READY before broker margin/slippage/commission/swap/tick/simultaneous-position interactions are validated
+
+## 11. BEFORE → AFTER progress
+
+Every update must report:
+
+- Total finalized backtest
+- Candidate evaluated
+- Candidate PASS
+- HARD PASS
+- WATCH
+- FAIL
+- Selected methods
+- Distinct family
+- Max family concentration
+- Corr violations
+- Global Corr kept
+- Python verified
+- MT5 verified
+- Sample >=300 count
+- Max DD <=25% count
+- Portfolio readiness
+
+If no progress occurs: identify the bottleneck, fix engine/data/discovery, rerun, validate, and only then publish.
+
+## 12. Target
+
+**48 registered real-family designs → large-scale candidate discovery → Candidate Gate → HARD PASS → global correlation → diversification → exact Python/MT5 pair → reproducible Portfolio Final.**
