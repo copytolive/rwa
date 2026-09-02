@@ -1,19 +1,9 @@
-import { BusinessRewards } from "@/components/rewards";
+import { LiveRouteWorkspace } from "@/components/live-dashboard";
 
-export const dynamicParams = false;
-export function generateStaticParams(){
-  return [
-    "kopi-nusantara",
-    "seablue-estate",
-    "harbourview-asset-management",
-    "blue-ocean-shipping",
-    "maple-finance",
-    "green-city-living",
-    "seaside-villas",
-  ].map(business => ({business}));
-}
+export const dynamicParams=false;
+export function generateStaticParams(){return [{business:"provider-required"}];}
 
-export default async function BusinessRewardsPage({params}:{params:Promise<{business:string}>}){
+export default async function BusinessRewardsLivePage({params}:{params:Promise<{business:string}>}){
   const {business}=await params;
-  return <BusinessRewards slug={business}/>;
+  return <LiveRouteWorkspace title="Business Rewards Provider Required" path={`/businesses/${business}/rewards`}/>;
 }

@@ -39,6 +39,7 @@ jobs:
           node tools/launch-gate-current.mjs --require-engineering
           node tools/rwa-total-ready-screen.mjs --require-engineering
           (cd apps/realworldasset && npm run verify:foundation)
+          (cd apps/realworldasset && npm run verify:live-only)
 
       - name: Validate immutable safety, lazy runtime, commerce and MULTI CHAIN V2 markers
         shell: bash
@@ -145,11 +146,41 @@ jobs:
             test "$code" = 200
           done
 
-          grep -Fq 'UI DEMO' /tmp/rwa-root.html
-          grep -Fq 'BACKEND OFFLINE' /tmp/rwa-root.html
-          grep -Fq 'Connect Wallet' /tmp/rwa-root.html
-          grep -Fq 'Demo' /tmp/rwa-markets.html
-          grep -Fq 'Demo' /tmp/rwa-merchant.html
+          python3 - <<'PY'
+          import re
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          class VisibleText(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.skip=0; self.parts=[]
+              def handle_starttag(self, tag, attrs):
+                  if tag in {'script','style','noscript'}: self.skip+=1
+              def handle_endtag(self, tag):
+                  if tag in {'script','style','noscript'} and self.skip: self.skip-=1
+              def handle_data(self, data):
+                  if not self.skip: self.parts.append(data)
+
+          forbidden=[
+              re.compile(r'\bdemo\b',re.I),
+              re.compile(r'Alex Morgan',re.I),
+              re.compile(r'Level\s*3',re.I),
+              re.compile(r'Sample dataset',re.I),
+              re.compile(r'Connected Account\s*\(Preview\)',re.I),
+              re.compile(r'(?:ORD|POS)-DEMO',re.I),
+          ]
+          pages=['root','markets','merchant','orders','community','settings','checkout','account_orders']
+          for name in pages:
+              parser=VisibleText(); parser.feed(Path(f'/tmp/rwa-{name}.html').read_text(errors='ignore'))
+              text=' '.join(' '.join(parser.parts).split())
+              for pattern in forbidden:
+                  assert not pattern.search(text),(name,pattern.pattern,text[:500])
+          root=VisibleText(); root.feed(Path('/tmp/rwa-root.html').read_text(errors='ignore'))
+          root_text=' '.join(' '.join(root.parts).split())
+          assert 'LIVE ONLY' in root_text,root_text[:800]
+          assert 'Connect Wallet' in root_text,root_text[:800]
+          print('PUBLIC_VISIBLE_TEXT_LIVE_ONLY_PASS')
+          PY
 
           curl --connect-timeout 5 --max-time 20 -fsSL "$base/UI_SYNC_MANIFEST.json?v=$q" -o /tmp/rwa-sync.json
           python - <<'PY'
@@ -173,7 +204,7 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/release-candidate' -f description='Canonical UI + safety + fail-closed engineering contract verified'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/release-candidate' -f description='Canonical live-only UI + safety + fail-closed engineering contract verified'
 
       - name: Publish release candidate failure
         if: failure()

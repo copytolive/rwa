@@ -1,5 +1,5 @@
-import { AssetDetail, getCryptoAsset } from "@/components/details";
+import { LiveCurrentRoutePage } from "@/components/live-dashboard";
 
-export default function BtcAssetAliasPage(){
-  return <AssetDetail asset={getCryptoAsset("btc-usdc")}/>;
+export default function LiveOnlyPage(){
+  return <LiveCurrentRoutePage/>;
 }

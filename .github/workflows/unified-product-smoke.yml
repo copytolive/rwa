@@ -87,11 +87,15 @@ jobs:
           grep -Fq 'printf' .github/workflows/pages.yml
           grep -Fq 'deployment-sha.txt' .github/workflows/pages.yml
           grep -Fq 'path: apps/realworldasset/out' .github/workflows/pages.yml
-          grep -Fq 'PUBLIC_CHROMIUM_REALWORLDASSET_PASS' .github/workflows/pages.yml
+          grep -Fq 'public-route-manifest.txt' .github/workflows/pages.yml
+          grep -Fq 'PUBLIC_EVERY_PAGE_LIVE_PROOF' .github/workflows/pages.yml
+          grep -Fq "page.screenshot(path=str(path),full_page=True)" .github/workflows/pages.yml
       - name: Safety invariants preserved
         run: |
           grep -q "mainnetEnabled" trade/config.js
           grep -q "canMainnet" trade/config.js
           grep -q "defaultTestnet:true" trade/config.js
-          grep -Fq 'BACKEND_CONNECTED = false' apps/realworldasset/src/components/app/AppShell.tsx
+          grep -Fq 'data-live-only="true"' apps/realworldasset/src/components/app/AppShell.tsx
+          grep -Fq 'data-ui-demo="false"' apps/realworldasset/src/components/app/AppShell.tsx
+          grep -Fq 'mainnetReady' apps/realworldasset/src/components/app/AppShell.tsx
           ! grep -R --line-number -E 'private[_ -]?key|seed phrase|withdraw.*automatic' product-os-v3.js trader/index.html asset/index.html unified-design-v3.css

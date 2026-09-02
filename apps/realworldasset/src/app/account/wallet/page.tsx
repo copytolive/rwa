@@ -1,2 +1,5 @@
-import { WalletManager } from "@/components/wallet";
-export default function ManageWalletPage(){return <WalletManager/>}
+import { CriticalLiveWorkspace } from "@/components/critical-workspaces/CriticalWorkspaces";
+
+export default function WalletPage(){
+  return <CriticalLiveWorkspace kind="wallet"/>;
+}

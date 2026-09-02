@@ -1,5 +1,9 @@
-import { DEMO_ORDER_ID, OrderDetailPage } from "@/components/trading";
+import { LiveRouteWorkspace } from "@/components/live-dashboard";
 
 export const dynamicParams=false;
-export function generateStaticParams(){return [{id:DEMO_ORDER_ID},{id:"ORD-DEMO-002"}];}
-export default async function OrderRoute({params}:{params:Promise<{id:string}>}){const {id}=await params;return <OrderDetailPage orderId={id}/>}
+export function generateStaticParams(){return [{id:"provider-required"}];}
+
+export default async function OrderProviderRequiredPage({params}:{params:Promise<{id:string}>}){
+  const {id}=await params;
+  return <LiveRouteWorkspace title="Order Provider Required" path={`/orders/${id}`}/>;
+}

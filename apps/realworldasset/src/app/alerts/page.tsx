@@ -1,2 +1,5 @@
-import { AlertsManagement } from "@/components/account-tools";
-export default function AlertsPage(){return <AlertsManagement/>}
+import { LiveCurrentRoutePage } from "@/components/live-dashboard";
+
+export default function LiveOnlyPage(){
+  return <LiveCurrentRoutePage/>;
+}

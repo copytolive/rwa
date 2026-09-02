@@ -29,15 +29,17 @@ for (const token of ["--rwa-primary", "--rwa-bg", "--rwa-surface", "--rwa-border
   if (!tokens.includes(token)) throw new Error(`Missing token ${token}`);
 }
 
-// CHAT 00A originally prohibited routes while the foundation-only slice was being built.
-// In the integrated final application a real landing route is mandatory. Keep the
-// anti-screenshot intent by requiring composed UI source and explicit demo truth.
 const pagePath = path.join(root, "src/app/page.tsx");
+const livePath = path.join(root, "src/components/live-dashboard/LiveDashboard.tsx");
 if (!fs.existsSync(pagePath)) throw new Error("Integrated final app is missing src/app/page.tsx");
+if (!fs.existsSync(livePath)) throw new Error("Integrated final app is missing LiveDashboard.tsx");
 const page = fs.readFileSync(pagePath, "utf8");
-if (!page.includes('PublicShell')) throw new Error("Landing page must compose the canonical PublicShell");
-if (!page.includes('Market figures shown in this public preview are deterministic demo data')) throw new Error("Landing page must preserve explicit demo-data disclosure");
+const live = fs.readFileSync(livePath, "utf8");
+if (!page.includes('LivePublicLanding')) throw new Error("Landing route must bind to LivePublicLanding");
+if (!live.includes('return <PublicShell><LiveContent')) throw new Error("LivePublicLanding must compose the canonical PublicShell");
+if (!live.includes('https://api.hyperliquid.xyz/info') || !live.includes('metaAndAssetCtxs')) throw new Error("Landing must use the verified public Hyperliquid market source");
+if (!live.includes('No synthetic fallback.')) throw new Error("Landing must keep missing market data fail-closed without fabricated fallback");
 if (/export\s+default\s+function\s+\w+\s*\(\s*\)\s*\{?\s*return\s*<img\b/i.test(page)) throw new Error("Screenshot-only landing route is prohibited");
-if (page.includes('dangerouslySetInnerHTML')) throw new Error("Landing page must not inject screenshot-derived HTML");
+if (page.includes('dangerouslySetInnerHTML') || live.includes('dangerouslySetInnerHTML')) throw new Error("Landing must not inject screenshot-derived HTML");
 
-console.log(`Foundation verified: ${mustExist.length} required modules, centralized tokens, composed final landing route, demo truth preserved.`);
+console.log(`Foundation verified: ${mustExist.length} required modules, centralized tokens, canonical live landing composition, and fail-closed data policy.`);

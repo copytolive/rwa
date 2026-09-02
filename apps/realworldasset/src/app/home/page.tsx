@@ -1,2 +1,5 @@
-import { HomeFeed } from "@/components/discovery";
-export default function HomePage(){return <HomeFeed/>}
+import { LiveHomeDashboard } from "@/components/live-dashboard";
+
+export default function HomePage(){
+  return <LiveHomeDashboard/>;
+}

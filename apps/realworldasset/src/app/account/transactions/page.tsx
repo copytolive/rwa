@@ -1,2 +1,5 @@
-import { TransactionsPage } from "@/components/account";
-export default function AccountTransactionsPage(){return <TransactionsPage/>}
+import { LiveCurrentRoutePage } from "@/components/live-dashboard";
+
+export default function LiveOnlyPage(){
+  return <LiveCurrentRoutePage/>;
+}

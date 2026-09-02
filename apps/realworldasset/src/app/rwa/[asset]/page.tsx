@@ -1,19 +1,9 @@
-import { AssetDetail, getRwaAsset } from "@/components/details";
+import { LiveRouteWorkspace } from "@/components/live-dashboard";
 
-export const dynamicParams = false;
-export function generateStaticParams() {
-  return [
-    "marina-bay-residences",
-    "marina-bay-residences-regulated",
-    "seaside-private-credit-fund",
-    "treasury-income-note",
-    "gold-reserve-trust",
-    "blue-port-logistics-infrastructure",
-    "green-energy-fund",
-  ].map(asset => ({ asset }));
-}
+export const dynamicParams=false;
+export function generateStaticParams(){return [{asset:"provider-required"}];}
 
-export default async function RwaAssetPage({params}:{params:Promise<{asset:string}>}){
+export default async function RwaAssetLivePage({params}:{params:Promise<{asset:string}>}){
   const {asset}=await params;
-  return <AssetDetail asset={getRwaAsset(asset)}/>;
+  return <LiveRouteWorkspace title="RWA Provider Required" path={`/rwa/${asset}`}/>;
 }

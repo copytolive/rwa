@@ -1,19 +1,9 @@
-import { AssetDetail, getBusinessToken } from "@/components/details";
+import { LiveRouteWorkspace } from "@/components/live-dashboard";
 
-export const dynamicParams = false;
-export function generateStaticParams() {
-  return [
-    "kopi-nusantara",
-    "seablue-estate",
-    "harbourview-asset-management",
-    "blue-ocean-shipping",
-    "maple-finance",
-    "green-city-living",
-    "seaside-villas",
-  ].map(business => ({ business }));
-}
+export const dynamicParams=false;
+export function generateStaticParams(){return [{business:"provider-required"}];}
 
-export default async function BusinessTokenPage({params}:{params:Promise<{business:string}>}){
+export default async function BusinessTokenLivePage({params}:{params:Promise<{business:string}>}){
   const {business}=await params;
-  return <AssetDetail asset={getBusinessToken(business)}/>;
+  return <LiveRouteWorkspace title="Business Token Provider Required" path={`/businesses/${business}/token`}/>;
 }

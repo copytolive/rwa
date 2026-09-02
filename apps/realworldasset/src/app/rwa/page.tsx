@@ -1,2 +1,5 @@
-import { RwaDirectory } from "@/components/discovery";
-export default function RwaPage(){return <RwaDirectory/>}
+import { CriticalLiveWorkspace } from "@/components/critical-workspaces/CriticalWorkspaces";
+
+export default function RwaPage(){
+  return <CriticalLiveWorkspace kind="rwa"/>;
+}

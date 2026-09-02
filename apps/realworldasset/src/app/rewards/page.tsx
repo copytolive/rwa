@@ -1,5 +1,5 @@
-import { RewardsCenter } from "@/components/rewards";
+import { LiveCurrentRoutePage } from "@/components/live-dashboard";
 
-export default function RewardsPage(){
-  return <RewardsCenter/>;
+export default function LiveOnlyPage(){
+  return <LiveCurrentRoutePage/>;
 }

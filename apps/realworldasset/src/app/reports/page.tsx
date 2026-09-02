@@ -1,2 +1,5 @@
-import { ReportsPage } from "@/components/account-tools";
-export default function ReportsRoute(){return <ReportsPage/>}
+import { LiveCurrentRoutePage } from "@/components/live-dashboard";
+
+export default function LiveOnlyPage(){
+  return <LiveCurrentRoutePage/>;
+}

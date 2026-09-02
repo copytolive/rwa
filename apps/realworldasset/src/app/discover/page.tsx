@@ -1,2 +1,5 @@
-import { DiscoverHub } from "@/components/discovery";
-export default function DiscoverPage(){return <DiscoverHub/>}
+import { LiveCurrentRoutePage } from "@/components/live-dashboard";
+
+export default function LiveOnlyPage(){
+  return <LiveCurrentRoutePage/>;
+}

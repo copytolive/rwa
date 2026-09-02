@@ -1,5 +1,9 @@
-import { DEMO_POSITION_ID, PositionDetailPage } from "@/components/trading";
+import { LiveRouteWorkspace } from "@/components/live-dashboard";
 
 export const dynamicParams=false;
-export function generateStaticParams(){return [{id:DEMO_POSITION_ID},{id:"POS-DEMO-002"}];}
-export default async function PositionRoute({params}:{params:Promise<{id:string}>}){const {id}=await params;return <PositionDetailPage positionId={id}/>}
+export function generateStaticParams(){return [{id:"provider-required"}];}
+
+export default async function PositionProviderRequiredPage({params}:{params:Promise<{id:string}>}){
+  const {id}=await params;
+  return <LiveRouteWorkspace title="Position Provider Required" path={`/positions/${id}`}/>;
+}

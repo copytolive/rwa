@@ -1,2 +1,5 @@
-import { WatchlistPage } from "@/components/account-tools";
-export default function WatchlistRoute(){return <WatchlistPage/>}
+import { LiveCurrentRoutePage } from "@/components/live-dashboard";
+
+export default function LiveOnlyPage(){
+  return <LiveCurrentRoutePage/>;
+}

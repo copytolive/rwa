@@ -22,9 +22,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for f in index.html app.js styles.css superapp-v5.js rwa-target-dashboard-v2.js rwa-ecommerce-target-controller-v1.js manifest.webmanifest; do
-            test -s "$f"
-          done
+          for f in index.html app.js styles.css superapp-v5.js rwa-target-dashboard-v2.js rwa-ecommerce-target-controller-v1.js manifest.webmanifest; do test -s "$f"; done
           test -s renko/index.html
           test -s renko/renko-tv-engine.js
           node --check app.js
@@ -34,7 +32,7 @@ jobs:
           node --check renko/renko-tv-engine.js
           echo SYSTEM_RUNTIME_PASS
 
-      - name: Verify complete canonical UI source
+      - name: Verify complete canonical live-only UI source
         shell: bash
         run: |
           set -euo pipefail
@@ -45,13 +43,14 @@ jobs:
           test -s apps/realworldasset/next.config.js
           test -s apps/realworldasset/src/app/page.tsx
           test -s 'apps/realworldasset/src/app/[...slug]/page.tsx'
+          test -s apps/realworldasset/scripts/every-page-live-proof.py
           test -d apps/realworldasset/src/components
           test -d apps/realworldasset/scripts
           test -d apps/realworldasset/public
           test ! -e ui/realworldasset
           FILE_COUNT="$(git ls-files apps/realworldasset | wc -l | tr -d ' ')"
           test "$FILE_COUNT" -gt 50
-          grep -Fq 'MerchantGrowthRoute' 'apps/realworldasset/src/app/[...slug]/page.tsx'
+          grep -Fq 'LiveRouteWorkspace' 'apps/realworldasset/src/app/[...slug]/page.tsx'
           grep -Fq '"/rwa"' apps/realworldasset/next.config.js
           python3 - <<'PY'
           import json
@@ -61,7 +60,7 @@ jobs:
           assert m.get('compatibilityMirror') is None,m
           assert m.get('syncMode')=='embedded-canonical-source',m
           PY
-          echo "TOTAL_UI_SOURCE_PASS files=$FILE_COUNT upstream=$(cat apps/realworldasset/UPSTREAM_SHA.txt) canonical_only=1"
+          echo "TOTAL_UI_SOURCE_PASS files=$FILE_COUNT upstream=$(cat apps/realworldasset/UPSTREAM_SHA.txt) canonical_only=1 live_only=1"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -74,10 +73,11 @@ jobs:
         working-directory: apps/realworldasset
         run: npm ci --no-audit --no-fund
 
-      - name: Run final UI interaction contracts
+      - name: Run live-only and interaction contracts
         working-directory: apps/realworldasset
         run: |
           set -euo pipefail
+          npm run verify:live-only
           npm run verify:interactions
           npm run verify:chat04
           npm run verify:chat05
@@ -107,10 +107,9 @@ jobs:
           set -euo pipefail
           O=apps/realworldasset/out
           test -s "$O/index.html"
-          for route in markets merchant merchant/orders merchant/updates/new merchant/ads community settings checkout account/orders; do
-            test -s "$O/$route/index.html"
-          done
+          for route in markets merchant merchant/orders intelligence settings checkout account/orders; do test -s "$O/$route/index.html"; done
           grep -Rq '/rwa/_next/' "$O"/index.html "$O"/merchant/index.html
+          ! grep -RqiE 'UI DEMO|Alex Morgan|Level 3 · Demo|Connected Account \(Preview\)|POS-DEMO|ORD-DEMO' "$O" --include='*.html'
           echo TOTAL_UI_BUILD_PASS
 
       - name: Install Chromium
@@ -131,7 +130,7 @@ jobs:
           python3 - <<'PY'
           from playwright.sync_api import sync_playwright
           base='http://127.0.0.1:4197/rwa'
-          routes=['/','/markets/','/merchant/','/merchant/orders/','/merchant/updates/new/','/merchant/ads/','/community/','/settings/','/checkout/','/account/orders/','/renko/']
+          routes=['/','/home/','/markets/','/intelligence/','/merchant/','/merchant/orders/','/settings/','/checkout/','/account/orders/','/renko/']
           errors=[]
           with sync_playwright() as p:
               b=p.chromium.launch(headless=True,args=['--no-sandbox'])
@@ -141,12 +140,14 @@ jobs:
                   for route in routes:
                       r=page.goto(base+route,wait_until='domcontentloaded',timeout=20000)
                       assert r and r.status==200,(route,r.status if r else None)
-                      page.wait_for_timeout(100)
+                      page.wait_for_timeout(150)
                       text=page.locator('body').inner_text()
                       assert '404' not in text[:120],route
+                      assert 'UI DEMO' not in text.upper(),route
+                      assert 'ALEX MORGAN' not in text.upper(),route
                   page.close()
               assert not errors,errors
               b.close()
-          print('CHROMIUM_COMBINED_UI_PASS routes=',len(routes),'viewports=2')
+          print('CHROMIUM_COMBINED_UI_PASS routes=',len(routes),'viewports=2 live_only=1')
           PY
           kill "$(cat /tmp/rwa-ui-http.pid)" || true

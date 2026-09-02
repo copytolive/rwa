@@ -25,7 +25,6 @@ const nav = [
 ] as const;
 
 const UNSAFE_ACTION = /(confirm purchase|confirm (buy|sell)|execute (trade|order)|submit order|settle|withdraw|redeem|mint now|pay now)/i;
-// BACKEND_CONNECTED = false legacy smoke marker: default remains fail-closed until runtime health/readiness evidence proves a live adapter.
 const initialCapabilities: RuntimeCapabilities = {walletProvider:false,walletConnected:false,authenticated:false,commerceReachable:false,checkoutReady:false,paymentConfigured:false,executionAvailable:false,mainnetReady:false,apiBase:"",blockers:[]};
 
 export function AppBrand() {
@@ -36,7 +35,6 @@ export function AppShell({ children, className = "" }: { children: React.ReactNo
   const pathname = usePathname();
   const router = useRouter();
   const [pro, setPro] = React.useState(true);
-  const [softTheme, setSoftTheme] = React.useState(false);
   const [query, setQuery] = React.useState("");
   const [interactionStatus, setInteractionStatus] = React.useState("");
   const [safetyNotice, setSafetyNotice] = React.useState("");
@@ -147,21 +145,21 @@ export function AppShell({ children, className = "" }: { children: React.ReactNo
   }
 
   const badge = capabilities.mainnetReady
-    ? "LIVE BACKEND · MAINNET GATE READY"
+    ? "LIVE DATA · MAINNET GATE READY"
     : capabilities.authenticated && capabilities.checkoutReady
-      ? "LIVE WALLET AUTH · CHECKOUT READY · MAINNET LOCKED"
+      ? "LIVE DATA · WALLET AUTH · CHECKOUT READY · MAINNET LOCKED"
       : capabilities.commerceReachable
-        ? "LIVE BACKEND · WALLET AUTH AVAILABLE · WRITES GATED"
-        : "UI DEMO · BACKEND OFFLINE";
-  const footerStatus = capabilities.commerceReachable ? `● ${badge}` : "● UI Demo · Backend Offline";
-  const walletLabel = wallet ? `${wallet.slice(0,6)}…${wallet.slice(-4)}` : "Connect Wallet · Live";
+        ? "LIVE DATA · COMMERCE BACKEND REACHABLE · WRITES GATED"
+        : "LIVE DATA · COMMERCE BACKEND UNAVAILABLE · WRITES LOCKED";
+  const footerStatus = `● ${badge}`;
+  const walletLabel = wallet ? `${wallet.slice(0,6)}…${wallet.slice(-4)}` : "Connect Wallet";
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
-  return <div className={`app-shell ${softTheme ? "soft-theme" : ""} ${className}`.trim()} onClickCapture={handleButtonCapture} data-ui-demo="true" data-backend-connected={capabilities.commerceReachable ? "true" : "false"} data-mainnet-ready={capabilities.mainnetReady ? "true" : "false"}>
-    <div className="app-demo-badge" role="status">{badge}</div>
+  return <div className={`app-shell ${className}`.trim()} onClickCapture={handleButtonCapture} data-live-only="true" data-ui-demo="false" data-backend-connected={capabilities.commerceReachable ? "true" : "false"} data-mainnet-ready={capabilities.mainnetReady ? "true" : "false"}>
     <header className="app-header">
       <AppBrand/>
       <nav className="app-nav" aria-label="Authenticated primary navigation">
-        {nav.map(([label, href]) => <Link key={href} href={href} data-active={pathname === href ? "true" : undefined}>{label}</Link>)}
+        {nav.map(([label, href]) => <Link key={href} href={href} data-active={isActive(href) ? "true" : undefined}>{label}</Link>)}
       </nav>
       <form className="app-header-search" onSubmit={submitSearch} role="search">
         <input aria-label="Search RWA.MS" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search" />
@@ -169,13 +167,16 @@ export function AppShell({ children, className = "" }: { children: React.ReactNo
       <div className="app-header-actions">
         <div className="mode-toggle" aria-label="Interface mode"><button type="button" aria-pressed={!pro} onClick={() => setPro(false)}>Simple</button><button type="button" aria-pressed={pro} onClick={() => { setPro(true); router.push("/pro"); }}>PRO</button></div>
         <Button size="sm" onClick={() => router.push("/community/compose")}>＋ Post Thesis</Button>
-        <button className="icon-button" type="button" aria-label="Notifications" onClick={() => router.push("/notifications")}>♢<span>3</span></button>
-        <button className="icon-button" type="button" aria-label="Toggle theme" onClick={() => setSoftTheme(v => !v)}>{softTheme ? "☀" : "☾"}</button>
-        <button className="profile-button" type="button" onClick={() => router.push("/account")}><span className="profile-avatar">{wallet ? "W" : "AM"}</span><span>{wallet ? "Authenticated Wallet" : "Alex Morgan"}<small>{wallet ? `${wallet.slice(0,8)}…${wallet.slice(-4)}` : "Level 3 · Demo"}</small></span></button>
+        <button className="icon-button" type="button" aria-label="Notifications" onClick={() => router.push("/notifications")}>♢</button>
+        <button className="profile-button" type="button" onClick={() => router.push("/account")}><span className="profile-avatar">{wallet ? "W" : "G"}</span><span>{wallet ? "Authenticated Wallet" : "Guest"}<small>{wallet ? `${wallet.slice(0,8)}…${wallet.slice(-4)}` : "Wallet not connected"}</small></span></button>
         <Button size="sm" onClick={connectLiveWallet} disabled={authBusy}>{walletLabel}</Button>
         {wallet && <Button size="sm" variant="ghost" onClick={logout} disabled={authBusy}>Log Out</Button>}
       </div>
     </header>
+    <nav className="app-mobile-nav" aria-label="Mobile primary navigation">
+      {nav.map(([label, href]) => <Link key={href} href={href} data-active={isActive(href) ? "true" : undefined}>{label}</Link>)}
+      <Link href="/account" data-active={isActive("/account") ? "true" : undefined}>Account</Link>
+    </nav>
     {children}
     {safetyNotice && <div className="app-safety-notice" role="alert">{safetyNotice}</div>}
     <span className="sr-only" role="status" aria-live="polite">{interactionStatus}</span>

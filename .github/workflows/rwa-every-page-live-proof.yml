@@ -1,26 +1,27 @@
-name: Realworldasset UI Total Audit
+name: RWA Every Page Live Proof
 
 on:
-  push:
-    branches:
-      - main
-      - 'fix/ui-backend-total-audit-*'
   pull_request:
+    branches: [main]
+    paths:
+      - 'apps/realworldasset/**'
+      - '.github/workflows/rwa-every-page-live-proof.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/realworldasset/**'
+      - '.github/workflows/rwa-every-page-live-proof.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
-concurrency:
-  group: realworldasset-ui-total-audit-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  total-ui-audit:
+  every-page-live-proof:
     runs-on: ubuntu-latest
     timeout-minutes: 55
     steps:
-      - name: Checkout exact SHA
+      - name: Checkout exact candidate
         uses: actions/checkout@v4
 
       - name: Setup Node
@@ -30,45 +31,22 @@ jobs:
           cache: npm
           cache-dependency-path: apps/realworldasset/package-lock.json
 
-      - name: Install UI dependencies
+      - name: Install canonical UI
         working-directory: apps/realworldasset
         run: npm ci --no-audit --no-fund
 
-      - name: Verify live-only source and interaction contracts
+      - name: Enforce live-only production truth
         working-directory: apps/realworldasset
-        run: |
-          set -euo pipefail
-          npm run verify:interactions
-          npm run typecheck
+        run: npm run verify:live-only
 
-      - name: Build canonical /rwa UI
+      - name: Typecheck and build canonical Pages UI
         working-directory: apps/realworldasset
         env:
           RWA_BASE_PATH: /rwa
           GITHUB_ACTIONS: 'true'
-        run: npm run build
-
-      - name: Compose actual public route set
-        shell: bash
         run: |
-          set -euo pipefail
-          rm -rf /tmp/rwa-ui-site every-page-live-proof
-          mkdir -p /tmp/rwa-ui-site/rwa
-          cp -a apps/realworldasset/out/. /tmp/rwa-ui-site/rwa/
-          printf '%s\n' "$GITHUB_SHA" > /tmp/rwa-ui-site/rwa/deployment-sha.txt
-          test -s /tmp/rwa-ui-site/rwa/index.html
-          test "$(cat /tmp/rwa-ui-site/rwa/deployment-sha.txt)" = "$GITHUB_SHA"
-          COUNT="$(find /tmp/rwa-ui-site/rwa -name index.html -type f | wc -l | tr -d ' ')"
-          test "$COUNT" -ge 30
-          if grep -R -n -E '["'"'"'(]/realworldasset/' /tmp/rwa-ui-site/rwa --include='*.html' --include='*.js' --include='*.css'; then
-            echo 'STALE_PUBLIC_ROOT_FOUND' >&2
-            exit 1
-          fi
-          if grep -R -n -Ei 'UI DEMO|Alex Morgan|Level 3[[:space:]]*[·-][[:space:]]*Demo|Connected Account \(Preview\)|POS-DEMO|ORD-DEMO' /tmp/rwa-ui-site/rwa --include='*.html'; then
-            echo 'SYNTHETIC_VISIBLE_MARKER_FOUND' >&2
-            exit 1
-          fi
-          echo "ACTUAL_EXPORTED_ROUTES=$COUNT" | tee /tmp/actual-route-count.txt
+          npm run typecheck
+          npm run build
 
       - name: Probe authoritative public venue
         shell: bash
@@ -93,22 +71,23 @@ jobs:
           fi
           exit 0
 
-      - name: Install Chromium and image analysis runtime
+      - name: Install Chromium proof runtime
         run: |
           python3 -m pip install --disable-pip-version-check playwright==1.55.0 pillow
           python3 -m playwright install --with-deps chromium
 
-      - name: Start local static production
+      - name: Start canonical local production shape
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m http.server 4173 --directory /tmp/rwa-ui-site > /tmp/rwa-ui-server.log 2>&1 &
-          echo $! > /tmp/rwa-ui-server.pid
-          for i in $(seq 1 30); do
-            curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && exit 0
-            sleep 1
-          done
-          cat /tmp/rwa-ui-server.log
+          rm -rf .every-page-preview every-page-live-proof
+          mkdir -p .every-page-preview/rwa
+          cp -a apps/realworldasset/out/. .every-page-preview/rwa/
+          printf '%s\n' "$GITHUB_SHA" > .every-page-preview/rwa/deployment-sha.txt
+          python3 -m http.server 4199 --bind 127.0.0.1 --directory .every-page-preview >/tmp/rwa-every-page-http.log 2>&1 &
+          echo $! > /tmp/rwa-every-page-http.pid
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4199/rwa/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/rwa-every-page-http.log
           exit 1
 
       - name: Screenshot and analyze every exported page desktop and mobile
@@ -117,18 +96,18 @@ jobs:
         run: |
           python3 apps/realworldasset/scripts/every-page-live-proof.py \
             --out apps/realworldasset/out \
-            --base http://127.0.0.1:4173/rwa \
+            --base http://127.0.0.1:4199/rwa \
             --evidence every-page-live-proof
 
       - name: Stop local production
         if: always()
-        run: kill "$(cat /tmp/rwa-ui-server.pid)" 2>/dev/null || true
+        run: kill "$(cat /tmp/rwa-every-page-http.pid)" 2>/dev/null || true
 
-      - name: Upload total every-page audit evidence
+      - name: Upload every-page desktop/mobile proof
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: realworldasset-every-page-live-proof-${{ github.sha }}
+          name: rwa-every-page-live-proof-${{ github.sha }}
           path: every-page-live-proof/
           retention-days: 14
           if-no-files-found: error

@@ -1,2 +1,5 @@
-import { OnboardingFlow } from "@/components/auth";
-export default function OnboardingPage(){return <OnboardingFlow/>}
+import { LiveCurrentRoutePage } from "@/components/live-dashboard";
+
+export default function LiveOnlyPage(){
+  return <LiveCurrentRoutePage/>;
+}

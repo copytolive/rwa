@@ -9,10 +9,11 @@ import "./final-interaction-lock.css";
 import "./landing-production-lock.css";
 import "./layout-consistency-lock.css";
 import "./layout-consistency-lock-v2.css";
+import "./live-only-dark-theme.css";
 
 export const metadata: Metadata = {
   title: "RWA.MS",
-  description: "Real-world asset platform",
+  description: "Real-world asset platform with live-only market and runtime truth",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
