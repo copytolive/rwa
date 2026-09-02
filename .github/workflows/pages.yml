@@ -27,6 +27,8 @@ on:
       - "rwa-seablueprint-commerce-bridge.css"
       - "rwa-seablueprint-commerce-bridge.js"
       - "rwa-live-home-v1.js"
+      - "rwa-live-home-v1.css"
+      - "rwa-ecommerce-orderbook-parity-v1.css"
       - "app.js"
       - "chart-core.js"
       - "rwa-storefront.js"
@@ -69,6 +71,13 @@ jobs:
           ! grep -Fq 'rwa-golden-home-integration-v1.js' index.html
           ! grep -Fq 'rwa-screenshot-parity-v1.js' index.html
           grep -Fq 'rwa-live-home-v1.js' chart-core.js
+          grep -Fq 'rwa-live-home-v1.css' chart-core.js
+          ! grep -Fq 'B 56%' rwa-ecommerce-orderbook-parity-v1.css
+          ! grep -Fq '44% S' rwa-ecommerce-orderbook-parity-v1.css
+          ! grep -Fq '$9.87T' rwa-target-dashboard-v2.js
+          ! grep -Fq 'Marina Bay Residences Token' rwa-target-dashboard-v2.js
+          ! grep -Fq 'Blue Ocean Shipping Note' rwa-target-dashboard-v2.js
+          ! grep -Fq '2,315.00 USDC' rwa-target-dashboard-v2.js
           echo RWA_LIVE_NO_MOCK_PASS
 
       - name: Compose static site
@@ -125,4 +134,8 @@ jobs:
           ! grep -Fq '/rwa/_next/' /tmp/root.html
           ! grep -Fq 'rwa-golden-home-integration-v1.js' /tmp/root.html
           ! grep -Fq 'rwa-screenshot-parity-v1.js' /tmp/root.html
+          curl -fsSL "$BASE/rwa-live-home-v1.css" > /tmp/live.css
+          curl -fsSL "$BASE/rwa-ecommerce-orderbook-parity-v1.css" > /tmp/book.css
+          ! grep -Fq 'B 56%' /tmp/book.css
+          ! grep -Fq '44% S' /tmp/book.css
           echo PUBLIC_RWA_LIVE_NO_MOCK_PASS
