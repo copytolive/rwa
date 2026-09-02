@@ -80,7 +80,7 @@ jobs:
           x=json.loads(p.read_text())
           assert x['status']=='PASS'
           assert x['all_rows_verified'] is True
-          assert int(x['total_methods'])==13
+          assert int(x['total_methods'])==15
           assert int(x['source_batch'])==int(os.environ['SOURCE_BATCH'])
           assert str(x['source_run_id'])==str(os.environ['SOURCE_RUN_ID'])
           assert int(x['source_archive_total'])==int(os.environ['SOURCE_ARCHIVED'])
