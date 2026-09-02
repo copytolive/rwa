@@ -1,4 +1,4 @@
-name: Deploy RWA Initial UI + Research Pages
+name: Deploy RWA Home Market Chart + Research Pages
 
 on:
   push:
@@ -28,19 +28,22 @@ jobs:
       - name: Checkout exact release SHA
         uses: actions/checkout@v4
 
-      - name: Verify initial RWA root UI and research pages
+      - name: Verify HOME market chart and research pages
         shell: bash
         run: |
           set -euo pipefail
           test -s index.html
-          grep -Fq '<title>RWA — Real World Assets</title>' index.html
-          grep -Fq 'Own the <span class="grad">real world.</span>' index.html
+          grep -Fq '<title>RWA Market — Live Social Trading Terminal</title>' index.html
+          grep -Fq 'id="fallbackChart"' index.html
+          grep -Fq 'id="tvHost"' index.html
+          grep -Fq 's3.tradingview.com/external-embedding/embed-widget-advanced-chart.js' index.html
+          ! grep -Eiq 'renko' index.html
           ! grep -Fq 'RWA × Seablueprint' index.html
           ! grep -Fq '/rwa/_next/' index.html
           test -s renko/index.html
           test -s backtest/index.html
           test -s legacy-canonical.js
-          echo INITIAL_RWA_UI_PASS
+          echo RWA_HOME_MARKET_CHART_PASS
 
       - name: Compose static Pages artifact
         shell: bash
@@ -56,7 +59,7 @@ jobs:
           printf '%s\n' "$GITHUB_SHA" > site/deployment-sha.txt
           printf '%s\n' "$GITHUB_SHA" > site/renko/deployment-sha.txt
           printf '%s\n' "$GITHUB_SHA" > site/backtest/deployment-sha.txt
-          echo STATIC_INITIAL_UI_ARTIFACT_PASS
+          echo STATIC_HOME_MARKET_ARTIFACT_PASS
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -71,7 +74,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy initial RWA UI
+      - name: Deploy RWA HOME market chart
         id: deployment
         uses: actions/deploy-pages@v4
 
@@ -80,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Validate public root, Renko and backtest
+      - name: Validate public HOME market chart and routes
         shell: bash
         run: |
           set -euo pipefail
@@ -93,10 +96,11 @@ jobs:
           done
           test "$PASS" = 1
           curl -fsSL "$BASE/" > /tmp/root.html
-          grep -Fq '<title>RWA — Real World Assets</title>' /tmp/root.html
-          grep -Fq 'Own the <span class="grad">real world.</span>' /tmp/root.html
+          grep -Fq '<title>RWA Market — Live Social Trading Terminal</title>' /tmp/root.html
+          grep -Fq 'id="fallbackChart"' /tmp/root.html
+          grep -Fq 'id="tvHost"' /tmp/root.html
+          ! grep -Eiq 'renko' /tmp/root.html
           ! grep -Fq 'RWA × Seablueprint' /tmp/root.html
           ! grep -Fq '/rwa/_next/' /tmp/root.html
-          test "$(curl -sS -L -o /dev/null -w '%{http_code}' "$BASE/renko/")" = "200"
           test "$(curl -sS -L -o /dev/null -w '%{http_code}' "$BASE/backtest/")" = "200"
-          echo PUBLIC_INITIAL_RWA_UI_PASS
+          echo PUBLIC_RWA_HOME_MARKET_CHART_PASS
