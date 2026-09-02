@@ -1,33 +1,4 @@
-/* RWA target dashboard v2.2 hardening — canonical target owns geometry, typography and color tokens. */
-:root{
-  --rwa-bg:#020912;
-  --rwa-panel:#07101d;
-  --rwa-card:#0a1625;
-  --rwa-card-2:#0b1a2d;
-  --rwa-border:#17283b;
-  --rwa-border-soft:#122235;
-  --rwa-text:#f2f7fb;
-  --rwa-muted:#8292a5;
-  --rwa-blue:#2ca8ff;
-  --rwa-green:#0dcc8f;
-  --rwa-red:#ff5775;
-  --rwa-warning:#ffc857;
-  --rwa-disabled:#46566a;
-  --rwa-topbar-h:62px;
-  --rwa-footer-h:60px;
-  --rwa-watchlist-w:291px;
-  --rwa-orderbook-w:239px;
-  --rwa-ecommerce-w:460px;
-}
-html,body{background:var(--rwa-bg)!important;color:var(--rwa-text)!important}
-html body.rwa-target-dashboard-v2,
-html body.rwa-target-dashboard-v2 button,
-html body.rwa-target-dashboard-v2 input,
-html body.rwa-target-dashboard-v2 select{
-  font-family:Inter,"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif!important;
-  text-rendering:geometricPrecision;
-  -webkit-font-smoothing:antialiased;
-}
+/* RWA target dashboard v2.1 hardening — canonical chrome stays stable; contextual panels must not reshape the market grid. */
 html body.rwa-target-dashboard-v2 #rwaExperienceRail,
 html[data-rwa-level] body.rwa-target-dashboard-v2 #rwaExperienceRail,
 body.rwa-target-dashboard-v2 [data-rwa-target-stage-rail="1"]{
@@ -38,8 +9,8 @@ html body.rwa-target-dashboard-v2 #rwaMarketplaceLaunch,
 html body.rwa-target-dashboard-v2 #rwaMultiChainLaunch{
   display:inline-flex!important;align-items:center!important;justify-content:center!important;
   height:32px!important;min-width:32px!important;width:auto!important;padding:0 8px!important;
-  border:1px solid var(--rwa-border)!important;border-radius:8px!important;background:var(--rwa-panel)!important;
-  color:var(--rwa-muted)!important;font-size:10px!important;font-weight:650!important;letter-spacing:.01em!important;
+  border:1px solid #283650!important;border-radius:8px!important;background:#07111e!important;
+  color:#aebbd0!important;font-size:6.5px!important;font-weight:850!important;letter-spacing:.04em!important;
   line-height:1!important;white-space:nowrap!important;opacity:1!important;visibility:visible!important;
   pointer-events:auto!important;position:relative!important;inset:auto!important;transform:none!important;
 }
@@ -48,184 +19,16 @@ html body.rwa-target-dashboard-v2 #rwaMarketplaceLaunch .rwa-marketplace-mark{di
 /* #shop first paint must never expose Context / AI or other legacy right-rail cards before runtime reconciliation. */
 html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 .layout>.right>:not(.order-section){display:none!important;visibility:hidden!important;pointer-events:none!important}
 html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 .layout>.right>.order-section{display:block!important;visibility:visible!important;opacity:1!important}
-/* First-paint typography is production UI too: never render 5/6/7px copy. */
-html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 #rwaFirstPaintCommerceSkeleton .fp-head small,
-html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 #rwaFirstPaintCommerceSkeleton .fp-pill,
-html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 #rwaFirstPaintCommerceSkeleton .fp-badges i,
-html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 #rwaFirstPaintCommerceSkeleton .fp-store p,
-html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 #rwaFirstPaintCommerceSkeleton .fp-metrics small,
-html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 #rwaFirstPaintCommerceSkeleton .fp-card b,
-html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 #rwaFirstPaintCommerceSkeleton .fp-card small,
-html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 #rwaFirstPaintCommerceSkeleton .fp-cart,
-html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 #rwaFirstPaintCommerceSkeleton .fp-lockline{font-size:8.5px!important;line-height:1.25!important}
-html body.rwa-target-dashboard-v2 .rwa-target-inpage b{font-size:9px!important;line-height:1.1!important}
-html body.rwa-target-dashboard-v2 .rwa-target-inpage small{font-size:8.5px!important;line-height:1.1!important}
-html body.rwa-target-dashboard-v2 .aside-label small,
-html body.rwa-target-dashboard-v2 .paircount{font-size:8.5px!important}
-html body.rwa-target-dashboard-v2 .tokenicon{font-size:9px!important}
-html body.rwa-target-dashboard-v2 .search-icon{font-size:0!important;width:14px!important;height:14px!important;display:inline-block!important;background-repeat:no-repeat!important;background-position:center!important;background-size:14px 14px!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238292a5' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6'/%3E%3Cpath d='m16 16 4 4'/%3E%3C/svg%3E")!important;color:transparent!important}
-/* Static pre-runtime source layer: remove visible Unicode placeholders and enforce the same readable floor before any JS module can run. */
-html.rwa-target-prepaint:not(.rwa-target-runtime-ready) body.rwa-target-dashboard-v2 .rwa-target-icon-actions{width:96px!important;height:30px!important;display:block!important;background-repeat:no-repeat!important;background-size:16px 16px!important;background-position:7px center,40px center,73px center!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23aab6c9' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6.5 9a5.5 5.5 0 0 1 11 0c0 6 2.5 6.5 2.5 6.5H4S6.5 15 6.5 9Z'/%3E%3Cpath d='M10 19h4'/%3E%3C/svg%3E"),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23aab6c9' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M9.7 9a2.5 2.5 0 1 1 3.2 2.4c-.9.35-.9 1.1-.9 1.6M12 17h.01'/%3E%3C/svg%3E"),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23aab6c9' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 15.7A8 8 0 0 1 8.3 5a7 7 0 1 0 10.7 10.7Z'/%3E%3C/svg%3E")!important}
-html.rwa-target-prepaint:not(.rwa-target-runtime-ready) body.rwa-target-dashboard-v2 .rwa-target-icon-actions>button{display:none!important;visibility:hidden!important;pointer-events:none!important}
-html.rwa-target-prepaint:not(.rwa-target-runtime-ready) body.rwa-target-dashboard-v2 .search-icon{display:none!important;visibility:hidden!important}
-html.rwa-target-prepaint:not(.rwa-target-runtime-ready) body.rwa-target-dashboard-v2 .search{position:relative!important;padding-left:28px!important}
-html.rwa-target-prepaint:not(.rwa-target-runtime-ready) body.rwa-target-dashboard-v2 .search:before{content:'';position:absolute;left:9px;top:50%;width:14px;height:14px;transform:translateY(-50%);background-repeat:no-repeat;background-position:center;background-size:14px 14px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238292a5' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6'/%3E%3Cpath d='m16 16 4 4'/%3E%3C/svg%3E")}
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .pairmeta small,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .pairprice small,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .chg,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .stats small,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .stats span,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .quickstats small,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .quickstats span,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 #rwaFirstLoadSub,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 #rwaFirstLoadOverlay small,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 #rwaFirstLoadOverlay button,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .loading-overlay small,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .loading-overlay button,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .bookhead,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .bookhead span,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .bookrow,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .bookrow span,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .trade,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .trade span,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .trade b,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .instrument small,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .instrument span,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .instrument-actions button,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .instrument-actions span,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .watch-actions button,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .watch-actions span,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 #rwaTickerStatus,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .ticker small,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .ticker span,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .ticker b{font-size:8.5px!important;line-height:1.25!important}
-/* Painted first-load/order-book/footer controls: these exist before chart-core and must already meet the visual contract. */
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .rwa-firstload button,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .rwa-firstload small{font-size:9px!important;line-height:1.25!important}
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .right .book-head,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .right .book-head span{font-size:9px!important;line-height:1.25!important}
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .rwa-ticker-brand,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .rwa-ticker-brand *,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 :has(>.rwa-ticker-brand) button,
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 :has(>.rwa-ticker-brand) button *{font-size:9px!important;line-height:1.2!important}
-html.rwa-target-prepaint body.rwa-target-dashboard-v2 .top-actions>.signin{font-size:10px!important;line-height:1.2!important}
-
-/* Canonical target chrome. */
-html body.rwa-target-dashboard-v2 .rwa-target-topbar{height:var(--rwa-topbar-h)!important;min-height:var(--rwa-topbar-h)!important;background:#030b15!important;border-bottom:1px solid var(--rwa-border)!important;box-shadow:none!important}
-html body.rwa-target-dashboard-v2 .rwa-target-brand{font-size:14px!important;font-weight:700!important;letter-spacing:-.01em!important}
-html body.rwa-target-dashboard-v2 .rwa-target-nav button,
-html body.rwa-target-dashboard-v2 [data-rwa-target-nav]{font-size:12px!important;font-weight:600!important;line-height:1.2!important;letter-spacing:0!important}
-html body.rwa-target-dashboard-v2 .rwa-target-nav button.active,
-html body.rwa-target-dashboard-v2 [data-rwa-target-nav].active{color:#fff!important;background:#102448!important;border-color:#173563!important}
-html body.rwa-target-dashboard-v2 .rwa-target-new{font-size:8.5px!important;font-weight:750!important;letter-spacing:.02em!important}
-html body.rwa-target-dashboard-v2 .rwa-target-wallet,
-html body.rwa-target-dashboard-v2 #connectWalletBtn{font-size:11px!important;font-weight:700!important}
-
-/* Readable market hierarchy: no visible 5/6/7px production text. */
-html body.rwa-target-dashboard-v2 .left-title,
-html body.rwa-target-dashboard-v2 .watchlist-title,
-html body.rwa-target-dashboard-v2 .right-title,
-html body.rwa-target-dashboard-v2 .order-title{font-size:12px!important;font-weight:700!important;line-height:1.25!important}
-html body.rwa-target-dashboard-v2 .filter,
-html body.rwa-target-dashboard-v2 .filters button,
-html body.rwa-target-dashboard-v2 .watch-filter,
-html body.rwa-target-dashboard-v2 .timeframe,
-html body.rwa-target-dashboard-v2 .chart-toolbar button{font-size:10px!important;font-weight:600!important;line-height:1.2!important}
-html body.rwa-target-dashboard-v2 .symbol,
-html body.rwa-target-dashboard-v2 .watch-symbol,
-html body.rwa-target-dashboard-v2 .symbol-name{font-size:11px!important;font-weight:650!important;line-height:1.25!important}
-html body.rwa-target-dashboard-v2 .subtitle,
-html body.rwa-target-dashboard-v2 .watch-subtitle,
-html body.rwa-target-dashboard-v2 .symbol-subtitle{font-size:9.5px!important;font-weight:500!important;line-height:1.3!important;color:var(--rwa-muted)!important}
-html body.rwa-target-dashboard-v2 .price,
-html body.rwa-target-dashboard-v2 .watch-price,
-html body.rwa-target-dashboard-v2 .pct,
-html body.rwa-target-dashboard-v2 .watch-change{font-size:10.5px!important;font-weight:650!important;line-height:1.25!important}
-html body.rwa-target-dashboard-v2 .instrument-title,
-html body.rwa-target-dashboard-v2 .pair-title,
-html body.rwa-target-dashboard-v2 #symbolTitle{font-size:13px!important;font-weight:700!important;line-height:1.2!important}
-html body.rwa-target-dashboard-v2 .quick-stat,
-html body.rwa-target-dashboard-v2 .stat-label,
-html body.rwa-target-dashboard-v2 .stat-value{font-size:9.5px!important;line-height:1.3!important}
-html body.rwa-target-dashboard-v2 .order-section,
-html body.rwa-target-dashboard-v2 .order-section button,
-html body.rwa-target-dashboard-v2 .order-section input,
-html body.rwa-target-dashboard-v2 .order-section select{font-size:10px!important;line-height:1.25!important}
-html body.rwa-target-dashboard-v2 .order-section th,
-html body.rwa-target-dashboard-v2 .order-section td,
-html body.rwa-target-dashboard-v2 .book-row,
-html body.rwa-target-dashboard-v2 .orderbook-row{font-size:9.5px!important;line-height:1.3!important}
-
-/* Ecommerce typography and system colors. */
-html body.rwa-target-dashboard-v2 .rwa-shop-head,
-html body.rwa-target-dashboard-v2 .rwa-ecom-target{background:var(--rwa-panel)!important;color:var(--rwa-text)!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-head-title b{font-size:13px!important;font-weight:700!important;line-height:1.2!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-head-title small{font-size:9.5px!important;color:var(--rwa-muted)!important;line-height:1.25!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-tabs button{font-size:11px!important;font-weight:600!important;line-height:1.2!important;color:var(--rwa-muted)!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-tabs button.active{color:var(--rwa-blue)!important;border-color:var(--rwa-blue)!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-store,
-html body.rwa-target-dashboard-v2 .rwa-ecom-product,
-html body.rwa-target-dashboard-v2 .rwa-ecom-cart-preview{background:var(--rwa-card)!important;border-color:var(--rwa-border)!important;box-shadow:none!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-store h3{font-size:12px!important;font-weight:700!important;line-height:1.25!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-store p,
-html body.rwa-target-dashboard-v2 .rwa-ecom-store-meta-line,
-html body.rwa-target-dashboard-v2 .rwa-ecom-store-metrics small{font-size:9.5px!important;line-height:1.3!important;color:var(--rwa-muted)!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-badge{font-size:8.5px!important;font-weight:750!important;line-height:1.2!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-badge.warn{color:var(--rwa-warning)!important;border-color:#6a531d!important;background:#251d08!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-badge.locked{color:#c4ced9!important;background:#151d28!important;border-color:#2a3545!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-section-head{font-size:11.5px!important;line-height:1.25!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-link{font-size:9.5px!important;color:var(--rwa-blue)!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-product h4{font-size:10.5px!important;font-weight:650!important;line-height:1.25!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-tag{font-size:8.5px!important;font-weight:700!important;line-height:1.2!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-price{font-size:11px!important;font-weight:700!important;line-height:1.2!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-sub{font-size:9px!important;line-height:1.25!important;color:var(--rwa-muted)!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-cart-title,
-html body.rwa-target-dashboard-v2 .rwa-ecom-cart-item{font-size:9.5px!important;line-height:1.25!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-cart-actions button{font-size:10.5px!important;font-weight:700!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-warning{font-size:9.5px!important;line-height:1.3!important;color:var(--rwa-warning)!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-detail h3{font-size:13px!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-detail p,
-html body.rwa-target-dashboard-v2 .rwa-ecom-detail small{font-size:9.5px!important;line-height:1.35!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-primary,
-html body.rwa-target-dashboard-v2 .rwa-ecom-locked-action,
-html body.rwa-target-dashboard-v2 .rwa-ecom-back{font-size:10px!important;font-weight:700!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-inpage{font-size:8.5px!important;font-weight:700!important;color:var(--rwa-green)!important;border-color:#116c52!important;background:#06251e!important}
-/* Header owns only its 58px hit area; actions must never cover the tab row below. */
-html body.rwa-target-dashboard-v2 .rwa-shop-head{position:relative!important;height:58px!important;min-height:58px!important;max-height:58px!important;overflow:hidden!important;z-index:9!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-head-actions{position:relative!important;inset:auto!important;height:auto!important;max-height:58px!important;align-self:center!important;flex:0 0 auto!important;pointer-events:none!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-head-actions>*{pointer-events:auto!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-tabs{position:sticky!important;top:58px!important;z-index:8!important;pointer-events:auto!important}
-html body.rwa-target-dashboard-v2 .rwa-ecom-tabs button{pointer-events:auto!important;position:relative!important;z-index:1!important}
-
-/* Canonical interaction colors. */
-html body.rwa-target-dashboard-v2 .up,
-html body.rwa-target-dashboard-v2 .positive,
-html body.rwa-target-dashboard-v2 [data-side="buy"]{color:var(--rwa-green)!important}
-html body.rwa-target-dashboard-v2 .down,
-html body.rwa-target-dashboard-v2 .negative,
-html body.rwa-target-dashboard-v2 [data-side="sell"]{color:var(--rwa-red)!important}
-html body.rwa-target-dashboard-v2 button:focus-visible,
-html body.rwa-target-dashboard-v2 [role="button"]:focus-visible{outline:2px solid var(--rwa-blue)!important;outline-offset:2px!important}
-
 @media(min-width:1121px){
-  html body.rwa-target-dashboard-v2 .topbar,html[data-rwa-level] body.rwa-target-dashboard-v2 .topbar{top:0!important;left:0!important;right:auto!important;width:100vw!important;max-width:100vw!important;height:var(--rwa-topbar-h)!important;min-height:var(--rwa-topbar-h)!important;max-height:var(--rwa-topbar-h)!important}
-  html body.rwa-target-dashboard-v2 .app,html[data-rwa-level] body.rwa-target-dashboard-v2 .app{padding-top:var(--rwa-topbar-h)!important}
+  html body.rwa-target-dashboard-v2 .topbar,html[data-rwa-level] body.rwa-target-dashboard-v2 .topbar{top:0!important;left:0!important;right:auto!important;width:100vw!important;max-width:100vw!important;height:62px!important;min-height:62px!important;max-height:62px!important}
+  html body.rwa-target-dashboard-v2 .app,html[data-rwa-level] body.rwa-target-dashboard-v2 .app{padding-top:62px!important}
   html body.rwa-target-dashboard-v2 .app>#rwaExperienceRail~.layout,html[data-rwa-level] body.rwa-target-dashboard-v2 .app>#rwaExperienceRail~.layout{margin-top:0!important}
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-super-market-open .layout,html body.rwa-target-dashboard-v2.rwa-super-market-open .layout{width:100%!important;max-width:none!important;min-width:0!important;margin-right:0!important;padding-right:0!important}
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout,
-  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout{
-    box-sizing:border-box!important;width:calc(100vw - var(--rwa-ecommerce-w))!important;max-width:calc(100vw - var(--rwa-ecommerce-w))!important;min-width:0!important;margin-right:var(--rwa-ecommerce-w)!important;padding-right:0!important;
-    grid-template-columns:var(--rwa-watchlist-w) minmax(0,1fr) var(--rwa-orderbook-w)!important;
-  }
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open #rwaCommerceDock,
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open #rwaShopScreen{
-    position:fixed!important;left:calc(100vw - var(--rwa-ecommerce-w))!important;right:auto!important;top:var(--rwa-topbar-h)!important;bottom:var(--rwa-footer-h)!important;
-    width:var(--rwa-ecommerce-w)!important;min-width:var(--rwa-ecommerce-w)!important;max-width:var(--rwa-ecommerce-w)!important;height:auto!important;box-sizing:border-box!important;
-  }
+  html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-super-market-open .layout,html body.rwa-target-dashboard-v2.rwa-super-market-open .layout,
+  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout,html[data-rwa-level] body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout{width:100%!important;max-width:none!important;min-width:0!important;margin-right:0!important;padding-right:0!important}
 }
 @media(min-width:1600px){
   html.rwa-target-prepaint.rwa-target-prepaint-shop,html.rwa-target-prepaint.rwa-target-prepaint-shop body{overflow:hidden!important;width:100vw!important;max-width:100vw!important}
-  html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 .app .layout{box-sizing:border-box!important;width:calc(100vw - 460px)!important;max-width:calc(100vw - 460px)!important;min-width:calc(100vw - 460px)!important;grid-template-columns:291px minmax(0,1fr) 239px!important;height:calc(100vh - 122px)!important;min-height:calc(100vh - 122px)!important;max-height:calc(100vh - 122px)!important;overflow:hidden!important;align-items:stretch!important;margin-right:460px!important}
+  html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 .app .layout{box-sizing:border-box!important;width:100vw!important;max-width:100vw!important;min-width:100vw!important;grid-template-columns:291px minmax(0,calc(100vw - 990px)) 239px!important;height:calc(100vh - 122px)!important;min-height:calc(100vh - 122px)!important;max-height:calc(100vh - 122px)!important;overflow:hidden!important;align-items:stretch!important}
   html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 .app .layout>.left{width:291px!important;min-width:291px!important;max-width:291px!important;height:calc(100vh - 122px)!important;display:flex!important;visibility:visible!important}
   html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 .app .layout>.main{grid-column:2!important;min-width:0!important;width:auto!important;max-width:none!important}
   html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 .app .layout>.right{position:relative!important;grid-column:3!important;grid-row:auto!important;inset:auto!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;width:239px!important;min-width:239px!important;max-width:239px!important;height:calc(100vh - 122px)!important;margin:0!important;transform:none!important;translate:none!important;display:block!important;visibility:visible!important;opacity:1!important}
@@ -233,23 +36,11 @@ html body.rwa-target-dashboard-v2 [role="button"]:focus-visible{outline:2px soli
   html.rwa-target-prepaint.rwa-target-prepaint-shop body.rwa-target-dashboard-v2 .app .layout>.right .right-title{display:flex!important;visibility:visible!important;opacity:1!important}
   html.rwa-target-prepaint.rwa-target-prepaint-shop #rwaFirstPaintCommerceSkeleton{position:fixed!important;left:calc(100vw - 460px)!important;right:auto!important;top:62px!important;bottom:60px!important;height:auto!important;width:460px!important;min-width:460px!important;max-width:460px!important;margin:0!important;transform:none!important;translate:none!important}
 }
-@media(min-width:2000px){
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout{--rwa-watchlist-w:304px;--rwa-orderbook-w:248px}
-}
-@media(max-width:1450px) and (min-width:1121px){html body.rwa-target-dashboard-v2 #rwaMultiChainLaunch{max-width:38px!important;min-width:38px!important;padding:0 4px!important;overflow:hidden!important;text-indent:-9999px!important}html body.rwa-target-dashboard-v2 #rwaMultiChainLaunch:after{content:'MC';display:block;text-indent:0!important;font-size:9px!important}html body.rwa-target-dashboard-v2 #rwaMarketplaceLaunch{width:32px!important;min-width:32px!important;padding:0!important}}
+@media(max-width:1450px) and (min-width:1121px){html body.rwa-target-dashboard-v2 #rwaMultiChainLaunch{max-width:38px!important;min-width:38px!important;padding:0 4px!important;overflow:hidden!important;text-indent:-9999px!important}html body.rwa-target-dashboard-v2 #rwaMultiChainLaunch:after{content:'MC';display:block;text-indent:0!important;font-size:6px!important}html body.rwa-target-dashboard-v2 #rwaMarketplaceLaunch{width:32px!important;min-width:32px!important;padding:0!important}}
 @media(max-width:1120px){
   html body.rwa-target-dashboard-v2 #rwaMarketplaceLaunch,html body.rwa-target-dashboard-v2 #rwaMultiChainLaunch{position:fixed!important;bottom:72px!important;z-index:12050!important;width:36px!important;min-width:36px!important;height:36px!important;padding:0!important;border-radius:18px!important;overflow:hidden!important;pointer-events:auto!important}
-  html body.rwa-target-dashboard-v2 #rwaMarketplaceLaunch{left:58px!important}html body.rwa-target-dashboard-v2 #rwaMultiChainLaunch{left:104px!important;text-indent:-9999px!important}html body.rwa-target-dashboard-v2 #rwaMultiChainLaunch:after{content:'MC';display:block;text-indent:0!important;font-size:9px!important}
+  html body.rwa-target-dashboard-v2 #rwaMarketplaceLaunch{left:58px!important}html body.rwa-target-dashboard-v2 #rwaMultiChainLaunch{left:104px!important;text-indent:-9999px!important}html body.rwa-target-dashboard-v2 #rwaMultiChainLaunch:after{content:'MC';display:block;text-indent:0!important;font-size:6px!important}
   html body.rwa-target-dashboard-v2 #rwaSeablueprintCommerceLaunch{position:fixed!important;left:10px!important;bottom:72px!important;z-index:12060!important;width:40px!important;min-width:40px!important;height:40px!important;padding:0!important;border-radius:20px!important;display:inline-flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;transform:none!important}
   html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open #rwaSeablueprintCommerceLaunch{display:none!important;visibility:hidden!important;pointer-events:none!important}
   html body.rwa-target-dashboard-v2.rwa-multichain-open #rwaMultiChainLaunch{display:none!important;visibility:hidden!important;pointer-events:none!important}
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .layout{width:100vw!important;max-width:100vw!important;margin-right:0!important}
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open #rwaCommerceDock,
-  html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open #rwaShopScreen{left:0!important;right:0!important;top:var(--rwa-topbar-h)!important;bottom:0!important;width:100vw!important;min-width:100vw!important;max-width:100vw!important}
 }
-
-/* FINAL-CLOSURE-20260830: cart type floor + canonical single-shell ownership */
-html body.rwa-target-dashboard-v2 .rwa-ecom-cart-item>div>b{font-size:9.5px!important;line-height:1.25!important}
-html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open #rwaBusinessConsole,
-html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open #rwaBusinessConsoleLaunch,
-html body.rwa-target-dashboard-v2.rwa-seablueprint-commerce-open .rwa-business-console{display:none!important;visibility:hidden!important;pointer-events:none!important}

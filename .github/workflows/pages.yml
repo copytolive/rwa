@@ -1,4 +1,4 @@
-name: Deploy RWA Home Market Chart + Research Pages
+name: Deploy RWA Screenshot Baseline + Research Pages
 
 on:
   push:
@@ -6,9 +6,28 @@ on:
     paths:
       - ".github/workflows/pages.yml"
       - "index.html"
+      - "app.js"
+      - "realtime-core.js"
+      - "styles.css"
+      - "mobile.css"
+      - "stable-shell.css"
+      - "superapp-v5.css"
+      - "superapp-v5.js"
+      - "chart-core.js"
+      - "market-performance.js"
+      - "mobile.js"
+      - "rwa-target-dashboard-v2.css"
+      - "rwa-target-dashboard-v2-hardening.css"
+      - "rwa-target-dashboard-v2.js"
+      - "rwa-target-dashboard-v2-hardening.js"
+      - "rwa-ecommerce-target-controller-v1.js"
+      - "rwa-ecommerce-target-hardening-v1.js"
+      - "rwa-ecommerce-parity-finish-v2.js"
+      - "rwa-ecommerce-production-visual-v1.js"
+      - "rwa-seablueprint-commerce-bridge.css"
+      - "rwa-seablueprint-commerce-bridge.js"
       - "renko/**"
       - "backtest/**"
-      - "legacy-canonical.js"
   workflow_dispatch:
 
 permissions:
@@ -25,44 +44,47 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Checkout exact release SHA
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Verify HOME market chart and research pages
+      - name: Verify screenshot baseline and root isolation
         shell: bash
         run: |
           set -euo pipefail
           test -s index.html
-          grep -Fq '<title>RWA Market — Live Social Trading Terminal</title>' index.html
+          grep -Fq 'RWA × Seablueprint' index.html
+          grep -Fq 'IN-PAGE COMMERCE' index.html
+          grep -Fq 'data-rwa-target-nav="markets"' index.html
+          grep -Fq 'data-rwa-target-nav="ecommerce"' index.html
           grep -Fq 'id="fallbackChart"' index.html
           grep -Fq 'id="tvHost"' index.html
-          grep -Fq 's3.tradingview.com/external-embedding/embed-widget-advanced-chart.js' index.html
           ! grep -Eiq 'renko' index.html
-          ! grep -Fq 'RWA × Seablueprint' index.html
           ! grep -Fq '/rwa/_next/' index.html
-          test -s renko/index.html
-          test -s backtest/index.html
-          test -s legacy-canonical.js
-          echo RWA_HOME_MARKET_CHART_PASS
+          test ! -e apps/realworldasset
+          test ! -e REALWORLDASSET_MIGRATION_MANIFEST.json
+          test ! -e UI_SYNC_MANIFEST.json
+          echo RWA_SCREENSHOT_BASELINE_PASS
 
-      - name: Compose static Pages artifact
+      - name: Compose static site
         shell: bash
         run: |
           set -euo pipefail
           rm -rf site
           mkdir -p site
-          cp index.html site/index.html
-          cp legacy-canonical.js site/legacy-canonical.js
-          cp -a renko site/renko
-          cp -a backtest site/backtest
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='apps' \
+            --exclude='tools' \
+            --exclude='docs' \
+            --exclude='qa' \
+            ./ site/
           touch site/.nojekyll
           printf '%s\n' "$GITHUB_SHA" > site/deployment-sha.txt
-          printf '%s\n' "$GITHUB_SHA" > site/renko/deployment-sha.txt
-          printf '%s\n' "$GITHUB_SHA" > site/backtest/deployment-sha.txt
-          echo STATIC_HOME_MARKET_ARTIFACT_PASS
+          test -s site/index.html
+          test -s site/renko/index.html
+          test -s site/backtest/index.html
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: site
 
@@ -74,8 +96,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy RWA HOME market chart
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4
 
   validate-public:
@@ -83,7 +104,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Validate public HOME market chart and routes
+      - name: Validate public screenshot baseline
         shell: bash
         run: |
           set -euo pipefail
@@ -96,11 +117,12 @@ jobs:
           done
           test "$PASS" = 1
           curl -fsSL "$BASE/" > /tmp/root.html
-          grep -Fq '<title>RWA Market — Live Social Trading Terminal</title>' /tmp/root.html
+          grep -Fq 'RWA × Seablueprint' /tmp/root.html
+          grep -Fq 'IN-PAGE COMMERCE' /tmp/root.html
           grep -Fq 'id="fallbackChart"' /tmp/root.html
           grep -Fq 'id="tvHost"' /tmp/root.html
           ! grep -Eiq 'renko' /tmp/root.html
-          ! grep -Fq 'RWA × Seablueprint' /tmp/root.html
           ! grep -Fq '/rwa/_next/' /tmp/root.html
+          test "$(curl -sS -L -o /dev/null -w '%{http_code}' "$BASE/renko/")" = "200"
           test "$(curl -sS -L -o /dev/null -w '%{http_code}' "$BASE/backtest/")" = "200"
-          echo PUBLIC_RWA_HOME_MARKET_CHART_PASS
+          echo PUBLIC_RWA_SCREENSHOT_BASELINE_PASS
