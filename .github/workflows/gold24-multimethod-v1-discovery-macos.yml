@@ -24,7 +24,7 @@ permissions:
 
 concurrency:
   group: gold24-multimethod-v1-adaptive-discovery-macos
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   discover:
