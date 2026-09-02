@@ -1,4 +1,4 @@
 GOLD Canonical v11 recovery kick
 requested_by=ChatGPT
-reason=Continue authoritative GOLD24 search from latest finalized PASS batch 281 / run 33513845503 because the user requested a fresh update. Preserve cumulative DB, cursor, exact-ledger dedupe, Gate A, 20 logical workers, and single-writer promotion; do not reset canonical state.
-utc=2026-09-01T14:05:00Z
+reason=Continue authoritative GOLD24 search from latest finalized PASS batch 310 / run 33667987913 after scheduled runner shutdown exit143. Preserve cumulative DB, cursor, exact-ledger dedupe, Gate A, 20 logical workers, and single-writer promotion; do not reset canonical state. Re-run until a new finalized PASS state is published.
+local_time=2026-09-03T02:44:00+07:00
