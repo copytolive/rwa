@@ -1,4 +1,4 @@
-name: RWA Live No-Mock HOME
+name: RWA Trading + MULTI CHAIN Browser Gate
 
 on:
   push:
@@ -9,11 +9,14 @@ on:
       - "chart-core.js"
       - "rwa-live-home-v1.js"
       - "rwa-live-home-v1.css"
-      - "rwa-ecommerce-orderbook-parity-v1.css"
-      - "rwa-target-dashboard-v2.js"
-      - "rwa-storefront.js"
-      - "rwa-commerce-config.json"
-      - "rwa-commerce-registry.json"
+      - "rwa-live-orderbook-v1.css"
+      - "rwa-multichain.js"
+      - "rwa-multichain-engine.js"
+      - "rwa-multichain-registry.json"
+      - "execution-api.js"
+      - "exchange-core.js"
+      - "wallet-core.js"
+      - "walletconnect.js"
       - "tools/live-no-mock-home-browser.mjs"
       - ".github/workflows/live-no-mock-home.yml"
   workflow_dispatch:
@@ -33,23 +36,23 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Serve local RWA
         run: |
-          python3 -m http.server 4173 --directory .. >/tmp/rwa-live.log 2>&1 &
+          python3 -m http.server 4173 --directory .. >/tmp/rwa-trading.log 2>&1 &
           for i in $(seq 1 30); do
             curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && exit 0
             sleep 1
           done
-          cat /tmp/rwa-live.log
+          cat /tmp/rwa-trading.log
           exit 1
-      - name: Prove live data, geometry and zero mock content
+      - name: Certify trading-only HOME and MULTI CHAIN
         env:
           RWA_UI_URL: http://127.0.0.1:4173/rwa/
-          RWA_UI_PROOF_DIR: proof/live-no-mock-local
+          RWA_UI_PROOF_DIR: proof/trading-multichain-local
         run: node tools/live-no-mock-home-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: live-no-mock-local-${{ github.sha }}
-          path: proof/live-no-mock-local/
+          name: trading-multichain-local-${{ github.sha }}
+          path: proof/trading-multichain-local/
           if-no-files-found: error
           retention-days: 30
 
@@ -66,11 +69,7 @@ jobs:
           URL='https://copytolive.github.io/rwa/deployment-sha.txt'
           for i in $(seq 1 60); do
             LIVE="$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "$URL?v=$GITHUB_SHA-$i" 2>/dev/null | tr -d '\r\n' || true)"
-            if [ "$LIVE" = "$GITHUB_SHA" ]; then
-              echo "Exact Pages SHA live: $LIVE"
-              exit 0
-            fi
-            echo "waiting expected=$GITHUB_SHA live=${LIVE:-none}"
+            if [ "$LIVE" = "$GITHUB_SHA" ]; then exit 0; fi
             sleep 10
           done
           exit 1
@@ -78,15 +77,15 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Prove public live data, geometry and zero mock content
+      - name: Certify public trading-only HOME and MULTI CHAIN
         env:
           RWA_UI_URL: https://copytolive.github.io/rwa/
-          RWA_UI_PROOF_DIR: proof/live-no-mock-public
+          RWA_UI_PROOF_DIR: proof/trading-multichain-public
         run: node tools/live-no-mock-home-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: live-no-mock-public-${{ github.sha }}
-          path: proof/live-no-mock-public/
+          name: trading-multichain-public-${{ github.sha }}
+          path: proof/trading-multichain-public/
           if-no-files-found: error
           retention-days: 30
