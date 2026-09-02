@@ -100,7 +100,7 @@ jobs:
           if($names.Count -ne [int]$p.total_method_pairs){throw 'selected wrapper count mismatch'}
           $names | Set-Content (Join-Path $env:RUNNER_TEMP 'selected-stems.txt') -Encoding ASCII
           "EXPECTED_EA_COUNT=$($names.Count)" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
-      - name: Install official Exness MT5 and locate MetaEditor
+      - name: Install official Exness MT5 and locate terminal + MetaEditor
         shell: powershell
         run: |
           $ErrorActionPreference='Stop'
@@ -108,25 +108,46 @@ jobs:
           Invoke-WebRequest -UseBasicParsing 'https://download.terminal.free/cdn/web/exness.technologies.ltd/mt5/exness5setup.exe' -OutFile $setup
           Start-Process -FilePath $setup -ArgumentList '/auto' -Wait
           Start-Sleep -Seconds 12
-          $c=@(); foreach($r in @('C:\Program Files','C:\Program Files (x86)',"$env:LOCALAPPDATA\Programs")){if(Test-Path $r){$c+=Get-ChildItem $r -Filter metaeditor64.exe -File -Recurse -ErrorAction SilentlyContinue}}
-          $meta=($c|Sort-Object LastWriteTime -Descending|Select-Object -First 1).FullName
-          if([string]::IsNullOrWhiteSpace($meta)){throw 'metaeditor64.exe not found'}
+          $term=@(); foreach($r in @('C:\Program Files','C:\Program Files (x86)',"$env:LOCALAPPDATA\Programs")){if(Test-Path $r){$term+=Get-ChildItem $r -Filter terminal64.exe -File -Recurse -ErrorAction SilentlyContinue}}
+          $terminal=($term|Sort-Object LastWriteTime -Descending|Select-Object -First 1).FullName
+          if([string]::IsNullOrWhiteSpace($terminal)){throw 'terminal64.exe not found'}
+          $meta=Join-Path (Split-Path $terminal) 'MetaEditor64.exe'
+          if(!(Test-Path $meta)){throw 'MetaEditor64.exe not found next to terminal'}
+          "MT5_TERMINAL=$terminal" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
           "MT5_META=$meta" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Initialize MT5 data directory
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          $p=Start-Process -FilePath $env:MT5_TERMINAL -PassThru
+          Start-Sleep -Seconds 25
+          if(-not $p.HasExited){Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue}
+          Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          Start-Sleep -Seconds 2
+          $base=Join-Path $env:APPDATA 'MetaQuotes\Terminal'
+          $cand=Get-ChildItem $base -Directory -ErrorAction Stop | Where-Object {Test-Path (Join-Path $_.FullName 'MQL5')} | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if($null -eq $cand){throw 'MT5 data directory missing'}
+          "MT5_DATA=$($cand.FullName)" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
       - name: Native MetaEditor compile exact selected set
         shell: powershell
         run: |
           $ErrorActionPreference='Stop'
           $evidence=Join-Path $env:RUNNER_TEMP 'compile-evidence'; New-Item -ItemType Directory -Force $evidence|Out-Null
+          $expert=Join-Path $env:MT5_DATA 'MQL5\Experts\Gold24Latest'; New-Item -ItemType Directory -Force $expert|Out-Null
+          Copy-Item 'backtest/gold24/qualified_scripts/qualified_engine.mqh' $expert -Force
+          Copy-Item 'backtest/gold24/qualified_scripts/multimethod_engine.mqh' $expert -Force
           $stems=@(Get-Content (Join-Path $env:RUNNER_TEMP 'selected-stems.txt') | Where-Object {$_})
           if($stems.Count -ne [int]$env:EXPECTED_EA_COUNT){throw 'selected stems changed'}
+          foreach($stem in $stems){Copy-Item "backtest/gold24/qualified_scripts/$stem.mq5" (Join-Path $expert "$stem.mq5") -Force}
           foreach($stem in $stems){
-            $p=(Resolve-Path "backtest/gold24/qualified_scripts/$stem.mq5").Path
+            $p=Join-Path $expert "$stem.mq5"
             $log=[IO.Path]::ChangeExtension($p,'.log'); $ex5=[IO.Path]::ChangeExtension($p,'.ex5')
             Remove-Item $log,$ex5 -Force -ErrorAction SilentlyContinue
             $proc=Start-Process -FilePath $env:MT5_META -ArgumentList @("/compile:$p",'/log') -PassThru
             if(-not $proc.WaitForExit(120000)){Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue;throw "compile timeout $stem"}
-            for($i=0;$i -lt 20 -and (!(Test-Path $log) -or !(Test-Path $ex5));$i++){Start-Sleep -Milliseconds 500}
-            if(!(Test-Path $log) -or !(Test-Path $ex5)){throw "compile evidence missing $stem"}
+            for($i=0;$i -lt 30 -and (!(Test-Path $log) -or !(Test-Path $ex5));$i++){Start-Sleep -Milliseconds 500}
+            if(!(Test-Path $log) -or !(Test-Path $ex5)){throw "compile evidence missing $stem log=$(Test-Path $log) ex5=$(Test-Path $ex5)"}
             $txt=Get-Content $log -Raw; Copy-Item $log (Join-Path $evidence "$stem.log") -Force
             if($txt -notmatch '0 errors, 0 warnings'){throw "compile not clean $stem`n$txt"}
           }
