@@ -128,3 +128,5 @@ html.rwa-live-dim body.rwa-target-dashboard-v2 #rwaGlobalTicker{filter:brightnes
 .rwa-live-help-grid p,.rwa-live-help-note{color:#8798ae;font-size:8px;line-height:1.55}
 .rwa-live-help-note{margin:10px 0 0}
 @media(max-width:680px){.rwa-live-help-grid{grid-template-columns:1fr}}
+
+/* FINAL_ATOMIC_CERT_V1 */

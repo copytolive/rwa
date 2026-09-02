@@ -117,6 +117,36 @@ try{
   const stores=page.locator('[data-live-ecom-tab="stores"]').first();
   if(await stores.count()){await stores.click();await page.waitForTimeout(100)} else fail('live Stores tab missing');
 
+  const help=page.locator('[data-live-top-action="help"]').first();
+  if(await help.count()){
+    await help.click();
+    await page.waitForTimeout(100);
+    const open=await page.locator('#rwaLiveHelp').evaluate(el=>el.classList.contains('open')).catch(()=>false);
+    const copy=await page.locator('#rwaLiveHelp').innerText().catch(()=>'');
+    if(!open||!/HYPERLIQUID TESTNET/.test(copy)||!/MARKET DATA/.test(copy))fail('Help control did not open live status',copy);
+    await page.locator('[data-live-help-close]').click();
+  }else fail('Help control missing');
+
+  const theme=page.locator('[data-live-top-action="theme"]').first();
+  if(await theme.count()){
+    const before=await page.evaluate(()=>document.documentElement.classList.contains('rwa-live-dim'));
+    await theme.click();await page.waitForTimeout(60);
+    const after=await page.evaluate(()=>document.documentElement.classList.contains('rwa-live-dim'));
+    if(after===before)fail('Theme control did not change display mode');
+    await theme.click();
+  }else fail('Theme control missing');
+
+  const amount=page.locator('#rwaTargetOrderTicket [data-live-amount]').first();
+  const buy=page.locator('#rwaTargetOrderTicket [data-live-trade="BUY"]').first();
+  if(await amount.count()&&await buy.count()){
+    await amount.fill('0.001');
+    await buy.click();
+    await page.waitForFunction(()=>{const t=document.querySelector('#rwaTargetOrderTicket .rwa-target-trade-note')?.textContent||'';return !/Checking wallet/.test(t)&&!/Real testnet execution/.test(t)},{timeout:10000}).catch(()=>{});
+    const note=await page.locator('#rwaTargetOrderTicket .rwa-target-trade-note').innerText();
+    if(/accepted by protected|Order accepted/i.test(note))fail('Execution unexpectedly succeeded without a wallet',note);
+    if(!/wallet|EVM|provider|connect/i.test(note))fail('Execution did not fail closed without wallet',note);
+  }else fail('Buy execution control missing');
+
   if(pageErrors.length)fail('page errors',pageErrors);
   if(failedResponses.length)fail('same-origin failed responses',failedResponses);
   await page.screenshot({path:`${proof}/live-no-mock-1672x941.png`,fullPage:false});
