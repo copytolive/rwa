@@ -59,7 +59,7 @@ jobs:
           cp -a "$RUNNER_TEMP/qstate/." "$STATE_DIR/"
           test -s "$STATE_DIR/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv"
           test -s "$STATE_DIR/gate_a/gate_a_receipt.json"
-      - name: Exact canonical parity for all 9 selected Python methods
+      - name: Exact canonical parity for exact selected Python method set
         run: python backtest/gold24/qualified_scripts/validate_qualified_scripts.py --state-dir "$STATE_DIR" --out "$RUNNER_TEMP/qualified_scripts_validation.json"
       - name: Upload Python parity evidence
         uses: actions/upload-artifact@v4
@@ -132,8 +132,26 @@ jobs:
           $evidence=Join-Path $env:RUNNER_TEMP 'metaquotes-mt5-evidence';New-Item -ItemType Directory -Force $evidence|Out-Null
           "MT5_EVIDENCE=$evidence"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           $logs=Join-Path $cand.FullName 'logs'
-          Get-ChildItem $logs -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 3 | ForEach-Object {Copy-Item $_.FullName (Join-Path $evidence ("bootstrap-"+$_.Name)) -Force}
-      - name: Compile all 9 qualified EAs in native MetaEditor
+          $latestLogs=@(Get-ChildItem $logs -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 6)
+          $latestLogs | ForEach-Object {Copy-Item $_.FullName (Join-Path $evidence ("bootstrap-"+$_.Name)) -Force}
+          $accounts=Join-Path $cand.FullName 'config\accounts.dat'
+          if(!(Test-Path $accounts) -or (Get-Item $accounts).Length -le 0){throw 'MetaQuotes account bootstrap FAIL: config/accounts.dat missing or empty'}
+          $login=$null;$server=$null
+          foreach($lf in $latestLogs){
+            $txt=Get-Content $lf.FullName -Raw -ErrorAction SilentlyContinue
+            $m=[regex]::Match($txt,'(?im)(?<login>\d{5,})\s*:\s*authorized on\s+(?<server>MetaQuotes-Demo(?:\s+\d+)?)(?:\s|,|$)')
+            if($m.Success){$login=$m.Groups['login'].Value;$server=$m.Groups['server'].Value;break}
+          }
+          if([string]::IsNullOrWhiteSpace($login) -or $login -eq '0' -or [string]::IsNullOrWhiteSpace($server)){
+            $receipt=Join-Path $evidence 'account-bootstrap-receipt.txt'
+            "status=FAIL`naccounts_dat=$(Test-Path $accounts)`nlogin_resolved=$login`nserver_resolved=$server" | Set-Content $receipt
+            throw 'MetaQuotes account bootstrap FAIL: no real nonzero Login/Server authorization found in terminal logs'
+          }
+          "MT5_LOGIN=$login"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "MT5_SERVER=$server"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "status=PASS`nlogin=$login`nserver=$server`naccounts_dat_bytes=$((Get-Item $accounts).Length)" | Set-Content (Join-Path $evidence 'account-bootstrap-receipt.txt')
+          Write-Host "METAQUOTES_ACCOUNT_CONTEXT_PASS login=$login server=$server"
+      - name: Compile exact dynamically resolved qualified EA set in native MetaEditor
         shell: powershell
         run: |
           $ErrorActionPreference='Stop'
@@ -155,8 +173,13 @@ jobs:
             if($txt -notmatch '0 errors, 0 warnings'){throw "MetaEditor compile not clean: $p`n$txt"}
           }
           Compile (Join-Path $script 'qualified_import_canonical.mq5')
+          $strictCount=@(Import-Csv 'backtest/gold24/runtime_mt5_lot/latest_entry100_net20000_standard_lot.csv').Count
+          $multiCount=@(Import-Csv 'backtest/gold24/runtime_multimethod_v1/latest_multimethod_v1_discovery.csv').Count
+          $expectedCount=[int]$strictCount+[int]$multiCount
+          if($expectedCount -lt 1){throw 'no selected methods found in runtime CSVs'}
           $eas=@(Get-ChildItem $expert -Filter '*.mq5' | Sort-Object Name)
-          if($eas.Count -ne 9){throw "expected 9 EAs, found $($eas.Count)"}
+          if($eas.Count -ne $expectedCount){throw "selected EA count mismatch: runtime CSVs=$expectedCount wrappers=$($eas.Count)"}
+          "QUALIFIED_EA_COUNT=$expectedCount"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           foreach($ea in $eas){Compile $ea.FullName}
       - name: Import exact canonical D1 series as MT5 custom symbol
         shell: powershell
@@ -175,13 +198,14 @@ jobs:
           if(!(Test-Path $receipt)){throw 'custom symbol import receipt missing'}
           $txt=Get-Content $receipt -Raw;Copy-Item $receipt $env:MT5_EVIDENCE -Force
           if($txt -notmatch 'status=PASS'){throw "custom symbol import FAIL`n$txt"}
-      - name: Native MT5 Strategy Tester operational smoke for all 9 EAs
+      - name: Native MT5 Strategy Tester operational smoke for exact selected EA set
         shell: powershell
         run: |
           $ErrorActionPreference='Stop'
           $common=Join-Path $env:APPDATA 'MetaQuotes\Terminal\Common\Files\Gold24Qualified'
           $eas=@(Get-ChildItem $env:MT5_EXPERT_DIR -Filter '*.mq5' | Sort-Object Name)
-          if($eas.Count -ne 9){throw "expected 9 EAs for tester, found $($eas.Count)"}
+          if([string]::IsNullOrWhiteSpace($env:QUALIFIED_EA_COUNT)){throw 'QUALIFIED_EA_COUNT missing'}
+          if($eas.Count -ne [int]$env:QUALIFIED_EA_COUNT){throw "EA count changed before tester: expected=$env:QUALIFIED_EA_COUNT found=$($eas.Count)"}
           foreach($ea in $eas){
             Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
             Start-Sleep -Seconds 2
@@ -190,7 +214,7 @@ jobs:
             $receipt=Join-Path $common "receipt_$magic.txt";Remove-Item $receipt -Force -ErrorAction SilentlyContinue
             $report=Join-Path $env:MT5_EVIDENCE "$name.html";$ini=Join-Path $env:RUNNER_TEMP "$name.ini";Remove-Item $report -Force -ErrorAction SilentlyContinue
             @(
-              '[Common]','NewsEnable=0','CertInstall=0','[Tester]',
+              '[Common]',"Login=$env:MT5_LOGIN","Server=$env:MT5_SERVER",'NewsEnable=0','CertInstall=0','[Tester]',
               "Expert=Gold24Qualified\$name",'Symbol=GOLD24-CANON','Period=D1','Model=2','ExecutionMode=0','Optimization=0','ForwardMode=0',
               'FromDate=2000.10.23','ToDate=2026.08.27','Deposit=10000','Currency=USD','ProfitInPips=0','Leverage=1:100',
               'UseLocal=1','UseRemote=0','UseCloud=0','Visual=0',"Report=$report",'ReplaceReport=1','ShutdownTerminal=1'
