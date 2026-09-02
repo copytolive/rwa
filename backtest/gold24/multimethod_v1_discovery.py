@@ -40,7 +40,9 @@ DIRECTIONS = ["LONG_ONLY", "BOTH", "SHORT_ONLY"]
 MASTER_UNIVERSE_PATH = Path(__file__).resolve().with_name("MASTER_METHOD_UNIVERSE.json")
 IMPLEMENTED_FAMILIES = tuple(sorted(FAMILIES))
 PORTFOLIO_MIN_DISTINCT_FAMILIES = 6
+PORTFOLIO_TARGET_DISTINCT_FAMILIES = 10
 PORTFOLIO_MAX_SINGLE_FAMILY_SHARE = 0.25
+PORTFOLIO_IDEAL_MAX_SINGLE_FAMILY_SHARE = 0.20
 
 _WORKER_D: pd.DataFrame | None = None
 
@@ -134,8 +136,44 @@ def _family_params(rng: random.Random, family: str, current: dict | None = None)
     if current and rng.random() < 0.60:
         return float(current["p1"]), float(current["p2"]), float(current["p3"])
 
-    if family in {"ATR_BREAKOUT", "KELTNER_BREAKOUT", "VOLATILITY", "ADAPTIVE_TREND"}:
+    if family == "ADX_TREND":
+        return float(rng.choice([18, 20, 22, 25, 28, 30])), 55.0, 1.0
+    if family == "TURTLE_BREAKOUT":
+        return float(rng.choice([50, 52, 55, 58])), 55.0, 1.0
+    if family in {"ATR_BREAKOUT", "KELTNER_BREAKOUT", "VOLATILITY", "ADAPTIVE_TREND", "ATR_CHANNEL"}:
         return float(rng.choice([0.5, 0.7, 0.9, 1.0, 1.2, 1.5, 1.8, 2.2])), 55.0, 1.0
+    if family in {"EMA_PULLBACK", "FRACTAL_BREAKOUT", "PIVOT_SR", "ICHIMOKU_PULLBACK"}:
+        return float(rng.choice([0.1, 0.2, 0.3, 0.5, 0.7, 1.0])), 55.0, 1.0
+    if family == "MACD_MOMENTUM":
+        return float(rng.choice([0.0, 0.02, 0.05, 0.10, 0.20])), float(rng.choice([50, 52, 55, 58])), 1.0
+    if family == "RSI_MOMENTUM":
+        return float(rng.choice([52, 55, 58, 62, 66])), 55.0, 1.0
+    if family == "RSI_REVERSION":
+        return float(rng.choice([20, 25, 30, 35, 40])), 55.0, 1.0
+    if family == "BOLLINGER_REVERSION_V2":
+        return float(rng.choice([1.2, 1.5, 1.8, 2.0, 2.2, 2.6])), float(rng.choice([25, 30, 35, 40])), 1.0
+    if family == "BOLLINGER_SQUEEZE":
+        return float(rng.choice([0.005, 0.01, 0.015, 0.02, 0.03, 0.05])), float(rng.choice([1.5, 1.8, 2.0, 2.2, 2.5])), 1.0
+    if family == "KELTNER_SQUEEZE":
+        return float(rng.choice([0.6, 0.7, 0.8, 0.9, 1.0])), float(rng.choice([0.5, 0.7, 1.0, 1.2, 1.5])), 1.0
+    if family == "BOS_CHOCH":
+        return float(rng.choice([50, 52, 55, 58])), 55.0, 1.0
+    if family in {"FIBONACCI", "FIB_PULLBACK"}:
+        return float(rng.choice([0.382, 0.5, 0.618, 0.786])), float(rng.choice([3.0, 5.0, 8.0, 10.0])), 1.0
+    if family == "ICHIMOKU_KUMO_BREAKOUT":
+        return float(rng.choice([0.0, 0.1, 0.2, 0.3, 0.5])), 55.0, 1.0
+    if family == "SUPERTREND_ATR":
+        return float(rng.choice([1.0, 1.5, 2.0, 2.5, 3.0])), 55.0, 1.0
+    if family == "CHANDELIER_TREND":
+        return float(rng.choice([1.5, 2.0, 2.5, 3.0, 3.5, 4.0])), 55.0, 1.0
+    if family == "ROLLING_ZSCORE":
+        return float(rng.choice([0.5, 0.7, 1.0, 1.3, 1.7, 2.1])), 55.0, 1.0
+    if family == "LINEAR_REGRESSION":
+        return float(rng.choice([0.01, 0.02, 0.03, 0.05, 0.08, 0.12])), 55.0, 1.0
+    if family == "VOLATILITY_REGIME":
+        return float(rng.choice([1.05, 1.10, 1.20, 1.30, 1.50])), float(rng.choice([0.60, 0.70, 0.80, 0.90, 1.00])), 1.0
+    if family == "TREND_MEANREV_ENSEMBLE":
+        return float(rng.choice([0.5, 0.7, 1.0, 1.3, 1.7])), float(rng.choice([30, 35, 40, 45])), 1.0
     if family == "BAND_HYBRID":
         return float(rng.choice([1.0, 1.2, 1.5, 1.8, 2.0])), float(rng.choice([1.5, 1.8, 2.0, 2.2, 2.5])), 1.0
     if family in {"BOLLINGER_REVERSION", "VWAP"}:
@@ -146,8 +184,6 @@ def _family_params(rng: random.Random, family: str, current: dict | None = None)
         return float(rng.choice([0.3, 0.5, 0.8, 1.2, 1.8, 2.5])), float(rng.choice([52, 55, 58, 62, 66])), 1.0
     if family in {"CHART_PATTERN", "SUPPORT_RESISTANCE"}:
         return float(rng.choice([0.2, 0.3, 0.5, 0.7, 1.0])), 55.0, 1.0
-    if family == "FIBONACCI":
-        return float(rng.choice([0.382, 0.5, 0.618, 0.786])), float(rng.choice([3.0, 5.0, 8.0, 10.0])), 1.0
     if family == "DIVERGENCE":
         return float(rng.choice([2.0, 3.0, 5.0, 8.0, 10.0])), 55.0, 1.0
     if family == "VOLUME":
