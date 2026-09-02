@@ -32,6 +32,20 @@ FAMILIES = {
     "DONCHIAN": 7,
     "ZSCORE_REVERSION": 8,
     "HYBRID": 9,
+    "CHART_PATTERN": 10,
+    "MARKET_STRUCTURE": 11,
+    "SUPPORT_RESISTANCE": 12,
+    "FIBONACCI": 13,
+    "VOLATILITY": 14,
+    "BAND_HYBRID": 15,
+    "ICHIMOKU": 16,
+    "ADAPTIVE_TREND": 17,
+    "DIVERGENCE": 18,
+    "VOLUME": 19,
+    "VWAP": 20,
+    "STATISTICAL": 21,
+    "RELATIVE_STRENGTH": 22,
+    "MULTI_TIMEFRAME": 23,
 }
 REQUIRED_PORTFOLIO_FAMILIES = {
     "ATR_BREAKOUT", "BOLLINGER_REVERSION", "KELTNER_BREAKOUT",
@@ -215,43 +229,89 @@ def _atr(h: np.ndarray, l: np.ndarray, c: np.ndarray, n: int) -> np.ndarray:
     return pd.Series(tr).rolling(n).mean().bfill().to_numpy(float)
 
 
+def _kama(x: np.ndarray, n: int) -> np.ndarray:
+    """Causal Kaufman adaptive moving average."""
+    s = pd.Series(x, dtype=float)
+    change = (s - s.shift(n)).abs()
+    volatility = s.diff().abs().rolling(n).sum().replace(0, np.nan)
+    er = (change / volatility).fillna(0.0).clip(0.0, 1.0).to_numpy(float)
+    fast_sc = 2.0 / (2.0 + 1.0)
+    slow_sc = 2.0 / (30.0 + 1.0)
+    sc = (er * (fast_sc - slow_sc) + slow_sc) ** 2
+    out = np.empty(len(x), dtype=float)
+    out[0] = float(x[0])
+    for i in range(1, len(x)):
+        out[i] = out[i - 1] + sc[i] * (float(x[i]) - out[i - 1])
+    return out
+
+
+def _completed_5d_regime(d: pd.DataFrame, fast: int, slow: int) -> np.ndarray:
+    """Causal higher-timeframe regime from completed 5-business-day bars.
+
+    The aggregate is formed from D1 data only and is available from the close
+    of each completed Friday bar onward. No future daily bar is used.
+    """
+    idx = pd.DatetimeIndex(pd.to_datetime(d["Date"], utc=True))
+    close = pd.Series(pd.to_numeric(d["Close"], errors="raise").to_numpy(float), index=idx)
+    weekly = close.resample("W-FRI").last().dropna()
+    wf = max(2, int(round(fast / 5)))
+    ws = max(wf + 1, int(round(slow / 5)))
+    wfast = weekly.ewm(span=wf, adjust=False).mean()
+    wslow = weekly.ewm(span=ws, adjust=False).mean()
+    regime = pd.Series(np.where(wfast > wslow, 1.0, np.where(wfast < wslow, -1.0, 0.0)), index=weekly.index)
+    aligned = regime.reindex(idx, method="ffill").fillna(0.0)
+    return aligned.to_numpy(float)
+
+
 def signal_series(d: pd.DataFrame, cnd: Candidate) -> np.ndarray:
     close = d["Close"].to_numpy(float)
     open_ = d["Open"].to_numpy(float)
     high = d["High"].to_numpy(float)
     low = d["Low"].to_numpy(float)
+    volume = d["Volume"].to_numpy(float)
     s = pd.Series(close)
+    hs = pd.Series(high)
+    ls = pd.Series(low)
+    vs = pd.Series(volume)
     fast = _ema(s, cnd.fast)
     slow = _ema(s, cnd.slow)
     rsi = _rsi(s, cnd.fast)
     roc = (s / s.shift(cnd.fast) - 1).fillna(0).to_numpy(float)
     atr = _atr(high, low, close, cnd.fast)
+    atr_slow = _atr(high, low, close, cnd.slow)
     sma = s.rolling(cnd.slow).mean().bfill().to_numpy(float)
     std = s.rolling(cnd.slow).std(ddof=0).replace(0, np.nan).bfill().fillna(1).to_numpy(float)
     z = (close - sma) / std
-    rh = pd.Series(high).rolling(cnd.slow).max().shift(1).bfill().to_numpy(float)
-    rl = pd.Series(low).rolling(cnd.slow).min().shift(1).bfill().to_numpy(float)
+    rh = hs.rolling(cnd.slow).max().shift(1).bfill().to_numpy(float)
+    rl = ls.rolling(cnd.slow).min().shift(1).bfill().to_numpy(float)
+    rh_fast = hs.rolling(cnd.fast).max().shift(1).bfill().to_numpy(float)
+    rl_fast = ls.rolling(cnd.fast).min().shift(1).bfill().to_numpy(float)
     out = np.zeros(len(d), dtype=np.int8)
 
     if cnd.family == "TREND_EMA":
         long = (fast > slow) & (rsi > cnd.p1)
         short = (fast < slow) & (rsi < 100 - cnd.p1)
+
     elif cnd.family == "MOMENTUM_RSI_ROC":
         long = (roc > cnd.p1 / 100) & (rsi > cnd.p2)
         short = (roc < -cnd.p1 / 100) & (rsi < 100 - cnd.p2)
+
     elif cnd.family == "ATR_BREAKOUT":
         long = (close > sma + cnd.p1 * atr) & (fast > slow)
         short = (close < sma - cnd.p1 * atr) & (fast < slow)
+
     elif cnd.family == "BOLLINGER_REVERSION":
         upper = sma + cnd.p1 * std
         lower = sma - cnd.p1 * std
         long = (close < lower) & (rsi < cnd.p2)
         short = (close > upper) & (rsi > 100 - cnd.p2)
+
     elif cnd.family == "KELTNER_BREAKOUT":
         upper = slow + cnd.p1 * atr
         lower = slow - cnd.p1 * atr
         long = (close > upper) & (fast > slow)
         short = (close < lower) & (fast < slow)
+
     elif cnd.family == "CANDLE_ENGULFING":
         po = np.r_[open_[0], open_[:-1]]
         pc = np.r_[close[0], close[:-1]]
@@ -259,18 +319,139 @@ def signal_series(d: pd.DataFrame, cnd: Candidate) -> np.ndarray:
         bear = (close < open_) & (pc > po) & (close <= po) & (open_ >= pc)
         long = bull & (fast > slow)
         short = bear & (fast < slow)
+
     elif cnd.family == "PRICE_STRUCTURE":
         long = (close > rh) & (fast > slow)
         short = (close < rl) & (fast < slow)
+
     elif cnd.family == "DONCHIAN":
         long = (close > rh) & (rsi > 50)
         short = (close < rl) & (rsi < 50)
+
     elif cnd.family == "ZSCORE_REVERSION":
         long = (z < -cnd.p1) & (rsi < cnd.p2)
         short = (z > cnd.p1) & (rsi > 100 - cnd.p2)
-    else:
+
+    elif cnd.family == "HYBRID":
         long = (fast > slow) & (roc > 0) & (rsi > cnd.p2) & (close > sma)
         short = (fast < slow) & (roc < 0) & (rsi < 100 - cnd.p2) & (close < sma)
+
+    elif cnd.family == "CHART_PATTERN":
+        tolerance = np.maximum(atr * cnd.p1, 1e-9)
+        near_support = np.abs(low - rl) <= tolerance
+        near_resistance = np.abs(high - rh) <= tolerance
+        prior_support_touch = np.r_[False, near_support[:-1]]
+        prior_resistance_touch = np.r_[False, near_resistance[:-1]]
+        long = near_support & prior_support_touch & (close > open_) & (close > fast)
+        short = near_resistance & prior_resistance_touch & (close < open_) & (close < fast)
+
+    elif cnd.family == "MARKET_STRUCTURE":
+        prev_fast_high = np.r_[rh_fast[0], rh_fast[:-1]]
+        prev_fast_low = np.r_[rl_fast[0], rl_fast[:-1]]
+        higher_low = rl_fast > prev_fast_low
+        lower_high = rh_fast < prev_fast_high
+        long = (close > rh_fast) & higher_low & (fast > slow)
+        short = (close < rl_fast) & lower_high & (fast < slow)
+
+    elif cnd.family == "SUPPORT_RESISTANCE":
+        tolerance = np.maximum(atr * cnd.p1, 1e-9)
+        long = (low <= rl + tolerance) & (close > rl) & (close > open_) & (rsi > 50)
+        short = (high >= rh - tolerance) & (close < rh) & (close < open_) & (rsi < 50)
+
+    elif cnd.family == "FIBONACCI":
+        span = np.maximum(rh - rl, 1e-9)
+        pos = (close - rl) / span
+        target = cnd.p1
+        tol = max(0.03, min(0.12, cnd.p2 / 100.0))
+        long = (fast > slow) & (pos >= target - tol) & (pos <= target + tol) & (close > open_)
+        short_level = 1.0 - target
+        short = (fast < slow) & (pos >= short_level - tol) & (pos <= short_level + tol) & (close < open_)
+
+    elif cnd.family == "VOLATILITY":
+        ratio = atr / np.maximum(atr_slow, 1e-9)
+        long = (ratio >= cnd.p1) & (close > rh_fast) & (fast > slow)
+        short = (ratio >= cnd.p1) & (close < rl_fast) & (fast < slow)
+
+    elif cnd.family == "BAND_HYBRID":
+        bb_mult = cnd.p2
+        bb_upper = sma + bb_mult * std
+        bb_lower = sma - bb_mult * std
+        kc_upper = slow + cnd.p1 * atr_slow
+        kc_lower = slow - cnd.p1 * atr_slow
+        squeeze = (bb_upper < kc_upper) & (bb_lower > kc_lower)
+        prev_squeeze = np.r_[False, squeeze[:-1]]
+        long = prev_squeeze & (close > bb_upper) & (fast > slow)
+        short = prev_squeeze & (close < bb_lower) & (fast < slow)
+
+    elif cnd.family == "ICHIMOKU":
+        conv_hi = hs.rolling(cnd.fast).max().bfill().to_numpy(float)
+        conv_lo = ls.rolling(cnd.fast).min().bfill().to_numpy(float)
+        base_hi = hs.rolling(cnd.slow).max().bfill().to_numpy(float)
+        base_lo = ls.rolling(cnd.slow).min().bfill().to_numpy(float)
+        conv = (conv_hi + conv_lo) * 0.5
+        base = (base_hi + base_lo) * 0.5
+        span_a = (conv + base) * 0.5
+        span_b_n = min(max(cnd.slow * 2, cnd.slow + 1), max(cnd.slow + 1, len(d) - 1))
+        span_b_hi = hs.rolling(span_b_n).max().bfill().to_numpy(float)
+        span_b_lo = ls.rolling(span_b_n).min().bfill().to_numpy(float)
+        span_b = (span_b_hi + span_b_lo) * 0.5
+        cloud_hi = np.maximum(span_a, span_b)
+        cloud_lo = np.minimum(span_a, span_b)
+        long = (conv > base) & (close > cloud_hi)
+        short = (conv < base) & (close < cloud_lo)
+
+    elif cnd.family == "ADAPTIVE_TREND":
+        kama = _kama(close, cnd.fast)
+        slope = kama - np.r_[kama[0], kama[:-1]]
+        band = cnd.p1 * atr
+        long = (close > kama + band) & (slope > 0)
+        short = (close < kama - band) & (slope < 0)
+
+    elif cnd.family == "DIVERGENCE":
+        rsi_s = pd.Series(rsi)
+        prior_price_low = ls.rolling(cnd.slow).min().shift(1).bfill().to_numpy(float)
+        prior_price_high = hs.rolling(cnd.slow).max().shift(1).bfill().to_numpy(float)
+        prior_rsi_low = rsi_s.rolling(cnd.slow).min().shift(1).bfill().to_numpy(float)
+        prior_rsi_high = rsi_s.rolling(cnd.slow).max().shift(1).bfill().to_numpy(float)
+        long = (low < prior_price_low) & (rsi > prior_rsi_low + cnd.p1) & (close > open_)
+        short = (high > prior_price_high) & (rsi < prior_rsi_high - cnd.p1) & (close < open_)
+
+    elif cnd.family == "VOLUME":
+        vol_ma = vs.rolling(cnd.slow).mean().replace(0, np.nan).bfill().fillna(1).to_numpy(float)
+        spike = volume >= vol_ma * cnd.p1
+        long = spike & (close > rh_fast) & (fast > slow)
+        short = spike & (close < rl_fast) & (fast < slow)
+
+    elif cnd.family == "VWAP":
+        typical = (high + low + close) / 3.0
+        pv = pd.Series(typical * np.maximum(volume, 0.0))
+        vv = pd.Series(np.maximum(volume, 0.0))
+        denom = vv.rolling(cnd.slow).sum().replace(0, np.nan)
+        vwap = (pv.rolling(cnd.slow).sum() / denom).bfill().fillna(s).to_numpy(float)
+        dev = np.maximum(std, 1e-9)
+        long = (close < vwap - cnd.p1 * dev) & (rsi < cnd.p2)
+        short = (close > vwap + cnd.p1 * dev) & (rsi > 100 - cnd.p2)
+
+    elif cnd.family == "STATISTICAL":
+        q = min(max(cnd.p1, 0.55), 0.95)
+        upper = s.rolling(cnd.slow).quantile(q).shift(1).bfill().to_numpy(float)
+        lower = s.rolling(cnd.slow).quantile(1.0 - q).shift(1).bfill().to_numpy(float)
+        long = (close > upper) & (fast > slow)
+        short = (close < lower) & (fast < slow)
+
+    elif cnd.family == "RELATIVE_STRENGTH":
+        rs = close / np.maximum(slow, 1e-9) - 1.0
+        threshold = cnd.p1 / 100.0
+        long = (rs > threshold) & (roc > 0) & (rsi > cnd.p2)
+        short = (rs < -threshold) & (roc < 0) & (rsi < 100 - cnd.p2)
+
+    elif cnd.family == "MULTI_TIMEFRAME":
+        regime = _completed_5d_regime(d, cnd.fast, cnd.slow)
+        long = (regime > 0) & (fast > slow) & (rsi > cnd.p1)
+        short = (regime < 0) & (fast < slow) & (rsi < 100 - cnd.p1)
+
+    else:
+        raise ValueError(f"unknown family: {cnd.family}")
 
     out[long & ~short] = 1
     out[short & ~long] = -1
@@ -280,7 +461,6 @@ def signal_series(d: pd.DataFrame, cnd: Candidate) -> np.ndarray:
         out[out > 0] = 0
     out[: max(150, cnd.slow + 2)] = 0
     return out
-
 
 def _cost(entry: float, exit_: float, qty: float) -> float:
     avg = (abs(entry) + abs(exit_)) * 0.5
@@ -457,16 +637,30 @@ def generate_candidate(rng: random.Random, timeframe: str = "D1") -> Candidate:
     tp = rng.choice([x / 2 for x in range(10, 51)])
     offset = rng.choice([x / 4 for x in range(2, 21)])
     expiry = rng.randint(1, 8)
-    if family in {"ATR_BREAKOUT", "KELTNER_BREAKOUT"}:
-        p1, p2, p3 = rng.choice([0.5, 0.7, 0.9, 1.2, 1.5, 1.8, 2.2, 2.8]), 55.0, 1.0
-    elif family == "BOLLINGER_REVERSION":
-        p1, p2, p3 = rng.choice([1.2, 1.5, 1.8, 2.2, 2.6, 3.0]), rng.choice([25, 30, 35, 40]), 1.0
+
+    if family in {"ATR_BREAKOUT", "KELTNER_BREAKOUT", "VOLATILITY", "ADAPTIVE_TREND"}:
+        p1, p2, p3 = rng.choice([0.5, 0.7, 0.9, 1.0, 1.2, 1.5, 1.8, 2.2]), 55.0, 1.0
+    elif family == "BAND_HYBRID":
+        p1, p2, p3 = rng.choice([1.0, 1.2, 1.5, 1.8, 2.0]), rng.choice([1.5, 1.8, 2.0, 2.2, 2.5]), 1.0
+    elif family in {"BOLLINGER_REVERSION", "VWAP"}:
+        p1, p2, p3 = rng.choice([0.7, 1.0, 1.2, 1.5, 1.8, 2.2, 2.6]), rng.choice([25, 30, 35, 40]), 1.0
     elif family == "ZSCORE_REVERSION":
         p1, p2, p3 = rng.choice([0.7, 1.0, 1.3, 1.7, 2.1, 2.7]), rng.choice([25, 30, 35, 40]), 1.0
-    elif family == "MOMENTUM_RSI_ROC":
+    elif family in {"MOMENTUM_RSI_ROC", "RELATIVE_STRENGTH"}:
         p1, p2, p3 = rng.choice([0.3, 0.5, 0.8, 1.2, 1.8, 2.5]), rng.choice([52, 55, 58, 62, 66]), 1.0
+    elif family in {"CHART_PATTERN", "SUPPORT_RESISTANCE"}:
+        p1, p2, p3 = rng.choice([0.2, 0.3, 0.5, 0.7, 1.0]), 55.0, 1.0
+    elif family == "FIBONACCI":
+        p1, p2, p3 = rng.choice([0.382, 0.5, 0.618, 0.786]), rng.choice([3.0, 5.0, 8.0, 10.0]), 1.0
+    elif family == "DIVERGENCE":
+        p1, p2, p3 = rng.choice([2.0, 3.0, 5.0, 8.0, 10.0]), 55.0, 1.0
+    elif family == "VOLUME":
+        p1, p2, p3 = rng.choice([1.1, 1.2, 1.4, 1.6, 2.0, 2.5]), 55.0, 1.0
+    elif family == "STATISTICAL":
+        p1, p2, p3 = rng.choice([0.65, 0.70, 0.75, 0.80, 0.85, 0.90]), 55.0, 1.0
     else:
         p1, p2, p3 = rng.choice([52, 55, 58, 62, 66]), rng.choice([52, 55, 58, 62, 66]), 1.0
+
     c = Candidate("GOLD", timeframe, family, fast, slow, p1, p2, p3, entry_method, direction_mode, sl, tp, offset, expiry)
     validate_candidate(c)
     return c
