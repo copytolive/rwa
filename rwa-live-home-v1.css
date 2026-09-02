@@ -179,3 +179,29 @@ body.rwa-target-dashboard-v2 .pairprice b,body.rwa-target-dashboard-v2 .pairpric
  .rwa-live-market-head span:nth-child(4),.rwa-live-market-table>button span:nth-child(4){display:none}
  .rwa-page-summary{padding:14px}.rwa-page-summary h3{font-size:17px}
 }
+
+/* FINAL_REFERENCE_DETAIL_V5 */
+@media(min-width:1121px){
+ body.rwa-target-dashboard-v2 .book-head,
+ body.rwa-target-dashboard-v2 .bookrow{
+   grid-template-columns:1.15fr .82fr 1.03fr!important;
+   column-gap:7px!important;
+   padding-left:9px!important;padding-right:9px!important;
+ }
+ body.rwa-target-dashboard-v2 .bookrow span{min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+ body.rwa-target-dashboard-v2 .bookrow span:nth-child(2),
+ body.rwa-target-dashboard-v2 .bookrow span:nth-child(3){text-align:right!important}
+ body.rwa-target-dashboard-v2 .rwa-order-percent{display:grid!important;gap:3px!important;margin:0 1px!important}
+ body.rwa-target-dashboard-v2 .rwa-order-percent input[type="range"]{
+   -webkit-appearance:none!important;appearance:none!important;width:100%!important;max-width:none!important;height:12px!important;margin:0!important;padding:0!important;background:transparent!important;outline:0!important
+ }
+ body.rwa-target-dashboard-v2 .rwa-order-percent input[type="range"]::-webkit-slider-runnable-track{height:2px!important;border:0!important;border-radius:999px!important;background:#293b58!important}
+ body.rwa-target-dashboard-v2 .rwa-order-percent input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none!important;appearance:none!important;width:8px!important;height:8px!important;margin-top:-3px!important;border:1px solid #a7b7d2!important;border-radius:50%!important;background:#7188ad!important;box-shadow:none!important}
+ body.rwa-target-dashboard-v2 .rwa-order-percent input[type="range"]:not(:disabled)::-webkit-slider-thumb{background:#6885ff!important;border-color:#aec0ff!important}
+ body.rwa-target-dashboard-v2 .rwa-order-percent input[type="range"]::-moz-range-track{height:2px!important;border:0!important;border-radius:999px!important;background:#293b58!important}
+ body.rwa-target-dashboard-v2 .rwa-order-percent input[type="range"]::-moz-range-thumb{width:8px!important;height:8px!important;border:1px solid #a7b7d2!important;border-radius:50%!important;background:#7188ad!important}
+ body.rwa-target-dashboard-v2 .rwa-order-percent-labels{display:flex!important;justify-content:space-between!important;color:#6f8098!important;font-size:7px!important;line-height:1!important}
+ body.rwa-target-dashboard-v2 .rwa-target-trade-nav button{color:#8fa1ba!important;font-weight:650!important}
+ body.rwa-target-dashboard-v2 .rwa-target-trade-nav button.active{color:#9fb0ff!important}
+}
+/* END_FINAL_REFERENCE_DETAIL_V5 */
