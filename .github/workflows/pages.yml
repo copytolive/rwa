@@ -1,4 +1,4 @@
-name: Deploy RWA Live No-Mock HOME
+name: Deploy RWA Trading + MULTI CHAIN
 
 on:
   push:
@@ -8,32 +8,22 @@ on:
       - "index.html"
       - "app.js"
       - "realtime-core.js"
+      - "chart-core.js"
+      - "rwa-live-home-v1.js"
+      - "rwa-live-home-v1.css"
+      - "rwa-live-orderbook-v1.css"
+      - "rwa-multichain.js"
+      - "rwa-multichain-engine.js"
+      - "rwa-multichain-registry.json"
+      - "execution-api.js"
+      - "exchange-core.js"
+      - "wallet-core.js"
+      - "walletconnect.js"
+      - "superapp-v5.js"
+      - "superapp-v5.css"
       - "styles.css"
       - "mobile.css"
       - "stable-shell.css"
-      - "superapp-v5.css"
-      - "superapp-v5.js"
-      - "chart-core.js"
-      - "market-performance.js"
-      - "mobile.js"
-      - "rwa-target-dashboard-v2.css"
-      - "rwa-target-dashboard-v2-hardening.css"
-      - "rwa-target-dashboard-v2.js"
-      - "rwa-target-dashboard-v2-hardening.js"
-      - "rwa-ecommerce-target-controller-v1.js"
-      - "rwa-ecommerce-target-hardening-v1.js"
-      - "rwa-ecommerce-parity-finish-v2.js"
-      - "rwa-ecommerce-production-visual-v1.js"
-      - "rwa-seablueprint-commerce-bridge.css"
-      - "rwa-seablueprint-commerce-bridge.js"
-      - "rwa-live-home-v1.js"
-      - "rwa-live-home-v1.css"
-      - "rwa-ecommerce-orderbook-parity-v1.css"
-      - "app.js"
-      - "chart-core.js"
-      - "rwa-storefront.js"
-      - "rwa-commerce-registry.json"
-      - "assets/ecommerce/**"
   workflow_dispatch:
 
 permissions:
@@ -52,46 +42,54 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify live no-mock HOME
+      - name: Verify trading-only root
         shell: bash
         run: |
           set -euo pipefail
           test -s index.html
-          grep -Fq 'RWA × Seablueprint' index.html
-          grep -Fq 'IN-PAGE COMMERCE' index.html
+          test -s app.js
+          test -s chart-core.js
+          test -s rwa-live-home-v1.js
+          test -s rwa-live-orderbook-v1.css
+          test -s rwa-multichain.js
+          test -s rwa-multichain-engine.js
+          test -s rwa-multichain-registry.json
+          test -s execution-api.js
+          test -s exchange-core.js
+          grep -Fq '<strong>RWA</strong>' index.html
           grep -Fq 'data-rwa-target-nav="markets"' index.html
-          grep -Fq 'data-rwa-target-nav="ecommerce"' index.html
           grep -Fq 'id="fallbackChart"' index.html
           grep -Fq 'id="tvHost"' index.html
-          ! grep -Eiq 'renko' index.html
+          grep -Fq 'rwaMultiChainLazyBootstrap' index.html
+          grep -Fq "rwa-live-orderbook-v1.css" chart-core.js
+          grep -Fq "rwa-live-home-v1.js?v=2.0.0" chart-core.js
+          grep -Fq "Hyperliquid Testnet" rwa-live-home-v1.js
+          grep -Fq "Mainnet locked" rwa-live-home-v1.js
+          grep -Fq "POLICY='chain-abstraction-fail-closed-v2'" rwa-multichain.js
+          ! grep -Eiq 'seablueprint|ecommerce|in-page commerce' index.html
+          ! grep -Fq 'rwa-seablueprint-commerce-bridge.js' chart-core.js
           ! grep -Fq '/rwa/_next/' index.html
-          test ! -e apps/realworldasset
-          test ! -e REALWORLDASSET_MIGRATION_MANIFEST.json
-          test ! -e UI_SYNC_MANIFEST.json
-          ! grep -Fq 'rwa-golden-home-integration-v1.js' index.html
-          ! grep -Fq 'rwa-screenshot-parity-v1.js' index.html
-          grep -Fq 'rwa-live-home-v1.js' chart-core.js
-          grep -Fq 'rwa-live-home-v1.css' chart-core.js
-          ! grep -Fq 'B 56%' rwa-ecommerce-orderbook-parity-v1.css
-          ! grep -Fq '44% S' rwa-ecommerce-orderbook-parity-v1.css
-          ! grep -Fq '$9.87T' rwa-target-dashboard-v2.js
-          ! grep -Fq 'Marina Bay Residences Token' rwa-target-dashboard-v2.js
-          ! grep -Fq 'Blue Ocean Shipping Note' rwa-target-dashboard-v2.js
-          ! grep -Fq '2,315.00 USDC' rwa-target-dashboard-v2.js
-          echo RWA_LIVE_NO_MOCK_PASS
+          ! grep -Eiq 'renko' index.html
+          echo RWA_TRADING_MULTICHAIN_SOURCE_PASS
 
-      - name: Compose static site
+      - name: Compose trading-only Pages artifact
         shell: bash
         run: |
           set -euo pipefail
           rm -rf site
           mkdir -p site
-          rsync -a --exclude='.git' --exclude='.github' --exclude='apps' --exclude='tools' --exclude='docs' --exclude='qa' ./ site/
+          rsync -a             --exclude='.git'             --exclude='.github'             --exclude='apps'             --exclude='tools'             --exclude='docs'             --exclude='qa'             --exclude='commerce-service'             --exclude='assets/ecommerce'             --exclude='rwa-commerce-*'             --exclude='rwa-ecommerce-*'             --exclude='rwa-seablueprint-*'             --exclude='rwa-storefront*'             --exclude='rwa-store-detail*'             --exclude='rwa-store-draft*'             --exclude='rwa-checkout-ui*'             --exclude='rwa-home-commerce*'             ./ site/
           touch site/.nojekyll
           echo "$GITHUB_SHA" > site/deployment-sha.txt
           test -s site/index.html
           test -s site/renko/index.html
           test -s site/backtest/index.html
+          test -s site/rwa-multichain.js
+          test -s site/execution-api.js
+          test ! -e site/rwa-seablueprint-commerce-bridge.js
+          test ! -e site/rwa-commerce-config.json
+          test ! -e site/commerce-service
+          echo RWA_TRADING_ONLY_ARTIFACT_PASS
 
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -113,7 +111,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Validate public live no-mock HOME
+      - name: Validate public trading-only root
         shell: bash
         run: |
           set -euo pipefail
@@ -126,16 +124,14 @@ jobs:
           done
           test "$PASS" = 1
           curl -fsSL "$BASE/" > /tmp/root.html
-          grep -Fq 'RWA × Seablueprint' /tmp/root.html
-          grep -Fq 'IN-PAGE COMMERCE' /tmp/root.html
+          grep -Fq '<strong>RWA</strong>' /tmp/root.html
           grep -Fq 'id="fallbackChart"' /tmp/root.html
           grep -Fq 'id="tvHost"' /tmp/root.html
-          ! grep -Eiq 'renko' /tmp/root.html
+          grep -Fq 'rwaMultiChainLazyBootstrap' /tmp/root.html
+          ! grep -Eiq 'seablueprint|ecommerce|in-page commerce' /tmp/root.html
           ! grep -Fq '/rwa/_next/' /tmp/root.html
-          ! grep -Fq 'rwa-golden-home-integration-v1.js' /tmp/root.html
-          ! grep -Fq 'rwa-screenshot-parity-v1.js' /tmp/root.html
-          curl -fsSL "$BASE/rwa-live-home-v1.css" > /tmp/live.css
-          curl -fsSL "$BASE/rwa-ecommerce-orderbook-parity-v1.css" > /tmp/book.css
-          ! grep -Fq 'B 56%' /tmp/book.css
-          ! grep -Fq '44% S' /tmp/book.css
-          echo PUBLIC_RWA_LIVE_NO_MOCK_PASS
+          test "$(curl -sS -L -o /dev/null -w '%{http_code}' "$BASE/rwa-multichain.js")" = "200"
+          test "$(curl -sS -L -o /dev/null -w '%{http_code}' "$BASE/execution-api.js")" = "200"
+          test "$(curl -sS -L -o /dev/null -w '%{http_code}' "$BASE/rwa-seablueprint-commerce-bridge.js")" != "200"
+          test "$(curl -sS -L -o /dev/null -w '%{http_code}' "$BASE/rwa-commerce-config.json")" != "200"
+          echo PUBLIC_RWA_TRADING_MULTICHAIN_PASS
