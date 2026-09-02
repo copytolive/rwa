@@ -22,9 +22,9 @@ window.addEventListener('resize',queueDraw,{passive:true});window.addEventListen
     const l=document.createElement('link');l.rel='stylesheet';l.href=href;l.dataset[`rwaTarget${key[0].toUpperCase()+key.slice(1)}`]='1';document.head.appendChild(l)
   }
   if(!window.RWASeablueprintCommerceBridge)await import('./rwa-seablueprint-commerce-bridge.js?v=1.5.1');
-  if(!document.querySelector('link[data-rwa-target-livehome]')){const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-live-home-v1.css?v=1.1.0';l.dataset.rwaTargetLivehome='1';document.head.appendChild(l)}
+  if(!document.querySelector('link[data-rwa-target-livehome]')){const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-live-home-v1.css?v=1.2.0';l.dataset.rwaTargetLivehome='1';document.head.appendChild(l)}
   if(!window.RWATargetTopbarCleanup)await import('./rwa-target-topbar-cleanup-v1.js?v=1.6.0');
-  if(!window.RWALiveHome)await import('./rwa-live-home-v1.js?v=1.1.0');
+  if(!window.RWALiveHome)await import('./rwa-live-home-v1.js?v=1.2.0');
   document.documentElement.classList.add('rwa-target-runtime-ready');document.getElementById('rwaFirstPaintCommerceSkeleton')?.remove()
 }catch(e){console.error('RWA live HOME failed to load',e)}})();
 /* RWA_REAL_BUSINESS_VALIDATION_CONSOLE_V1_BOOTSTRAP */
