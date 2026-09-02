@@ -115,13 +115,112 @@ jobs:
           "MT5_TERMINAL=$terminal"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "MT5_META=$meta"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           Write-Host "METAQUOTES_TERMINAL=$terminal"
-      - name: Bootstrap fresh MetaQuotes demo account and data directory
+      - name: Bootstrap real MetaQuotes demo account context
         shell: powershell
         run: |
           $ErrorActionPreference='Stop'
+          $evidence=Join-Path $env:RUNNER_TEMP 'metaquotes-mt5-evidence';New-Item -ItemType Directory -Force $evidence|Out-Null
+          "MT5_EVIDENCE=$evidence"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          Add-Type -AssemblyName UIAutomationClient
+          Add-Type -AssemblyName UIAutomationTypes
+          Add-Type -AssemblyName System.Windows.Forms
+          Add-Type -AssemblyName System.Drawing
+          Add-Type @'
+          using System;
+          using System.Runtime.InteropServices;
+          public class NativeGold24 {
+            [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
+            [DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
+          }
+          '@
+          function Elements {
+            return [System.Windows.Automation.AutomationElement]::RootElement.FindAll(
+              [System.Windows.Automation.TreeScope]::Descendants,
+              [System.Windows.Automation.Condition]::TrueCondition)
+          }
+          function FindElement([string]$nameRegex,[string]$typeRegex='.*'){
+            foreach($el in (Elements)){
+              try{
+                if($el.Current.Name -match $nameRegex -and $el.Current.ControlType.ProgrammaticName -match $typeRegex){return $el}
+              }catch{}
+            }
+            return $null
+          }
+          function DumpUi([string]$tag){
+            $out=Join-Path $evidence ("ui-"+$tag+".txt")
+            foreach($el in (Elements)){
+              try{
+                $n=$el.Current.Name;$t=$el.Current.ControlType.ProgrammaticName;$a=$el.Current.AutomationId
+                if(-not [string]::IsNullOrWhiteSpace($n) -or -not [string]::IsNullOrWhiteSpace($a)){"type=$t id=$a name=$n"|Out-File $out -Append -Encoding utf8}
+              }catch{}
+            }
+            try{
+              $b=[System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+              $bmp=New-Object System.Drawing.Bitmap $b.Width,$b.Height
+              $g=[System.Drawing.Graphics]::FromImage($bmp);$g.CopyFromScreen($b.Location,[System.Drawing.Point]::Empty,$b.Size)
+              $bmp.Save((Join-Path $evidence ("screen-"+$tag+".png")),[System.Drawing.Imaging.ImageFormat]::Png)
+              $g.Dispose();$bmp.Dispose()
+            }catch{"screenshot_error=$($_.Exception.Message)"|Out-File $out -Append}
+          }
+          function InvokeButton([string]$regex){
+            $el=FindElement $regex 'ControlType.Button'
+            if($null -eq $el){throw "button not found regex=$regex"}
+            $p=$el.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern);$p.Invoke()
+          }
+          function SetEditByName([string]$regex,[string]$value){
+            $el=FindElement $regex 'ControlType.Edit'
+            if($null -eq $el){return $false}
+            $p=$el.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern);$p.SetValue($value);return $true
+          }
+          function SelectByName([string]$regex,[string]$type='ControlType.RadioButton'){
+            $el=FindElement $regex $type
+            if($null -eq $el){return $false}
+            $p=$el.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern);$p.Select();return $true
+          }
           Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
           $p=Start-Process -FilePath $env:MT5_TERMINAL -PassThru
-          Start-Sleep -Seconds 45
+          Start-Sleep -Seconds 15
+          $tp=Get-Process terminal64 -ErrorAction Stop | Sort-Object StartTime -Descending | Select-Object -First 1
+          [NativeGold24]::ShowWindowAsync($tp.MainWindowHandle,3)|Out-Null
+          [NativeGold24]::SetForegroundWindow($tp.MainWindowHandle)|Out-Null
+          [System.Windows.Forms.SendKeys]::SendWait('%f');Start-Sleep -Seconds 1
+          [System.Windows.Forms.SendKeys]::SendWait('a');Start-Sleep -Seconds 8
+          DumpUi 'broker'
+          $searchEdits=@()
+          foreach($el in (Elements)){try{if($el.Current.ControlType -eq [System.Windows.Automation.ControlType]::Edit){$searchEdits+=$el}}catch{}}
+          if($searchEdits.Count -gt 0){
+            try{$vp=$searchEdits[0].GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern);$vp.SetValue('MetaQuotes');Start-Sleep -Seconds 8}catch{}
+          }
+          $company=FindElement 'MetaQuotes Software|MetaQuotes' 'ControlType.(ListItem|DataItem|Text)'
+          if($null -ne $company){try{$sp=$company.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern);$sp.Select()}catch{}}
+          InvokeButton 'Next|Continue'
+          Start-Sleep -Seconds 6
+          DumpUi 'account-type'
+          if(-not (SelectByName 'demo account|virtual money')){throw 'demo-account radio option not found'}
+          InvokeButton 'Next|Continue'
+          Start-Sleep -Seconds 5
+          DumpUi 'registration'
+          $named=0
+          if(SetEditByName 'First name|Name' 'GOLD24'){$named++}
+          if(SetEditByName 'Last name|Surname' 'Certification'){$named++}
+          if(SetEditByName 'E-mail|Email' 'gold24-ci@copytolive.com'){$named++}
+          if(SetEditByName 'Phone|Mobile' '+12025550123'){$named++}
+          if($named -lt 4){
+            $edits=@()
+            foreach($el in (Elements)){try{if($el.Current.ControlType -eq [System.Windows.Automation.ControlType]::Edit){$edits+=$el}}catch{}}
+            $vals=@('GOLD24','Certification','gold24-ci@copytolive.com','+12025550123')
+            for($i=0;$i -lt [Math]::Min(4,$edits.Count);$i++){try{$vp=$edits[$i].GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern);$vp.SetValue($vals[$i])}catch{}}
+          }
+          $agree=FindElement 'agree|terms|personal data' 'ControlType.CheckBox'
+          if($null -eq $agree){throw 'demo-account agreement checkbox not found'}
+          $toggle=$agree.GetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern)
+          if($toggle.Current.ToggleState -ne [System.Windows.Automation.ToggleState]::On){$toggle.Toggle()}
+          InvokeButton 'Next|Continue'
+          Start-Sleep -Seconds 20
+          DumpUi 'created'
+          $finish=FindElement 'Finish|Done' 'ControlType.Button'
+          if($null -ne $finish){$ip=$finish.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern);$ip.Invoke()}
+          Start-Sleep -Seconds 20
           if(-not $p.HasExited){Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue}
           Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
           Start-Sleep -Seconds 3
@@ -129,23 +228,19 @@ jobs:
           $cand=Get-ChildItem $base -Directory -ErrorAction Stop | Where-Object {Test-Path (Join-Path $_.FullName 'MQL5')} | Sort-Object LastWriteTime -Descending | Select-Object -First 1
           if($null -eq $cand){throw 'MetaQuotes MT5 data dir missing'}
           "MT5_DATA=$($cand.FullName)"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-          $evidence=Join-Path $env:RUNNER_TEMP 'metaquotes-mt5-evidence';New-Item -ItemType Directory -Force $evidence|Out-Null
-          "MT5_EVIDENCE=$evidence"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           $logs=Join-Path $cand.FullName 'logs'
           $latestLogs=@(Get-ChildItem $logs -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 6)
           $latestLogs | ForEach-Object {Copy-Item $_.FullName (Join-Path $evidence ("bootstrap-"+$_.Name)) -Force}
           $accounts=Join-Path $cand.FullName 'config\accounts.dat'
-          if(!(Test-Path $accounts) -or (Get-Item $accounts).Length -le 0){throw 'MetaQuotes account bootstrap FAIL: config/accounts.dat missing or empty'}
           $login=$null;$server=$null
           foreach($lf in $latestLogs){
             $txt=Get-Content $lf.FullName -Raw -ErrorAction SilentlyContinue
             $m=[regex]::Match($txt,'(?im)(?<login>\d{5,})\s*:\s*authorized on\s+(?<server>MetaQuotes-Demo(?:\s+\d+)?)(?:\s|,|$)')
             if($m.Success){$login=$m.Groups['login'].Value;$server=$m.Groups['server'].Value;break}
           }
-          if([string]::IsNullOrWhiteSpace($login) -or $login -eq '0' -or [string]::IsNullOrWhiteSpace($server)){
-            $receipt=Join-Path $evidence 'account-bootstrap-receipt.txt'
-            "status=FAIL`naccounts_dat=$(Test-Path $accounts)`nlogin_resolved=$login`nserver_resolved=$server" | Set-Content $receipt
-            throw 'MetaQuotes account bootstrap FAIL: no real nonzero Login/Server authorization found in terminal logs'
+          if(!(Test-Path $accounts) -or (Get-Item $accounts).Length -le 0 -or [string]::IsNullOrWhiteSpace($login) -or $login -eq '0' -or [string]::IsNullOrWhiteSpace($server)){
+            "status=FAIL`naccounts_dat=$(Test-Path $accounts)`nlogin_resolved=$login`nserver_resolved=$server" | Set-Content (Join-Path $evidence 'account-bootstrap-receipt.txt')
+            throw 'MetaQuotes demo account bootstrap FAIL: no real authorized account context'
           }
           "MT5_LOGIN=$login"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "MT5_SERVER=$server"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
