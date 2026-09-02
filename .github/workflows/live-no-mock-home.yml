@@ -1,4 +1,4 @@
-name: RWA Trading + MULTI CHAIN Browser Gate
+name: RWA Trading UI v3 Browser Gate
 # FINAL_TRADING_NO_ECOMMERCE_CERT
 # MULTICHAIN_VISIBLE_V202
 
@@ -19,6 +19,7 @@ on:
       - "exchange-core.js"
       - "wallet-core.js"
       - "walletconnect.js"
+      - "superapp-v5.js"
       - "tools/live-no-mock-home-browser.mjs"
       - ".github/workflows/live-no-mock-home.yml"
   workflow_dispatch:
@@ -45,16 +46,16 @@ jobs:
           done
           cat /tmp/rwa-trading.log
           exit 1
-      - name: Certify trading-only HOME and MULTI CHAIN
+      - name: Certify trading UI v3 · desktop + mobile
         env:
           RWA_UI_URL: http://127.0.0.1:4173/rwa/
-          RWA_UI_PROOF_DIR: proof/trading-multichain-local
+          RWA_UI_PROOF_DIR: proof/trading-ui-v3-local
         run: node tools/live-no-mock-home-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: trading-multichain-local-${{ github.sha }}
-          path: proof/trading-multichain-local/
+          name: trading-ui-v3-local-${{ github.sha }}
+          path: proof/trading-ui-v3-local/
           if-no-files-found: error
           retention-days: 30
 
@@ -82,12 +83,12 @@ jobs:
       - name: Certify public trading-only HOME and MULTI CHAIN
         env:
           RWA_UI_URL: https://copytolive.github.io/rwa/
-          RWA_UI_PROOF_DIR: proof/trading-multichain-public
+          RWA_UI_PROOF_DIR: proof/trading-ui-v3-public
         run: node tools/live-no-mock-home-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: trading-multichain-public-${{ github.sha }}
-          path: proof/trading-multichain-public/
+          name: trading-ui-v3-public-${{ github.sha }}
+          path: proof/trading-ui-v3-public/
           if-no-files-found: error
           retention-days: 30
