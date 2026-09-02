@@ -26,7 +26,9 @@ SUMMARY_KEYS = [
     "cheap_pass_count_this_run", "execution_duplicate_rejected_this_run", "exact_full_metrics_pre_corr_new_this_run",
     "combined_pre_corr_count", "removed_by_correlation_count", "library_count", "new_selected_count",
     "existing_selected_count", "active_count", "elite_count", "tier_counts",
-    "implemented_family_count", "generated_family_counts_this_run", "selected_family_counts",
+    "implemented_family_count", "implemented_category_count",
+    "generated_family_counts_this_run", "generated_category_counts_this_run",
+    "all_implemented_categories_sampled", "selected_family_counts",
     "selected_distinct_family_count", "max_selected_family_share", "portfolio_ready",
 ]
 
