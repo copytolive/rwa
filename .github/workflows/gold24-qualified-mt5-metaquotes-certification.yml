@@ -476,7 +476,7 @@ jobs:
             @(
               '[Common]',"Login=$env:MT5_LOGIN","Server=$env:MT5_SERVER",'NewsEnable=0','CertInstall=0','[Tester]',
               "Expert=Gold24Qualified\$name",'Symbol=GOLD24-CANON','Period=D1','Model=2','ExecutionMode=0','Optimization=0','ForwardMode=0',
-              'FromDate=2000.10.23','ToDate=2026.08.27','Deposit=10000','Currency=USD','ProfitInPips=0','Leverage=1:100',
+              'FromDate=2000.10.23','ToDate=2026.08.27','Deposit=1000000','Currency=USD','ProfitInPips=0','Leverage=1:100',
               'UseLocal=1','UseRemote=0','UseCloud=0','Visual=0',"Report=$reportName",'ReplaceReport=1','ShutdownTerminal=1'
             ) | Set-Content $ini -Encoding ASCII
             Write-Host "START_TESTER $name report=$reportName"
