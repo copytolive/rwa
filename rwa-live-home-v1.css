@@ -1,4 +1,4 @@
-/* RWA Trading UI v3.0 — live data only; no ecommerce or screenshot overlay */
+/* RWA Trading UI v3.1 — live data only; no ecommerce or screenshot overlay */
 :root{--rwa-bg:#030812;--rwa-surface:#06101b;--rwa-surface-2:#081421;--rwa-surface-3:#0b1725;--rwa-line:#1b2b40;--rwa-line-strong:#273a53;--rwa-text:#eef4ff;--rwa-muted:#8394aa;--rwa-soft:#aebbd0;--rwa-accent:#6f82ff;--rwa-green:#2bd39a;--rwa-red:#ef586b}
 html[data-rwa-theme="contrast"]{--rwa-bg:#000;--rwa-surface:#070707;--rwa-surface-2:#0d0d0d;--rwa-surface-3:#121212;--rwa-line:#343434;--rwa-line-strong:#4a4a4a;--rwa-text:#fff;--rwa-muted:#b4b4b4;--rwa-soft:#d1d1d1;--rwa-accent:#91a0ff}
 html[data-rwa-theme] body.rwa-target-dashboard-v2,html[data-rwa-theme] body.rwa-target-dashboard-v2 .app{background:var(--rwa-bg)!important;color:var(--rwa-text)!important}
@@ -132,3 +132,50 @@ body.rwa-trading-page-open .rwa-report-grid{grid-template-columns:repeat(4,minma
  body.rwa-target-dashboard-v2 .brandcopy strong{font-size:16px!important}
 }
 /* END_REFERENCE_PARITY_V4 */
+/* RWA_BRAND_TARGET_V31 */
+body.rwa-target-dashboard-v2 .brandmark{
+  background:#03101f url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cg fill='none' stroke='%235b9cff' stroke-width='2.25' stroke-linejoin='round'%3E%3Cpath d='M16 3 27 9.5 16 16 5 9.5 16 3Z'/%3E%3Cpath d='M5 9.5v12L16 28V16M27 9.5v12L16 28'/%3E%3Cpath d='m9.5 12 6.5-3.8 6.5 3.8-6.5 3.8-6.5-3.8Z'/%3E%3C/g%3E%3C/svg%3E") center/27px 27px no-repeat!important;
+  box-shadow:none!important;border:0!important
+}
+body.rwa-target-dashboard-v2 .brandmark>b,body.rwa-target-dashboard-v2 .brandmark>i{display:none!important}
+body.rwa-target-dashboard-v2 .brandcopy strong{font-size:18px!important}
+
+/* Reference-like watchlist columns */
+.rwa-pair-head{height:28px;display:grid;grid-template-columns:minmax(0,1fr) 78px 48px;gap:7px;align-items:center;padding:0 10px;border-top:1px solid #142135;border-bottom:1px solid #142135;background:#050c16;color:#73839a;font-size:7px;font-weight:800;text-transform:uppercase}
+.rwa-pair-head span:nth-child(2),.rwa-pair-head span:nth-child(3){text-align:right}
+body.rwa-target-dashboard-v2 .pairprice{display:grid!important;grid-template-columns:78px 48px!important;gap:7px!important;align-items:center!important}
+body.rwa-target-dashboard-v2 .pairprice b,body.rwa-target-dashboard-v2 .pairprice .chg{margin:0!important;text-align:right!important}
+
+/* Native page workspaces */
+.rwa-page-summary{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:18px;border:1px solid var(--rwa-line);border-radius:12px;background:linear-gradient(145deg,var(--rwa-surface-2),var(--rwa-surface));margin-bottom:12px}
+.rwa-page-summary small{display:block;color:#7588a1;font-size:8px;font-weight:900;letter-spacing:.09em}
+.rwa-page-summary h3{margin:6px 0 5px;font-size:20px;line-height:1.2}
+.rwa-page-summary p{margin:0;color:var(--rwa-muted);font-size:10px;line-height:1.55;max-width:760px}
+.rwa-page-summary>span{flex:none;border:1px solid #245346;border-radius:999px;background:#06251c;color:#52eeb9;padding:6px 9px;font-size:7px;font-weight:900}
+.rwa-intel-grid{margin-bottom:15px}
+.rwa-intel-columns{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rwa-live-market-table{border:1px solid var(--rwa-line);border-radius:10px;overflow:hidden;background:var(--rwa-surface)}
+.rwa-live-market-head,.rwa-live-market-table>button{display:grid;grid-template-columns:minmax(110px,1fr) 100px 75px 110px;gap:8px;align-items:center;padding:0 11px}
+.rwa-live-market-head{height:31px;background:#081321;color:#72839a;font-size:7px;font-weight:850;text-transform:uppercase}
+.rwa-live-market-table>button{width:100%;height:37px;border:0;border-top:1px solid var(--rwa-line);background:transparent;color:var(--rwa-soft);font-size:9px;text-align:right;cursor:pointer}
+.rwa-live-market-table>button:hover{background:#0a1725}
+.rwa-live-market-table>button b{text-align:left;color:var(--rwa-text);font-size:10px}
+.rwa-live-market-table>button .pos{color:var(--rwa-green)}.rwa-live-market-table>button .neg{color:var(--rwa-red)}
+.rwa-position-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.rwa-position-grid>div{display:grid;gap:5px;padding:12px;border:1px solid var(--rwa-line);border-radius:9px;background:var(--rwa-surface-2)}
+.rwa-position-grid b{font-size:12px}.rwa-position-grid span{font-size:9px;color:var(--rwa-muted)}
+.rwa-wallet-short{font-size:11px!important}
+
+@media(min-width:681px){
+ body.rwa-trading-page-open #rwaTradingWorkspace{left:0!important;right:0!important;top:59px!important;bottom:38px!important;width:100vw!important;max-width:none!important;border-left:0!important;box-shadow:none!important;background:#030812!important}
+ body.rwa-trading-page-open #rwaTradingWorkspace>header{height:70px!important;padding:0 22px!important}
+ body.rwa-trading-page-open #rwaTradingWorkspace [data-workspace-body]{max-width:1480px!important;margin:0 auto!important;padding:18px 22px 28px!important}
+}
+@media(max-width:680px){
+ .rwa-pair-head{display:none!important}
+ .rwa-intel-columns{grid-template-columns:1fr!important}
+ .rwa-position-grid{grid-template-columns:1fr!important}
+ .rwa-live-market-head,.rwa-live-market-table>button{grid-template-columns:1fr 88px 58px!important}
+ .rwa-live-market-head span:nth-child(4),.rwa-live-market-table>button span:nth-child(4){display:none}
+ .rwa-page-summary{padding:14px}.rwa-page-summary h3{font-size:17px}
+}
