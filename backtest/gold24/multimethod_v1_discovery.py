@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from core import Candidate, audit_dataset, backtest_candidate, generate_candidate, pearson_log_equity, validate_candidate
+from core import Candidate, FAMILIES, audit_dataset, backtest_candidate, generate_candidate, pearson_log_equity, validate_candidate
 from multimethod_v1_full_rescan import (
     ACTIVE,
     CORR_HARD_MAX,
@@ -37,7 +37,30 @@ SL_TP_FULL = [x / 2 for x in range(10, 51)]
 OFFSETS = [x / 4 for x in range(2, 21)]
 DIRECTIONS = ["LONG_ONLY", "BOTH", "SHORT_ONLY"]
 
+MASTER_UNIVERSE_PATH = Path(__file__).resolve().with_name("MASTER_METHOD_UNIVERSE.json")
+IMPLEMENTED_FAMILIES = tuple(sorted(FAMILIES))
+PORTFOLIO_MIN_DISTINCT_FAMILIES = 6
+PORTFOLIO_MAX_SINGLE_FAMILY_SHARE = 0.25
+
 _WORKER_D: pd.DataFrame | None = None
+
+
+def _validate_master_universe() -> dict:
+    if not MASTER_UNIVERSE_PATH.exists():
+        raise RuntimeError(f"master method universe missing: {MASTER_UNIVERSE_PATH}")
+    payload = json.loads(MASTER_UNIVERSE_PATH.read_text())
+    registered = set()
+    for category in payload.get("categories", []):
+        if str(category.get("status")) != "IMPLEMENTED":
+            continue
+        registered.update(str(x) for x in category.get("engine_families", []))
+    engine = set(IMPLEMENTED_FAMILIES)
+    if registered != engine:
+        raise RuntimeError(
+            "master method universe/engine mismatch: "
+            f"registered_only={sorted(registered-engine)} engine_only={sorted(engine-registered)}"
+        )
+    return payload
 
 
 def _worker_init(dataset: str, receipt: str) -> None:
@@ -121,38 +144,16 @@ def _family_params(rng: random.Random, family: str, current: dict | None = None)
     return float(rng.choice([52, 55, 58, 62, 66])), float(rng.choice([52, 55, 58, 62, 66])), 1.0
 
 
-def _mutated_candidate(rng: random.Random, seeds: list[dict]) -> Candidate:
-    # 78% exploit empirically positive >=100-entry neighborhoods; 22% broad targeted exploration.
-    if seeds and rng.random() < 0.78:
-        pool = seeds[: min(24, len(seeds))] if rng.random() < 0.85 else seeds
-        base = dict(rng.choice(pool)["candidate"])
-        family = str(base["family"])
-
-        # Effective geometry gets deliberately varied; p-values are also varied when used by the family.
-        if rng.random() < 0.80:
-            fast, slow = sorted(rng.sample(WINDOWS, 2))
-            base["fast"], base["slow"] = int(fast), int(slow)
-        p1, p2, p3 = _family_params(rng, family, base)
-        base["p1"], base["p2"], base["p3"] = p1, p2, p3
-        base["entry_method"] = "LIMIT" if rng.random() < 0.94 else "STOP"
-        base["direction_mode"] = _weighted_direction(rng)
-        choices = SL_TP_FOCUSED if rng.random() < 0.92 else SL_TP_FULL
-        sl = float(rng.choice(choices))
-        if rng.random() < 0.88:
-            tps = [x for x in choices if x + 1e-12 >= sl]
-            tp = float(rng.choice(tps or choices))
-        else:
-            tp = float(rng.choice(choices))
-        base["sl"], base["tp"] = sl, tp
-        base["offset"] = float(rng.choice(OFFSETS))
-        base["expiry"] = int(rng.randint(1, 8))
-        c = Candidate(**base)
-        validate_candidate(c)
-        return c
-
-    # Broad branch keeps all canonical families represented but biases execution toward the empirically useful zone.
+def _fresh_candidate_for_family(rng: random.Random, family: str) -> Candidate:
+    if family not in FAMILIES:
+        raise ValueError(f"unknown implemented family: {family}")
     c0 = generate_candidate(rng, timeframe="D1")
     d = c0.canonical_dict()
+    d["family"] = family
+    fast, slow = sorted(rng.sample(WINDOWS, 2))
+    d["fast"], d["slow"] = int(fast), int(slow)
+    p1, p2, p3 = _family_params(rng, family, None)
+    d["p1"], d["p2"], d["p3"] = p1, p2, p3
     d["entry_method"] = "LIMIT" if rng.random() < 0.90 else "STOP"
     d["direction_mode"] = _weighted_direction(rng)
     choices = SL_TP_FOCUSED if rng.random() < 0.85 else SL_TP_FULL
@@ -169,6 +170,42 @@ def _mutated_candidate(rng: random.Random, seeds: list[dict]) -> Candidate:
     validate_candidate(c)
     return c
 
+
+def _mutated_candidate(rng: random.Random, seeds: list[dict], target_family: str) -> Candidate:
+    # Family-balanced discovery: exploit only inside the target family.
+    family_seeds = [
+        x for x in seeds
+        if str(x.get("candidate", {}).get("family", "")) == target_family
+    ]
+
+    # Exploit useful neighborhoods inside the requested family, never globally.
+    if family_seeds and rng.random() < 0.68:
+        pool = family_seeds[: min(24, len(family_seeds))] if rng.random() < 0.85 else family_seeds
+        base = dict(rng.choice(pool)["candidate"])
+        base["family"] = target_family
+
+        if rng.random() < 0.80:
+            fast, slow = sorted(rng.sample(WINDOWS, 2))
+            base["fast"], base["slow"] = int(fast), int(slow)
+        p1, p2, p3 = _family_params(rng, target_family, base)
+        base["p1"], base["p2"], base["p3"] = p1, p2, p3
+        base["entry_method"] = "LIMIT" if rng.random() < 0.90 else "STOP"
+        base["direction_mode"] = _weighted_direction(rng)
+        choices = SL_TP_FOCUSED if rng.random() < 0.88 else SL_TP_FULL
+        sl = float(rng.choice(choices))
+        if rng.random() < 0.84:
+            tps = [x for x in choices if x + 1e-12 >= sl]
+            tp = float(rng.choice(tps or choices))
+        else:
+            tp = float(rng.choice(choices))
+        base["sl"], base["tp"] = sl, tp
+        base["offset"] = float(rng.choice(OFFSETS))
+        base["expiry"] = int(rng.randint(1, 8))
+        c = Candidate(**base)
+        validate_candidate(c)
+        return c
+
+    return _fresh_candidate_for_family(rng, target_family)
 
 def _oos_qty100(d: pd.DataFrame, c: Candidate) -> dict:
     start = int(len(d) * 0.80)
@@ -273,6 +310,7 @@ def main() -> int:
     out.mkdir(parents=True, exist_ok=True)
     source = json.loads(Path(args.source_summary).read_text())
     existing_payload = json.loads(Path(args.existing_library).read_text())
+    master_universe = _validate_master_universe()
 
     dataset = state / "gate_a" / "GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv"
     receipt = state / "gate_a" / "gate_a_receipt.json"
@@ -296,18 +334,28 @@ def main() -> int:
     rng = random.Random(int(args.base_seed))
     generated: list[Candidate] = []
     generated_hashes: set[str] = set()
+    generated_family_counts = {family: 0 for family in IMPLEMENTED_FAMILIES}
     attempts = 0
-    max_attempts = max(int(args.candidate_count) * 200, 10000)
+    max_attempts = max(int(args.candidate_count) * 300, 20000)
     while len(generated) < int(args.candidate_count) and attempts < max_attempts:
         attempts += 1
-        c = _mutated_candidate(rng, seeds)
-        h = c.config_hash
+        min_count = min(generated_family_counts.values())
+        least_sampled = [
+            family for family in IMPLEMENTED_FAMILIES
+            if generated_family_counts[family] == min_count
+        ]
+        target_family = rng.choice(least_sampled)
+        candidate = _mutated_candidate(rng, seeds, target_family)
+        h = candidate.config_hash
         if h in archive_hashes or h in prior_evaluated or h in generated_hashes:
             continue
-        generated.append(c)
+        generated.append(candidate)
         generated_hashes.add(h)
+        generated_family_counts[candidate.family] += 1
     if len(generated) < int(args.candidate_count):
         raise RuntimeError(f"generation exhausted: wanted={args.candidate_count} got={len(generated)} attempts={attempts}")
+    if max(generated_family_counts.values()) - min(generated_family_counts.values()) > 1:
+        raise RuntimeError(f"family-balanced generation invariant failed: {generated_family_counts}")
 
     workers = int(args.workers) if int(args.workers) > 0 else max(1, min(os.cpu_count() or 2, 8))
     simulated: list[dict] = []
@@ -424,6 +472,21 @@ def main() -> int:
     new_selected_count = sum(1 for row in selected if row.get("origin") == "DISCOVERY")
     existing_selected_count = sum(1 for row in selected if row.get("origin") != "DISCOVERY")
 
+    selected_family_counts: dict[str, int] = {}
+    for row in selected:
+        family = str(row.get("family") or "")
+        selected_family_counts[family] = selected_family_counts.get(family, 0) + 1
+    selected_count = len(selected)
+    selected_distinct_family_count = len([x for x in selected_family_counts if x])
+    max_selected_family_share = (
+        max(selected_family_counts.values()) / selected_count
+        if selected_count > 0 else 0.0
+    )
+    portfolio_ready = (
+        selected_distinct_family_count >= PORTFOLIO_MIN_DISTINCT_FAMILIES
+        and max_selected_family_share <= PORTFOLIO_MAX_SINGLE_FAMILY_SHARE + 1e-12
+    )
+
     evaluated_hashes = sorted(prior_evaluated | generated_hashes)
     payload = {
         "schema": "gold24-multimethod-v1-adaptive-discovery-v1",
@@ -436,6 +499,11 @@ def main() -> int:
         "base_seed": int(args.base_seed),
         "workers": workers,
         "generation_attempts": attempts,
+        "discovery_policy": "family-balanced across every implemented engine family; seed exploitation is restricted to the target family",
+        "master_method_universe_schema": master_universe.get("schema"),
+        "implemented_family_count": len(IMPLEMENTED_FAMILIES),
+        "implemented_families": list(IMPLEMENTED_FAMILIES),
+        "generated_family_counts_this_run": generated_family_counts,
         "simulated_new_configs_this_run": len(simulated),
         "evaluated_config_hash_count_cumulative": len(evaluated_hashes),
         "cheap_pass_count_this_run": cheap_pass_count,
@@ -451,6 +519,16 @@ def main() -> int:
         "active_count": sum(1 for x in selected if x["tier_v1"] in {"ACTIVE", "ELITE"}),
         "elite_count": sum(1 for x in selected if x["tier_v1"] == "ELITE"),
         "tier_counts": tier_counts,
+        "selected_family_counts": selected_family_counts,
+        "selected_distinct_family_count": selected_distinct_family_count,
+        "max_selected_family_share": max_selected_family_share,
+        "portfolio_ready": portfolio_ready,
+        "portfolio_diversification_gate": {
+            "min_distinct_families": PORTFOLIO_MIN_DISTINCT_FAMILIES,
+            "max_single_family_share": PORTFOLIO_MAX_SINGLE_FAMILY_SHARE,
+            "library_may_exceed_family_cap": True,
+            "status": "PASS" if portfolio_ready else "NOT_READY",
+        },
         "library_rule": LIBRARY,
         "active_rule": ACTIVE,
         "elite_rule": ELITE,
@@ -481,6 +559,8 @@ def main() -> int:
             "cheap_pass_count_this_run", "execution_duplicate_rejected_this_run", "exact_full_metrics_pre_corr_new_this_run",
             "combined_pre_corr_count", "removed_by_correlation_count", "library_count", "new_selected_count",
             "existing_selected_count", "active_count", "elite_count", "tier_counts",
+            "implemented_family_count", "generated_family_counts_this_run", "selected_family_counts",
+            "selected_distinct_family_count", "max_selected_family_share", "portfolio_ready",
         ]
     })
     _write_csv(out / "latest_multimethod_v1_discovery.csv", selected)
