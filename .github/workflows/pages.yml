@@ -1,4 +1,4 @@
-name: Deploy RWA Trading + MULTI CHAIN
+name: Deploy RWA Trading UI v3 + MULTI CHAIN
 # FINAL_TRADING_NO_ECOMMERCE_CERT
 
 on:
@@ -12,7 +12,6 @@ on:
       - "chart-core.js"
       - "rwa-live-home-v1.js"
       - "rwa-live-home-v1.css"
-      - "rwa-live-orderbook-v1.css"
       - "rwa-multichain.js"
       - "rwa-multichain-engine.js"
       - "rwa-multichain-registry.json"
@@ -51,7 +50,6 @@ jobs:
           test -s app.js
           test -s chart-core.js
           test -s rwa-live-home-v1.js
-          test -s rwa-live-orderbook-v1.css
           test -s rwa-multichain.js
           test -s rwa-multichain-engine.js
           test -s rwa-multichain-registry.json
@@ -62,8 +60,12 @@ jobs:
           grep -Fq 'id="fallbackChart"' index.html
           grep -Fq 'id="tvHost"' index.html
           grep -Fq 'rwaMultiChainLazyBootstrap' index.html
-          grep -Fq "rwa-live-orderbook-v1.css" chart-core.js
-          grep -Fq "rwa-live-home-v1.js?v=2.0.2" chart-core.js
+          grep -Fq "rwa-live-home-v1.js?v=3.0.0" chart-core.js
+          grep -Fq "rwa-live-home-v1.css?v=3.0.0" chart-core.js
+          ! grep -Fq "rwa-live-orderbook-v1.css" chart-core.js
+          grep -Fq "openOrders" rwa-live-home-v1.js
+          grep -Fq "openReports" rwa-live-home-v1.js
+          ! grep -Fq "rwaContextBrief" index.html
           grep -Fq "Hyperliquid Testnet" rwa-live-home-v1.js
           grep -Fq "Mainnet locked" rwa-live-home-v1.js
           grep -Fq "POLICY='chain-abstraction-fail-closed-v2'" rwa-multichain.js
@@ -71,7 +73,7 @@ jobs:
           ! grep -Fq 'rwa-seablueprint-commerce-bridge.js' chart-core.js
           ! grep -Fq '/rwa/_next/' index.html
           ! grep -Eiq 'renko' index.html
-          echo RWA_TRADING_MULTICHAIN_SOURCE_PASS
+          echo RWA_TRADING_UI_V3_SOURCE_PASS
 
       - name: Compose trading-only Pages artifact
         shell: bash
