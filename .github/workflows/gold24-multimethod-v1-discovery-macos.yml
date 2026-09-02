@@ -6,11 +6,11 @@ on:
       candidate_count:
         description: New targeted configs to simulate
         required: false
-        default: '5000'
+        default: '20000'
       base_seed:
         description: Deterministic discovery seed
         required: false
-        default: '2026083102'
+        default: '2026090304'
   push:
     paths:
       - '.github/workflows/gold24-multimethod-v1-discovery-macos.yml'
@@ -39,8 +39,8 @@ jobs:
       STATE_DIR: ${{ github.workspace }}/.gold24-multimethod-v1-discovery-state
       OUT_DIR: ${{ github.workspace }}/backtest/gold24/runtime_multimethod_v1
       SOURCE_SUMMARY: ${{ github.workspace }}/backtest/gold24/runtime_v11/latest_validation_summary.json
-      CANDIDATE_COUNT: ${{ github.event.inputs.candidate_count || '5000' }}
-      BASE_SEED: ${{ github.event.inputs.base_seed || '2026083102' }}
+      CANDIDATE_COUNT: ${{ github.event.inputs.candidate_count || '20000' }}
+      BASE_SEED: ${{ github.event.inputs.base_seed || '2026090304' }}
     steps:
       - uses: actions/checkout@v4
         with:
