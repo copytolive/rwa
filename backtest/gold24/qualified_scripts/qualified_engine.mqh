@@ -259,6 +259,39 @@ void PriorRange(MqlRates &r[],int lookback,int signalIdx,double &rh,double &rl)
    }
 }
 
+double RollingCloseMeanAt(MqlRates &r[],int period,int endIdx)
+{
+   if(period<=0 || endIdx-period+1<0) return EMPTY_VALUE;
+   double sum=0.0;
+   for(int i=endIdx-period+1;i<=endIdx;i++) sum+=r[i].close;
+   return sum/period;
+}
+
+double RollingCloseStdPopulationAt(MqlRates &r[],int period,int endIdx)
+{
+   double mean=RollingCloseMeanAt(r,period,endIdx);
+   if(mean==EMPTY_VALUE) return EMPTY_VALUE;
+   double ss=0.0;
+   for(int i=endIdx-period+1;i<=endIdx;i++)
+   {
+      double d=r[i].close-mean;
+      ss+=d*d;
+   }
+   return MathSqrt(ss/period);
+}
+
+double RollingVolumeMeanAt(MqlRates &r[],int period,int endIdx)
+{
+   if(period<=0 || endIdx-period+1<0) return EMPTY_VALUE;
+   double sum=0.0;
+   for(int i=endIdx-period+1;i<=endIdx;i++)
+   {
+      double v=(r[i].real_volume>0 ? (double)r[i].real_volume : (double)r[i].tick_volume);
+      sum+=v;
+   }
+   return sum/period;
+}
+
 bool PandasKAMALastTwo(MqlRates &r[],int period,double &prevKama,double &curKama)
 {
    int n=ArraySize(r);
@@ -353,6 +386,42 @@ int CanonicalSignal()
       double closeNow=r[n-1].close;
       longSig=(closeNow>curKama+band && slope>0.0);
       shortSig=(closeNow<curKama-band && slope<0.0);
+   }
+   else if(QM_FAMILY_CODE==5)
+   {
+      // Python BOLLINGER_REVERSION_V2 parity:
+      // rolling SMA/std(ddof=0), previous-bar band excursion, current re-entry,
+      // and simple rolling RSI(FAST). Warmup already removes bfill-only region.
+      if(n<=MathMax(SLOW+2,FAST+2)) return 0;
+      int curIdx=n-1,prevIdx=n-2;
+      double smaCur=RollingCloseMeanAt(r,SLOW,curIdx);
+      double stdCur=RollingCloseStdPopulationAt(r,SLOW,curIdx);
+      double smaPrev=RollingCloseMeanAt(r,SLOW,prevIdx);
+      double stdPrev=RollingCloseStdPopulationAt(r,SLOW,prevIdx);
+      if(smaCur==EMPTY_VALUE || stdCur==EMPTY_VALUE || smaPrev==EMPTY_VALUE || stdPrev==EMPTY_VALUE) return 0;
+      double upperCur=smaCur+P1*stdCur;
+      double lowerCur=smaCur-P1*stdCur;
+      double upperPrev=smaPrev+P1*stdPrev;
+      double lowerPrev=smaPrev-P1*stdPrev;
+      double rsi=SimpleRollingRSI(r,FAST);
+      longSig=(r[prevIdx].close<lowerPrev && r[curIdx].close>lowerCur && rsi<P2);
+      shortSig=(r[prevIdx].close>upperPrev && r[curIdx].close<upperCur && rsi>100.0-P2);
+   }
+   else if(QM_FAMILY_CODE==6)
+   {
+      // Python VOLUME parity: rolling SLOW volume mean, FAST prior high/low,
+      // and pandas-style EMA FAST/SLOW trend confirmation.
+      if(n<=MathMax(SLOW+2,FAST+2)) return 0;
+      int curIdx=n-1;
+      double volMean=RollingVolumeMeanAt(r,SLOW,curIdx);
+      if(volMean==EMPTY_VALUE || volMean<=0.0) return 0;
+      double curVol=(r[curIdx].real_volume>0 ? (double)r[curIdx].real_volume : (double)r[curIdx].tick_volume);
+      bool spike=(curVol>=volMean*P1);
+      double rh,rl;
+      PriorRange(r,FAST,curIdx,rh,rl);
+      double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
+      longSig=(spike && r[curIdx].close>rh && emaFast>emaSlow);
+      shortSig=(spike && r[curIdx].close<rl && emaFast<emaSlow);
    }
    else
    {
