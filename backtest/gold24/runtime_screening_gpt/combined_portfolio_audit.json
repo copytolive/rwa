@@ -1,87 +1,87 @@
 {
   "status": "PASS",
-  "methods_input": 13,
-  "methods_final": 12,
+  "methods_input": 15,
+  "methods_final": 14,
   "dataset_rows": 6500,
-  "global_pair_count": 78,
+  "global_pair_count": 105,
   "pairs_gt_0_50": 4,
   "max_pair": {
     "i": 2,
-    "j": 11,
+    "j": 13,
     "a": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=2.75 exp=8",
     "b": "CANDLE_ENGULFING f55/s100 p1=55.0 p2=58.0 p3=1.0 off=3.25 exp=8",
-    "corr_abs": 0.671810277245724
+    "corr_abs": 0.6718102772457232
   },
   "top10_pairs": [
     {
       "i": 2,
-      "j": 11,
+      "j": 13,
       "a": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=2.75 exp=8",
       "b": "CANDLE_ENGULFING f55/s100 p1=55.0 p2=58.0 p3=1.0 off=3.25 exp=8",
-      "corr_abs": 0.671810277245724
+      "corr_abs": 0.6718102772457232
     },
     {
       "i": 2,
       "j": 5,
       "a": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=2.75 exp=8",
       "b": "CANDLE_ENGULFING f100/s144 p1=66.0 p2=52.0 p3=1.0 off=5.0 exp=4",
-      "corr_abs": 0.636114281622924
-    },
-    {
-      "i": 2,
-      "j": 7,
-      "a": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=2.75 exp=8",
-      "b": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=2.0 exp=5",
-      "corr_abs": 0.5262182417625091
+      "corr_abs": 0.6361142816229237
     },
     {
       "i": 2,
       "j": 8,
       "a": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=2.75 exp=8",
-      "b": "CANDLE_ENGULFING f26/s144 p1=58.0 p2=58.0 p3=1.0 off=2.75 exp=7",
-      "corr_abs": 0.5214909278800647
+      "b": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=2.0 exp=5",
+      "corr_abs": 0.5262182417625081
     },
     {
-      "i": 9,
+      "i": 2,
       "j": 10,
+      "a": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=2.75 exp=8",
+      "b": "CANDLE_ENGULFING f26/s144 p1=58.0 p2=58.0 p3=1.0 off=2.75 exp=7",
+      "corr_abs": 0.5214909278800626
+    },
+    {
+      "i": 11,
+      "j": 12,
       "a": "CANDLE_ENGULFING f34/s144 p1=62.0 p2=66.0 p3=1.0 off=4.5 exp=8",
       "b": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=1.25 exp=8",
-      "corr_abs": 0.49804976679442625
+      "corr_abs": 0.4980497667944249
     },
     {
-      "i": 9,
-      "j": 12,
+      "i": 11,
+      "j": 14,
       "a": "CANDLE_ENGULFING f34/s144 p1=62.0 p2=66.0 p3=1.0 off=4.5 exp=8",
       "b": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=1.75 exp=8",
-      "corr_abs": 0.49497520047665605
+      "corr_abs": 0.4949752004766548
+    },
+    {
+      "i": 5,
+      "j": 10,
+      "a": "CANDLE_ENGULFING f100/s144 p1=66.0 p2=52.0 p3=1.0 off=5.0 exp=4",
+      "b": "CANDLE_ENGULFING f26/s144 p1=58.0 p2=58.0 p3=1.0 off=2.75 exp=7",
+      "corr_abs": 0.48768803125268806
     },
     {
       "i": 5,
       "j": 8,
-      "a": "CANDLE_ENGULFING f100/s144 p1=66.0 p2=52.0 p3=1.0 off=5.0 exp=4",
-      "b": "CANDLE_ENGULFING f26/s144 p1=58.0 p2=58.0 p3=1.0 off=2.75 exp=7",
-      "corr_abs": 0.4876880312526892
-    },
-    {
-      "i": 5,
-      "j": 7,
       "a": "CANDLE_ENGULFING f100/s144 p1=66.0 p2=52.0 p3=1.0 off=5.0 exp=4",
       "b": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=2.0 exp=5",
-      "corr_abs": 0.4776752248683621
+      "corr_abs": 0.47767522486836034
     },
     {
-      "i": 7,
-      "j": 8,
+      "i": 8,
+      "j": 10,
       "a": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=2.0 exp=5",
       "b": "CANDLE_ENGULFING f26/s144 p1=58.0 p2=58.0 p3=1.0 off=2.75 exp=7",
-      "corr_abs": 0.4685381499157819
+      "corr_abs": 0.4685381499157821
     },
     {
-      "i": 7,
-      "j": 12,
+      "i": 8,
+      "j": 14,
       "a": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=2.0 exp=5",
       "b": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=1.75 exp=8",
-      "corr_abs": 0.4567314717694863
+      "corr_abs": 0.45673147176948736
     }
   ],
   "rows": [
@@ -90,10 +90,10 @@
       "method": "DONCHIAN f3/s89 p1=66.0 p2=55.0 p3=1.0 off=3.0 exp=4",
       "family": "DONCHIAN",
       "config_hash": "13f689142dff69d33b2c6b33c3652aec484046d059d64636e4639f2d4a5bd295",
-      "raw_global_corr_max": 0.42305388437251884,
+      "raw_global_corr_max": 0.4230538843725163,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.42305388437251884,
+      "global_corr_max": 0.4230538843725163,
       "global_corr_gate": "PASS"
     },
     {
@@ -101,7 +101,7 @@
       "method": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=2.75 exp=8",
       "family": "CANDLE_ENGULFING",
       "config_hash": "7c00212eb6bd65ad07e432d4a261d3f3240478d4d4698cf57e99c549684b61cb",
-      "raw_global_corr_max": 0.671810277245724,
+      "raw_global_corr_max": 0.6718102772457232,
       "raw_global_corr_gate": "FAIL",
       "global_selection": "REJECTED",
       "global_corr_max": null,
@@ -112,10 +112,10 @@
       "method": "DONCHIAN f3/s100 p1=55.0 p2=58.0 p3=1.0 off=1.0 exp=7",
       "family": "DONCHIAN",
       "config_hash": "860c7a7defb867ad594b594e41f4a5157b3dc4262a1b1bd69c978298130ac57c",
-      "raw_global_corr_max": 0.3228413775329864,
+      "raw_global_corr_max": 0.32284137753298675,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.3228413775329864,
+      "global_corr_max": 0.32284137753298675,
       "global_corr_gate": "PASS"
     },
     {
@@ -123,10 +123,10 @@
       "method": "DONCHIAN f3/s89 p1=58.0 p2=52.0 p3=1.0 off=4.75 exp=3",
       "family": "DONCHIAN",
       "config_hash": "8398c92b8fb894fd605c077b07863777b0e43160ea761f0dee51a40984efa5ef",
-      "raw_global_corr_max": 0.42305388437251884,
+      "raw_global_corr_max": 0.4230538843725163,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.42305388437251884,
+      "global_corr_max": 0.4230538843725163,
       "global_corr_gate": "PASS"
     },
     {
@@ -134,10 +134,10 @@
       "method": "CANDLE_ENGULFING f100/s144 p1=66.0 p2=52.0 p3=1.0 off=5.0 exp=4",
       "family": "CANDLE_ENGULFING",
       "config_hash": "19b16bbde8f2edb8f9ab7a699cf228e3d6d1f2b47ca32ac0aed6408cae7caefc",
-      "raw_global_corr_max": 0.636114281622924,
+      "raw_global_corr_max": 0.6361142816229237,
       "raw_global_corr_gate": "FAIL",
       "global_selection": "KEPT",
-      "global_corr_max": 0.4876880312526892,
+      "global_corr_max": 0.48768803125268806,
       "global_corr_gate": "PASS"
     },
     {
@@ -145,10 +145,21 @@
       "method": "CHART_PATTERN f3/s34 p1=0.7 p2=55.0 p3=1.0 off=1.25 exp=8",
       "family": "CHART_PATTERN",
       "config_hash": "4ff55b7bfa26f3cd3778faa661704fa1b1ed2e7767a249e5eab593352ca1b514",
-      "raw_global_corr_max": 0.11960193772681099,
+      "raw_global_corr_max": 0.16057481369180482,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.11960193772681099,
+      "global_corr_max": 0.16057481369180482,
+      "global_corr_gate": "PASS"
+    },
+    {
+      "stem": "multi_bollinger_reversion_v2_f3_s14_off1_25_exp4",
+      "method": "BOLLINGER_REVERSION_V2 f3/s14 p1=1.5 p2=30.0 p3=1.0 off=1.25 exp=4",
+      "family": "BOLLINGER_REVERSION_V2",
+      "config_hash": "5b32ea7bda5439f27bc176bed6866ff72c74a109e0e7d51170a205d580017a81",
+      "raw_global_corr_max": 0.16057481369180482,
+      "raw_global_corr_gate": "PASS",
+      "global_selection": "KEPT",
+      "global_corr_max": 0.16057481369180482,
       "global_corr_gate": "PASS"
     },
     {
@@ -156,10 +167,21 @@
       "method": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=2.0 exp=5",
       "family": "CANDLE_ENGULFING",
       "config_hash": "f2b4a66e680b1bc73f7e7f22c6583368ee0a982fdc0bb958baf7dc45575bc41f",
-      "raw_global_corr_max": 0.5262182417625091,
+      "raw_global_corr_max": 0.5262182417625081,
       "raw_global_corr_gate": "FAIL",
       "global_selection": "KEPT",
-      "global_corr_max": 0.4776752248683621,
+      "global_corr_max": 0.47767522486836034,
+      "global_corr_gate": "PASS"
+    },
+    {
+      "stem": "multi_volume_f50_s100_off1_exp5",
+      "method": "VOLUME f50/s100 p1=1.4 p2=55.0 p3=1.0 off=1.0 exp=5",
+      "family": "VOLUME",
+      "config_hash": "09fb362cbb4fcbc244e2c5e9d3ec336466e6b63f391328af656f24482c15290d",
+      "raw_global_corr_max": 0.29498820308458557,
+      "raw_global_corr_gate": "PASS",
+      "global_selection": "KEPT",
+      "global_corr_max": 0.29498820308458557,
       "global_corr_gate": "PASS"
     },
     {
@@ -167,10 +189,10 @@
       "method": "CANDLE_ENGULFING f26/s144 p1=58.0 p2=58.0 p3=1.0 off=2.75 exp=7",
       "family": "CANDLE_ENGULFING",
       "config_hash": "4b9f29a975f601fdef05a83c4ebffb861e6bc3c34e318a8e879b7e17940131f1",
-      "raw_global_corr_max": 0.5214909278800647,
+      "raw_global_corr_max": 0.5214909278800626,
       "raw_global_corr_gate": "FAIL",
       "global_selection": "KEPT",
-      "global_corr_max": 0.4876880312526892,
+      "global_corr_max": 0.48768803125268806,
       "global_corr_gate": "PASS"
     },
     {
@@ -178,10 +200,10 @@
       "method": "CANDLE_ENGULFING f34/s144 p1=62.0 p2=66.0 p3=1.0 off=4.5 exp=8",
       "family": "CANDLE_ENGULFING",
       "config_hash": "aa50efa4bf3e91060ff7938d45928802aef1e02995bdfb98fa08ad43d12facb3",
-      "raw_global_corr_max": 0.49804976679442625,
+      "raw_global_corr_max": 0.4980497667944249,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.49804976679442625,
+      "global_corr_max": 0.4980497667944249,
       "global_corr_gate": "PASS"
     },
     {
@@ -189,10 +211,10 @@
       "method": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=1.25 exp=8",
       "family": "CANDLE_ENGULFING",
       "config_hash": "c7bf875486d7ce6dcbd638821f2932d6dac402aa6979023e79360e01f6ddfab5",
-      "raw_global_corr_max": 0.49804976679442625,
+      "raw_global_corr_max": 0.4980497667944249,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.49804976679442625,
+      "global_corr_max": 0.4980497667944249,
       "global_corr_gate": "PASS"
     },
     {
@@ -200,10 +222,10 @@
       "method": "CANDLE_ENGULFING f55/s100 p1=55.0 p2=58.0 p3=1.0 off=3.25 exp=8",
       "family": "CANDLE_ENGULFING",
       "config_hash": "b27c57af4988aa89b12d9421250f8244c1460fb9f1570590c8501579a869a45b",
-      "raw_global_corr_max": 0.671810277245724,
+      "raw_global_corr_max": 0.6718102772457232,
       "raw_global_corr_gate": "FAIL",
       "global_selection": "KEPT",
-      "global_corr_max": 0.4481080203335683,
+      "global_corr_max": 0.44810802033356645,
       "global_corr_gate": "PASS"
     },
     {
@@ -211,10 +233,10 @@
       "method": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=1.75 exp=8",
       "family": "CANDLE_ENGULFING",
       "config_hash": "db02ceb03b2a80d41e08ef0271529a78acac546b4dea2d370b8fc71dd9d75dc0",
-      "raw_global_corr_max": 0.49497520047665605,
+      "raw_global_corr_max": 0.4949752004766548,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.49497520047665605,
+      "global_corr_max": 0.4949752004766548,
       "global_corr_gate": "PASS"
     },
     {
@@ -222,20 +244,22 @@
       "method": "ADAPTIVE_TREND f20/s144 p1=2.2 p2=55.0 p3=1.0 off=5.0 exp=5",
       "family": "ADAPTIVE_TREND",
       "config_hash": "d3844bec737310d796a696cb50450f11295e7cb85580a619237f2e32f560a4c4",
-      "raw_global_corr_max": 0.23650521436330976,
+      "raw_global_corr_max": 0.2365052143633089,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.23650521436330976,
+      "global_corr_max": 0.2365052143633089,
       "global_corr_gate": "PASS"
     }
   ],
-  "global_greedy_kept_count": 12,
+  "global_greedy_kept_count": 14,
   "global_greedy_kept": [
     "DONCHIAN f3/s89 p1=58.0 p2=52.0 p3=1.0 off=4.75 exp=3",
     "DONCHIAN f3/s89 p1=66.0 p2=55.0 p3=1.0 off=3.0 exp=4",
     "CANDLE_ENGULFING f100/s144 p1=66.0 p2=52.0 p3=1.0 off=5.0 exp=4",
     "CHART_PATTERN f3/s34 p1=0.7 p2=55.0 p3=1.0 off=1.25 exp=8",
+    "BOLLINGER_REVERSION_V2 f3/s14 p1=1.5 p2=30.0 p3=1.0 off=1.25 exp=4",
     "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=2.0 exp=5",
+    "VOLUME f50/s100 p1=1.4 p2=55.0 p3=1.0 off=1.0 exp=5",
     "DONCHIAN f3/s100 p1=55.0 p2=58.0 p3=1.0 off=1.0 exp=7",
     "CANDLE_ENGULFING f26/s144 p1=58.0 p2=58.0 p3=1.0 off=2.75 exp=7",
     "CANDLE_ENGULFING f34/s144 p1=62.0 p2=66.0 p3=1.0 off=4.5 exp=8",
@@ -253,60 +277,64 @@
       "conflicts": [
         {
           "method": "CANDLE_ENGULFING f100/s144 p1=66.0 p2=52.0 p3=1.0 off=5.0 exp=4",
-          "corr_abs": 0.636114281622924
+          "corr_abs": 0.6361142816229237
         },
         {
           "method": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=2.0 exp=5",
-          "corr_abs": 0.5262182417625091
+          "corr_abs": 0.5262182417625081
         }
       ]
     }
   ],
   "family_counts_input": {
     "ADAPTIVE_TREND": 1,
+    "BOLLINGER_REVERSION_V2": 1,
     "CANDLE_ENGULFING": 8,
     "CHART_PATTERN": 1,
-    "DONCHIAN": 3
+    "DONCHIAN": 3,
+    "VOLUME": 1
   },
   "family_counts_final": {
     "ADAPTIVE_TREND": 1,
+    "BOLLINGER_REVERSION_V2": 1,
     "CANDLE_ENGULFING": 7,
     "CHART_PATTERN": 1,
-    "DONCHIAN": 3
+    "DONCHIAN": 3,
+    "VOLUME": 1
   },
-  "final_distinct_family_count": 4,
-  "final_max_family_share": 0.5833333333333334,
+  "final_distinct_family_count": 6,
+  "final_max_family_share": 0.5,
   "portfolio_ready_diversification": false,
   "full_size_stack_all_input": {
-    "methods": 13,
+    "methods": 15,
     "scale_per_strategy": 1.0,
-    "net_profit_usd": 455340.12900000025,
-    "max_dd_pct": 48.1656598459405,
-    "ending_equity_usd": 465340.12900000066,
+    "net_profit_usd": 511871.1980000003,
+    "max_dd_pct": 42.963352379776445,
+    "ending_equity_usd": 521871.1980000009,
     "min_equity_usd": 10000.0
   },
   "equal_budget_total_1x_all_input": {
-    "methods": 13,
-    "scale_per_strategy": 0.07692307692307693,
-    "net_profit_usd": 35026.163769230785,
-    "max_dd_pct": 24.794292459030785,
-    "ending_equity_usd": 45026.16376923076,
+    "methods": 15,
+    "scale_per_strategy": 0.06666666666666667,
+    "net_profit_usd": 34124.74653333335,
+    "max_dd_pct": 22.30641251702219,
+    "ending_equity_usd": 44124.74653333327,
     "min_equity_usd": 10000.0
   },
   "full_size_stack_final": {
-    "methods": 12,
+    "methods": 14,
     "scale_per_strategy": 1.0,
-    "net_profit_usd": 417066.5500000002,
-    "max_dd_pct": 44.41548963086387,
-    "ending_equity_usd": 427066.55000000016,
+    "net_profit_usd": 473597.61900000036,
+    "max_dd_pct": 39.20587943412656,
+    "ending_equity_usd": 483597.61900000094,
     "min_equity_usd": 10000.0
   },
   "equal_budget_total_1x_final": {
-    "methods": 12,
-    "scale_per_strategy": 0.08333333333333333,
-    "net_profit_usd": 34755.545833333344,
-    "max_dd_pct": 23.896459900406768,
-    "ending_equity_usd": 44755.545833333395,
+    "methods": 14,
+    "scale_per_strategy": 0.07142857142857142,
+    "net_profit_usd": 33828.40135714287,
+    "max_dd_pct": 21.37627934361922,
+    "ending_equity_usd": 43828.40135714288,
     "min_equity_usd": 10000.0
   },
   "note": "Final Corr Max/Gate is post-greedy and therefore refers only to the surviving global selected set. Portfolio PnL remains a canonical bar-PnL diagnostic and does not model broker margin/slippage/netting interactions."
