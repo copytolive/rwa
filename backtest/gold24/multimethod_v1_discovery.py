@@ -369,6 +369,26 @@ def main() -> int:
     if max(generated_family_counts.values()) - min(generated_family_counts.values()) > 1:
         raise RuntimeError(f"family-balanced generation invariant failed: {generated_family_counts}")
 
+    generated_category_counts: dict[str, int] = {}
+    implemented_categories = [
+        category for category in master_universe.get("categories", [])
+        if str(category.get("status")) == "IMPLEMENTED"
+    ]
+    for category in implemented_categories:
+        name = str(category.get("name") or category.get("id") or "")
+        families = [str(x) for x in category.get("engine_families", [])]
+        generated_category_counts[name] = sum(generated_family_counts.get(family, 0) for family in families)
+    all_implemented_categories_sampled = (
+        len(implemented_categories) == int(master_universe.get("implemented_category_count", len(implemented_categories)))
+        and len(implemented_categories) == 20
+        and all(int(v) > 0 for v in generated_category_counts.values())
+    )
+    if not all_implemented_categories_sampled:
+        raise RuntimeError(
+            f"master category coverage failed count={len(implemented_categories)} "
+            f"generated={generated_category_counts}"
+        )
+
     workers = int(args.workers) if int(args.workers) > 0 else max(1, min(os.cpu_count() or 2, 8))
     simulated: list[dict] = []
     with ProcessPoolExecutor(max_workers=workers, initializer=_worker_init, initargs=(str(dataset), str(receipt))) as pool:
@@ -515,7 +535,10 @@ def main() -> int:
         "master_method_universe_schema": master_universe.get("schema"),
         "implemented_family_count": len(IMPLEMENTED_FAMILIES),
         "implemented_families": list(IMPLEMENTED_FAMILIES),
+        "implemented_category_count": len(implemented_categories),
         "generated_family_counts_this_run": generated_family_counts,
+        "generated_category_counts_this_run": generated_category_counts,
+        "all_implemented_categories_sampled": all_implemented_categories_sampled,
         "simulated_new_configs_this_run": len(simulated),
         "evaluated_config_hash_count_cumulative": len(evaluated_hashes),
         "cheap_pass_count_this_run": cheap_pass_count,
@@ -571,7 +594,9 @@ def main() -> int:
             "cheap_pass_count_this_run", "execution_duplicate_rejected_this_run", "exact_full_metrics_pre_corr_new_this_run",
             "combined_pre_corr_count", "removed_by_correlation_count", "library_count", "new_selected_count",
             "existing_selected_count", "active_count", "elite_count", "tier_counts",
-            "implemented_family_count", "generated_family_counts_this_run", "selected_family_counts",
+            "implemented_family_count", "implemented_category_count",
+            "generated_family_counts_this_run", "generated_category_counts_this_run",
+            "all_implemented_categories_sampled", "selected_family_counts",
             "selected_distinct_family_count", "max_selected_family_share", "portfolio_ready",
         ]
     })
