@@ -534,6 +534,15 @@ def main() -> int:
         row["rank"] = rank
         row["status"] = f"PASS MULTI-METHOD v1 {row['tier_v1']} + CORR<=0.50"
 
+    new_pre_corr_family_counts: dict[str, int] = {}
+    for row in new_exact_rows:
+        fam=str(row.get("family") or "")
+        new_pre_corr_family_counts[fam]=new_pre_corr_family_counts.get(fam,0)+1
+    removed_by_corr_family_counts: dict[str, int] = {}
+    for row in removed:
+        fam=str(row.get("family") or "")
+        removed_by_corr_family_counts[fam]=removed_by_corr_family_counts.get(fam,0)+1
+
     tier_counts: dict[str, int] = {}
     for row in selected:
         tier_counts[row["tier_v1"]] = tier_counts.get(row["tier_v1"], 0) + 1
@@ -584,6 +593,8 @@ def main() -> int:
         "execution_duplicate_rejected_this_run": duplicate_execution_rejected,
         "exact_full_metrics_pre_corr_new_this_run": len(new_exact_rows),
         "exact_reject_counts_this_run": exact_reject_counts,
+        "new_pre_corr_family_counts_this_run": new_pre_corr_family_counts,
+        "removed_by_corr_family_counts_this_run": removed_by_corr_family_counts,
         "existing_library_input_count": len(existing_payload.get("ranking", [])),
         "combined_pre_corr_count": len(combined_rows),
         "removed_by_correlation_count": len(removed),
@@ -631,6 +642,7 @@ def main() -> int:
             "schema", "status", "source_run_id", "source_batch", "source_candidate_cursor", "source_archive_total",
             "base_seed", "workers", "simulated_new_configs_this_run", "evaluated_config_hash_count_cumulative",
             "cheap_pass_count_this_run", "execution_duplicate_rejected_this_run", "exact_full_metrics_pre_corr_new_this_run",
+            "new_pre_corr_family_counts_this_run", "removed_by_corr_family_counts_this_run",
             "combined_pre_corr_count", "removed_by_correlation_count", "library_count", "new_selected_count",
             "existing_selected_count", "active_count", "elite_count", "tier_counts",
             "implemented_family_count", "registered_target_engine_family_count", "data_blocked_engine_family_count",
