@@ -1,0 +1,244 @@
+{
+  "status": "PASS",
+  "methods": 13,
+  "dataset_rows": 6500,
+  "global_pair_count": 78,
+  "pairs_gt_0_50": 4,
+  "max_pair": {
+    "i": 2,
+    "j": 11,
+    "a": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=2.75 exp=8",
+    "b": "CANDLE_ENGULFING f55/s100 p1=55.0 p2=58.0 p3=1.0 off=3.25 exp=8",
+    "corr_abs": 0.6718102772457232
+  },
+  "top10_pairs": [
+    {
+      "i": 2,
+      "j": 11,
+      "a": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=2.75 exp=8",
+      "b": "CANDLE_ENGULFING f55/s100 p1=55.0 p2=58.0 p3=1.0 off=3.25 exp=8",
+      "corr_abs": 0.6718102772457232
+    },
+    {
+      "i": 2,
+      "j": 5,
+      "a": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=2.75 exp=8",
+      "b": "CANDLE_ENGULFING f100/s144 p1=66.0 p2=52.0 p3=1.0 off=5.0 exp=4",
+      "corr_abs": 0.6361142816229237
+    },
+    {
+      "i": 2,
+      "j": 7,
+      "a": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=2.75 exp=8",
+      "b": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=2.0 exp=5",
+      "corr_abs": 0.5262182417625081
+    },
+    {
+      "i": 2,
+      "j": 8,
+      "a": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=2.75 exp=8",
+      "b": "CANDLE_ENGULFING f26/s144 p1=58.0 p2=58.0 p3=1.0 off=2.75 exp=7",
+      "corr_abs": 0.5214909278800626
+    },
+    {
+      "i": 9,
+      "j": 10,
+      "a": "CANDLE_ENGULFING f34/s144 p1=62.0 p2=66.0 p3=1.0 off=4.5 exp=8",
+      "b": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=1.25 exp=8",
+      "corr_abs": 0.4980497667944249
+    },
+    {
+      "i": 9,
+      "j": 12,
+      "a": "CANDLE_ENGULFING f34/s144 p1=62.0 p2=66.0 p3=1.0 off=4.5 exp=8",
+      "b": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=1.75 exp=8",
+      "corr_abs": 0.4949752004766548
+    },
+    {
+      "i": 5,
+      "j": 8,
+      "a": "CANDLE_ENGULFING f100/s144 p1=66.0 p2=52.0 p3=1.0 off=5.0 exp=4",
+      "b": "CANDLE_ENGULFING f26/s144 p1=58.0 p2=58.0 p3=1.0 off=2.75 exp=7",
+      "corr_abs": 0.48768803125268806
+    },
+    {
+      "i": 5,
+      "j": 7,
+      "a": "CANDLE_ENGULFING f100/s144 p1=66.0 p2=52.0 p3=1.0 off=5.0 exp=4",
+      "b": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=2.0 exp=5",
+      "corr_abs": 0.47767522486836034
+    },
+    {
+      "i": 7,
+      "j": 8,
+      "a": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=2.0 exp=5",
+      "b": "CANDLE_ENGULFING f26/s144 p1=58.0 p2=58.0 p3=1.0 off=2.75 exp=7",
+      "corr_abs": 0.4685381499157821
+    },
+    {
+      "i": 7,
+      "j": 12,
+      "a": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=2.0 exp=5",
+      "b": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=1.75 exp=8",
+      "corr_abs": 0.45673147176948736
+    }
+  ],
+  "rows": [
+    {
+      "stem": "rank01_donchian_f3_s89_off3_exp4",
+      "method": "DONCHIAN f3/s89 p1=66.0 p2=55.0 p3=1.0 off=3.0 exp=4",
+      "family": "DONCHIAN",
+      "config_hash": "13f689142dff69d33b2c6b33c3652aec484046d059d64636e4639f2d4a5bd295",
+      "global_corr_max": 0.4230538843725163,
+      "global_corr_gate": "PASS"
+    },
+    {
+      "stem": "rank02_candle_engulfing_f34_s144_off2_75_exp8",
+      "method": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=2.75 exp=8",
+      "family": "CANDLE_ENGULFING",
+      "config_hash": "7c00212eb6bd65ad07e432d4a261d3f3240478d4d4698cf57e99c549684b61cb",
+      "global_corr_max": 0.6718102772457232,
+      "global_corr_gate": "FAIL"
+    },
+    {
+      "stem": "rank03_donchian_f3_s100_off1_exp7",
+      "method": "DONCHIAN f3/s100 p1=55.0 p2=58.0 p3=1.0 off=1.0 exp=7",
+      "family": "DONCHIAN",
+      "config_hash": "860c7a7defb867ad594b594e41f4a5157b3dc4262a1b1bd69c978298130ac57c",
+      "global_corr_max": 0.32284137753298675,
+      "global_corr_gate": "PASS"
+    },
+    {
+      "stem": "multi_rank01_donchian_f3_s89_off4_75_exp3",
+      "method": "DONCHIAN f3/s89 p1=58.0 p2=52.0 p3=1.0 off=4.75 exp=3",
+      "family": "DONCHIAN",
+      "config_hash": "8398c92b8fb894fd605c077b07863777b0e43160ea761f0dee51a40984efa5ef",
+      "global_corr_max": 0.4230538843725163,
+      "global_corr_gate": "PASS"
+    },
+    {
+      "stem": "multi_rank02_candle_engulfing_f100_s144_off5_exp4",
+      "method": "CANDLE_ENGULFING f100/s144 p1=66.0 p2=52.0 p3=1.0 off=5.0 exp=4",
+      "family": "CANDLE_ENGULFING",
+      "config_hash": "19b16bbde8f2edb8f9ab7a699cf228e3d6d1f2b47ca32ac0aed6408cae7caefc",
+      "global_corr_max": 0.6361142816229237,
+      "global_corr_gate": "FAIL"
+    },
+    {
+      "stem": "multi_chart_pattern_f3_s34_off1_25_exp8",
+      "method": "CHART_PATTERN f3/s34 p1=0.7 p2=55.0 p3=1.0 off=1.25 exp=8",
+      "family": "CHART_PATTERN",
+      "config_hash": "4ff55b7bfa26f3cd3778faa661704fa1b1ed2e7767a249e5eab593352ca1b514",
+      "global_corr_max": 0.11960193772681088,
+      "global_corr_gate": "PASS"
+    },
+    {
+      "stem": "multi_rank03_candle_engulfing_f26_s144_off2_exp5",
+      "method": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=2.0 exp=5",
+      "family": "CANDLE_ENGULFING",
+      "config_hash": "f2b4a66e680b1bc73f7e7f22c6583368ee0a982fdc0bb958baf7dc45575bc41f",
+      "global_corr_max": 0.5262182417625081,
+      "global_corr_gate": "FAIL"
+    },
+    {
+      "stem": "multi_rank04_candle_engulfing_f26_s144_off2_75_exp7",
+      "method": "CANDLE_ENGULFING f26/s144 p1=58.0 p2=58.0 p3=1.0 off=2.75 exp=7",
+      "family": "CANDLE_ENGULFING",
+      "config_hash": "4b9f29a975f601fdef05a83c4ebffb861e6bc3c34e318a8e879b7e17940131f1",
+      "global_corr_max": 0.5214909278800626,
+      "global_corr_gate": "FAIL"
+    },
+    {
+      "stem": "multi_rank05_candle_engulfing_f34_s144_off4_5_exp8",
+      "method": "CANDLE_ENGULFING f34/s144 p1=62.0 p2=66.0 p3=1.0 off=4.5 exp=8",
+      "family": "CANDLE_ENGULFING",
+      "config_hash": "aa50efa4bf3e91060ff7938d45928802aef1e02995bdfb98fa08ad43d12facb3",
+      "global_corr_max": 0.4980497667944249,
+      "global_corr_gate": "PASS"
+    },
+    {
+      "stem": "multi_rank06_candle_engulfing_f34_s144_off1_25_exp8",
+      "method": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=1.25 exp=8",
+      "family": "CANDLE_ENGULFING",
+      "config_hash": "c7bf875486d7ce6dcbd638821f2932d6dac402aa6979023e79360e01f6ddfab5",
+      "global_corr_max": 0.4980497667944249,
+      "global_corr_gate": "PASS"
+    },
+    {
+      "stem": "multi_rank07_candle_engulfing_f55_s100_off3_25_exp8",
+      "method": "CANDLE_ENGULFING f55/s100 p1=55.0 p2=58.0 p3=1.0 off=3.25 exp=8",
+      "family": "CANDLE_ENGULFING",
+      "config_hash": "b27c57af4988aa89b12d9421250f8244c1460fb9f1570590c8501579a869a45b",
+      "global_corr_max": 0.6718102772457232,
+      "global_corr_gate": "FAIL"
+    },
+    {
+      "stem": "multi_rank08_candle_engulfing_f26_s144_off1_75_exp8",
+      "method": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=1.75 exp=8",
+      "family": "CANDLE_ENGULFING",
+      "config_hash": "db02ceb03b2a80d41e08ef0271529a78acac546b4dea2d370b8fc71dd9d75dc0",
+      "global_corr_max": 0.4949752004766548,
+      "global_corr_gate": "PASS"
+    },
+    {
+      "stem": "multi_adaptive_trend_f20_s144_off5_exp5",
+      "method": "ADAPTIVE_TREND f20/s144 p1=2.2 p2=55.0 p3=1.0 off=5.0 exp=5",
+      "family": "ADAPTIVE_TREND",
+      "config_hash": "d3844bec737310d796a696cb50450f11295e7cb85580a619237f2e32f560a4c4",
+      "global_corr_max": 0.2365052143633089,
+      "global_corr_gate": "PASS"
+    }
+  ],
+  "global_greedy_kept_count": 12,
+  "global_greedy_kept": [
+    "DONCHIAN f3/s89 p1=58.0 p2=52.0 p3=1.0 off=4.75 exp=3",
+    "DONCHIAN f3/s89 p1=66.0 p2=55.0 p3=1.0 off=3.0 exp=4",
+    "CANDLE_ENGULFING f100/s144 p1=66.0 p2=52.0 p3=1.0 off=5.0 exp=4",
+    "CHART_PATTERN f3/s34 p1=0.7 p2=55.0 p3=1.0 off=1.25 exp=8",
+    "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=2.0 exp=5",
+    "DONCHIAN f3/s100 p1=55.0 p2=58.0 p3=1.0 off=1.0 exp=7",
+    "CANDLE_ENGULFING f26/s144 p1=58.0 p2=58.0 p3=1.0 off=2.75 exp=7",
+    "CANDLE_ENGULFING f34/s144 p1=62.0 p2=66.0 p3=1.0 off=4.5 exp=8",
+    "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=1.25 exp=8",
+    "CANDLE_ENGULFING f55/s100 p1=55.0 p2=58.0 p3=1.0 off=3.25 exp=8",
+    "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=1.75 exp=8",
+    "ADAPTIVE_TREND f20/s144 p1=2.2 p2=55.0 p3=1.0 off=5.0 exp=5"
+  ],
+  "global_greedy_rejected": [
+    {
+      "method": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=2.75 exp=8",
+      "reason": "corr>0.50",
+      "conflicts": [
+        {
+          "method": "CANDLE_ENGULFING f100/s144 p1=66.0 p2=52.0 p3=1.0 off=5.0 exp=4",
+          "corr_abs": 0.6361142816229237
+        },
+        {
+          "method": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=2.0 exp=5",
+          "corr_abs": 0.5262182417625081
+        }
+      ]
+    }
+  ],
+  "family_counts": {
+    "ADAPTIVE_TREND": 1,
+    "CANDLE_ENGULFING": 8,
+    "CHART_PATTERN": 1,
+    "DONCHIAN": 3
+  },
+  "full_size_stack": {
+    "scale_per_strategy": 1.0,
+    "net_profit_usd": 455340.12900000025,
+    "max_dd_pct": 48.1656598459405,
+    "ending_equity_usd": 465340.12900000066,
+    "min_equity_usd": 10000.0
+  },
+  "equal_budget_total_1x": {
+    "scale_per_strategy": 0.07692307692307693,
+    "net_profit_usd": 35026.163769230785,
+    "max_dd_pct": 24.794292459030785,
+    "ending_equity_usd": 45026.16376923076,
+    "min_equity_usd": 10000.0
+  },
+  "note": "Portfolio PnL scenarios are diagnostic sums of canonical bar PnL; they do not model cross-strategy margin netting or broker execution interactions."
+}
