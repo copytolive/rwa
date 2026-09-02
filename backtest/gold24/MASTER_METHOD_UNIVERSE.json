@@ -1,0 +1,354 @@
+{
+  "schema": "gold24-master-method-universe-v1",
+  "purpose": "Single authoritative method universe and diversification policy for GOLD24 discovery, validation, and portfolio construction.",
+  "gold_execution_rules": {
+    "symbol": "GOLD",
+    "allowed_timeframes": [
+      "H1",
+      "H4",
+      "D1"
+    ],
+    "canonical_current_timeframe": "D1",
+    "pending_order_only": true,
+    "allowed_entry_methods": [
+      "STOP",
+      "LIMIT"
+    ],
+    "direction_modes": [
+      "LONG_ONLY",
+      "SHORT_ONLY",
+      "BOTH"
+    ],
+    "fixed_sl_price_usd": {
+      "min": 5,
+      "max": 25,
+      "step": 0.5
+    },
+    "fixed_tp_price_usd": {
+      "min": 5,
+      "max": 25,
+      "step": 0.5
+    },
+    "gold_pip_size_usd": 0.01,
+    "sl_pips_range": {
+      "min": 500,
+      "max": 2500
+    },
+    "tp_pips_range": {
+      "min": 500,
+      "max": 2500
+    },
+    "flat_lot_backtest": true,
+    "compounding_backtest": false,
+    "cost_floor_round_trip": 0.0032
+  },
+  "selection_contract": {
+    "candidate_pass": {
+      "min_entry": 100,
+      "min_net_profit_usd": 20000,
+      "max_abs_pearson_log_return_equity_corr": 0.5,
+      "corr_selection": "per-symbol greedy; when >0.50 remove lower-quality/ranking method"
+    },
+    "validated": {
+      "note": "Separate from Candidate PASS. Full BACKTEST_RULES quality/robustness gates must be satisfied before VALIDATED."
+    }
+  },
+  "diversification_policy": {
+    "discovery": "balanced across every implemented engine family; exploit seeds only inside the target family",
+    "portfolio_ready_min_distinct_families": 6,
+    "portfolio_ready_max_single_family_share": 0.25,
+    "library_may_exceed_family_cap": true,
+    "rationale": "Do not discard useful research rows; prevent a concentrated library from being mislabeled portfolio-ready."
+  },
+  "categories": [
+    {
+      "id": "TREND",
+      "name": "Moving Average / Trend",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "TREND_EMA"
+      ],
+      "methods": [
+        "SMA Cross",
+        "EMA Cross",
+        "WMA Cross",
+        "HMA Trend",
+        "EMA Slope",
+        "Triple MA",
+        "MA Pullback"
+      ]
+    },
+    {
+      "id": "CHANNEL_BREAKOUT",
+      "name": "Channel / Breakout",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "ATR_BREAKOUT",
+        "KELTNER_BREAKOUT",
+        "PRICE_STRUCTURE",
+        "DONCHIAN"
+      ],
+      "methods": [
+        "Donchian",
+        "N-Bar High/Low",
+        "Price Structure Breakout",
+        "ATR Breakout",
+        "Keltner Breakout",
+        "Bollinger Breakout"
+      ]
+    },
+    {
+      "id": "MOMENTUM",
+      "name": "Momentum",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "MOMENTUM_RSI_ROC"
+      ],
+      "methods": [
+        "RSI Momentum",
+        "ROC",
+        "Stochastic",
+        "MACD",
+        "CCI",
+        "Williams %R",
+        "Momentum Oscillator",
+        "TSI"
+      ]
+    },
+    {
+      "id": "MEAN_REVERSION",
+      "name": "Mean Reversion",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "BOLLINGER_REVERSION",
+        "ZSCORE_REVERSION"
+      ],
+      "methods": [
+        "Bollinger Reversion",
+        "Z-Score Reversion",
+        "RSI Reversion",
+        "Keltner Reversion",
+        "MA Deviation",
+        "VWAP Deviation"
+      ]
+    },
+    {
+      "id": "CANDLESTICK",
+      "name": "Candlestick",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "CANDLE_ENGULFING"
+      ],
+      "methods": [
+        "Engulfing",
+        "Pin Bar",
+        "Inside Bar",
+        "Outside Bar",
+        "Doji Reversal",
+        "Harami",
+        "Morning Star",
+        "Evening Star",
+        "3 Soldiers",
+        "3 Crows"
+      ]
+    },
+    {
+      "id": "HYBRID",
+      "name": "Hybrid / Ensemble",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "HYBRID"
+      ],
+      "methods": [
+        "Trend+Momentum",
+        "Trend+Breakout",
+        "Breakout+Volume",
+        "Mean Reversion+Volatility",
+        "Structure+Momentum",
+        "3-factor confirmation"
+      ]
+    },
+    {
+      "id": "CHART_PATTERN",
+      "name": "Chart Pattern",
+      "status": "PLANNED",
+      "engine_families": [],
+      "methods": [
+        "Double Top",
+        "Double Bottom",
+        "Head & Shoulders",
+        "Inverse H&S",
+        "Triangle",
+        "Wedge",
+        "Flag",
+        "Pennant",
+        "Rectangle"
+      ]
+    },
+    {
+      "id": "MARKET_STRUCTURE",
+      "name": "Market Structure",
+      "status": "PLANNED",
+      "engine_families": [],
+      "methods": [
+        "Higher High/Low",
+        "Lower High/Low",
+        "Swing Break",
+        "Break of Structure",
+        "Change of Character",
+        "Range Break"
+      ]
+    },
+    {
+      "id": "SUPPORT_RESISTANCE",
+      "name": "Support / Resistance",
+      "status": "PLANNED",
+      "engine_families": [],
+      "methods": [
+        "Horizontal S/R",
+        "Previous High/Low",
+        "Daily High/Low",
+        "Weekly High/Low",
+        "Dynamic S/R"
+      ]
+    },
+    {
+      "id": "FIBONACCI",
+      "name": "Fibonacci",
+      "status": "PLANNED",
+      "engine_families": [],
+      "methods": [
+        "38.2 Pullback",
+        "50 Pullback",
+        "61.8 Pullback",
+        "78.6 Pullback",
+        "Fib Extension Breakout"
+      ]
+    },
+    {
+      "id": "VOLATILITY",
+      "name": "Volatility",
+      "status": "PLANNED",
+      "engine_families": [],
+      "methods": [
+        "ATR Expansion",
+        "ATR Compression",
+        "Bollinger Width",
+        "Volatility Breakout",
+        "Volatility Contraction"
+      ]
+    },
+    {
+      "id": "BAND_HYBRID",
+      "name": "Keltner / Bollinger Hybrid",
+      "status": "PLANNED",
+      "engine_families": [],
+      "methods": [
+        "BB inside Keltner Squeeze",
+        "Keltner Expansion",
+        "BB+ATR Breakout",
+        "Band Re-entry"
+      ]
+    },
+    {
+      "id": "ICHIMOKU",
+      "name": "Ichimoku",
+      "status": "PLANNED",
+      "engine_families": [],
+      "methods": [
+        "Tenkan/Kijun Cross",
+        "Kumo Breakout",
+        "Kumo Trend",
+        "Chikou Confirmation"
+      ]
+    },
+    {
+      "id": "ADAPTIVE_TREND",
+      "name": "SuperTrend / Adaptive Trend",
+      "status": "PLANNED",
+      "engine_families": [],
+      "methods": [
+        "SuperTrend",
+        "ATR SuperTrend",
+        "Adaptive MA",
+        "KAMA",
+        "VIDYA Trend"
+      ]
+    },
+    {
+      "id": "DIVERGENCE",
+      "name": "Divergence",
+      "status": "PLANNED",
+      "engine_families": [],
+      "methods": [
+        "RSI Divergence",
+        "MACD Divergence",
+        "Stochastic Divergence",
+        "CCI Divergence",
+        "Hidden Divergence"
+      ]
+    },
+    {
+      "id": "VOLUME",
+      "name": "Volume",
+      "status": "PLANNED",
+      "engine_families": [],
+      "methods": [
+        "Volume Breakout",
+        "Volume Spike",
+        "OBV Trend",
+        "OBV Divergence",
+        "MFI",
+        "Volume MA",
+        "Price+Volume Confirmation"
+      ]
+    },
+    {
+      "id": "VWAP",
+      "name": "VWAP",
+      "status": "PLANNED",
+      "engine_families": [],
+      "methods": [
+        "VWAP Reversion",
+        "VWAP Breakout",
+        "Anchored VWAP",
+        "VWAP Trend/Pullback"
+      ]
+    },
+    {
+      "id": "STATISTICAL",
+      "name": "Statistical",
+      "status": "PLANNED",
+      "engine_families": [],
+      "methods": [
+        "Z-Score",
+        "Rolling Regression",
+        "Linear Regression Channel",
+        "Mean/Std Bands",
+        "Percentile Breakout"
+      ]
+    },
+    {
+      "id": "RELATIVE_STRENGTH",
+      "name": "Relative Strength",
+      "status": "PLANNED",
+      "engine_families": [],
+      "methods": [
+        "Price vs MA Relative Strength",
+        "Cross-Asset Relative Strength",
+        "Gold vs USD/DXY Filter"
+      ]
+    },
+    {
+      "id": "MULTI_TIMEFRAME",
+      "name": "Multi-Timeframe",
+      "status": "PLANNED",
+      "engine_families": [],
+      "methods": [
+        "D1 Trend + H4 Entry",
+        "D1 Trend + H1 Entry",
+        "H4 Structure + H1 Confirmation"
+      ]
+    }
+  ]
+}
