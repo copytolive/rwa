@@ -559,6 +559,7 @@ function mapInternalUrl(u){
   return'research';
 }
 function interceptClick(e){
+  if(e.target.closest?.('.topnav [data-rwa-target-nav]'))return;
   const pairRow=e.target.closest?.('.pairrow[data-sym]');if(pairRow){e.preventDefault();e.stopImmediatePropagation();const sym=String(pairRow.dataset.sym||'').replace(/USDT$/i,'');selectSymbol(sym);openAsset(sym,true);return}
   const actionEl=e.target.closest?.('[data-v5-action]');
   if(actionEl){e.preventDefault();e.stopImmediatePropagation();handleAction(actionEl.dataset.v5Action,actionEl);return}
