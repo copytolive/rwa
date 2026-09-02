@@ -103,3 +103,28 @@ body.rwa-target-dashboard-v2 .rwa-global-ticker{height:60px!important;min-height
     height:60px!important;min-height:60px!important;max-height:60px!important;margin:0!important
   }
 }
+
+/* Functional target controls; default screenshot stays dark. */
+@media(min-width:1121px){
+  body.rwa-target-dashboard-v2 #rwaMultiChainLaunch,
+  body.rwa-target-dashboard-v2 #rwaMarketplaceLaunch,
+  body.rwa-target-dashboard-v2 #rwaQuickDock{display:none!important}
+}
+html.rwa-live-dim body.rwa-target-dashboard-v2 .app,
+html.rwa-live-dim body.rwa-target-dashboard-v2 #rwaCommerceDock,
+html.rwa-live-dim body.rwa-target-dashboard-v2 #rwaGlobalTicker{filter:brightness(.78)}
+.rwa-live-help{position:fixed;inset:0;z-index:20000;display:none;place-items:center;padding:20px;background:rgba(2,6,12,.76);backdrop-filter:blur(10px)}
+.rwa-live-help.open{display:grid}
+.rwa-live-help>section{width:min(720px,calc(100vw - 32px));max-height:min(680px,calc(100vh - 32px));overflow:auto;border:1px solid #26364e;border-radius:14px;background:#07111d;color:#edf4ff;box-shadow:0 30px 100px rgba(0,0,0,.55)}
+.rwa-live-help header{height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid #1c2b40}
+.rwa-live-help header small{display:block;color:#7186a4;font-size:7px;font-weight:900;letter-spacing:.09em}
+.rwa-live-help header h2{margin:4px 0 0;font-size:16px}
+.rwa-live-help header button{width:34px;height:34px;border:1px solid #293951;border-radius:8px;background:#0d1927;color:#cbd6e7;font-size:19px}
+.rwa-live-help [data-live-help-body]{padding:14px}
+.rwa-live-help-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.rwa-live-help-grid>div{border:1px solid #203149;border-radius:9px;background:#091522;padding:12px}
+.rwa-live-help-grid small{display:block;color:#70829c;font-size:7px;font-weight:900}
+.rwa-live-help-grid b{display:block;margin-top:6px;font-size:11px}
+.rwa-live-help-grid p,.rwa-live-help-note{color:#8798ae;font-size:8px;line-height:1.55}
+.rwa-live-help-note{margin:10px 0 0}
+@media(max-width:680px){.rwa-live-help-grid{grid-template-columns:1fr}}
