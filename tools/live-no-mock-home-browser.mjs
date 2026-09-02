@@ -40,11 +40,23 @@ async function desktop(){
   if(data.pairFont<12)fail('watchlist pair font below 12px',data.pairFont);
   if(data.navFont<12)fail('nav font below 12px',data.navFont);
   if(data.chartH<330||data.chartH>435)fail('responsive chart height out of range',data.chartH);
-  if(Math.abs(data.rightW-280)>3)fail('orderbook rail must be 280px',data.rightW);
+  if(Math.abs(data.rightW-250)>3)fail('orderbook rail must be 250px',data.rightW);
   if(Math.abs(data.tickerH-38)>2)fail('ticker must be 38px',data.tickerH);
   if(!data.buyAmount||!data.sellAmount||data.sellCopy)fail('BUY/SELL independent amounts missing',data);
   if(!data.stopDisabled)fail('unsupported Stop Limit must be disabled');
   if(!/MULTI CHAIN/.test(data.mc)||!/NETWORKS/.test(data.mc))fail('MULTI CHAIN live status missing',data.mc);
+  const parity=await page.evaluate(()=>({
+    marketCardH:document.querySelector('#rwaTargetMarketCard')?.getBoundingClientRect().height||0,
+    logoText:document.querySelector('.brandmark b')?getComputedStyle(document.querySelector('.brandmark b')).display:'missing',
+    brandFont:parseFloat(getComputedStyle(document.querySelector('.brandcopy strong')).fontSize),
+    priceFont:parseFloat(getComputedStyle(document.querySelector('.price-stat b')).fontSize),
+    sliderCount:document.querySelectorAll('[data-live-percent]').length
+  }));
+  if(parity.marketCardH<220)fail('left live activity card is not reference-height',parity);
+  if(parity.logoText!=='none')fail('reference cube logo not active',parity);
+  if(parity.brandFont<18)fail('brand typography too small',parity);
+  if(parity.priceFont<18)fail('headline price typography too small',parity);
+  if(parity.sliderCount!==2)fail('functional percentage sliders missing',parity);
 
   await page.locator('[data-rwa-target-nav="orders"]').click();await page.waitForSelector('#rwaTradingWorkspace:not([hidden])');
   let txt=await page.locator('#rwaTradingWorkspace').innerText();if(!/Orders/.test(txt)||!/Wallet required|Open orders/.test(txt))fail('Orders does not open real account workspace',txt);await page.locator('[data-workspace-close]').click();
@@ -61,8 +73,8 @@ async function desktop(){
   const note=await page.locator('#rwaTargetOrderTicket .rwa-target-trade-note').innerText();if(/Order accepted/i.test(note))fail('headless execution succeeded without a wallet',note);
 
   const g={topbar:await r('.topbar'),layout:await r('.layout'),left:await r('.layout>.left'),main:await r('.layout>.main'),right:await r('.layout>.right'),header:await r('.terminal-header'),chart:await r('.chart-wrap'),footer:await r('#rwaGlobalTicker')};
-  const vw=await page.evaluate(()=>document.documentElement.clientWidth),vh=941,mainW=vw-291-280;
-  const expect={topbar:{left:0,top:0,width:vw,height:59},layout:{left:0,top:59,width:vw,height:vh-59-38},left:{left:0,top:59,width:291,height:vh-59-38},main:{left:291,top:59,width:mainW,height:vh-59-38},right:{left:vw-280,top:59,width:280,height:vh-59-38},header:{left:291,top:59,width:mainW,height:72},footer:{left:0,top:vh-38,width:vw,height:38}};
+  const vw=await page.evaluate(()=>document.documentElement.clientWidth),vh=941,mainW=vw-290-250;
+  const expect={topbar:{left:0,top:0,width:vw,height:59},layout:{left:0,top:59,width:vw,height:vh-59-38},left:{left:0,top:59,width:290,height:vh-59-38},main:{left:290,top:59,width:mainW,height:vh-59-38},right:{left:vw-250,top:59,width:250,height:vh-59-38},header:{left:290,top:59,width:mainW,height:72},footer:{left:0,top:vh-38,width:vw,height:38}};
   for(const [k,w] of Object.entries(expect)){const a=g[k];if(!a){fail('missing geometry '+k);continue}for(const p of Object.keys(w))if(Math.abs(Number(a[p])-Number(w[p]))>3)fail('placement mismatch '+k+'.'+p,{want:w[p],got:a[p],full:a})}
   if(!g.chart||Math.abs(g.chart.top-(59+72))>4)fail('chart must begin below terminal header',g.chart);
   await page.screenshot({path:proof+'/desktop-1672x941.png',fullPage:false});await ctx.close();return{data,g,note};
