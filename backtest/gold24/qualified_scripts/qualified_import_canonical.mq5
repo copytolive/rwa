@@ -49,6 +49,19 @@ void OnStart()
    CustomSymbolSetDouble(InpCustomSymbol,SYMBOL_VOLUME_STEP,0.01);
    CustomSymbolSetInteger(InpCustomSymbol,SYMBOL_SPREAD,0);
    CustomSymbolSetInteger(InpCustomSymbol,SYMBOL_SPREAD_FLOAT,false);
+   // The canonical TradingView D1 archive is the execution calendar for parity.
+   // Do not inherit broker/XAUUSD market-session closures into the custom symbol,
+   // otherwise valid canonical bar-open order/delete operations return retcode 10018.
+   datetime session_from=D'1970.01.01 00:00:00';
+   datetime session_to=D'1970.01.01 23:59:59';
+   for(int d=0;d<7;d++)
+   {
+      ENUM_DAY_OF_WEEK dow=(ENUM_DAY_OF_WEEK)d;
+      if(!CustomSymbolSetSessionQuote(InpCustomSymbol,dow,0,session_from,session_to))
+         PrintFormat("GOLD24_SESSION_WARN quote day=%d err=%d",d,GetLastError());
+      if(!CustomSymbolSetSessionTrade(InpCustomSymbol,dow,0,session_from,session_to))
+         PrintFormat("GOLD24_SESSION_WARN trade day=%d err=%d",d,GetLastError());
+   }
    SymbolSelect(InpCustomSymbol,true);
    CustomRatesDelete(InpCustomSymbol,D'1990.01.01 00:00:00',D'2035.01.01 00:00:00');
 
