@@ -4,6 +4,15 @@ on:
   push:
     branches: ["main"]
     paths:
+      - "index.html"
+      - "app.js"
+      - "chart-core.js"
+      - "rwa-live-home-v1.js"
+      - "rwa-live-home-v1.css"
+      - "rwa-target-dashboard-v2.css"
+      - "rwa-multichain.js"
+      - "rwa-multichain-engine.js"
+      - "rwa-multichain-registry.json"
       - "tools/page-by-page-audit.mjs"
       - ".github/workflows/page-by-page-audit.yml"
   workflow_dispatch:
@@ -14,9 +23,24 @@ permissions:
 jobs:
   audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
+      - name: Wait for exact public Pages SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL='https://copytolive.github.io/rwa/deployment-sha.txt'
+          for i in $(seq 1 90); do
+            LIVE="$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "$URL?v=$GITHUB_SHA-$i" 2>/dev/null | tr -d '\r\n' || true)"
+            if [ "$LIVE" = "$GITHUB_SHA" ]; then
+              echo "Exact public SHA live: $LIVE"
+              exit 0
+            fi
+            echo "waiting expected=$GITHUB_SHA live=${LIVE:-none}"
+            sleep 10
+          done
+          exit 1
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.55.0
