@@ -57,6 +57,7 @@ try{
   const mc=page.locator('#rwaMultiChainLaunch');
   await mc.click();
   await page.waitForFunction(()=>window.RWAMultiChain?.status?.().open===true,{timeout:15000});
+  await page.waitForFunction(()=>document.querySelectorAll('#rwaMultiChainPanel [data-rwa-chain]').length===9,{timeout:15000});
   const mcs=await page.evaluate(()=>({status:window.RWAMultiChain.status(),buttons:document.querySelectorAll('#rwaMultiChainPanel [data-rwa-chain]').length,text:document.querySelector('#rwaMultiChainPanel')?.innerText||''}));
   if(mcs.buttons!==9)fail('MULTI CHAIN registry did not render 9 networks',mcs);
   if(!/Hyperliquid/.test(mcs.text)||!/Solana/.test(mcs.text)||!/Arbitrum/.test(mcs.text))fail('MULTI CHAIN network list incomplete',mcs.text);
