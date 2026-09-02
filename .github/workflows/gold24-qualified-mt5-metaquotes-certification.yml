@@ -348,6 +348,32 @@ jobs:
           InvokeButton 'Next|Continue'
           Start-Sleep -Seconds 20
           DumpUi 'created'
+          $uiLogin=$null;$uiServer=$null
+          $loginEl=FindByAutomationId '10137' ([System.Windows.Automation.ControlType]::Edit)
+          if($null -ne $loginEl){
+            try{
+              $vp=$loginEl.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
+              $uiLogin=$vp.Current.Value
+            }catch{
+              try{$uiLogin=$loginEl.Current.Name}catch{}
+            }
+          }
+          $serverEl=FindByAutomationId '10139'
+          if($null -ne $serverEl){
+            try{$uiServer=$serverEl.Current.Name}catch{}
+            if([string]::IsNullOrWhiteSpace($uiServer)){
+              try{
+                $vp=$serverEl.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
+                $uiServer=$vp.Current.Value
+              }catch{}
+            }
+          }
+          if(-not [string]::IsNullOrWhiteSpace($uiServer)){
+            $sm=[regex]::Match($uiServer,'MetaQuotes-Demo(?:\s+\d+)?')
+            if($sm.Success){$uiServer=$sm.Value}
+          }
+          Write-Host "CREATED_ACCOUNT_UI login=$uiLogin server=$uiServer"
+          ("ui_login="+$uiLogin+[Environment]::NewLine+"ui_server="+$uiServer) | Set-Content (Join-Path $evidence 'created-account-ui.txt')
           $finish=FindElement 'Finish|Done' 'ControlType.Button'
           if($null -ne $finish){$ip=$finish.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern);$ip.Invoke()}
           Start-Sleep -Seconds 20
@@ -362,11 +388,16 @@ jobs:
           $latestLogs=@(Get-ChildItem $logs -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 6)
           $latestLogs | ForEach-Object {Copy-Item $_.FullName (Join-Path $evidence ("bootstrap-"+$_.Name)) -Force}
           $accounts=Join-Path $cand.FullName 'config\accounts.dat'
-          $login=$null;$server=$null
+          $login=$uiLogin;$server=$uiServer
           foreach($lf in $latestLogs){
+            if(-not [string]::IsNullOrWhiteSpace($login) -and -not [string]::IsNullOrWhiteSpace($server)){break}
             $txt=Get-Content $lf.FullName -Raw -ErrorAction SilentlyContinue
             $m=[regex]::Match($txt,'(?im)(?<login>\d{5,})\s*:\s*authorized on\s+(?<server>MetaQuotes-Demo(?:\s+\d+)?)(?:\s|,|$)')
-            if($m.Success){$login=$m.Groups['login'].Value;$server=$m.Groups['server'].Value;break}
+            if($m.Success){
+              if([string]::IsNullOrWhiteSpace($login)){$login=$m.Groups['login'].Value}
+              if([string]::IsNullOrWhiteSpace($server)){$server=$m.Groups['server'].Value}
+              break
+            }
           }
           if(!(Test-Path $accounts) -or (Get-Item $accounts).Length -le 0 -or [string]::IsNullOrWhiteSpace($login) -or $login -eq '0' -or [string]::IsNullOrWhiteSpace($server)){
             "status=FAIL`naccounts_dat=$(Test-Path $accounts)`nlogin_resolved=$login`nserver_resolved=$server" | Set-Content (Join-Path $evidence 'account-bootstrap-receipt.txt')
