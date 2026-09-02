@@ -55,7 +55,6 @@ try{
   if(data.bids<1||data.asks<1)fail('live order book missing',{bids:data.bids,asks:data.asks});
   if(!data.card.includes('RWA-LINKED 24H VOLUME'))fail('live RWA volume card missing',data.card);
   if(!data.ticket.includes('Hyperliquid Testnet')||!data.ticket.includes('Real testnet execution'))fail('real Hyperliquid execution ticket missing',data.ticket);
-  if(!document){} // keep syntax simple for node
   if(data.home?.backendConnected===false){
     if(data.home.verifiedStores!==0||data.home.liveProducts!==0)fail('commerce fabricated records while backend offline',data.home);
     if(!/No backend is configured|OFFLINE|No verified stores/i.test(data.commerce))fail('commerce offline truth not visible',data.commerce);
