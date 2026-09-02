@@ -7,7 +7,7 @@ const browser=await chromium.launch({headless:true});
 const failures=[],errors=[];const fail=(m,d=null)=>failures.push({message:m,detail:d});
 async function ready(page){
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:50000});
-  await page.waitForFunction(()=>window.RWALiveHome?.version==='3.0.0'&&window.RWAMarketRuntime?.state?.().pairs?.length>50,{timeout:35000});
+  await page.waitForFunction(()=>window.RWALiveHome?.version==='3.1.0'&&window.RWAMarketRuntime?.state?.().pairs?.length>50,{timeout:35000});
   await page.waitForFunction(()=>document.querySelectorAll('#bids .bookrow').length>0&&document.querySelectorAll('#asks .bookrow').length>0,{timeout:30000});
   await page.waitForFunction(()=>document.querySelector('#rwaTargetOrderTicket'),{timeout:15000});
   await page.waitForTimeout(500);
@@ -58,6 +58,10 @@ async function desktop(){
   if(parity.priceFont<18)fail('headline price typography too small',parity);
   if(parity.sliderCount!==2)fail('functional percentage sliders missing',parity);
 
+  await page.locator('[data-rwa-target-nav="intelligence"]').click();await page.waitForSelector('#rwaTradingWorkspace:not([hidden])');
+  let nativeTxt=await page.locator('#rwaTradingWorkspace').innerText();if(!/Intelligence/.test(nativeTxt)||!/LIVE PAIRS|Top gainers/.test(nativeTxt))fail('Intelligence does not open native workspace',nativeTxt);await page.locator('[data-workspace-close]').click();
+  await page.locator('[data-rwa-target-nav="portfolio"]').click();await page.waitForSelector('#rwaTradingWorkspace:not([hidden])');
+  nativeTxt=await page.locator('#rwaTradingWorkspace').innerText();if(!/Portfolio/.test(nativeTxt)||!/Wallet required|ACCOUNT VALUE/.test(nativeTxt))fail('Portfolio does not open native workspace',nativeTxt);await page.locator('[data-workspace-close]').click();
   await page.locator('[data-rwa-target-nav="orders"]').click();await page.waitForSelector('#rwaTradingWorkspace:not([hidden])');
   let txt=await page.locator('#rwaTradingWorkspace').innerText();if(!/Orders/.test(txt)||!/Wallet required|Open orders/.test(txt))fail('Orders does not open real account workspace',txt);await page.locator('[data-workspace-close]').click();
   await page.locator('[data-rwa-target-nav="reports"]').click();await page.waitForSelector('#rwaTradingWorkspace:not([hidden])');
