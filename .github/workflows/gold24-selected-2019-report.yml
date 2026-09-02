@@ -1,0 +1,142 @@
+name: GOLD24 Selected 2019-to-Latest Report
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/gold24-selected-2019-report.yml'
+      - 'backtest/gold24/PERIOD2019_REPORT_KICK'
+      - 'backtest/gold24/period2019_selected_report.py'
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: gold24-selected-2019-report
+  cancel-in-progress: true
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  STATE_DIR: ${{ github.workspace }}/.gold24-period2019-state
+  OUT_DIR: ${{ github.workspace }}/backtest/gold24/runtime_period2019
+  SOURCE_SUMMARY: ${{ github.workspace }}/backtest/gold24/runtime_v11/latest_validation_summary.json
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install GOLD24 dependencies
+        run: python -m pip install -r backtest/gold24/requirements.txt
+
+      - name: Freeze latest authoritative canonical source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY' > "$RUNNER_TEMP/source.env"
+          import json, os, pathlib
+          x=json.loads(pathlib.Path(os.environ['SOURCE_SUMMARY']).read_text())
+          assert x.get('validation') == 'PASS'
+          assert x.get('gate_a_strict',{}).get('gate_a') == 'PASS'
+          assert x.get('simulation_executed') is True
+          print('SOURCE_RUN_ID=' + str(x['github_run_id']))
+          print('SOURCE_BATCH=' + str(x['batch']))
+          print('SOURCE_ARCHIVED=' + str(x['cumulative_configs_archived']))
+          print('SOURCE_CURSOR=' + str(x['candidate_cursor']))
+          PY
+          cat "$RUNNER_TEMP/source.env"
+          cat "$RUNNER_TEMP/source.env" >> "$GITHUB_ENV"
+
+      - name: Restore exact canonical state artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$STATE_DIR"
+          mkdir -p "$STATE_DIR"
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" -n gold24-canonical-v11-state -D "$STATE_DIR"
+          test -s "$STATE_DIR/gold24-v11.db"
+          test -s "$STATE_DIR/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv"
+          test -s "$STATE_DIR/gate_a/gate_a_receipt.json"
+
+      - name: Validate selected script set against canonical state
+        shell: bash
+        run: |
+          set -euo pipefail
+          python backtest/gold24/qualified_scripts/validate_qualified_scripts.py             --state-dir "$STATE_DIR"             --out "$RUNNER_TEMP/qualified_scripts_validation.json"
+
+      - name: Build exact 2019-to-latest selected-method report
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$OUT_DIR"
+          mkdir -p "$OUT_DIR"
+          python backtest/gold24/period2019_selected_report.py             --state-dir "$STATE_DIR"             --source-summary "$SOURCE_SUMMARY"             --out-dir "$OUT_DIR"
+          test -s "$OUT_DIR/latest_selected_2019_to_today.csv"
+          test -s "$OUT_DIR/latest_selected_2019_to_today.json"
+          python - <<'PY'
+          import csv, json, os, pathlib
+          out=pathlib.Path(os.environ['OUT_DIR'])
+          rows=list(csv.DictReader((out/'latest_selected_2019_to_today.csv').open()))
+          x=json.loads((out/'latest_selected_2019_to_today.json').read_text())
+          assert x['status']=='PASS'
+          assert int(x['source_batch'])==int(os.environ['SOURCE_BATCH'])
+          assert str(x['source_run_id'])==str(os.environ['SOURCE_RUN_ID'])
+          assert int(x['source_archive_total'])==int(os.environ['SOURCE_ARCHIVED'])
+          assert len(rows)==11
+          assert int(x['selected_method_count'])==11
+          assert all(r['python_script'].startswith('https://github.com/copytolive/rwa/') for r in rows)
+          assert all(r['mt5_script'].startswith('https://github.com/copytolive/rwa/') for r in rows)
+          print(json.dumps({
+            'status':x['status'],
+            'source_batch':x['source_batch'],
+            'source_run_id':x['source_run_id'],
+            'period_start':x['period_start_utc'],
+            'data_available_through':x['data_available_through_utc'],
+            'coverage_gap_days':x['coverage_gap_days'],
+            'selected_method_count':x['selected_method_count'],
+          }, indent=2))
+          PY
+
+      - name: Publish report race-safe
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             backtest/gold24/runtime_period2019/latest_selected_2019_to_today.csv             backtest/gold24/runtime_period2019/latest_selected_2019_to_today.json
+          if git diff --cached --quiet; then
+            echo "No report delta to publish"
+            exit 0
+          fi
+          git commit -m "chore(gold24): publish selected 2019-to-latest report [skip ci]"
+          for TRY in 1 2 3 4 5; do
+            if git pull --rebase origin main && git push origin HEAD:main; then
+              echo "publish PASS try=$TRY"
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            git fetch origin main
+            git rebase origin/main
+            sleep $((TRY * 2))
+          done
+          exit 1
+
+      - name: Upload report evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold24-selected-2019-report-${{ github.run_id }}
+          path: |
+            backtest/gold24/runtime_period2019/latest_selected_2019_to_today.csv
+            backtest/gold24/runtime_period2019/latest_selected_2019_to_today.json
+            ${{ runner.temp }}/qualified_scripts_validation.json
+          if-no-files-found: error
+          retention-days: 90
