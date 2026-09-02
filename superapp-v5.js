@@ -745,25 +745,8 @@ function updateFirstLoad(){
   else{$('rwaFirstLoadTitle').textContent='Preparing market history';$('rwaFirstLoadSub').textContent='Loading real historical bars before realtime'}
   if(elapsed>9000&&!hist){el.classList.add('warn');$('rwaFirstLoadTitle').textContent='Market history is taking longer than expected';$('rwaFirstLoadSub').textContent='Cached UI remains available · retry safely'}
 }
-function installContextBrief(){
-  const right=$('depth')||document.querySelector('.right');if(!right||$('rwaContextBrief'))return;
-  const s=document.createElement('section');s.id='rwaContextBrief';s.className='right-section rwa-context-brief';s.innerHTML=`<div class="right-title"><span>CONTEXT / AI INSIGHT</span><small id="rwaContextFreshness">LIVE</small></div><div class="rwa-context-symbol"><div><small id="rwaContextSource">PUBLIC MARKET DATA</small><b id="rwaContextSymbol">BTC / USDT</b></div><strong id="rwaContextPrice">—</strong></div><p id="rwaContextInsight">Waiting for live market context…</p><div class="rwa-context-proof"><span><i></i><b>History</b><small id="rwaContextHistory">loading</small></span><span><i></i><b>Realtime</b><small id="rwaContextRealtime">connecting</small></span><span><i></i><b>Evidence</b><small id="rwaContextEvidence">market data</small></span></div><div class="rwa-context-actions"><button type="button" data-p20-action="research">Research</button><button type="button" data-p20-action="trade">Trade</button></div>`;
-  right.insertBefore(s,right.firstChild);
-}
-function updateContextBrief(){
-  if(!$('rwaContextBrief'))return;
-  const sym=selected(),price=text('statPrice'),chg=numberFrom('statChange'),buy=numberFrom('buyPct'),label=text('selLabel','Public market feed');
-  $('rwaContextSymbol').textContent=`${sym} / USDT`;$('rwaContextPrice').textContent=price;$('rwaContextSource').textContent=label.toUpperCase();
-  const h=historyReady(),m=marketsReady(),evidence=rootRoute()==='asset'?'asset context':rootRoute()==='assets'?'registry + discovery':'market data';
-  $('rwaContextHistory').textContent=h?'ready':'loading';$('rwaContextRealtime').textContent=m?'live':navigator.onLine?'connecting':'offline';$('rwaContextEvidence').textContent=evidence;
-  $('rwaContextFreshness').textContent=!navigator.onLine?'OFFLINE':m?'LIVE':'CONNECTING';
-  let insight='Waiting for enough live data to form a market insight.';
-  if(chg!==null){
-    const direction=chg>1?'positive':chg<-1?'negative':'neutral';const pressure=buy===null?'order-flow still loading':buy>=56?'buy pressure is elevated':buy<=44?'sell pressure is elevated':'order flow is balanced';
-    insight=`${sym} momentum is ${direction} at ${chg>=0?'+':''}${chg.toFixed(2)}% over 24h; ${pressure}. This is market context, not investment advice.`;
-  }
-  $('rwaContextInsight').textContent=insight;
-}
+function installContextBrief(){document.getElementById('rwaContextBrief')?.remove()}
+function updateContextBrief(){document.getElementById('rwaContextBrief')?.remove()}
 function installMobileAssetActions(){
   if($('rwaMobileAssetActions'))return;
   const bar=document.createElement('div');bar.id='rwaMobileAssetActions';bar.className='rwa-mobile-asset-actions';bar.innerHTML=`<button type="button" data-p20-action="research">Research</button><button type="button" class="buy" data-p20-action="buy">Buy</button><button type="button" class="sell" data-p20-action="sell">Sell</button>`;document.body.appendChild(bar);updateMobileActions();
