@@ -35,7 +35,7 @@ jobs:
           python -m json.tool launch/readiness.json >/dev/null
 
           grep -Fq "version:'4.0.0'" walletconnect.js
-          grep -Fq "version:'3.0.0'" wallet-core.js
+          grep -Fq "version:'4.0.0'" wallet-core.js
           grep -Fq 'Wallet account switched' wallet-core.js
           grep -Fq "version:'2.0.0'" execution-api.js
           grep -Fq "hardening:'single-write-path-v1'" execution-api.js
@@ -85,7 +85,7 @@ jobs:
           grep -Fq "riskGate:'mandatory-internal-v1'" <<<"$execapi"
           grep -Fq "protection:'atomic-normal-tpsl-v1'" <<<"$core"
           grep -Fq "const state={env:'testnet'" <<<"$core"
-          grep -Fq "version:'3.0.0'" <<<"$wallet"
+          grep -Fq "version:'4.0.0'" <<<"$wallet"
           grep -Eq '"mainnet_ready"[[:space:]]*:[[:space:]]*false' <<<"$ready"
           echo RWA_EXCHANGE_PUBLIC_PASS
 
