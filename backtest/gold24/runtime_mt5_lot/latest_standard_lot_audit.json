@@ -1705,9 +1705,9 @@
   ],
   "report_minimum_trades": 100,
   "schema": "gold24-standard-lot-audit-v2",
-  "source_batch": 303,
-  "source_candidate_cursor": 52642557,
-  "source_run_id": "33624938369",
+  "source_batch": 304,
+  "source_candidate_cursor": 53042557,
+  "source_run_id": "33630957375",
   "standard_lot_reference": {
     "contract_size_oz": 100.0,
     "gold_units": 100.0,
