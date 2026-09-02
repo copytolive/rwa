@@ -1,6 +1,6 @@
 {
-  "schema": "gold24-master-method-universe-v1",
-  "purpose": "Single authoritative method universe and diversification policy for GOLD24 discovery, validation, and portfolio construction.",
+  "schema": "gold24-master-method-universe-v2",
+  "purpose": "Authoritative GOLD24 method universe, real-data policy, global correlation contract, hard-pass gates, script validation, and portfolio diversification policy.",
   "gold_execution_rules": {
     "symbol": "GOLD",
     "allowed_timeframes": [
@@ -47,18 +47,41 @@
       "min_entry": 100,
       "min_net_profit_usd": 20000,
       "max_abs_pearson_log_return_equity_corr": 0.5,
-      "corr_selection": "per-symbol greedy; when >0.50 remove lower-quality/ranking method"
+      "corr_scope": "GLOBAL per-symbol across the complete selected set",
+      "corr_selection": "quality-ordered greedy; when abs Pearson(log-return equity) >0.50 remove the lower-quality/ranking method"
     },
-    "validated": {
-      "note": "Separate from Candidate PASS. Full BACKTEST_RULES quality/robustness gates must be satisfied before VALIDATED."
+    "hard_pass": {
+      "note": "Candidate PASS is not final validation.",
+      "min_entry": 300,
+      "min_pf_net": 1.2,
+      "max_dd_pct": 25,
+      "min_ev_per_trade_usd_exclusive": 0,
+      "min_oos_pf": 1,
+      "monte_carlo_pass_required": true,
+      "monte_carlo_probability_positive_min_pct": 95,
+      "positive_year_min_pct": 60,
+      "max_corr": 0.5,
+      "classification": {
+        "HARD_PASS": "Candidate PASS + 8/8 hard gates",
+        "WATCH": "Candidate PASS + at least 5/8 hard gates",
+        "FAIL": "otherwise"
+      }
+    },
+    "script_validation": {
+      "python": "real .py file + CANDIDATE + EXPECTED + config_hash + exact canonical qty parity PASS",
+      "mt5": "real .mq5 file + identical config/hash + real engine/include + native MetaEditor compile PASS + native MT5 Strategy Tester PASS",
+      "failure_rule": "If either side fails, do not label the method VERIFIED."
     }
   },
   "diversification_policy": {
-    "discovery": "balanced across every implemented engine family; exploit seeds only inside the target family",
+    "discovery": "balanced across every IMPLEMENTED engine family; seed exploitation only within the target family",
     "portfolio_ready_min_distinct_families": 6,
+    "portfolio_target_distinct_families": 10,
     "portfolio_ready_max_single_family_share": 0.25,
+    "portfolio_ideal_max_single_family_share": 0.2,
+    "global_corr_required": true,
     "library_may_exceed_family_cap": true,
-    "rationale": "Do not discard useful research rows; prevent a concentrated library from being mislabeled portfolio-ready."
+    "rationale": "Do not delete useful research rows merely to make the library look diversified; final portfolio must pass global correlation and family concentration."
   },
   "categories": [
     {
@@ -66,7 +89,9 @@
       "name": "Moving Average / Trend",
       "status": "IMPLEMENTED",
       "engine_families": [
-        "TREND_EMA"
+        "TREND_EMA",
+        "ADX_TREND",
+        "EMA_PULLBACK"
       ],
       "methods": [
         "SMA Cross",
@@ -86,7 +111,10 @@
         "ATR_BREAKOUT",
         "KELTNER_BREAKOUT",
         "PRICE_STRUCTURE",
-        "DONCHIAN"
+        "DONCHIAN",
+        "TURTLE_BREAKOUT",
+        "ATR_CHANNEL",
+        "FRACTAL_BREAKOUT"
       ],
       "methods": [
         "Donchian",
@@ -102,7 +130,9 @@
       "name": "Momentum",
       "status": "IMPLEMENTED",
       "engine_families": [
-        "MOMENTUM_RSI_ROC"
+        "MOMENTUM_RSI_ROC",
+        "MACD_MOMENTUM",
+        "RSI_MOMENTUM"
       ],
       "methods": [
         "RSI Momentum",
@@ -121,7 +151,9 @@
       "status": "IMPLEMENTED",
       "engine_families": [
         "BOLLINGER_REVERSION",
-        "ZSCORE_REVERSION"
+        "ZSCORE_REVERSION",
+        "RSI_REVERSION",
+        "BOLLINGER_REVERSION_V2"
       ],
       "methods": [
         "Bollinger Reversion",
@@ -157,7 +189,8 @@
       "name": "Hybrid / Ensemble",
       "status": "IMPLEMENTED",
       "engine_families": [
-        "HYBRID"
+        "HYBRID",
+        "TREND_MEANREV_ENSEMBLE"
       ],
       "methods": [
         "Trend+Momentum",
@@ -192,7 +225,8 @@
       "name": "Market Structure",
       "status": "IMPLEMENTED",
       "engine_families": [
-        "MARKET_STRUCTURE"
+        "MARKET_STRUCTURE",
+        "BOS_CHOCH"
       ],
       "methods": [
         "Higher High/Low",
@@ -208,7 +242,8 @@
       "name": "Support / Resistance",
       "status": "IMPLEMENTED",
       "engine_families": [
-        "SUPPORT_RESISTANCE"
+        "SUPPORT_RESISTANCE",
+        "PIVOT_SR"
       ],
       "methods": [
         "Horizontal S/R",
@@ -223,7 +258,8 @@
       "name": "Fibonacci",
       "status": "IMPLEMENTED",
       "engine_families": [
-        "FIBONACCI"
+        "FIBONACCI",
+        "FIB_PULLBACK"
       ],
       "methods": [
         "38.2 Pullback",
@@ -238,7 +274,8 @@
       "name": "Volatility",
       "status": "IMPLEMENTED",
       "engine_families": [
-        "VOLATILITY"
+        "VOLATILITY",
+        "VOLATILITY_REGIME"
       ],
       "methods": [
         "ATR Expansion",
@@ -253,7 +290,9 @@
       "name": "Keltner / Bollinger Hybrid",
       "status": "IMPLEMENTED",
       "engine_families": [
-        "BAND_HYBRID"
+        "BAND_HYBRID",
+        "BOLLINGER_SQUEEZE",
+        "KELTNER_SQUEEZE"
       ],
       "methods": [
         "BB inside Keltner Squeeze",
@@ -267,7 +306,9 @@
       "name": "Ichimoku",
       "status": "IMPLEMENTED",
       "engine_families": [
-        "ICHIMOKU"
+        "ICHIMOKU",
+        "ICHIMOKU_KUMO_BREAKOUT",
+        "ICHIMOKU_PULLBACK"
       ],
       "methods": [
         "Tenkan/Kijun Cross",
@@ -281,7 +322,9 @@
       "name": "SuperTrend / Adaptive Trend",
       "status": "IMPLEMENTED",
       "engine_families": [
-        "ADAPTIVE_TREND"
+        "ADAPTIVE_TREND",
+        "SUPERTREND_ATR",
+        "CHANDELIER_TREND"
       ],
       "methods": [
         "SuperTrend",
@@ -342,7 +385,9 @@
       "name": "Statistical",
       "status": "IMPLEMENTED",
       "engine_families": [
-        "STATISTICAL"
+        "STATISTICAL",
+        "ROLLING_ZSCORE",
+        "LINEAR_REGRESSION"
       ],
       "methods": [
         "Z-Score",
@@ -376,14 +421,74 @@
         "Completed 5D Higher-Timeframe Regime + D1 Entry",
         "D1 trend confirmed by completed higher-timeframe aggregate"
       ],
-      "implementation_note": "Current canonical source has D1 only. Multi-timeframe backtest uses a causal completed 5-business-day aggregate derived from D1; no H1/H4 data is fabricated. Native H1/H4 variant remains a future data upgrade."
+      "implementation_note": "Current canonical production source is D1 only. Existing MULTI_TIMEFRAME uses a causal completed 5-business-day aggregate from D1 and is explicitly not labeled native H4. H4_D1_MTF_NATIVE and D1_H4_PULLBACK_NATIVE remain DATA_BLOCKED until real canonical H4 is Gate-A audited.",
+      "data_blocked_engine_families": [
+        "H4_D1_MTF_NATIVE",
+        "D1_H4_PULLBACK_NATIVE"
+      ]
     }
   ],
-  "implemented_engine_family_count": 24,
+  "implemented_engine_family_count": 46,
   "implemented_category_count": 20,
   "all_required_categories_backtestable": true,
   "implementation_notes": {
     "multi_timeframe": "Causal completed 5D aggregate + D1 entry; no fabricated H1/H4.",
-    "relative_strength": "Price-vs-MA relative strength until canonical DXY/cross-asset series is added."
+    "relative_strength": "Price-vs-MA relative strength until canonical DXY/cross-asset series is added.",
+    "expansion_2026_09_03": "22 new causal D1-real engine families implemented; 2 native-H4 remix families registered but DATA_BLOCKED until real H4 exists.",
+    "target": "48 registered families = 46 implemented now + 2 data-blocked native MTF."
+  },
+  "registered_target_engine_family_count": 48,
+  "data_blocked_engine_family_count": 2,
+  "data_blocked_engine_families": [
+    {
+      "family": "H4_D1_MTF_NATIVE",
+      "status": "DATA_BLOCKED",
+      "required_data": "real canonical H4 + D1",
+      "reason": "No canonical H4 dataset exists in repository/source state; resampling D1 is forbidden."
+    },
+    {
+      "family": "D1_H4_PULLBACK_NATIVE",
+      "status": "DATA_BLOCKED",
+      "required_data": "real canonical H4 + D1",
+      "reason": "No canonical H4 dataset exists in repository/source state; resampling D1 is forbidden."
+    }
+  ],
+  "real_dataset_policy": {
+    "traceable_fields": [
+      "provider",
+      "symbol",
+      "timeframe",
+      "rows",
+      "period",
+      "dataset_sha256",
+      "cost_model",
+      "quantity_lot",
+      "starting_equity",
+      "config_hash",
+      "execution_hash"
+    ],
+    "forbid_fake_timeframes": true,
+    "rule": "Never synthesize/resample a timeframe and label it real H1/H4. Native H1/H4 becomes eligible only after its own canonical data and Gate-A audit exist."
+  },
+  "progress_contract": {
+    "before_after_required": [
+      "total_finalized_backtest",
+      "candidate_evaluated",
+      "candidate_pass",
+      "hard_pass",
+      "watch",
+      "fail",
+      "selected_methods",
+      "distinct_family",
+      "max_family_concentration",
+      "corr_violations",
+      "global_corr_kept",
+      "python_verified",
+      "mt5_verified",
+      "sample_ge_300",
+      "max_dd_le_25",
+      "portfolio_readiness"
+    ],
+    "no_progress_action": "identify cause, fix engine/data/discovery, rerun, validate, then publish"
   }
 }
