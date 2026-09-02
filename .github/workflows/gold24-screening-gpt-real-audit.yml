@@ -95,13 +95,43 @@ jobs:
           },indent=2))
           PY
 
+      - name: Run 15-method global correlation portfolio audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python backtest/gold24/screening_gpt_combined_portfolio_audit.py \
+            --state-dir "$STATE_DIR" \
+            --out "$OUT_DIR/combined_portfolio_audit.json"
+          python - <<'PY'
+          import json, os, pathlib
+          p=pathlib.Path(os.environ['OUT_DIR'])/'combined_portfolio_audit.json'
+          x=json.loads(p.read_text())
+          assert x['status']=='PASS'
+          assert int(x['methods_input'])==15
+          assert int(x['global_pair_count'])==105
+          assert int(x['methods_final'])==int(x['global_greedy_kept_count'])
+          assert all(r['global_corr_gate']=='PASS' for r in x['rows'] if r['global_selection']=='KEPT')
+          print(json.dumps({
+            'methods_input':x['methods_input'],
+            'methods_final':x['methods_final'],
+            'global_pair_count':x['global_pair_count'],
+            'pairs_gt_0_50':x['pairs_gt_0_50'],
+            'distinct_family':x['final_distinct_family_count'],
+            'max_family_share':x['final_max_family_share'],
+            'portfolio_ready_diversification':x['portfolio_ready_diversification'],
+          },indent=2))
+          PY
+
       - name: Publish audit outputs
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add             backtest/gold24/runtime_screening_gpt/screening_gpt_real_audit.json             backtest/gold24/runtime_screening_gpt/screening_gpt_real_audit.csv
+          git add \
+            backtest/gold24/runtime_screening_gpt/screening_gpt_real_audit.json \
+            backtest/gold24/runtime_screening_gpt/screening_gpt_real_audit.csv \
+            backtest/gold24/runtime_screening_gpt/combined_portfolio_audit.json
           if git diff --cached --quiet; then
             echo "No audit delta"
             exit 0
@@ -117,5 +147,6 @@ jobs:
           path: |
             backtest/gold24/runtime_screening_gpt/screening_gpt_real_audit.json
             backtest/gold24/runtime_screening_gpt/screening_gpt_real_audit.csv
+            backtest/gold24/runtime_screening_gpt/combined_portfolio_audit.json
           if-no-files-found: error
           retention-days: 90
