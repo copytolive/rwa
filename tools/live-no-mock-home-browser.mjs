@@ -1,80 +1,76 @@
 import { chromium } from 'playwright';
 import { mkdir, writeFile } from 'node:fs/promises';
-
 const base=process.env.RWA_UI_URL||'http://127.0.0.1:4173/rwa/';
-const proof=process.env.RWA_UI_PROOF_DIR||'proof/trading-multichain';
-const publicMode=/^https:\/\//i.test(base);
+const proof=process.env.RWA_UI_PROOF_DIR||'proof/trading-ui-v3';
 await mkdir(proof,{recursive:true});
 const browser=await chromium.launch({headless:true});
-const ctx=await browser.newContext({viewport:{width:1672,height:941},deviceScaleFactor:1,serviceWorkers:'block'});
-const page=await ctx.newPage();
-const failures=[],errors=[];
-const fail=(message,detail=null)=>failures.push({message,detail});
-page.on('pageerror',e=>errors.push(String(e?.message||e)));
-const rect=async sel=>page.locator(sel).first().evaluate(el=>{const r=el.getBoundingClientRect();return{left:Math.round(r.left),top:Math.round(r.top),width:Math.round(r.width),height:Math.round(r.height)}}).catch(()=>null);
-const close=(a,b,t=5)=>Math.abs(Number(a)-Number(b))<=t;
-
-try{
-  await page.goto(base,{waitUntil:'domcontentloaded',timeout:publicMode?50000:30000});
-  await page.waitForFunction(()=>window.RWALiveHome?.audit?.().ready===true,{timeout:20000});
-  await page.waitForFunction(()=>window.RWAMarketRuntime?.state?.().pairs?.length>50,{timeout:30000});
-  await page.waitForFunction(()=>document.querySelector('#statPrice')?.textContent&&document.querySelector('#statPrice').textContent!=='—',{timeout:30000});
+const failures=[],errors=[];const fail=(m,d=null)=>failures.push({message:m,detail:d});
+async function ready(page){
+  await page.goto(base,{waitUntil:'domcontentloaded',timeout:50000});
+  await page.waitForFunction(()=>window.RWALiveHome?.version==='3.0.0'&&window.RWAMarketRuntime?.state?.().pairs?.length>50,{timeout:35000});
   await page.waitForFunction(()=>document.querySelectorAll('#bids .bookrow').length>0&&document.querySelectorAll('#asks .bookrow').length>0,{timeout:30000});
   await page.waitForFunction(()=>document.querySelector('#rwaTargetOrderTicket'),{timeout:15000});
-
+  await page.waitForTimeout(500);
+}
+async function desktop(){
+  const ctx=await browser.newContext({viewport:{width:1672,height:941},deviceScaleFactor:1,serviceWorkers:'block'});
+  const page=await ctx.newPage();page.on('pageerror',e=>errors.push('desktop: '+String(e?.message||e)));await ready(page);
+  const r=sel=>page.locator(sel).first().evaluate(el=>{const x=el.getBoundingClientRect();return{left:Math.round(x.left),top:Math.round(x.top),width:Math.round(x.width),height:Math.round(x.height)}}).catch(()=>null);
   const data=await page.evaluate(()=>({
-    body:document.body.innerText,
-    html:document.documentElement.innerHTML,
-    price:document.querySelector('#statPrice')?.textContent||'',
-    pairs:window.RWAMarketRuntime?.state?.().pairs?.length||0,
-    bids:document.querySelectorAll('#bids .bookrow').length,
-    asks:document.querySelectorAll('#asks .bookrow').length,
-    chart:!!document.querySelector('#fallbackChart')&&!!document.querySelector('#tvHost'),
-    ticket:document.querySelector('#rwaTargetOrderTicket')?.innerText||'',
-    home:window.RWALiveHome?.audit?.()||null,
-    nav:[...document.querySelectorAll('.topnav [data-rwa-target-nav]')].map(x=>x.dataset.rwaTargetNav),
-    multichainButton:!!document.querySelector('#rwaMultiChainLaunch'),
-    commerceNodes:document.querySelectorAll('[id*="Commerce"],[id*="Shop"],[data-rwa-shop]').length
+    pairs:window.RWAMarketRuntime.state().pairs.length,
+    context:!!document.querySelector('#rwaContextBrief'),
+    commerce:/seablueprint|ecommerce|in-page commerce/i.test(document.body.innerText),
+    orderbookFont:parseFloat(getComputedStyle(document.querySelector('#bids .bookrow')).fontSize),
+    pairFont:parseFloat(getComputedStyle(document.querySelector('.pairrow .pairname b')).fontSize),
+    navFont:parseFloat(getComputedStyle(document.querySelector('.topnav button')).fontSize),
+    chartH:document.querySelector('.chart-wrap')?.getBoundingClientRect().height||0,
+    rightW:document.querySelector('.layout>.right')?.getBoundingClientRect().width||0,
+    tickerH:document.querySelector('#rwaGlobalTicker')?.getBoundingClientRect().height||0,
+    buyAmount:!!document.querySelector('[data-order-side="BUY"] [data-live-amount]'),
+    sellAmount:!!document.querySelector('[data-order-side="SELL"] [data-live-amount]'),
+    sellCopy:(document.querySelector('[data-order-side="SELL"]')?.innerText||'').includes('Uses amount entered at left'),
+    stopDisabled:document.querySelector('.rwa-target-order-modes button[disabled]')?.disabled===true,
+    wallet:document.querySelector('.signin')?.textContent||'',
+    mc:document.querySelector('#rwaMultiChainLaunch')?.innerText||''
   }));
-  if(/seablueprint|ecommerce|in-page commerce/i.test(data.body))fail('removed ecommerce UI is visible');
-  if(/rwa-seablueprint-commerce-bridge/i.test(data.html))fail('removed Seablueprint bridge is still wired');
-  if(data.commerceNodes)fail('commerce DOM remains',data.commerceNodes);
-  if(data.pairs<50)fail('live market universe missing',data.pairs);
-  if(!/^\$/.test(data.price))fail('live market price missing',data.price);
-  if(data.bids<1||data.asks<1)fail('live order book missing',{bids:data.bids,asks:data.asks});
-  if(!data.chart)fail('chart runtime missing');
-  if(!/Hyperliquid Testnet/.test(data.ticket)||!/Mainnet locked/.test(data.ticket))fail('trading ticket status is not truthful',data.ticket);
-  if(!data.multichainButton)fail('MULTI CHAIN launcher missing');
-  if(data.nav.join('|')!=='markets|intelligence|portfolio|orders|reports')fail('trading-only nav mismatch',data.nav);
+  if(data.context)fail('AI Insight is still in HOME');
+  if(data.commerce)fail('removed commerce is visible');
+  if(data.pairs<50)fail('market universe missing',data.pairs);
+  if(data.orderbookFont<10)fail('orderbook font below 10px',data.orderbookFont);
+  if(data.pairFont<12)fail('watchlist pair font below 12px',data.pairFont);
+  if(data.navFont<12)fail('nav font below 12px',data.navFont);
+  if(data.chartH<330||data.chartH>435)fail('responsive chart height out of range',data.chartH);
+  if(Math.abs(data.rightW-280)>3)fail('orderbook rail must be 280px',data.rightW);
+  if(Math.abs(data.tickerH-38)>2)fail('ticker must be 38px',data.tickerH);
+  if(!data.buyAmount||!data.sellAmount||data.sellCopy)fail('BUY/SELL independent amounts missing',data);
+  if(!data.stopDisabled)fail('unsupported Stop Limit must be disabled');
+  if(!/MULTI CHAIN/.test(data.mc)||!/NETWORKS/.test(data.mc))fail('MULTI CHAIN live status missing',data.mc);
 
-  const g={topbar:await rect('.topbar'),layout:await rect('.layout'),left:await rect('.layout>.left'),main:await rect('.layout>.main'),right:await rect('.layout>.right'),footer:await rect('#rwaGlobalTicker')};
-  const want={topbar:{left:0,top:0,width:1672,height:59},layout:{left:0,top:59,width:1672,height:822},left:{left:0,top:59,width:291,height:822},main:{left:291,top:59,width:1142,height:822},right:{left:1433,top:59,width:239,height:822},footer:{left:0,top:881,width:1672,height:60}};
-  for(const [k,w] of Object.entries(want)){const a=g[k];if(!a){fail('missing geometry '+k);continue}for(const p of ['left','top','width','height'])if(!close(a[p],w[p]))fail('geometry mismatch '+k+'.'+p,{want:w[p],got:a[p],full:a})}
+  await page.locator('[data-rwa-target-nav="orders"]').click();await page.waitForSelector('#rwaTradingWorkspace:not([hidden])');
+  let txt=await page.locator('#rwaTradingWorkspace').innerText();if(!/Orders/.test(txt)||!/Wallet required|Open orders/.test(txt))fail('Orders does not open real account workspace',txt);await page.locator('[data-workspace-close]').click();
+  await page.locator('[data-rwa-target-nav="reports"]').click();await page.waitForSelector('#rwaTradingWorkspace:not([hidden])');
+  txt=await page.locator('#rwaTradingWorkspace').innerText();if(!/Trading Report/.test(txt)||!/Wallet required|Hyperliquid/.test(txt))fail('Reports does not open real venue report workspace',txt);await page.locator('[data-workspace-close]').click();
 
-  const eth=page.locator('.pairrow').filter({hasText:'ETH / USDT'}).first();
-  if(await eth.count()){await eth.click();await page.waitForFunction(()=>document.querySelector('#selName')?.textContent?.includes('ETH'),{timeout:10000})}else fail('ETH market row missing');
+  const before=await page.evaluate(()=>getComputedStyle(document.querySelector('.topbar')).backgroundColor);
+  await page.locator('[data-live-top-action="theme"]').click();await page.waitForTimeout(80);
+  const after=await page.evaluate(()=>getComputedStyle(document.querySelector('.topbar')).backgroundColor);if(before===after)fail('theme tokens did not change surface',{before,after});await page.locator('[data-live-top-action="theme"]').click();
 
-  const mc=page.locator('#rwaMultiChainLaunch');
-  await mc.click();
-  await page.waitForFunction(()=>window.RWAMultiChain?.status?.().open===true,{timeout:15000});
-  await page.waitForFunction(()=>document.querySelectorAll('#rwaMultiChainPanel [data-rwa-chain]').length===9,{timeout:15000});
-  const mcs=await page.evaluate(()=>({status:window.RWAMultiChain.status(),buttons:document.querySelectorAll('#rwaMultiChainPanel [data-rwa-chain]').length,text:document.querySelector('#rwaMultiChainPanel')?.innerText||''}));
-  if(mcs.buttons!==9)fail('MULTI CHAIN registry did not render 9 networks',mcs);
-  if(!/Hyperliquid/.test(mcs.text)||!/Solana/.test(mcs.text)||!/Arbitrum/.test(mcs.text))fail('MULTI CHAIN network list incomplete',mcs.text);
-  await page.locator('#rwaMultiChainPanel .rwa-mc-close').click();
+  await page.locator('#rwaMultiChainLaunch').click();await page.waitForFunction(()=>window.RWAMultiChain?.status?.().open===true,{timeout:15000});await page.waitForFunction(()=>document.querySelectorAll('#rwaMultiChainPanel [data-rwa-chain]').length===9,{timeout:15000});await page.locator('#rwaMultiChainPanel .rwa-mc-close').click();
 
-  const amount=page.locator('#rwaTargetOrderTicket [data-live-amount]');
-  const buy=page.locator('#rwaTargetOrderTicket [data-live-trade="BUY"]');
-  await amount.fill('0.001');await buy.click();await page.waitForTimeout(800);
-  const note=await page.locator('#rwaTargetOrderTicket .rwa-target-trade-note').innerText();
-  if(/Order accepted/i.test(note))fail('headless user traded without wallet',note);
+  const buyBox=page.locator('[data-order-side="BUY"]');await buyBox.locator('[data-live-amount]').fill('0.001');await buyBox.locator('[data-live-trade="BUY"]').click();await page.waitForTimeout(700);
+  const note=await page.locator('#rwaTargetOrderTicket .rwa-target-trade-note').innerText();if(/Order accepted/i.test(note))fail('headless execution succeeded without a wallet',note);
 
-  if(errors.length)fail('page errors',errors);
-  await page.screenshot({path:`${proof}/trading-multichain-1672x941.png`,fullPage:false});
-  await writeFile(`${proof}/audit.json`,JSON.stringify({data,g,mcs,note,errors},null,2));
-}catch(e){fail('unexpected failure',String(e?.stack||e));try{await page.screenshot({path:`${proof}/failure.png`,fullPage:false})}catch{}}
-await browser.close();
-const out={ok:failures.length===0,contract:'rwa-trading-multichain-no-ecommerce-v1',base,publicMode,failures};
-await writeFile(`${proof}/browser-result.json`,JSON.stringify(out,null,2));
-console.log(JSON.stringify(out,null,2));
-if(!out.ok)process.exit(1);
+  const g={topbar:await r('.topbar'),left:await r('.layout>.left'),main:await r('.layout>.main'),right:await r('.layout>.right'),footer:await r('#rwaGlobalTicker')};
+  if(Math.abs(g.topbar.height-59)>2)fail('topbar geometry',g.topbar);if(Math.abs(g.left.width-291)>3)fail('left geometry',g.left);if(Math.abs(g.right.width-280)>3)fail('right geometry',g.right);if(Math.abs(g.footer.height-38)>2)fail('ticker geometry',g.footer);
+  await page.screenshot({path:proof+'/desktop-1672x941.png',fullPage:false});await ctx.close();return{data,g,note};
+}
+async function mobile(width,height,name){
+  const ctx=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,serviceWorkers:'block'});const page=await ctx.newPage();page.on('pageerror',e=>errors.push(name+': '+String(e?.message||e)));await ready(page);
+  const m=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,multichain:!!document.querySelector('#rwaMultiChainLaunch'),ticket:!!document.querySelector('#rwaTargetOrderTicket'),commerce:/seablueprint|ecommerce|in-page commerce/i.test(document.body.innerText),buyH:document.querySelector('[data-order-side="BUY"]>button')?.getBoundingClientRect().height||0,inputH:document.querySelector('[data-order-side="BUY"] label')?.getBoundingClientRect().height||0}));
+  if(m.sw>m.cw+2)fail(name+' horizontal overflow',m);if(!m.multichain||!m.ticket)fail(name+' core controls missing',m);if(m.commerce)fail(name+' commerce visible');if(m.buyH<44||m.inputH<42)fail(name+' touch targets too small',m);
+  await page.locator('#rwaMultiChainLaunch').click();await page.waitForFunction(()=>window.RWAMultiChain?.status?.().open===true,{timeout:15000});const pw=await page.locator('#rwaMultiChainPanel').evaluate(el=>Math.round(el.getBoundingClientRect().width));if(Math.abs(pw-width)>3)fail(name+' MULTI CHAIN width',{width,pw});await page.locator('#rwaMultiChainPanel .rwa-mc-close').click();
+  await page.screenshot({path:proof+'/'+name+'.png',fullPage:false});await ctx.close();return m;
+}
+let audit={};try{audit.desktop=await desktop();audit.mobile390=await mobile(390,844,'mobile-390x844');audit.mobile430=await mobile(430,932,'mobile-430x932')}catch(e){fail('unexpected failure',String(e?.stack||e))}
+await browser.close();if(errors.length)fail('page errors',errors);
+const out={ok:failures.length===0,contract:'rwa-trading-ui-v3-live-only',base,failures,audit};await writeFile(proof+'/browser-result.json',JSON.stringify(out,null,2));console.log(JSON.stringify(out,null,2));if(!out.ok)process.exit(1);
