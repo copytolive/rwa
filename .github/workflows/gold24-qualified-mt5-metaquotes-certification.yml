@@ -175,7 +175,26 @@ jobs:
           function SelectByName([string]$regex,[string]$type='ControlType.RadioButton'){
             $el=FindElement $regex $type
             if($null -eq $el){return $false}
-            $p=$el.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern);$p.Select();return $true
+            try{
+              $p=$el.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
+              if($p.Current.IsSelected){Write-Host "SELECT_ALREADY_ACTIVE regex=$regex";return $true}
+              if(-not $el.Current.IsEnabled){Write-Host "SELECT_DISABLED_NOT_ACTIVE regex=$regex";return $false}
+              $p.Select()
+              return $true
+            }catch{
+              try{
+                if($el.Current.ControlType -eq [System.Windows.Automation.ControlType]::RadioButton){
+                  $click=$el.GetClickablePoint()
+                  [System.Windows.Forms.Cursor]::Position=New-Object System.Drawing.Point([int]$click.X,[int]$click.Y)
+                  [System.Windows.Forms.SendKeys]::SendWait(' ')
+                  Start-Sleep -Milliseconds 500
+                  $p2=$el.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
+                  if($p2.Current.IsSelected){Write-Host "SELECT_FALLBACK_ACTIVE regex=$regex";return $true}
+                }
+              }catch{}
+              Write-Host "SELECT_FAIL regex=$regex error=$($_.Exception.Message)"
+              return $false
+            }
           }
           Get-Process terminal64,metatester64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
           $p=Start-Process -FilePath $env:MT5_TERMINAL -PassThru
