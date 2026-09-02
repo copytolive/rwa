@@ -1,6 +1,6 @@
 {
   "schema": 5,
-  "generated_at": "2026-08-31T11:49:19.502Z",
+  "generated_at": "2026-09-02T22:13:10.484Z",
   "status": "BLOCKED",
   "engineering_ready": true,
   "beta_ready": false,
@@ -23,11 +23,6 @@
   "product_rwa": {
     "testnet_status": "NOT_DEPLOYED",
     "transfer_enabled": false
-  },
-  "commerce": {
-    "configured": false,
-    "live": false,
-    "checkout_ready": false
   },
   "checks": {
     "browser_single_write": {
@@ -52,7 +47,7 @@
     },
     "tests_pipeline": {
       "ok": true,
-      "detail": "copy lifecycle simulation + security + engineering gates are automated"
+      "detail": "copy lifecycle simulation + security + trading release gates are automated"
     },
     "deployment_package": {
       "ok": true,
@@ -90,10 +85,6 @@
       "ok": true,
       "detail": "canonical Product RWA entitlement + inventory-gated mint + SoD + transfer OFF + delivery-only redemption burn automated in CI"
     },
-    "commerce_pipeline": {
-      "ok": true,
-      "detail": "authoritative inventory/quote/order/payment/refund commerce backend + integration tests + image build"
-    },
     "real_wallet_e2e": {
       "ok": true,
       "detail": "1 registered wallet proof(s)"
@@ -109,18 +100,6 @@
     "product_rwa_testnet": {
       "ok": false,
       "detail": "NOT_DEPLOYED · real chain-998 receipts + public evidence required"
-    },
-    "commerce_backend_configured": {
-      "ok": false,
-      "detail": "api_base blank; frontend stays preview-only"
-    },
-    "commerce_backend_live": {
-      "ok": false,
-      "detail": "commerce api_base is not configured"
-    },
-    "commerce_checkout_ready": {
-      "ok": false,
-      "detail": "commerce api_base is not configured"
     },
     "worker_configured": {
       "ok": false,
@@ -195,18 +174,6 @@
     {
       "gate": "product_rwa_testnet",
       "detail": "NOT_DEPLOYED · real chain-998 receipts + public evidence required"
-    },
-    {
-      "gate": "commerce_backend_configured",
-      "detail": "api_base blank; frontend stays preview-only"
-    },
-    {
-      "gate": "commerce_backend_live",
-      "detail": "commerce api_base is not configured"
-    },
-    {
-      "gate": "commerce_checkout_ready",
-      "detail": "commerce api_base is not configured"
     },
     {
       "gate": "worker_configured",
