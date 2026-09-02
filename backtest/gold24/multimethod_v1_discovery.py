@@ -131,18 +131,30 @@ def _weighted_direction(rng: random.Random) -> str:
 
 
 def _family_params(rng: random.Random, family: str, current: dict | None = None) -> tuple[float, float, float]:
-    if current and rng.random() < 0.70:
+    if current and rng.random() < 0.60:
         return float(current["p1"]), float(current["p2"]), float(current["p3"])
-    if family in {"ATR_BREAKOUT", "KELTNER_BREAKOUT"}:
-        return float(rng.choice([0.5, 0.7, 0.9, 1.2, 1.5, 1.8, 2.2, 2.8])), 55.0, 1.0
-    if family == "BOLLINGER_REVERSION":
-        return float(rng.choice([1.2, 1.5, 1.8, 2.2, 2.6, 3.0])), float(rng.choice([25, 30, 35, 40])), 1.0
+
+    if family in {"ATR_BREAKOUT", "KELTNER_BREAKOUT", "VOLATILITY", "ADAPTIVE_TREND"}:
+        return float(rng.choice([0.5, 0.7, 0.9, 1.0, 1.2, 1.5, 1.8, 2.2])), 55.0, 1.0
+    if family == "BAND_HYBRID":
+        return float(rng.choice([1.0, 1.2, 1.5, 1.8, 2.0])), float(rng.choice([1.5, 1.8, 2.0, 2.2, 2.5])), 1.0
+    if family in {"BOLLINGER_REVERSION", "VWAP"}:
+        return float(rng.choice([0.7, 1.0, 1.2, 1.5, 1.8, 2.2, 2.6])), float(rng.choice([25, 30, 35, 40])), 1.0
     if family == "ZSCORE_REVERSION":
         return float(rng.choice([0.7, 1.0, 1.3, 1.7, 2.1, 2.7])), float(rng.choice([25, 30, 35, 40])), 1.0
-    if family == "MOMENTUM_RSI_ROC":
+    if family in {"MOMENTUM_RSI_ROC", "RELATIVE_STRENGTH"}:
         return float(rng.choice([0.3, 0.5, 0.8, 1.2, 1.8, 2.5])), float(rng.choice([52, 55, 58, 62, 66])), 1.0
+    if family in {"CHART_PATTERN", "SUPPORT_RESISTANCE"}:
+        return float(rng.choice([0.2, 0.3, 0.5, 0.7, 1.0])), 55.0, 1.0
+    if family == "FIBONACCI":
+        return float(rng.choice([0.382, 0.5, 0.618, 0.786])), float(rng.choice([3.0, 5.0, 8.0, 10.0])), 1.0
+    if family == "DIVERGENCE":
+        return float(rng.choice([2.0, 3.0, 5.0, 8.0, 10.0])), 55.0, 1.0
+    if family == "VOLUME":
+        return float(rng.choice([1.1, 1.2, 1.4, 1.6, 2.0, 2.5])), 55.0, 1.0
+    if family == "STATISTICAL":
+        return float(rng.choice([0.65, 0.70, 0.75, 0.80, 0.85, 0.90])), 55.0, 1.0
     return float(rng.choice([52, 55, 58, 62, 66])), float(rng.choice([52, 55, 58, 62, 66])), 1.0
-
 
 def _fresh_candidate_for_family(rng: random.Random, family: str) -> Candidate:
     if family not in FAMILIES:
