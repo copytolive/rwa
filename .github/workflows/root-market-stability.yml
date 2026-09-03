@@ -83,7 +83,7 @@ jobs:
           grep -Fq "renderLiveRail" rwa-live-home-v1.js
           grep -Fq "keepMarketRoute" rwa-live-home-v1.js
           grep -Fq "RWATerminalV5" rwa-live-home-v1.js
-          grep -Fq "rwa-terminal-v5.js?v=1.0.9" chart-core.js
+          grep -Fq "rwa-terminal-v5.js?v=1.0.10" chart-core.js
           grep -Fq "rwa-terminal-v5.css?v=1.0.4" chart-core.js
           grep -Fq "data-v5-nav=\"discover\"" rwa-terminal-v5.js
           grep -Fq "data-v5-bottom=\"positions\"" rwa-terminal-v5.js
