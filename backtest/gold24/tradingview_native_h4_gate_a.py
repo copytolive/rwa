@@ -74,21 +74,33 @@ def fetch_h4(n_bars: int) -> tuple[pd.DataFrame,pd.DataFrame,dict]:
 
 
 def evaluate(primary: pd.DataFrame, cross: pd.DataFrame) -> dict:
-    p = primary[["Date","Close"]].rename(columns={"Close":"primary_close"})
-    x = cross[["Date","Close"]].rename(columns={"Close":"cross_close"})
-    overlap = p.merge(x, on="Date", how="inner").sort_values("Date")
-    if len(overlap) >= 3:
-        rp = np.log(overlap["primary_close"]).diff()
-        rx = np.log(overlap["cross_close"]).diff()
+    # Futures and spot H4 sessions are source-native but their bar anchors can
+    # differ by one hour (for example COMEX 23:00 UTC vs OANDA 22:00 UTC).
+    # Cross-check alignment therefore matches the nearest SOURCE bar within
+    # two hours. No OHLCV is resampled, synthesized or shifted for backtesting.
+    p = primary[["Date","Close"]].rename(columns={"Date":"primary_date","Close":"primary_close"}).sort_values("primary_date")
+    x = cross[["Date","Close"]].rename(columns={"Date":"cross_date","Close":"cross_close"}).sort_values("cross_date")
+    aligned = pd.merge_asof(
+        p, x, left_on="primary_date", right_on="cross_date",
+        direction="nearest", tolerance=pd.Timedelta(hours=2),
+    ).dropna(subset=["cross_date","cross_close"])
+    if len(aligned) >= 3:
+        rp = np.log(aligned["primary_close"]).diff()
+        rx = np.log(aligned["cross_close"]).diff()
         valid = rp.notna() & rx.notna()
         corr = float(rp[valid].corr(rx[valid])) if valid.sum() >= 2 else float("nan")
         direction = float((np.sign(rp[valid]) == np.sign(rx[valid])).mean()) if valid.any() else 0.0
-        ratio = overlap["primary_close"] / overlap["cross_close"]
+        ratio = aligned["primary_close"] / aligned["cross_close"]
         med_delta = float((ratio - 1.0).abs().median())
+        offsets = (aligned["primary_date"] - aligned["cross_date"]).abs().dt.total_seconds() / 3600.0
+        median_anchor_offset_h = float(offsets.median())
+        max_anchor_offset_h = float(offsets.max())
+        distinct_cross_ratio = float(aligned["cross_date"].nunique() / len(aligned))
     else:
         corr, direction, med_delta = float("nan"), 0.0, float("inf")
+        median_anchor_offset_h, max_anchor_offset_h, distinct_cross_ratio = float("inf"), float("inf"), 0.0
     min_rows = min(len(primary), len(cross))
-    overlap_floor = min(3000, max(1500, int(min_rows * 0.55)))
+    overlap_floor = max(3000, int(min_rows * 0.90))
     span_days = float((primary["Date"].iloc[-1] - primary["Date"].iloc[0]).total_seconds() / 86400.0)
     criteria = {
         "primary_rows_ge_3000": len(primary) >= 3000,
@@ -96,7 +108,9 @@ def evaluate(primary: pd.DataFrame, cross: pd.DataFrame) -> dict:
         "primary_reaches_2026": int(primary["Date"].iloc[-1].year) >= 2026,
         "crosscheck_reaches_2026": int(cross["Date"].iloc[-1].year) >= 2026,
         "primary_history_ge_2_years": span_days >= 730,
-        "direct_h4_overlap_sufficient": len(overlap) >= overlap_floor,
+        "direct_h4_nearest_source_overlap_ge_90pct": len(aligned) >= overlap_floor,
+        "cross_bar_mapping_nearly_one_to_one": distinct_cross_ratio >= 0.98,
+        "max_source_anchor_offset_le_2h": max_anchor_offset_h <= 2.0,
         "h4_log_return_corr_ge_0_75": bool(np.isfinite(corr) and corr >= 0.75),
         "h4_direction_agreement_ge_0_65": direction >= 0.65,
         "median_abs_price_delta_le_0_08": med_delta <= 0.08,
@@ -104,14 +118,17 @@ def evaluate(primary: pd.DataFrame, cross: pd.DataFrame) -> dict:
     return {
         "crosscheck_pass": bool(all(criteria.values())),
         "criteria": criteria,
-        "overlap_rows": int(len(overlap)),
+        "overlap_rows": int(len(aligned)),
         "overlap_floor": int(overlap_floor),
         "h4_log_return_correlation": corr,
         "h4_direction_agreement": direction,
         "median_absolute_price_delta_fraction": med_delta,
         "primary_history_days": span_days,
+        "crosscheck_alignment_policy": "nearest source H4 timestamp within 2h; no OHLCV resampling",
+        "median_source_anchor_offset_hours": median_anchor_offset_h,
+        "max_source_anchor_offset_hours": max_anchor_offset_h,
+        "distinct_cross_bar_mapping_ratio": distinct_cross_ratio,
     }
-
 
 def main() -> int:
     ap=argparse.ArgumentParser()
