@@ -380,3 +380,12 @@ body.rwa-target-dashboard-v2 .orderbook-tools button:hover{background:#0d1b2d;co
 @media(max-width:680px){
   .watch-actions{display:none!important}
 }
+
+/* legacy institutional overlay hard-disable */
+body.rwa-target-dashboard-v2 .rwa-legacy-institutional-card,
+body.rwa-target-dashboard-v2 .rwa-legacy-institutional-card *,
+body.rwa-target-dashboard-v2 .rwa-legacy-institutional-card .institutional-orb{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
