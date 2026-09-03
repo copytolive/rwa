@@ -336,3 +336,5 @@ window.RWATerminalV5={version:VERSION,active:true,apply,navigate,setBottom,setMo
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
 /* RWA_TERMINAL_V5_BACKEND_INTEGRATION_2026_09_03 */
+
+/* RWA_TERMINAL_V5_BACKEND_CLIENT_ACCEPTANCE_2026_09_03 */
