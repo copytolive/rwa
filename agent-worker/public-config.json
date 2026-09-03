@@ -1,12 +1,12 @@
 {
   "schema": 3,
-  "enabled": false,
-  "candidate_base_url": "",
-  "base_url": "",
+  "enabled": true,
+  "candidate_base_url": "https://rwa-terminal-service.vercel.app",
+  "base_url": "https://rwa-terminal-service.vercel.app",
   "mode": "terminal+delegated-agent",
   "master_private_key_required": false,
   "agent_private_key_scope": "trade-only delegated Hyperliquid agent",
-  "note": "Backend implementation is ready but remains fail-closed until an HTTPS CopyToLive production service is deployed and validated.",
+  "note": "Production terminal service validated on Vercel: signed sessions, durable 24/7 alert workflow, signed social endpoints, rewards ledger, and authoritative source-gated holders.",
   "terminal_service": {
     "sessions": true,
     "alerts_24x7": true,
@@ -14,5 +14,5 @@
     "rewards_ledger": true,
     "holders_source_gated": true
   },
-  "deployment_probe": "terminal-final-2026-09-03-r1"
+  "deployment_probe": "terminal-prod-vercel-workflow-1.3.2-2026-09-03"
 }
