@@ -64,7 +64,8 @@ async function desktop(browser){
       commerce:/seablueprint|ecommerce|in-page commerce/i.test(document.body.innerText),
       mock:!!document.querySelector('#rwaScreenshotParity'),
       brand:document.querySelector('.brandcopy strong')?.textContent,
-      nav:[...document.querySelectorAll('.topnav [data-v5-nav]')].map(x=>x.dataset.v5Nav),
+      globalNav:[...document.querySelectorAll('.topnav [data-v5-global]')].map(x=>x.dataset.v5Global),
+      marketNav:[...document.querySelectorAll('#liveRail .rwa-v5-market-nav>button[data-v5-nav]')].map(x=>x.dataset.v5Nav),
       bottomTabs:[...document.querySelectorAll('#rwaV5Bottom [data-v5-bottom]')].map(x=>x.dataset.v5Bottom),
       leftTabs:[...document.querySelectorAll('.rwa-v5-left-tabs [data-v5-left]')].map(x=>x.dataset.v5Left),
       ticketInside:!!document.querySelector('#liveRail #rwaTargetOrderTicket'),
@@ -78,7 +79,9 @@ async function desktop(browser){
   assert.equal(info.commerce,false);
   assert.equal(info.mock,false);
   assert.equal(info.brand,'Real World Asset');
-  assert.deepEqual(info.nav,['trade','discover','portfolio','analytics','rewards','more']);
+  assert.deepEqual(info.globalNav,['markets']);
+  assert.deepEqual(info.marketNav,['trade','portfolio','orders','analytics','rewards','more']);
+  assert.equal(await page.locator('.topnav [data-v5-nav]').count(),0);
   assert.deepEqual(info.bottomTabs,['positions','orders','holders','feed','analytics','thesis','history']);
   assert.deepEqual(info.leftTabs,['watchlist','feed','pulse','live']);
   assert.equal(info.ticketInside,true);
@@ -89,14 +92,14 @@ async function desktop(browser){
   assert.ok(Math.abs(info.footer.h-28)<=2);
   assert.equal(await locationHash(page),'#markets');
 
-  await page.locator('.topnav [data-v5-nav="discover"]').click();await page.waitForTimeout(40);
+  await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="more"]').click();await page.locator('#liveRail [data-v5-more-menu] [data-v5-nav="discover"]').click();await page.waitForTimeout(40);
   assert.match(await page.locator('[data-v5-bottom-body]').innerText(),/Top movers|Top volume/i);
-  await page.locator('.topnav [data-v5-nav="analytics"]').click();await page.waitForTimeout(40);
+  await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="analytics"]').click();await page.waitForTimeout(40);
   assert.match(await page.locator('[data-v5-bottom-body]').innerText(),/LIVE PAIRS|RWA-LINKED/i);
-  await page.locator('.topnav [data-v5-nav="rewards"]').click();await page.waitForTimeout(40);
+  await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="rewards"]').click();await page.waitForTimeout(40);
   assert.match(await page.locator('[data-v5-bottom-body]').innerText(),/INACTIVE|No verified rewards|Rewards ledger unavailable|LOCKED/i);
 
-  await page.locator('.topnav [data-v5-nav="trade"]').click();
+  await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="trade"]').click();
   await page.locator('.rwa-v5-side-switch [data-v5-side="SELL"]').click();
   assert.equal(await page.locator('#rwaTargetOrderTicket').getAttribute('data-v5-side'),'SELL');
   await page.locator('.rwa-v5-side-switch [data-v5-side="BUY"]').click();
@@ -137,9 +140,11 @@ async function mobile(browser,width,height){
   x=await page.evaluate(()=>({mode:document.body.dataset.v5MobileMode,trade:getComputedStyle(document.querySelector('#liveRail')).display,ticket:!!document.querySelector('#liveRail #rwaTargetOrderTicket')}));
   assert.equal(x.mode,'trade');assert.notEqual(x.trade,'none');assert.equal(x.ticket,true);
   await page.locator('.rwa-v5-mobile-worktabs [data-v5-mobile-mode="feed"]').click();assert.ok(await page.locator('#rwaV5MobileFeed').isVisible());
-  await page.locator('[data-v5-mobile-nav="markets"]').click();assert.ok(await page.locator('.left').isVisible());
+  await page.locator('.rwa-v5-mobile-worktabs [data-v5-action="open-markets"]').click();assert.ok(await page.locator('.left').isVisible());
   await page.locator('[data-v5-action="close-markets"]').click();
-  await page.locator('[data-v5-mobile-nav="portfolio"]').click();assert.ok(await page.locator('#rwaV5Bottom').isVisible());
+  await page.locator('.rwa-v5-mobile-worktabs [data-v5-mobile-mode="trade"]').click();
+  await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="portfolio"]').click();assert.ok(await page.locator('#rwaV5Bottom').isVisible());
+  assert.equal(await page.locator('.mobile-tabs [data-v5-mobile-nav],.topnav [data-v5-nav]').count(),0);
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);assert.ok(overflow<=2);
   assert.equal(errors.length,0,`mobile page errors: ${errors.join(' | ')}`);
   await context.close();return x;
