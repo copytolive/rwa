@@ -37,20 +37,12 @@ jobs:
           curl -fsSL --retry 3 -H 'Cache-Control: no-cache' "$BASE/fundamental.html?snapshot=${{ steps.req.outputs.id }}-$RANDOM" -o "$OUT/fundamental.html"
           python3 - <<'PY'
           from pathlib import Path
-          import re,os,hashlib,json
+          import re,os
           out=Path(os.environ["OUT"])
           idx=(out/"index.html").read_text("utf-8","ignore")
           m=re.search(r'<script[^>]+src="([^"]*index-renko-final-[^"]+\.js[^"]*)"',idx)
           if m:
-            import urllib.request
-            url="https://copytolive.com"+m.group(1).split("?")[0]
-            data=urllib.request.urlopen(url,timeout=30).read()
-            (out/"assets/js/index-current.js").write_bytes(data)
-          rows={}
-          for p in out.rglob("*"):
-            if p.is_file():
-              b=p.read_bytes();rows[str(p.relative_to(out))]={"bytes":len(b),"sha256":hashlib.sha256(b).hexdigest()}
-          (out/"manifest.json").write_text(json.dumps(rows,indent=2)+"\n")
+            (out/"index-current-url.txt").write_text(("https://copytolive.com"+m.group(1).split("?")[0])+"\n")
           PY
           if [ -s "$OUT/index-current-url.txt" ]; then
             URL="$(cat "$OUT/index-current-url.txt")"
