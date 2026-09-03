@@ -1,10 +1,17 @@
 {
-  "schema": 2,
+  "schema": 3,
   "enabled": false,
-  "candidate_base_url": "https://seablueprint.com/rwa-worker",
+  "candidate_base_url": "",
   "base_url": "",
-  "mode": "delegated-agent",
+  "mode": "terminal+delegated-agent",
   "master_private_key_required": false,
   "agent_private_key_scope": "trade-only delegated Hyperliquid agent",
-  "note": "candidate_base_url is probe-only. Set enabled=true and base_url only after public /healthz + /readyz prove the TESTNET worker is actually live with kill_switch=false and mainnet_allowed=false."
+  "note": "Backend implementation is ready but remains fail-closed until an HTTPS CopyToLive production service is deployed and validated.",
+  "terminal_service": {
+    "sessions": true,
+    "alerts_24x7": true,
+    "social": true,
+    "rewards_ledger": true,
+    "holders_source_gated": true
+  }
 }
