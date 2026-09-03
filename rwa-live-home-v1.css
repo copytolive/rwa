@@ -318,7 +318,6 @@ body.rwa-target-dashboard-v2 .pairprice b,body.rwa-target-dashboard-v2 .pairpric
  body.rwa-target-dashboard-v2 .top-actions .signin{max-width:118px!important;min-width:96px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
 }
 
-/* TARGET_V4_EXACT_SHA_CERT_FINAL */
 
 /* TARGET_V4_LEGACY_LAYOUT_REMOVED */
 @media(max-width:680px){
@@ -345,3 +344,5 @@ body.rwa-target-dashboard-v2 .pairprice b,body.rwa-target-dashboard-v2 .pairpric
   body.rwa-target-dashboard-v2 #rwaMultiChainLaunch>.rwa-mc-link-icon{display:block!important;font-size:15px!important;line-height:1!important}
   body.rwa-target-dashboard-v2 #rwaMultiChainLaunch>span:last-child{display:none!important}
 }
+
+/* TARGET_V4_PUBLIC_INTERACTION_CERT_FINAL */
