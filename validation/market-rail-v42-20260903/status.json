@@ -1,0 +1,68 @@
+{
+  "target_sha": "4a7bf8a4df33ea1c719df714479be79ebed661ed",
+  "observed_at": "2026-09-03T03:09:19Z",
+  "workflows": [
+    {
+      "name": "RWA Root Market Stability",
+      "id": 33710116985,
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "4a7bf8a4df33ea1c719df714479be79ebed661ed",
+      "event": "push",
+      "run_attempt": 1,
+      "html_url": "https://github.com/copytolive/rwa/actions/runs/33710116985",
+      "created_at": "2026-09-03T03:06:01Z",
+      "updated_at": "2026-09-03T03:07:00Z"
+    },
+    {
+      "name": "Real World Asset V4 UI Final",
+      "id": 33710116986,
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "4a7bf8a4df33ea1c719df714479be79ebed661ed",
+      "event": "push",
+      "run_attempt": 1,
+      "html_url": "https://github.com/copytolive/rwa/actions/runs/33710116986",
+      "created_at": "2026-09-03T03:06:01Z",
+      "updated_at": "2026-09-03T03:06:46Z"
+    },
+    {
+      "name": "Deploy Real World Asset Target V4",
+      "id": 33710116968,
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "4a7bf8a4df33ea1c719df714479be79ebed661ed",
+      "event": "push",
+      "run_attempt": 1,
+      "html_url": "https://github.com/copytolive/rwa/actions/runs/33710116968",
+      "created_at": "2026-09-03T03:06:01Z",
+      "updated_at": "2026-09-03T03:08:10Z"
+    },
+    {
+      "name": "Real World Asset V4 Public Page-by-Page Audit",
+      "id": 33710116988,
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "4a7bf8a4df33ea1c719df714479be79ebed661ed",
+      "event": "push",
+      "run_attempt": 1,
+      "html_url": "https://github.com/copytolive/rwa/actions/runs/33710116988",
+      "created_at": "2026-09-03T03:06:01Z",
+      "updated_at": "2026-09-03T03:08:50Z"
+    },
+    {
+      "name": "RWA Target V4 Browser Gate",
+      "id": 33710116936,
+      "status": "completed",
+      "conclusion": "failure",
+      "head_sha": "4a7bf8a4df33ea1c719df714479be79ebed661ed",
+      "event": "push",
+      "run_attempt": 1,
+      "html_url": "https://github.com/copytolive/rwa/actions/runs/33710116936",
+      "created_at": "2026-09-03T03:06:00Z",
+      "updated_at": "2026-09-03T03:09:12Z"
+    }
+  ],
+  "complete": true,
+  "all_success": false
+}
