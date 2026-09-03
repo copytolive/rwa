@@ -2,43 +2,146 @@ import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 
 const BASE=process.env.RWA_TEST_URL||'http://127.0.0.1:4173/';
-const markets=Array.from({length:520},(_,i)=>{const base=i===0?'BTC':`T${String(i).padStart(3,'0')}`;return {symbol:`${base}USDT`,baseAsset:base,quoteAsset:'USDT',status:'TRADING',isSpotTradingAllowed:true};});
-const tickers=markets.map((m,i)=>({symbol:m.symbol,lastPrice:String(100+i/10),openPrice:String(99+i/10),priceChangePercent:String((i%17)-8),highPrice:String(103+i/10),lowPrice:String(96+i/10),quoteVolume:String(1000000-i*100)}));
-const klines=Array.from({length:180},(_,i)=>{const o=100+i*.05,c=o+(i%2?.2:-.15);return [Date.now()-(180-i)*900000,String(o),String(Math.max(o,c)+.4),String(Math.min(o,c)-.4),String(c),'10'];});
+const markets=Array.from({length:520},(_,i)=>{
+  const base=i===0?'BTC':i===1?'ETH':`T${String(i).padStart(3,'0')}`;
+  return {symbol:`${base}USDT`,baseAsset:base,quoteAsset:'USDT',status:'TRADING',isSpotTradingAllowed:true};
+});
+const tickers=markets.map((m,i)=>({
+  symbol:m.symbol,lastPrice:String(100+i/10),openPrice:String(99+i/10),
+  priceChangePercent:String((i%17)-8),highPrice:String(103+i/10),
+  lowPrice:String(96+i/10),quoteVolume:String(1000000000-i*1000000)
+}));
+const klines=Array.from({length:180},(_,i)=>{
+  const o=100+i*.05,c=o+(i%2?.2:-.15);
+  return [Date.now()-(180-i)*3600000,String(o),String(Math.max(o,c)+.4),String(Math.min(o,c)-.4),String(c),'10'];
+});
+const depth={
+  bids:Array.from({length:100},(_,i)=>[(100-i*.02).toFixed(2),String(1+i*.01)]),
+  asks:Array.from({length:100},(_,i)=>[(100.10+i*.02).toFixed(2),String(1+i*.01)])
+};
 
-async function installMocks(context){
-  await context.addInitScript(()=>{class FakeWebSocket{static CONNECTING=0;static OPEN=1;static CLOSING=2;static CLOSED=3;constructor(url){this.url=url;this.readyState=0;this.__listeners=new Map();setTimeout(()=>{if(this.readyState!==0)return;this.readyState=1;this.onopen?.({type:'open'});for(const fn of this.__listeners.get('open')||[])fn({type:'open'})},12)}addEventListener(type,fn){if(!this.__listeners.has(type))this.__listeners.set(type,new Set());this.__listeners.get(type).add(fn)}removeEventListener(type,fn){this.__listeners.get(type)?.delete(fn)}send(){}close(){if(this.readyState===3)return;this.readyState=3;setTimeout(()=>{this.onclose?.({type:'close'});for(const fn of this.__listeners.get('close')||[])fn({type:'close'})},0)}}window.WebSocket=FakeWebSocket;});
+async function installDeterministicMarket(context){
+  await context.addInitScript(()=>{
+    class FakeWebSocket{
+      static CONNECTING=0;static OPEN=1;static CLOSING=2;static CLOSED=3;
+      constructor(url){this.url=url;this.readyState=0;setTimeout(()=>{if(this.readyState!==0)return;this.readyState=1;this.onopen?.({type:'open'})},8)}
+      addEventListener(){} removeEventListener(){} send(){}
+      close(){if(this.readyState===3)return;this.readyState=3;setTimeout(()=>this.onclose?.({type:'close'}),0)}
+    }
+    window.WebSocket=FakeWebSocket;
+  });
   await context.route('**/api/v3/exchangeInfo',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({symbols:markets})}));
-  await context.route('**/api/v3/ticker/24hr',r=>{const u=new URL(r.request().url());const sym=u.searchParams.get('symbol');if(sym){const t=tickers.find(x=>x.symbol===sym)||tickers[0];return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(t)});}return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(tickers)});});
+  await context.route('**/api/v3/ticker/24hr**',r=>{
+    const u=new URL(r.request().url()),sym=u.searchParams.get('symbol');
+    const body=sym?(tickers.find(x=>x.symbol===sym)||tickers[0]):tickers;
+    return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)});
+  });
   await context.route('**/api/v3/klines**',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(klines)}));
+  await context.route('**/api/v3/depth**',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(depth)}));
   await context.route('https://s3.tradingview.com/**',r=>r.abort());
 }
-async function enterMarkets(page){
-  await page.waitForFunction(()=>window.RWASuperApp?.version==='5.0.0',{timeout:10000});
-  await page.evaluate(()=>{try{window.RWASeablueprintCommerceBridge?.close?.()}catch{};try{window.RWASuperApp?.navigate?.('markets')}catch{};if(location.hash==='#shop')location.hash='#markets'});
-  await page.waitForFunction(()=>location.hash==='#markets'||document.documentElement.dataset.rwaRoute==='markets',{timeout:8000});
+
+async function open(browser,width,height){
+  const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,serviceWorkers:'block'});
+  await installDeterministicMarket(context);
+  const page=await context.newPage(),errors=[];
+  page.on('pageerror',e=>errors.push(String(e?.message||e)));
+  await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:25000});
+  await page.waitForFunction(()=>window.RWALiveHome?.version==='4.1.0'&&window.RWAMarketRuntime?.version==='1.4.1'&&window.RWAMarketRuntime.state().pairs.length===520,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelectorAll('#bids .bookrow').length>=5&&document.querySelectorAll('#asks .bookrow').length>=5,{timeout:15000});
+  await page.waitForTimeout(250);
+  return {context,page,errors};
 }
 
 async function desktop(browser){
-  const context=await browser.newContext({viewport:{width:1440,height:900}});await installMocks(context);const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-  await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:20000});await page.waitForFunction(()=>window.RWAMarketPerformanceGuard?.runtime==='root-terminal-low-jank-v1',{timeout:10000});await enterMarkets(page);await page.waitForFunction(()=>document.querySelectorAll('#pairList .pairrow').length>10,{timeout:10000});
-  const info=await page.evaluate(()=>{const h=document.querySelector('.topbar');const r=h.getBoundingClientRect();return {rows:document.querySelectorAll('#pairList .pairrow').length,total:S.pairs.length,scrollWidth:document.documentElement.scrollWidth,innerWidth,guard:window.RWAMarketPerformanceGuard,quick:window.RWAQuickActions?.performance,header:{h:r.height,scrollH:h.scrollHeight,scrollW:h.scrollWidth,clientW:h.clientWidth,single:h.dataset.rwaSingleRow,productbar:!!document.querySelector('.productbar'),trustbar:!!document.querySelector('.trustbar')}}});
-  assert.equal(info.total,520);assert.ok(info.rows<=140&&info.rows>=10,`desktop market DOM cap invalid: ${info.rows}`);assert.ok(info.scrollWidth<=info.innerWidth+2,`desktop horizontal overflow ${info.scrollWidth}/${info.innerWidth}`);assert.equal(info.header.single,'1');assert.equal(info.header.productbar,false);assert.equal(info.header.trustbar,false);assert.ok(info.header.h<=63&&info.header.scrollH<=63,`desktop header wrapped: ${JSON.stringify(info.header)}`);
-  const stress=await page.evaluate(async()=>{const start=performance.now();for(let n=0;n<40;n++)for(const x of S.pairs)updatePairDOM(x,x.price);const queueMs=performance.now()-start;let observerCalls=0;const mo=new MutationObserver(()=>observerCalls++);mo.observe(document.documentElement,{subtree:true,childList:true,characterData:true});const temp=document.createElement('div');document.body.appendChild(temp);for(let i=0;i<2000;i++)temp.textContent=String(i);for(let i=0;i<2500;i++)addTrade({m:i%2===0,p:String(100+i/10000),q:'0.01',T:Date.now()});await new Promise(r=>setTimeout(r,1450));mo.disconnect();temp.remove();return {queueMs,observerCalls,tape:document.querySelectorAll('#tradeTape .trade').length,rows:document.querySelectorAll('#pairList .pairrow').length};});
-  assert.ok(stress.queueMs<1200,`queued market updates blocked main thread: ${stress.queueMs}ms`);assert.ok(stress.observerCalls<=2,`hot MutationObserver fired too often: ${stress.observerCalls}`);assert.ok(stress.tape<=28,`trade tape unbounded: ${stress.tape}`);assert.ok(stress.rows<=140);assert.equal(errors.length,0,`desktop page errors: ${errors.join(' | ')}`);await context.close();return {info,stress};
+  const {context,page,errors}=await open(browser,1672,941);
+  const info=await page.evaluate(()=>{
+    const rect=s=>{const e=document.querySelector(s);if(!e)return null;const r=e.getBoundingClientRect();return{x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,bottom:r.bottom,display:getComputedStyle(e).display}};
+    return {
+      pairs:window.RWAMarketRuntime.state().pairs.length,
+      rows:document.querySelectorAll('#pairList .pairrow').length,
+      asks:document.querySelectorAll('#asks .bookrow').length,
+      bids:document.querySelectorAll('#bids .bookrow').length,
+      overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
+      commerce:/seablueprint|ecommerce|in-page commerce/i.test(document.body.innerText),
+      mock:!!document.querySelector('#rwaScreenshotParity'),
+      brand:document.querySelector('.brandcopy strong')?.textContent,
+      layout:rect('.layout'),left:rect('.layout>.left'),right:rect('.layout>.right'),
+      rail:rect('#liveRail'),footer:rect('#rwaGlobalTicker')
+    };
+  });
+  assert.equal(info.pairs,520);
+  assert.ok(info.rows>10&&info.rows<=140,`desktop watchlist DOM cap invalid: ${info.rows}`);
+  assert.ok(info.asks>=5&&info.bids>=5,`depth100 book incomplete: ${info.asks}/${info.bids}`);
+  assert.ok(info.overflow<=2,`desktop overflow: ${info.overflow}`);
+  assert.equal(info.commerce,false);
+  assert.equal(info.mock,false);
+  assert.equal(info.brand,'Real World Asset');
+  assert.equal(info.rail?.display,'flex');
+  assert.ok(Math.abs(info.left?.w-286)<=3);
+  assert.ok(Math.abs(info.right?.w-286)<=3);
+  assert.ok(Math.abs(info.rail?.w-330)<=3);
+  assert.ok(Math.abs(info.footer?.h-34)<=3);
+
+  const menu=page.locator('#bookMenu');
+  await menu.click();
+  await page.waitForTimeout(60);
+  const ten=await page.locator('#bids .bookrow').count();
+  assert.ok(ten>=8,`10-level book control did not expand rows: ${ten}`);
+
+  const search=page.locator('#search');
+  if(await search.count()){
+    await search.fill('T250');
+    await page.waitForTimeout(80);
+    assert.equal(await page.locator('#pairList .pairrow').count(),1);
+    await search.fill('');
+    await page.waitForTimeout(80);
+    assert.ok((await page.locator('#pairList .pairrow').count())<=140);
+  }
+
+  assert.equal(errors.length,0,`desktop page errors: ${errors.join(' | ')}`);
+  await context.close();
+  return info;
 }
 
-async function compactDesktop(browser){
-  const context=await browser.newContext({viewport:{width:1024,height:820}});await installMocks(context);const page=await context.newPage();await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:20000});await page.waitForFunction(()=>window.RWAMarketPerformanceGuard,{timeout:10000});await enterMarkets(page);
-  const x=await page.evaluate(()=>({right:getComputedStyle(document.querySelector('.right')).display,layout:document.querySelector('.layout').getBoundingClientRect().width,scrollWidth:document.documentElement.scrollWidth,innerWidth,headerH:document.querySelector('.topbar').scrollHeight}));
-  assert.equal(x.right,'none');assert.ok(x.layout<=x.innerWidth+1);assert.ok(x.scrollWidth<=x.innerWidth+2);assert.ok(x.headerH<=63,`compact header wrapped to ${x.headerH}`);await context.close();return x;
+async function compact(browser){
+  const {context,page,errors}=await open(browser,1280,900);
+  const x=await page.evaluate(()=>({
+    rail:getComputedStyle(document.querySelector('#liveRail')).display,
+    overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
+    rows:document.querySelectorAll('#pairList .pairrow').length
+  }));
+  assert.equal(x.rail,'none');
+  assert.ok(x.overflow<=2);
+  assert.ok(x.rows<=140);
+  assert.equal(errors.length,0);
+  await context.close();
+  return x;
 }
 
-async function mobile(browser){
-  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});await installMocks(context);const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:20000});await page.waitForFunction(()=>window.RWAMarketPerformanceGuard,{timeout:10000});await enterMarkets(page);await page.waitForTimeout(500);
-  const m=await page.evaluate(()=>{const de=document.documentElement,chart=document.querySelector('.chart-wrap')?.getBoundingClientRect(),exchange=document.querySelector('#rwaExchange')?.getBoundingClientRect(),app=document.querySelector('.app')?.getBoundingClientRect(),h=document.querySelector('.topbar'),hr=h.getBoundingClientRect();const visible=e=>{const s=getComputedStyle(e),r=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity)!==0&&r.width>1&&r.height>1};const visibleHeaderChildren=[...h.children].filter(visible).map(e=>{const r=e.getBoundingClientRect();return{tag:e.tagName,cls:e.className,x:r.x,right:r.right,w:r.width,h:r.height}});return {innerWidth,scrollWidth:de.scrollWidth,bodyWidth:document.body.scrollWidth,chart:chart&&{w:chart.width,h:chart.height},exchange:exchange&&{x:exchange.x,w:exchange.width},app:app&&{x:app.x,w:app.width},rows:document.querySelectorAll('#pairList .pairrow').length,legacyMobileVisible:[...document.querySelectorAll('[data-v5-mobile]')].some(visible),header:{h:hr.height,scrollH:h.scrollHeight,scrollW:h.scrollWidth,clientW:h.clientWidth,single:h.dataset.rwaSingleRow,visibleChildren:visibleHeaderChildren}};});
-  assert.ok(m.scrollWidth<=m.innerWidth+2,`mobile html overflow ${m.scrollWidth}/${m.innerWidth}`);assert.ok(m.bodyWidth<=m.innerWidth+2,`mobile body overflow ${m.bodyWidth}/${m.innerWidth}`);assert.ok(m.app.w<=m.innerWidth+1&&m.app.x>=-1,`mobile app width invalid ${JSON.stringify(m.app)}`);assert.ok(m.chart?.w<=m.innerWidth+1&&m.chart?.h>=280&&m.chart?.h<=505,`mobile chart invalid ${JSON.stringify(m.chart)}`);if(m.exchange)assert.ok(m.exchange.w<=m.innerWidth+1&&m.exchange.x>=-1,`mobile exchange overflow ${JSON.stringify(m.exchange)}`);assert.ok(m.rows<=70,`mobile pair DOM cap invalid ${m.rows}`);assert.equal(m.header.single,'1');assert.ok(m.header.h<=58&&m.header.scrollH<=58,`mobile header vertical wrap: ${JSON.stringify(m.header)}`);assert.equal(m.legacyMobileVisible,false,'legacy Super App mobile chrome resurfaced');for(const c of m.header.visibleChildren)assert.ok(c.x>=-1&&c.right<=m.innerWidth+1,`mobile visible header child clipped: ${JSON.stringify(c)} / ${m.innerWidth}`);
-  const nav=await page.evaluate(()=>({hash:location.hash,route:document.documentElement.dataset.rwaRoute,marketShell:document.body.classList.contains('rwa-super-market-open'),scrollWidth:document.documentElement.scrollWidth}));assert.ok(nav.hash==='#markets'||nav.route==='markets',`mobile Markets navigation lost route: ${JSON.stringify(nav)}`);assert.equal(nav.marketShell,true);assert.ok(nav.scrollWidth<=390+2);assert.equal(errors.length,0,`mobile page errors: ${errors.join(' | ')}`);await context.close();return {m,nav};
+async function mobile(browser,width,height){
+  const {context,page,errors}=await open(browser,width,height);
+  await page.locator('#rwaTargetOrderTicket').scrollIntoViewIfNeeded();
+  const m=await page.evaluate(()=>{const r=s=>{const e=document.querySelector(s);if(!e)return null;const x=e.getBoundingClientRect();return{x:x.x,right:x.right,y:x.y,bottom:x.bottom,w:x.width,h:x.height,display:getComputedStyle(e).display}};return{
+    overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
+    rows:document.querySelectorAll('#pairList .pairrow').length,
+    rail:getComputedStyle(document.querySelector('#liveRail')).display,
+    buy:r('[data-order-side="BUY"]>button'),sell:r('[data-order-side="SELL"]>button'),
+    input:r('[data-order-side="BUY"] label'),wallet:r('.top-actions .signin'),mc:r('#rwaMultiChainLaunch'),ticket:r('#rwaTargetOrderTicket')
+  }});
+  assert.ok(m.overflow<=2,`mobile overflow ${m.overflow}`);
+  assert.ok(m.rows<=70,`mobile watchlist cap invalid: ${m.rows}`);
+  assert.equal(m.rail,'none');
+  assert.ok(m.buy?.h>=44&&m.sell?.h>=44&&m.input?.h>=42,`mobile touch target invalid ${JSON.stringify(m)}`);
+  if(m.wallet)assert.ok(m.wallet.right<=width+1,`wallet clipped ${JSON.stringify(m.wallet)}`);
+  if(m.mc&&m.ticket){const overlap=Math.min(m.mc.bottom,m.ticket.bottom)-Math.max(m.mc.y,m.ticket.y);assert.ok(overlap<=8,`MULTI CHAIN overlaps ticket by ${overlap}px`)}
+  assert.equal(errors.length,0,`mobile page errors: ${errors.join(' | ')}`);
+  await context.close();
+  return m;
 }
 
-const browser=await chromium.launch({headless:true});try{const d=await desktop(browser),c=await compactDesktop(browser),m=await mobile(browser);console.log(JSON.stringify({ok:true,contract:'rwa-root-market-browser-stability-v5-target-root',desktop:d,compact:c,mobile:m},null,2));}finally{await browser.close()}
+const browser=await chromium.launch({headless:true});
+try{
+  const result={desktop:await desktop(browser),compact:await compact(browser),mobile390:await mobile(browser,390,844),mobile430:await mobile(browser,430,932)};
+  console.log(JSON.stringify({ok:true,contract:'rwa-root-market-stability-v6-trading-only',result},null,2));
+}finally{await browser.close()}
