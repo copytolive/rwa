@@ -23,7 +23,7 @@ env:
 
 jobs:
   search:
-    runs-on: ubuntu-latest
+    runs-on: macos-15
     timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
@@ -52,7 +52,7 @@ jobs:
             --repo-root . \
             --out "$RUNNER_TEMP/latest_hardpass_frequency_v4.json" \
             --candidate-count 100000 \
-            --workers 8 \
+            --workers 10 \
             --seed 2026090417
           python - <<'PY'
           import json,os
