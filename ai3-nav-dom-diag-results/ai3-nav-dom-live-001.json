@@ -4,7 +4,7 @@
       "tag": "NAV",
       "id": "",
       "cls": "hidden lg:flex items-end gap-8 absolute",
-      "x": 603.8359375,
+      "x": 598.8359375,
       "y": 8,
       "w": 456.328125,
       "h": 66,
@@ -20,7 +20,7 @@
       "cls": "relative flex items-center justify-center gap-4",
       "x": 99,
       "y": 1,
-      "w": 1466,
+      "w": 1456,
       "h": 80,
       "display": "flex",
       "position": "relative",
@@ -34,7 +34,7 @@
       "cls": "mx-auto max-w-[1760px] px-6 lg:px-10",
       "x": 64,
       "y": 1,
-      "w": 1536,
+      "w": 1526,
       "h": 80,
       "display": "block",
       "position": "static",
@@ -48,7 +48,7 @@
       "cls": "hidden md:block bg-[#0B0E11] border-b border-[#2B3139]",
       "x": 64,
       "y": 1,
-      "w": 1536,
+      "w": 1526,
       "h": 81,
       "display": "block",
       "position": "static",
@@ -62,7 +62,7 @@
       "cls": "sticky top-0 z-40",
       "x": 64,
       "y": 1,
-      "w": 1536,
+      "w": 1526,
       "h": 177,
       "display": "block",
       "position": "sticky",
@@ -76,8 +76,8 @@
       "cls": "w-full flex flex-col relative bg-[#0B0E11] text-[#B7BDC6] min-h-full",
       "x": 64,
       "y": 0,
-      "w": 1536,
-      "h": 539,
+      "w": 1526,
+      "h": 7458,
       "display": "flex",
       "position": "relative",
       "justify": "normal",
@@ -90,8 +90,8 @@
       "cls": "h-full w-full bg-[#0B0E11]",
       "x": 64,
       "y": 0,
-      "w": 1536,
-      "h": 539,
+      "w": 1526,
+      "h": 7458,
       "display": "block",
       "position": "static",
       "justify": "normal",
@@ -102,13 +102,13 @@
   "signal": {
     "headings": [
       {
-        "text": "Market ScannerReady",
-        "html": "<h1 class=\"text-lg flex items-baseline gap-1\"><span class=\"font-bold text-white tracking-wide\">Market Scanner</span><span class=\"text-zinc-500 text-sm\">Ready</span></h1>",
+        "text": "Market Scanner",
+        "html": "<h2 class=\"text-sm font-extrabold\">Market Scanner</h2>",
         "rect": {
           "x": 78,
-          "y": 61.5,
-          "w": 153.53125,
-          "h": 24.5
+          "y": 63.75,
+          "w": 96.578125,
+          "h": 17.5
         }
       }
     ],
@@ -174,26 +174,14 @@
         }
       },
       {
-        "text": "7 selected",
+        "text": "Mencari kandidat\u2026",
         "aria": null,
         "title": "",
-        "html": "<button type=\"button\" data-ai3-instruments=\"\">7 selected</button>",
+        "html": "<button type=\"button\" disabled=\"\" style=\"align-self: center; height: 40px; margin: 0px 10px; border: 0px; border-radius: 22px; background: rgb(94, 77, 0); color: rgb(155, 139, 80); font-weight: 900; font-size: 12px; cursor: default;\">Mencari kandidat\u2026</button>",
         "rect": {
-          "x": 270,
-          "y": 140,
-          "w": 245.953125,
-          "h": 21
-        }
-      },
-      {
-        "text": "\u2315 Cari",
-        "aria": null,
-        "title": "",
-        "html": "<button type=\"button\" class=\"ai3-sf-search\" data-ai3-scan=\"\">\u2315&nbsp; Cari</button>",
-        "rect": {
-          "x": 1307.984375,
-          "y": 122.5,
-          "w": 98,
+          "x": 1275.984375,
+          "y": 120,
+          "w": 130,
           "h": 40
         }
       }
