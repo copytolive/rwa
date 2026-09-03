@@ -24,6 +24,7 @@ def main() -> int:
     cross = load("runtime_global_cross_tf/latest_global_d1_h4_corr.json")
     broker_h4 = load("runtime_native_h4_broker/latest_native_h4_broker_hardpass.json")
     hardpass_v4 = load("runtime_hardpass_v4/latest_hardpass_frequency_v4.json")
+    cert = load("runtime_certification/latest_native_mt5_certification.json")
 
     finalized = int(v11.get("cumulative_configs_archived", 0) or 0)
     master_eval = int(
@@ -41,6 +42,9 @@ def main() -> int:
     v4_eval = int(hardpass_v4.get("candidate_evaluated_unique", 0) or 0)
     d1_total_with_v4 = discovery_total + v4_eval
     all_tf_min_unique = d1_total_with_v4 + h4_eval
+    cert_ok = str(cert.get("status","")) == "PASS" and str(cert.get("github_run_conclusion","")) == "success"
+    python_verified = int(cert.get("canonical_python_parity_job",{}).get("exact_method_pairs",0) or 0) if cert_ok else 0
+    mt5_verified = int(cert.get("native_metaquotes_mt5_job",{}).get("qualified_ea_count",0) or 0) if cert_ok else 0
 
     source_input = int(port.get("methods_input", 0) or 0)
     global_kept = int(port.get("global_greedy_kept_count", 0) or 0)
@@ -129,6 +133,9 @@ def main() -> int:
             "max_family_concentration_all_timeframes": cross_max_share,
             "sample_ge_300_count": int(port.get("sample_ge_300_count", 0) or 0),
             "max_dd_le_25_count": int(port.get("max_dd_le_25_count", 0) or 0),
+            "python_verified": python_verified,
+            "mt5_verified": mt5_verified,
+            "native_mt5_certification_run": int(cert.get("github_run_id",0) or 0) if cert_ok else None,
             "portfolio_readiness": str(port.get("portfolio_readiness", "NOT_READY")),
         },
         "latest_targeted_search": {
