@@ -1,0 +1,58 @@
+{
+  "target_sha": "dd31bc965ca334f8646587ec3af8b691abbb1348",
+  "observed_at": "2026-09-03T05:28:52Z",
+  "workflows": [
+    {
+      "name": "Deploy Real World Asset Target V4",
+      "id": 33718871785,
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "dd31bc965ca334f8646587ec3af8b691abbb1348",
+      "html_url": "https://github.com/copytolive/rwa/actions/runs/33718871785",
+      "created_at": "2026-09-03T05:26:42Z",
+      "updated_at": "2026-09-03T05:27:16Z"
+    },
+    {
+      "name": "RWA Root Market Stability",
+      "id": 33718871746,
+      "status": "completed",
+      "conclusion": "failure",
+      "head_sha": "dd31bc965ca334f8646587ec3af8b691abbb1348",
+      "html_url": "https://github.com/copytolive/rwa/actions/runs/33718871746",
+      "created_at": "2026-09-03T05:26:42Z",
+      "updated_at": "2026-09-03T05:26:51Z"
+    },
+    {
+      "name": "Real World Asset V4 UI Final",
+      "id": 33718871763,
+      "status": "completed",
+      "conclusion": "failure",
+      "head_sha": "dd31bc965ca334f8646587ec3af8b691abbb1348",
+      "html_url": "https://github.com/copytolive/rwa/actions/runs/33718871763",
+      "created_at": "2026-09-03T05:26:42Z",
+      "updated_at": "2026-09-03T05:26:53Z"
+    },
+    {
+      "name": "Real World Asset V4 Public Page-by-Page Audit",
+      "id": 33718871766,
+      "status": "completed",
+      "conclusion": "failure",
+      "head_sha": "dd31bc965ca334f8646587ec3af8b691abbb1348",
+      "html_url": "https://github.com/copytolive/rwa/actions/runs/33718871766",
+      "created_at": "2026-09-03T05:26:42Z",
+      "updated_at": "2026-09-03T05:27:47Z"
+    },
+    {
+      "name": "RWA Target V4 Browser Gate",
+      "id": 33718871748,
+      "status": "completed",
+      "conclusion": "failure",
+      "head_sha": "dd31bc965ca334f8646587ec3af8b691abbb1348",
+      "html_url": "https://github.com/copytolive/rwa/actions/runs/33718871748",
+      "created_at": "2026-09-03T05:26:42Z",
+      "updated_at": "2026-09-03T05:27:45Z"
+    }
+  ],
+  "complete": true,
+  "all_success": false
+}
