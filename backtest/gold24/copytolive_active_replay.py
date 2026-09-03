@@ -28,10 +28,10 @@ from copytolive_compat import (
     COPYTOLIVE_RISK_USD,
     COPYTOLIVE_STRESSED_FEE,
     CopyToLiveExecutionConfig,
-    apply_production_filter,
     compute_copytolive_metrics,
     execution_digest,
-    run_copytolive_backtest,
+    run_copytolive_filtered_backtest,
+    vs,
 )
 from multimethod_v1_full_rescan import annual_stats, monte_carlo_metrics
 
@@ -100,6 +100,7 @@ def load_h1(path: Path) -> pd.DataFrame:
         d[col] = pd.to_numeric(d[col], errors="coerce")
     d = d.dropna(subset=["open", "high", "low", "close"])
     d = d.drop_duplicates(subset=["Date"], keep="last").sort_values("Date").reset_index(drop=True)
+    d.index = pd.DatetimeIndex(d["Date"])
 
     if len(d) < 10_000:
         raise RuntimeError(f"H1 dataset unexpectedly short: {len(d)}")
@@ -147,6 +148,7 @@ def load_d1(path: Path) -> pd.DataFrame:
         d[col] = pd.to_numeric(d[col], errors="coerce")
     d = d.dropna(subset=["open", "high", "low", "close"])
     d = d.drop_duplicates(subset=["Date"], keep="last").sort_values("Date").reset_index(drop=True)
+    d.index = pd.DatetimeIndex(d["Date"])
 
     if len(d) < 201:
         raise RuntimeError(f"D1 dataset unexpectedly short: {len(d)}")
@@ -210,18 +212,19 @@ def compile_signal(s: dict, source: str):
 
 
 def oos_metrics(trades: list[dict], d: pd.DataFrame) -> dict:
-    split_i = min(max(int(len(d) * 0.70), 1), len(d) - 1)
-    split_ts = pd.Timestamp(d["Date"].iloc[split_i])
-    test = []
-    for t in trades:
-        ts = pd.Timestamp(t["closeTime"])
-        if ts.tzinfo is None:
-            ts = ts.tz_localize("UTC")
-        else:
-            ts = ts.tz_convert("UTC")
-        if ts > split_ts:
-            test.append(t)
-    m = compute_copytolive_metrics(test)
+    # Exact producer split: trm = exit_index <= int(n * 0.70)
+    split_i = int(len(d) * 0.70)
+    test = [t for t in trades if int(t.get("exitBar", -1)) > split_i]
+    pnl = np.asarray([float(t["profit"]) for t in test], dtype=float)
+    m = vs(pnl, 50)
+    if m is None:
+        raw = compute_copytolive_metrics(test)
+        return {
+            "oos_trades": int(raw["totalTrades"]),
+            "oos_profit_factor": finite(raw["profitFactor"]),
+            "oos_win_rate_pct": finite(raw["winRate"]),
+            "oos_net_profit_usd": finite(raw["netProfit"]),
+        }
     return {
         "oos_trades": int(m["totalTrades"]),
         "oos_profit_factor": finite(m["profitFactor"]),
@@ -257,19 +260,24 @@ def replay_one(s: dict, source: str, d: pd.DataFrame, d1: pd.DataFrame):
         raise RuntimeError(f"signal length mismatch: {s['id']}")
     if not np.isin(sig, [-1, 0, 1]).all():
         raise RuntimeError(f"non -1/0/+1 signal: {s['id']}")
-    sig = apply_production_filter(
-        sig,
-        d,
-        signal_type=s.get("signalType"),
-        d1=d1,
-    )
 
     cfg = CopyToLiveExecutionConfig(sl_pct=float(s["sl_pct"]), tp_ratio=float(s["tp_ratio"]))
-    result = run_copytolive_backtest(d, sig, cfg)
+    result = run_copytolive_filtered_backtest(
+        d,
+        d1,
+        sig,
+        str(s.get("signalType") or ""),
+        cfg,
+    )
     trades = list(result["trades"])
-    m = dict(result["metrics"])
+    pnl = np.asarray(result["profits"], dtype=float)
+    producer_m = vs(pnl, 300)
+    m = dict(producer_m if producer_m is not None else result["metrics"])
+    if "expectancy" not in m:
+        m["expectancy"] = float(pnl.mean()) if len(pnl) else 0.0
+    if "maxConsecLoss" not in m:
+        m["maxConsecLoss"] = int(m.get("maxConsecLoss", 0))
     bar_pnl = np.asarray(result["bar_pnl"], dtype=float)
-    pnl = np.asarray([float(t["profit"]) for t in trades], dtype=float)
     oos = oos_metrics(trades, d)
     ann = annual_stats(d, bar_pnl)
 
