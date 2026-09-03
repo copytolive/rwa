@@ -1,0 +1,36 @@
+name: AI3 Public Selfhosted Production Probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ai3-public-selfhosted-probe/**"
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe production mount
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ai3-public-selfhosted-results
+          python3 - <<'PY' > ai3-public-selfhosted-results/latest.json
+          import os,json,socket
+          paths=["/var/www/copytolive","/home/opentrue-platform/backend","/opt/copytolive-source"]
+          print(json.dumps({"ok":True,"hostname":socket.gethostname(),"uid":os.geteuid(),"paths":{p:os.path.isdir(p) for p in paths}}))
+          PY
+      - name: Commit result
+        shell: bash
+        run: |
+          git config user.name "CopyToLive AI3 Selfhosted"
+          git config user.email "copytolive-ai3-selfhosted@local.invalid"
+          git add ai3-public-selfhosted-results/latest.json
+          git commit -m "ai3 public selfhosted probe result" || true
+          git pull --rebase origin main
+          git push origin HEAD:main
