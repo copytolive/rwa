@@ -508,19 +508,21 @@ async function bracket({coin,side='BUY',size,type='MARKET',price=null,tp=null,sl
   audit('execution.order',{kind:'bracket',entryKind:kind,coin,side,price:p,size:s,tp:tpN||null,sl:slN||null,protection:orders.length-1,testnet,mode,builder:!!builder});
   return{result,mode,price:p,size:s,protectionCount:orders.length-1,tp:tpN||null,sl:slN||null};
 }
-async function trigger({coin,side,size,triggerPx,tpsl='sl',testnet=false,preferAgent=true}){
+async function trigger({coin,side,size,triggerPx,tpsl='sl',reduceOnly=true,isMarket=true,leverage=1,testnet=false,preferAgent=true}){
   coin=String(coin).toUpperCase();
   const {idx,u}=await asset(coin,testnet);
   const p=fmtPx(triggerPx,u.szDecimals);
   const s=fmtSz(Math.abs(Number(size)),u.szDecimals);
   const kind=String(tpsl).toLowerCase()==='tp'?'tp':'sl';
-  await mandatoryRiskCheck({coin,price:Number(p),size:Number(s),leverage:1,reduceOnly:true,kind:'trigger'},testnet);
-  const {client,mode}=await exchange(testnet,{preferAgent,allowMaster:true});
+  const reduce=!!reduceOnly,lev=Math.max(1,Math.floor(Number(leverage)||1));
+  await mandatoryRiskCheck({coin,price:Number(p),size:Number(s),leverage:lev,reduceOnly:reduce,kind:reduce?'trigger':'stop-entry'},testnet);
+  const {client,mode}=await exchange(testnet,{preferAgent,allowMaster:reduce});
+  if(!reduce&&leverage!=null)assertWriteResult(await client.updateLeverage({asset:idx,isCross:true,leverage:lev}),'Leverage update');
   const builder=await builderParam();
-  const args={orders:[{a:idx,b:String(side).toUpperCase()==='BUY',p,s,r:true,t:{trigger:{isMarket:true,triggerPx:p,tpsl:kind}}}],grouping:'positionTpsl',...(builder?{builder}:{})};
-  const result=assertWriteResult(await client.order(args),'TP/SL trigger');
-  audit('execution.trigger',{coin,side,size:s,triggerPx:p,tpsl:kind,testnet,mode,builder:!!builder});
-  return{result,mode,price:p,size:s};
+  const args={orders:[{a:idx,b:String(side).toUpperCase()==='BUY',p,s,r:reduce,t:{trigger:{isMarket:!!isMarket,triggerPx:p,tpsl:kind}}}],grouping:reduce?'positionTpsl':'na',...(builder?{builder}:{})};
+  const result=assertWriteResult(await client.order(args),reduce?'TP/SL trigger':'Stop entry');
+  audit('execution.trigger',{coin,side,size:s,triggerPx:p,tpsl:kind,reduceOnly:reduce,isMarket:!!isMarket,leverage:lev,testnet,mode,builder:!!builder});
+  return{result,mode,price:p,size:s,reduceOnly:reduce,isMarket:!!isMarket};
 }
 async function cancel({coin,oid,testnet=false,preferAgent=true}){
   coin=String(coin).toUpperCase();
@@ -559,7 +561,7 @@ async function health(testnet=false){
 
 window.RWAExecutionAPI={
   version:'2.0.0',
-  revision:'2.2.0',
+  revision:'2.3.0',
   hardening:'single-write-path-v1',
   riskGate:'mandatory-internal-v1',
   productionGate:'machine-wallet-gate-v1',
