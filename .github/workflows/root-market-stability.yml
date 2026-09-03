@@ -87,7 +87,12 @@ jobs:
           grep -Fq "rwa-terminal-v5.js?v=1.0.22" chart-core.js
           grep -Fq "rwa-terminal-v5.css?v=1.0.12" chart-core.js
           grep -Fq "data-v5-nav=\"discover\"" rwa-terminal-v5.js
-          grep -Fq 'data-v5-global="markets"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-global="trade"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-global="discover"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-global="portfolio"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-global="analytics"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-global="rewards"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-global="more"' rwa-terminal-v5.js
           grep -Fq 'rwa-v5-market-nav' rwa-terminal-v5.js
           ! grep -Fq 'data-mobile-nav="portfolio"' index.html
           ! grep -Fq 'data-mobile-nav="social"' index.html
