@@ -1,0 +1,70 @@
+name: AI7 GOLD Public Production File Probe
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/ai7-gold-public-file-probe.yml"
+      - "backtest/gold24/AI7_PUBLIC_FILE_PROBE_KICK"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe public production artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          SID="ND_MTF_LINREG_SLP_f21s55_GOLD_H1_SL0.025_TP2.5"
+          cat > out/urls.txt <<EOF
+          https://copytolive.com/data/backtest_farm.json
+          https://copytolive.com/data/backtest_detail/$SID.json
+          https://copytolive.com/data/ohlcv/GOLD_H1.parquet
+          https://copytolive.com/data/ohlcv/GOLD_D1.parquet
+          https://copytolive.com/ohlcv/GOLD_H1.parquet
+          https://copytolive.com/ohlcv/GOLD_D1.parquet
+          https://copytolive.com/trading/data/ohlcv/GOLD_H1.parquet
+          https://copytolive.com/trading/data/ohlcv/GOLD_D1.parquet
+          http://109.123.239.76:8000/data/ohlcv/GOLD_H1.parquet
+          http://109.123.239.76:8000/data/ohlcv/GOLD_D1.parquet
+          http://109.123.239.76:8000/trading/data/ohlcv/GOLD_H1.parquet
+          http://109.123.239.76:8000/trading/data/ohlcv/GOLD_D1.parquet
+          EOF
+          python3 - <<'PY'
+          import hashlib,json,pathlib,subprocess
+          urls=[x.strip() for x in pathlib.Path("out/urls.txt").read_text().splitlines() if x.strip()]
+          rows=[]
+          for i,url in enumerate(urls):
+              body=pathlib.Path(f"out/body-{i}")
+              hdr=pathlib.Path(f"out/hdr-{i}.txt")
+              cp=subprocess.run(["curl","-L","-sS","--retry","2","--connect-timeout","10","--max-time","45",
+                                 "-D",str(hdr),"-o",str(body),"-w","%{http_code}\n%{content_type}\n%{url_effective}",url],
+                                text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+              parts=(cp.stdout or "").splitlines()
+              status=parts[0] if parts else ""
+              ctype=parts[1] if len(parts)>1 else ""
+              effective=parts[2] if len(parts)>2 else ""
+              b=body.read_bytes() if body.exists() else b""
+              rows.append({
+                "url":url,"status":status,"content_type":ctype,"effective_url":effective,
+                "bytes":len(b),"sha256":hashlib.sha256(b).hexdigest() if b else None,
+                "head_hex":b[:32].hex(),
+                "text_preview":b[:500].decode("utf-8","replace") if ("json" in ctype or "text" in ctype) else None,
+                "curl_rc":cp.returncode,"curl_stderr":(cp.stderr or "")[-1000:]
+              })
+          pathlib.Path("out/report.json").write_text(json.dumps(rows,indent=2)+"\n")
+          print(json.dumps(rows,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ai7-gold-public-file-probe-${{ github.run_id }}
+          path: out
+          if-no-files-found: error
+          retention-days: 30
