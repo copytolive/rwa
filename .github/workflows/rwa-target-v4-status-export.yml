@@ -1,0 +1,58 @@
+name: RWA Target V4 Status Export
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/rwa-target-v4-status-export.yml"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TARGET_SHA: 7b1dc81a1306c02f7c197025632566c8316585cf
+      GH_TOKEN: ${{ github.token }}
+      OUT: validation/target-v4-fresh-20260903/status.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Export official workflow state
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "$OUT")"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$TARGET_SHA&per_page=100" > /tmp/runs.json
+          jq --arg sha "$TARGET_SHA" '{
+            target_sha:$sha,
+            observed_at:(now|todateiso8601),
+            workflows:[
+              .workflow_runs[]
+              | select(.name=="Deploy Real World Asset Target V4"
+                    or .name=="RWA Target V4 Browser Gate"
+                    or .name=="Real World Asset V4 Public Page-by-Page Audit")
+              | {name,id,status,conclusion,head_sha,event,run_attempt,html_url,created_at,updated_at}
+            ]
+          }' /tmp/runs.json > "$OUT"
+          cat "$OUT"
+      - name: Publish status snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "rwa-target-v4-status-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add "$OUT"
+          git commit -m "chore(validation): snapshot fresh Target V4 workflow status [skip ci]"
+          for i in $(seq 1 8); do
+            git fetch origin main
+            if git rebase origin/main && git push origin HEAD:main; then exit 0; fi
+            git rebase --abort || true
+            sleep $((i*2))
+          done
+          exit 1
