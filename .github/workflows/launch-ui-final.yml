@@ -42,7 +42,7 @@ jobs:
           node --check rwa-multichain-engine.js
           grep -Fq '<strong>Real World Asset</strong>' index.html
           grep -Fq 'Markets</button>' index.html
-          grep -Fq 'rwa-terminal-v5.css?v=1.0.14' index.html
+          grep -Fq 'rwa-terminal-v5.css?v=1.0.15' index.html
           ! grep -Fq 'id="rwaV5FirstPaintShell"' index.html
           grep -Fq 'html.rwa-target-prepaint body>.app{visibility:hidden' index.html
           grep -Fq 'data-v5-nav="trade"' rwa-terminal-v5.js
