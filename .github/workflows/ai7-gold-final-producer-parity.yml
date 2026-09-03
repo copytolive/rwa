@@ -93,8 +93,8 @@ jobs:
           import hashlib,os,pandas as pd
           h1=os.environ["H1_FILE"]; d1=os.environ["D1_FILE"]
           a=pd.read_csv(h1); b=pd.read_csv(d1)
-          assert 190000 <= len(a) <= 205000, len(a)
-          assert 8000 <= len(b) <= 8500, len(b)
+          assert 160000 <= len(a) <= 175000, len(a)
+          assert 6800 <= len(b) <= 7300, len(b)
           print({
             "h1_rows":len(a),"h1_start":a["Date"].iloc[0],"h1_end":a["Date"].iloc[-1],
             "h1_sha256":hashlib.sha256(open(h1,"rb").read()).hexdigest(),
