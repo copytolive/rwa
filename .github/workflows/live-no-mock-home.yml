@@ -1,6 +1,4 @@
-name: RWA Trading UI v3 Browser Gate
-# FINAL_TRADING_NO_ECOMMERCE_CERT
-# MULTICHAIN_VISIBLE_V202
+name: RWA Target V4 Browser Gate
 
 on:
   push:
@@ -11,7 +9,6 @@ on:
       - "chart-core.js"
       - "rwa-live-home-v1.js"
       - "rwa-live-home-v1.css"
-      - "rwa-live-orderbook-v1.css"
       - "rwa-multichain.js"
       - "rwa-multichain-engine.js"
       - "rwa-multichain-registry.json"
@@ -19,7 +16,6 @@ on:
       - "exchange-core.js"
       - "wallet-core.js"
       - "walletconnect.js"
-      - "superapp-v5.js"
       - "tools/live-no-mock-home-browser.mjs"
       - ".github/workflows/live-no-mock-home.yml"
   workflow_dispatch:
@@ -39,23 +35,19 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Serve local RWA
         run: |
-          python3 -m http.server 4173 --directory .. >/tmp/rwa-trading.log 2>&1 &
-          for i in $(seq 1 30); do
-            curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && exit 0
-            sleep 1
-          done
-          cat /tmp/rwa-trading.log
-          exit 1
-      - name: Certify trading UI v3 · desktop + mobile
+          python3 -m http.server 4173 --directory .. >/tmp/rwa-target-v4.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/rwa-target-v4.log; exit 1
+      - name: Certify Real World Asset target V4
         env:
           RWA_UI_URL: http://127.0.0.1:4173/rwa/
-          RWA_UI_PROOF_DIR: proof/trading-ui-v3-local
+          RWA_UI_PROOF_DIR: proof/target-v4-local
         run: node tools/live-no-mock-home-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: trading-ui-v3-local-${{ github.sha }}
-          path: proof/trading-ui-v3-local/
+          name: target-v4-local-${{ github.sha }}
+          path: proof/target-v4-local/
           if-no-files-found: error
           retention-days: 30
 
@@ -70,9 +62,9 @@ jobs:
         run: |
           set -euo pipefail
           URL='https://copytolive.github.io/rwa/deployment-sha.txt'
-          for i in $(seq 1 60); do
+          for i in $(seq 1 90); do
             LIVE="$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "$URL?v=$GITHUB_SHA-$i" 2>/dev/null | tr -d '\r\n' || true)"
-            if [ "$LIVE" = "$GITHUB_SHA" ]; then exit 0; fi
+            [ "$LIVE" = "$GITHUB_SHA" ] && exit 0
             sleep 10
           done
           exit 1
@@ -80,15 +72,15 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Certify public trading-only HOME and MULTI CHAIN
+      - name: Certify public target V4
         env:
           RWA_UI_URL: https://copytolive.github.io/rwa/
-          RWA_UI_PROOF_DIR: proof/trading-ui-v3-public
+          RWA_UI_PROOF_DIR: proof/target-v4-public
         run: node tools/live-no-mock-home-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: trading-ui-v3-public-${{ github.sha }}
-          path: proof/trading-ui-v3-public/
+          name: target-v4-public-${{ github.sha }}
+          path: proof/target-v4-public/
           if-no-files-found: error
           retention-days: 30
