@@ -63,30 +63,28 @@ jobs:
           assert x['contract']['pip_size_usd']==0.01
           assert x['contract']['quantity_gold_units']==100.0
           assert x['contract']['timeframe']=='H4'
-          n=x['selected_h4_hardpass_count']
-          py=list(p.parent.glob('h4_*.py')); mq=list(p.parent.glob('h4_*.mq5'))
-          assert len(py)==n and len(mq)==n,(n,len(py),len(mq))
+          n=int(x['selected_h4_hardpass_count'])
+          assert len(list(p.parent.glob('h4_*.py')))==n
+          assert len(list(p.parent.glob('h4_*.mq5')))==n
           print(f'H4_EXACT_PAIR_GENERATION_PASS count={n}')
           PY
       - name: Validate exact native-H4 Python replay parity
         run: |
           set -euo pipefail
-          cp "$RUNNER_TEMP/h4/GC1_COMEX_TRADINGVIEW_H4_PRIMARY.csv" "$RUNNER_TEMP/h4/GC1_COMEX_TRADINGVIEW_H4_PRIMARY.csv.keep"
-          export GOLD10B_NATIVE_H4_DATASET="$RUNNER_TEMP/h4/GC1_COMEX_TRADINGVIEW_H4_PRIMARY.csv"
-          export GOLD10B_NATIVE_H4_RECEIPT="$RUNNER_TEMP/h4/gate_a_h4_receipt.json"
           python - <<'PY'
           import json,os,pathlib,subprocess,sys
-          root=pathlib.Path('backtest/gold24/native_h4_qualified')
+          root=pathlib.Path('backtest/gold24/native_h4_qualified').resolve()
+          state=pathlib.Path(os.environ['RUNNER_TEMP'])/'h4'
           m=json.loads((root/'selected_manifest_h4.json').read_text())
           checks=[]
           for row in m['methods']:
               p=root/row['python']
-              cp=subprocess.run([sys.executable,str(p)],cwd=str(root),capture_output=True,text=True,env=os.environ.copy())
+              cp=subprocess.run([sys.executable,str(p),'--state-dir',str(state)],cwd=str(root),capture_output=True,text=True)
               checks.append({'python':row['python'],'returncode':cp.returncode,'stdout':cp.stdout[-4000:],'stderr':cp.stderr[-4000:]})
               if cp.returncode!=0:
                   raise SystemExit(f"PYTHON_H4_PARITY_FAIL {row['python']}\n{cp.stdout}\n{cp.stderr}")
           out={'status':'PASS','count':len(checks),'checks':checks}
-          pathlib.Path(os.environ['RUNNER_TEMP']+'/native_h4_python_parity.json').write_text(json.dumps(out,indent=2)+'\n')
+          (pathlib.Path(os.environ['RUNNER_TEMP'])/'native_h4_python_parity.json').write_text(json.dumps(out,indent=2)+'\n')
           print(f'NATIVE_H4_PYTHON_PARITY_PASS count={len(checks)}')
           PY
       - name: Publish exact H4 wrapper set race-safe
