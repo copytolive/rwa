@@ -1,0 +1,218 @@
+name: ALL PAIRS Zero Delay Public Evidence
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "history-allpairs-zero-requests/**"
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: req
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^history-allpairs-zero-requests/.*\.json$' | tail -n 1)"
+          ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$FILE")"
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+
+      - name: Capture production ALL PAIRS at zero intentional delay
+        shell: bash
+        env:
+          ACCEPT_ID: ${{ steps.req.outputs.id }}
+        run: |
+          set -euo pipefail
+          OUT="validation/history-allpairs-zero-delay/$ACCEPT_ID"
+          mkdir -p "$OUT"
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu --remote-debugging-port=9222 about:blank >/tmp/allpairs.chrome.out 2>/tmp/allpairs.chrome.err &
+          PID=$!
+          trap 'kill $PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 100); do
+            if curl -fsS http://127.0.0.1:9222/json/list >/tmp/allpairs-pages.json; then break; fi
+            sleep .1
+          done
+
+          cat >/tmp/allpairs.mjs <<'NODE'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+
+          const ID=process.env.ACCEPT_ID;
+          const DIR='validation/history-allpairs-zero-delay/'+ID;
+          const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+          const result={ok:false,id:ID,acceptance:'FAIL',requestedDelayMs:0,desktop:{},mobile:{},screenshots:{},consoleErrors:[],exceptions:[],networkFailed:[],httpErrors:[]};
+          let ws=null,seq=0; const pending=new Map(),urls=new Map();
+
+          function save(name,b64){
+            const p=DIR+'/'+name;
+            fs.writeFileSync(p,Buffer.from(b64,'base64'));
+            const buf=fs.readFileSync(p);
+            result.screenshots[name]={bytes:buf.length,sha256:crypto.createHash('sha256').update(buf).digest('hex')};
+          }
+
+          try{
+            const pages=JSON.parse(fs.readFileSync('/tmp/allpairs-pages.json','utf8'));
+            const target=pages.find(x=>x.type==='page');
+            if(!target?.webSocketDebuggerUrl) throw Error('NO_CDP_PAGE');
+            ws=new WebSocket(target.webSocketDebuggerUrl);
+            const send=(method,params={})=>new Promise((resolve,reject)=>{
+              const id=++seq;
+              const tm=setTimeout(()=>{pending.delete(id);reject(Error('CDP_TIMEOUT '+method));},25000);
+              pending.set(id,{resolve:v=>{clearTimeout(tm);resolve(v)},reject:e=>{clearTimeout(tm);reject(e)}});
+              ws.send(JSON.stringify({id,method,params}));
+            });
+            ws.onmessage=e=>{
+              const m=JSON.parse(e.data);
+              if(m.id&&pending.has(m.id)){
+                const p=pending.get(m.id); pending.delete(m.id);
+                m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result); return;
+              }
+              if(m.method==='Runtime.exceptionThrown') result.exceptions.push(String(m.params?.exceptionDetails?.exception?.description||m.params?.exceptionDetails?.text||'exception'));
+              if(m.method==='Runtime.consoleAPICalled'&&m.params?.type==='error') result.consoleErrors.push((m.params.args||[]).map(a=>String(a.value??a.description??'')).join(' '));
+              if(m.method==='Network.requestWillBeSent') urls.set(m.params.requestId,m.params?.request?.url||'');
+              if(m.method==='Network.loadingFailed'&&!m.params?.canceled) result.networkFailed.push((urls.get(m.params.requestId)||'')+' :: '+(m.params.errorText||''));
+              if(m.method==='Network.responseReceived'){
+                const rr=m.params?.response;
+                if(rr&&Number(rr.status)>=400) result.httpErrors.push({status:Number(rr.status),url:rr.url||''});
+              }
+            };
+            await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('CDP_OPEN_TIMEOUT')),10000);ws.onopen=()=>{clearTimeout(t);resolve()};ws.onerror=reject;});
+            await send('Runtime.enable'); await send('Network.enable'); await send('Page.enable');
+
+            const ev=async expression=>{
+              const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});
+              if(r.exceptionDetails) throw Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text||'EVAL');
+              return r.result.value;
+            };
+            const j=async expression=>{
+              const v=await ev(expression);
+              return typeof v==='string'?JSON.parse(v):v;
+            };
+            async function wait(expression,timeout=50000){
+              const end=Date.now()+timeout;
+              while(Date.now()<end){
+                try{if(await ev(expression))return true;}catch{}
+                await sleep(75);
+              }
+              return false;
+            }
+            async function viewport(w,h,mobile=false){
+              await send('Emulation.setDeviceMetricsOverride',{width:w,height:h,deviceScaleFactor:1,mobile,screenWidth:w,screenHeight:h});
+            }
+            async function rect(selector){
+              return await j(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return JSON.stringify(null);const r=e.getBoundingClientRect();return JSON.stringify({x:Math.max(0,r.left+scrollX),y:Math.max(0,r.top+scrollY),width:Math.max(1,r.width),height:Math.max(1,r.height)})})()`);
+            }
+            async function shot(name,clip){
+              const r=await send('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:true,clip:{...clip,scale:1}});
+              save(name,r.data);
+            }
+            async function viewportShot(name){
+              const r=await send('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
+              save(name,r.data);
+            }
+
+            await viewport(2048,933,false);
+            await send('Page.navigate',{url:'https://copytolive.com/dashboard/index.html?allpairsZeroPublic='+encodeURIComponent(ID)});
+            const ready=await wait("document.readyState==='complete'&&document.querySelector('#historyTypeFilters')&&document.querySelector('#backtestHistoryPanel')&&window.__CTL_NATIVE_FILTER_V51__?.ready&&window.__CTL_HISTORY_STABLE__?.render?.__ctlV51===true&&window.__CTL_HL_LEDGER_V32__?.version>=33");
+            if(!ready) throw Error('HISTORY_V51_NOT_READY');
+
+            async function runCase(label,w,h,mobile){
+              await viewport(w,h,mobile);
+              await ev("window.scrollTo(0,0);true");
+              const panel=await rect('#backtestHistoryPanel');
+              const filters=await rect('#historyTypeFilters');
+              if(!panel||!filters) throw Error('TARGET_MISSING '+label);
+
+              const sync=await j(`(()=>{
+                const b=document.querySelector('#historyTypeFilters [data-history-type="all"]');
+                if(!b)return JSON.stringify({ok:false,error:'ALL missing'});
+                const t0=performance.now();
+                b.click();
+                const t1=performance.now();
+                const st=window.__CTL_HISTORY_STABLE__;
+                const active=document.querySelector('#historyTypeFilters [data-history-type].active')?.dataset?.historyType||'';
+                const title=document.querySelector('#backtestHistoryPanel')?.firstElementChild?.firstElementChild?.textContent||'';
+                const info=document.getElementById('tradeLogInfo')?.textContent||'';
+                const count=document.getElementById('historyCount')?.textContent||'';
+                return JSON.stringify({ok:true,requestedDelayMs:0,syncApplyMs:t1-t0,mode:st?.mode||'',active,title,info,count});
+              })()`);
+              if(!sync.ok||sync.mode!=='all'||sync.active!=='all'||!sync.title.includes('Detailed Trade Log · ALL PAIRS')) throw Error('ALL_SYNC_FAIL '+label+' '+JSON.stringify(sync));
+
+              // True zero intentional delay: no rAF, setTimeout, or sleep before this capture command.
+              const host0=process.hrtime.bigint();
+              await shot(label+'-allpairs-0ms-panel.png',panel);
+              const host1=process.hrtime.bigint();
+              await shot(label+'-allpairs-0ms-filters.png',filters);
+              await viewportShot(label+'-allpairs-0ms-viewport.png');
+
+              await sleep(100);
+              await shot(label+'-allpairs-100ms-panel.png',panel);
+              await shot(label+'-allpairs-100ms-filters.png',filters);
+
+              const p0=result.screenshots[label+'-allpairs-0ms-panel.png'];
+              const p100=result.screenshots[label+'-allpairs-100ms-panel.png'];
+              const f0=result.screenshots[label+'-allpairs-0ms-filters.png'];
+              const f100=result.screenshots[label+'-allpairs-100ms-filters.png'];
+              const out={width:w,height:h,requestedDelayMs:0,syncApplyMs:sync.syncApplyMs,captureCommandRoundTripMs:Number(host1-host0)/1e6,mode:sync.mode,active:sync.active,title:sync.title,info:sync.info,count:sync.count,panelPixelExact0to100:p0.sha256===p100.sha256,filtersPixelExact0to100:f0.sha256===f100.sha256};
+              if(!out.panelPixelExact0to100||!out.filtersPixelExact0to100) throw Error('PIXEL_MOVED_WITHIN_100MS '+label+' '+JSON.stringify(out));
+              return out;
+            }
+
+            result.desktop=await runCase('desktop',2048,933,false);
+            result.mobile=await runCase('mobile',390,844,true);
+
+            result.consoleErrors=[...new Set(result.consoleErrors)].filter(Boolean).slice(0,50);
+            result.exceptions=[...new Set(result.exceptions)].filter(Boolean).slice(0,50);
+            result.networkFailed=[...new Set(result.networkFailed)].filter(x=>x&&!/ERR_ABORTED|favicon/i.test(x)).slice(0,50);
+            result.httpErrors=[...new Map(result.httpErrors.map(x=>[x.status+'|'+x.url,x])).values()].filter(x=>x.status!==401&&!/favicon/i.test(x.url)).slice(0,50);
+            const serious=result.consoleErrors.concat(result.exceptions).filter(x=>/SyntaxError|already been declared|Uncaught/i.test(x));
+            if(serious.length) throw Error('JS_ERRORS '+JSON.stringify(serious));
+            if(result.networkFailed.length) throw Error('NETWORK_FAILURES '+JSON.stringify(result.networkFailed));
+            const badHttp=result.httpErrors.filter(x=>!((x.status===429&&/hyperliquid/i.test(x.url))||(/googleapis|gstatic/i.test(x.url)&&[403,404,429].includes(x.status))));
+            if(badHttp.length) throw Error('HTTP_ERRORS '+JSON.stringify(badHttp));
+
+            result.ok=true; result.acceptance='PASS';
+          }catch(e){
+            result.ok=false; result.acceptance='FAIL'; result.error=String(e?.stack||e);
+          }finally{
+            try{ws?.close()}catch{}
+          }
+
+          result.publicBase='https://copytolive.github.io/rwa/validation/history-allpairs-zero-delay/'+ID+'/';
+          for(const name of Object.keys(result.screenshots)) result.screenshots[name].url=result.publicBase+name;
+          fs.writeFileSync(DIR+'/manifest.json',JSON.stringify(result,null,2)+'\n');
+          const html='<!doctype html><meta charset="utf-8"><title>ALL PAIRS Zero Delay Evidence</title><style>body{font-family:system-ui;background:#0b0e14;color:#eaecef;margin:20px}img{max-width:100%;display:block;margin:12px 0 28px;border:1px solid #30363d}code{color:#00e7a0}</style><h1>Detailed Trade Log · ALL PAIRS — 0ms Evidence</h1><p><code>'+result.acceptance+'</code> · requested delay 0ms</p>'+Object.keys(result.screenshots).map(n=>'<h2>'+n+'</h2><img src="'+n+'">').join('');
+          fs.writeFileSync(DIR+'/index.html',html);
+          console.log(JSON.stringify(result,null,2));
+          if(!result.ok) process.exit(2);
+          NODE
+
+          node /tmp/allpairs.mjs
+
+      - name: Commit public evidence
+        shell: bash
+        env:
+          ACCEPT_ID: ${{ steps.req.outputs.id }}
+        run: |
+          set -euo pipefail
+          git config user.name "CopyToLive ALL PAIRS Evidence"
+          git config user.email "copytolive-allpairs-evidence@local.invalid"
+          git add "validation/history-allpairs-zero-delay/$ACCEPT_ID"
+          git commit -m "evidence: ALL PAIRS zero-delay $ACCEPT_ID"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort || true; sleep "$attempt"; continue; }
+            if git push origin HEAD:main; then exit 0; fi
+            sleep "$attempt"
+          done
+          exit 1
