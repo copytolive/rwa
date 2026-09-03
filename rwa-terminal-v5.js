@@ -155,7 +155,11 @@ function ensureMobile(){
  if(close&&!close.dataset.v5Direct){close.dataset.v5Direct='1';close.onclick=e=>{e.preventDefault();e.stopPropagation();closeMarketsMobile()}}
  ensureMiniBook();applyMobileState()
 }
-function setMobile(mode){mobileMode=mode;document.body.dataset.v5MobileMode=mode;setActive('.rwa-v5-mobile-worktabs [data-v5-mobile-mode]',mode,'v5MobileMode');applyMobileState()}
+function setMobile(mode){
+ mobileMode=mode;document.body.dataset.v5MobileMode=mode;setActive('.rwa-v5-mobile-worktabs [data-v5-mobile-mode]',mode,'v5MobileMode');
+ if(innerWidth<681){const bottom=$('#rwaV5Bottom');if(bottom)bottom.style.setProperty('display',mode==='workspace'?'block':'none','important')}
+ applyMobileState()
+}
 function applyMobileState(){
  document.body.dataset.v5MobileMode=mobileMode;
  const feed=$('#rwaV5MobileFeed');if(feed){feed.hidden=mobileMode!=='feed';if(!feed.hidden)feed.innerHTML=feedHtml()}
@@ -239,6 +243,23 @@ function apply(){
 }
 function bind(){
  const depth=$('#depth');if(depth&&!depth.dataset.v5BookBound){depth.dataset.v5BookBound='1';depth.addEventListener('pointerdown',e=>orderBookClick(e),true)}
+ if(!window.__RWA_V5_CRITICAL_CAPTURE__){
+  window.__RWA_V5_CRITICAL_CAPTURE__=true;
+  window.addEventListener('click',e=>{
+   const t=e.target?.closest?.('[data-v5-trade-tab],[data-v5-mobile-nav],[data-v5-action="close-markets"]');if(!t)return;
+   if(t.matches('[data-v5-trade-tab]')){e.preventDefault();e.stopImmediatePropagation();t.dataset.v5TradeTab==='alerts'?openAlerts():openTrade();return}
+   if(t.matches('[data-v5-action="close-markets"]')){e.preventDefault();e.stopImmediatePropagation();closeMarketsMobile();return}
+   if(t.matches('[data-v5-mobile-nav]')){
+    e.preventDefault();e.stopImmediatePropagation();const k=t.dataset.v5MobileNav;
+    qa('[data-v5-mobile-nav]').forEach(x=>x.classList.toggle('active',x===t));
+    if(k==='home')setMobile('feed');
+    else if(k==='markets')openMarketsMobile();
+    else if(k==='trade')setMobile('trade');
+    else if(k==='portfolio'){setBottom('portfolio');setMobile('workspace')}
+    else if(k==='profile')$('.signin')?.click();
+   }
+  },true)
+ }
  document.addEventListener('click',e=>{
   const lockSign=e.target.closest('.rwa-v5-lock .signin');if(lockSign){e.preventDefault();$('.top-actions .signin')?.click();return}
   const nav=e.target.closest('[data-v5-nav]');if(nav){e.preventDefault();e.stopPropagation();navigate(nav.dataset.v5Nav);return}
@@ -270,4 +291,4 @@ function boot(){apply();bind();renderBottom();clearInterval(renderTimer);renderT
 window.RWATerminalV5={version:VERSION,active:true,apply,navigate,setBottom,setMobile,setTradeSide,openAlerts,openTrade,toggleFavorite,share,audit:()=>({version:VERSION,route:location.hash||'#markets',leftMode,bottomMode,mobileMode,tradeSide,globalNav:qa('.topnav [data-v5-nav]').map(x=>x.dataset.v5Nav),bottomTabs:qa('#rwaV5Bottom [data-v5-bottom]').map(x=>x.dataset.v5Bottom),railTrade:$('#liveRail')?.dataset.v5Trade==='1',orderTicketInside:!!$('#liveRail #rwaTargetOrderTicket'),mobileMarketsOpen:document.body.classList.contains('rwa-v5-mobile-markets'),favorites:favorites().length,alerts:alerts().length,theses:theses().length})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
-/* RWA_TERMINAL_V5_ACCEPTANCE_2026_09_03_R17 */
+/* RWA_TERMINAL_V5_ACCEPTANCE_2026_09_03_R18 */
