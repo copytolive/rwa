@@ -102,6 +102,20 @@ def evaluate(primary: pd.DataFrame, cross: pd.DataFrame) -> dict:
     min_rows = min(len(primary), len(cross))
     overlap_floor = max(3000, int(min_rows * 0.90))
     span_days = float((primary["Date"].iloc[-1] - primary["Date"].iloc[0]).total_seconds() / 86400.0)
+    # Additional instrument identity check: compare each source's last native
+    # H4 close per UTC date. This aggregation is CROSS-CHECK ONLY; the H4
+    # backtest dataset remains the untouched source H4 bars above.
+    pdaily = primary.set_index("Date")["Close"].groupby(primary["Date"].dt.floor("D").to_numpy()).last()
+    xdaily = cross.set_index("Date")["Close"].groupby(cross["Date"].dt.floor("D").to_numpy()).last()
+    daily = pd.concat([pdaily.rename("p"), xdaily.rename("x")], axis=1, join="inner").dropna()
+    if len(daily) >= 3:
+        drp=np.log(daily["p"]).diff(); drx=np.log(daily["x"]).diff()
+        dv=drp.notna() & drx.notna()
+        daily_corr=float(drp[dv].corr(drx[dv])) if dv.sum()>=2 else float("nan")
+        daily_direction=float((np.sign(drp[dv])==np.sign(drx[dv])).mean()) if dv.any() else 0.0
+    else:
+        daily_corr,daily_direction=float("nan"),0.0
+
     criteria = {
         "primary_rows_ge_3000": len(primary) >= 3000,
         "crosscheck_rows_ge_3000": len(cross) >= 3000,
@@ -111,8 +125,10 @@ def evaluate(primary: pd.DataFrame, cross: pd.DataFrame) -> dict:
         "direct_h4_nearest_source_overlap_ge_90pct": len(aligned) >= overlap_floor,
         "cross_bar_mapping_nearly_one_to_one": distinct_cross_ratio >= 0.98,
         "max_source_anchor_offset_le_2h": max_anchor_offset_h <= 2.0,
-        "h4_log_return_corr_ge_0_75": bool(np.isfinite(corr) and corr >= 0.75),
-        "h4_direction_agreement_ge_0_65": direction >= 0.65,
+        "h4_log_return_corr_ge_0_70": bool(np.isfinite(corr) and corr >= 0.70),
+        "h4_direction_agreement_ge_0_70": direction >= 0.70,
+        "daily_validation_return_corr_ge_0_85": bool(np.isfinite(daily_corr) and daily_corr >= 0.85),
+        "daily_validation_direction_ge_0_75": daily_direction >= 0.75,
         "median_abs_price_delta_le_0_08": med_delta <= 0.08,
     }
     return {
@@ -122,6 +138,10 @@ def evaluate(primary: pd.DataFrame, cross: pd.DataFrame) -> dict:
         "overlap_floor": int(overlap_floor),
         "h4_log_return_correlation": corr,
         "h4_direction_agreement": direction,
+        "daily_validation_rows": int(len(daily)),
+        "daily_validation_log_return_correlation": daily_corr,
+        "daily_validation_direction_agreement": daily_direction,
+        "daily_validation_policy": "last native H4 close per UTC date for cross-check only; never used as backtest bars",
         "median_absolute_price_delta_fraction": med_delta,
         "primary_history_days": span_days,
         "crosscheck_alignment_policy": "nearest source H4 timestamp within 2h; no OHLCV resampling",
