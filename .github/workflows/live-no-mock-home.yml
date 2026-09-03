@@ -57,19 +57,24 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Wait for final public UI markers
+      - name: Wait for current public target markers
         shell: bash
         run: |
           set -euo pipefail
           BASE='https://copytolive.github.io/rwa'
           for i in $(seq 1 90); do
-            ROOT="$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "$BASE/?v=$i" 2>/dev/null || true)"
-            CORE="$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "$BASE/chart-core.js?v=$i" 2>/dev/null || true)"
-            if printf '%s' "$ROOT" | grep -Fq 'id="bookPrecision"' && printf '%s' "$ROOT" | grep -Fq 'id="watchAdd"' && printf '%s' "$ROOT" | grep -Fq 'app.js?v=19' && printf '%s' "$CORE" | grep -Fq 'rwa-live-home-v1.js?v=4.1.0.1'; then
-              echo "Final public UI markers are live"
+            LIVE_SHA="$(curl -fsSL --max-time 15 "$BASE/deployment-sha.txt?v=$i" 2>/dev/null | tr -d '\r\n' || true)"
+            Q="${LIVE_SHA:-none}-$i"
+            ROOT="$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "$BASE/?v=$Q" 2>/dev/null || true)"
+            CORE="$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "$BASE/chart-core.js?v=$Q" 2>/dev/null || true)"
+            if printf '%s' "$ROOT" | grep -Fq 'id="bookPrecision"' \
+              && printf '%s' "$ROOT" | grep -Fq 'id="watchAdd"' \
+              && printf '%s' "$ROOT" | grep -Fq 'app.js?v=19' \
+              && printf '%s' "$CORE" | grep -Fq 'rwa-live-home-v1.js?v=4.1.0.1'; then
+              echo "Public target markers live at deployment $LIVE_SHA"
               exit 0
             fi
-            sleep 10
+            sleep 5
           done
           exit 1
       - name: Install Chromium
