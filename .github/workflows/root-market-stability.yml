@@ -61,11 +61,11 @@ jobs:
           node --check rwa-live-home-v1.js
           node --check tools/root-market-browser-stability.mjs
           grep -Fq '<strong>Real World Asset</strong>' index.html
-          grep -Fq 'app.js?v=17' index.html
+          grep -Fq 'app.js?v=18' index.html
           grep -Fq 'id="bookPrecision"' index.html
           grep -Fq 'id="bookMenu"' index.html
           grep -Fq 'id="liveRail"' index.html
-          grep -Fq "RWAMarketRuntime={version:'1.4.1'" app.js
+          grep -Fq "RWAMarketRuntime={version:'1.4.2'" app.js
           grep -Fq "/api/v3/depth?symbol=" app.js
           grep -Fq "limit=100" app.js
           grep -Fq "limit=innerWidth<681?70:140" app.js
