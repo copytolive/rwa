@@ -6,6 +6,7 @@ on:
     workflows:
       - GOLD10B Targeted HARD PASS Search
       - GOLD10B Targeted HARD PASS Search v3
+      - GOLD10B Targeted HARD PASS Search v4
       - GOLD10B Native H4 HARD PASS Discovery
       - GOLD10B Broker Native MT5 H4 Discovery
       - GOLD10B Global D1-H4 Correlation Gate
