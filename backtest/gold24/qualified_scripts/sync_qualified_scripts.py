@@ -211,7 +211,8 @@ def main() -> int:
         "total_method_pairs": len(rows),
         "created": created,
         "reused": reused,
-        "removed_stale_auto": removed,\n        "removed_stale_wrappers": removed,
+        "removed_stale_auto": removed,
+        "removed_stale_wrappers": removed,
         "methods": manifest,
         "contract": {
             "pip_size_usd": PIP_SIZE_USD,
