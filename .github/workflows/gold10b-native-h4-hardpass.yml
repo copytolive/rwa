@@ -37,7 +37,7 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install -r backtest/gold24/requirements.txt
-          python -m pip install --no-deps 'git+https://github.com/rongardF/tvdatafeed.git'
+          python -m pip install 'git+https://github.com/rongardF/tvdatafeed.git'
 
       - name: Fetch and audit direct native H4 source bars
         run: |
