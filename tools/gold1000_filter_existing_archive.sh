@@ -11,7 +11,7 @@ test -d "$ARCHIVE_BASE" || { echo "ERROR: archive lokal tidak ditemukan"; exit 1
 
 SOURCE_ARCHIVE="${1:-}"
 if [[ -z "$SOURCE_ARCHIVE" ]]; then
-  SOURCE_ARCHIVE="$(find "$ARCHIVE_BASE" -mindepth 1 -maxdepth 1 -type d | LC_ALL=C sort | tail -1)"
+  SOURCE_ARCHIVE="$(find "$ARCHIVE_BASE" -mindepth 1 -maxdepth 1 -type d ! -name '.*' | LC_ALL=C sort | tail -1)"
 fi
 
 test -n "$SOURCE_ARCHIVE" || { echo "ERROR: tidak ada archive sumber"; exit 1; }
@@ -22,15 +22,21 @@ TMP="$ARCHIVE_BASE/.backtest_only_$TS"
 QUARANTINE="$QUARANTINE_BASE/$TS"
 MANIFEST="$MANIFEST_DIR/local_legacy_${TS}.sha256"
 META="$MANIFEST_DIR/local_legacy_${TS}.meta"
+SOURCE_LIST="$(mktemp)"
+
+cleanup() {
+  rm -f "$SOURCE_LIST"
+}
+trap cleanup EXIT
 
 rm -rf "$TMP"
-mkdir -p "$TMP"
-mkdir -p "$QUARANTINE_BASE"
+mkdir -p "$TMP" "$QUARANTINE_BASE" "$MANIFEST_DIR"
 
 copy_tree_if_exists() {
   local src_root="$1"
   local rel="$2"
   local dest_root="$3"
+
   if [[ -d "$src_root/$rel" ]]; then
     mkdir -p "$dest_root/$rel"
     rsync -a       --exclude='.git/'       --exclude='node_modules/'       --exclude='.venv/'       --exclude='venv/'       --exclude='__pycache__/'       --exclude='.pytest_cache/'       --exclude='.mypy_cache/'       --exclude='.DS_Store'       --exclude='.env'       --exclude='.env.*'       --exclude='*.pem'       --exclude='*.key'       --exclude='*.parquet'       --exclude='*.csv'       --exclude='*.zip'       --exclude='*.7z'       --exclude='*.tar'       --exclude='*.gz'       --exclude='*.html'       --exclude='*.css'       --exclude='*.js'       --exclude='*.jsx'       --exclude='*.ts'       --exclude='*.tsx'       "$src_root/$rel/" "$dest_root/$rel/"
@@ -41,15 +47,43 @@ copy_file_if_exists() {
   local src_root="$1"
   local rel="$2"
   local dest_root="$3"
+
   if [[ -f "$src_root/$rel" ]]; then
     mkdir -p "$(dirname "$dest_root/$rel")"
     cp -p "$src_root/$rel" "$dest_root/$rel"
   fi
 }
 
+is_site_path() {
+  case "$1" in
+    frontend/*|web/*|website/*|site/*|public/*|static/*|templates/*|assets/*|node_modules/*)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+is_backtest_file() {
+  local name
+  name="$(basename "$1")"
+
+  case "$name" in
+    *backtest*.py|*backtest*.sh|*backtest*.yml|*backtest*.yaml|    *strategy*.py|*gold*.py|*replay*.py|*parity*.py|*scanner*.py)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
 extract_source() {
   local src_root="$1"
   local dest_root="$2"
+  local rel
+  local f
 
   for rel in     pipeline     strategies     backtest     app/engines     app/services/backtest     app/services/backtests     scripts/backtest     scripts/backtests     scripts/gold     scripts/strategies     tests/backtest     tests/backtests     tests/engines     tests/strategies
   do
@@ -63,16 +97,20 @@ extract_source() {
 
   while IFS= read -r -d '' f; do
     rel="${f#$src_root/}"
-    case "$rel" in
-      frontend/*|web/*|website/*|site/*|public/*|static/*|templates/*|assets/*|node_modules/*)
-        continue
-        ;;
-    esac
-    mkdir -p "$(dirname "$dest_root/$rel")"
-    cp -p "$f" "$dest_root/$rel"
-  done < <(
-    find "$src_root"       -type f       (         -iname '*backtest*.py' -o         -iname '*backtest*.sh' -o         -iname '*backtest*.yml' -o         -iname '*backtest*.yaml' -o         -iname '*strategy*.py' -o         -iname '*gold*.py' -o         -iname '*replay*.py' -o         -iname '*parity*.py' -o         -iname '*scanner*.py'       )       -not -path '*/frontend/*'       -not -path '*/web/*'       -not -path '*/website/*'       -not -path '*/site/*'       -not -path '*/public/*'       -not -path '*/static/*'       -not -path '*/templates/*'       -not -path '*/assets/*'       -not -path '*/node_modules/*'       -print0 2>/dev/null
-  )
+
+    if is_site_path "$rel"; then
+      continue
+    fi
+
+    if is_backtest_file "$rel"; then
+      mkdir -p "$(dirname "$dest_root/$rel")"
+      cp -p "$f" "$dest_root/$rel"
+    fi
+  done < <(find "$src_root" -type f -print0 2>/dev/null)
+
+  if [[ ! -f "$dest_root/ORIGINAL_SOURCE_PATH.txt" ]]; then
+    printf '%s\n' "$src_root" > "$dest_root/ORIGINAL_SOURCE_PATH.txt"
+  fi
 }
 
 echo "======================================================"
@@ -80,15 +118,20 @@ echo " GOLD1000 — FILTER EXISTING ARCHIVE TO BACKTEST ONLY"
 echo "======================================================"
 echo "Source archive : $SOURCE_ARCHIVE"
 
+find "$SOURCE_ARCHIVE"   -mindepth 1   -maxdepth 1   -type d   -name 'source_*'   -print | LC_ALL=C sort > "$SOURCE_LIST"
+
 N=0
 while IFS= read -r SRC; do
+  [[ -n "$SRC" ]] || continue
+
   N=$((N+1))
   NAME="$(basename "$SRC")"
   DEST="$TMP/$NAME"
+
   mkdir -p "$DEST"
   echo "Filter $NAME ..."
   extract_source "$SRC" "$DEST"
-done < <(find "$SOURCE_ARCHIVE" -mindepth 1 -maxdepth 1 -type d -name 'source_*' | LC_ALL=C sort)
+done < "$SOURCE_LIST"
 
 if [[ "$N" -eq 0 ]]; then
   echo "ERROR: tidak ada source_* dalam archive."
@@ -105,7 +148,10 @@ if [[ "$FILES" -lt 2 || "$PYFILES" -lt 1 ]]; then
   exit 3
 fi
 
-BAD_SITE="$(find "$TMP" -type f   ( -name '*.html' -o -name '*.css' -o -name '*.js' -o -name '*.jsx' -o -name '*.ts' -o -name '*.tsx' )   -print)"
+BAD_SITE="$(
+  find "$TMP" -type f -print |
+  grep -E '\.(html|css|js|jsx|ts|tsx)$' || true
+)"
 
 if [[ -n "$BAD_SITE" ]]; then
   echo "ERROR: site/UI masih ditemukan:"
@@ -114,9 +160,13 @@ if [[ -n "$BAD_SITE" ]]; then
   exit 4
 fi
 
+rm -f "$MANIFEST.tmp"
 (
   cd "$TMP"
-  find . -type f -print0 | sort -z | xargs -0 shasum -a 256
+  find . -type f -print0 |
+  while IFS= read -r -d '' F; do
+    shasum -a 256 "$F"
+  done
 ) > "$MANIFEST.tmp"
 
 echo
@@ -126,7 +176,7 @@ echo "files=$FILES"
 echo "python_files=$PYFILES"
 echo "site_ui_files=0"
 
-# Only after the filtered copy passes all validation:
+# Broad snapshot is moved only after the filtered copy passes all validation.
 rm -rf "$QUARANTINE"
 mv "$SOURCE_ARCHIVE" "$QUARANTINE"
 mv "$TMP" "$SOURCE_ARCHIVE"
