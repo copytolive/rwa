@@ -39,7 +39,7 @@ async function desktop(){
  if(!info.bodyClass.includes('rwa-terminal-v5'))fail('V5 body class missing',info.bodyClass);
  if(JSON.stringify(info.globalNav)!==JSON.stringify(['markets']))fail('V5 global nav must contain only Markets',info.globalNav);
  if(JSON.stringify(info.marketNav)!==JSON.stringify(['trade','portfolio','orders','analytics','rewards','more']))fail('V5 Market-owned nav mismatch',info.marketNav);
- if(document.querySelector('.topnav [data-v5-nav]'))fail('non-Market navigation escaped into global topbar');
+ if(await page.locator('.topnav [data-v5-nav]').count())fail('non-Market navigation escaped into global topbar');
  if(JSON.stringify(info.bottom)!==JSON.stringify(['positions','orders','holders','feed','analytics','thesis','history']))fail('V5 bottom tabs mismatch',info.bottom);
  if(JSON.stringify(info.leftTabs)!==JSON.stringify(['watchlist','feed','pulse','live']))fail('V5 left tabs mismatch',info.leftTabs);
  if(!info.search||!info.ticketInside)fail('V5 primary structure incomplete',info);
