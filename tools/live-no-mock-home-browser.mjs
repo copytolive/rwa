@@ -15,6 +15,7 @@ async function ready(page){
  await page.waitForFunction(()=>window.RWALiveHome?.version==='5.0.0'&&window.RWATerminalV5?.version==='1.0.0'&&window.RWAMarketRuntime?.state?.().pairs?.length>50,{timeout:50000});
  await page.waitForFunction(()=>document.querySelectorAll('#bids .bookrow').length>=5&&document.querySelectorAll('#asks .bookrow').length>=5,{timeout:30000});
  await page.waitForFunction(()=>document.querySelector('#liveRail #rwaTargetOrderTicket'),{timeout:20000});
+ await page.waitForFunction(()=>{const t=document.querySelector('#statPrice')?.textContent||'';const n=Number(t.replace(/,/g,'').replace(/[^0-9.-]/g,''));return Number.isFinite(n)&&n>0},{timeout:30000});
  await page.waitForTimeout(0);
 }
 async function desktop(){
