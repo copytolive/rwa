@@ -739,3 +739,33 @@ body.rwa-terminal-v5 .rwa-v5-header-more{top:49px!important;right:0!important;le
 /* R9 MOBILE OVERLAY BLOCKER REMOVAL */
 body.rwa-terminal-v5 #rwaMobileInstrumentStrip{display:none!important;visibility:hidden!important;pointer-events:none!important}
 
+/* R12 MOBILE WORKTAB HIT-TEST FIX */
+@media(max-width:680px){
+ body.rwa-terminal-v5 .terminal-header{
+  position:relative!important;
+  z-index:60!important;
+  isolation:isolate!important;
+  overflow:visible!important
+ }
+ body.rwa-terminal-v5 .rwa-v5-mobile-worktabs{
+  position:relative!important;
+  z-index:80!important;
+  pointer-events:auto!important;
+  background:#030c16!important
+ }
+ body.rwa-terminal-v5 .rwa-v5-mobile-worktabs button{
+  position:relative!important;
+  z-index:81!important;
+  pointer-events:auto!important
+ }
+ body.rwa-terminal-v5 .chart-wrap{
+  position:relative!important;
+  z-index:1!important
+ }
+ body.rwa-terminal-v5 .chart-wrap canvas,
+ body.rwa-terminal-v5 .chart-wrap iframe,
+ body.rwa-terminal-v5 .chart-wrap .tradingview-widget-container,
+ body.rwa-terminal-v5 .chart-wrap .tradingview-widget-container__widget{
+  z-index:1!important
+ }
+}
