@@ -213,7 +213,9 @@ function ensureMobile(){
  const marketsOpen=innerWidth<681&&document.body.classList.contains('rwa-v5-mobile-markets');
  setMobileMarketsCloseVisible(marketsOpen);
  const marketBtn=tabs?.querySelector('[data-v5-mobile-nav="markets"]');if(marketBtn&&!marketBtn.dataset.v5Direct){marketBtn.dataset.v5Direct='1';marketBtn.onclick=e=>{e.preventDefault();e.stopPropagation();openMarketsMobile()}}
- if(close&&!close.dataset.v5Direct){close.dataset.v5Direct='1';close.onclick=e=>{e.preventDefault();e.stopPropagation();closeMarketsMobile()}}
+ const openBtn=head?.querySelector('[data-v5-action="open-markets"]');
+ if(openBtn&&!openBtn.dataset.v5Direct){openBtn.dataset.v5Direct='1';openBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();openMarketsMobile()},{capture:true});openBtn.onclick=e=>{e.preventDefault();e.stopPropagation();openMarketsMobile()}}
+ if(close&&!close.dataset.v5Direct){close.dataset.v5Direct='1';close.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();closeMarketsMobile()},{capture:true});close.onclick=e=>{e.preventDefault();e.stopPropagation();closeMarketsMobile()}}
  ensureMiniBook();applyMobileState()
 }
 function setMobile(mode){
@@ -305,7 +307,7 @@ function apply(){
  window.__RWA_FIRST_PAINT_HEADER_LOCK__?.disconnect?.();
  const preserveMobileMarkets=innerWidth<681&&document.body.classList.contains('rwa-v5-mobile-markets');
  document.body.classList.add('rwa-terminal-v5');document.documentElement.dataset.rwaTerminal='v5';unlockLegacyGeometry();keepMarket();ensureHeader();ensureLeft();ensureBottom();ensureTrade();ensureMobile();ensureFooter();ensureTargetHeaderStats();lockV5Geometry();pruneLegacyUi();
- document.documentElement.classList.add('rwa-target-runtime-ready');const shell=$('#rwaV5FirstPaintShell');shell?.remove();document.documentElement.classList.remove('rwa-target-prepaint');
+ document.documentElement.classList.add('rwa-target-runtime-ready');document.documentElement.classList.remove('rwa-target-prepaint');
  if(preserveMobileMarkets||document.body.classList.contains('rwa-v5-mobile-markets')){setMobileMarketsDrawerVisible(true);setMobileMarketsCloseVisible(true)}
  renderFavorite();renderStatus();renderFooter()
 }
@@ -314,8 +316,9 @@ function bind(){
  if(!window.__RWA_V5_CRITICAL_CAPTURE__){
   window.__RWA_V5_CRITICAL_CAPTURE__=true;
   window.addEventListener('click',e=>{
-   const t=e.target?.closest?.('[data-v5-trade-tab],[data-v5-mobile-nav],[data-v5-action="close-markets"]');if(!t)return;
+   const t=e.target?.closest?.('[data-v5-trade-tab],[data-v5-mobile-nav],[data-v5-action="open-markets"],[data-v5-action="close-markets"]');if(!t)return;
    if(t.matches('[data-v5-trade-tab]')){e.preventDefault();e.stopImmediatePropagation();t.dataset.v5TradeTab==='alerts'?openAlerts():openTrade();return}
+   if(t.matches('[data-v5-action="open-markets"]')){e.preventDefault();e.stopImmediatePropagation();openMarketsMobile();return}
    if(t.matches('[data-v5-action="close-markets"]')){e.preventDefault();e.stopImmediatePropagation();closeMarketsMobile();return}
    if(t.matches('[data-v5-mobile-nav]')){
     e.preventDefault();e.stopImmediatePropagation();const k=t.dataset.v5MobileNav;
@@ -388,3 +391,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 /* RWA_TERMINAL_PUBLIC_FINAL_ACCEPTANCE_2026_09_03_R4 */
 
 /* RWA_TERMINAL_PUBLIC_FINAL_VALIDATION_2026_09_03 */
+
+/* RWA_TERMINAL_REAL_FIRST_PAINT_ONLY_2026_09_03 */
