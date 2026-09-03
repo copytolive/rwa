@@ -38,6 +38,12 @@ CTrade trade;
 #ifndef QM_DIRECTION_MODE
 #error QM_DIRECTION_MODE must be defined by wrapper
 #endif
+#ifndef QM_ENTRY_METHOD
+#error QM_ENTRY_METHOD must be defined by wrapper
+#endif
+#ifndef QM_CONFIG_HASH
+#error QM_CONFIG_HASH must be defined by wrapper
+#endif
 #ifndef QM_MAGIC
 #error QM_MAGIC must be defined by wrapper
 #endif
@@ -64,6 +70,8 @@ const double TP_USD=QM_TP_USD;
 const double OFFSET_USD=QM_OFFSET_USD;
 const int EXPIRY_BARS=QM_EXPIRY_BARS;
 const string DIRECTION_MODE=QM_DIRECTION_MODE;
+const string ENTRY_METHOD=QM_ENTRY_METHOD;
+const string CONFIG_HASH=QM_CONFIG_HASH;
 
 datetime g_lastBar=0;
 string gSignalSymbol="";
@@ -94,8 +102,8 @@ void WriteReceipt(const string status,const int reason)
    int h=FileOpen(ReceiptPath(),FILE_WRITE|FILE_TXT|FILE_ANSI|FILE_COMMON);
    if(h==INVALID_HANDLE) return;
    FileWriteString(h,StringFormat(
-      "status=%s\nmagic=%I64u\nsignal_symbol=%s\ntrade_symbol=%s\nparity_mode=%s\nbars=%I64d\nsignals=%I64d\norder_attempts=%I64d\norder_accepted=%I64d\ntrade_errors=%I64d\ngap_market_fills=%I64d\ntrade_error_details=%s\ndeinit_reason=%d\n",
-      status,InpMagic,gSignalSymbol,gTradeSymbol,gParity?"true":"false",gBarsSeen,gSignals,gOrderAttempts,gOrderAccepted,gTradeErrors,gGapMarketFills,gTradeErrorDetails,reason));
+      "status=%s\nmagic=%I64u\nconfig_hash=%s\nentry_method=%s\nsignal_symbol=%s\ntrade_symbol=%s\nparity_mode=%s\nbars=%I64d\nsignals=%I64d\norder_attempts=%I64d\norder_accepted=%I64d\ntrade_errors=%I64d\ngap_market_fills=%I64d\ntrade_error_details=%s\ndeinit_reason=%d\n",
+      status,InpMagic,CONFIG_HASH,ENTRY_METHOD,gSignalSymbol,gTradeSymbol,gParity?"true":"false",gBarsSeen,gSignals,gOrderAttempts,gOrderAccepted,gTradeErrors,gGapMarketFills,gTradeErrorDetails,reason));
    FileClose(h);
 }
 
@@ -423,6 +431,30 @@ int CanonicalSignal()
       longSig=(spike && r[curIdx].close>rh && emaFast>emaSlow);
       shortSig=(spike && r[curIdx].close<rl && emaFast<emaSlow);
    }
+   else if(QM_FAMILY_CODE==7)
+   {
+      // Python VOLATILITY_REGIME parity:
+      // ATR(FAST)/ATR(SLOW) regime split, FAST prior high/low, EMA trend,
+      // and SLOW rolling z-score with simple rolling RSI(FAST).
+      if(n<=MathMax(SLOW+2,FAST+2)) return 0;
+      int curIdx=n-1;
+      double atrFast=RollingATRAt(r,FAST,curIdx);
+      double atrSlow=RollingATRAt(r,SLOW,curIdx);
+      double sma=RollingCloseMeanAt(r,SLOW,curIdx);
+      double std=RollingCloseStdPopulationAt(r,SLOW,curIdx);
+      if(atrFast==EMPTY_VALUE || atrSlow==EMPTY_VALUE || atrSlow<=0.0 || sma==EMPTY_VALUE || std==EMPTY_VALUE) return 0;
+      double ratio=atrFast/MathMax(atrSlow,1e-9);
+      double z=(r[curIdx].close-sma)/MathMax(std,1e-9);
+      double rh,rl; PriorRange(r,FAST,curIdx,rh,rl);
+      double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
+      double rsi=SimpleRollingRSI(r,FAST);
+      bool trendLong=(ratio>=P1 && r[curIdx].close>rh && emaFast>emaSlow);
+      bool trendShort=(ratio>=P1 && r[curIdx].close<rl && emaFast<emaSlow);
+      bool revertLong=(ratio<=P2 && z<-1.0 && rsi<40.0);
+      bool revertShort=(ratio<=P2 && z>1.0 && rsi>60.0);
+      longSig=(trendLong || revertLong);
+      shortSig=(trendShort || revertShort);
+   }
    else
    {
       PrintFormat("GOLD24_SIGNAL_FAIL unsupported family code=%d",QM_FAMILY_CODE);
@@ -473,23 +505,46 @@ bool PlaceCanonicalPending(const int side)
 {
    double close1=iClose(gSignalSymbol,PERIOD_D1,1); if(close1<=0.0) return false;
    double open0=iOpen(gSignalSymbol,PERIOD_D1,0); if(open0<=0.0) open0=close1;
-   double price=(side==1 ? close1-OFFSET_USD : close1+OFFSET_USD);
+   bool isStop=(ENTRY_METHOD=="STOP");
+   bool isLimit=(ENTRY_METHOD=="LIMIT");
+   if(!isStop && !isLimit)
+   {
+      gTradeErrors++;
+      AppendTradeError("ENTRY_METHOD",0,ENTRY_METHOD,0);
+      return false;
+   }
+   double price=isStop
+      ? (side==1 ? close1+OFFSET_USD : close1-OFFSET_USD)
+      : (side==1 ? close1-OFFSET_USD : close1+OFFSET_USD);
 
-   // Canonical Python fills a LIMIT at bar open if the new bar gaps strictly through the level.
-   // Native BuyLimit/SellLimit can be rejected when the market has already crossed that level,
-   // so use an immediate market fill on that exact gap case. In parity custom-symbol tests the
-   // first tick has zero spread and represents the canonical bar open.
-   if(InpAllowGapMarketFill && ((side==1 && open0<price) || (side==-1 && open0>price)))
+   // Canonical Python fills at the new-bar open when it has already crossed the pending level.
+   bool gapFill=isStop
+      ? ((side==1 && open0>=price) || (side==-1 && open0<=price))
+      : ((side==1 && open0<price) || (side==-1 && open0>price));
+   if(InpAllowGapMarketFill && gapFill)
       return PlaceGapMarket(side);
 
    double sl=(side==1 ? price-SL_USD : price+SL_USD);
    double tp=(side==1 ? price+TP_USD : price-TP_USD);
    price=N(price); sl=N(sl); tp=N(tp);
    ResetLastError();
-   bool ok=(side==1)
-      ? trade.BuyLimit(gLot,price,gTradeSymbol,sl,tp,ORDER_TIME_GTC,0,QM_TAG)
-      : trade.SellLimit(gLot,price,gTradeSymbol,sl,tp,ORDER_TIME_GTC,0,QM_TAG);
-   return RecordTradeResult(ok,side==1?"BUY_LIMIT":"SELL_LIMIT");
+   bool ok=false;
+   string action="";
+   if(isStop)
+   {
+      ok=(side==1)
+         ? trade.BuyStop(gLot,price,gTradeSymbol,sl,tp,ORDER_TIME_GTC,0,QM_TAG)
+         : trade.SellStop(gLot,price,gTradeSymbol,sl,tp,ORDER_TIME_GTC,0,QM_TAG);
+      action=(side==1?"BUY_STOP":"SELL_STOP");
+   }
+   else
+   {
+      ok=(side==1)
+         ? trade.BuyLimit(gLot,price,gTradeSymbol,sl,tp,ORDER_TIME_GTC,0,QM_TAG)
+         : trade.SellLimit(gLot,price,gTradeSymbol,sl,tp,ORDER_TIME_GTC,0,QM_TAG);
+      action=(side==1?"BUY_LIMIT":"SELL_LIMIT");
+   }
+   return RecordTradeResult(ok,action);
 }
 
 int OnInit()
