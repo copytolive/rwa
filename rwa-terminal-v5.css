@@ -1,3 +1,13 @@
+html[data-rwa-terminal="v5"]{width:100vw!important;height:100vh!important;overflow:hidden!important}
+body.rwa-terminal-v5 #rwaExperienceRail,
+body.rwa-terminal-v5 #rwaContextBrief,
+body.rwa-terminal-v5 #rwaQualityBadge,
+body.rwa-terminal-v5 #rwaQualityPanel,
+body.rwa-terminal-v5 #rwaMobileAssetActions,
+body.rwa-terminal-v5 #rwaSuperWorkspace,
+body.rwa-terminal-v5 #rwaQuickDock,
+body.rwa-terminal-v5 #rwaGlobalTicker,
+body.rwa-terminal-v5 .rwa-command-button{display:none!important}
 /* RWA TERMINAL V5 — Fomo discovery x Hyperliquid execution */
 :root{
  --v5-bg:#030913;--v5-panel:#06101a;--v5-panel2:#081420;--v5-line:#152536;--v5-line2:#203249;
