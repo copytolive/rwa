@@ -1,0 +1,64 @@
+name: GOLD10B Ready Package
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'backtest/gold24/**'
+      - 'backtest/GOLD10B_READY/**'
+      - '.github/workflows/gold10b-ready-package.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate package contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install -r backtest/gold24/requirements.txt
+          bash backtest/GOLD10B_READY/run_backtest_ready.sh verify
+
+      - name: Build reproducible ready package
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf dist_gold10b
+          mkdir -p dist_gold10b/GOLD10B_READY
+          cp -a backtest/gold24 dist_gold10b/GOLD10B_READY/
+          cp -a backtest/GOLD10B_READY dist_gold10b/GOLD10B_READY/PANDUAN
+          mkdir -p dist_gold10b/GOLD10B_READY/.github/workflows
+          cp .github/workflows/gold24-multimethod-v1-discovery-macos.yml dist_gold10b/GOLD10B_READY/.github/workflows/
+          cp .github/workflows/gold24-engine-family-smoke.yml dist_gold10b/GOLD10B_READY/.github/workflows/
+          cp .github/workflows/gold24-qualified-script-certification.yml dist_gold10b/GOLD10B_READY/.github/workflows/
+          cp .github/workflows/gold24-qualified-mt5-metaquotes-certification.yml dist_gold10b/GOLD10B_READY/.github/workflows/
+          cp .github/workflows/gold24-combined-portfolio-audit.yml dist_gold10b/GOLD10B_READY/.github/workflows/
+          cp .github/workflows/gold24-selected-2019-report.yml dist_gold10b/GOLD10B_READY/.github/workflows/
+          printf '%s\n' "$GITHUB_SHA" > dist_gold10b/GOLD10B_READY/PACKAGE_GIT_SHA.txt
+          (
+            cd dist_gold10b/GOLD10B_READY
+            find . -type f ! -name PACKAGE_SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > PACKAGE_SHA256SUMS.txt
+          )
+          (
+            cd dist_gold10b
+            zip -qr "GOLD10B_READY_PACKAGE_${GITHUB_SHA}.zip" GOLD10B_READY
+          )
+          sha256sum dist_gold10b/GOLD10B_READY_PACKAGE_*.zip > dist_gold10b/ZIP_SHA256.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GOLD10B_READY_PACKAGE
+          path: |
+            dist_gold10b/GOLD10B_READY_PACKAGE_*.zip
+            dist_gold10b/ZIP_SHA256.txt
+          if-no-files-found: error
+          retention-days: 90
