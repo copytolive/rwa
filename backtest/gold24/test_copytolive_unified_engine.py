@@ -76,12 +76,12 @@ class UnifiedEngineTests(unittest.TestCase):
         self.assertEqual(int(m[22]),0)
 
     def test_bt_filtered_contract(self):
-        c=np.array([100.,100.,100.])
-        h=np.array([100.,103.,103.])
-        l=np.array([100.,99.5,99.5])
-        sig=np.array([1,0,0],dtype=np.int8)
-        one=np.ones(3,dtype=np.int8)
-        zero=np.zeros(3,dtype=np.int8)
+        c=np.full(12,100.0)
+        h=np.full(12,100.0); h[1]=103.0
+        l=np.full(12,100.0); l[1]=99.5
+        sig=np.zeros(12,dtype=np.int8); sig[0]=1
+        one=np.ones(12,dtype=np.int8)
+        zero=np.zeros(12,dtype=np.int8)
         arr=bt_filtered(sig,one,zero,c,h,l,0.01,0.02,0.0)
         self.assertEqual(len(arr[-1]),1)
         self.assertAlmostEqual(float(arr[-1][0]),400.0)
@@ -98,14 +98,20 @@ class UnifiedEngineTests(unittest.TestCase):
         self.assertEqual(m["netProfit"],200.0)
 
     def test_wrapper_identifies_unified_engine_and_stop_first(self):
-        idx=pd.date_range("2026-01-01",periods=2,freq="h")
+        idx=pd.date_range("2026-01-01",periods=12,freq="h")
         df=pd.DataFrame(
-            {"open":[100.,100.],"high":[100.,103.],"low":[100.,98.],"close":[100.,100.]},
+            {
+                "open":np.full(12,100.0),
+                "high":np.r_[100.0,103.0,np.full(10,100.0)],
+                "low":np.r_[100.0,98.0,np.full(10,100.0)],
+                "close":np.full(12,100.0),
+            },
             index=idx,
         )
+        sig=np.zeros(12,dtype=np.int8); sig[0]=1
         r=run_copytolive_backtest(
             df,
-            np.array([1,0],dtype=np.int8),
+            sig,
             CopyToLiveExecutionConfig(sl_pct=0.01,tp_ratio=2.0,fee=0.0),
         )
         self.assertEqual(r["engine_id"],ENGINE_ID)
