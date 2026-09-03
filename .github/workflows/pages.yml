@@ -73,9 +73,9 @@ jobs:
           grep -Fq 'rwaMultiChainLazyBootstrap' index.html
           grep -Fq "rwa-live-home-v1.js?v=5.0.2" chart-core.js
           grep -Fq "rwa-live-home-v1.css?v=5.0.0" chart-core.js
-          grep -Fq "rwa-terminal-v5.js?v=1.0.17" chart-core.js
+          grep -Fq "rwa-terminal-v5.js?v=1.0.18" chart-core.js
           grep -Fq "rwa-terminal-service.js?v=1.0.0" chart-core.js
-          grep -Fq "rwa-terminal-v5.css?v=1.0.7" chart-core.js
+          grep -Fq "rwa-terminal-v5.css?v=1.0.8" chart-core.js
           grep -Fq "RWATerminalV5" rwa-terminal-v5.js
           grep -Fq 'data-v5-global="markets"' rwa-terminal-v5.js
           grep -Fq 'rwa-v5-market-nav' rwa-terminal-v5.js
