@@ -164,7 +164,8 @@ function ensureFooter(){
 }
 function renderFooter(){const f=$('#rwaV5Footer');if(!f)return;const rows=[...(market()?.pairs||[])].sort((a,b)=>num(b.vol)-num(a.vol)).slice(0,4);f.innerHTML='<span><i></i> System Status · Operational</span><div>'+rows.map(x=>'<button data-v5-symbol="'+esc(x.symbol)+'"><b>'+esc(x.base)+'</b> <i class="'+(num(x.change)>=0?'pos':'neg')+'">'+pct(x.change)+'</i></button>').join('')+'</div><small>Real market data · account data only when connected</small>'}
 function apply(){
- document.body.classList.add('rwa-terminal-v5');document.documentElement.dataset.rwaTerminal='v5';keepMarket();ensureHeader();ensureLeft();ensureBottom();ensureTrade();ensureMobile();ensureFooter();renderFavorite();renderStatus();renderFooter()
+ window.__RWA_FIRST_PAINT_HEADER_LOCK__?.disconnect?.();document.documentElement.classList.remove('rwa-target-prepaint');document.documentElement.classList.add('rwa-target-runtime-ready');
+ document.body.classList.add('rwa-terminal-v5');document.documentElement.dataset.rwaTerminal='v5';unlockLegacyGeometry();keepMarket();ensureHeader();ensureLeft();ensureBottom();ensureTrade();ensureMobile();ensureFooter();renderFavorite();renderStatus();renderFooter()
 }
 function bind(){
  document.addEventListener('click',e=>{
