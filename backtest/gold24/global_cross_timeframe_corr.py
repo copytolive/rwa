@@ -86,6 +86,7 @@ def main() -> int:
     ap.add_argument("--h4-artifact-dir", required=True)
     ap.add_argument("--repo-root", default=".")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--h4-source-run-id", default="")
     a = ap.parse_args()
 
     repo = Path(a.repo_root).resolve()
@@ -198,6 +199,7 @@ def main() -> int:
             "backtest_resampling": False,
             "reason": "different native bar timestamps require a common equity-return clock; source OHLCV is unchanged",
         },
+        "source_h4_run_id": str(a.h4_source_run_id or ""),
         "datasets": {
             "D1": {
                 "rows": d1_audit["rows"], "sha256": d1_audit["dataset_sha256"],
