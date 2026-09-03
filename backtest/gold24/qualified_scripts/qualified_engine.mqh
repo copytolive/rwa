@@ -214,12 +214,36 @@ bool LoadCanonicalRates(MqlRates &r[])
    return copied>0;
 }
 
+double PandasEMAAt(MqlRates &r[],int period,int endIdx)
+{
+   int n=ArraySize(r);
+   if(n<=0 || endIdx<0) return EMPTY_VALUE;
+   if(endIdx>=n) endIdx=n-1;
+   double alpha=2.0/(period+1.0), ema=r[0].close;
+   for(int i=1;i<=endIdx;i++) ema=alpha*r[i].close+(1.0-alpha)*ema;
+   return ema;
+}
+
 double PandasEMA(MqlRates &r[],int period)
 {
-   int n=ArraySize(r); if(n<=0) return EMPTY_VALUE;
-   double alpha=2.0/(period+1.0), ema=r[0].close;
-   for(int i=1;i<n;i++) ema=alpha*r[i].close+(1.0-alpha)*ema;
-   return ema;
+   return PandasEMAAt(r,period,ArraySize(r)-1);
+}
+
+double RollingLinRegSlopeAt(MqlRates &r[],int period,int endIdx)
+{
+   period=MathMax(2,period);
+   if(endIdx-period+1<0) return 0.0;
+   double meanX=(period-1)*0.5;
+   double den=0.0,num=0.0;
+   int start=endIdx-period+1;
+   for(int j=0;j<period;j++)
+   {
+      double w=j-meanX;
+      den+=w*w;
+      num+=w*r[start+j].close;
+   }
+   if(den<=0.0) return 0.0;
+   return num/den;
 }
 
 double SimpleRollingRSI(MqlRates &r[],int period)
@@ -454,6 +478,145 @@ int CanonicalSignal()
       bool revertShort=(ratio<=P2 && z>1.0 && rsi>60.0);
       longSig=(trendLong || revertLong);
       shortSig=(trendShort || revertShort);
+   }
+   else if(QM_FAMILY_CODE==10)
+   {
+      // Python ATR_BREAKOUT parity.
+      int curIdx=n-1;
+      double sma=RollingCloseMeanAt(r,SLOW,curIdx);
+      double atrCur=RollingATRAt(r,FAST,curIdx);
+      if(sma==EMPTY_VALUE || atrCur==EMPTY_VALUE) return 0;
+      double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
+      double closeNow=r[curIdx].close;
+      longSig=(closeNow>sma+P1*atrCur && emaFast>emaSlow);
+      shortSig=(closeNow<sma-P1*atrCur && emaFast<emaSlow);
+   }
+   else if(QM_FAMILY_CODE==13)
+   {
+      // Python PRICE_STRUCTURE parity: SLOW prior range plus EMA trend.
+      int curIdx=n-1;
+      double rh,rl; PriorRange(r,SLOW,curIdx,rh,rl);
+      double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
+      longSig=(r[curIdx].close>rh && emaFast>emaSlow);
+      shortSig=(r[curIdx].close<rl && emaFast<emaSlow);
+   }
+   else if(QM_FAMILY_CODE==16)
+   {
+      // Python MARKET_STRUCTURE parity using current and previous FAST prior ranges.
+      int curIdx=n-1,prevIdx=n-2;
+      if(prevIdx<=FAST) return 0;
+      double rhCur,rlCur,rhPrev,rlPrev;
+      PriorRange(r,FAST,curIdx,rhCur,rlCur);
+      PriorRange(r,FAST,prevIdx,rhPrev,rlPrev);
+      bool higherLow=(rlCur>rlPrev);
+      bool lowerHigh=(rhCur<rhPrev);
+      double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
+      longSig=(r[curIdx].close>rhCur && higherLow && emaFast>emaSlow);
+      shortSig=(r[curIdx].close<rlCur && lowerHigh && emaFast<emaSlow);
+   }
+   else if(QM_FAMILY_CODE==17)
+   {
+      // Python SUPPORT_RESISTANCE parity.
+      int curIdx=n-1;
+      double rh,rl; PriorRange(r,SLOW,curIdx,rh,rl);
+      double atrCur=RollingATRAt(r,FAST,curIdx);
+      if(atrCur==EMPTY_VALUE) return 0;
+      double tol=MathMax(atrCur*P1,1e-9);
+      double rsi=SimpleRollingRSI(r,FAST);
+      longSig=(r[curIdx].low<=rl+tol && r[curIdx].close>rl && r[curIdx].close>r[curIdx].open && rsi>50.0);
+      shortSig=(r[curIdx].high>=rh-tol && r[curIdx].close<rh && r[curIdx].close<r[curIdx].open && rsi<50.0);
+   }
+   else if(QM_FAMILY_CODE==19)
+   {
+      // Python VOLATILITY parity.
+      int curIdx=n-1;
+      double atrFast=RollingATRAt(r,FAST,curIdx);
+      double atrSlow=RollingATRAt(r,SLOW,curIdx);
+      if(atrFast==EMPTY_VALUE || atrSlow==EMPTY_VALUE || atrSlow<=0.0) return 0;
+      double ratio=atrFast/MathMax(atrSlow,1e-9);
+      double rh,rl; PriorRange(r,FAST,curIdx,rh,rl);
+      double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
+      longSig=(ratio>=P1 && r[curIdx].close>rh && emaFast>emaSlow);
+      shortSig=(ratio>=P1 && r[curIdx].close<rl && emaFast<emaSlow);
+   }
+   else if(QM_FAMILY_CODE==34)
+   {
+      // Python BOLLINGER_SQUEEZE parity including previous-bar squeeze state.
+      int curIdx=n-1,prevIdx=n-2;
+      double smaCur=RollingCloseMeanAt(r,SLOW,curIdx);
+      double stdCur=RollingCloseStdPopulationAt(r,SLOW,curIdx);
+      double smaPrev=RollingCloseMeanAt(r,SLOW,prevIdx);
+      double stdPrev=RollingCloseStdPopulationAt(r,SLOW,prevIdx);
+      if(smaCur==EMPTY_VALUE || stdCur==EMPTY_VALUE || smaPrev==EMPTY_VALUE || stdPrev==EMPTY_VALUE) return 0;
+      double upperCur=smaCur+P2*stdCur;
+      double lowerCur=smaCur-P2*stdCur;
+      double upperPrev=smaPrev+P2*stdPrev;
+      double lowerPrev=smaPrev-P2*stdPrev;
+      double prevBandwidth=(upperPrev-lowerPrev)/MathMax(MathAbs(smaPrev),1e-9);
+      bool prevSqueeze=(prevBandwidth<=P1);
+      double rh,rl; PriorRange(r,FAST,curIdx,rh,rl);
+      double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
+      longSig=(prevSqueeze && r[curIdx].close>rh && emaFast>emaSlow);
+      shortSig=(prevSqueeze && r[curIdx].close<rl && emaFast<emaSlow);
+   }
+   else if(QM_FAMILY_CODE==35)
+   {
+      // Python KELTNER_SQUEEZE parity including previous-bar compression state.
+      int curIdx=n-1,prevIdx=n-2;
+      double atrFastCur=RollingATRAt(r,FAST,curIdx);
+      double atrFastPrev=RollingATRAt(r,FAST,prevIdx);
+      double atrSlowPrev=RollingATRAt(r,SLOW,prevIdx);
+      if(atrFastCur==EMPTY_VALUE || atrFastPrev==EMPTY_VALUE || atrSlowPrev==EMPTY_VALUE || atrSlowPrev<=0.0) return 0;
+      bool prevCompressed=(atrFastPrev/MathMax(atrSlowPrev,1e-9)<=P1);
+      double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
+      double upper=emaFast+P2*atrFastCur;
+      double lower=emaFast-P2*atrFastCur;
+      longSig=(prevCompressed && r[curIdx].close>upper && emaFast>emaSlow);
+      shortSig=(prevCompressed && r[curIdx].close<lower && emaFast<emaSlow);
+   }
+   else if(QM_FAMILY_CODE==39)
+   {
+      // Python FIB_PULLBACK parity.
+      int curIdx=n-1;
+      double rh,rl; PriorRange(r,SLOW,curIdx,rh,rl);
+      double span=MathMax(rh-rl,1e-9);
+      double longLevel=rh-P1*span;
+      double shortLevel=rl+P1*span;
+      double tol=MathMax((P2/100.0)*span,1e-9);
+      double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
+      longSig=(emaFast>emaSlow && MathAbs(r[curIdx].close-longLevel)<=tol && r[curIdx].close>r[curIdx].open);
+      shortSig=(emaFast<emaSlow && MathAbs(r[curIdx].close-shortLevel)<=tol && r[curIdx].close<r[curIdx].open);
+   }
+   else if(QM_FAMILY_CODE==44)
+   {
+      // Python ROLLING_ZSCORE parity with previous-bar threshold crossing.
+      int curIdx=n-1,prevIdx=n-2;
+      double smaCur=RollingCloseMeanAt(r,SLOW,curIdx);
+      double stdCur=RollingCloseStdPopulationAt(r,SLOW,curIdx);
+      double smaPrev=RollingCloseMeanAt(r,SLOW,prevIdx);
+      double stdPrev=RollingCloseStdPopulationAt(r,SLOW,prevIdx);
+      if(smaCur==EMPTY_VALUE || stdCur==EMPTY_VALUE || smaPrev==EMPTY_VALUE || stdPrev==EMPTY_VALUE) return 0;
+      double zCur=(r[curIdx].close-smaCur)/MathMax(stdCur,1e-9);
+      double zPrev=(r[prevIdx].close-smaPrev)/MathMax(stdPrev,1e-9);
+      double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
+      longSig=(zCur>=P1 && zPrev<P1 && emaFast>emaSlow);
+      shortSig=(zCur<=-P1 && zPrev>-P1 && emaFast<emaSlow);
+   }
+   else if(QM_FAMILY_CODE==47)
+   {
+      // Python REGRESSION_CHANNEL_BREAKOUT parity.
+      int curIdx=n-1;
+      double sma=RollingCloseMeanAt(r,SLOW,curIdx);
+      double std=RollingCloseStdPopulationAt(r,SLOW,curIdx);
+      double atrSlow=RollingATRAt(r,SLOW,curIdx);
+      if(sma==EMPTY_VALUE || std==EMPTY_VALUE || atrSlow==EMPTY_VALUE || atrSlow<=0.0) return 0;
+      double slope=RollingLinRegSlopeAt(r,SLOW,curIdx);
+      double normSlope=slope/MathMax(atrSlow,1e-9);
+      double upper=sma+P2*std;
+      double lower=sma-P2*std;
+      double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
+      longSig=(r[curIdx].close>upper && normSlope>=P1 && emaFast>emaSlow);
+      shortSig=(r[curIdx].close<lower && normSlope<=-P1 && emaFast<emaSlow);
    }
    else
    {
