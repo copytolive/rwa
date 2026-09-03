@@ -31,3 +31,4 @@ window.addEventListener('resize',queueDraw,{passive:true});window.addEventListen
 /* RWA_REAL_BUSINESS_VALIDATION_CONSOLE_V1_BOOTSTRAP */
 (()=>{if(window.RWABusinessConsole)return;import('./rwa-business-console.js?v=1.0.0').catch(()=>console.error('RWA business validation console failed to load'))})();
 /* RWA_TERMINAL_V5_POST_HOTFIX_ACCEPTANCE_2026_09_03 */
+/* RWA_TERMINAL_V5_BACKEND_INTEGRATED_FINAL_ACCEPTANCE_2026_09_03 */
