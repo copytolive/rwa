@@ -1,0 +1,91 @@
+{
+  "ok": true,
+  "id": "history-allpairs-zero-public-probe-20260903-1000",
+  "acceptance": "PASS",
+  "requestedDelayMs": 0,
+  "desktop": {
+    "width": 2048,
+    "height": 933,
+    "requestedDelayMs": 0,
+    "syncApplyMs": 9.299999999988358,
+    "captureCommandRoundTripMs": 144.305692,
+    "mode": "all",
+    "active": "all",
+    "title": "📋 Detailed Trade Log · ALL PAIRS",
+    "info": "REAL HYPERLIQUID · READY · 0 account · 0 fills",
+    "count": "0 Hyperliquid fills",
+    "panelPixelExact0to100": true,
+    "filtersPixelExact0to100": true
+  },
+  "mobile": {
+    "width": 390,
+    "height": 844,
+    "requestedDelayMs": 0,
+    "syncApplyMs": 6.7999999999883585,
+    "captureCommandRoundTripMs": 72.931616,
+    "mode": "all",
+    "active": "all",
+    "title": "📋 Detailed Trade Log · ALL PAIRS",
+    "info": "REAL HYPERLIQUID · READY · 0 account · 0 fills",
+    "count": "0 Hyperliquid fills",
+    "panelPixelExact0to100": true,
+    "filtersPixelExact0to100": true
+  },
+  "screenshots": {
+    "desktop-allpairs-0ms-panel.png": {
+      "bytes": 23006,
+      "sha256": "01929aabe0838891c16d21f04e0a4a8dc878e3fd5f0ee177b7a3bfd9c4be64f1",
+      "url": "https://copytolive.github.io/rwa/validation/history-allpairs-zero-delay/history-allpairs-zero-public-probe-20260903-1000/desktop-allpairs-0ms-panel.png"
+    },
+    "desktop-allpairs-0ms-filters.png": {
+      "bytes": 4038,
+      "sha256": "eacb0af647197f5297c32bdda993442cd19de337b1a0acc118f2b9a4e3b939ae",
+      "url": "https://copytolive.github.io/rwa/validation/history-allpairs-zero-delay/history-allpairs-zero-public-probe-20260903-1000/desktop-allpairs-0ms-filters.png"
+    },
+    "desktop-allpairs-0ms-viewport.png": {
+      "bytes": 80978,
+      "sha256": "60ddaf3fe9406c97eada2129e0e9626a4be9cacb11034310fc1d27d11eb3b10c",
+      "url": "https://copytolive.github.io/rwa/validation/history-allpairs-zero-delay/history-allpairs-zero-public-probe-20260903-1000/desktop-allpairs-0ms-viewport.png"
+    },
+    "desktop-allpairs-100ms-panel.png": {
+      "bytes": 23006,
+      "sha256": "01929aabe0838891c16d21f04e0a4a8dc878e3fd5f0ee177b7a3bfd9c4be64f1",
+      "url": "https://copytolive.github.io/rwa/validation/history-allpairs-zero-delay/history-allpairs-zero-public-probe-20260903-1000/desktop-allpairs-100ms-panel.png"
+    },
+    "desktop-allpairs-100ms-filters.png": {
+      "bytes": 4038,
+      "sha256": "eacb0af647197f5297c32bdda993442cd19de337b1a0acc118f2b9a4e3b939ae",
+      "url": "https://copytolive.github.io/rwa/validation/history-allpairs-zero-delay/history-allpairs-zero-public-probe-20260903-1000/desktop-allpairs-100ms-filters.png"
+    },
+    "mobile-allpairs-0ms-panel.png": {
+      "bytes": 21373,
+      "sha256": "26a1b3f3dc9ff4e8e2d2df4c87125ea0abbafa220c8a538edd0d360c9356fe9b",
+      "url": "https://copytolive.github.io/rwa/validation/history-allpairs-zero-delay/history-allpairs-zero-public-probe-20260903-1000/mobile-allpairs-0ms-panel.png"
+    },
+    "mobile-allpairs-0ms-filters.png": {
+      "bytes": 4490,
+      "sha256": "cd615a90c619b8fb0553671f10e66674e6e30a3860ae8091ad14d916eb4f4372",
+      "url": "https://copytolive.github.io/rwa/validation/history-allpairs-zero-delay/history-allpairs-zero-public-probe-20260903-1000/mobile-allpairs-0ms-filters.png"
+    },
+    "mobile-allpairs-0ms-viewport.png": {
+      "bytes": 57989,
+      "sha256": "fbc8253491139f6b9cf8e0c21a2f1186db54f65087a92bf30c9b30dfb06d438b",
+      "url": "https://copytolive.github.io/rwa/validation/history-allpairs-zero-delay/history-allpairs-zero-public-probe-20260903-1000/mobile-allpairs-0ms-viewport.png"
+    },
+    "mobile-allpairs-100ms-panel.png": {
+      "bytes": 21373,
+      "sha256": "26a1b3f3dc9ff4e8e2d2df4c87125ea0abbafa220c8a538edd0d360c9356fe9b",
+      "url": "https://copytolive.github.io/rwa/validation/history-allpairs-zero-delay/history-allpairs-zero-public-probe-20260903-1000/mobile-allpairs-100ms-panel.png"
+    },
+    "mobile-allpairs-100ms-filters.png": {
+      "bytes": 4490,
+      "sha256": "cd615a90c619b8fb0553671f10e66674e6e30a3860ae8091ad14d916eb4f4372",
+      "url": "https://copytolive.github.io/rwa/validation/history-allpairs-zero-delay/history-allpairs-zero-public-probe-20260903-1000/mobile-allpairs-100ms-filters.png"
+    }
+  },
+  "consoleErrors": [],
+  "exceptions": [],
+  "networkFailed": [],
+  "httpErrors": [],
+  "publicBase": "https://copytolive.github.io/rwa/validation/history-allpairs-zero-delay/history-allpairs-zero-public-probe-20260903-1000/"
+}
