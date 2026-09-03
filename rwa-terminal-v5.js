@@ -149,7 +149,10 @@ function ensureMobile(){
  let close=$('#mobileMarketsClose')||$('[data-v5-action="close-markets"]');
  if(close){close.dataset.v5Action='close-markets';close.classList.add('rwa-v5-mobile-market-close-v2');close.type='button';close.setAttribute('aria-label','Close markets')}
  else{close=document.createElement('button');close.className='rwa-v5-mobile-market-close-v2';close.type='button';close.textContent='×';close.setAttribute('aria-label','Close markets');close.dataset.v5Action='close-markets';document.body.appendChild(close)}
- close.style.setProperty('display','none','important');
+ const marketsOpen=innerWidth<681&&document.body.classList.contains('rwa-v5-mobile-markets');
+ setMobileMarketsCloseVisible(marketsOpen);
+ const marketBtn=tabs?.querySelector('[data-v5-mobile-nav="markets"]');if(marketBtn&&!marketBtn.dataset.v5Direct){marketBtn.dataset.v5Direct='1';marketBtn.onclick=e=>{e.preventDefault();e.stopPropagation();openMarketsMobile()}}
+ if(close&&!close.dataset.v5Direct){close.dataset.v5Direct='1';close.onclick=e=>{e.preventDefault();e.stopPropagation();closeMarketsMobile()}}
  ensureMiniBook();applyMobileState()
 }
 function setMobile(mode){mobileMode=mode;document.body.dataset.v5MobileMode=mode;setActive('.rwa-v5-mobile-worktabs [data-v5-mobile-mode]',mode,'v5MobileMode');applyMobileState()}
@@ -229,7 +232,10 @@ function ensureFooter(){
 function renderFooter(){const f=$('#rwaV5Footer');if(!f)return;const rows=[...(market()?.pairs||[])].sort((a,b)=>num(b.vol)-num(a.vol)).slice(0,4);f.innerHTML='<span><i></i> System Status · Operational</span><div>'+rows.map(x=>'<button data-v5-symbol="'+esc(x.symbol)+'"><b>'+esc(x.base)+'</b> <i class="'+(num(x.change)>=0?'pos':'neg')+'">'+pct(x.change)+'</i></button>').join('')+'</div><small>Real market data · account data only when connected</small>'}
 function apply(){
  window.__RWA_FIRST_PAINT_HEADER_LOCK__?.disconnect?.();document.documentElement.classList.remove('rwa-target-prepaint');document.documentElement.classList.add('rwa-target-runtime-ready');
- document.body.classList.add('rwa-terminal-v5');document.documentElement.dataset.rwaTerminal='v5';unlockLegacyGeometry();keepMarket();ensureHeader();ensureLeft();ensureBottom();ensureTrade();ensureMobile();ensureFooter();lockV5Geometry();renderFavorite();renderStatus();renderFooter()
+ const preserveMobileMarkets=innerWidth<681&&document.body.classList.contains('rwa-v5-mobile-markets');
+ document.body.classList.add('rwa-terminal-v5');document.documentElement.dataset.rwaTerminal='v5';unlockLegacyGeometry();keepMarket();ensureHeader();ensureLeft();ensureBottom();ensureTrade();ensureMobile();ensureFooter();lockV5Geometry();
+ if(preserveMobileMarkets||document.body.classList.contains('rwa-v5-mobile-markets')){setMobileMarketsDrawerVisible(true);setMobileMarketsCloseVisible(true)}
+ renderFavorite();renderStatus();renderFooter()
 }
 function bind(){
  const depth=$('#depth');if(depth&&!depth.dataset.v5BookBound){depth.dataset.v5BookBound='1';depth.addEventListener('pointerdown',e=>orderBookClick(e),true)}
@@ -264,4 +270,4 @@ function boot(){apply();bind();renderBottom();clearInterval(renderTimer);renderT
 window.RWATerminalV5={version:VERSION,active:true,apply,navigate,setBottom,setMobile,setTradeSide,openAlerts,openTrade,toggleFavorite,share,audit:()=>({version:VERSION,route:location.hash||'#markets',leftMode,bottomMode,mobileMode,tradeSide,globalNav:qa('.topnav [data-v5-nav]').map(x=>x.dataset.v5Nav),bottomTabs:qa('#rwaV5Bottom [data-v5-bottom]').map(x=>x.dataset.v5Bottom),railTrade:$('#liveRail')?.dataset.v5Trade==='1',orderTicketInside:!!$('#liveRail #rwaTargetOrderTicket'),mobileMarketsOpen:document.body.classList.contains('rwa-v5-mobile-markets'),favorites:favorites().length,alerts:alerts().length,theses:theses().length})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
-/* RWA_TERMINAL_V5_ACCEPTANCE_2026_09_03_R13 */
+/* RWA_TERMINAL_V5_ACCEPTANCE_2026_09_03_R14 */
