@@ -48,7 +48,7 @@ FAMILIES = {
     "RELATIVE_STRENGTH": 22,
     "MULTI_TIMEFRAME": 23,
 
-    # 22 new D1-real remix families. These are distinct signal engines, not
+    # 24 new D1-real remix families. These are distinct signal engines, not
     # parameter aliases of Candle/Donchian.
     "ADX_TREND": 24,
     "TURTLE_BREAKOUT": 25,
@@ -72,9 +72,11 @@ FAMILIES = {
     "LINEAR_REGRESSION": 43,
     "VOLATILITY_REGIME": 44,
     "TREND_MEANREV_ENSEMBLE": 45,
+    "REGRESSION_CHANNEL_BREAKOUT": 46,
+    "ATR_MEANREV_REGIME": 47,
 }
 
-# Registered target families that MUST NOT be simulated from D1 resampling.
+# Native-MTF research families that MUST NOT be simulated from D1 resampling.
 # They become implemented only after real canonical H4 data is added and
 # independently Gate-A audited.
 DATA_BLOCKED_NATIVE_MTF_FAMILIES = {
@@ -714,6 +716,21 @@ def signal_series(d: pd.DataFrame, cnd: Candidate) -> np.ndarray:
         long = (fast > slow) & (z <= -cnd.p1) & (rsi <= cnd.p2) & (close > open_)
         short = (fast < slow) & (z >= cnd.p1) & (rsi >= 100 - cnd.p2) & (close < open_)
 
+    elif cnd.family == "REGRESSION_CHANNEL_BREAKOUT":
+        slope = _rolling_linreg_slope(close, cnd.slow)
+        norm_slope = slope / np.maximum(atr_slow, 1e-9)
+        channel_mult = cnd.p2
+        upper = sma + channel_mult * std
+        lower = sma - channel_mult * std
+        long = (close > upper) & (norm_slope >= cnd.p1) & (fast > slow)
+        short = (close < lower) & (norm_slope <= -cnd.p1) & (fast < slow)
+
+    elif cnd.family == "ATR_MEANREV_REGIME":
+        ratio = atr / np.maximum(atr_slow, 1e-9)
+        quiet = ratio <= cnd.p2
+        long = quiet & (z <= -cnd.p1) & (rsi < 45)
+        short = quiet & (z >= cnd.p1) & (rsi > 55)
+
     elif cnd.family == "RELATIVE_STRENGTH":
         rs = close / np.maximum(slow, 1e-9) - 1.0
         threshold = cnd.p1 / 100.0
@@ -954,6 +971,10 @@ def generate_candidate(rng: random.Random, timeframe: str = "D1") -> Candidate:
         p1, p2, p3 = rng.choice([1.05, 1.10, 1.20, 1.30, 1.50]), rng.choice([0.60, 0.70, 0.80, 0.90, 1.00]), 1.0
     elif family == "TREND_MEANREV_ENSEMBLE":
         p1, p2, p3 = rng.choice([0.5, 0.7, 1.0, 1.3, 1.7]), rng.choice([30.0, 35.0, 40.0, 45.0]), 1.0
+    elif family == "REGRESSION_CHANNEL_BREAKOUT":
+        p1, p2, p3 = rng.choice([0.005, 0.01, 0.02, 0.03, 0.05, 0.08]), rng.choice([0.8, 1.0, 1.2, 1.5, 1.8, 2.0]), 1.0
+    elif family == "ATR_MEANREV_REGIME":
+        p1, p2, p3 = rng.choice([0.5, 0.7, 1.0, 1.3, 1.7, 2.0]), rng.choice([0.65, 0.75, 0.85, 0.95, 1.05]), 1.0
     elif family in {"ATR_BREAKOUT", "KELTNER_BREAKOUT", "VOLATILITY", "ADAPTIVE_TREND"}:
         p1, p2, p3 = rng.choice([0.5, 0.7, 0.9, 1.0, 1.2, 1.5, 1.8, 2.2]), 55.0, 1.0
     elif family == "BAND_HYBRID":
