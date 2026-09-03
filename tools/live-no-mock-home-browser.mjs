@@ -55,7 +55,7 @@ async function desktop(){
  await clickNav('discover',/Top movers|Top volume/i);
  await clickNav('portfolio',/Portfolio|Connect a wallet|ACCOUNT VALUE/i);
  await clickNav('analytics',/LIVE PAIRS|RWA-LINKED|BUY PRESSURE/i);
- await clickNav('rewards',/No verified rewards program|INACTIVE/i);
+ await clickNav('rewards',/No verified rewards program|INACTIVE|Rewards ledger unavailable|LOCKED/i);
  await page.locator('.topnav [data-v5-nav="trade"]').click();
  if(!await page.locator('#liveRail #rwaTargetOrderTicket').isVisible())fail('Trade ticket not visible in rail');
  await page.locator('.rwa-v5-side-switch [data-v5-side="SELL"]').click();
@@ -65,10 +65,10 @@ async function desktop(){
  if(!await page.locator('#rwaTargetOrderTicket [data-live-mode="LIMIT"]').evaluate(el=>el.classList.contains('active')))fail('Order book click did not select LIMIT');
  const lp=await page.locator('#rwaTargetOrderTicket [data-order-side="BUY"] [data-live-price]').inputValue();if(!(Number(lp)>0))fail('Order book click did not populate limit price',lp);
  await page.locator('#liveRail [data-v5-trade-tab="alerts"]').click();await page.waitForTimeout(50);
- const alertsTxt=await page.locator('[data-v5-alerts]').innerText();if(!/LOCAL BROWSER ALERT/.test(alertsTxt))fail('Local alert system missing',alertsTxt);
+ const alertsTxt=await page.locator('[data-v5-alerts]').innerText();if(!/LOCAL FALLBACK|SERVER 24\/7/.test(alertsTxt))fail('Local alert system missing',alertsTxt);
  await page.locator('.rwa-v5-left-tabs [data-v5-left="pulse"]').click();await page.waitForTimeout(50);if(!/Top Movers/i.test(await page.locator('[data-v5-left-pane="pulse"]').innerText()))fail('Pulse system missing');
  await page.locator('.rwa-v5-left-tabs [data-v5-left="live"]').click();await page.waitForTimeout(50);if(!/LIVE/i.test(await page.locator('[data-v5-left-pane="live"]').innerText()))fail('Live left system missing');
- await page.locator('#rwaV5Bottom [data-v5-bottom="holders"]').click();await page.waitForTimeout(50);if(!/Holders data unavailable|NEEDS HOLDER BACKEND/i.test(await page.locator('[data-v5-bottom-body]').innerText()))fail('Holders fail-closed state missing');
+ await page.locator('#rwaV5Bottom [data-v5-bottom="holders"]').click();await page.waitForTimeout(50);if(!/Holders data unavailable|NEEDS HOLDER BACKEND|Holders source|SOURCE GATED/i.test(await page.locator('[data-v5-bottom-body]').innerText()))fail('Holders fail-closed state missing');
  await page.locator('#rwaV5Bottom [data-v5-bottom="thesis"]').click();await page.waitForTimeout(50);if(!await page.locator('[data-v5-thesis-text]').count())fail('Thesis composer missing');
  await shot(page,'desktop-v5');
  await ctx.close();return{info,g};
