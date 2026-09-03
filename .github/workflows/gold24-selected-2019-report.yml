@@ -7,6 +7,9 @@ on:
       - '.github/workflows/gold24-selected-2019-report.yml'
       - 'backtest/gold24/PERIOD2019_REPORT_KICK'
       - 'backtest/gold24/period2019_selected_report.py'
+      - 'backtest/gold24/runtime_mt5_lot/latest_entry100_net20000_standard_lot.csv'
+      - 'backtest/gold24/runtime_multimethod_v1/latest_multimethod_v1_discovery.csv'
+      - 'backtest/gold24/qualified_scripts/**'
 
 permissions:
   contents: write
@@ -87,12 +90,14 @@ jobs:
           out=pathlib.Path(os.environ['OUT_DIR'])
           rows=list(csv.DictReader((out/'latest_selected_2019_to_today.csv').open()))
           x=json.loads((out/'latest_selected_2019_to_today.json').read_text())
+          v=json.loads(pathlib.Path(os.environ.get('RUNNER_TEMP','/tmp')).joinpath('qualified_scripts_validation.json').read_text())
+          expected=int(v['total_method_pairs'])
           assert x['status']=='PASS'
           assert int(x['source_batch'])==int(os.environ['SOURCE_BATCH'])
           assert str(x['source_run_id'])==str(os.environ['SOURCE_RUN_ID'])
           assert int(x['source_archive_total'])==int(os.environ['SOURCE_ARCHIVED'])
-          assert len(rows)==11
-          assert int(x['selected_method_count'])==11
+          assert len(rows)==expected
+          assert int(x['selected_method_count'])==expected
           assert all(r['python_script'].startswith('https://github.com/copytolive/rwa/') for r in rows)
           assert all(r['mt5_script'].startswith('https://github.com/copytolive/rwa/') for r in rows)
           print(json.dumps({
