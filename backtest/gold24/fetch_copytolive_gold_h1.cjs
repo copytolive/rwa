@@ -44,7 +44,7 @@ function timestampMs(x) {
 }
 
 (async () => {
-  const [, , outPath, fromIso = '2003-05-05', toIso = '2026-05-01'] = process.argv;
+  const [, , outPath, fromIso = '2003-05-05', toIso = '2026-04-29'] = process.argv;
   if (!outPath) {
     console.error('usage: node fetch_copytolive_gold_h1.cjs <output.csv> [from] [to-exclusive]');
     process.exit(2);
@@ -54,10 +54,11 @@ function timestampMs(x) {
   const end = utcDate(toIso);
   if (!(start < end)) throw new Error('invalid date window');
 
-  // CopyToLive's source CSV was Dukascopy M1. We keep flat M1 candles because
-  // the production converter itself does not remove them; it only removes
-  // invalid / zero-price rows before resampling.
-  const ignoreFlats = String(process.env.COPYTOLIVE_IGNORE_FLATS || 'false').toLowerCase() === 'true';
+  // The original production CSV snapshot contains market-session M1 bars,
+  // not Dukascopy's synthetic flat/weekend filler. The converter itself does
+  // not delete flat bars because they were already absent from that snapshot.
+  // Use ignoreFlats=true when rebuilding the historical source through the API.
+  const ignoreFlats = String(process.env.COPYTOLIVE_IGNORE_FLATS || 'true').toLowerCase() === 'true';
   const chunkMonths = Math.max(1, Number(process.env.COPYTOLIVE_M1_CHUNK_MONTHS || 12));
 
   const hours = new Map();

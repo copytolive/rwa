@@ -76,6 +76,11 @@ jobs:
           cd backtest/gold24
           python -m unittest -v test_copytolive_compat.py
 
+      - name: Compile exact replay producer path
+        run: |
+          set -euo pipefail
+          python -m py_compile backtest/gold24/copytolive_active_replay.py
+
       - name: Validate exact active source pack
         run: |
           set -euo pipefail
@@ -110,7 +115,7 @@ jobs:
           path: |
             .copytolive-gold-h1
             .dukascopy-cache-copytolive-gold
-          key: copytolive-xauusd-m1-resampled-h1-v3-${{ env.FROM_DATE }}-${{ env.TO_DATE }}
+          key: copytolive-xauusd-m1-resampled-h1-v4-${{ env.FROM_DATE }}-${{ env.TO_DATE }}
 
       - name: Fetch GOLD H1 on GitHub runner
         run: |
