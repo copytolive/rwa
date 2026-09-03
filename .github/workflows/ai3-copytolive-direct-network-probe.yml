@@ -57,6 +57,10 @@ jobs:
             "http://109.123.239.76:8013/",
             "http://109.123.239.76:8013/health",
             "http://109.123.239.76:8013/openapi.json",
+            "http://109.123.239.76:2019/",
+            "http://109.123.239.76:2019/config/",
+            "http://109.123.239.76:2019/config/apps/http/servers",
+            "http://109.123.239.76:2019/metrics",
           ]
           out={}
           for u in urls:
