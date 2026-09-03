@@ -98,13 +98,13 @@ jobs:
           a["Date"]=pd.to_datetime(a["Date"],utc=True,errors="raise")
           b["Date"]=pd.to_datetime(b["Date"],utc=True,errors="raise")
           assert 120000 <= len(a) <= 150000, len(a)
-          assert 5900 <= len(b) <= 6300, len(b)
+          assert 6900 <= len(b) <= 7150, len(b)
           print({
             "h1_rows":len(a),"h1_start":str(a["Date"].iloc[0]),"h1_end":str(a["Date"].iloc[-1]),
             "h1_sha256":hashlib.sha256(open(h1,"rb").read()).hexdigest(),
             "d1_rows":len(b),"d1_start":str(b["Date"].iloc[0]),"d1_end":str(b["Date"].iloc[-1]),
             "d1_sha256":hashlib.sha256(open(d1,"rb").read()).hexdigest(),
-            "construction":"DUKASCOPY_M1_IGNORE_FLATS_RESAMPLE_H1_D1"
+            "construction":"ONLINE_DUKASCOPY_M1_IGNORE_FLATS_RESAMPLE_H1_D1_DIAGNOSTIC"
           })
           PY
 
