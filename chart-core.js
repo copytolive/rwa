@@ -23,8 +23,8 @@ window.addEventListener('resize',queueDraw,{passive:true});window.addEventListen
   if(!document.querySelector('link[data-rwa-target-livehome]')){const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-live-home-v1.css?v=5.0.0';l.dataset.rwaTargetLivehome='1';document.head.appendChild(l)}
   if(!window.RWALiveHome)await import('./rwa-live-home-v1.js?v=5.0.0');
   document.querySelectorAll('link[data-rwa-terminal-v5]').forEach(x=>x.remove());
-  {const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-terminal-v5.css?v=1.0.2';l.dataset.rwaTerminalV5='1';document.head.appendChild(l)}
-  if(!window.RWATerminalV5)await import('./rwa-terminal-v5.js?v=1.0.2');
+  {const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-terminal-v5.css?v=1.0.3';l.dataset.rwaTerminalV5='1';document.head.appendChild(l)}
+  if(!window.RWATerminalV5)await import('./rwa-terminal-v5.js?v=1.0.3');
   document.documentElement.classList.add('rwa-target-runtime-ready')
 }catch(e){console.error('RWA live HOME failed to load',e)}})();
 /* RWA_REAL_BUSINESS_VALIDATION_CONSOLE_V1_BOOTSTRAP */
