@@ -186,11 +186,17 @@ def main() -> int:
             }
         )
 
+    # Remove every stale generated/legacy qualified wrapper, not only *_auto_*.
+    # Infrastructure Python files in IGNORE_PY do not represent selected strategies.
     removed = []
-    for p in sorted(HERE.glob("*_auto_*.py")):
+    for p in sorted(HERE.glob("*.py")):
+        if p.name in IGNORE_PY:
+            continue
         text = p.read_text(encoding="utf-8")
         m = re.search(r'["\']config_hash["\']\s*:\s*["\']([0-9a-f]{64})["\']', text)
-        if m and m.group(1) not in selected_hashes:
+        if not m:
+            continue
+        if m.group(1) not in selected_hashes:
             stem = p.stem
             p.unlink()
             mq = p.with_suffix(".mq5")
@@ -205,7 +211,7 @@ def main() -> int:
         "total_method_pairs": len(rows),
         "created": created,
         "reused": reused,
-        "removed_stale_auto": removed,
+        "removed_stale_auto": removed,\n        "removed_stale_wrappers": removed,
         "methods": manifest,
         "contract": {
             "pip_size_usd": PIP_SIZE_USD,
