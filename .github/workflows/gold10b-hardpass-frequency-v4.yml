@@ -1,0 +1,107 @@
+name: GOLD10B HARD PASS Frequency v4
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/gold10b-hardpass-frequency-v4.yml'
+      - 'backtest/gold24/hardpass_frequency_v4.py'
+      - 'backtest/gold24/HARDPASS_FREQUENCY_V4_KICK'
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: gold10b-hardpass-frequency-v4
+  cancel-in-progress: true
+
+env:
+  SOURCE_RUN_ID: '33667987913'
+  STATE_ARTIFACT: gold24-canonical-v11-state
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned dependencies
+        run: python -m pip install -r backtest/gold24/requirements.txt
+      - name: Restore authoritative canonical D1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -rf .hardpass-v4-state
+          mkdir -p .hardpass-v4-state
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" -n "$STATE_ARTIFACT" -D .hardpass-v4-state
+          test -s .hardpass-v4-state/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv
+          test -s .hardpass-v4-state/gate_a/gate_a_receipt.json
+      - name: Run frequency v4 discovery on real canonical D1
+        run: |
+          set -euo pipefail
+          python -u backtest/gold24/hardpass_frequency_v4.py \
+            --state-dir .hardpass-v4-state \
+            --repo-root . \
+            --out "$RUNNER_TEMP/latest_hardpass_frequency_v4.json" \
+            --candidate-count 100000 \
+            --workers 8 \
+            --seed 2026090417
+          python - <<'PY'
+          import json,os
+          p=os.environ['RUNNER_TEMP']+'/latest_hardpass_frequency_v4.json'
+          x=json.load(open(p))
+          assert x['status']=='PASS'
+          assert x['candidate_evaluated_unique']==100000
+          assert x['candidate_gate']=={'entry_min':100,'net_profit_usd_min':20000.0,'corr_max':0.5}
+          assert x['hard_pass_gate']['entry_min']==300
+          assert x['hard_pass_gate']['pf_min']==1.2
+          assert x['hard_pass_gate']['max_dd_pct_max']==25.0
+          assert x['hard_pass_gate']['oos_pf_min']==1.0
+          assert x['hard_pass_gate']['positive_year_pct_min']==60.0
+          assert x['hard_pass_gate']['corr_max']==0.5
+          assert x['generation_profile']['threshold_relaxation'] is False
+          assert x['generation_profile']['disjoint_from_master_targeted_v1_v2_v3'] is True
+          print('GOLD10B_HARDPASS_FREQUENCY_V4_PASS')
+          print(json.dumps({
+            'candidate_evaluated_unique':x['candidate_evaluated_unique'],
+            'primitive_diagnostics':x['primitive_diagnostics'],
+            'primitive_survivors':x['primitive_survivors'],
+            'noncorr_7_of_7_survivors':x['noncorr_7_of_7_survivors'],
+            'hard_pass_new_count':x['hard_pass_new_count'],
+            'global_selected':x['global_selected'],
+          },indent=2))
+          PY
+      - name: Publish v4 evidence race-safe
+        run: |
+          set -euo pipefail
+          PAYLOAD="$RUNNER_TEMP/latest_hardpass_frequency_v4.json"
+          test -s "$PAYLOAD"
+          git config user.name 'gold10b-bot'
+          git config user.email 'gold10b-bot@users.noreply.github.com'
+          for TRY in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p backtest/gold24/runtime_hardpass_v4
+            cp "$PAYLOAD" backtest/gold24/runtime_hardpass_v4/latest_hardpass_frequency_v4.json
+            git add backtest/gold24/runtime_hardpass_v4/latest_hardpass_frequency_v4.json
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m 'chore(gold10b): publish frequency-v4 hard-pass evidence [skip ci]'
+            if git push origin HEAD:main; then exit 0; fi
+            sleep $((TRY*2))
+          done
+          exit 1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gold10b-hardpass-frequency-v4-${{ github.run_id }}
+          path: ${{ runner.temp }}/latest_hardpass_frequency_v4.json
+          if-no-files-found: warn
+          retention-days: 90
