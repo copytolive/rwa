@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
-if(window.RWALiveHome?.version==='4.0.0')return;
-const VERSION='4.0.0',$=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)];
+if(window.RWALiveHome?.version==='4.0.1')return;
+const VERSION='4.0.1',$=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const num=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
 const money=v=>Number.isFinite(Number(v))?'$'+Number(v).toLocaleString(undefined,{maximumFractionDigits:2}):'—';
