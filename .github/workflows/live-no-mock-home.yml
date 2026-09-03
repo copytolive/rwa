@@ -7,7 +7,7 @@ on:
       - "index.html"
       - "app.js"
       - "chart-core.js"
-      - "rwa-live-home-v1.js"
+      - "rwa-live-home-v1.js"\n      - "rwa-terminal-v5.js"\n      - "rwa-terminal-v5.css"
       - "rwa-live-home-v1.css"
       - "rwa-multichain.js"
       - "rwa-multichain-engine.js"
@@ -70,7 +70,7 @@ jobs:
             if printf '%s' "$ROOT" | grep -Fq 'id="bookPrecision"' \
               && printf '%s' "$ROOT" | grep -Fq 'id="watchAdd"' \
               && printf '%s' "$ROOT" | grep -Fq 'app.js?v=19' \
-              && printf '%s' "$CORE" | grep -Fq 'rwa-live-home-v1.js?v=4.2.1'; then
+              && printf '%s' "$CORE" | grep -Fq 'rwa-terminal-v5.js?v=1.0.0'; then
               echo "Public target markers live at deployment $LIVE_SHA"
               exit 0
             fi
