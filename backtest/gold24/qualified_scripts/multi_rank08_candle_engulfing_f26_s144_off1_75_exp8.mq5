@@ -11,6 +11,11 @@
 #define MM_OFFSET_USD 1.75
 #define MM_EXPIRY_BARS 8
 #define MM_DIRECTION_MODE "BOTH"
+#define MM_P1 55.0
+#define MM_P2 52.0
+#define MM_P3 1.0
+#define MM_ENTRY_METHOD "LIMIT"
+#define MM_CONFIG_HASH "db02ceb03b2a80d41e08ef0271529a78acac546b4dea2d370b8fc71dd9d75dc0"
 #define MM_MAGIC 24090208
 #define MM_TAG "GOLD24_MULTI_08"
 #include "multimethod_engine.mqh"
