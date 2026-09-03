@@ -1,0 +1,74 @@
+{
+  "active_gold_input": 118,
+  "corr_kept_count": 0,
+  "corr_removed_count": 0,
+  "dataset": {
+    "end_utc": "2026-08-27 23:00:00+00:00",
+    "path": "/home/runner/work/rwa/rwa/.copytolive-gold-h1/GOLD_H1.csv",
+    "rows": 140906,
+    "sha256": "ee10162271a44548621ae46461b99417cbbbc7c0ec18728c2a201e562492dbd4",
+    "start_utc": "2003-05-05 00:00:00+00:00"
+  },
+  "engine_mode": "COPYTOLIVE_EXACT_ACTIVE_REPLAY",
+  "execution_contract": {
+    "deposit_usd": 10000.0,
+    "entry": "signal-bar close",
+    "fee": 0.0016,
+    "one_position_at_a_time": true,
+    "risk_usd_per_trade": 200.0,
+    "same_bar_entry_exit": false,
+    "same_bar_precedence": "SL_FIRST",
+    "size": "risk_usd / stop_distance",
+    "stop": "entry_price * sl_pct",
+    "target": "stop_distance * tp_ratio",
+    "walk_forward_split": "70/30 chronological"
+  },
+  "github_gate": {
+    "max_abs_pearson_log_return_equity": 0.5,
+    "max_dd_pct": 25.0,
+    "min_entry": 300,
+    "min_net_profit_usd": 20000.0,
+    "min_oos_pf": 1.0,
+    "min_pf": 1.2,
+    "min_positive_year_pct": 60.0,
+    "monte_carlo_probability_positive_pct": 95.0
+  },
+  "hard_pass_count": 0,
+  "parity_mean_abs_delta": {
+    "maxDrawdownPercent": 55.87476032900397,
+    "netProfit": 25835.67011299435,
+    "profitFactor": 0.6492721596714708,
+    "recoveryFactor": 19.717526441539775,
+    "sqn": 4.249688886624289,
+    "totalTrades": 239.6271186440678,
+    "wf_test_pf": 0.768020260848076,
+    "winRate": 11.573756257823202
+  },
+  "pre_corr_pass_count": 0,
+  "schema": "gold24-copytolive-active-replay-v1",
+  "source": {
+    "active_gold_count": 118,
+    "farm_path": "/var/www/copytolive/data/backtest_farm.json",
+    "farm_sha256": "2a954aea39e3c47a4ae56b1a26ce0ddfc6649440ce471dabab3429f881b51308",
+    "runtime_model": {
+      "deposit_usd": 10000,
+      "end_of_data_open_position": "discarded",
+      "entry": "signal-bar close",
+      "fee_rate_round_trip_stress": 0.0016,
+      "max_positions_per_strategy": 1,
+      "position_size": "risk_usd / stop_distance",
+      "risk_usd_per_trade": 200,
+      "same_bar_priority": "SL before TP",
+      "stop_loss": "entry_price * sl_pct",
+      "take_profit": "stop_distance * tp_ratio",
+      "walk_forward_split": 0.7
+    },
+    "state_path": "/home/opentrue-platform/backend/trading-service/app/data/compounding_state.json",
+    "state_sha256": "5436ac0310c4ef015e5fddb48ff44e6f821b6470a7805bd43fc1a84a566b17fc",
+    "strategy_source_root": "/home/opentrue-platform/backend/trading-service/strategies/scripts/python/GOLD",
+    "timeframe_counts": {
+      "H1": 118
+    }
+  },
+  "status": "PASS"
+}
