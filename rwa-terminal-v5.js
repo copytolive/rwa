@@ -64,18 +64,20 @@ function ensureTargetHeaderStats(){
  if(!qs.querySelector('[data-v5-stat="market-cap"]')){const mk=document.createElement('div');mk.className='qstat rwa-v5-extra-stat';mk.dataset.v5Stat='market-cap';mk.innerHTML='<small>Market Cap</small><b>—</b>';qs.appendChild(mk)}
  if(!qs.querySelector('[data-v5-stat="liquidity"]')){const li=document.createElement('div');li.className='qstat rwa-v5-extra-stat';li.dataset.v5Stat='liquidity';li.innerHTML='<small>Liquidity</small><b>—</b>';qs.appendChild(li)}
  if(!qs.querySelector('[data-v5-stat="holders"]')){const ho=document.createElement('div');ho.className='qstat rwa-v5-extra-stat';ho.dataset.v5Stat='holders';ho.innerHTML='<small>Holders</small><b>—</b>';qs.appendChild(ho)}
+ if(!window.__RWA_V5_HEADER_STATS_OBSERVER__){const nodes=[$('#statPrice'),$('#statChange')].filter(Boolean);if(nodes.length){const obs=new MutationObserver(()=>renderTargetHeaderStats());nodes.forEach(x=>obs.observe(x,{childList:true,subtree:true,characterData:true}));window.__RWA_V5_HEADER_STATS_OBSERVER__=obs}}
  const price=$('#statPrice')?.closest('.qstat'),change=$('#statChange')?.closest('.qstat'),vol=$('#statVol')?.closest('.qstat');
  if(price)price.querySelector('small').textContent='Price';
  if(change)change.querySelector('small').textContent='24h Change';
  if(vol)vol.querySelector('small').textContent='24h Volume'
 }
 function renderTargetHeaderStats(){
- ensureTargetHeaderStats();const p=pair(),fmt=window.RWAMarketRuntime?.format;
+ ensureTargetHeaderStats();const p=pair(),s=market(),fmt=window.RWAMarketRuntime?.format,parseText=v=>{const n=Number(String(v||'').replace(/[^0-9+.-]/g,''));return Number.isFinite(n)?n:NaN};
+ const b=num(s?.book?.bids?.[0]?.[0]),a=num(s?.book?.asks?.[0]?.[0]),domPrice=parseText($('#statPrice')?.textContent),domChange=parseText($('#statChange')?.textContent),livePrice=num(p.price)>0?num(p.price):(domPrice>0?domPrice:(b&&a?(b+a)/2:(b||a))),liveChange=num(p.price)>0?num(p.change):(Number.isFinite(domChange)?domChange:num(p.change));
  const kind=$('[data-v5-asset-kind]'),net=$('[data-v5-asset-network]');
  if(kind)kind.textContent=p.rwa?'RWA':'Spot';if(net)net.textContent=p.rwa?'Real World Asset':'Live Market';
  const mp=$('[data-v5-mobile-price]'),mc=$('[data-v5-mobile-change]');
- if(mp)mp.textContent=fmt?.price?.(p.price)||money(p.price);
- if(mc){mc.textContent=pct(p.change);mc.className=num(p.change)>=0?'pos':'neg'}
+ if(mp)mp.textContent=livePrice>0?(fmt?.price?.(livePrice)||money(livePrice)):'—';
+ if(mc){mc.textContent=pct(liveChange);mc.className=liveChange>=0?'pos':'neg'}
  const cap=$('[data-v5-stat="market-cap"] b'),liq=$('[data-v5-stat="liquidity"] b'),hold=$('[data-v5-stat="holders"] b');
  if(cap)cap.textContent='—';if(liq)liq.textContent='—';
  if(hold){const h=serverHolders;hold.textContent=h?.available&&Array.isArray(h.holders)?Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1}).format(h.holders.length):'—'}
@@ -436,3 +438,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 /* RWA_TERMINAL_R13_FINAL_VISUAL_ZERO_DELAY_RECERT_2026_09_04 */
 
 /* RWA_TERMINAL_R15_FINAL_PUBLIC_ZERO_DELAY_LIVE_READY_RECERT_2026_09_04 */
+
+/* RWA_TERMINAL_R16_ZERO_DELAY_LIVE_HEADER_SYNC_2026_09_04 */
