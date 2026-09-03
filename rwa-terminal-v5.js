@@ -387,3 +387,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 /* RWA_TERMINAL_V5_NO_LEGACY_FIRST_PAINT_2026_09_03 */
 
 /* RWA_TERMINAL_TARGET_PARITY_R1_2026_09_03 */
+
+/* RWA_TERMINAL_TARGET_PARITY_R2_2026_09_03 */
