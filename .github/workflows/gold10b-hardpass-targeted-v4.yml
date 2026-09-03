@@ -1,0 +1,112 @@
+name: GOLD10B Targeted HARD PASS Search v4
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/gold10b-hardpass-targeted-v4.yml'
+      - 'backtest/gold24/hardpass_targeted_v4.py'
+      - 'backtest/gold24/HARDPASS_TARGETED_V4_KICK'
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: gold10b-hardpass-targeted-v4
+  cancel-in-progress: true
+
+env:
+  SOURCE_RUN_ID: '33667987913'
+  STATE_ARTIFACT: gold24-canonical-v11-state
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install -r backtest/gold24/requirements.txt
+
+      - name: Restore authoritative canonical D1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -rf .hardpass-v4-state
+          mkdir -p .hardpass-v4-state
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" -n "$STATE_ARTIFACT" -D .hardpass-v4-state
+          test -s .hardpass-v4-state/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv
+          test -s .hardpass-v4-state/gate_a/gate_a_receipt.json
+
+      - name: Run frequency-first v4 discovery
+        run: |
+          set -euo pipefail
+          mkdir -p backtest/gold24/runtime_hardpass_targeted_v4
+          python -u backtest/gold24/hardpass_targeted_v4.py \
+            --state-dir .hardpass-v4-state \
+            --prior-json backtest/gold24/runtime_multimethod_v1/latest_multimethod_v1_discovery.json \
+            --prior-targeted-json backtest/gold24/runtime_hardpass_targeted/latest_hardpass_targeted.json \
+            --out backtest/gold24/runtime_hardpass_targeted_v4/latest_hardpass_targeted_v4.json \
+            --candidate-count 150000 \
+            --workers 8 \
+            --seed 2026090417
+          python - <<'PY'
+          import json
+          p='backtest/gold24/runtime_hardpass_targeted_v4/latest_hardpass_targeted_v4.json'
+          x=json.load(open(p))
+          assert x['status']=='PASS'
+          assert x['schema']=='gold10b-hardpass-targeted-search-v4-frequency-first'
+          assert x['targeted_evaluated_unique']==150000
+          assert x['candidate_gate']=={'entry_min':100,'net_profit_usd_min':20000.0,'corr_max':0.5}
+          assert x['hard_pass_gate']=={
+            'entry_min':300,'pf_min':1.2,'max_dd_pct_max':25.0,'ev_gt':0.0,
+            'oos_pf_min':1.0,'monte_carlo':'PASS','positive_year_pct_min':60.0,'corr_max':0.5
+          }
+          assert x['generation_profile']['threshold_relaxation'] is False
+          print(json.dumps({
+            'combined_candidate_evaluated':x['combined_candidate_evaluated'],
+            'primitive_diagnostics':x['primitive_diagnostics'],
+            'prefilter_survivors':x['prefilter_survivors'],
+            'full_pre_corr_survivors':x['full_pre_corr_survivors'],
+            'hard_pass_count':x['hard_pass_count'],
+            'hard_pass_new_count':x['hard_pass_new_count'],
+            'global_corr_rejected':x['global_corr_rejected']
+          },indent=2))
+          PY
+
+      - name: Publish v4 evidence race-safe
+        run: |
+          set -euo pipefail
+          PAYLOAD="$RUNNER_TEMP/latest_hardpass_targeted_v4.json"
+          cp backtest/gold24/runtime_hardpass_targeted_v4/latest_hardpass_targeted_v4.json "$PAYLOAD"
+          git config user.name "gold10b-bot"
+          git config user.email "gold10b-bot@users.noreply.github.com"
+          for TRY in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p backtest/gold24/runtime_hardpass_targeted_v4
+            cp "$PAYLOAD" backtest/gold24/runtime_hardpass_targeted_v4/latest_hardpass_targeted_v4.json
+            git add backtest/gold24/runtime_hardpass_targeted_v4/latest_hardpass_targeted_v4.json
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m "chore(gold10b): publish v4 hard-pass evidence [skip ci]"
+            if git push origin HEAD:main; then exit 0; fi
+            sleep $((TRY*2))
+          done
+          exit 1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gold10b-hardpass-targeted-v4-${{ github.run_id }}
+          path: backtest/gold24/runtime_hardpass_targeted_v4/latest_hardpass_targeted_v4.json
+          if-no-files-found: error
+          retention-days: 90
