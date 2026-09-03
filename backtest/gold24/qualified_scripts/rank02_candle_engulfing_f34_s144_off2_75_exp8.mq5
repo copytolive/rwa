@@ -10,6 +10,11 @@
 #define QM_OFFSET_USD 2.75
 #define QM_EXPIRY_BARS 8
 #define QM_DIRECTION_MODE "LONG_ONLY"
+#define QM_P1 66.0
+#define QM_P2 58.0
+#define QM_P3 1.0
+#define QM_ENTRY_METHOD "LIMIT"
+#define QM_CONFIG_HASH "7c00212eb6bd65ad07e432d4a261d3f3240478d4d4698cf57e99c549684b61cb"
 #define QM_MAGIC 24090102
 #define QM_TAG "GOLD24_STRICT_02"
 #include "qualified_engine.mqh"
