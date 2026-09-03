@@ -240,10 +240,10 @@ body.rwa-terminal-v5 #rwaTargetOrderTicket .rwa-target-trade-note{font-size:6.5p
  body.rwa-terminal-v5 .main{position:relative!important;inset:auto!important;width:100%!important;height:auto!important;min-height:0!important;display:block!important;overflow:visible!important;background:#030913!important}
  body.rwa-terminal-v5 .terminal-header{height:auto!important;min-height:118px!important;display:grid!important;grid-template-columns:1fr auto!important;align-items:start!important;padding:12px 10px 0!important;background:#04101a!important;border-bottom:1px solid var(--v5-line)!important}
  body.rwa-terminal-v5 .instrument{grid-column:1!important}.instrument-actions{grid-column:2!important}
- body.rwa-terminal-v5 .quickstats{grid-column:1/3!important;display:grid!important;grid-template-columns:repeat(4,1fr)!important;margin-top:7px!important;overflow:hidden!important}
+ body.rwa-terminal-v5 .quickstats{grid-column:1/3!important;display:grid!important;grid-template-columns:repeat(5,1fr)!important;margin-top:7px!important;overflow:hidden!important}
  body.rwa-terminal-v5 .quickstats .qstat:nth-child(4){display:none!important}
  body.rwa-terminal-v5 .qstat{min-width:0!important;padding:5px!important}.qstat small{font-size:6px!important}.qstat b{font-size:8px!important}
- .rwa-v5-mobile-worktabs{grid-column:1/3!important;display:grid!important;grid-template-columns:repeat(4,1fr)!important;height:38px!important;margin-top:6px!important}
+ .rwa-v5-mobile-worktabs{grid-column:1/3!important;display:grid!important;grid-template-columns:repeat(5,1fr)!important;height:38px!important;margin-top:6px!important}
  .rwa-v5-mobile-worktabs button{border:0!important;background:transparent!important;color:#8192a8!important;font-size:8px!important;font-weight:750!important}
  .rwa-v5-mobile-worktabs button.active{color:#fff!important;box-shadow:inset 0 -2px 0 var(--v5-green)!important}
  body.rwa-terminal-v5 .chart-wrap{height:360px!important;min-height:360px!important;display:block!important}
