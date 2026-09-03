@@ -5,19 +5,16 @@ on:
     paths:
       - "index.html"
       - "app.js"
-      - "realtime-core.js"
       - "chart-core.js"
-      - "market-performance.js"
-      - "persistent-market-shell-v3.css"
-      - "persistent-market-operability-patch-v1.css"
-      - "enterprise-ui-v12.css"
-      - "styles.css"
-      - "mobile.css"
-      - "stable-shell.css"
-      - "superapp-v5.js"
-      - "superapp-v5.css"
-      - "quick-actions.js"
-      - "mobile.js"
+      - "rwa-live-home-v1.js"
+      - "rwa-live-home-v1.css"
+      - "rwa-target-dashboard-v2.css"
+      - "rwa-multichain.js"
+      - "rwa-multichain-engine.js"
+      - "rwa-multichain-registry.json"
+      - "execution-api.js"
+      - "exchange-core.js"
+      - "wallet-core.js"
       - "tools/root-market-browser-stability.mjs"
       - ".github/workflows/root-market-stability.yml"
   push:
@@ -25,25 +22,25 @@ on:
     paths:
       - "index.html"
       - "app.js"
-      - "realtime-core.js"
       - "chart-core.js"
-      - "market-performance.js"
-      - "persistent-market-shell-v3.css"
-      - "persistent-market-operability-patch-v1.css"
-      - "enterprise-ui-v12.css"
-      - "styles.css"
-      - "mobile.css"
-      - "stable-shell.css"
-      - "superapp-v5.js"
-      - "superapp-v5.css"
-      - "quick-actions.js"
-      - "mobile.js"
+      - "rwa-live-home-v1.js"
+      - "rwa-live-home-v1.css"
+      - "rwa-target-dashboard-v2.css"
+      - "rwa-multichain.js"
+      - "rwa-multichain-engine.js"
+      - "rwa-multichain-registry.json"
+      - "execution-api.js"
+      - "exchange-core.js"
+      - "wallet-core.js"
       - "tools/root-market-browser-stability.mjs"
       - ".github/workflows/root-market-stability.yml"
 
 concurrency:
   group: rwa-root-market-stability-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   stability:
@@ -54,54 +51,55 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate current stable source contract
+
+      - name: Validate V4 trading-only source contract
+        shell: bash
         run: |
           set -euo pipefail
-          node --check realtime-core.js
+          node --check app.js
           node --check chart-core.js
-          node --check market-performance.js
-          node --check superapp-v5.js
-          node --check quick-actions.js
-          node --check mobile.js
+          node --check rwa-live-home-v1.js
           node --check tools/root-market-browser-stability.mjs
-          test -s persistent-market-shell-v3.css
-          test -s enterprise-ui-v12.css
-          grep -Fq 'market-performance.js?v=12' index.html
-          grep -Fq 'stable-shell.css?v=3' index.html
-          grep -Fq 'realtime-core.js?v=3' index.html
-          ! grep -Fq 'product-os-mobile-contract-v3.js' index.html
-          ! grep -Fq 'product-os-v3.js' index.html
-          grep -Fq "runtime:'root-terminal-low-jank-v1'" market-performance.js
-          grep -Fq 'persistent-market-shell-v3.css?v=3' market-performance.js
-          grep -Fq 'persistent-market-operability-patch-v1.css?v=11' market-performance.js
-          grep -Fq 'enterprise-ui-v12.css?v=12' market-performance.js
-          ! grep -Fq 'persistent-market-router-v2.js' market-performance.js
-          grep -Fq "persistent_market_workspaces='css-core-router-v3'" market-performance.js
-          grep -Fq "header='single-row-global-shell-v1'" market-performance.js
-          grep -Fq "observer_policy='hot-dom-periodic-1200ms'" market-performance.js
-          grep -Fq "asset_pair_geometry='route-owned-440px-v12'" market-performance.js
-          grep -Fq 'body.rwa-super-workspace-open .layout' persistent-market-shell-v3.css
-          grep -Fq 'body.rwa-super-suite-open .layout' persistent-market-shell-v3.css
-          grep -Fq 'WORKFLOW VIEWPORT PARITY V10' persistent-market-operability-patch-v1.css
-          grep -Fq 'ACTION ZERO-FLICKER TRANSITION LOCK V11' persistent-market-operability-patch-v1.css
-          grep -Fq 'STRICT SINGLE TOP ROW' stable-shell.css
-          grep -Fq 'COMPACT EXCHANGE CORE' stable-shell.css
-          grep -Fq 'rwa-ex-main>.rwa-ex-card:first-child' stable-shell.css
-          grep -Fq 'depth10@1000ms' realtime-core.js
-          grep -Fq 'setInterval(persistUniverse,30000)' realtime-core.js
-          grep -Fq "performance:'lazy-storefront-no-global-observer-v1'" quick-actions.js
-          ! grep -Fq 'new MutationObserver(injectTrade)' quick-actions.js
-          node tools/superapp-v5-audit.mjs
+          grep -Fq '<strong>Real World Asset</strong>' index.html
+          grep -Fq 'app.js?v=17' index.html
+          grep -Fq 'id="bookPrecision"' index.html
+          grep -Fq 'id="bookMenu"' index.html
+          grep -Fq 'id="liveRail"' index.html
+          grep -Fq "RWAMarketRuntime={version:'1.4.1'" app.js
+          grep -Fq "/api/v3/depth?symbol=" app.js
+          grep -Fq "limit=100" app.js
+          grep -Fq "limit=innerWidth<681?70:140" app.js
+          grep -Fq "VERSION='4.1.0'" rwa-live-home-v1.js
+          grep -Fq "renderLiveRail" rwa-live-home-v1.js
+          grep -Fq "openPortfolio" rwa-live-home-v1.js
+          grep -Fq "openOrders" rwa-live-home-v1.js
+          grep -Fq "openRewards" rwa-live-home-v1.js
+          grep -Fq "workspaceOpen('analytics'" rwa-live-home-v1.js
+          grep -Fq "rwa-live-home-v1.js?v=4.1.0" chart-core.js
+          grep -Fq "rwa-live-home-v1.css?v=4.1.0" chart-core.js
+          grep -Fq "POLICY='chain-abstraction-fail-closed-v2'" rwa-multichain.js
+          ! grep -Eiq 'seablueprint|ecommerce|in-page commerce' index.html
+          ! grep -Fq '/rwa/_next/' index.html
+          echo RWA_ROOT_V4_SOURCE_PASS
+
       - name: Install Playwright Chromium
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
+
       - name: Start deterministic local site
+        shell: bash
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/rwa-http.log 2>&1 &
           echo $! >/tmp/rwa-http.pid
-          for i in {1..20}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
           cat /tmp/rwa-http.log
           exit 1
-      - name: Stress desktop compact and mobile UI
+
+      - name: Stress V4 desktop and mobile market UI
+        env:
+          RWA_TEST_URL: http://127.0.0.1:4173/
         run: node tools/root-market-browser-stability.mjs
