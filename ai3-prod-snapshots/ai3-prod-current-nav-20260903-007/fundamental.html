@@ -208,7 +208,8 @@ function renderTab(){
  if(state.tab==='Filings')h=filings(d);
  if(state.tab==='Estimates')h=estimates(d);
  if(state.tab==='Compare')h=compareView();
- $('#tabContent').innerHTML=h;
+ const tabTarget=$('#tabContent');if(!tabTarget)return;
+ tabTarget.innerHTML=h;
  bindTabExtras();
 }
 function bindTabExtras(){
@@ -218,11 +219,11 @@ function bindTabExtras(){
 }
 async function runCompare(){
  const input=$('#compareInput');const syms=[...new Set(input.value.toUpperCase().split(',').map(x=>x.trim()).filter(Boolean))].slice(0,6);
- if(syms.length<2){$('#compareResult').innerHTML='<div class="error">Enter 2-6 symbols.</div>';return}
- state.compare=syms;$('#compareResult').innerHTML='<div class="loading"><div class="spinner"></div>Comparing reported fundamentals...</div>';
+ if(syms.length<2){const t=$('#compareResult');if(t)t.innerHTML='<div class="error">Enter 2-6 symbols.</div>';return}
+ state.compare=syms;{const t=$('#compareResult');if(!t)return;t.innerHTML='<div class="loading"><div class="spinner"></div>Comparing reported fundamentals...</div>';}
  try{
   const j=await api(API+'/compare?symbols='+encodeURIComponent(syms.join(',')));const rows=j.rows||[];
-  $('#compareResult').innerHTML='<div class="tableWrap"><table><thead><tr><th>Metric</th>'+rows.map(r=>'<th>'+esc(r.symbol)+'</th>').join('')+'</tr></thead><tbody>'+
+  {const t=$('#compareResult');if(!t)return;t.innerHTML='<div class="tableWrap"><table><thead><tr><th>Metric</th>'+rows.map(r=>'<th>'+esc(r.symbol)+'</th>').join('')+'</tr></thead><tbody>'+
   [
    ['Company',r=>r.company&&r.company.name||'N/A'],['Price',r=>n(r.metrics&&r.metrics.price)!=null?'$'+fmtNum(r.metrics.price):'N/A'],['Market Cap',r=>fmtMoney(r.metrics&&r.metrics.marketCap)],
    ['P/E',r=>fmtNum(r.metrics&&r.metrics.pe)],['Forward P/E',r=>fmtNum(r.metrics&&r.metrics.forwardPE)],['P/B',r=>fmtNum(r.metrics&&r.metrics.priceToBook)],['EV/EBITDA',r=>fmtNum(r.metrics&&r.metrics.evToEbitda)],
@@ -230,8 +231,8 @@ async function runCompare(){
    ['Revenue Growth 1Y',r=>fmtPct(r.metrics&&r.metrics.revenueGrowth1y)],['Revenue CAGR 3Y',r=>fmtPct(r.metrics&&r.metrics.revenueCagr3y)],['FCF Yield',r=>fmtPct(r.metrics&&r.metrics.fcfYield)],
    ['Debt/Equity',r=>fmtNum(r.metrics&&r.metrics.debtToEquity)],['Current Ratio',r=>fmtNum(r.metrics&&r.metrics.currentRatio)],['Piotroski',r=>r.metrics&&r.metrics.piotroski&&r.metrics.piotroski.score!=null?fmtNum(r.metrics.piotroski.score,0):'N/A'],
    ['Altman Z',r=>fmtNum(r.metrics&&r.metrics.altmanZ)],['DCF Base',r=>{const x=r.valuation&&r.valuation.scenarios&&r.valuation.scenarios.find(s=>s.name==='Base');return x?'$'+fmtNum(x.fairValuePerShare):'N/A'}]
-  ].map(([label,fn])=>'<tr><td><b>'+label+'</b></td>'+rows.map(r=>'<td>'+esc(fn(r))+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
- }catch(e){$('#compareResult').innerHTML='<div class="error">'+esc(e.message)+'</div>'}
+  ].map(([label,fn])=>'<tr><td><b>'+label+'</b></td>'+rows.map(r=>'<td>'+esc(fn(r))+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';}
+ }catch(e){const t=$('#compareResult');if(t)t.innerHTML='<div class="error">'+esc(e.message)+'</div>'}
 }
 async function loadSymbol(symbol){
  state.symbol=symbol.toUpperCase();location.hash=state.symbol;state.mode='research';$('#researchMode').classList.add('active');$('#screenerMode').classList.remove('active');$('#watchlistMode').classList.remove('active');
@@ -335,10 +336,8 @@ function renderScreener(){
  const rows=numericFundFilter(presetFilter(state.screenPreset,state.screenRows));
  const asof=state.screenAsOf?new Date(state.screenAsOf).toLocaleString():'source timestamp unavailable';
  $('#main').innerHTML='<div class="screenerHead"><div class="symbol" style="font-size:24px">FUNDAMENTAL SCREENER</div><div class="meta">Equity-only fundamental universe • '+esc(state.screenRows.length)+' securities • Fundamentals as of '+esc(asof)+'. Click any row for full 11-tab research.</div></div>'+
- '<div class="screenerFilters">'+['All','Value','Quality','Growth','Dividend','Compounder','Low Debt','Complete Data'].map(x=>'<button class="preset '+(state.screenPreset===x?'active':'')+'" data-preset="'+x+'">'+x+'</button>').join('')+
- '<span class="pill ok">Numeric filters: '+(state.screenNumeric.maxPE==null?'P/E Any':'P/E ≤ '+esc(state.screenNumeric.maxPE))+' · '+(state.screenNumeric.minROE==null?'ROE Any':'ROE ≥ '+esc(state.screenNumeric.minROE)+'%')+' · '+(state.screenNumeric.maxDE==null?'D/E Any':'D/E ≤ '+esc(state.screenNumeric.maxDE))+' · '+(state.screenNumeric.minGrowth==null?'Growth Any':'Growth ≥ '+esc(state.screenNumeric.minGrowth)+'%')+'</span></div>'+
+ '<div class="sourcebar"><span class="pill ok">Active filters: '+(state.screenNumeric.maxPE==null?'P/E Any':'P/E ≤ '+esc(state.screenNumeric.maxPE))+' · '+(state.screenNumeric.minROE==null?'ROE Any':'ROE ≥ '+esc(state.screenNumeric.minROE)+'%')+' · '+(state.screenNumeric.maxDE==null?'D/E Any':'D/E ≤ '+esc(state.screenNumeric.maxDE))+' · '+(state.screenNumeric.minGrowth==null?'Growth Any':'Growth ≥ '+esc(state.screenNumeric.minGrowth)+'%')+'</span></div>'+
  '<div class="tableWrap"><table><thead><tr><th>Symbol</th><th>Company</th><th>Exchange</th><th>Industry</th><th>P/E</th><th>P/B</th><th>P/S</th><th>EV/EBITDA</th><th>ROE</th><th>ROA</th><th>Gross Margin</th><th>Operating Margin</th><th>Net Margin</th><th>D/E</th><th>Current Ratio</th><th>Interest Cover</th><th>Dividend Yield</th><th>Revenue Growth</th><th>EPS Growth</th><th>Data</th></tr></thead><tbody id="screenBody">'+rows.map(x=>screenRow(x)).join('')+'</tbody></table></div>';
- document.querySelectorAll('[data-preset]').forEach(btn=>btn.onclick=()=>{state.screenPreset=btn.dataset.preset;renderScreener()});
  bindScreenRows();
  syncTopFundFilters();
 }
@@ -357,7 +356,7 @@ function renderWatchlist(){
  document.querySelectorAll('[data-remove-watch]').forEach(x=>x.onclick=()=>{state.watchlist=state.watchlist.filter(s=>s!==x.dataset.removeWatch);saveWatchlist();renderWatchlist()});
 }
 let searchTimer=null;
-$('#search').addEventListener('input',e=>{clearTimeout(searchTimer);const q=e.target.value.trim();if(!q){$('#results').classList.remove('show');return}searchTimer=setTimeout(async()=>{try{const j=await api(API+'/search?q='+encodeURIComponent(q));const rows=j.results||[];$('#results').innerHTML=rows.map(x=>'<div class="result" data-symbol="'+esc(x.symbol)+'"><div><strong>'+esc(x.symbol)+'</strong><div style="font-size:11px;color:#87919a;margin-top:3px">'+esc(x.name)+'</div></div><div class="muted" style="font-size:10px;text-align:right">'+esc(x.exchange||'')+'<br>'+esc(x.type||'')+'</div></div>').join('')||'<div class="empty">No results</div>';$('#results').classList.add('show');document.querySelectorAll('.result[data-symbol]').forEach(r=>r.onclick=()=>{$('#search').value='';$('#results').classList.remove('show');loadSymbol(r.dataset.symbol)})}catch(e){$('#results').innerHTML='<div class="empty">'+esc(e.message)+'</div>';$('#results').classList.add('show')}},250)});
+$('#search').addEventListener('input',e=>{clearTimeout(searchTimer);const q=e.target.value.trim();if(!q){$('#results').classList.remove('show');return}searchTimer=setTimeout(async()=>{try{const j=await api(API+'/search?q='+encodeURIComponent(q));const rows=j.results||[];const rt=$('#results');if(!rt)return;rt.innerHTML=rows.map(x=>'<div class="result" data-symbol="'+esc(x.symbol)+'"><div><strong>'+esc(x.symbol)+'</strong><div style="font-size:11px;color:#87919a;margin-top:3px">'+esc(x.name)+'</div></div><div class="muted" style="font-size:10px;text-align:right">'+esc(x.exchange||'')+'<br>'+esc(x.type||'')+'</div></div>').join('')||'<div class="empty">No results</div>';$('#results').classList.add('show');document.querySelectorAll('.result[data-symbol]').forEach(r=>r.onclick=()=>{$('#search').value='';$('#results').classList.remove('show');loadSymbol(r.dataset.symbol)})}catch(e){const rt=$('#results');if(rt){rt.innerHTML='<div class="empty">'+esc(e.message)+'</div>';rt.classList.add('show')}}},250)});
 document.addEventListener('click',e=>{if(!e.target.closest('#searchWrap'))$('#results').classList.remove('show')});
 document.querySelectorAll('[data-main-nav]').forEach(btn=>btn.onclick=()=>mainNavigate(btn.dataset.mainNav));
 $('#fundSearchBtn').onclick=runFundamentalSearch;

@@ -1,22 +1,26 @@
 {
+  "manifest.json": {
+    "bytes": 678,
+    "sha256": "2c86818db209d9b4563482a81c4ca8920d59b1227ca21a66b80ca6f34866fe59"
+  },
   "index-current-url.txt": {
     "bytes": 67,
     "sha256": "fe6e6032961a0baac88cb950c6e7a78700127d67a4e0da7e109ae62fc6cdf478"
   },
   "fundamental.html": {
-    "bytes": 48928,
-    "sha256": "dc478ea19688b23cc8168385194fc14e7ca3d972f1ffef193a3c4d1cb4182d01"
+    "bytes": 48744,
+    "sha256": "157c682082d8e45dd7b033e3849442338f9b73147b3372d79db30fe52e763d30"
   },
   "index.html": {
-    "bytes": 17707,
-    "sha256": "3dd6a084dbc0665dd2f21a055918b2ec30f66cde6586ee21ad613e088e853969"
+    "bytes": 21364,
+    "sha256": "6bb2fac02934495dd5f567ad32848e9a8d51293e95dc67aafb5cbb224293012d"
   },
   "assets/js/index-current.js": {
     "bytes": 1683014,
-    "sha256": "89cfd4ae31a71104ddf91462e6649d5657bd26442b47f2dc0169597f89770af2"
+    "sha256": "495f540fb69218e218a1b0d1197f93fcd7d47d49520ee75c81a76aabe364c95b"
   },
   "assets/js/ai3_public_shell_v1.js": {
-    "bytes": 12750,
-    "sha256": "dd2408c3072af3522dce26bf3906fba75e16a05ffab3f9ee6777927735698941"
+    "bytes": 15937,
+    "sha256": "12cc13067f10a75a027c6b681d69834f9998de416a49be7515be2b12ce7354e2"
   }
 }\n
