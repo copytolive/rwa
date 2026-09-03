@@ -9,7 +9,7 @@ const money=v=>Number.isFinite(Number(v))?'$'+Number(v).toLocaleString(undefined
 const pct=v=>Number.isFinite(Number(v))?(Number(v)>=0?'+':'')+Number(v).toFixed(2)+'%':'—';
 const compact=v=>{const n=num(v),a=Math.abs(n);return a>=1e9?'$'+(n/1e9).toFixed(2)+'B':a>=1e6?'$'+(n/1e6).toFixed(2)+'M':a>=1e3?'$'+(n/1e3).toFixed(1)+'K':money(n)};
 const store={get(k,d){try{const v=JSON.parse(localStorage.getItem(k)||'null');return v??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
-let leftMode='watchlist',bottomMode='positions',mobileMode='chart',tradeSide='BUY',lastPair='',lastExchangeStamp=0,alertTimer=0,renderTimer=0;
+let leftMode='watchlist',bottomMode='positions',mobileMode='chart',tradeSide='BUY',lastPair='',lastExchangeStamp=0,alertTimer=0,renderTimer=0,serviceTimer=0,serverReady=false,serverSession=false,serverAlerts=[],serverFeed=[],serverRewards=null,serverHolders=null,serverServiceError='';
 function market(){try{return window.RWAMarketRuntime?.state?.()||null}catch{return null}}
 function exchange(){try{return window.RWAExchangeCore?.state?.()||null}catch{return null}}
 function pair(){const s=market(),sym=s?.selected||'BTCUSDT';return s?.pairs?.find(x=>x.symbol===sym)||{symbol:sym,base:String(sym).replace(/USDT$/,''),quote:'USDT',price:0,change:0,vol:0,rwa:false}}
@@ -20,6 +20,16 @@ function keepMarket(){try{history.replaceState(history.state,'',location.pathnam
 function favorites(){return store.get(LS.fav,[]).filter(Boolean)}
 function theses(){return store.get(LS.thesis,[]).filter(Boolean)}
 function alerts(){return store.get(LS.alerts,[]).filter(Boolean)}
+function visibleAlerts(){return serverReady&&serverSession?serverAlerts:alerts()}
+async function syncService(force=false){
+ const svc=window.RWATerminalService;if(!svc){serverReady=false;serverServiceError='client_unavailable';return false}
+ try{const st=await svc.status();serverReady=!!(st?.enabled&&st?.ready?.ok);serverServiceError=serverReady?'':String(st?.ready?.error||'service_not_ready');return serverReady}catch(e){serverReady=false;serverServiceError=String(e?.message||e);return false}
+}
+async function syncServerAlerts({interactive=false}={}){
+ if(!await syncService())return false;if(!window.RWAWalletAuth?.isLoggedIn?.())return false;
+ try{const r=await window.RWATerminalService.alerts.list();serverAlerts=Array.isArray(r?.alerts)?r.alerts:[];serverSession=true;renderAlertCount();if(!$('[data-v5-alerts]')?.hidden)renderAlerts();return true}catch(e){if(interactive)toast(String(e?.message||e));serverServiceError=String(e?.message||e);return false}
+}
+async function syncServerFeed(){if(!await syncService())return false;try{const r=await window.RWATerminalService.social.feed(50);serverFeed=Array.isArray(r?.posts)?r.posts:[];if(bottomMode==='feed'||leftMode==='feed')renderBottom();return true}catch(e){serverServiceError=String(e?.message||e);return false}}
 function setActive(selector,value,attr='v5Nav'){qa(selector).forEach(b=>b.classList.toggle('active',b.dataset[attr]===value))}
 function unlockLegacyGeometry(){
  const props=['position','inset','left','right','top','bottom','width','min-width','max-width','height','min-height','max-height','display','grid-template-columns','grid-template-rows','overflow','margin','padding','transform','box-sizing'];
@@ -79,24 +89,33 @@ function ensureTrade(){
  if(!sw){sw=document.createElement('div');sw.className='rwa-v5-side-switch';sw.innerHTML='<button type="button" class="active" data-v5-side="BUY" aria-pressed="true">Buy / Long</button><button type="button" data-v5-side="SELL" aria-pressed="false">Sell / Short</button>';const modes=ticket.querySelector('.rwa-target-order-modes');ticket.insertBefore(sw,modes||ticket.firstChild);sw.addEventListener('click',e=>{const b=e.target.closest('[data-v5-side]');if(!b)return;e.preventDefault();e.stopPropagation();setTradeSide(b.dataset.v5Side)})}
  setTradeSide(tradeSide);renderAlertCount()
 }
-function renderAlertCount(){const n=alerts().filter(a=>!a.triggered).length;qa('[data-v5-alert-count]').forEach(x=>x.textContent=String(n));const icon=$('[data-live-top-action="alerts"]');if(icon)icon.dataset.count=String(n)}
+function renderAlertCount(){const n=visibleAlerts().filter(a=>!a.triggered).length;qa('[data-v5-alert-count]').forEach(x=>x.textContent=String(n));const icon=$('[data-live-top-action="alerts"]');if(icon)icon.dataset.count=String(n)}
 function openAlerts(){
  ensureTrade();const rail=$('#liveRail');if(!rail)return;
- rail.querySelector('.rwa-v5-trade-host').hidden=true;const pane=rail.querySelector('[data-v5-alerts]');pane.hidden=false;setActive('[data-v5-trade-tab]','alerts','v5TradeTab');renderAlerts();if(innerWidth<681)setMobile('trade')
+ rail.querySelector('.rwa-v5-trade-host').hidden=true;const pane=rail.querySelector('[data-v5-alerts]');pane.hidden=false;setActive('[data-v5-trade-tab]','alerts','v5TradeTab');renderAlerts();if(innerWidth<681)setMobile('trade');syncServerAlerts({interactive:false})
 }
 function openTrade(){
  ensureTrade();const rail=$('#liveRail');if(!rail)return;
  rail.querySelector('.rwa-v5-trade-host').hidden=false;rail.querySelector('[data-v5-alerts]').hidden=true;setActive('[data-v5-trade-tab]','trade','v5TradeTab');if(innerWidth<681)setMobile('trade')
 }
 function renderAlerts(){
- const pane=$('[data-v5-alerts]');if(!pane)return;const list=alerts(),p=pair();
- pane.innerHTML='<div class="rwa-v5-alert-compose"><small>LOCAL BROWSER ALERT · '+esc(p.base)+'/USDT</small><label>Trigger price<input type="number" step="any" data-v5-alert-price placeholder="'+esc(String(p.price||''))+'"></label><div class="rwa-v5-alert-dir"><button class="active" data-v5-alert-dir="above">Above</button><button data-v5-alert-dir="below">Below</button></div><button class="primary" data-v5-create-alert>Create alert</button><p>Runs only while this browser session is active. It is not a server-backed notification service.</p></div><div class="rwa-v5-alert-list">'+(list.length?list.slice().reverse().map(a=>'<div class="'+(a.triggered?'done':'')+'"><span><b>'+esc(a.symbol.replace(/USDT$/,'/USDT'))+'</b><small>'+esc(a.dir)+' '+esc(String(a.price))+(a.triggered?' · triggered':'')+'</small></span><button data-v5-delete-alert="'+esc(a.id)+'">×</button></div>').join(''):'<div class="rwa-v5-empty">No local alerts configured.</div>')+'</div>'
+ const pane=$('[data-v5-alerts]');if(!pane)return;const list=visibleAlerts(),p=pair(),mode=serverReady&&serverSession?'SERVER 24/7':'LOCAL FALLBACK';
+ pane.innerHTML='<div class="rwa-v5-alert-compose"><small>'+mode+' · '+esc(p.base)+'/USDT</small><label>Trigger price<input type="number" step="any" data-v5-alert-price placeholder="'+esc(String(p.price||''))+'"></label><div class="rwa-v5-alert-dir"><button class="active" data-v5-alert-dir="above">Above</button><button data-v5-alert-dir="below">Below</button></div><button class="primary" data-v5-create-alert>Create alert</button><p>'+(serverReady?'Server evaluates alerts continuously. A wallet signature creates a 7-day terminal session; no private key is sent.':'Backend is not enabled, so alerts fall back to this browser only.')+'</p></div><div class="rwa-v5-alert-list">'+(list.length?list.slice().reverse().map(a=>'<div class="'+(a.triggered?'done':'')+'"><span><b>'+esc(a.symbol.replace(/USDT$/,'/USDT'))+'</b><small>'+esc(a.direction||a.dir)+' '+esc(String(a.price))+(a.triggered?' · triggered @ '+esc(String(a.triggerPrice||'')):'')+'</small></span><button data-v5-delete-alert="'+esc(a.id)+'">×</button></div>').join(''):'<div class="rwa-v5-empty">No alerts configured.</div>')+'</div>'
 }
-function createAlert(){
+async function createAlert(){
  const pane=$('[data-v5-alerts]'),input=pane?.querySelector('[data-v5-alert-price]'),price=num(input?.value);if(!(price>0)){toast('Enter a valid alert price');return}
- const dir=pane.querySelector('[data-v5-alert-dir].active')?.dataset.v5AlertDir||'above',list=alerts();list.push({id:String(Date.now()),symbol:selected(),price,dir,created:Date.now(),triggered:false});store.set(LS.alerts,list);renderAlerts();renderAlertCount();toast('Local browser alert created')
+ const dir=pane.querySelector('[data-v5-alert-dir].active')?.dataset.v5AlertDir||'above';
+ if(await syncService()&&window.RWAWalletAuth?.isLoggedIn?.()){
+  try{await window.RWATerminalService.alerts.create({symbol:selected(),price,direction:dir});serverSession=true;await syncServerAlerts();toast('Server alert created · 24/7 monitoring');return}catch(e){toast(String(e?.message||e));return}
+ }
+ const list=alerts();list.push({id:String(Date.now()),symbol:selected(),price,dir,created:Date.now(),triggered:false});store.set(LS.alerts,list);renderAlerts();renderAlertCount();toast('Local browser alert created')
+}
+async function deleteAlert(id){
+ if(serverReady&&serverSession){try{await window.RWATerminalService.alerts.delete(id);await syncServerAlerts();toast('Alert deleted');return}catch(e){toast(String(e?.message||e));return}}
+ store.set(LS.alerts,alerts().filter(a=>a.id!==id));renderAlerts();renderAlertCount()
 }
 function monitorAlerts(){
+ if(serverReady&&serverSession){syncServerAlerts({interactive:false});return}
  const p=pair();if(!(num(p.price)>0))return;let changed=false;const list=alerts().map(a=>{if(a.triggered||a.symbol!==p.symbol)return a;const hit=a.dir==='below'?num(p.price)<=num(a.price):num(p.price)>=num(a.price);if(!hit)return a;changed=true;toast('Alert · '+a.symbol+' '+a.dir+' '+a.price);try{if(Notification?.permission==='granted')new Notification('RWA market alert',{body:a.symbol+' '+a.dir+' '+a.price})}catch{}return{...a,triggered:true,triggeredAt:Date.now()}});if(changed){store.set(LS.alerts,list);renderAlertCount();if(!$('[data-v5-alerts]')?.hidden)renderAlerts()}
 }
 function ensureBottom(){
@@ -107,8 +126,9 @@ function accountLocked(title){return '<div class="rwa-v5-lock"><b>'+esc(title)+'
 function positionRows(rows){if(!rows?.length)return '<div class="rwa-v5-empty">No open Hyperliquid positions.</div>';return '<div class="rwa-v5-table"><div class="head"><span>Market</span><span>Size</span><span>Entry</span><span>Mark</span><span>PnL</span><span>Risk</span></div>'+rows.slice(0,30).map(p=>'<div><b>'+esc(p.coin||'—')+'</b><span>'+esc(String(p.szi??'—'))+'</span><span>'+esc(String(p.entryPx??'—'))+'</span><span>'+esc(String(p.positionValue?((num(p.positionValue)/Math.max(Math.abs(num(p.szi)),1e-12)).toFixed(4)):'—'))+'</span><strong class="'+(num(p.unrealizedPnl)>=0?'pos':'neg')+'">'+money(p.unrealizedPnl)+'</strong><i>'+((num(p.liquidationPx)>0)?'Liq '+esc(String(p.liquidationPx)):'—')+'</i></div>').join('')+'</div>'}
 function orderRows(rows,open){if(!rows?.length)return '<div class="rwa-v5-empty">'+(open?'No open orders.':'No venue history loaded.')+'</div>';return '<div class="rwa-v5-table rwa-v5-orders"><div class="head"><span>Market</span><span>Side</span><span>Size</span><span>Price</span><span>Status</span><span>Action</span></div>'+rows.slice(0,40).map(x=>{const o=x.order||x,coin=o.coin||x.coin||'—',oid=o.oid??x.oid??'',side=o.side||o.dir||x.side||'—',px=o.limitPx??o.px??o.price??'—',sz=o.sz??o.origSz??o.size??'—',status=x.status||o.status||(open?'OPEN':'HISTORY');return '<div><b>'+esc(coin)+'</b><span>'+esc(side)+'</span><span>'+esc(String(sz))+'</span><span>'+esc(String(px))+'</span><i>'+esc(String(status))+'</i>'+(open&&oid!==''?'<button data-v5-cancel data-coin="'+esc(coin)+'" data-oid="'+esc(String(oid))+'">Cancel</button>':'<span>—</span>')+'</div>'}).join('')+'</div>'}
 function feedHtml(){
- const s=market(),fmt=window.RWAMarketRuntime?.format,local=theses().slice().reverse().slice(0,8),trades=(s?.recentTrades||[]).slice(0,12);
- return '<div class="rwa-v5-feed-grid"><section><header><b>Local thesis</b><button data-v5-bottom="thesis">Post an idea</button></header>'+(local.length?local.map(t=>'<article><small>'+esc(t.side)+' · '+new Date(t.ts).toLocaleString()+'</small><p>'+esc(t.text)+'</p><button data-v5-symbol="'+esc(t.symbol)+'">'+esc(t.symbol.replace(/USDT$/,'/USDT'))+'</button></article>').join(''):'<div class="rwa-v5-empty">No local thesis yet.</div>')+'</section><section><header><b>Verified live trades</b><span>'+esc(base())+'/USDT</span></header>'+(trades.length?trades.map(t=>'<div class="rwa-v5-feed-trade"><span class="'+(t.buy?'pos':'neg')+'">'+(t.buy?'BUY':'SELL')+'</span><b>'+esc(fmt?.price?.(t.p)||String(t.p))+'</b><i>'+esc(String(t.q??''))+'</i><small>'+new Date(t.time||Date.now()).toLocaleTimeString()+'</small></div>').join(''):'<div class="rwa-v5-empty">Waiting for live trades…</div>')+'</section></div>'
+ const s=market(),fmt=window.RWAMarketRuntime?.format,local=theses().slice().reverse().slice(0,8),trades=(s?.recentTrades||[]).slice(0,12),posts=serverReady?serverFeed:[];
+ const social=posts.length?posts.slice(0,10).map(t=>'<article data-v5-post="'+esc(t.id)+'"><small>'+esc(t.side)+' · '+new Date(t.createdAt).toLocaleString()+' · '+esc(String(t.wallet||'').slice(0,6))+'…'+esc(String(t.wallet||'').slice(-4))+'</small><p>'+esc(t.text)+'</p><div><button data-v5-symbol="'+esc(t.symbol)+'">'+esc(t.symbol.replace(/USDT$/,'/USDT'))+'</button><button data-v5-react="'+esc(t.id)+'">🔥 '+esc(String(t.reactions?.fire||0))+'</button><button data-v5-comment="'+esc(t.id)+'">💬 '+esc(String(t.comments||0))+'</button><button data-v5-follow="'+esc(t.wallet)+'">Follow</button></div></article>').join(''):local.map(t=>'<article><small>'+esc(t.side)+' · '+new Date(t.ts).toLocaleString()+'</small><p>'+esc(t.text)+'</p><button data-v5-symbol="'+esc(t.symbol)+'">'+esc(t.symbol.replace(/USDT$/,'/USDT'))+'</button></article>').join('');
+ return '<div class="rwa-v5-feed-grid"><section><header><b>'+(serverReady?'Network thesis':'Local thesis')+'</b><button data-v5-bottom="thesis">Post an idea</button></header>'+(social||'<div class="rwa-v5-empty">No thesis yet.</div>')+'</section><section><header><b>Verified live trades</b><span>'+esc(base())+'/USDT</span></header>'+(trades.length?trades.map(t=>'<div class="rwa-v5-feed-trade"><span class="'+(t.buy?'pos':'neg')+'">'+(t.buy?'BUY':'SELL')+'</span><b>'+esc(fmt?.price?.(t.p)||String(t.p))+'</b><i>'+esc(String(t.q??''))+'</i><small>'+new Date(t.time||Date.now()).toLocaleTimeString()+'</small></div>').join(''):'<div class="rwa-v5-empty">Waiting for live trades…</div>')+'</section></div>'
 }
 function analyticsHtml(){
  const s=market(),pairs=s?.pairs||[],rwa=pairs.filter(x=>x.rwa),g=pairs.filter(x=>num(x.change)>0),l=pairs.filter(x=>num(x.change)<0),vol=pairs.reduce((n,x)=>n+num(x.vol),0),rv=rwa.reduce((n,x)=>n+num(x.vol),0),bp=num(s?.buyVol),sp=num(s?.sellVol),pressure=bp+sp>0?bp/(bp+sp)*100:null;
@@ -131,12 +151,20 @@ async function renderBottom(force=false){
  if(bottomMode==='orders'){body.innerHTML=window.RWAWalletAuth?.isLoggedIn?.()?orderRows(ex?.orders||[],true):accountLocked('Open Orders');return}
  if(bottomMode==='portfolio'){body.innerHTML=window.RWAWalletAuth?.isLoggedIn?.()?portfolioHtml(ex||{}):accountLocked('Portfolio');return}
  if(bottomMode==='history'){body.innerHTML=window.RWAWalletAuth?.isLoggedIn?.()?'<div class="rwa-v5-history"><section><header><b>Recent fills</b><span>Venue loaded</span></header>'+orderRows(ex?.fills||[],false)+'</section><section><header><b>Order history</b><span>Venue loaded</span></header>'+orderRows(ex?.history||[],false)+'</section></div>':accountLocked('History');return}
- if(bottomMode==='holders'){body.innerHTML='<div class="rwa-v5-lock"><b>Holders data unavailable</b><p>No authoritative holder registry/indexer is connected for the selected live market. This panel stays locked instead of inventing holder counts.</p><span>NEEDS HOLDER BACKEND</span></div>';return}
- if(bottomMode==='feed'){body.innerHTML=feedHtml();return}
+ if(bottomMode==='holders'){
+  body.innerHTML='<div class="rwa-v5-loading">Loading authoritative holder source…</div>';
+  if(!await syncService()){body.innerHTML='<div class="rwa-v5-lock"><b>Holders source unavailable</b><p>Terminal backend is not enabled. No holder counts are fabricated.</p><span>SOURCE GATED</span></div>';return}
+  try{serverHolders=await window.RWATerminalService.holders.get(selected());const rows=Array.isArray(serverHolders?.holders)?serverHolders.holders:[];body.innerHTML=rows.length?'<div class="rwa-v5-table"><div class="head"><span>Holder</span><span>Balance</span><span>Share</span><span>Chain</span><span>Source</span><span>Updated</span></div>'+rows.map(x=>'<div><b>'+esc(x.address||x.holder||'—')+'</b><span>'+esc(String(x.balance??'—'))+'</span><span>'+esc(String(x.share??x.percent??'—'))+'</span><span>'+esc(String(x.chain||'—'))+'</span><span>'+esc(String(x.source||serverHolders.source||'verified'))+'</span><span>'+new Date(serverHolders.updatedAt||Date.now()).toLocaleTimeString()+'</span></div>').join('')+'</div>':'<div class="rwa-v5-empty">Authoritative source returned no holders.</div>'}catch(e){body.innerHTML='<div class="rwa-v5-lock"><b>Holders source not configured</b><p>'+esc(String(e?.message||e))+'</p><span>SOURCE GATED</span></div>'}return
+ }
+ if(bottomMode==='feed'){body.innerHTML=feedHtml();syncServerFeed();return}
  if(bottomMode==='analytics'){body.innerHTML=analyticsHtml();return}
  if(bottomMode==='thesis'){body.innerHTML=thesisHtml();const pub=body.querySelector('[data-v5-thesis-publish]');if(pub)pub.onclick=e=>{e.preventDefault();e.stopPropagation();publishThesis()};body.querySelectorAll('[data-v5-thesis-side]').forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();body.querySelectorAll('[data-v5-thesis-side]').forEach(x=>x.classList.toggle('active',x===b))});return}
  if(bottomMode==='discover'){body.innerHTML=discoverHtml();return}
- if(bottomMode==='rewards'){body.innerHTML='<div class="rwa-v5-lock"><b>No verified rewards program is active</b><p>Rewards remain inactive until an authoritative rewards ledger/backend is connected. No APR, points or balances are fabricated.</p><span>INACTIVE</span></div>';return}
+ if(bottomMode==='rewards'){
+  body.innerHTML='<div class="rwa-v5-loading">Loading rewards ledger…</div>';
+  if(!await syncService()||!window.RWAWalletAuth?.isLoggedIn?.()){body.innerHTML='<div class="rwa-v5-lock"><b>Rewards ledger unavailable</b><p>Connect a wallet and enable the terminal backend to read the authoritative ledger. No reward balance is fabricated.</p><span>LOCKED</span></div>';return}
+  try{serverRewards=await window.RWATerminalService.rewards.summary();body.innerHTML='<div class="rwa-v5-metrics"><div><small>PROGRAM</small><b>'+esc(serverRewards.program||'RWA Rewards')+'</b></div><div><small>STATUS</small><b>'+(serverRewards.active?'ACTIVE':'INACTIVE')+'</b></div><div><small>POINTS</small><b>'+esc(String(serverRewards.points||0))+'</b></div><div><small>CLAIM</small><b>'+esc(serverRewards.claim?.enabled?'READY':'LOCKED')+'</b></div></div><div class="rwa-v5-history"><section><header><b>Reward ledger</b><span>Server verified</span></header>'+(serverRewards.entries?.length?serverRewards.entries.map(x=>'<div class="rwa-v5-feed-trade"><span>'+esc(x.reason)+'</span><b>+'+esc(String(x.points))+'</b><i>'+esc(String(x.ref||''))+'</i><small>'+new Date(x.ts).toLocaleString()+'</small></div>').join(''):'<div class="rwa-v5-empty">No reward events yet.</div>')+'</section><section><header><b>Claim status</b><span>'+esc(serverRewards.claim?.reason||'')+'</span></header><div class="rwa-v5-empty">'+(serverRewards.active?'Program is active; on-chain claim remains gated by contract configuration.':'Program policy is currently inactive. Ledger remains authoritative and zero-valued until enabled.')+'</div></section></div>'}catch(e){body.innerHTML='<div class="rwa-v5-lock"><b>Rewards unavailable</b><p>'+esc(String(e?.message||e))+'</p><span>FAIL CLOSED</span></div>'}return
+ }
 }
 function ensureMiniBook(){
  const main=$('.main'),chart=$('.chart-wrap');if(!main||!chart)return;let mini=$('#rwaV5MiniBook');if(!mini){mini=document.createElement('section');mini.id='rwaV5MiniBook';mini.className='rwa-v5-mini-book';mini.innerHTML='<header><span>Bids</span><b data-v5-mini-spread>Spread —</b><span>Asks</span></header><div data-v5-mini-rows></div><button data-v5-mobile-mode="book">View full book</button>';chart.insertAdjacentElement('afterend',mini)}renderMiniBook()
@@ -220,9 +248,22 @@ function navigate(k){
  if(k==='more'){const m=$('[data-v5-more-menu]');if(m)m.hidden=!m.hidden}
 }
 async function cancelOrder(b){try{const core=await window.RWALiveHome?.ensureExecution?.();await core.cancel(b.dataset.coin,b.dataset.oid);await core.refresh();renderBottom()}catch(e){toast(String(e?.message||e))}}
-function publishThesis(){
+async function publishThesis(){
  const box=$('[data-v5-thesis-text]'),text=box?.value.trim();if(!text){toast('Write a thesis first');return}
- const side=$('[data-v5-thesis-side].active')?.dataset.v5ThesisSide||'LONG',list=theses();list.push({id:String(Date.now()),symbol:selected(),side,text,ts:Date.now()});store.set(LS.thesis,list.slice(-100));box.value='';renderBottom();renderLeft();toast('Local thesis saved')
+ const side=$('[data-v5-thesis-side].active')?.dataset.v5ThesisSide||'LONG';
+ if(await syncService()&&window.RWAWalletAuth?.isLoggedIn?.()){
+  try{await window.RWATerminalService.social.post({symbol:selected(),side,text});serverSession=true;box.value='';await syncServerFeed();renderBottom();renderLeft();toast('Thesis published to signed server feed');return}catch(e){toast(String(e?.message||e));return}
+ }
+ const list=theses();list.push({id:String(Date.now()),symbol:selected(),side,text,ts:Date.now()});store.set(LS.thesis,list.slice(-100));box.value='';renderBottom();renderLeft();toast('Local thesis saved')
+}
+async function socialAction(kind,target){
+ if(!await syncService()||!window.RWAWalletAuth?.isLoggedIn?.()){toast('Connect wallet and enable terminal backend');return}
+ try{
+  if(kind==='react')await window.RWATerminalService.social.react(target,'fire');
+  if(kind==='follow')await window.RWATerminalService.social.follow(target);
+  if(kind==='comment'){const text=prompt('Comment');if(!text?.trim())return;await window.RWATerminalService.social.comment(target,text.trim())}
+  serverSession=true;await syncServerFeed();if(bottomMode==='feed')renderBottom();toast(kind==='follow'?'Follow updated':'Feed updated')
+ }catch(e){toast(String(e?.message||e))}
 }
 function orderBookClick(e){const row=e.target.closest('.bookrow');if(!row||!$('#depth')?.contains(row))return;const raw=row.querySelector('span')?.textContent||'',price=Number(raw.replace(/[^0-9.\-]/g,''));if(!(price>0))return;openTrade();const ticket=$('#rwaTargetOrderTicket');window.RWALiveHome?.setOrderMode?.('LIMIT');if(ticket){ticket.querySelectorAll('[data-live-mode]').forEach(b=>b.classList.toggle('active',b.dataset.liveMode==='LIMIT'));ticket.querySelectorAll('[data-live-price]').forEach(p=>{p.disabled=false;p.placeholder='Limit price'})}const side=ticket?.querySelector('[data-order-side="'+tradeSide+'"]'),input=side?.querySelector('[data-live-price]');if(input){input.disabled=false;input.value=String(price);input.dispatchEvent(new Event('input',{bubbles:true}));toast('Limit price set from order book')}}
 function renderStatus(){
@@ -273,7 +314,10 @@ function bind(){
   const mn=e.target.closest('[data-v5-mobile-nav]');if(mn){const k=mn.dataset.v5MobileNav;qa('[data-v5-mobile-nav]').forEach(x=>x.classList.toggle('active',x===mn));if(k==='home')setMobile('feed');if(k==='markets')openMarketsMobile();if(k==='trade')setMobile('trade');if(k==='portfolio'){setBottom('portfolio');setMobile('workspace')}if(k==='profile')$('.signin')?.click();return}
   const dir=e.target.closest('[data-v5-alert-dir]');if(dir){qa('[data-v5-alert-dir]').forEach(x=>x.classList.toggle('active',x===dir));return}
   if(e.target.closest('[data-v5-create-alert]')){createAlert();return}
-  const delA=e.target.closest('[data-v5-delete-alert]');if(delA){store.set(LS.alerts,alerts().filter(a=>a.id!==delA.dataset.v5DeleteAlert));renderAlerts();renderAlertCount();return}
+  const delA=e.target.closest('[data-v5-delete-alert]');if(delA){deleteAlert(delA.dataset.v5DeleteAlert);return}
+  const react=e.target.closest('[data-v5-react]');if(react){socialAction('react',react.dataset.v5React);return}
+  const comment=e.target.closest('[data-v5-comment]');if(comment){socialAction('comment',comment.dataset.v5Comment);return}
+  const follow=e.target.closest('[data-v5-follow]');if(follow){socialAction('follow',follow.dataset.v5Follow);return}
   const tside=e.target.closest('[data-v5-thesis-side]');if(tside){qa('[data-v5-thesis-side]').forEach(x=>x.classList.toggle('active',x===tside));return}
   if(e.target.closest('[data-v5-thesis-publish]')){publishThesis();return}
   const delT=e.target.closest('[data-v5-delete-thesis]');if(delT){store.set(LS.thesis,theses().filter(t=>t.id!==delT.dataset.v5DeleteThesis));renderBottom();renderLeft();return}
@@ -287,8 +331,8 @@ function bind(){
  window.addEventListener('rwa:wallet-logout',()=>renderBottom());
  window.addEventListener('rwa:exchange-state',()=>renderStatus())
 }
-function boot(){apply();bind();renderBottom();clearInterval(renderTimer);renderTimer=setInterval(renderStatus,1000);clearInterval(alertTimer);alertTimer=setInterval(monitorAlerts,1000);window.dispatchEvent(new CustomEvent('rwa:terminal-v5-ready',{detail:{version:VERSION}}))}
-window.RWATerminalV5={version:VERSION,active:true,apply,navigate,setBottom,setMobile,setTradeSide,openAlerts,openTrade,toggleFavorite,share,audit:()=>({version:VERSION,route:location.hash||'#markets',leftMode,bottomMode,mobileMode,tradeSide,globalNav:qa('.topnav [data-v5-nav]').map(x=>x.dataset.v5Nav),bottomTabs:qa('#rwaV5Bottom [data-v5-bottom]').map(x=>x.dataset.v5Bottom),railTrade:$('#liveRail')?.dataset.v5Trade==='1',orderTicketInside:!!$('#liveRail #rwaTargetOrderTicket'),mobileMarketsOpen:document.body.classList.contains('rwa-v5-mobile-markets'),favorites:favorites().length,alerts:alerts().length,theses:theses().length})};
+function boot(){apply();bind();renderBottom();syncService().then(ok=>{if(ok)syncServerFeed()});clearInterval(renderTimer);renderTimer=setInterval(renderStatus,1000);clearInterval(alertTimer);alertTimer=setInterval(monitorAlerts,5000);clearInterval(serviceTimer);serviceTimer=setInterval(()=>{syncService();if(serverReady)syncServerFeed()},30000);window.dispatchEvent(new CustomEvent('rwa:terminal-v5-ready',{detail:{version:VERSION}}))}
+window.RWATerminalV5={version:VERSION,active:true,apply,navigate,setBottom,setMobile,setTradeSide,openAlerts,openTrade,toggleFavorite,share,syncService,audit:()=>({version:VERSION,route:location.hash||'#markets',leftMode,bottomMode,mobileMode,tradeSide,globalNav:qa('.topnav [data-v5-nav]').map(x=>x.dataset.v5Nav),bottomTabs:qa('#rwaV5Bottom [data-v5-bottom]').map(x=>x.dataset.v5Bottom),railTrade:$('#liveRail')?.dataset.v5Trade==='1',orderTicketInside:!!$('#liveRail #rwaTargetOrderTicket'),mobileMarketsOpen:document.body.classList.contains('rwa-v5-mobile-markets'),favorites:favorites().length,alerts:visibleAlerts().length,theses:theses().length,serverReady,serverSession,serverFeed:serverFeed.length,serverServiceError})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
-/* RWA_TERMINAL_V5_ACCEPTANCE_2026_09_03_R19 */
+/* RWA_TERMINAL_V5_BACKEND_INTEGRATION_2026_09_03 */
