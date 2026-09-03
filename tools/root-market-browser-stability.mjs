@@ -100,6 +100,10 @@ async function desktop(browser){
   await page.locator('.rwa-v5-side-switch [data-v5-side="SELL"]').click();
   assert.equal(await page.locator('#rwaTargetOrderTicket').getAttribute('data-v5-side'),'SELL');
   await page.locator('.rwa-v5-side-switch [data-v5-side="BUY"]').click();
+  await page.locator('#rwaTargetOrderTicket [data-live-mode="STOP"]').click();
+  assert.ok(await page.locator('#rwaTargetOrderTicket [data-live-mode="STOP"]').evaluate(el=>el.classList.contains('active')));
+  assert.equal(await page.locator('#rwaTargetOrderTicket [data-order-side="BUY"] [data-live-price]').isDisabled(),false);
+  await page.locator('#rwaTargetOrderTicket [data-live-mode="MARKET"]').click();
   await page.locator('#asks .bookrow').last().click();
   assert.ok(await page.locator('#rwaTargetOrderTicket [data-live-mode="LIMIT"]').evaluate(el=>el.classList.contains('active')));
   assert.ok(Number(await page.locator('#rwaTargetOrderTicket [data-order-side="BUY"] [data-live-price]').inputValue())>0);
