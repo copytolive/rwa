@@ -1,0 +1,1228 @@
+{
+  "id": "ai3-nav-candidate-final-002",
+  "ok": false,
+  "acceptance": "FAIL",
+  "issues": [
+    "desktop: nav x drift 110.00px"
+  ],
+  "desktop": {
+    "home": {
+      "nav": {
+        "x": 682,
+        "y": 41,
+        "w": 456,
+        "h": 66
+      },
+      "items": [
+        {
+          "name": "Home",
+          "raw": "Home",
+          "x": 682,
+          "y": 41,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 38,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        },
+        {
+          "name": "Fundamental",
+          "raw": "Fundamental",
+          "x": 774,
+          "y": 41,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 82,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        },
+        {
+          "name": "Signal Scan",
+          "raw": "Signal Scan",
+          "x": 866,
+          "y": 41,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 71,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        },
+        {
+          "name": "Crypto",
+          "raw": "₿ Crypto",
+          "x": 958,
+          "y": 41,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 44,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        },
+        {
+          "name": "Renko",
+          "raw": "Renko",
+          "x": 1050,
+          "y": 41,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 39,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        }
+      ],
+      "scrollWidth": 1600,
+      "innerWidth": 1600,
+      "viewMode": "home"
+    },
+    "homeFilter": {
+      "x": 247,
+      "y": 94,
+      "w": 1170,
+      "h": 64
+    },
+    "crypto": {
+      "nav": {
+        "x": 682,
+        "y": 41,
+        "w": 456,
+        "h": 66
+      },
+      "items": [
+        {
+          "name": "Home",
+          "raw": "Home",
+          "x": 682,
+          "y": 41,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 38,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        },
+        {
+          "name": "Fundamental",
+          "raw": "Fundamental",
+          "x": 774,
+          "y": 41,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 82,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        },
+        {
+          "name": "Signal Scan",
+          "raw": "Signal Scan",
+          "x": 866,
+          "y": 41,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 71,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        },
+        {
+          "name": "Crypto",
+          "raw": "₿ Crypto",
+          "x": 958,
+          "y": 41,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 44,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        },
+        {
+          "name": "Renko",
+          "raw": "Renko",
+          "x": 1050,
+          "y": 41,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 39,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        }
+      ],
+      "scrollWidth": 1600,
+      "innerWidth": 1600,
+      "viewMode": "home"
+    },
+    "renko": {
+      "nav": {
+        "x": 572,
+        "y": 40,
+        "w": 456,
+        "h": 66
+      },
+      "items": [
+        {
+          "name": "Home",
+          "raw": "Home",
+          "x": 572,
+          "y": 40,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 38,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        },
+        {
+          "name": "Fundamental",
+          "raw": "Fundamental",
+          "x": 664,
+          "y": 40,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 82,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        },
+        {
+          "name": "Signal Scan",
+          "raw": "Signal Scan",
+          "x": 756,
+          "y": 40,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 71,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        },
+        {
+          "name": "Crypto",
+          "raw": "₿ Crypto",
+          "x": 848,
+          "y": 40,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 44,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        },
+        {
+          "name": "Renko",
+          "raw": "Renko",
+          "x": 940,
+          "y": 40,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 39,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        }
+      ],
+      "scrollWidth": 1600,
+      "innerWidth": 1600,
+      "viewMode": "renko"
+    },
+    "fundamental": {
+      "nav": {
+        "x": 604,
+        "y": 18.5,
+        "w": 456,
+        "h": 66
+      },
+      "items": [
+        {
+          "name": "Home",
+          "x": 604,
+          "y": 18.5,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "fontSize": 13,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Fundamental",
+          "x": 696,
+          "y": 18.5,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "fontSize": 13,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Signal Scan",
+          "x": 788,
+          "y": 18.5,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "fontSize": 13,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Crypto",
+          "x": 880,
+          "y": 18.5,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "fontSize": 13,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Renko",
+          "x": 972,
+          "y": 18.5,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "fontSize": 13,
+            "fontWeight": "600"
+          }
+        }
+      ],
+      "filter": {
+        "x": 247,
+        "y": 104,
+        "w": 1170,
+        "h": 64
+      },
+      "scrollWidth": 1600,
+      "innerWidth": 1600
+    },
+    "signalFilter": {
+      "x": 247,
+      "y": 110.5,
+      "w": 1170,
+      "h": 64
+    },
+    "signalMode": "scanner-signal",
+    "signalBackClicked": true,
+    "afterSignalBackMode": "home",
+    "afterSignalBackFilter": {
+      "x": 247,
+      "y": 94,
+      "w": 1170,
+      "h": 64
+    },
+    "afterSignalBackNav": {
+      "nav": {
+        "x": 682,
+        "y": 41,
+        "w": 456,
+        "h": 66
+      },
+      "items": [
+        {
+          "name": "Home",
+          "raw": "Home",
+          "x": 682,
+          "y": 41,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 38,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        },
+        {
+          "name": "Fundamental",
+          "raw": "Fundamental",
+          "x": 774,
+          "y": 41,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 82,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        },
+        {
+          "name": "Signal Scan",
+          "raw": "Signal Scan",
+          "x": 866,
+          "y": 41,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 71,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        },
+        {
+          "name": "Crypto",
+          "raw": "₿ Crypto",
+          "x": 958,
+          "y": 41,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 44,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        },
+        {
+          "name": "Renko",
+          "raw": "Renko",
+          "x": 1050,
+          "y": 41,
+          "w": 88,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 39,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600",
+            "lineHeight": "19.5px"
+          }
+        }
+      ],
+      "scrollWidth": 1600,
+      "innerWidth": 1600,
+      "viewMode": "home"
+    },
+    "cycle": [
+      {
+        "label": "Crypto",
+        "clicked": true,
+        "state": {
+          "mode": "home",
+          "hasError": false,
+          "scrollWidth": 1600,
+          "innerWidth": 1600
+        }
+      },
+      {
+        "label": "Home",
+        "clicked": true,
+        "state": {
+          "mode": "home",
+          "hasError": false,
+          "scrollWidth": 1600,
+          "innerWidth": 1600
+        }
+      },
+      {
+        "label": "Renko",
+        "clicked": true,
+        "state": {
+          "mode": "renko",
+          "hasError": false,
+          "scrollWidth": 1600,
+          "innerWidth": 1600
+        }
+      },
+      {
+        "label": "Home",
+        "clicked": true,
+        "state": {
+          "mode": "home",
+          "hasError": false,
+          "scrollWidth": 1600,
+          "innerWidth": 1600
+        }
+      },
+      {
+        "label": "Signal Scan",
+        "clicked": true,
+        "state": {
+          "mode": "scanner-signal",
+          "hasError": false,
+          "scrollWidth": 1600,
+          "innerWidth": 1600
+        }
+      },
+      {
+        "label": "Home",
+        "clicked": true,
+        "state": {
+          "mode": "home",
+          "hasError": false,
+          "scrollWidth": 1600,
+          "innerWidth": 1600
+        }
+      }
+    ]
+  },
+  "mobile": {
+    "home": {
+      "nav": {
+        "x": 5,
+        "y": 69.5,
+        "w": 380,
+        "h": 73
+      },
+      "items": [
+        {
+          "name": "Home",
+          "raw": "Home",
+          "x": 5,
+          "y": 80,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 32,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        },
+        {
+          "name": "Fundamental",
+          "raw": "Fundamental",
+          "x": 81,
+          "y": 80,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 70,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        },
+        {
+          "name": "Signal Scan",
+          "raw": "Signal Scan",
+          "x": 157,
+          "y": 80,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 62,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        },
+        {
+          "name": "Crypto",
+          "raw": "₿ Crypto",
+          "x": 233,
+          "y": 80,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 36,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        },
+        {
+          "name": "Renko",
+          "raw": "Renko",
+          "x": 309,
+          "y": 80,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 34,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        }
+      ],
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "viewMode": "home"
+    },
+    "homeFilter": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0
+    },
+    "crypto": {
+      "nav": {
+        "x": 5,
+        "y": 69.5,
+        "w": 380,
+        "h": 73
+      },
+      "items": [
+        {
+          "name": "Home",
+          "raw": "Home",
+          "x": 5,
+          "y": 80,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 32,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        },
+        {
+          "name": "Fundamental",
+          "raw": "Fundamental",
+          "x": 81,
+          "y": 80,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 70,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        },
+        {
+          "name": "Signal Scan",
+          "raw": "Signal Scan",
+          "x": 157,
+          "y": 80,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 62,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        },
+        {
+          "name": "Crypto",
+          "raw": "₿ Crypto",
+          "x": 233,
+          "y": 80,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 36,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        },
+        {
+          "name": "Renko",
+          "raw": "Renko",
+          "x": 309,
+          "y": 80,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 34,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        }
+      ],
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "viewMode": "home"
+    },
+    "renko": {
+      "nav": {
+        "x": 5,
+        "y": 68.5,
+        "w": 380,
+        "h": 73
+      },
+      "items": [
+        {
+          "name": "Home",
+          "raw": "Home",
+          "x": 5,
+          "y": 79,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 32,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        },
+        {
+          "name": "Fundamental",
+          "raw": "Fundamental",
+          "x": 81,
+          "y": 79,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 70,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        },
+        {
+          "name": "Signal Scan",
+          "raw": "Signal Scan",
+          "x": 157,
+          "y": 79,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 62,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        },
+        {
+          "name": "Crypto",
+          "raw": "₿ Crypto",
+          "x": 233,
+          "y": 79,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 36,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        },
+        {
+          "name": "Renko",
+          "raw": "Renko",
+          "x": 309,
+          "y": 79,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 34,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        }
+      ],
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "viewMode": "renko"
+    },
+    "fundamental": {
+      "nav": {
+        "x": 5,
+        "y": 6.5,
+        "w": 380,
+        "h": 59
+      },
+      "items": [
+        {
+          "name": "Home",
+          "x": 5,
+          "y": 6.5,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "fontSize": 11,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Fundamental",
+          "x": 81,
+          "y": 6.5,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "fontSize": 11,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Signal Scan",
+          "x": 157,
+          "y": 6.5,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "fontSize": 11,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Crypto",
+          "x": 233,
+          "y": 6.5,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "fontSize": 11,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Renko",
+          "x": 309,
+          "y": 6.5,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "fontSize": 11,
+            "fontWeight": "600"
+          }
+        }
+      ],
+      "filter": {
+        "x": 8,
+        "y": 82,
+        "w": 760,
+        "h": 56
+      },
+      "scrollWidth": 390,
+      "innerWidth": 390
+    },
+    "signalFilter": {
+      "x": 8,
+      "y": 145.5,
+      "w": 374,
+      "h": 56
+    },
+    "signalMode": "scanner-signal",
+    "signalBackClicked": true,
+    "afterSignalBackMode": "home",
+    "afterSignalBackFilter": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0
+    },
+    "afterSignalBackNav": {
+      "nav": {
+        "x": 5,
+        "y": 69.5,
+        "w": 380,
+        "h": 73
+      },
+      "items": [
+        {
+          "name": "Home",
+          "raw": "Home",
+          "x": 5,
+          "y": 80,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 32,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        },
+        {
+          "name": "Fundamental",
+          "raw": "Fundamental",
+          "x": 81,
+          "y": 80,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 70,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        },
+        {
+          "name": "Signal Scan",
+          "raw": "Signal Scan",
+          "x": 157,
+          "y": 80,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 62,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        },
+        {
+          "name": "Crypto",
+          "raw": "₿ Crypto",
+          "x": 233,
+          "y": 80,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 36,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        },
+        {
+          "name": "Renko",
+          "raw": "Renko",
+          "x": 309,
+          "y": 80,
+          "w": 76,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 34,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600",
+            "lineHeight": "16.5px"
+          }
+        }
+      ],
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "viewMode": "home"
+    },
+    "cycle": [
+      {
+        "label": "Crypto",
+        "clicked": true,
+        "state": {
+          "mode": "home",
+          "hasError": false,
+          "scrollWidth": 390,
+          "innerWidth": 390
+        }
+      },
+      {
+        "label": "Home",
+        "clicked": true,
+        "state": {
+          "mode": "home",
+          "hasError": false,
+          "scrollWidth": 390,
+          "innerWidth": 390
+        }
+      },
+      {
+        "label": "Renko",
+        "clicked": true,
+        "state": {
+          "mode": "renko",
+          "hasError": false,
+          "scrollWidth": 390,
+          "innerWidth": 390
+        }
+      },
+      {
+        "label": "Home",
+        "clicked": true,
+        "state": {
+          "mode": "home",
+          "hasError": false,
+          "scrollWidth": 390,
+          "innerWidth": 390
+        }
+      },
+      {
+        "label": "Signal Scan",
+        "clicked": true,
+        "state": {
+          "mode": "scanner-signal",
+          "hasError": false,
+          "scrollWidth": 390,
+          "innerWidth": 390
+        }
+      },
+      {
+        "label": "Home",
+        "clicked": true,
+        "state": {
+          "mode": "home",
+          "hasError": false,
+          "scrollWidth": 390,
+          "innerWidth": 390
+        }
+      }
+    ]
+  }
+}
