@@ -432,7 +432,7 @@ def write_csv(path: Path, rows: list[dict]):
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", required=True, help="Canonical GOLD H1 dataset")
-    ap.add_argument("--d1-dataset", required=True, help="Canonical GOLD D1 dataset")
+    ap.add_argument("--d1-dataset", required=False, help="Canonical GOLD D1 dataset; omitted = derive D1 from H1 with production OHLC aggregation")
     ap.add_argument("--manifest", default=str(DEFAULT_MANIFEST))
     ap.add_argument("--sources", default=str(DEFAULT_SOURCES))
     ap.add_argument("--out-dir", required=True)
@@ -440,7 +440,26 @@ def main() -> int:
 
     manifest, scripts = load_sources(Path(args.manifest), Path(args.sources))
     d = load_h1(Path(args.dataset))
-    d1 = load_d1(Path(args.d1_dataset))
+    if args.d1_dataset:
+        d1 = load_d1(Path(args.d1_dataset))
+        d1_path = str(Path(args.d1_dataset))
+        d1_sha = sha256_file(Path(args.d1_dataset))
+        d1_source = "explicit"
+    else:
+        # Backward-compatible fallback for hosted workflows. Production parity
+        # should still pass the byte-exact D1 parquet explicitly.
+        x = d[["Date","open","high","low","close","volume"]].copy()
+        x = x.set_index(pd.DatetimeIndex(x["Date"]))
+        d1 = x.resample("1D").agg({
+            "open":"first","high":"max","low":"min","close":"last","volume":"sum"
+        }).dropna(subset=["open","high","low","close"])
+        d1["Date"] = d1.index
+        d1 = d1[["Date","open","high","low","close","volume"]]
+        d1_path = "<derived-from-H1>"
+        d1_sha = sha256_bytes(
+            d1.to_csv(index=False, date_format="%Y-%m-%dT%H:%M:%S").encode("utf-8")
+        )
+        d1_source = "derived_h1_production_aggregation"
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
 
@@ -508,8 +527,9 @@ def main() -> int:
                 "end_utc": str(d["Date"].iloc[-1]),
             },
             "d1": {
-                "path": str(Path(args.d1_dataset)),
-                "sha256": sha256_file(Path(args.d1_dataset)),
+                "path": d1_path,
+                "sha256": d1_sha,
+                "source": d1_source,
                 "rows": int(len(d1)),
                 "start_utc": str(d1["Date"].iloc[0]),
                 "end_utc": str(d1["Date"].iloc[-1]),
