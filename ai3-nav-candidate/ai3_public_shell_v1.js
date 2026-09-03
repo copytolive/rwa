@@ -72,9 +72,20 @@ function normalizeTopNav(){
       const svg=b.querySelector("svg");if(svg){svg.style.setProperty("width",icon+"px","important");svg.style.setProperty("height",icon+"px","important");}
       const l=label(b);if(l){l.style.setProperty("font-size",font+"px","important");l.style.setProperty("font-weight","600","important");l.style.setProperty("line-height",mobile?"16.5px":"19.5px","important");l.style.setProperty("height","auto","important");}
     });
-    // Use a viewport-centered visual anchor so route-specific parent padding cannot shift the group.
-    const r=nav.getBoundingClientRect(),desired=(window.innerWidth-total)/2,dx=desired-r.x;
-    nav.style.setProperty("transform","translateX("+dx+"px)","important");
+    // Desktop nav is absolute inside a stable content header. Pin it to that
+    // parent center so active route/sibling changes cannot move the group.
+    const pos=getComputedStyle(nav).position;
+    if(!mobile&&pos==="absolute"){
+      nav.style.setProperty("left","50%","important");
+      nav.style.setProperty("right","auto","important");
+      nav.style.setProperty("transform","translateX(-50%)","important");
+    }else{
+      nav.style.setProperty("left","auto","important");
+      nav.style.setProperty("right","auto","important");
+      nav.style.setProperty("transform","none","important");
+      nav.style.setProperty("margin-left","auto","important");
+      nav.style.setProperty("margin-right","auto","important");
+    }
   });
 }
 function cleanupTopHyper(){
@@ -164,11 +175,12 @@ function ai3SignalBack(e){
   if(mode!=="scanner-signal")return;
   const btn=e&&e.target&&e.target.closest?e.target.closest("button"):null;if(!btn)return;
   if(btn.closest("#desktop-sidebar"))return;
-  const titles=Array.from(document.querySelectorAll("h1,h2,h3")).filter(x=>["Scanner Signal","Signal Scan"].includes(norm(x.textContent)));
-  if(!titles.length)return;
-  const br=btn.getBoundingClientRect();
-  const hit=titles.some(t=>{const tr=t.getBoundingClientRect();const sameBand=Math.abs((br.y+br.height/2)-(tr.y+tr.height/2))<42;return sameBand&&br.right<=tr.left+18&&br.width<=64&&br.height<=64});
-  if(!hit)return;
+  const br=btn.getBoundingClientRect();if(br.top>90||br.width>64||br.height>64)return;
+  const svg=btn.querySelector("svg");if(!svg)return;
+  const paths=Array.from(svg.querySelectorAll("path")).map(x=>String(x.getAttribute("d")||"").replace(/\\s+/g,""));
+  const arrowLeft=paths.some(d=>d==="M19 12H5"||d==="M19,12H5"||d.includes("M19")&&d.includes("12H5")) &&
+                  paths.some(d=>d.includes("m12 19-7-7 7-7")||d.includes("m1219-7-77-7"));
+  if(!arrowLeft)return;
   e.preventDefault();e.stopPropagation();if(typeof e.stopImmediatePropagation==="function")e.stopImmediatePropagation();
   direct("home");
 }
