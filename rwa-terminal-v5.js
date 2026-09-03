@@ -316,7 +316,7 @@ function apply(){
  if(preserveMobileMarkets||document.body.classList.contains('rwa-v5-mobile-markets')){setMobileMarketsDrawerVisible(true);setMobileMarketsCloseVisible(true)}
  renderFavorite();renderStatus();renderFooter();
  document.documentElement.classList.add('rwa-target-runtime-ready');
- const shell=$('#rwaV5FirstPaintShell');requestAnimationFrame(()=>{document.documentElement.classList.remove('rwa-target-prepaint');shell?.remove()})
+ const shell=$('#rwaV5FirstPaintShell');shell?.remove();document.documentElement.classList.remove('rwa-target-prepaint')
 }
 function bind(){
  const depth=$('#depth');if(depth&&!depth.dataset.v5BookBound){depth.dataset.v5BookBound='1';depth.addEventListener('pointerdown',e=>orderBookClick(e),true)}
