@@ -1,0 +1,69 @@
+name: GOLD10B Qualified Script Autogen
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/gold10b-qualified-script-autogen.yml'
+      - 'backtest/gold24/qualified_scripts/generate_from_runtime.py'
+      - 'backtest/gold24/runtime_multimethod_v1/latest_multimethod_v1_discovery.csv'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gold10b-qualified-script-autogen
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Generate exact Python + MT5 selected pairs
+        run: |
+          set -euo pipefail
+          python backtest/gold24/qualified_scripts/generate_from_runtime.py
+          python - <<'PY'
+          import json,pathlib,py_compile
+          q=pathlib.Path('backtest/gold24/qualified_scripts')
+          m=json.loads((q/'generated_multi_manifest.json').read_text())
+          assert m['count'] > 0
+          for r in m['rows']:
+              py=q/(r['stem']+'.py'); mq=q/(r['stem']+'.mq5')
+              assert py.is_file() and mq.is_file()
+              py_compile.compile(str(py),doraise=True)
+              txt=py.read_text(); mt=mq.read_text()
+              assert 'CANDIDATE=Candidate(' in txt and 'EXPECTED=' in txt
+              assert r['config_hash'] in txt and r['config_hash'] in mt
+          print('AUTOGEN_STATIC_PASS pairs=',m['count'])
+          PY
+      - name: Publish generated real script pairs race-safe
+        run: |
+          set -euo pipefail
+          git config user.name "gold10b-bot"
+          git config user.email "gold10b-bot@users.noreply.github.com"
+          git add -A backtest/gold24/qualified_scripts
+          if git diff --cached --quiet; then
+            echo "generated scripts already current"
+            exit 0
+          fi
+          git commit -m "chore(gold10b): sync exact selected Python MT5 pairs"
+          for TRY in 1 2 3 4 5; do
+            if git pull --rebase origin main && git push origin HEAD:main; then
+              echo "AUTOGEN_PUBLISH_PASS try=$TRY"
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            git fetch origin main
+            git rebase origin/main
+            sleep $((TRY*2))
+          done
+          exit 1
