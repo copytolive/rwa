@@ -1,6 +1,6 @@
 {
   "schema": 5,
-  "generated_at": "2026-09-03T15:08:16.017Z",
+  "generated_at": "2026-09-03T17:42:37.871Z",
   "status": "BLOCKED",
   "engineering_ready": true,
   "beta_ready": false,
@@ -106,12 +106,12 @@
       "detail": "https://rwa-terminal-service.vercel.app"
     },
     "worker_live": {
-      "ok": false,
-      "detail": "{\"service\":\"rwa-terminal-service\",\"version\":\"1.3.2\"}"
+      "ok": true,
+      "detail": "{\"service\":\"rwa-terminal-service\",\"version\":\"1.3.2\",\"terminal_ready\":true,\"alerts_24_7\":true,\"worker\":\"vercel-workflow\"}"
     },
     "worker_control": {
-      "ok": false,
-      "detail": "enabled=false kill=true production_ready=false readyz=false"
+      "ok": true,
+      "detail": "terminal_service=true sessions=true alerts=true social=true rewards=true holders=authoritative-source-gated"
     },
     "legal_terms": {
       "ok": false,
@@ -174,14 +174,6 @@
     {
       "gate": "product_rwa_testnet",
       "detail": "NOT_DEPLOYED · real chain-998 receipts + public evidence required"
-    },
-    {
-      "gate": "worker_live",
-      "detail": "{\"service\":\"rwa-terminal-service\",\"version\":\"1.3.2\"}"
-    },
-    {
-      "gate": "worker_control",
-      "detail": "enabled=false kill=true production_ready=false readyz=false"
     },
     {
       "gate": "legal_terms",
