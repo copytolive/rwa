@@ -23,6 +23,7 @@ def main() -> int:
     h4 = load("runtime_native_h4/latest_native_h4_hardpass.json")
     cross = load("runtime_global_cross_tf/latest_global_d1_h4_corr.json")
     broker_h4 = load("runtime_native_h4_broker/latest_native_h4_broker_hardpass.json")
+    hardpass_v4 = load("runtime_hardpass_v4/latest_hardpass_frequency_v4.json")
 
     finalized = int(v11.get("cumulative_configs_archived", 0) or 0)
     master_eval = int(
@@ -36,7 +37,9 @@ def main() -> int:
     discovery_total = master_eval + targeted_eval
     h4_eval = int(h4.get("candidate_evaluated_unique", 0) or 0)
     broker_h4_eval = int(broker_h4.get("candidate_evaluated_unique", 0) or 0)
-    all_tf_min_unique = discovery_total + h4_eval
+    v4_eval = int(hardpass_v4.get("candidate_evaluated_unique", 0) or 0)
+    d1_total_with_v4 = discovery_total + v4_eval
+    all_tf_min_unique = d1_total_with_v4 + h4_eval
 
     source_input = int(port.get("methods_input", 0) or 0)
     global_kept = int(port.get("global_greedy_kept_count", 0) or 0)
@@ -103,7 +106,9 @@ def main() -> int:
             "master_candidate_evaluated": master_eval,
             "targeted_candidate_evaluated_unique": targeted_eval,
             "candidate_evaluated_discovery_total": discovery_total,
-            "candidate_evaluated_discovery_total_d1": discovery_total,
+            "candidate_evaluated_discovery_total_d1": d1_total_with_v4,
+            "candidate_evaluated_d1_pre_v4": discovery_total,
+            "candidate_evaluated_frequency_v4_unique": v4_eval,
             "candidate_evaluated_direct_h4_unique": h4_eval,
             "candidate_evaluated_all_timeframes_minimum_unique": all_tf_min_unique,
             "candidate_evaluated_broker_h4_separate": broker_h4_eval,
@@ -148,6 +153,16 @@ def main() -> int:
             "global_cross_timeframe_corr_status": h4_corr_state,
             "globally_eligible_hard_pass": h4_global_eligible,
             "portfolio_readiness": h4.get("portfolio_readiness", "NOT_READY"),
+        },
+        "hardpass_frequency_v4": {
+            "status": hardpass_v4.get("status", "NOT_PUBLISHED"),
+            "candidate_evaluated_unique": v4_eval,
+            "primitive_diagnostics": hardpass_v4.get("primitive_diagnostics", {}),
+            "primitive_survivors": int(hardpass_v4.get("primitive_survivors", 0) or 0),
+            "noncorr_7_of_7_survivors": int(hardpass_v4.get("noncorr_7_of_7_survivors", 0) or 0),
+            "hard_pass_new_count": int(hardpass_v4.get("hard_pass_new_count", 0) or 0),
+            "global_selected": int(hardpass_v4.get("global_selected", 0) or 0),
+            "disjoint_from_prior_d1_discovery": bool(hardpass_v4.get("generation_profile", {}).get("disjoint_from_master_targeted_v1_v2_v3", False)),
         },
         "broker_native_h4": {
             "status": broker_h4.get("status", "NOT_PUBLISHED"),
