@@ -24,7 +24,8 @@ async function desktop(){
  const info=await page.evaluate(()=>({
    route:location.hash,
    bodyClass:document.body.className,
-   nav:[...document.querySelectorAll('.topnav [data-v5-nav]')].map(x=>x.dataset.v5Nav),
+   globalNav:[...document.querySelectorAll('.topnav [data-v5-global]')].map(x=>x.dataset.v5Global),
+   marketNav:[...document.querySelectorAll('#liveRail .rwa-v5-market-nav>button[data-v5-nav]')].map(x=>x.dataset.v5Nav),
    bottom:[...document.querySelectorAll('#rwaV5Bottom [data-v5-bottom]')].map(x=>x.dataset.v5Bottom),
    leftTabs:[...document.querySelectorAll('.rwa-v5-left-tabs [data-v5-left]')].map(x=>x.dataset.v5Left),
    search:!!document.querySelector('#rwaV5GlobalSearch'),
@@ -36,7 +37,9 @@ async function desktop(){
  }));
  if(info.route!=='#markets')fail('V5 route left markets',info.route);
  if(!info.bodyClass.includes('rwa-terminal-v5'))fail('V5 body class missing',info.bodyClass);
- if(JSON.stringify(info.nav)!==JSON.stringify(['trade','discover','portfolio','analytics','rewards','more']))fail('V5 header nav mismatch',info.nav);
+ if(JSON.stringify(info.globalNav)!==JSON.stringify(['markets']))fail('V5 global nav must contain only Markets',info.globalNav);
+ if(JSON.stringify(info.marketNav)!==JSON.stringify(['trade','portfolio','orders','analytics','rewards','more']))fail('V5 Market-owned nav mismatch',info.marketNav);
+ if(document.querySelector('.topnav [data-v5-nav]'))fail('non-Market navigation escaped into global topbar');
  if(JSON.stringify(info.bottom)!==JSON.stringify(['positions','orders','holders','feed','analytics','thesis','history']))fail('V5 bottom tabs mismatch',info.bottom);
  if(JSON.stringify(info.leftTabs)!==JSON.stringify(['watchlist','feed','pulse','live']))fail('V5 left tabs mismatch',info.leftTabs);
  if(!info.search||!info.ticketInside)fail('V5 primary structure incomplete',info);
@@ -47,16 +50,19 @@ async function desktop(){
  if(!g.main||g.main.x!==238||!near(g.main.width,884,5)||!near(g.main.height,638,5))fail('main geometry mismatch',g.main);
  if(!g.book||!near(g.book.x,1122,5)||!near(g.book.width,250,4)||!near(g.book.height,638,5))fail('order book geometry mismatch',g.book);
  const clickNav=async(key,expect)=>{
-   await page.locator('.topnav [data-v5-nav="'+key+'"]').click();await page.waitForTimeout(120);
+   await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="'+key+'"]').click();await page.waitForTimeout(120);
    if((await page.evaluate(()=>location.hash))!=='#markets')fail(key+' changed route');
    const txt=await page.locator('#rwaV5Bottom').innerText();
    if(expect&&!expect.test(txt))fail(key+' content mismatch',txt.slice(0,1000));
  };
- await clickNav('discover',/Top movers|Top volume/i);
+ await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="more"]').click();
+ await page.locator('#liveRail [data-v5-more-menu] [data-v5-nav="discover"]').click();await page.waitForTimeout(120);
+ if(!/Top movers|Top volume/i.test(await page.locator('#rwaV5Bottom').innerText()))fail('discover content mismatch');
  await clickNav('portfolio',/Portfolio|Connect a wallet|ACCOUNT VALUE/i);
+ await clickNav('orders',/Open Orders|Connect a wallet|No open orders/i);
  await clickNav('analytics',/LIVE PAIRS|RWA-LINKED|BUY PRESSURE/i);
- await clickNav('rewards',/No verified rewards program|INACTIVE|Rewards ledger unavailable|LOCKED/i);
- await page.locator('.topnav [data-v5-nav="trade"]').click();
+ await clickNav('rewards',/No verified rewards program|INACTIVE|Rewards ledger unavailable|LOCKED|Rewards program/i);
+ await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="trade"]').click();
  if(!await page.locator('#liveRail #rwaTargetOrderTicket').isVisible())fail('Trade ticket not visible in rail');
  await page.locator('.rwa-v5-side-switch [data-v5-side="SELL"]').click();
  const side=await page.locator('#rwaTargetOrderTicket').getAttribute('data-v5-side');if(side!=='SELL')fail('Sell side switch failed',side);
@@ -85,9 +91,11 @@ async function mobile(width,height,name){
  await page.locator('.rwa-v5-mobile-worktabs [data-v5-mobile-mode="book"]').click();await page.waitForTimeout(50);m=await page.evaluate(()=>({mode:document.body.dataset.v5MobileMode,chart:getComputedStyle(document.querySelector('.chart-wrap')).display,book:getComputedStyle(document.querySelector('.right')).display,trade:getComputedStyle(document.querySelector('#liveRail')).display}));if(m.mode!=='book'||m.chart!=='none'||m.book==='none'||m.trade!=='none')fail(name+' Book state invalid',m);
  await page.locator('.rwa-v5-mobile-worktabs [data-v5-mobile-mode="trade"]').click();await page.waitForTimeout(50);m=await page.evaluate(()=>({mode:document.body.dataset.v5MobileMode,chart:getComputedStyle(document.querySelector('.chart-wrap')).display,book:getComputedStyle(document.querySelector('.right')).display,trade:getComputedStyle(document.querySelector('#liveRail')).display,ticket:!!document.querySelector('#liveRail #rwaTargetOrderTicket')}));if(m.mode!=='trade'||m.chart!=='none'||m.book!=='none'||m.trade==='none'||!m.ticket)fail(name+' Trade state invalid',m);
  await page.locator('.rwa-v5-mobile-worktabs [data-v5-mobile-mode="feed"]').click();await page.waitForTimeout(50);if(!await page.locator('#rwaV5MobileFeed').isVisible())fail(name+' Feed state invalid');
- await page.locator('[data-v5-mobile-nav="markets"]').click();await page.waitForTimeout(50);if(!await page.locator('.left').isVisible())fail(name+' Markets drawer did not open');
+ await page.locator('.rwa-v5-mobile-worktabs [data-v5-action="open-markets"]').click();await page.waitForTimeout(50);if(!await page.locator('.left').isVisible())fail(name+' internal Markets drawer did not open');
  await page.locator('[data-v5-action="close-markets"]').click();await page.waitForTimeout(50);
- await page.locator('[data-v5-mobile-nav="portfolio"]').click();await page.waitForTimeout(50);if(!await page.locator('#rwaV5Bottom').isVisible())fail(name+' Portfolio workspace did not open');
+ await page.locator('.rwa-v5-mobile-worktabs [data-v5-mobile-mode="trade"]').click();await page.waitForTimeout(30);
+ await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="portfolio"]').click();await page.waitForTimeout(50);if(!await page.locator('#rwaV5Bottom').isVisible())fail(name+' Market-owned Portfolio workspace did not open');
+ const escaped=await page.locator('.mobile-tabs [data-v5-mobile-nav],.topnav [data-v5-nav]').count();if(escaped)fail(name+' found navigation outside Market',escaped);
  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);if(overflow>2)fail(name+' overflow after interactions',overflow);
  await shot(page,name);await ctx.close();return m;
 }
