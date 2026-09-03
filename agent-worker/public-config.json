@@ -13,5 +13,6 @@
     "social": true,
     "rewards_ledger": true,
     "holders_source_gated": true
-  }
+  },
+  "deployment_probe": "terminal-final-2026-09-03-r1"
 }
