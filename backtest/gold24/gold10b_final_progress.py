@@ -16,7 +16,8 @@ def load(rel: str, default=None):
 def main() -> int:
     v11 = load("runtime_v11/latest_validation_summary.json")
     multi = load("runtime_multimethod_v1/latest_multimethod_v1_discovery_summary.json")
-    target = load("runtime_hardpass_targeted/latest_hardpass_targeted.json")
+    target_v4 = load("runtime_hardpass_targeted_v4/latest_hardpass_targeted_v4.json")
+    target = target_v4 if target_v4 else load("runtime_hardpass_targeted/latest_hardpass_targeted.json")
     port = load("runtime_screening_gpt/combined_portfolio_audit.json")
     audit = load("runtime_screening_gpt/screening_gpt_real_audit.json")
     h4 = load("runtime_native_h4/latest_native_h4_hardpass.json")
