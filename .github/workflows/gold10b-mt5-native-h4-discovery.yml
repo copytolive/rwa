@@ -1,0 +1,123 @@
+name: GOLD10B Broker Native MT5 H4 Discovery
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/gold10b-mt5-native-h4-discovery.yml'
+      - 'backtest/gold24/mt5_native_h4_fetch.py'
+      - 'backtest/gold24/native_h4_broker_search.py'
+      - 'backtest/gold24/MT5_NATIVE_H4_DISCOVERY_KICK'
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  TV_H4_RUN_ID: '33791624885'
+
+jobs:
+  fetch_broker_native_h4:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    env:
+      MT5_LOGIN: ${{ secrets.MT5_LOGIN }}
+      MT5_PASSWORD: ${{ secrets.MT5_PASSWORD }}
+      MT5_SERVER: ${{ secrets.MT5_SERVER }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Require existing broker account context
+        shell: powershell
+        run: |
+          if([string]::IsNullOrWhiteSpace($env:MT5_LOGIN) -or [string]::IsNullOrWhiteSpace($env:MT5_PASSWORD) -or [string]::IsNullOrWhiteSpace($env:MT5_SERVER)){throw 'ACCOUNT_CONTEXT_MISSING'}
+          Write-Host 'ACCOUNT_CONTEXT_PRESENT=PASS'
+      - name: Install Python and official broker terminal
+        shell: powershell
+        run: |
+          python -m pip install pandas numpy MetaTrader5
+          $setup=Join-Path $env:RUNNER_TEMP 'exness5setup.exe'
+          Invoke-WebRequest -UseBasicParsing 'https://download.terminal.free/cdn/web/exness.technologies.ltd/mt5/exness5setup.exe' -OutFile $setup
+          Start-Process -FilePath $setup -ArgumentList '/auto' -Wait
+          Start-Sleep -Seconds 12
+          $c=@();foreach($r in @('C:\Program Files','C:\Program Files (x86)',"$env:LOCALAPPDATA\Programs")){if(Test-Path $r){$c+=Get-ChildItem $r -Filter terminal64.exe -File -Recurse -ErrorAction SilentlyContinue}}
+          $terminal=($c|Sort-Object LastWriteTime -Descending|Select-Object -First 1).FullName
+          if([string]::IsNullOrWhiteSpace($terminal)){throw 'terminal64.exe not found'}
+          "MT5_TERMINAL=$terminal"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Download independent TradingView OANDA native H4 crosscheck
+        shell: powershell
+        run: |
+          gh run download $env:TV_H4_RUN_ID --repo $env:GITHUB_REPOSITORY -n "gold10b-native-h4-$env:TV_H4_RUN_ID" -D "$env:RUNNER_TEMP\tvh4"
+          if(!(Test-Path "$env:RUNNER_TEMP\tvh4\XAUUSD_OANDA_TRADINGVIEW_H4_CROSSCHECK.csv")){throw 'TV H4 crosscheck missing'}
+      - name: Fetch broker-server native H4 and enforce Gate A
+        shell: powershell
+        run: |
+          $out="$env:RUNNER_TEMP\brokerh4";New-Item -ItemType Directory -Force $out|Out-Null
+          python backtest/gold24/mt5_native_h4_fetch.py --terminal "$env:MT5_TERMINAL" --crosscheck "$env:RUNNER_TEMP\tvh4\XAUUSD_OANDA_TRADINGVIEW_H4_CROSSCHECK.csv" --out-dir $out
+          if($LASTEXITCODE -ne 0){throw 'BROKER_NATIVE_H4_GATE_A_FAIL'}
+          python -c "import json,os; x=json.load(open(os.path.join(os.environ['RUNNER_TEMP'],'brokerh4','gate_a_h4_receipt.json'))); assert x['crosscheck_pass'] and x['no_resampling_attested'] and x['construction']=='DIRECT_BROKER_NATIVE_H4_NO_RESAMPLING'; print('BROKER_NATIVE_H4_GATE_A_PASS rows='+str(x['primary_rows']))"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gold10b-broker-native-h4-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/brokerh4/XAUUSD_MT5_NATIVE_H4_PRIMARY.csv
+            ${{ runner.temp }}/brokerh4/gate_a_h4_receipt.json
+          if-no-files-found: error
+          retention-days: 90
+
+  search:
+    needs: fetch_broker_native_h4
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned dependencies
+        run: python -m pip install -r backtest/gold24/requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: gold10b-broker-native-h4-${{ github.run_id }}
+          path: ${{ runner.temp }}/brokerh4
+      - name: Search all 48 families on long-history native H4
+        run: |
+          set -euo pipefail
+          python -u backtest/gold24/native_h4_broker_search.py \
+            --state-dir "$RUNNER_TEMP/brokerh4" \
+            --out "$RUNNER_TEMP/brokerh4/native_h4_broker_hardpass.json" \
+            --candidate-count 20000 --workers 8 --seed 2026090411
+          python - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'brokerh4/native_h4_broker_hardpass.json';x=json.loads(p.read_text())
+          assert x['status']=='PASS' and x['candidate_evaluated_unique']==20000
+          assert x['dataset']['construction']=='DIRECT_BROKER_NATIVE_H4_NO_RESAMPLING'
+          print(json.dumps({'rows':x['dataset']['rows'],'candidate_evaluated':x['candidate_evaluated_unique'],'candidate_gate_pre_corr':x['primitive_diagnostics'].get('candidate_gate_pre_corr',0),'full_pre_corr_hardpass':x['full_pre_corr_hardpass'],'hardpass_kept':x['native_h4_hardpass_kept']},indent=2))
+          PY
+      - name: Publish broker-native H4 discovery evidence race-safe
+        run: |
+          set -euo pipefail
+          PAYLOAD="$RUNNER_TEMP/brokerh4-publish";rm -rf "$PAYLOAD";mkdir -p "$PAYLOAD"
+          cp "$RUNNER_TEMP/brokerh4/gate_a_h4_receipt.json" "$PAYLOAD/latest_gate_a_h4_receipt.json"
+          cp "$RUNNER_TEMP/brokerh4/native_h4_broker_hardpass.json" "$PAYLOAD/latest_native_h4_broker_hardpass.json"
+          git config user.name 'gold10b-bot';git config user.email 'gold10b-bot@users.noreply.github.com'
+          for TRY in 1 2 3 4 5; do
+            git fetch origin main;git reset --hard origin/main;mkdir -p backtest/gold24/runtime_native_h4_broker
+            cp "$PAYLOAD/"* backtest/gold24/runtime_native_h4_broker/;git add backtest/gold24/runtime_native_h4_broker
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m 'chore(gold10b): publish broker-native H4 discovery [skip ci]'
+            if git push origin HEAD:main; then exit 0; fi;sleep $((TRY*2))
+          done
+          exit 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gold10b-broker-native-h4-search-${{ github.run_id }}
+          path: ${{ runner.temp }}/brokerh4/native_h4_broker_hardpass.json
+          if-no-files-found: error
+          retention-days: 90
