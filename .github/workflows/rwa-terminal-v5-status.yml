@@ -28,7 +28,7 @@ on:
     types: [completed]
 
 concurrency:
-  group: rwa-terminal-v5-status
+  group: rwa-terminal-v5-status-${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
   cancel-in-progress: true
 permissions:
   actions: read
