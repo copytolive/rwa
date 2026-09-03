@@ -47,7 +47,7 @@ async function open(browser,width,height){
   const page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(String(e?.message||e)));
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:25000});
-  await page.waitForFunction(()=>window.RWALiveHome?.version==='4.1.0'&&window.RWAMarketRuntime?.version==='1.4.3'&&window.RWAMarketRuntime.state().pairs.length===520,{timeout:20000});
+  await page.waitForFunction(()=>window.RWALiveHome?.version==='4.2.0'&&window.RWAMarketRuntime?.version==='1.4.3'&&window.RWAMarketRuntime.state().pairs.length===520,{timeout:20000});
   await page.waitForFunction(()=>document.querySelectorAll('#bids .bookrow').length>=5&&document.querySelectorAll('#asks .bookrow').length>=5,{timeout:15000});
   await page.waitForTimeout(250);
   return {context,page,errors};
@@ -82,6 +82,9 @@ async function desktop(browser){
   assert.ok(Math.abs(info.right?.w-286)<=3);
   assert.ok(Math.abs(info.rail?.w-330)<=3);
   assert.ok(Math.abs(info.footer?.h-34)<=3);
+
+  const navRoute=async key=>{await page.locator('[data-rwa-target-nav="'+key+'"]').click();await page.waitForSelector('#rwaTradingWorkspace:not([hidden])');const state=await page.evaluate(()=>({hash:location.hash,mode:document.querySelector('#liveRail')?.dataset.mode,open:document.querySelector('#liveRail')?.classList.contains('workspace-open')}));assert.equal(state.hash,'#markets');assert.equal(state.mode,key);assert.equal(state.open,true);await page.locator('[data-workspace-close]').click()};
+  for(const key of ['trade','portfolio','orders','analytics','rewards'])await navRoute(key);
 
   const menu=page.locator('#bookMenu');
   await menu.click();
