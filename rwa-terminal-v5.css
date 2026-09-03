@@ -502,3 +502,13 @@ body.rwa-terminal-v5 .rwa-v5-bottom-body{height:calc(100% - 39px)!important;back
  body.rwa-terminal-v5 .rwa-v5-footer{display:none!important}
  body.rwa-terminal-v5 [data-v5-left-pane="watchlist"]{height:100%!important}
 }
+
+
+/* TARGET HEADER HIT-TEST FIX */
+@media(min-width:1281px){
+ body.rwa-terminal-v5 .topbar{pointer-events:none!important}
+ body.rwa-terminal-v5 .topbar>.brand,
+ body.rwa-terminal-v5 .topbar>.rwa-v5-search,
+ body.rwa-terminal-v5 .topbar>.top-actions{pointer-events:auto!important}
+ body.rwa-terminal-v5 #liveRail>.rwa-v5-market-nav{z-index:2147482000!important;pointer-events:auto!important}
+}
