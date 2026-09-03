@@ -3,7 +3,12 @@
   "ok": false,
   "acceptance": "FAIL",
   "issues": [
-    "desktop: nav x drift 110.00px"
+    "desktop: nav x drift 110.00px",
+    "desktop: Signal filter 0x0",
+    "desktop: cycle click missing Home",
+    "desktop: cycle click missing Home",
+    "mobile: cycle click missing Home",
+    "mobile: cycle click missing Home"
   ],
   "desktop": {
     "home": {
@@ -430,10 +435,10 @@
       "innerWidth": 1600
     },
     "signalFilter": {
-      "x": 247,
-      "y": 110.5,
-      "w": 1170,
-      "h": 64
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0
     },
     "signalMode": "scanner-signal",
     "signalBackClicked": true,
@@ -585,9 +590,9 @@
       },
       {
         "label": "Home",
-        "clicked": true,
+        "clicked": false,
         "state": {
-          "mode": "home",
+          "mode": "renko",
           "hasError": false,
           "scrollWidth": 1600,
           "innerWidth": 1600
@@ -605,9 +610,9 @@
       },
       {
         "label": "Home",
-        "clicked": true,
+        "clicked": false,
         "state": {
-          "mode": "home",
+          "mode": "scanner-signal",
           "hasError": false,
           "scrollWidth": 1600,
           "innerWidth": 1600
@@ -1040,10 +1045,10 @@
       "innerWidth": 390
     },
     "signalFilter": {
-      "x": 8,
-      "y": 145.5,
-      "w": 374,
-      "h": 56
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0
     },
     "signalMode": "scanner-signal",
     "signalBackClicked": true,
@@ -1195,9 +1200,9 @@
       },
       {
         "label": "Home",
-        "clicked": true,
+        "clicked": false,
         "state": {
-          "mode": "home",
+          "mode": "renko",
           "hasError": false,
           "scrollWidth": 390,
           "innerWidth": 390
@@ -1215,9 +1220,9 @@
       },
       {
         "label": "Home",
-        "clicked": true,
+        "clicked": false,
         "state": {
-          "mode": "home",
+          "mode": "scanner-signal",
           "hasError": false,
           "scrollWidth": 390,
           "innerWidth": 390
