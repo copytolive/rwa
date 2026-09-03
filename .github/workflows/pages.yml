@@ -61,7 +61,7 @@ jobs:
           grep -Fq 'id="tvHost"' index.html
           grep -Fq 'rwaMultiChainLazyBootstrap' index.html
           grep -Fq "rwa-live-home-v1.js?v=4.1.0.1" chart-core.js
-          grep -Fq "rwa-live-home-v1.css?v=4.1.0.1" chart-core.js
+          grep -Fq "rwa-live-home-v1.css?v=4.1.0.2" chart-core.js
           ! grep -Fq "rwa-live-orderbook-v1.css" chart-core.js
           grep -Fq "openIntelligence" rwa-live-home-v1.js
           grep -Fq "openPortfolio" rwa-live-home-v1.js

@@ -79,7 +79,7 @@ jobs:
           grep -Fq "openRewards" rwa-live-home-v1.js
           grep -Fq "workspaceOpen('analytics'" rwa-live-home-v1.js
           grep -Fq "rwa-live-home-v1.js?v=4.1.0.1" chart-core.js
-          grep -Fq "rwa-live-home-v1.css?v=4.1.0.1" chart-core.js
+          grep -Fq "rwa-live-home-v1.css?v=4.1.0.2" chart-core.js
           grep -Fq "POLICY='chain-abstraction-fail-closed-v2'" rwa-multichain.js
           ! grep -Eiq 'seablueprint|ecommerce|in-page commerce' index.html
           ! grep -Fq '/rwa/_next/' index.html
