@@ -60,8 +60,8 @@ jobs:
           grep -Fq 'id="fallbackChart"' index.html
           grep -Fq 'id="tvHost"' index.html
           grep -Fq 'rwaMultiChainLazyBootstrap' index.html
-          grep -Fq "rwa-live-home-v1.js?v=4.0.0" chart-core.js
-          grep -Fq "rwa-live-home-v1.css?v=4.0.0" chart-core.js
+          grep -Fq "rwa-live-home-v1.js?v=4.0.1" chart-core.js
+          grep -Fq "rwa-live-home-v1.css?v=4.0.1" chart-core.js
           ! grep -Fq "rwa-live-orderbook-v1.css" chart-core.js
           grep -Fq "openIntelligence" rwa-live-home-v1.js
           grep -Fq "openPortfolio" rwa-live-home-v1.js
@@ -69,6 +69,8 @@ jobs:
           grep -Fq "openReports" rwa-live-home-v1.js
           grep -Fq "openRewards" rwa-live-home-v1.js
           grep -Fq "renderLiveRail" rwa-live-home-v1.js
+          grep -Fq "bindBookControls" app.js
+          grep -Fq "bookPrecision" index.html
           grep -Fq 'id="liveRail"' index.html
           ! grep -Fq "rwaContextBrief" index.html
           grep -Fq "Hyperliquid Testnet" rwa-live-home-v1.js
