@@ -34,6 +34,27 @@ header{position:sticky;top:0;z-index:30;background:rgba(7,11,14,.96);backdrop-fi
 @media(max-width:1180px){.mainNav{gap:4px}.mainNavBtn{width:88px;min-width:88px;max-width:88px}.fundSearchBar{width:calc(100% - 32px);max-width:1170px;min-width:0;grid-template-columns:repeat(4,minmax(0,1fr)) 118px}}
 @media(max-width:720px){.app{padding:0 10px 32px}header{margin:0 -10px;padding:0 10px 8px}.mainNavRow{height:73px;min-height:73px;margin:0 -10px;padding:0 5px;justify-content:center}.mainNav{width:380px;min-width:380px;max-width:380px;justify-content:center;gap:0;padding:0}.mainNavBtn{flex:0 0 76px;width:76px;min-width:76px;max-width:76px;height:59px;min-height:59px;max-height:59px;padding:6px 2px 4px;gap:3px;font-size:11px}.mainNavIcon,.mainNavIcon svg{width:28px;height:28px}.mainNavLabel{font-size:11px;line-height:16.5px;font-weight:600}.mainNavBtn.active:after{left:8px;right:8px}.fundSearchScroll{margin:0 -10px;padding:9px 8px 8px}.fundSearchBar{width:760px;max-width:none;min-width:760px;height:56px;min-height:56px;max-height:56px;grid-template-columns:repeat(4,150px) 160px;border-radius:28px}.fundFilter{padding:7px 12px}.fundFilterLabel{font-size:10px;line-height:13px}.fundSelect{font-size:11px;line-height:16px}.fundSearchBtn{height:38px;min-height:38px;margin:0 8px}.top{flex-wrap:wrap;gap:8px;padding-top:6px}.brand{font-size:12px}.mode{order:3}.mode button{padding:7px 9px;font-size:11px}.searchWrap{order:4;flex-basis:100%;max-width:none}.status{font-size:9px;margin-left:0}.hero{padding-top:16px}.symbol{font-size:24px}.name{font-size:13px}.price{font-size:22px}.tabs{margin:0 -10px;padding-left:10px}.tab{padding:11px 9px;font-size:11px}.grid.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:11px}.value{font-size:16px}.three{grid-template-columns:1fr}.chart{height:220px}}
 </style>
+<script>
+(function(){
+  function alignEmbeddedHeader(){
+    try{
+      if(!(window.parent&&window.parent!==window))return;
+      const frame=window.frameElement,fr=frame&&frame.getBoundingClientRect?frame.getBoundingClientRect():null;
+      if(!fr)return;
+      const p=window.parent,side=p.document&&p.document.querySelector("#desktop-sidebar"),sr=side&&side.getBoundingClientRect?side.getBoundingClientRect():null;
+      const sideRight=sr&&sr.width>0?sr.right:0,desiredGlobal=sideRight+(p.innerWidth-sideRight)/2;
+      const desiredLocal=desiredGlobal-fr.left,shift=desiredLocal-innerWidth/2;
+      [document.querySelector(".mainNav"),document.querySelector("#fundSearchBar")].forEach(el=>{
+        if(el)el.style.setProperty("transform","translateX("+shift+"px)","important");
+      });
+    }catch(_){}
+  }
+  addEventListener("DOMContentLoaded",alignEmbeddedHeader,{once:true});
+  addEventListener("resize",alignEmbeddedHeader);
+  setTimeout(alignEmbeddedHeader,0);setTimeout(alignEmbeddedHeader,250);
+  window.__CTL_FUND_HEADER_ALIGN__=alignEmbeddedHeader;
+})();
+</script>
 </head>
 <body>
 <div class="app">
@@ -294,11 +315,13 @@ function mainNavigate(target){
   if(window.parent&&window.parent!==window){
    const p=window.parent;
    if(target==='home'){
+    try{p.localStorage.setItem('ot_backtest_view_mode','home')}catch(_){}
     const overlay=p.document&&p.document.getElementById('ai4-fundamental-root-view');
     if(overlay)overlay.remove();
     if(p.document&&p.document.documentElement)p.document.documentElement.style.overflow='';
     if(p.document&&p.document.body)p.document.body.style.overflow='';
     try{p.history.replaceState(null,'','/')}catch(_){}
+    try{p.location.replace('/')}catch(_){try{p.location.assign('/')}catch(__){}}
     return;
    }
    const mode={
