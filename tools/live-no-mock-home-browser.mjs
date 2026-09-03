@@ -1,52 +1,93 @@
 import { chromium } from 'playwright';
 import { mkdir, writeFile } from 'node:fs/promises';
+
 const base=process.env.RWA_UI_URL||'http://127.0.0.1:4173/rwa/';
-const proof=process.env.RWA_UI_PROOF_DIR||'proof/target-v4';
+const proof=process.env.RWA_UI_PROOF_DIR||'proof/terminal-v5';
 await mkdir(proof,{recursive:true});
 const browser=await chromium.launch({headless:true});
-const failures=[],pageErrors=[];const fail=(message,detail=null)=>failures.push({message,detail});
-const rect=async(p,sel)=>p.locator(sel).first().evaluate(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return{left:Math.round(r.left),top:Math.round(r.top),right:Math.round(r.right),bottom:Math.round(r.bottom),width:Math.round(r.width),height:Math.round(r.height),display:s.display,visibility:s.visibility,font:parseFloat(s.fontSize)||0}}).catch(()=>null);
+const failures=[],pageErrors=[];
+const fail=(message,detail=null)=>failures.push({message,detail});
 const near=(a,b,t=3)=>Math.abs(Number(a)-Number(b))<=t;
-async function screenshot(page,path){try{await page.screenshot({path,fullPage:false,timeout:12000})}catch(e){const cdp=await page.context().newCDPSession(page);try{const shot=await cdp.send('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});await writeFile(path,Buffer.from(shot.data,'base64'))}finally{await cdp.detach().catch(()=>{})}}}
-async function ready(page){await page.goto(base,{waitUntil:'domcontentloaded',timeout:50000});await page.waitForFunction(()=>window.RWALiveHome?.version==='4.2.1'&&window.RWAMarketRuntime?.state?.().pairs?.length>50,{timeout:40000});await page.waitForFunction(()=>document.querySelectorAll('#bids .bookrow').length>0&&document.querySelectorAll('#asks .bookrow').length>0,{timeout:30000});await page.waitForFunction(()=>document.querySelector('#liveRail [data-live-top3]')?.children?.length>=3,{timeout:20000});await page.waitForTimeout(500)}
+const rect=async(page,sel)=>page.locator(sel).first().evaluate(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return{x:Math.round(r.x),y:Math.round(r.y),right:Math.round(r.right),bottom:Math.round(r.bottom),width:Math.round(r.width),height:Math.round(r.height),display:s.display,visibility:s.visibility}}).catch(()=>null);
+async function shot(page,name){const path=proof+'/'+name+'.png';try{await page.screenshot({path,fullPage:false,timeout:12000})}catch{const cdp=await page.context().newCDPSession(page);try{const out=await cdp.send('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});await writeFile(path,Buffer.from(out.data,'base64'))}finally{await cdp.detach().catch(()=>{})}}}
+async function ready(page){
+ await page.goto(base,{waitUntil:'domcontentloaded',timeout:50000});
+ await page.waitForFunction(()=>window.RWALiveHome?.version==='5.0.0'&&window.RWATerminalV5?.version==='1.0.0'&&window.RWAMarketRuntime?.state?.().pairs?.length>50,{timeout:50000});
+ await page.waitForFunction(()=>document.querySelectorAll('#bids .bookrow').length>=5&&document.querySelectorAll('#asks .bookrow').length>=5,{timeout:30000});
+ await page.waitForFunction(()=>document.querySelector('#liveRail #rwaTargetOrderTicket'),{timeout:20000});
+ await page.waitForTimeout(500);
+}
 async function desktop(){
- const ctx=await browser.newContext({viewport:{width:1672,height:941},deviceScaleFactor:1,serviceWorkers:'block'}),page=await ctx.newPage();page.on('pageerror',e=>pageErrors.push('desktop: '+String(e?.message||e)));await ready(page);
- const data=await page.evaluate(()=>({pairs:window.RWAMarketRuntime.state().pairs.length,brand:document.querySelector('.brandcopy strong')?.textContent?.trim(),nav:[...document.querySelectorAll('.topnav [data-rwa-target-nav]')].map(x=>[x.dataset.rwaTargetNav,x.textContent.trim()]),railNav:[...document.querySelectorAll('#liveRail>.live-rail-section-nav [data-rwa-target-nav]')].map(x=>[x.dataset.rwaTargetNav,x.textContent.trim()]),commerce:/seablueprint|ecommerce|in-page commerce/i.test(document.body.innerText),mock:!!document.querySelector('#rwaScreenshotParity'),liveText:document.querySelector('#liveRail')?.innerText||'',mc:document.querySelector('#rwaMultiChainLaunch')?.innerText||'',top3:document.querySelectorAll('#liveRail [data-live-top3] button').length,asks:document.querySelectorAll('#asks .bookrow').length,bids:document.querySelectorAll('#bids .bookrow').length}));
- if(data.brand!=='Real World Asset')fail('brand mismatch',data.brand);const expectedTop=['markets'],expectedRail=['trade','portfolio','orders','analytics','rewards'];if(JSON.stringify(data.nav.map(x=>x[0]))!==JSON.stringify(expectedTop))fail('global nav must contain Markets only',data.nav);if(JSON.stringify(data.railNav.map(x=>x[0]))!==JSON.stringify(expectedRail))fail('Market rail section nav mismatch',data.railNav);if(data.commerce)fail('removed commerce text visible');if(data.mock)fail('screenshot mock overlay present');if(data.pairs<50)fail('live market universe missing',data.pairs);if(data.asks<5||data.bids<5)fail('live order book rows missing',{asks:data.asks,bids:data.bids});if(!/LIVE/.test(data.liveText)||!/TOP 3/.test(data.liveText)||data.top3!==3)fail('real LIVE rail incomplete',{text:data.liveText,top3:data.top3});if(!/MULTI CHAIN/.test(data.mc)||!/TESTNET|MAINNET READY/.test(data.mc))fail('network status missing',data.mc); const bp=page.locator('#bookPrecision');if(!await bp.count())fail('order book grouping control missing');else{const before=await bp.innerText();await bp.click();await page.waitForTimeout(80);const after=await bp.innerText();if(before===after)fail('order book grouping control is not operational',{before,after});}
- const g={top:await rect(page,'.topbar'),layout:await rect(page,'.layout'),left:await rect(page,'.layout>.left'),main:await rect(page,'.layout>.main'),right:await rect(page,'.layout>.right'),rail:await rect(page,'#liveRail'),header:await rect(page,'.terminal-header'),chart:await rect(page,'.chart-wrap'),ticket:await rect(page,'#rwaTargetOrderTicket'),footer:await rect(page,'#rwaGlobalTicker')};
- const mainW=1672-286-286-330,wants={top:{left:0,top:0,width:1672,height:55},layout:{left:0,top:55,width:1672,height:852},left:{left:0,top:55,width:286,height:852},main:{left:286,top:55,width:mainW,height:852},right:{left:286+mainW,top:55,width:286,height:852},rail:{left:1672-330,top:55,width:330,height:852},header:{left:286,top:55,width:mainW,height:67},footer:{left:0,top:907,width:1672,height:34}};
- for(const [k,w] of Object.entries(wants)){const a=g[k];if(!a){fail('missing geometry '+k);continue}for(const [p,v] of Object.entries(w))if(!near(a[p],v,3))fail('geometry '+k+'.'+p,{want:v,got:a[p],full:a})}
- if(!g.chart||g.chart.height<430||g.chart.height>490)fail('chart height out of target range',g.chart);if(!g.ticket||!near(g.ticket.height,318,3))fail('trade ticket height mismatch',g.ticket);
- const baseMain=await rect(page,'.layout>.main'),baseRail=await rect(page,'#liveRail');
- const inline=async(key,need)=>{
-   await page.locator('[data-rwa-target-nav="'+key+'"]').click();
-   await page.waitForSelector('#rwaTradingWorkspace:not([hidden])');
-   await page.waitForTimeout(120);
-   const txt=await page.locator('#rwaTradingWorkspace').innerText();
-   if(!need.test(txt))fail(key+' inline Market rail content invalid',txt);
-   const state=await page.evaluate(()=>({hash:location.hash,railOpen:document.querySelector('#liveRail')?.classList.contains('workspace-open'),mode:document.querySelector('#liveRail')?.dataset.mode,bodyClass:document.body.className}));
-   if(state.hash!=='#markets'||!state.railOpen||state.mode!==key)fail(key+' left Market route or rail state',state);
-   const wr=await rect(page,'#rwaTradingWorkspace'),rr=await rect(page,'#liveRail'),mr=await rect(page,'.layout>.main');
-   if(!wr||!rr||wr.left<rr.left-1||wr.right>rr.right+1||wr.top<rr.top-1||wr.bottom>rr.bottom+1)fail(key+' workspace escaped LIVE rail',{wr,rr});
-   if(!mr||!near(mr.left,baseMain.left,1)||!near(mr.width,baseMain.width,1)||!near(rr.width,baseRail.width,1))fail(key+' changed Market geometry',{baseMain,mr,baseRail,rr});
-   const controlHeights=await page.evaluate(()=>[...document.querySelectorAll('#rwaTradingWorkspace button')].filter(e=>getComputedStyle(e).display!=='none').map(e=>Math.round(e.getBoundingClientRect().height)));
-   if(!controlHeights.length||controlHeights.some(h=>Math.abs(h-36)>1))fail(key+' rail workspace controls must share 36px height',controlHeights);
-   await page.locator('[data-workspace-close]').click();await page.waitForTimeout(60);
-   const closed=await page.evaluate(()=>({hash:location.hash,open:document.querySelector('#liveRail')?.classList.contains('workspace-open'),market:document.querySelector('[data-rwa-target-nav="markets"]')?.classList.contains('active')}));
-   if(closed.hash!=='#markets'||closed.open||!closed.market)fail(key+' did not return to Market LIVE rail',closed);
+ const ctx=await browser.newContext({viewport:{width:1672,height:941},deviceScaleFactor:1,serviceWorkers:'block'}),page=await ctx.newPage();
+ page.on('pageerror',e=>pageErrors.push('desktop: '+String(e?.message||e)));
+ await ready(page);
+ const info=await page.evaluate(()=>({
+   route:location.hash,
+   bodyClass:document.body.className,
+   nav:[...document.querySelectorAll('.topnav [data-v5-nav]')].map(x=>x.dataset.v5Nav),
+   bottom:[...document.querySelectorAll('#rwaV5Bottom [data-v5-bottom]')].map(x=>x.dataset.v5Bottom),
+   leftTabs:[...document.querySelectorAll('.rwa-v5-left-tabs [data-v5-left]')].map(x=>x.dataset.v5Left),
+   search:!!document.querySelector('#rwaV5GlobalSearch'),
+   ticketInside:!!document.querySelector('#liveRail #rwaTargetOrderTicket'),
+   pairs:window.RWAMarketRuntime.state().pairs.length,
+   commerce:/seablueprint|ecommerce|in-page commerce/i.test(document.body.innerText),
+   mock:!!document.querySelector('#rwaScreenshotParity'),
+   audit:window.RWATerminalV5.audit()
+ }));
+ if(info.route!=='#markets')fail('V5 route left markets',info.route);
+ if(!info.bodyClass.includes('rwa-terminal-v5'))fail('V5 body class missing',info.bodyClass);
+ if(JSON.stringify(info.nav)!==JSON.stringify(['trade','discover','portfolio','analytics','rewards','more']))fail('V5 header nav mismatch',info.nav);
+ if(JSON.stringify(info.bottom)!==JSON.stringify(['positions','orders','holders','feed','analytics','thesis','history']))fail('V5 bottom tabs mismatch',info.bottom);
+ if(JSON.stringify(info.leftTabs)!==JSON.stringify(['watchlist','feed','pulse','live']))fail('V5 left tabs mismatch',info.leftTabs);
+ if(!info.search||!info.ticketInside)fail('V5 primary structure incomplete',info);
+ if(info.commerce||info.mock)fail('removed/mock content visible',{commerce:info.commerce,mock:info.mock});
+ const g={top:await rect(page,'.topbar'),layout:await rect(page,'.layout'),left:await rect(page,'.left'),main:await rect(page,'.main'),book:await rect(page,'.right'),trade:await rect(page,'#liveRail'),bottom:await rect(page,'#rwaV5Bottom'),footer:await rect(page,'#rwaV5Footer')};
+ const wants={top:{x:0,y:0,width:1672,height:55},layout:{x:0,y:55,width:1672,height:858},left:{x:0,y:55,width:238,height:858},trade:{x:1372,y:55,width:300,height:858},bottom:{x:238,y:693,width:1134,height:220},footer:{x:0,y:913,width:1672,height:28}};
+ for(const [k,w] of Object.entries(wants)){const a=g[k];if(!a){fail('missing geometry '+k);continue}for(const [p,v] of Object.entries(w))if(!near(a[p],v,4))fail('geometry '+k+'.'+p,{want:v,got:a[p],full:a})}
+ if(!g.main||g.main.x!==238||!near(g.main.width,884,5)||!near(g.main.height,638,5))fail('main geometry mismatch',g.main);
+ if(!g.book||!near(g.book.x,1122,5)||!near(g.book.width,250,4)||!near(g.book.height,638,5))fail('order book geometry mismatch',g.book);
+ const clickNav=async(key,expect)=>{
+   await page.locator('.topnav [data-v5-nav="'+key+'"]').click();await page.waitForTimeout(120);
+   if((await page.evaluate(()=>location.hash))!=='#markets')fail(key+' changed route');
+   const txt=await page.locator('#rwaV5Bottom').innerText();
+   if(expect&&!expect.test(txt))fail(key+' content mismatch',txt.slice(0,1000));
  };
- await inline('trade',/Trade|MARKET STAYS OPEN|execution/i);
- await inline('analytics',/Analytics|Top gainers|LIVE PAIRS/i);
- await inline('portfolio',/Portfolio|Wallet required|ACCOUNT VALUE/i);
- await inline('orders',/Orders|Wallet required|Open orders/i);
- await inline('rewards',/Rewards|No verified rewards program|Nothing to claim/i);
- await page.evaluate(()=>window.RWALiveHome.openRailPane('alerts'));await page.waitForTimeout(80);
- const railSizing=await page.evaluate(()=>{const hs=s=>[...document.querySelectorAll(s)].filter(e=>getComputedStyle(e).display!=='none').map(e=>Math.round(e.getBoundingClientRect().height));return{hash:location.hash,workspaceOpen:document.querySelector('#liveRail')?.classList.contains('workspace-open'),sectionTabs:hs('#liveRail>.live-rail-section-nav [data-rwa-target-nav]'),tabs:hs('#liveRail [data-live-tab]'),configure:hs('#liveRail [data-live-configure-alert]'),top3:hs('#liveRail [data-live-top3]>button')}});if(railSizing.hash!=='#markets'||railSizing.workspaceOpen)fail('Alerts left Market route',railSizing);for(const [name,vals] of Object.entries({sectionTabs:railSizing.sectionTabs,tabs:railSizing.tabs,configure:railSizing.configure,top3:railSizing.top3}))if(!vals.length||vals.some(h=>Math.abs(h-36)>1))fail('rail controls must share 36px height: '+name,vals);
- await page.locator('#rwaMultiChainLaunch').click();await page.waitForFunction(()=>window.RWAMultiChain?.status?.().open===true,{timeout:15000});await page.waitForFunction(()=>document.querySelectorAll('#rwaMultiChainPanel [data-rwa-chain]').length===9,{timeout:15000});const nets=await page.locator('#rwaMultiChainPanel [data-rwa-chain]').count(),runtimeNets=await page.evaluate(()=>window.RWAMultiChain?.status?.().networks?.length||0);if(nets!==9||runtimeNets!==9)fail('MULTI CHAIN network count',{dom:nets,runtime:runtimeNets});await page.locator('#rwaMultiChainPanel .rwa-mc-close').click();
- await screenshot(page,proof+'/desktop-1672x941.png');await ctx.close();return{data,g};
+ await clickNav('discover',/Top movers|Top volume/i);
+ await clickNav('portfolio',/Portfolio|Connect a wallet|ACCOUNT VALUE/i);
+ await clickNav('analytics',/LIVE PAIRS|RWA-LINKED|BUY PRESSURE/i);
+ await clickNav('rewards',/No verified rewards program|INACTIVE/i);
+ await page.locator('.topnav [data-v5-nav="trade"]').click();
+ if(!await page.locator('#liveRail #rwaTargetOrderTicket').isVisible())fail('Trade ticket not visible in rail');
+ await page.locator('.rwa-v5-side-switch [data-v5-side="SELL"]').click();
+ const side=await page.locator('#rwaTargetOrderTicket').getAttribute('data-v5-side');if(side!=='SELL')fail('Sell side switch failed',side);
+ await page.locator('.rwa-v5-side-switch [data-v5-side="BUY"]').click();
+ const ask=page.locator('#asks .bookrow').last();await ask.click();await page.waitForTimeout(60);
+ if(!await page.locator('#rwaTargetOrderTicket [data-live-mode="LIMIT"]').evaluate(el=>el.classList.contains('active')))fail('Order book click did not select LIMIT');
+ const lp=await page.locator('#rwaTargetOrderTicket [data-order-side="BUY"] [data-live-price]').inputValue();if(!(Number(lp)>0))fail('Order book click did not populate limit price',lp);
+ await page.locator('#liveRail [data-v5-trade-tab="alerts"]').click();await page.waitForTimeout(50);
+ const alertsTxt=await page.locator('[data-v5-alerts]').innerText();if(!/LOCAL BROWSER ALERT/.test(alertsTxt))fail('Local alert system missing',alertsTxt);
+ await page.locator('.rwa-v5-left-tabs [data-v5-left="pulse"]').click();await page.waitForTimeout(50);if(!/Top Movers/i.test(await page.locator('[data-v5-left-pane="pulse"]').innerText()))fail('Pulse system missing');
+ await page.locator('.rwa-v5-left-tabs [data-v5-left="live"]').click();await page.waitForTimeout(50);if(!/LIVE/i.test(await page.locator('[data-v5-left-pane="live"]').innerText()))fail('Live left system missing');
+ await page.locator('#rwaV5Bottom [data-v5-bottom="holders"]').click();await page.waitForTimeout(50);if(!/Holders data unavailable|NEEDS HOLDER BACKEND/i.test(await page.locator('[data-v5-bottom-body]').innerText()))fail('Holders fail-closed state missing');
+ await page.locator('#rwaV5Bottom [data-v5-bottom="thesis"]').click();await page.waitForTimeout(50);if(!await page.locator('[data-v5-thesis-text]').count())fail('Thesis composer missing');
+ await shot(page,'desktop-v5');
+ await ctx.close();return{info,g};
 }
 async function mobile(width,height,name){
- const ctx=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,serviceWorkers:'block'}),page=await ctx.newPage();page.on('pageerror',e=>pageErrors.push(name+': '+String(e?.message||e)));await ready(page);await page.locator('#rwaTargetOrderTicket').scrollIntoViewIfNeeded();await page.waitForTimeout(100);
- const m=await page.evaluate(()=>{const q=s=>document.querySelector(s),r=s=>q(s)?.getBoundingClientRect();return{sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,rail:getComputedStyle(q('#liveRail')).display,buyH:r('[data-order-side="BUY"]>button')?.height||0,sellH:r('[data-order-side="SELL"]>button')?.height||0,inputH:r('[data-order-side="BUY"] label')?.height||0,wallet:r('.top-actions .signin'),mc:r('#rwaMultiChainLaunch'),ticket:r('#rwaTargetOrderTicket')}});if(m.sw>m.cw+2)fail(name+' horizontal overflow',m);if(m.rail!=='none')fail(name+' LIVE rail must collapse',m.rail);if(m.buyH<44||m.sellH<44||m.inputH<42)fail(name+' touch targets too small',m);if(m.wallet&&m.wallet.right>width+1)fail(name+' wallet clipped',m.wallet);if(m.mc&&m.ticket){const overlap=Math.min(m.mc.bottom,m.ticket.bottom)-Math.max(m.mc.top,m.ticket.top);if(overlap>8)fail(name+' MULTI CHAIN overlaps ticket',{mc:m.mc,ticket:m.ticket,overlap})}await screenshot(page,proof+'/'+name+'.png');await ctx.close();return m;
+ const ctx=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,serviceWorkers:'block'}),page=await ctx.newPage();page.on('pageerror',e=>pageErrors.push(name+': '+String(e?.message||e)));
+ await ready(page);
+ let m=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,mode:document.body.dataset.v5MobileMode,chart:getComputedStyle(document.querySelector('.chart-wrap')).display,book:getComputedStyle(document.querySelector('.right')).display,trade:getComputedStyle(document.querySelector('#liveRail')).display,mini:getComputedStyle(document.querySelector('#rwaV5MiniBook')).display}));
+ if(m.sw>m.cw+2)fail(name+' horizontal overflow',m);if(m.mode!=='chart'||m.chart==='none'||m.mini==='none'||m.book!=='none'||m.trade!=='none')fail(name+' default Chart state invalid',m);
+ await page.locator('[data-v5-mobile-mode="book"]').click();await page.waitForTimeout(50);m=await page.evaluate(()=>({mode:document.body.dataset.v5MobileMode,chart:getComputedStyle(document.querySelector('.chart-wrap')).display,book:getComputedStyle(document.querySelector('.right')).display,trade:getComputedStyle(document.querySelector('#liveRail')).display}));if(m.mode!=='book'||m.chart!=='none'||m.book==='none'||m.trade!=='none')fail(name+' Book state invalid',m);
+ await page.locator('[data-v5-mobile-mode="trade"]').click();await page.waitForTimeout(50);m=await page.evaluate(()=>({mode:document.body.dataset.v5MobileMode,chart:getComputedStyle(document.querySelector('.chart-wrap')).display,book:getComputedStyle(document.querySelector('.right')).display,trade:getComputedStyle(document.querySelector('#liveRail')).display,ticket:!!document.querySelector('#liveRail #rwaTargetOrderTicket')}));if(m.mode!=='trade'||m.chart!=='none'||m.book!=='none'||m.trade==='none'||!m.ticket)fail(name+' Trade state invalid',m);
+ await page.locator('[data-v5-mobile-mode="feed"]').click();await page.waitForTimeout(50);if(!await page.locator('#rwaV5MobileFeed').isVisible())fail(name+' Feed state invalid');
+ await page.locator('[data-v5-mobile-nav="markets"]').click();await page.waitForTimeout(50);if(!await page.locator('.left').isVisible())fail(name+' Markets drawer did not open');
+ await page.locator('[data-v5-action="close-markets"]').click();await page.waitForTimeout(50);
+ await page.locator('[data-v5-mobile-nav="portfolio"]').click();await page.waitForTimeout(50);if(!await page.locator('#rwaV5Bottom').isVisible())fail(name+' Portfolio workspace did not open');
+ const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);if(overflow>2)fail(name+' overflow after interactions',overflow);
+ await shot(page,name);await ctx.close();return m;
 }
-let audit={};try{audit.desktop=await desktop();audit.mobile390=await mobile(390,844,'mobile-390x844');audit.mobile430=await mobile(430,932,'mobile-430x932')}catch(e){fail('unexpected failure',String(e?.stack||e))}await browser.close();if(pageErrors.length)fail('page errors',pageErrors);const out={ok:failures.length===0,contract:'real-world-asset-target-v4-live-only',base,failures,audit};await writeFile(proof+'/browser-result.json',JSON.stringify(out,null,2));console.log(JSON.stringify(out,null,2));if(!out.ok)process.exit(1);
+let audit={};try{audit.desktop=await desktop();audit.mobile390=await mobile(390,844,'mobile-390x844-v5');audit.mobile430=await mobile(430,932,'mobile-430x932-v5')}catch(e){fail('unexpected failure',String(e?.stack||e))}
+await browser.close();if(pageErrors.length)fail('page errors',pageErrors);
+const out={ok:failures.length===0,contract:'rwa-terminal-v5-fomo-hyperliquid',base,failures,audit};
+await writeFile(proof+'/browser-result.json',JSON.stringify(out,null,2));console.log(JSON.stringify(out,null,2));if(!out.ok)process.exit(1);
