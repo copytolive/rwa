@@ -22,8 +22,6 @@ jobs:
   native_h4:
     runs-on: ubuntu-latest
     timeout-minutes: 180
-    env:
-      H4_STATE: ${{ runner.temp }}/gold10b-native-h4
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,6 +30,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: Initialize native H4 state outside repository workspace
+        run: echo "H4_STATE=$RUNNER_TEMP/gold10b-native-h4" >> "$GITHUB_ENV"
 
       - name: Install backtest and direct TradingView H4 dependencies
         run: |
