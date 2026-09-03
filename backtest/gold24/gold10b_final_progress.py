@@ -35,7 +35,8 @@ def main() -> int:
 
     source_input = int(port.get("methods_input", 0) or 0)
     global_kept = int(port.get("global_greedy_kept_count", 0) or 0)
-    corr_viol = int(port.get("global_corr_violations", port.get("corr_violation_count", 0)) or 0)
+    raw_viol = port.get("pairs_gt_0_50", port.get("global_corr_violations", port.get("corr_violation_count", 0)))
+    corr_viol = len(raw_viol) if isinstance(raw_viol, list) else int(raw_viol or 0)
 
     # Older audit payloads may not carry a precomputed violation count. The
     # exact pair count remains authoritative and no inferred number is invented.
