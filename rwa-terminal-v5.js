@@ -187,7 +187,7 @@ async function renderBottom(force=false){
  if(bottomMode==='portfolio'){body.innerHTML=window.RWAWalletAuth?.isLoggedIn?.()?portfolioHtml(ex||{}):accountLocked('Portfolio');return}
  if(bottomMode==='history'){body.innerHTML=window.RWAWalletAuth?.isLoggedIn?.()?'<div class="rwa-v5-history"><section><header><b>Recent fills</b><span>Venue loaded</span></header>'+orderRows(ex?.fills||[],false)+'</section><section><header><b>Order history</b><span>Venue loaded</span></header>'+orderRows(ex?.history||[],false)+'</section></div>':accountLocked('History');return}
  if(bottomMode==='holders'){
-  if(await syncService()){try{const r=await window.RWATerminalService.holders.get(selected());serverHolders=r;const rows=Array.isArray(r?.holders)?r.holders:[];body.innerHTML=r?.available&&rows.length?'<div class="rwa-v5-table"><div class="head"><span>Holder</span><span>Balance</span><span>Share</span><span>Source</span><span>Updated</span><span>Status</span></div>'+rows.slice(0,50).map(x=>'<div><b>'+esc(x.address||'—')+'</b><span>'+esc(String(x.balance??'—'))+'</span><span>'+esc(String(x.share??'—'))+'</span><span>'+esc(r.source||'authoritative')+'</span><span>'+new Date(r.updatedAt||Date.now()).toLocaleString()+'</span><i>VERIFIED</i></div>').join('')+'</div>':'<div class="rwa-v5-lock"><b>Holder source not configured</b><p>The terminal backend is online, but no authoritative holder indexer/source is configured for '+esc(base())+'. No holder counts are fabricated.</p><span>NEEDS AUTHORITATIVE SOURCE</span></div>';return}catch(e){serverServiceError=String(e?.message||e)}}
+  if(await syncService()){try{const r=await window.RWATerminalService.holders.get(selected());serverHolders=r;const rows=Array.isArray(r?.holders)?r.holders:[];body.innerHTML=r?.available&&rows.length?'<div class="rwa-v5-source-gated"><b>SOURCE GATED · VERIFIED</b><span>'+esc(r.issuer||'Authoritative issuer')+' · '+esc(r.network||'network')+'</span></div><div class="rwa-v5-table"><div class="head"><span>Holder</span><span>Balance</span><span>Share</span><span>Source</span><span>Updated</span><span>Status</span></div>'+rows.slice(0,50).map(x=>'<div><b>'+esc(x.address||'—')+'</b><span>'+esc(String(x.balance??'—'))+'</span><span>'+esc(String(x.share??'—'))+'</span><span>'+esc(r.source||'authoritative')+'</span><span>'+new Date(r.updatedAt||Date.now()).toLocaleString()+'</span><i>VERIFIED</i></div>').join('')+'</div>':'<div class="rwa-v5-lock"><b>Holder source not configured</b><p>The terminal backend is online, but no authoritative holder indexer/source is configured for '+esc(base())+'. No holder counts are fabricated.</p><span>NEEDS AUTHORITATIVE SOURCE</span></div>';return}catch(e){serverServiceError=String(e?.message||e)}}
   body.innerHTML='<div class="rwa-v5-lock"><b>Holders data unavailable</b><p>No authoritative holder registry/indexer is connected for the selected live market. This panel stays locked instead of inventing holder counts.</p><span>NEEDS HOLDER BACKEND</span></div>';return
  }
  if(bottomMode==='feed'){if(serverReady)await syncServerFeed();body.innerHTML=feedHtml();return}
@@ -228,17 +228,8 @@ function applyMobileState(){
 }
 function setMobileMarketsCloseVisible(on){
  const b=$('#rwaV5MarketsClose');if(!b)return;
- b.style.setProperty('display',on?'grid':'none','important');
- b.style.setProperty('visibility',on?'visible':'hidden','important');
- b.style.setProperty('opacity',on?'1':'0','important');
- b.style.setProperty('pointer-events',on?'auto':'none','important');
- b.style.setProperty('position','fixed','important');
- b.style.setProperty('right','10px','important');
- b.style.setProperty('top','64px','important');
- b.style.setProperty('z-index','2147483000','important');
- b.style.setProperty('width','36px','important');
- b.style.setProperty('height','36px','important');
- b.setAttribute('aria-hidden',String(!on))
+ b.dataset.open=on?'1':'0';b.setAttribute('aria-hidden',String(!on));
+ for(const p of ['display','visibility','opacity','pointer-events'])b.style.removeProperty(p)
 }
 function setMobileMarketsDrawerVisible(on){
  const left=$('.layout>.left')||$('.left');if(!left)return;
@@ -391,3 +382,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 /* RWA_TERMINAL_TARGET_PARITY_R2_2026_09_03 */
 
 /* RWA_TERMINAL_PUBLIC_FINAL_ACCEPTANCE_2026_09_03_R3 */
+
+/* RWA_TERMINAL_MOBILE_CLOSE_AND_HOLDER_SOURCE_GATE_R4 */
