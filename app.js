@@ -1,6 +1,6 @@
 const API=['https://data-api.binance.vision','https://api.binance.com'];
 const RWA=new Set(['ONDO','PENDLE','POLYX','LINK','TRU','RSR','MKR','SKY','AAVE','COMP','SNX','ENA','CFG','OM','XDC','ALGO','HBAR']);
-const S={pairs:[],map:new Map(),selected:'BTCUSDT',filter:'all',query:'',interval:'60',marketWS:null,detailWS:null,buyVol:0,sellVol:0,trades:0,recentTrades:[],klines:[],book:{bids:[],asks:[]},rawBook:{bids:[],asks:[]},bookLastUpdateId:0,bookStep:.1,bookLevels:5,bookTimer:null,tvTimer:null};
+const S={pairs:[],map:new Map(),selected:'BTCUSDT',filter:'all',query:'',interval:'60',marketWS:null,detailWS:null,buyVol:0,sellVol:0,trades:0,recentTrades:[],klines:[],book:{bids:[],asks:[]},rawBook:{bids:[],asks:[]},bookLastUpdateId:0,bookStep:.1,bookLevels:9,bookTimer:null,tvTimer:null};
 const $=id=>document.getElementById(id);const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2400)}
 function num(v){const n=Number(v);return Number.isFinite(n)?n:null}function price(v){const n=num(v);if(n==null)return'—';let d=n>=1000?2:n>=1?4:n>=.01?5:7;return '$'+n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:d})}function compact(v){const n=num(v);if(n==null)return'—';return '$'+Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:2}).format(n)}function pct(v){const n=num(v);if(n==null)return'—';return(n>=0?'+':'')+n.toFixed(2)+'%'}
