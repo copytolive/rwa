@@ -72,14 +72,21 @@ function normalizeTopNav(){
       const svg=b.querySelector("svg");if(svg){svg.style.setProperty("width",icon+"px","important");svg.style.setProperty("height",icon+"px","important");}
       const l=label(b);if(l){l.style.setProperty("font-size",font+"px","important");l.style.setProperty("font-weight","600","important");l.style.setProperty("line-height",mobile?"16.5px":"19.5px","important");l.style.setProperty("height","auto","important");}
     });
-    // Desktop nav is absolute inside a stable content header. Pin it to that
-    // parent center so active route/sibling changes cannot move the group.
-    const pos=getComputedStyle(nav).position;
-    if(!mobile&&pos==="absolute"){
-      nav.style.setProperty("left","50%","important");
+    // Pin the desktop group to the visual center of the content viewport
+    // (viewport minus the visible 64px sidebar), regardless of route wrapper.
+    if(!mobile){
+      const sr=document.querySelector("#desktop-sidebar")?.getBoundingClientRect();
+      const sideRight=sr&&sr.width>0?sr.right:0;
+      const desired=sideRight+(innerWidth-sideRight)/2;
+      const op=nav.offsetParent||document.body,pr=op.getBoundingClientRect();
+      nav.style.setProperty("position","absolute","important");
+      nav.style.setProperty("left",(desired-pr.left)+"px","important");
       nav.style.setProperty("right","auto","important");
       nav.style.setProperty("transform","translateX(-50%)","important");
+      nav.style.setProperty("margin-left","0","important");
+      nav.style.setProperty("margin-right","0","important");
     }else{
+      nav.style.setProperty("position","relative","important");
       nav.style.setProperty("left","auto","important");
       nav.style.setProperty("right","auto","important");
       nav.style.setProperty("transform","none","important");
@@ -147,29 +154,24 @@ function signalFilter(){
   const ib=bar.querySelector("[data-ai3-instruments]");if(ib&&ib.textContent!==txt)ib.textContent=txt;
 }
 if(!document.getElementById("ai3-filter-style")){const s=document.createElement("style");s.id="ai3-filter-style";s.textContent='[data-ai3-filterbar="1"]{width:calc(100% - 32px)!important;max-width:1170px!important;height:64px!important;min-height:64px!important;max-height:64px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:border-box!important}#ai3-signal-filter{width:calc(100% - 32px);max-width:1170px;height:64px;min-height:64px;max-height:64px;margin:12px auto;display:grid;grid-template-columns:1.15fr 1fr 1fr 1fr 118px;background:#1E2329;border:1px solid #2B3139;border-radius:34px;overflow:hidden;box-sizing:border-box;color:#EAECEF;flex:0 0 auto}.ai3-sf-cell{min-width:0;padding:9px 22px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid #2B3139}.ai3-sf-cell label{font-size:12px;line-height:16px;font-weight:800;color:#EAECEF}.ai3-sf-cell select,.ai3-sf-cell button{width:100%;padding:3px 0 0;background:transparent;border:0;outline:0;color:#848E9C;text-align:left;font-size:13px;line-height:18px}.ai3-sf-cell select{appearance:auto;cursor:pointer}.ai3-sf-cell button{cursor:pointer}.ai3-sf-search{align-self:center;justify-self:stretch;height:40px;margin:0 10px;border:0;border-radius:22px;background:#F0B90B;color:#0B0E11;font-weight:900;font-size:13px;cursor:pointer;box-shadow:0 0 20px rgba(240,185,11,.18)}@media(max-width:767px){[data-ai3-filterbar="1"]{width:calc(100% - 16px)!important;height:56px!important;min-height:56px!important;max-height:56px!important}#ai3-signal-filter{width:calc(100% - 16px);max-width:none;height:56px;min-height:56px;max-height:56px;grid-template-columns:repeat(4,minmax(132px,1fr)) 100px;border-radius:20px;overflow-x:auto}.ai3-sf-cell{padding:8px 12px}.ai3-sf-search{margin:0 8px;height:38px}}';document.head.appendChild(s)}
-function ai3FundamentalFallback(e){
-  const el=e&&e.target&&e.target.closest?e.target.closest('nav[data-ai3-primary="1"] button'):null;
-  if(!el||norm(el.innerText||el.textContent)!=="Fundamental")return;
-  e.preventDefault();
-  e.stopPropagation();
-  if(typeof e.stopImmediatePropagation==="function")e.stopImmediatePropagation();
-  try{
-    localStorage.setItem(K,"fundamental-saham");
-    if(location.pathname!=="/"||location.search||location.hash)history.replaceState(null,"","/");
-    window.dispatchEvent(new CustomEvent("copytolive:open-fundamental"));
-  }catch(_){}
-}
-document.addEventListener("click",ai3FundamentalFallback,true);
-function ai3SignalFallback(e){
-  const el=e&&e.target&&e.target.closest?e.target.closest('nav button'):null;
-  if(!el||norm(el.innerText||el.textContent)!=="Signal Scan")return;
+function ai3TopRoute(e){
+  const el=e&&e.target&&e.target.closest?e.target.closest("nav button"):null;
+  if(!el||el.closest("#desktop-sidebar"))return;
   const box=el.getBoundingClientRect();if(box.bottom<0||box.top>220)return;
-  e.preventDefault();
-  e.stopPropagation();
-  if(typeof e.stopImmediatePropagation==="function")e.stopImmediatePropagation();
-  direct("scanner-signal");
+  const name=btnName(el);if(!["Home","Fundamental","Signal Scan","Crypto","Renko"].includes(name))return;
+  e.preventDefault();e.stopPropagation();if(typeof e.stopImmediatePropagation==="function")e.stopImmediatePropagation();
+  if(name==="Fundamental"){
+    try{
+      localStorage.setItem(K,"fundamental-saham");
+      if(location.pathname!=="/"||location.search||location.hash)history.replaceState(null,"","/");
+      window.dispatchEvent(new CustomEvent("copytolive:open-fundamental"));
+    }catch(_){}
+    return;
+  }
+  const mode={Home:"home","Signal Scan":"scanner-signal",Crypto:"crypto",Renko:"renko"}[name];
+  if(mode)direct(mode);
 }
-document.addEventListener("click",ai3SignalFallback,true);
+document.addEventListener("click",ai3TopRoute,true);
 function ai3SignalBack(e){
   let mode="";try{mode=localStorage.getItem(K)||""}catch(_){}
   if(mode!=="scanner-signal")return;
