@@ -110,7 +110,7 @@ jobs:
           path: |
             .copytolive-gold-h1
             .dukascopy-cache-copytolive-gold
-          key: copytolive-xauusd-h1-v2-${{ env.FROM_DATE }}-${{ env.TO_DATE }}
+          key: copytolive-xauusd-m1-resampled-h1-v3-${{ env.FROM_DATE }}-${{ env.TO_DATE }}
 
       - name: Fetch GOLD H1 on GitHub runner
         run: |
@@ -189,6 +189,83 @@ jobs:
           print(json.dumps(x,indent=2,sort_keys=True))
           PY
 
+      - name: Build production parity report
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, pathlib
+          out=pathlib.Path(os.environ['OUT_DIR'])
+          x=json.loads((out/'latest_copytolive_active_replay.json').read_text())
+          rows=x.get('rows') or []
+          assert len(rows)==118, len(rows)
+          tolerances={
+              'totalTrades':0.0,
+              'winRate':0.11,
+              'profitFactor':0.011,
+              'netProfit':0.51,
+              'maxDrawdownPercent':0.11,
+              'sqn':0.011,
+              'recoveryFactor':0.011,
+              'wf_test_pf':0.011,
+          }
+          by={k:0 for k in tolerances}
+          max_abs={k:0.0 for k in tolerances}
+          worst={k:None for k in tolerances}
+          exact_all=0
+          for row in rows:
+              ok=True
+              parity=row.get('parity_delta') or {}
+              for key,tol in tolerances.items():
+                  item=parity.get(key)
+                  if item is None:
+                      ok=False
+                      continue
+                  delta=abs(float(item['delta']))
+                  if delta<=tol:
+                      by[key]+=1
+                  else:
+                      ok=False
+                  if delta>max_abs[key]:
+                      max_abs[key]=delta
+                      worst[key]={
+                          'strategy_id':row.get('strategy_id'),
+                          'expected':item.get('expected'),
+                          'actual':item.get('actual'),
+                          'delta':item.get('delta'),
+                      }
+              exact_all+=int(ok)
+          report={
+              'status':'PASS' if exact_all==118 else 'PARITY_MISMATCH',
+              'strategies':118,
+              'exact_all_metrics':exact_all,
+              'parity_by_metric':by,
+              'max_abs_delta':max_abs,
+              'worst_delta':worst,
+              'dataset':x['dataset'],
+              'source':x['source'],
+              'execution_contract':x['execution_contract'],
+              'strict_gate_counts':{
+                  'pre_corr_pass_count':x['pre_corr_pass_count'],
+                  'corr_kept_count':x['corr_kept_count'],
+                  'hard_pass_count':x['hard_pass_count'],
+              },
+          }
+          (out/'copytolive_production_parity.json').write_text(json.dumps(report,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(report,indent=2,sort_keys=True))
+          PY
+
+      - name: Enforce production parity
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, pathlib
+          p=pathlib.Path(os.environ['OUT_DIR'])/'copytolive_production_parity.json'
+          x=json.loads(p.read_text())
+          assert x['status']=='PASS', x
+          assert int(x['exact_all_metrics'])==118, x
+          print('COPYTOLIVE PRODUCTION PARITY PASS 118/118')
+          PY
+
       - name: Publish exact replay evidence race-safe
         run: |
           set -euo pipefail
@@ -213,6 +290,7 @@ jobs:
           exit 1
 
       - name: Upload exact replay evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: gold24-copytolive-exact-active-${{ github.run_id }}
@@ -220,5 +298,6 @@ jobs:
             backtest/gold24/runtime_copytolive_active/latest_copytolive_active_replay.json
             backtest/gold24/runtime_copytolive_active/latest_copytolive_active_replay.csv
             backtest/gold24/runtime_copytolive_active/latest_copytolive_active_replay_summary.json
+            backtest/gold24/runtime_copytolive_active/copytolive_production_parity.json
           if-no-files-found: error
           retention-days: 90
