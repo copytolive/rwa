@@ -10,7 +10,7 @@ on:
       - "app.js"
       - "realtime-core.js"
       - "chart-core.js"
-      - "rwa-live-home-v1.js"
+      - "rwa-live-home-v1.js"\n      - "rwa-terminal-v5.js"\n      - "rwa-terminal-v5.css"
       - "rwa-live-home-v1.css"
       - "rwa-multichain.js"
       - "rwa-multichain-engine.js"
@@ -50,6 +50,8 @@ jobs:
           test -s app.js
           test -s chart-core.js
           test -s rwa-live-home-v1.js
+          test -s rwa-terminal-v5.js
+          test -s rwa-terminal-v5.css
           test -s rwa-multichain.js
           test -s rwa-multichain-engine.js
           test -s rwa-multichain-registry.json
@@ -66,8 +68,12 @@ jobs:
           grep -Fq 'id="fallbackChart"' index.html
           grep -Fq 'id="tvHost"' index.html
           grep -Fq 'rwaMultiChainLazyBootstrap' index.html
-          grep -Fq "rwa-live-home-v1.js?v=4.2.1" chart-core.js
-          grep -Fq "rwa-live-home-v1.css?v=4.2.1" chart-core.js
+          grep -Fq "rwa-live-home-v1.js?v=5.0.0" chart-core.js
+          grep -Fq "rwa-live-home-v1.css?v=5.0.0" chart-core.js
+          grep -Fq "rwa-terminal-v5.js?v=1.0.0" chart-core.js
+          grep -Fq "rwa-terminal-v5.css?v=1.0.0" chart-core.js
+          grep -Fq "RWATerminalV5" rwa-terminal-v5.js
+          grep -Fq "rwa-v5-bottom" rwa-terminal-v5.css
           ! grep -Fq "rwa-live-orderbook-v1.css" chart-core.js
           grep -Fq "openIntelligence" rwa-live-home-v1.js
           grep -Fq "openPortfolio" rwa-live-home-v1.js
