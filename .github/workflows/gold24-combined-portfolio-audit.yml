@@ -7,10 +7,17 @@ on:
     paths:
       - '.github/workflows/gold24-combined-portfolio-audit.yml'
       - 'backtest/gold24/screening_gpt_combined_portfolio_audit.py'
+      - 'backtest/gold24/runtime_mt5_lot/latest_entry100_net20000_standard_lot.csv'
+      - 'backtest/gold24/runtime_multimethod_v1/latest_multimethod_v1_discovery.csv'
+      - 'backtest/gold24/qualified_scripts/**'
 
 permissions:
   contents: write
   actions: read
+
+concurrency:
+  group: gold24-combined-portfolio-audit
+  cancel-in-progress: true
 
 jobs:
   audit:
@@ -22,7 +29,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -r backtest/gold24/requirements.txt
-      - name: Restore canonical Batch310
+      - name: Restore authoritative canonical Batch310
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -30,15 +37,35 @@ jobs:
           rm -rf .audit_state
           mkdir .audit_state
           gh run download 33667987913 --repo "$GITHUB_REPOSITORY" -n gold24-canonical-v11-state -D .audit_state
-      - name: Run combined audit
+      - name: Run combined audit against current selected package
         run: |
-          python backtest/gold24/screening_gpt_combined_portfolio_audit.py             --state-dir .audit_state             --out backtest/gold24/runtime_screening_gpt/combined_portfolio_audit.json
+          python backtest/gold24/screening_gpt_combined_portfolio_audit.py \
+            --state-dir .audit_state \
+            --out backtest/gold24/runtime_screening_gpt/combined_portfolio_audit.json
+          python - <<'PY'
+          import csv,json,pathlib
+          strict=list(csv.DictReader(open('backtest/gold24/runtime_mt5_lot/latest_entry100_net20000_standard_lot.csv')))
+          multi=list(csv.DictReader(open('backtest/gold24/runtime_multimethod_v1/latest_multimethod_v1_discovery.csv')))
+          x=json.loads(pathlib.Path('backtest/gold24/runtime_screening_gpt/combined_portfolio_audit.json').read_text())
+          expected=len(strict)+len(multi)
+          assert x['status']=='PASS'
+          assert x['methods_input']==expected,(x['methods_input'],expected)
+          assert x['global_pair_count']==expected*(expected-1)//2
+          assert x['hard_pass_count']+x['watch_count']+x['fail_count']==expected
+          print(json.dumps({'selected_input':expected,'global_pairs':x['global_pair_count'],'hard_pass':x['hard_pass_count'],'watch':x['watch_count'],'fail':x['fail_count'],'global_kept':x['global_greedy_kept_count'],'distinct_final':x['final_distinct_family_count'],'max_family_share':x['final_max_family_share'],'portfolio_readiness':x['portfolio_readiness']},indent=2))
+          PY
       - name: Publish
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add backtest/gold24/runtime_screening_gpt/combined_portfolio_audit.json
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "chore(gold24): publish combined portfolio audit [skip ci]"
-          git pull --rebase origin main
-          git push origin HEAD:main
+          git commit -m "chore(gold24): publish current combined portfolio audit [skip ci]"
+          for TRY in 1 2 3 4 5; do
+            if git pull --rebase origin main && git push origin HEAD:main; then exit 0; fi
+            git rebase --abort 2>/dev/null || true
+            git fetch origin main
+            git rebase origin/main
+            sleep $((TRY*2))
+          done
+          exit 1
