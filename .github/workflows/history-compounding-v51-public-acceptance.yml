@@ -22,7 +22,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          FILE="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^history-compounding-v51-requests/.*\\.json$' | tail -n 1)"
+          FILE="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^history-compounding-v51-requests/.*\.json$' | tail -n 1)"
           ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$FILE")"
           echo "id=$ID" >> "$GITHUB_OUTPUT"
           echo "response=history-compounding-v51-responses/$ID.json" >> "$GITHUB_OUTPUT"
