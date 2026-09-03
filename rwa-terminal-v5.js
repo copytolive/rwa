@@ -66,11 +66,18 @@ function renderLeft(){
  if(live&&!live.hidden){const rows=(s?.recentTrades||[]).slice(0,18);live.innerHTML='<div class="rwa-v5-pane-head"><b>LIVE</b><span class="rwa-v5-live-state"><i></i> market stream</span></div>'+(rows.length?'<div class="rwa-v5-live-list">'+rows.map(t=>'<div><span class="'+(t.buy?'pos':'neg')+'">'+(t.buy?'BUY':'SELL')+'</span><b>'+esc(base())+'/USDT</b><strong>'+esc(fmt?.price?.(t.p)||String(t.p))+'</strong><small>'+new Date(t.time||Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})+'</small></div>').join('')+'</div>':'<div class="rwa-v5-empty">Waiting for verified live trades…</div>')}
  const fav=favorites();qa('#pairList .pairrow').forEach(r=>r.classList.toggle('rwa-v5-favorite',fav.includes(r.dataset.sym)))
 }
+function setTradeSide(side){
+ side=String(side||'BUY').toUpperCase()==='SELL'?'SELL':'BUY';tradeSide=side;
+ const ticket=$('#rwaTargetOrderTicket');if(ticket){ticket.dataset.v5Side=side;ticket.setAttribute('aria-label',side==='SELL'?'Sell / Short order ticket':'Buy / Long order ticket')}
+ qa('.rwa-v5-side-switch [data-v5-side]').forEach(b=>{const on=b.dataset.v5Side===side;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on))});
+ return side
+}
 function ensureTrade(){
  const rail=$('#liveRail'),ticket=$('#rwaTargetOrderTicket');if(!rail||!ticket)return;
  if(rail.dataset.v5Trade!=='1'){rail.dataset.v5Trade='1';rail.dataset.mode='trade';rail.innerHTML='<header class="rwa-v5-trade-head"><nav><button class="active" data-v5-trade-tab="trade">Trade</button><button data-v5-trade-tab="alerts">Alerts <span data-v5-alert-count>0</span></button></nav><button data-v5-action="trade-more">•••</button></header><div class="rwa-v5-trade-host"></div><section class="rwa-v5-alerts" data-v5-alerts hidden></section>';rail.querySelector('.rwa-v5-trade-host').appendChild(ticket)}
- if(!ticket.querySelector('.rwa-v5-side-switch')){const sw=document.createElement('div');sw.className='rwa-v5-side-switch';sw.innerHTML='<button class="active" data-v5-side="BUY">Buy / Long</button><button data-v5-side="SELL">Sell / Short</button>';const modes=ticket.querySelector('.rwa-target-order-modes');ticket.insertBefore(sw,modes||ticket.firstChild)}
- ticket.dataset.v5Side=tradeSide;setActive('.rwa-v5-side-switch [data-v5-side]',tradeSide,'v5Side');renderAlertCount()
+ let sw=ticket.querySelector('.rwa-v5-side-switch');
+ if(!sw){sw=document.createElement('div');sw.className='rwa-v5-side-switch';sw.innerHTML='<button type="button" class="active" data-v5-side="BUY" aria-pressed="true">Buy / Long</button><button type="button" data-v5-side="SELL" aria-pressed="false">Sell / Short</button>';const modes=ticket.querySelector('.rwa-target-order-modes');ticket.insertBefore(sw,modes||ticket.firstChild);sw.addEventListener('click',e=>{const b=e.target.closest('[data-v5-side]');if(!b)return;e.preventDefault();e.stopPropagation();setTradeSide(b.dataset.v5Side)})}
+ setTradeSide(tradeSide);renderAlertCount()
 }
 function renderAlertCount(){const n=alerts().filter(a=>!a.triggered).length;qa('[data-v5-alert-count]').forEach(x=>x.textContent=String(n));const icon=$('[data-live-top-action="alerts"]');if(icon)icon.dataset.count=String(n)}
 function openAlerts(){
@@ -139,7 +146,7 @@ function ensureMobile(){
  const head=$('.terminal-header');if(head&&!head.querySelector('.rwa-v5-mobile-worktabs')){const nav=document.createElement('nav');nav.className='rwa-v5-mobile-worktabs';nav.innerHTML='<button class="active" data-v5-mobile-mode="chart">Chart</button><button data-v5-mobile-mode="book">Book</button><button data-v5-mobile-mode="trade">Trade</button><button data-v5-mobile-mode="feed">Feed</button>';head.appendChild(nav)}
  let mf=$('#rwaV5MobileFeed');if(!mf){mf=document.createElement('section');mf.id='rwaV5MobileFeed';mf.className='rwa-v5-mobile-feed';mf.hidden=true;$('.main')?.appendChild(mf)}
  const tabs=$('.mobile-tabs');if(tabs&&tabs.dataset.v5!=='1'){tabs.dataset.v5='1';tabs.innerHTML='<button data-v5-mobile-nav="home"><span>⌂</span><small>Home</small></button><button class="active" data-v5-mobile-nav="markets"><span>⌕</span><small>Markets</small></button><button data-v5-mobile-nav="trade"><span>↻</span><small>Trade</small></button><button data-v5-mobile-nav="portfolio"><span>▣</span><small>Portfolio</small></button><button data-v5-mobile-nav="profile"><span>◎</span><small>Profile</small></button>'}
- if(!$('.rwa-v5-mobile-market-close')){const b=document.createElement('button');b.className='rwa-v5-mobile-market-close';b.type='button';b.textContent='×';b.setAttribute('aria-label','Close markets');b.dataset.v5Action='close-markets';$('.left')?.prepend(b)}
+ let close=$('.rwa-v5-mobile-market-close');if(!close){close=document.createElement('button');close.className='rwa-v5-mobile-market-close';close.type='button';close.textContent='×';close.setAttribute('aria-label','Close markets');close.dataset.v5Action='close-markets';document.body.appendChild(close)}
  ensureMiniBook();applyMobileState()
 }
 function setMobile(mode){mobileMode=mode;document.body.dataset.v5MobileMode=mode;setActive('.rwa-v5-mobile-worktabs [data-v5-mobile-mode]',mode,'v5MobileMode');applyMobileState()}
@@ -190,7 +197,7 @@ function bind(){
   const sym=e.target.closest('[data-v5-symbol]');if(sym){window.RWAMarketRuntime?.selectPair?.(sym.dataset.v5Symbol,false);if(innerWidth<681)closeMarketsMobile();return}
   const bottom=e.target.closest('[data-v5-bottom]');if(bottom){setBottom(bottom.dataset.v5Bottom);if(innerWidth<681)setMobile('workspace');return}
   const mode=e.target.closest('[data-v5-mobile-mode]');if(mode){setMobile(mode.dataset.v5MobileMode);return}
-  const side=e.target.closest('[data-v5-side]');if(side){tradeSide=side.dataset.v5Side;ensureTrade();return}
+  const side=e.target.closest('[data-v5-side]');if(side){e.preventDefault();setTradeSide(side.dataset.v5Side);return}
   const ttab=e.target.closest('[data-v5-trade-tab]');if(ttab){ttab.dataset.v5TradeTab==='alerts'?openAlerts():openTrade();return}
   const act=e.target.closest('[data-v5-action]');if(act){if(act.dataset.v5Action==='alerts')openAlerts();if(act.dataset.v5Action==='network')$('#rwaMultiChainLaunch')?.click();if(act.dataset.v5Action==='close-markets')closeMarketsMobile();return}
   const mn=e.target.closest('[data-v5-mobile-nav]');if(mn){const k=mn.dataset.v5MobileNav;qa('[data-v5-mobile-nav]').forEach(x=>x.classList.toggle('active',x===mn));if(k==='home')setMobile('feed');if(k==='markets')openMarketsMobile();if(k==='trade')setMobile('trade');if(k==='portfolio'){setBottom('portfolio');setMobile('workspace')}if(k==='profile')$('.signin')?.click();return}
@@ -211,7 +218,7 @@ function bind(){
  window.addEventListener('rwa:exchange-state',()=>renderStatus())
 }
 function boot(){apply();bind();renderBottom();clearInterval(renderTimer);renderTimer=setInterval(renderStatus,1000);clearInterval(alertTimer);alertTimer=setInterval(monitorAlerts,1000);window.dispatchEvent(new CustomEvent('rwa:terminal-v5-ready',{detail:{version:VERSION}}))}
-window.RWATerminalV5={version:VERSION,active:true,apply,navigate,setBottom,setMobile,openAlerts,openTrade,toggleFavorite,share,audit:()=>({version:VERSION,route:location.hash||'#markets',leftMode,bottomMode,mobileMode,tradeSide,globalNav:qa('.topnav [data-v5-nav]').map(x=>x.dataset.v5Nav),bottomTabs:qa('#rwaV5Bottom [data-v5-bottom]').map(x=>x.dataset.v5Bottom),railTrade:$('#liveRail')?.dataset.v5Trade==='1',orderTicketInside:!!$('#liveRail #rwaTargetOrderTicket'),favorites:favorites().length,alerts:alerts().length,theses:theses().length})};
+window.RWATerminalV5={version:VERSION,active:true,apply,navigate,setBottom,setMobile,setTradeSide,openAlerts,openTrade,toggleFavorite,share,audit:()=>({version:VERSION,route:location.hash||'#markets',leftMode,bottomMode,mobileMode,tradeSide,globalNav:qa('.topnav [data-v5-nav]').map(x=>x.dataset.v5Nav),bottomTabs:qa('#rwaV5Bottom [data-v5-bottom]').map(x=>x.dataset.v5Bottom),railTrade:$('#liveRail')?.dataset.v5Trade==='1',orderTicketInside:!!$('#liveRail #rwaTargetOrderTicket'),mobileMarketsOpen:document.body.classList.contains('rwa-v5-mobile-markets'),favorites:favorites().length,alerts:alerts().length,theses:theses().length})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
-/* RWA_TERMINAL_V5_ACCEPTANCE_2026_09_03_R4 */
+/* RWA_TERMINAL_V5_ACCEPTANCE_2026_09_03_R5 */
