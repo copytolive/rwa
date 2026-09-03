@@ -38,11 +38,17 @@ jobs:
           node --check rwa-multichain-engine.js
           grep -Fq '<strong>Real World Asset</strong>' index.html
           grep -Fq 'Markets</button>' index.html
-          grep -Fq 'Trade</button>' index.html
-          grep -Fq 'Portfolio</button>' index.html
-          grep -Fq 'Orders</button>' index.html
-          grep -Fq 'Analytics</button>' index.html
-          grep -Fq 'Rewards</button>' index.html
+          ! grep -Fq 'data-rwa-target-nav="trade"' index.html
+          ! grep -Fq 'data-rwa-target-nav="portfolio"' index.html
+          ! grep -Fq 'data-rwa-target-nav="orders"' index.html
+          ! grep -Fq 'data-rwa-target-nav="analytics"' index.html
+          ! grep -Fq 'data-rwa-target-nav="rewards"' index.html
+          grep -Fq 'live-rail-section-nav' rwa-live-home-v1.js
+          grep -Fq 'data-rwa-target-nav="trade"' rwa-live-home-v1.js
+          grep -Fq 'data-rwa-target-nav="portfolio"' rwa-live-home-v1.js
+          grep -Fq 'data-rwa-target-nav="orders"' rwa-live-home-v1.js
+          grep -Fq 'data-rwa-target-nav="analytics"' rwa-live-home-v1.js
+          grep -Fq 'data-rwa-target-nav="rewards"' rwa-live-home-v1.js
           grep -Fq 'rwaMultiChainLazyBootstrap' index.html
           grep -Fq 'Hyperliquid Testnet' rwa-live-home-v1.js
           grep -Fq 'Mainnet locked' rwa-live-home-v1.js
