@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
-      TARGET_SHA: e8a8a55037b5c5f7d40281dca70f86267c71b4e9
+      TARGET_SHA: 354cbf339b56faf9e1f84bb8764aa649db082849
       GH_TOKEN: ${{ github.token }}
       OUT: validation/terminal-v5-20260903/status.json
     steps:
