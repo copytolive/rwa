@@ -36,7 +36,7 @@ jobs:
           for i in $(seq 1 90); do
             ROOT="$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "$BASE/?v=$i" 2>/dev/null || true)"
             CORE="$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "$BASE/chart-core.js?v=$i" 2>/dev/null || true)"
-            if printf '%s' "$ROOT" | grep -Fq 'id="bookPrecision"' && printf '%s' "$ROOT" | grep -Fq 'id="watchAdd"' && printf '%s' "$ROOT" | grep -Fq 'app.js?v=19' && printf '%s' "$CORE" | grep -Fq 'rwa-terminal-v5.js?v=1.0.9'; then
+            if printf '%s' "$ROOT" | grep -Fq 'id="bookPrecision"' && printf '%s' "$ROOT" | grep -Fq 'id="watchAdd"' && printf '%s' "$ROOT" | grep -Fq 'app.js?v=19' && printf '%s' "$CORE" | grep -Fq 'rwa-terminal-v5.js?v=1.0.10'; then
               echo "Final public UI markers are live"
               exit 0
             fi
