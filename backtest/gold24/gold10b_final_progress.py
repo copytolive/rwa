@@ -21,6 +21,7 @@ def main() -> int:
     audit = load("runtime_screening_gpt/screening_gpt_real_audit.json")
     h4 = load("runtime_native_h4/latest_native_h4_hardpass.json")
     cross = load("runtime_global_cross_tf/latest_global_d1_h4_corr.json")
+    broker_h4 = load("runtime_native_h4_broker/latest_native_h4_broker_hardpass.json")
 
     finalized = int(v11.get("cumulative_configs_archived", 0) or 0)
     master_eval = int(
@@ -32,6 +33,9 @@ def main() -> int:
                    target.get("targeted_evaluated_unique", 0)) or 0
     )
     discovery_total = master_eval + targeted_eval
+    h4_eval = int(h4.get("candidate_evaluated_unique", 0) or 0)
+    broker_h4_eval = int(broker_h4.get("candidate_evaluated_unique", 0) or 0)
+    all_tf_min_unique = discovery_total + h4_eval
 
     source_input = int(port.get("methods_input", 0) or 0)
     global_kept = int(port.get("global_greedy_kept_count", 0) or 0)
@@ -98,6 +102,11 @@ def main() -> int:
             "master_candidate_evaluated": master_eval,
             "targeted_candidate_evaluated_unique": targeted_eval,
             "candidate_evaluated_discovery_total": discovery_total,
+            "candidate_evaluated_discovery_total_d1": discovery_total,
+            "candidate_evaluated_direct_h4_unique": h4_eval,
+            "candidate_evaluated_all_timeframes_minimum_unique": all_tf_min_unique,
+            "candidate_evaluated_broker_h4_separate": broker_h4_eval,
+            "broker_h4_added_to_unique_total": False,
             "candidate_pass_global_d1": global_kept,
             "hard_pass_portfolio_audit": hard_all,
             "watch_portfolio_audit": watch_all,
@@ -133,11 +142,21 @@ def main() -> int:
         "native_h4": {
             "status": h4.get("status", "NOT_PUBLISHED"),
             "dataset": h4.get("dataset", {}),
-            "candidate_evaluated_unique": int(h4.get("candidate_evaluated_unique", 0) or 0),
+            "candidate_evaluated_unique": h4_eval,
             "internal_hard_pass_kept": h4_internal,
             "global_cross_timeframe_corr_status": h4_corr_state,
             "globally_eligible_hard_pass": h4_global_eligible,
             "portfolio_readiness": h4.get("portfolio_readiness", "NOT_READY"),
+        },
+        "broker_native_h4": {
+            "status": broker_h4.get("status", "NOT_PUBLISHED"),
+            "dataset": broker_h4.get("dataset", {}),
+            "candidate_evaluated_unique": broker_h4_eval,
+            "full_pre_corr_hardpass": int(broker_h4.get("full_pre_corr_hardpass", 0) or 0),
+            "internal_hard_pass_kept": int(broker_h4.get("native_h4_hardpass_kept", 0) or 0),
+            "global_cross_timeframe_corr_status": broker_h4.get("global_cross_timeframe_corr_status", "NOT_RUN"),
+            "counted_in_all_timeframes_minimum_unique": False,
+            "counting_note": "kept separate until disjoint config-hash proof versus direct-H4 search is published",
         },
         "global_cross_timeframe": {
             "status": cross_status,
@@ -153,7 +172,11 @@ def main() -> int:
         },
         "hard_pass_global_final": cross_global_hard,
         "live_ready": False,
-        "live_ready_reason": "margin/slippage/broker interaction is not validated; native H4 methods are excluded until global cross-timeframe correlation is PASS",
+        "live_ready_reason": (
+            "no globally selected HARD PASS method yet; margin/slippage/broker interaction is not validated"
+            if cross_global_hard == 0 else
+            "margin/slippage/broker interaction is not validated"
+        ),
     }
 
     out = ROOT / "runtime_final_progress/latest_final_progress.json"
