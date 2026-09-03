@@ -85,7 +85,10 @@ async function desktop(browser){
 
   const menu=page.locator('#bookMenu');
   await menu.click();
-  await page.waitForFunction(()=>window.RWAMarketRuntime?.state?.().bookLevels===10,{timeout:3000});
+  await page.waitForFunction(()=>{
+    const s=window.RWAMarketRuntime?.state?.();
+    return s?.bookLevels===10 && (s?.book?.bids?.length||0)>=8 && document.querySelectorAll('#bids .bookrow').length>=8;
+  },{timeout:6000});
   const bookState=await page.evaluate(()=>window.RWAMarketRuntime.state());
   const ten=await page.locator('#bids .bookrow').count();
   assert.equal(bookState.bookLevels,10);
