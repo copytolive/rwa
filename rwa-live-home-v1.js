@@ -184,3 +184,4 @@ function boot(){restoreTheme();document.addEventListener('click',topAction,true)
 window.RWALiveHome={version:VERSION,apply,lockDesktopGeometry,navAction,renderLiveRail,openRailPane,openTradeRail,openIntelligence,openPortfolio,openOrders,openReports,openRewards,closeWorkspace,audit:()=>({ready:document.documentElement.dataset.rwaLiveNoMock==='ready',marketPairs:marketState()?.pairs?.length||0,contextBrief:!!$('#rwaContextBrief'),ordersPanel:!$('#rwaTradingWorkspace')?.hidden,railMode:$('#liveRail')?.dataset?.mode||'live',route:location.hash||'#markets',theme:document.documentElement.dataset.rwaTheme||'dark',mainnetReady:launchState?.mainnet_ready===true,screenshotMock:!!$('#rwaScreenshotParity')})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
+/* MARKET_RAIL_V42_FINAL_CERT_2026_09_03 */
