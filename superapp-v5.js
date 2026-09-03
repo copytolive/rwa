@@ -559,6 +559,7 @@ function mapInternalUrl(u){
   return'research';
 }
 function interceptClick(e){
+  if(window.RWATerminalV5?.active)return;
   if(e.target.closest?.('.topnav [data-rwa-target-nav]'))return;
   const pairRow=e.target.closest?.('.pairrow[data-sym]');if(pairRow){e.preventDefault();e.stopImmediatePropagation();const sym=String(pairRow.dataset.sym||'').replace(/USDT$/i,'');selectSymbol(sym);openAsset(sym,true);return}
   const actionEl=e.target.closest?.('[data-v5-action]');
@@ -690,6 +691,7 @@ function modeFor(r=rootRoute()){
 }
 /* RWA_EXPERIENCE_RAIL_LIFECYCLE_V15 */
 function installExperienceRail(){
+  if(window.RWATerminalV5?.active){$('rwaExperienceRail')?.remove();return null}
   let rail=$('rwaExperienceRail');
   if(!rail){
     rail=document.createElement('div');rail.id='rwaExperienceRail';rail.className='rwa-experience-rail';rail.setAttribute('aria-label','RWA workflow level');
@@ -784,7 +786,7 @@ function handleAction(e){
   if(a==='retry')softRetry();if(a==='research')window.RWASuperApp?.navigate?.(`research/compare/${sym}`);if(a==='trade')window.RWASuperApp?.navigate?.(`trade/${sym}`);if(a==='buy')window.RWAProductOS?.openTrade?.(sym,true,'BUY');if(a==='sell')window.RWAProductOS?.openTrade?.(sym,true,'SELL');
 }
 function removeEscapeTargets(){qa('a[target="_blank"]').forEach(a=>{a.removeAttribute('target');a.removeAttribute('rel')})}
-function onRoute(){quality.routeChanges++;installExperienceRail();updateExperienceRail();updateMobileActions();updateContextBrief();setTimeout(()=>{installExperienceRail();removeEscapeTargets();updateFirstLoad();renderQuality()},80)}
+function onRoute(){if(window.RWATerminalV5?.active){$('rwaExperienceRail')?.remove();return}quality.routeChanges++;installExperienceRail();updateExperienceRail();updateMobileActions();updateContextBrief();setTimeout(()=>{installExperienceRail();removeEscapeTargets();updateFirstLoad();renderQuality()},80)}
 function boot(){
   document.documentElement.dataset.rwaP16P20='ready';performance.mark('rwa:p16-p20-boot');installExperienceRail();installFirstLoadStatus();installContextBrief();installMobileAssetActions();installQualityBadge();removeEscapeTargets();
   document.addEventListener('click',handleAction,true);addEventListener('hashchange',onRoute);addEventListener('popstate',onRoute);addEventListener('online',()=>setTimeout(onRoute,50));addEventListener('offline',()=>setTimeout(onRoute,50));addEventListener('rwa:history-first-paint',()=>{updateFirstLoad();updateContextBrief()});
