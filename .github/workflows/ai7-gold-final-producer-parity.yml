@@ -24,7 +24,7 @@ jobs:
     env:
       FROM_DATE: "2003-05-05"
       TO_DATE: "2026-05-01"
-      COPYTOLIVE_IGNORE_FLATS: "false"
+      COPYTOLIVE_IGNORE_FLATS: "true"
       DATA_DIR: ${{ github.workspace }}/.ai7-gold-final
       H1_FILE: ${{ github.workspace }}/.ai7-gold-final/GOLD_H1.csv
       D1_FILE: ${{ github.workspace }}/.ai7-gold-final/GOLD_D1.csv
@@ -80,7 +80,7 @@ jobs:
           path: |
             .ai7-gold-final
             .dukascopy-cache-copytolive-gold-m1
-          key: ai7-xauusd-m1-continuous-h1d1-v8-${{ env.FROM_DATE }}-${{ env.TO_DATE }}
+          key: ai7-xauusd-m1-ignoreflats-h1d1-v9-${{ env.FROM_DATE }}-${{ env.TO_DATE }}
 
       - name: Build canonical-shape GOLD H1 and D1
         run: |
@@ -94,37 +94,17 @@ jobs:
           h1=os.environ["H1_FILE"]; d1=os.environ["D1_FILE"]
 
           a=pd.read_csv(h1)
-          a["Date"]=pd.to_datetime(a["Date"],utc=True,errors="raise").dt.tz_convert("UTC").dt.tz_localize(None)
-          a=a.sort_values("Date").drop_duplicates("Date",keep="last").set_index("Date")
-
-          full=pd.date_range(a.index.min().floor("h"),a.index.max().floor("h"),freq="h")
-          a=a.reindex(full)
-          previous=a["close"].ffill()
-          missing=a["close"].isna()
-          for col in ("open","high","low","close"):
-              a.loc[missing,col]=previous.loc[missing]
-          if "volume" not in a.columns:
-              a["volume"]=0.0
-          a.loc[missing,"volume"]=0.0
-          a=a.dropna(subset=["open","high","low","close"])
-          a.index.name="Date"
-
-          a.reset_index().to_csv(h1,index=False,date_format="%Y-%m-%dT%H:%M:%S.000Z")
-          d=a.resample("1D").agg({
-              "open":"first","high":"max","low":"min","close":"last","volume":"sum"
-          }).dropna()
-          d.index.name="Date"
-          d.reset_index().to_csv(d1,index=False,date_format="%Y-%m-%dT%H:%M:%S.000Z")
-
-          aa=pd.read_csv(h1); bb=pd.read_csv(d1)
-          assert 195000 <= len(aa) <= 205000, len(aa)
-          assert 8200 <= len(bb) <= 8500, len(bb)
+          b=pd.read_csv(d1)
+          a["Date"]=pd.to_datetime(a["Date"],utc=True,errors="raise")
+          b["Date"]=pd.to_datetime(b["Date"],utc=True,errors="raise")
+          assert 120000 <= len(a) <= 150000, len(a)
+          assert 5900 <= len(b) <= 6300, len(b)
           print({
-            "h1_rows":len(aa),"h1_start":aa["Date"].iloc[0],"h1_end":aa["Date"].iloc[-1],
+            "h1_rows":len(a),"h1_start":str(a["Date"].iloc[0]),"h1_end":str(a["Date"].iloc[-1]),
             "h1_sha256":hashlib.sha256(open(h1,"rb").read()).hexdigest(),
-            "d1_rows":len(bb),"d1_start":bb["Date"].iloc[0],"d1_end":bb["Date"].iloc[-1],
+            "d1_rows":len(b),"d1_start":str(b["Date"].iloc[0]),"d1_end":str(b["Date"].iloc[-1]),
             "d1_sha256":hashlib.sha256(open(d1,"rb").read()).hexdigest(),
-            "construction":"DUKASCOPY_M1_H1_THEN_CONTINUOUS_NO_SESSION_GRID"
+            "construction":"DUKASCOPY_M1_IGNORE_FLATS_RESAMPLE_H1_D1"
           })
           PY
 
