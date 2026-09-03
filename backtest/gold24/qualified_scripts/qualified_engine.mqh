@@ -291,6 +291,62 @@ void PriorRange(MqlRates &r[],int lookback,int signalIdx,double &rh,double &rl)
    }
 }
 
+void InclusiveRangeAt(MqlRates &r[],int lookback,int endIdx,double &rh,double &rl)
+{
+   rh=-DBL_MAX; rl=DBL_MAX;
+   if(endIdx<0) return;
+   int start=MathMax(0,endIdx-lookback+1);
+   for(int i=start;i<=endIdx;i++)
+   {
+      if(r[i].high>rh) rh=r[i].high;
+      if(r[i].low<rl) rl=r[i].low;
+   }
+}
+
+datetime WeekEndFriday(const datetime t)
+{
+   MqlDateTime s; TimeToStruct(t,s);
+   int add=(5-s.day_of_week+7)%7;
+   s.hour=0; s.min=0; s.sec=0;
+   return StructToTime(s)+add*86400;
+}
+
+int Completed5DRegime(MqlRates &r[],int fast,int slow,int curIdx)
+{
+   if(curIdx<0) return 0;
+   int wf=(int)MathRound((double)fast/5.0); if(wf<2) wf=2;
+   int ws=(int)MathRound((double)slow/5.0); if(ws<wf+1) ws=wf+1;
+   double af=2.0/(wf+1.0), as=2.0/(ws+1.0);
+   bool have=false;
+   double ef=0.0, es=0.0;
+   datetime current=r[curIdx].time;
+   datetime activeEnd=0;
+   double lastClose=0.0;
+
+   for(int i=0;i<=curIdx;i++)
+   {
+      datetime e=WeekEndFriday(r[i].time);
+      if(activeEnd==0){activeEnd=e;lastClose=r[i].close;continue;}
+      if(e==activeEnd){lastClose=r[i].close;continue;}
+
+      if(activeEnd<=current)
+      {
+         if(!have){ef=lastClose;es=lastClose;have=true;}
+         else {ef=af*lastClose+(1.0-af)*ef; es=as*lastClose+(1.0-as)*es;}
+      }
+      activeEnd=e; lastClose=r[i].close;
+   }
+   if(activeEnd!=0 && activeEnd<=current)
+   {
+      if(!have){ef=lastClose;es=lastClose;have=true;}
+      else {ef=af*lastClose+(1.0-af)*ef; es=as*lastClose+(1.0-as)*es;}
+   }
+   if(!have) return 0;
+   if(ef>es) return 1;
+   if(ef<es) return -1;
+   return 0;
+}
+
 double RollingCloseMeanAt(MqlRates &r[],int period,int endIdx)
 {
    if(period<=0 || endIdx-period+1<0) return EMPTY_VALUE;
@@ -538,6 +594,106 @@ int CanonicalSignal()
       double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
       longSig=(ratio>=P1 && r[curIdx].close>rh && emaFast>emaSlow);
       shortSig=(ratio>=P1 && r[curIdx].close<rl && emaFast<emaSlow);
+   }
+   else if(QM_FAMILY_CODE==8)
+   {
+      // Python TREND_EMA parity.
+      double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
+      double rsi=SimpleRollingRSI(r,FAST);
+      longSig=(emaFast>emaSlow && rsi>P1);
+      shortSig=(emaFast<emaSlow && rsi<100.0-P1);
+   }
+   else if(QM_FAMILY_CODE==18)
+   {
+      // Python FIBONACCI parity using SLOW prior range.
+      int curIdx=n-1;
+      double rh,rl; PriorRange(r,SLOW,curIdx,rh,rl);
+      double span=MathMax(rh-rl,1e-9);
+      double pos=(r[curIdx].close-rl)/span;
+      double tol=MathMax(0.03,MathMin(0.12,P2/100.0));
+      double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
+      longSig=(emaFast>emaSlow && pos>=P1-tol && pos<=P1+tol && r[curIdx].close>r[curIdx].open);
+      double shortLevel=1.0-P1;
+      shortSig=(emaFast<emaSlow && pos>=shortLevel-tol && pos<=shortLevel+tol && r[curIdx].close<r[curIdx].open);
+   }
+   else if(QM_FAMILY_CODE==20)
+   {
+      // Python BAND_HYBRID parity including prior squeeze state.
+      int curIdx=n-1,prevIdx=n-2;
+      double smaCur=RollingCloseMeanAt(r,SLOW,curIdx);
+      double stdCur=RollingCloseStdPopulationAt(r,SLOW,curIdx);
+      double smaPrev=RollingCloseMeanAt(r,SLOW,prevIdx);
+      double stdPrev=RollingCloseStdPopulationAt(r,SLOW,prevIdx);
+      double atrSlowPrev=RollingATRAt(r,SLOW,prevIdx);
+      if(smaCur==EMPTY_VALUE || stdCur==EMPTY_VALUE || smaPrev==EMPTY_VALUE || stdPrev==EMPTY_VALUE || atrSlowPrev==EMPTY_VALUE) return 0;
+      double emaSlowPrev=PandasEMAAt(r,SLOW,prevIdx);
+      double bbUpperPrev=smaPrev+P2*stdPrev, bbLowerPrev=smaPrev-P2*stdPrev;
+      double kcUpperPrev=emaSlowPrev+P1*atrSlowPrev, kcLowerPrev=emaSlowPrev-P1*atrSlowPrev;
+      bool prevSqueeze=(bbUpperPrev<kcUpperPrev && bbLowerPrev>kcLowerPrev);
+      double bbUpper=smaCur+P2*stdCur, bbLower=smaCur-P2*stdCur;
+      double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
+      longSig=(prevSqueeze && r[curIdx].close>bbUpper && emaFast>emaSlow);
+      shortSig=(prevSqueeze && r[curIdx].close<bbLower && emaFast<emaSlow);
+   }
+   else if(QM_FAMILY_CODE==26)
+   {
+      // Python MULTI_TIMEFRAME parity: causal completed W-FRI (5D) EMA regime + D1 entry.
+      int curIdx=n-1;
+      int regime=Completed5DRegime(r,FAST,SLOW,curIdx);
+      double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
+      double rsi=SimpleRollingRSI(r,FAST);
+      longSig=(regime>0 && emaFast>emaSlow && rsi>P1);
+      shortSig=(regime<0 && emaFast<emaSlow && rsi<100.0-P1);
+   }
+   else if(QM_FAMILY_CODE==29)
+   {
+      // Python ATR_CHANNEL parity.
+      int curIdx=n-1;
+      double atrCur=RollingATRAt(r,FAST,curIdx);
+      if(atrCur==EMPTY_VALUE) return 0;
+      double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
+      double upper=emaFast+P1*atrCur, lower=emaFast-P1*atrCur;
+      longSig=(r[curIdx].close>upper && emaFast>emaSlow);
+      shortSig=(r[curIdx].close<lower && emaFast<emaSlow);
+   }
+   else if(QM_FAMILY_CODE==33)
+   {
+      // Python RSI_REVERSION parity.
+      int curIdx=n-1;
+      double rsi=SimpleRollingRSI(r,FAST);
+      double sma=RollingCloseMeanAt(r,SLOW,curIdx);
+      if(sma==EMPTY_VALUE) return 0;
+      longSig=(rsi<=P1 && r[curIdx].close<sma && r[curIdx].close>r[curIdx].open);
+      shortSig=(rsi>=100.0-P1 && r[curIdx].close>sma && r[curIdx].close<r[curIdx].open);
+   }
+   else if(QM_FAMILY_CODE==40)
+   {
+      // Python ICHIMOKU_KUMO_BREAKOUT parity.
+      int curIdx=n-1,prevIdx=n-2;
+      int spanN=MathMax(SLOW+1,SLOW*2);
+      double ch,cl,bh,bl,sbh,sbl,pch,pcl,pbh,pbl,psbh,psbl;
+      InclusiveRangeAt(r,FAST,curIdx,ch,cl); InclusiveRangeAt(r,SLOW,curIdx,bh,bl); InclusiveRangeAt(r,spanN,curIdx,sbh,sbl);
+      InclusiveRangeAt(r,FAST,prevIdx,pch,pcl); InclusiveRangeAt(r,SLOW,prevIdx,pbh,pbl); InclusiveRangeAt(r,spanN,prevIdx,psbh,psbl);
+      double conv=(ch+cl)*0.5, base=(bh+bl)*0.5, spanA=(conv+base)*0.5, spanB=(sbh+sbl)*0.5;
+      double cloudHi=MathMax(spanA,spanB), cloudLo=MathMin(spanA,spanB);
+      double pconv=(pch+pcl)*0.5, pbase=(pbh+pbl)*0.5, pspanA=(pconv+pbase)*0.5, pspanB=(psbh+psbl)*0.5;
+      double prevHi=MathMax(pspanA,pspanB), prevLo=MathMin(pspanA,pspanB);
+      double atrCur=RollingATRAt(r,FAST,curIdx); if(atrCur==EMPTY_VALUE) return 0;
+      double thickness=cloudHi-cloudLo, minThickness=P1*atrCur;
+      longSig=(r[prevIdx].close<=prevHi && r[curIdx].close>cloudHi && conv>base && thickness>=minThickness);
+      shortSig=(r[prevIdx].close>=prevLo && r[curIdx].close<cloudLo && conv<base && thickness>=minThickness);
+   }
+   else if(QM_FAMILY_CODE==43)
+   {
+      // Python CHANDELIER_TREND parity.
+      int curIdx=n-1;
+      double rh,rl; PriorRange(r,SLOW,curIdx,rh,rl);
+      double atrCur=RollingATRAt(r,FAST,curIdx); if(atrCur==EMPTY_VALUE) return 0;
+      double chLong=rh-P1*atrCur, chShort=rl+P1*atrCur;
+      double emaFast=PandasEMA(r,FAST),emaSlow=PandasEMA(r,SLOW);
+      double rsi=SimpleRollingRSI(r,FAST);
+      longSig=(r[curIdx].close>chLong && emaFast>emaSlow && rsi>50.0);
+      shortSig=(r[curIdx].close<chShort && emaFast<emaSlow && rsi<50.0);
    }
    else if(QM_FAMILY_CODE==34)
    {
