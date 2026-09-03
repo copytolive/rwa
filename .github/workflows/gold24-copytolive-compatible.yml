@@ -1,6 +1,10 @@
 name: GOLD24 CopyToLive Exact Active Backtest
 
 on:
+  pull_request:
+    branches: ['main']
+    paths:
+      - 'backtest/gold24/COPYTOLIVE_COMPAT_PR_KICK'
   workflow_dispatch:
     inputs:
       from_date:
