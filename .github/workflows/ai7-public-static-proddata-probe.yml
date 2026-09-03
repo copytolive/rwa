@@ -1,0 +1,52 @@
+name: AI7 Public Static Production Data Probe
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/ai7-public-static-proddata-probe.yml"
+      - "backtest/gold24/AI7_STATIC_DATA_PROBE_KICK"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe candidate public production data paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          python3 - <<'PY'
+          import json,subprocess,pathlib,hashlib,os
+          urls=[
+            "https://copytolive.com/data/ohlcv/GOLD_H1.parquet",
+            "https://copytolive.com/data/ohlcv/GOLD_D1.parquet",
+            "https://copytolive.com/trading/data/ohlcv/GOLD_H1.parquet",
+            "https://copytolive.com/trading/data/ohlcv/GOLD_D1.parquet",
+            "https://copytolive.com/api/data/ohlcv/GOLD_H1.parquet",
+            "https://copytolive.com/api/data/ohlcv/GOLD_D1.parquet",
+            "https://copytolive.com/data/GOLD_H1.parquet",
+            "https://copytolive.com/data/GOLD_D1.parquet",
+            "https://copytolive.com/backend/trading-service/data/ohlcv/GOLD_H1.parquet",
+            "https://copytolive.com/backend/trading-service/data/ohlcv/GOLD_D1.parquet",
+          ]
+          rows=[]
+          for i,u in enumerate(urls):
+            hdr=pathlib.Path("out")/f"h{i}.txt"
+            body=pathlib.Path("out")/f"b{i}.bin"
+            cp=subprocess.run(["curl","-L","--max-time","30","-sS","-D",str(hdr),"-o",str(body),"-w","%{http_code} %{size_download} %{content_type}",u],text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            b=body.read_bytes() if body.exists() else b""
+            rows.append({"url":u,"curl_rc":cp.returncode,"meta":cp.stdout.strip(),"stderr":cp.stderr[-1000:],"sha256":hashlib.sha256(b).hexdigest() if b else None,"prefix_hex":b[:32].hex(),"headers":hdr.read_text(errors="ignore")[-4000:] if hdr.exists() else ""})
+          pathlib.Path("out/report.json").write_text(json.dumps(rows,indent=2)+"\n")
+          print(json.dumps(rows,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ai7-static-data-probe-${{ github.run_id }}
+          path: out
+          if-no-files-found: error
