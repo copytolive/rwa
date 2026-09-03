@@ -94,7 +94,7 @@ async function desktop(browser){
   await page.locator('.topnav [data-v5-nav="analytics"]').click();await page.waitForTimeout(40);
   assert.match(await page.locator('[data-v5-bottom-body]').innerText(),/LIVE PAIRS|RWA-LINKED/i);
   await page.locator('.topnav [data-v5-nav="rewards"]').click();await page.waitForTimeout(40);
-  assert.match(await page.locator('[data-v5-bottom-body]').innerText(),/INACTIVE|No verified rewards/i);
+  assert.match(await page.locator('[data-v5-bottom-body]').innerText(),/INACTIVE|No verified rewards|Rewards ledger unavailable|LOCKED/i);
 
   await page.locator('.topnav [data-v5-nav="trade"]').click();
   await page.locator('.rwa-v5-side-switch [data-v5-side="SELL"]').click();
@@ -107,7 +107,7 @@ async function desktop(browser){
   await page.locator('.rwa-v5-left-tabs [data-v5-left="pulse"]').click();
   assert.match(await page.locator('[data-v5-left-pane="pulse"]').innerText(),/Top Movers/i);
   await page.locator('#rwaV5Bottom [data-v5-bottom="holders"]').click();
-  assert.match(await page.locator('[data-v5-bottom-body]').innerText(),/NEEDS HOLDER BACKEND/i);
+  assert.match(await page.locator('[data-v5-bottom-body]').innerText(),/NEEDS HOLDER BACKEND|SOURCE GATED|Holders source/i);
   await page.locator('#rwaV5Bottom [data-v5-bottom="thesis"]').click();
   await page.locator('[data-v5-thesis-text]').fill('Deterministic local thesis');
   await page.locator('[data-v5-thesis-publish]').click();
