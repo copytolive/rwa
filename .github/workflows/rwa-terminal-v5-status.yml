@@ -2,7 +2,24 @@ name: RWA Terminal V5 Status Export
 on:
   push:
     branches: ["main"]
+    paths:
+      - "index.html"
+      - "app.js"
+      - "chart-core.js"
+      - "rwa-live-home-v1.js"
+      - "rwa-live-home-v1.css"
+      - "rwa-terminal-v5.js"
+      - "rwa-terminal-v5.css"
+      - "rwa-multichain.js"
+      - "rwa-multichain-engine.js"
+      - "rwa-multichain-registry.json"
+      - "execution-api.js"
+      - "exchange-core.js"
   workflow_dispatch:
+
+concurrency:
+  group: rwa-terminal-v5-status
+  cancel-in-progress: true
 permissions:
   actions: read
   contents: write
@@ -24,14 +41,14 @@ jobs:
           set -euo pipefail
           mkdir -p "$(dirname "$OUT")"
           names='["Deploy Real World Asset Target V4","RWA Target V4 Browser Gate","Real World Asset V4 Public Page-by-Page Audit","RWA Root Market Stability","Real World Asset V4 UI Final","RWA Security Gate","RWA Trading Release Candidate"]'
-          for i in $(seq 1 90); do
+          for i in $(seq 1 30); do
             gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$TARGET_SHA&per_page=100" > /tmp/runs.json
             jq --argjson names "$names" '{target_sha:env.TARGET_SHA,observed_at:(now|todateiso8601),workflows:[.workflow_runs[]|select(.name as $n|$names|index($n))|{name,id,status,conclusion,head_sha,html_url,created_at,updated_at}]}' /tmp/runs.json > "$OUT"
             count="$(jq '.workflows|map(.name)|unique|length' "$OUT")"
             pending="$(jq '[.workflows[]|select(.status!="completed")]|length' "$OUT")"
             echo "attempt=$i count=$count pending=$pending"
             [ "$count" -ge 7 ] && [ "$pending" -eq 0 ] && break
-            sleep 15
+            sleep 10
           done
           jq '. + {complete:((.workflows|map(.name)|unique|length)>=7 and ([.workflows[]|select(.status!="completed")]|length)==0),all_success:((.workflows|map(.name)|unique|length)>=7 and ([.workflows[]|select(.conclusion!="success")]|length)==0)}' "$OUT" > "$OUT.tmp"
           mv "$OUT.tmp" "$OUT"
