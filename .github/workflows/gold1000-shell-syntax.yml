@@ -1,0 +1,29 @@
+name: GOLD1000 Backtest-Only Shell Syntax
+
+on:
+  pull_request:
+    paths:
+      - 'tools/gold1000_*.sh'
+      - '.github/workflows/gold1000-shell-syntax.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/gold1000_*.sh'
+      - '.github/workflows/gold1000-shell-syntax.yml'
+  workflow_dispatch:
+
+jobs:
+  bash-syntax:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate macOS bash syntax
+        shell: bash
+        run: |
+          /bin/bash -n tools/gold1000_filter_existing_archive.sh
+          /bin/bash -n tools/gold1000_local_consolidate.sh
+      - name: Enforce backtest-only exclusions
+        shell: bash
+        run: |
+          grep -q "site_ui_files=0" tools/gold1000_filter_existing_archive.sh
+          grep -q "BACKTEST_ONLY" backtest/GOLD1000/README.md
