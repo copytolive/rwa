@@ -285,3 +285,32 @@ body.rwa-terminal-v5 #rwaTargetOrderTicket .rwa-target-trade-note{font-size:6.5p
   display:inline-flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important
  }
 }
+
+/* TERMINAL V5 FINAL MARKET NAV CONTAINMENT */
+body.rwa-terminal-v5 .topnav{min-width:92px!important;width:auto!important}
+body.rwa-terminal-v5 .topnav>button[data-v5-global="markets"]{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:82px!important;color:#fff!important;box-shadow:inset 0 -2px 0 var(--v5-green)!important}
+body.rwa-terminal-v5 #liveRail>.rwa-v5-market-nav{
+  position:relative!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:2px!important;flex:0 0 auto!important;min-height:72px!important;padding:4px!important;
+  border-bottom:1px solid var(--v5-line)!important;background:#05111b!important;z-index:10!important
+}
+body.rwa-terminal-v5 #liveRail>.rwa-v5-market-nav>button{
+  min-width:0!important;height:30px!important;padding:0 4px!important;border:0!important;border-radius:4px!important;
+  background:transparent!important;color:#8293a9!important;font:750 7px/1 Inter,system-ui!important;white-space:nowrap!important;cursor:pointer!important
+}
+body.rwa-terminal-v5 #liveRail>.rwa-v5-market-nav>button.active{
+  color:#fff!important;background:#0b1c29!important;box-shadow:inset 0 -2px 0 var(--v5-green)!important
+}
+body.rwa-terminal-v5 #liveRail>.rwa-v5-market-nav .rwa-v5-more{
+  top:70px!important;right:4px!important;left:auto!important
+}
+body.rwa-terminal-v5 .mobile-tabs{display:none!important}
+@media(max-width:680px){
+ body.rwa-terminal-v5 #liveRail>.rwa-v5-market-nav{
+   display:grid!important;grid-template-columns:repeat(6,minmax(72px,1fr))!important;
+   min-height:40px!important;height:40px!important;padding:3px!important;overflow-x:auto!important;overflow-y:hidden!important
+ }
+ body.rwa-terminal-v5 #liveRail>.rwa-v5-market-nav>button{height:34px!important;font-size:7px!important}
+ body.rwa-terminal-v5 #liveRail>.rwa-v5-market-nav .rwa-v5-more{position:fixed!important;top:102px!important;right:8px!important;left:8px!important;width:auto!important}
+ body.rwa-terminal-v5[data-v5-mobile-mode="trade"] #liveRail{padding-bottom:0!important}
+}
