@@ -1,0 +1,36 @@
+{
+  "bytes": 17707,
+  "scripts": [
+    "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
+    "https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js",
+    "https://accounts.google.com/gsi/client",
+    "https://cdn.tailwindcss.com",
+    "/assets/js/index-renko-final-06dfdeeb33b1.js?v=20260903-ai2-renko-filter-110-ai5-v7",
+    "/assets/js/ai3_public_shell_v1.js?v=20260903-12",
+    "/assets/js/ai4_fundamental_router_v1.js?v=20260903-11",
+    "/assets/js/ai5_signal_scan_runtime_v1.js?v=20260903-3"
+  ],
+  "links": [
+    "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
+    "https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css",
+    "https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css",
+    "https://fonts.googleapis.com",
+    "https://fonts.gstatic.com",
+    "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap",
+    "https://opentrue.org",
+    "/favicon.ico",
+    "/favicon-32x32.png",
+    "/favicon-16x16.png",
+    "/apple-touch-icon.png",
+    "/manifest.json",
+    "/assets/js/dashboard-WZpp2Gui.js",
+    "/assets/js/vendor-rXCDSp0G.js",
+    "/assets/js/market-DD_HSfzQ.js",
+    "/assets/js/charting-C4jAt7iT.js",
+    "/assets/js/trading-BeRNyRbU.js",
+    "/assets/css/index-Dam86hTI.css"
+  ],
+  "has_ai3_public_shell": true,
+  "has_githubio": false
+}
