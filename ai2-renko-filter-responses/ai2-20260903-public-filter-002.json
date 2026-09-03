@@ -31,6 +31,19 @@
     "nav": false
   },
   "errors": [],
-  "network": [],
+  "network": [
+    {
+      "status": 404,
+      "url": "https://copytolive.com/api/charting/hyperliquid/stream/EIGEN"
+    },
+    {
+      "status": 502,
+      "url": "https://copytolive.com/api/charting/hyperliquid/renko/GOLD?limit=400&smaPeriod=10&sma=10"
+    },
+    {
+      "status": 502,
+      "url": "https://copytolive.com/api/charting/hyperliquid/renko/SILVER?limit=400&smaPeriod=10&sma=10"
+    }
+  ],
   "error": "Error: RENKO_NAV_MISSING_OR_NOT_NEXT_TO_HYPERLIQUID\n    at file:///tmp/test.mjs:41:27"
 }
