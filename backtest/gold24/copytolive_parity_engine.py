@@ -18,10 +18,21 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-DEPOSIT = 10_000.0
-RISK = 200.0
-FEE = 0.0016
-WALK_FORWARD_TRAIN = 0.70
+from copytolive_unified_engine import (
+    ENGINE_ID,
+    COPYTOLIVE_DEPOSIT_USD,
+    COPYTOLIVE_RISK_USD,
+    COPYTOLIVE_STRESSED_FEE,
+    COPYTOLIVE_WF_TRAIN_PCT,
+    CopyToLiveExecutionConfig,
+    compute_copytolive_metrics,
+    run_copytolive_backtest,
+)
+
+DEPOSIT = COPYTOLIVE_DEPOSIT_USD
+RISK = COPYTOLIVE_RISK_USD
+FEE = COPYTOLIVE_STRESSED_FEE
+WALK_FORWARD_TRAIN = COPYTOLIVE_WF_TRAIN_PCT
 
 
 def _normalize_ohlcv_frame(df: pd.DataFrame) -> pd.DataFrame:
@@ -156,148 +167,28 @@ def backtest_signals(
     deposit: float = DEPOSIT,
     risk_usd: float = RISK,
 ) -> tuple[list[dict[str, Any]], np.ndarray]:
-    """Exact execution semantics of production wf_common.bt."""
-    sigs = np.asarray(signals, dtype=np.int8)
-    if len(sigs) != len(df):
-        raise ValueError("signals and OHLCV length mismatch")
-    if sl_pct <= 0 or tp_ratio <= 0 or risk_usd <= 0:
-        raise ValueError("sl_pct, tp_ratio and risk_usd must be positive")
-
-    c = df["close"].to_numpy(float)
-    h = df["high"].to_numpy(float)
-    l = df["low"].to_numpy(float)
-    idx = df.index
-
-    trades: list[dict[str, Any]] = []
-    bar_pnl = np.zeros(len(df), dtype=float)
-    pos: tuple[int, float, float, float, float, int] | None = None
-    eq = float(deposit)
-
-    for i in range(len(c)):
-        if pos is None:
-            if sigs[i] != 0:
-                ep = float(c[i])
-                sl = ep * float(sl_pct)
-                tp = sl * float(tp_ratio)
-                if sl <= 0:
-                    continue
-                lot = float(risk_usd) / sl
-                pos = (int(sigs[i]), ep, sl, tp, lot, i)
-        else:
-            direction, ep, sl, tp, lot, entry_i = pos
-            fee_value = float(fee) * ep * lot
-            pnl = None
-            exit_type = ""
-            exit_price = None
-
-            if direction == 1:
-                if l[i] <= ep - sl:
-                    pnl = -sl * lot - fee_value
-                    exit_type = "SL"
-                    exit_price = ep - sl
-                elif h[i] >= ep + tp:
-                    pnl = tp * lot - fee_value
-                    exit_type = "TP"
-                    exit_price = ep + tp
-            else:
-                if h[i] >= ep + sl:
-                    pnl = -sl * lot - fee_value
-                    exit_type = "SL"
-                    exit_price = ep + sl
-                elif l[i] <= ep - tp:
-                    pnl = tp * lot - fee_value
-                    exit_type = "TP"
-                    exit_price = ep - tp
-
-            if pnl is not None:
-                eq += float(pnl)
-                bar_pnl[i] += float(pnl)
-                trades.append(
-                    {
-                        "openTime": str(idx[entry_i])[:19],
-                        "closeTime": str(idx[i])[:19],
-                        "type": "BUY" if direction == 1 else "SELL",
-                        "openPrice": round(ep, 5),
-                        "closePrice": round(float(exit_price), 5),
-                        "lots": round(lot, 6),
-                        "profit": round(float(pnl), 2),
-                        "balance": round(eq, 2),
-                        "exitType": exit_type,
-                        "entryBar": int(entry_i),
-                        "exitBar": int(i),
-                    }
-                )
-                pos = None
-
-    return trades, bar_pnl
+    """Compatibility wrapper over the single unified execution kernel."""
+    result = run_copytolive_backtest(
+        df,
+        signals,
+        CopyToLiveExecutionConfig(
+            sl_pct=float(sl_pct),
+            tp_ratio=float(tp_ratio),
+            deposit_usd=float(deposit),
+            risk_usd=float(risk_usd),
+            fee=float(fee),
+        ),
+    )
+    return list(result["trades"]), np.asarray(result["bar_pnl"], dtype=float)
 
 
-def metrics_from_trades(trades: list[dict[str, Any]], *, deposit: float = DEPOSIT) -> dict[str, Any]:
-    if not trades:
-        return {
-            "totalTrades": 0, "winRate": 0.0, "profitFactor": 0.0,
-            "maxDrawdown": 0.0, "netProfit": 0.0, "sqn": 0.0,
-            "recoveryFactor": 0.0, "avgProfit": 0.0, "avgLoss": 0.0,
-            "rr": 0.0, "maxConsecLoss": 0,
-        }
-
-    profits = np.asarray([float(t["profit"]) for t in trades], dtype=float)
-    wins = profits[profits > 0]
-    losses = profits[profits <= 0]
-    n = len(profits)
-    gp = float(wins.sum()) if len(wins) else 0.0
-    gl = float(abs(losses.sum())) if len(losses) else 0.0
-    wr = float(len(wins) / n * 100.0)
-    pf = float(gp / gl) if gl > 0 else float("inf")
-    net = float(gp - gl)
-
-    eq = float(deposit)
-    peak = eq
-    mdd = 0.0
-    for p in profits:
-        eq += float(p)
-        peak = max(peak, eq)
-        if peak > 0:
-            mdd = max(mdd, (peak - eq) / peak * 100.0)
-
-    std_p = float(np.std(profits))
-    sqn = float((np.mean(profits) / std_p) * math.sqrt(n)) if std_p > 0 else 0.0
-    avg_w = float(np.mean(wins)) if len(wins) else 0.0
-    avg_l = abs(float(np.mean(losses))) if len(losses) else 0.0
-    rr = float(avg_w / avg_l) if avg_l > 0 else 0.0
-    recovery = float(net / (mdd / 100.0 * deposit)) if mdd > 0.01 else 0.0
-
-    cur_loss = max_loss = 0
-    cur_win = max_win = 0
-    for p in profits:
-        if p > 0:
-            cur_win += 1
-            max_win = max(max_win, cur_win)
-            cur_loss = 0
-        else:
-            cur_loss += 1
-            max_loss = max(max_loss, cur_loss)
-            cur_win = 0
-
-    return {
-        "totalTrades": int(n),
-        "winRate": round(wr, 1),
-        "profitFactor": round(pf, 2) if math.isfinite(pf) else 999.0,
-        "maxDrawdown": round(mdd, 1),
-        "netProfit": round(net, 2),
-        "sqn": round(sqn, 2),
-        "recoveryFactor": round(min(recovery, 99.0), 2),
-        "grossProfit": round(gp, 2),
-        "grossLoss": round(gl, 2),
-        "winningTrades": int(len(wins)),
-        "losingTrades": int(len(losses)),
-        "avgProfit": round(avg_w, 2),
-        "avgLoss": round(avg_l, 2),
-        "rr": round(rr, 2),
-        "maxConsecWin": int(max_win),
-        "maxConsecLoss": int(max_loss),
-        "expectancy": round(net / n, 2),
-    }
+def metrics_from_trades(
+    trades: list[dict[str, Any]],
+    *,
+    deposit: float = DEPOSIT,
+) -> dict[str, Any]:
+    """Compatibility wrapper over unified metric semantics."""
+    return compute_copytolive_metrics(trades, float(deposit))
 
 
 def validate_period(
@@ -439,7 +330,7 @@ def run_universe(
 
     return {
         "status": "PASS",
-        "engine": "copytolive-production-parity",
+        "engine": ENGINE_ID,
         "execution_contract": {
             "deposit_usd": DEPOSIT,
             "risk_usd": RISK,

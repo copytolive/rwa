@@ -21,8 +21,11 @@ on:
       - '.github/workflows/gold24-copytolive-compatible.yml'
       - 'backtest/gold24/COPYTOLIVE_COMPAT_KICK'
       - 'backtest/gold24/COPYTOLIVE_COMPAT.md'
+      - 'backtest/gold24/copytolive_unified_engine.py'
       - 'backtest/gold24/copytolive_compat.py'
+      - 'backtest/gold24/test_copytolive_unified_engine.py'
       - 'backtest/gold24/test_copytolive_compat.py'
+      - 'backtest/gold24/build_copytolive_gold_d1.py'
       - 'backtest/gold24/copytolive_active_gold_manifest.json'
       - 'backtest/gold24/copytolive_gold_strategy_sources.json'
       - 'backtest/gold24/copytolive_active_replay.py'
@@ -47,6 +50,7 @@ jobs:
       TO_DATE: ${{ github.event.inputs.to_date || '2026-05-01' }}
       DATA_DIR: ${{ github.workspace }}/.copytolive-gold-h1
       DATA_FILE: ${{ github.workspace }}/.copytolive-gold-h1/GOLD_H1.csv
+      D1_FILE: ${{ github.workspace }}/.copytolive-gold-h1/GOLD_D1.csv
       OUT_DIR: ${{ github.workspace }}/backtest/gold24/runtime_copytolive_active
 
     steps:
@@ -74,7 +78,7 @@ jobs:
         run: |
           set -euo pipefail
           cd backtest/gold24
-          python -m unittest -v test_copytolive_compat.py
+          python -m unittest -v test_copytolive_compat.py test_copytolive_unified_engine.py
 
       - name: Validate exact active source pack
         run: |
@@ -135,12 +139,28 @@ jobs:
           })
           PY
 
+      - name: Build D1 companion for production filter contract
+        run: |
+          set -euo pipefail
+          python backtest/gold24/build_copytolive_gold_d1.py "$DATA_FILE" "$D1_FILE"
+          test -s "$D1_FILE"
+          python - <<'PY'
+          import os, pandas as pd
+          d=pd.read_csv(os.environ['D1_FILE'])
+          assert len(d)>200
+          assert {'Date','open','high','low','close'}.issubset(d.columns)
+          print({'d1_rows':len(d),'start':d['Date'].iloc[0],'end':d['Date'].iloc[-1]})
+          PY
+
       - name: Replay exact 118 production strategies
         run: |
           set -euo pipefail
           rm -rf "$OUT_DIR"
           mkdir -p "$OUT_DIR"
-          python backtest/gold24/copytolive_active_replay.py             --dataset "$DATA_FILE"             --out-dir "$OUT_DIR"
+          python backtest/gold24/copytolive_active_replay.py \
+            --dataset "$DATA_FILE" \
+            --d1-dataset "$D1_FILE" \
+            --out-dir "$OUT_DIR"
           test -s "$OUT_DIR/latest_copytolive_active_replay.json"
           test -s "$OUT_DIR/latest_copytolive_active_replay.csv"
           test -s "$OUT_DIR/latest_copytolive_active_replay_summary.json"
@@ -159,7 +179,9 @@ jobs:
           assert len(rows)==118
           assert x['source']['active_gold_count']==118
           assert x['source']['timeframe_counts']=={'H1':118}
-          assert int(x['dataset']['rows'])>10000
+          assert int(x['dataset']['h1']['rows'])>10000
+          assert int(x['dataset']['d1']['rows'])>200
+          assert x['engine_id']=='copytolive-unified-backtest-v1'
           c=x['execution_contract']
           assert float(c['deposit_usd'])==10000.0
           assert float(c['risk_usd_per_trade'])==200.0
