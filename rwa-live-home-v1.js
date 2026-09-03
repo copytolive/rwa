@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
-if(window.RWALiveHome?.version==='4.2.0')return;
-const VERSION='4.2.0',$=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)];
+if(window.RWALiveHome?.version==='4.2.1')return;
+const VERSION='4.2.1',$=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const num=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
 const money=v=>Number.isFinite(Number(v))?'$'+Number(v).toLocaleString(undefined,{maximumFractionDigits:2}):'—';
@@ -39,7 +39,7 @@ function bindHeader(){
 }
 function keepMarketRoute(){try{history.replaceState(history.state,'',location.pathname+location.search+'#markets')}catch{}}
 function navAction(e){
- const btn=e.target.closest?.('.topnav [data-rwa-target-nav]');if(!btn)return;
+ const btn=e.target.closest?.('.topnav [data-rwa-target-nav],#liveRail [data-rwa-target-nav]');if(!btn)return;
  e.preventDefault();e.stopImmediatePropagation();const k=btn.dataset.rwaTargetNav;keepMarketRoute();
  if(k==='markets'){closeWorkspace();return}
  if(k==='trade'){openTradeRail();return}
@@ -48,7 +48,10 @@ function navAction(e){
  if(k==='analytics'){openIntelligence();return}
  if(k==='rewards'){openRewards();return}
 }
-function setNavActive(key){qa('.topnav [data-rwa-target-nav]').forEach(b=>b.classList.toggle('active',b.dataset.rwaTargetNav===key))}
+function setNavActive(key){
+ qa('.topnav [data-rwa-target-nav]').forEach(b=>b.classList.toggle('active',b.dataset.rwaTargetNav==='markets'));
+ qa('#liveRail [data-rwa-target-nav]').forEach(b=>b.classList.toggle('active',b.dataset.rwaTargetNav===key))
+}
 async function syncWallet(){const b=$('.signin');if(!b)return;await ensureWallet().catch(()=>{});const auth=window.RWAWalletAuth,s=auth?.session?.(),logged=auth?.isLoggedIn?.()===true;if(!logged||!s?.wallet){b.textContent='Connect Wallet';b.title='Connect a non-custodial wallet';return}let chain=s.chain||'';try{chain=await auth.provider?.()?.request?.({method:'eth_chainId'})||chain}catch{}const label=chainNames[String(chain).toLowerCase()]||String(chain||'CHAIN').toUpperCase();b.textContent=s.wallet.slice(0,6)+'…'+s.wallet.slice(-4)+' · '+label;b.title='Connected '+s.wallet+' · '+label+' · click to disconnect'}
 async function syncMultiChain(){const b=$('#rwaMultiChainLaunch');if(!b)return;const launch=await fetchLaunch();const count=window.RWAMultiChain?.status?.().networks?.length||9,status=launch?.mainnet_ready===true&&launch?.status==='READY_FOR_MAINNET'?'MAINNET READY':'TESTNET';b.innerHTML='<span class="rwa-mc-link-icon">⛓</span><span><b>MULTI CHAIN</b><small>'+count+' NETWORKS · '+status+'</small></span>';b.title=count+' supported networks · '+status}
 function decorateTokens(){
@@ -69,7 +72,7 @@ function marketCard(){
 function depthMeter(){const sec=$('.right>.order-section');if(!sec)return;let m=sec.querySelector('.rwa-live-depth-meter');if(!m){m=document.createElement('div');m.className='rwa-live-depth-meter';m.innerHTML='<div><b data-live-buy>—</b><span>BUY</span></div><div class="rwa-live-depth-bar"><i data-live-buy-bar></i></div><div><b data-live-sell>—</b><span>SELL</span></div>';sec.appendChild(m)}const s=marketState(),buy=num(s?.buyVol),sell=num(s?.sellVol),total=buy+sell;if(!(total>0)){m.querySelector('[data-live-buy]').textContent='—';m.querySelector('[data-live-sell]').textContent='—';m.querySelector('[data-live-buy-bar]').style.width='0%';return}const bp=buy/total*100;m.querySelector('[data-live-buy]').textContent=bp.toFixed(0)+'%';m.querySelector('[data-live-sell]').textContent=(100-bp).toFixed(0)+'%';m.querySelector('[data-live-buy-bar]').style.width=bp+'%'}
 function ensureLiveRail(){
  const rail=$('#liveRail');if(!rail)return null;
- if(!rail.dataset.ready){rail.dataset.ready='1';rail.innerHTML='<header><div><b data-live-rail-title>LIVE</b><i></i></div><button type="button" data-live-rail-filter aria-label="Feed filters">≡</button></header><nav><button class="active" data-live-tab="feed">Feed</button><button data-live-tab="trending">Trending</button><button data-live-tab="top">Top</button><button data-live-tab="alerts">Alerts</button></nav><div class="live-rail-body"><section data-live-pane="feed"></section><section data-live-pane="trending" hidden></section><section data-live-pane="top" hidden></section><section data-live-pane="alerts" hidden></section></div><section class="live-rail-top3"><div class="live-rail-top3-head"><b>TOP 3 · 24H VOLUME</b><span>Live markets</span></div><div data-live-top3></div></section>';rail.addEventListener('click',e=>{const b=e.target.closest('[data-live-tab]');if(!b)return;openRailPane(b.dataset.liveTab)})}
+ if(!rail.dataset.ready){rail.dataset.ready='1';rail.innerHTML='<header><div><b data-live-rail-title>LIVE</b><i></i></div><button type="button" data-live-rail-filter aria-label="Feed filters">≡</button></header><nav class="live-rail-section-nav" aria-label="Market sections"><button data-rwa-target-nav="trade">Trade</button><button data-rwa-target-nav="portfolio">Portfolio</button><button data-rwa-target-nav="orders">Orders</button><button data-rwa-target-nav="analytics">Analytics</button><button data-rwa-target-nav="rewards">Rewards</button></nav><nav class="live-rail-tabs" aria-label="Live rail tabs"><button class="active" data-live-tab="feed">Feed</button><button data-live-tab="trending">Trending</button><button data-live-tab="top">Top</button><button data-live-tab="alerts">Alerts</button></nav><div class="live-rail-body"><section data-live-pane="feed"></section><section data-live-pane="trending" hidden></section><section data-live-pane="top" hidden></section><section data-live-pane="alerts" hidden></section></div><section class="live-rail-top3"><div class="live-rail-top3-head"><b>TOP 3 · 24H VOLUME</b><span>Live markets</span></div><div data-live-top3></div></section>';rail.addEventListener('click',e=>{const b=e.target.closest('[data-live-tab]');if(!b)return;openRailPane(b.dataset.liveTab)})}
  return rail
 }
 function openRailPane(tab='feed'){
@@ -184,4 +187,4 @@ function boot(){restoreTheme();document.addEventListener('click',topAction,true)
 window.RWALiveHome={version:VERSION,apply,lockDesktopGeometry,navAction,renderLiveRail,openRailPane,openTradeRail,openIntelligence,openPortfolio,openOrders,openReports,openRewards,closeWorkspace,audit:()=>({ready:document.documentElement.dataset.rwaLiveNoMock==='ready',marketPairs:marketState()?.pairs?.length||0,contextBrief:!!$('#rwaContextBrief'),ordersPanel:!$('#rwaTradingWorkspace')?.hidden,railMode:$('#liveRail')?.dataset?.mode||'live',route:location.hash||'#markets',theme:document.documentElement.dataset.rwaTheme||'dark',mainnetReady:launchState?.mainnet_ready===true,screenshotMock:!!$('#rwaScreenshotParity')})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
-/* MARKET_RAIL_V42_FINAL_CERT_2026_09_03_R3 */
+/* MARKET_RAIL_NAV_INSIDE_MARKET_V421 */
