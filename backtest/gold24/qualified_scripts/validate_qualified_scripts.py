@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# GOLD10B million-selection certification trigger: 118 exact pairs.
+
 # Dynamic selected-set validation is intentionally triggered after wrapper synchronization.
 
 import argparse
