@@ -47,7 +47,7 @@ async function open(browser,width,height){
   const page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(String(e?.message||e)));
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:25000});
-  await page.waitForFunction(()=>window.RWALiveHome?.version==='4.1.0'&&window.RWAMarketRuntime?.version==='1.4.1'&&window.RWAMarketRuntime.state().pairs.length===520,{timeout:20000});
+  await page.waitForFunction(()=>window.RWALiveHome?.version==='4.1.0'&&window.RWAMarketRuntime?.version==='1.4.2'&&window.RWAMarketRuntime.state().pairs.length===520,{timeout:20000});
   await page.waitForFunction(()=>document.querySelectorAll('#bids .bookrow').length>=5&&document.querySelectorAll('#asks .bookrow').length>=5,{timeout:15000});
   await page.waitForTimeout(250);
   return {context,page,errors};
@@ -85,9 +85,12 @@ async function desktop(browser){
 
   const menu=page.locator('#bookMenu');
   await menu.click();
-  await page.waitForTimeout(60);
+  await page.waitForFunction(()=>window.RWAMarketRuntime?.state?.().bookLevels===10,{timeout:3000});
+  const bookState=await page.evaluate(()=>window.RWAMarketRuntime.state());
   const ten=await page.locator('#bids .bookrow').count();
-  assert.ok(ten>=8,`10-level book control did not expand rows: ${ten}`);
+  assert.equal(bookState.bookLevels,10);
+  assert.ok(bookState.book.bids.length>=8,`10-level grouped state incomplete: ${bookState.book.bids.length}`);
+  assert.ok(ten>=8,`10-level book control did not expand DOM rows: ${ten}`);
 
   const search=page.locator('#search');
   if(await search.count()){
