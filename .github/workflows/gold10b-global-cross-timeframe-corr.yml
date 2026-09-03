@@ -1,0 +1,98 @@
+name: GOLD10B Global D1-H4 Correlation Gate
+
+on:
+  workflow_run:
+    workflows:
+      - GOLD10B Native H4 HARD PASS Discovery
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: gold10b-global-d1-h4-corr
+  cancel-in-progress: true
+
+env:
+  D1_SOURCE_RUN_ID: '33667987913'
+  D1_ARTIFACT: gold24-canonical-v11-state
+
+jobs:
+  cross_tf:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned dependencies
+        run: python -m pip install -r backtest/gold24/requirements.txt
+
+      - name: Download exact H4 source-run artifact and D1 canonical state
+        env:
+          GH_TOKEN: ${{ github.token }}
+          H4_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          rm -rf .cross-h4 .cross-d1
+          mkdir -p .cross-h4 .cross-d1
+          gh run download "$H4_RUN_ID" --repo "$GITHUB_REPOSITORY"             -n "gold10b-native-h4-$H4_RUN_ID" -D .cross-h4
+          gh run download "$D1_SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY"             -n "$D1_ARTIFACT" -D .cross-d1
+          test -s .cross-h4/GC1_COMEX_TRADINGVIEW_H4_PRIMARY.csv
+          test -s .cross-h4/gate_a_h4_receipt.json
+          test -s .cross-h4/native_h4_hardpass.json
+          test -s .cross-d1/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv
+          test -s .cross-d1/gate_a/gate_a_receipt.json
+
+      - name: Run exact global cross-timeframe correlation filter
+        run: |
+          set -euo pipefail
+          python -u backtest/gold24/global_cross_timeframe_corr.py             --d1-state-dir .cross-d1             --h4-artifact-dir .cross-h4             --repo-root .             --out backtest/gold24/runtime_global_cross_tf/latest_global_d1_h4_corr.json
+          python - <<'PY'
+          import json
+          p='backtest/gold24/runtime_global_cross_tf/latest_global_d1_h4_corr.json'
+          x=json.load(open(p))
+          assert x['status']=='PASS'
+          assert x['correlation_rule']=='absolute Pearson(log-return equity), global per-symbol'
+          assert x['correlation_alignment']['backtest_resampling'] is False
+          assert x['datasets']['D1']['rows']==6500
+          assert x['datasets']['H4']['rows']>=3000
+          assert x['methods_input_d1']==118
+          assert x['max_family_concentration']<=0.25 + 1e-12
+          assert x['distinct_family']>=6
+          print('GOLD10B_GLOBAL_D1_H4_CORR_PASS')
+          PY
+
+      - name: Publish cross-timeframe evidence race-safe
+        run: |
+          set -euo pipefail
+          PAYLOAD="$RUNNER_TEMP/latest_global_d1_h4_corr.json"
+          cp backtest/gold24/runtime_global_cross_tf/latest_global_d1_h4_corr.json "$PAYLOAD"
+          git config user.name "gold10b-bot"
+          git config user.email "gold10b-bot@users.noreply.github.com"
+          for TRY in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p backtest/gold24/runtime_global_cross_tf
+            cp "$PAYLOAD" backtest/gold24/runtime_global_cross_tf/latest_global_d1_h4_corr.json
+            git add backtest/gold24/runtime_global_cross_tf/latest_global_d1_h4_corr.json
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m "chore(gold10b): publish global D1-H4 correlation proof [skip ci]"
+            if git push origin HEAD:main; then exit 0; fi
+            sleep $((TRY*2))
+          done
+          exit 1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gold10b-global-d1-h4-corr-${{ github.run_id }}
+          path: backtest/gold24/runtime_global_cross_tf/latest_global_d1_h4_corr.json
+          if-no-files-found: error
+          retention-days: 90
