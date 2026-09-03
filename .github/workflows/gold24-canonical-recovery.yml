@@ -22,7 +22,7 @@ env:
   GOLD24_TIMEFRAME: D1
   GOLD24_FLAT_LOT: '1.0'
   SHARD_COUNT: '20'
-  RAW_CURSOR_COUNT: '100000'
+  RAW_CURSOR_COUNT: '25000'
   MAX_SIMULATIONS_PER_SHARD: '1000000'
   OMP_NUM_THREADS: '1'
   OPENBLAS_NUM_THREADS: '1'
@@ -31,7 +31,7 @@ env:
 
 jobs:
   authoritative_20worker:
-    name: Authoritative 20 logical workers + single-writer publish
+    name: Authoritative 20 logical workers + single-writer publish (preemption-safe)
     runs-on: ubuntu-latest
     timeout-minutes: 70
     env:
