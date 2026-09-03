@@ -58,15 +58,15 @@ jobs:
             rm -f "$HOME/.ssh/ai2_control"
           fi
           python3 - "$RESP" "$ID" "$present" "$connected" "$remote" <<'PY'
-import json,sys,pathlib
-resp,aid,present,connected,remote=sys.argv[1:]
-pathlib.Path(resp).write_text(json.dumps({
-  "id":aid,
-  "secret_present":present=="true",
-  "ssh_connected":connected=="true",
-  "remote_output":remote[-4000:],
-},indent=2)+"\n")
-PY
+          import json,sys,pathlib
+          resp,aid,present,connected,remote=sys.argv[1:]
+          pathlib.Path(resp).write_text(json.dumps({
+            "id":aid,
+            "secret_present":present=="true",
+            "ssh_connected":connected=="true",
+            "remote_output":remote[-4000:],
+          },indent=2)+"\n")
+          PY
 
       - name: Commit response
         if: always()
