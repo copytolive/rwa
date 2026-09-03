@@ -1,6 +1,6 @@
 const API=['https://data-api.binance.vision','https://api.binance.com'];
 const RWA=new Set(['ONDO','PENDLE','POLYX','LINK','TRU','RSR','MKR','SKY','AAVE','COMP','SNX','ENA','CFG','OM','XDC','ALGO','HBAR']);
-const S={pairs:[],map:new Map(),selected:'BTCUSDT',filter:'all',query:'',interval:'60',marketWS:null,detailWS:null,buyVol:0,sellVol:0,trades:0,recentTrades:[],klines:[],book:{bids:[],asks:[]},rawBook:{bids:[],asks:[]},bookStep:.1,bookLevels:5,tvTimer:null};
+const S={pairs:[],map:new Map(),selected:'BTCUSDT',filter:'all',query:'',interval:'60',marketWS:null,detailWS:null,buyVol:0,sellVol:0,trades:0,recentTrades:[],klines:[],book:{bids:[],asks:[]},rawBook:{bids:[],asks:[]},bookLastUpdateId:0,bookStep:.1,bookLevels:5,tvTimer:null};
 const $=id=>document.getElementById(id);const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2400)}
 function num(v){const n=Number(v);return Number.isFinite(n)?n:null}function price(v){const n=num(v);if(n==null)return'—';let d=n>=1000?2:n>=1?4:n>=.01?5:7;return '$'+n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:d})}function compact(v){const n=num(v);if(n==null)return'—';return '$'+Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:2}).format(n)}function pct(v){const n=num(v);if(n==null)return'—';return(n>=0?'+':'')+n.toFixed(2)+'%'}
@@ -16,8 +16,31 @@ function renderMidPrice(value,spreadText){
  const el=$('midPrice');if(!el)return;const v=num(value);el.innerHTML='<strong>'+price(v)+'</strong><span>'+(spreadText?'Spread '+esc(spreadText):'Live mid')+'</span>'
 }
 function renderHeader(x){$('selIcon').textContent=x.base.slice(0,2);$('selName').textContent=x.base+' / USDT';$('selLabel').textContent=(x.rwa?'RWA-linked · ':'')+'Binance Spot';$('statPrice').textContent=price(x.price);$('statChange').textContent=pct(x.change);$('statChange').className=(x.change||0)>=0?'up':'down';$('statHigh').textContent=price(x.high);$('statLow').textContent=price(x.low);$('statVol').textContent=compact(x.vol);if(!S.rawBook.bids.length||!S.rawBook.asks.length)renderMidPrice(x.price,null)}
-async function selectPair(sym,scroll){if(!S.map.has(sym))return;S.selected=sym;S.buyVol=0;S.sellVol=0;S.trades=0;S.recentTrades=[];S.book={bids:[],asks:[]};renderHeader(S.map.get(sym));document.querySelectorAll('.pairrow.active').forEach(e=>e.classList.remove('active'));document.querySelector(`.pairrow[data-sym="${sym}"]`)?.classList.add('active');$('tradeTape').innerHTML='<div class="empty">Connecting live trade stream…</div>';$('activity').innerHTML='<div class="empty">Waiting for market activity…</div>';$('bids').innerHTML='';$('asks').innerHTML='';renderPulse();connectDetail();loadKlines();loadTradingView();if(scroll&&innerWidth<681)$('terminal').scrollIntoView({behavior:'smooth',block:'start'})}
-function connectDetail(){if(S.detailWS)try{S.detailWS.close()}catch(_){};const l=S.selected.toLowerCase();const url=`wss://data-stream.binance.vision/stream?streams=${l}@ticker/${l}@bookTicker/${l}@depth10@100ms/${l}@aggTrade`;const ws=new WebSocket(url);S.detailWS=ws;ws.onmessage=e=>{try{const m=JSON.parse(e.data).data||{};if(m.e==='24hrTicker'){const x=S.map.get(m.s);if(x){x.price=num(m.c);x.change=num(m.P);x.high=num(m.h);x.low=num(m.l);x.vol=num(m.q);renderHeader(x)}}else if(m.e==='aggTrade'){addTrade(m)}else if(Array.isArray(m.bids)&&Array.isArray(m.asks)){renderBook(m.bids,m.asks)}else if(m.e==='depthUpdate'&&m.b&&m.a){renderBook(m.b,m.a)}else if(m.s&&m.b&&m.a){$('bestBid').textContent=price(m.b);$('bestAsk').textContent=price(m.a);const b=num(m.b),a=num(m.a);$('spread').textContent=b&&a?(((a-b)/((a+b)/2))*100).toFixed(4)+'%':'—'}}catch(_){}};ws.onclose=()=>{if(S.detailWS===ws)setTimeout(connectDetail,1200)};ws.onerror=()=>{}}
+async function selectPair(sym,scroll){if(!S.map.has(sym))return;S.selected=sym;S.buyVol=0;S.sellVol=0;S.trades=0;S.recentTrades=[];S.book={bids:[],asks:[]};S.rawBook={bids:[],asks:[]};S.bookLastUpdateId=0;renderHeader(S.map.get(sym));document.querySelectorAll('.pairrow.active').forEach(e=>e.classList.remove('active'));document.querySelector(`.pairrow[data-sym="${sym}"]`)?.classList.add('active');$('tradeTape').innerHTML='<div class="empty">Connecting live trade stream…</div>';$('activity').innerHTML='<div class="empty">Waiting for market activity…</div>';$('bids').innerHTML='';$('asks').innerHTML='';renderPulse();loadBookSnapshot();connectDetail();loadKlines();loadTradingView();if(scroll&&innerWidth<681)$('terminal').scrollIntoView({behavior:'smooth',block:'start'})}
+async function loadBookSnapshot(){
+ try{
+  const snap=await get('/api/v3/depth?symbol='+encodeURIComponent(S.selected)+'&limit=100');
+  if(!snap||!Array.isArray(snap.bids)||!Array.isArray(snap.asks))throw Error('invalid order book snapshot');
+  S.bookLastUpdateId=Number(snap.lastUpdateId||0);
+  S.rawBook={bids:snap.bids.map(x=>[String(x[0]),String(x[1])]),asks:snap.asks.map(x=>[String(x[0]),String(x[1])])};
+  renderBook();
+ }catch(_){}
+}
+function mergeDepthSide(current,updates,desc){
+ const m=new Map((current||[]).map(x=>[String(x[0]),String(x[1])]));
+ for(const row of updates||[]){const p=String(row[0]),q=Number(row[1]);if(!(Number(p)>0))continue;if(q===0)m.delete(p);else m.set(p,String(row[1]))}
+ return [...m.entries()].sort((a,b)=>desc?Number(b[0])-Number(a[0]):Number(a[0])-Number(b[0])).slice(0,120);
+}
+function applyBookDelta(ev){
+ const U=Number(ev.U||0),u=Number(ev.u||0),last=Number(S.bookLastUpdateId||0);
+ if(last&&u<=last)return;
+ if(last&&U>last+1){S.bookLastUpdateId=0;loadBookSnapshot();return}
+ if(last&&u>=last+1&&U<=last+1){
+  S.rawBook={bids:mergeDepthSide(S.rawBook.bids,ev.b,true),asks:mergeDepthSide(S.rawBook.asks,ev.a,false)};
+  S.bookLastUpdateId=u;renderBook();
+ }
+}
+function connectDetail(){if(S.detailWS)try{S.detailWS.close()}catch(_){};const l=S.selected.toLowerCase();const url=`wss://data-stream.binance.vision/stream?streams=${l}@ticker/${l}@bookTicker/${l}@depth@100ms/${l}@aggTrade`;const ws=new WebSocket(url);S.detailWS=ws;ws.onmessage=e=>{try{const m=JSON.parse(e.data).data||{};if(m.e==='24hrTicker'){const x=S.map.get(m.s);if(x){x.price=num(m.c);x.change=num(m.P);x.high=num(m.h);x.low=num(m.l);x.vol=num(m.q);renderHeader(x)}}else if(m.e==='aggTrade'){addTrade(m)}else if(m.e==='depthUpdate'&&m.b&&m.a){applyBookDelta(m)}else if(m.s&&m.b&&m.a){$('bestBid').textContent=price(m.b);$('bestAsk').textContent=price(m.a);const b=num(m.b),a=num(m.a);$('spread').textContent=b&&a?(((a-b)/((a+b)/2))*100).toFixed(4)+'%':'—'}}catch(_){}};ws.onclose=()=>{if(S.detailWS===ws)setTimeout(connectDetail,1200)};ws.onerror=()=>{}}
 function groupBook(arr,side){
  const step=Math.max(.00000001,Number(S.bookStep)||.1),m=new Map();
  for(const row of arr||[]){const p=Number(row[0]),q=Number(row[1]);if(!(p>0)||!(q>=0))continue;const k=(side==='ask'?Math.ceil(p/step):Math.floor(p/step))*step,key=Number(k.toFixed(8));m.set(key,(m.get(key)||0)+q)}
@@ -49,4 +72,4 @@ const watchAdd=$('watchAdd'),watchMenu=$('watchMenu');
 if(watchAdd)watchAdd.onclick=()=>{document.body.classList.toggle('rwa-watch-search-open');if(document.body.classList.contains('rwa-watch-search-open'))setTimeout(()=>$('search')?.focus(),0)};
 if(watchMenu)watchMenu.onclick=()=>{const on=document.body.classList.toggle('rwa-watch-comfortable');watchMenu.setAttribute('aria-pressed',String(on));watchMenu.title=on?'Use compact watchlist':'Use comfortable watchlist'};
 document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');S.filter=b.dataset.filter;renderPairs()});$('search').oninput=e=>{S.query=e.target.value;renderPairs()};document.querySelectorAll('#timeframes button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#timeframes button').forEach(x=>x.classList.remove('active'));b.classList.add('active');S.interval=b.dataset.iv;loadKlines();loadTradingView()});addEventListener('resize',()=>drawFallback());document.addEventListener('visibilitychange',()=>{if(!document.hidden){if(!S.marketWS||S.marketWS.readyState>1)connectAllTicker();if(!S.detailWS||S.detailWS.readyState>1)connectDetail()}});setTimeout(loadMarkets,0);
-window.RWAMarketRuntime={version:'1.3.0',state:()=>({selected:S.selected,interval:S.interval,pairs:S.pairs.map(x=>({...x})),book:{bids:S.book.bids.map(x=>[...x]),asks:S.book.asks.map(x=>[...x])},buyVol:S.buyVol,sellVol:S.sellVol,trades:S.trades,recentTrades:S.recentTrades.map(x=>({...x})),klines:S.klines.map(x=>({...x}))}),selectPair:(sym,scroll=false)=>selectPair(sym,scroll),setInterval:iv=>{S.interval=String(iv);loadKlines();loadTradingView();return S.interval},reload:()=>{loadKlines();loadTradingView()},format:{price,compact,pct}};
+window.RWAMarketRuntime={version:'1.4.0',state:()=>({selected:S.selected,interval:S.interval,pairs:S.pairs.map(x=>({...x})),book:{bids:S.book.bids.map(x=>[...x]),asks:S.book.asks.map(x=>[...x])},buyVol:S.buyVol,sellVol:S.sellVol,trades:S.trades,recentTrades:S.recentTrades.map(x=>({...x})),klines:S.klines.map(x=>({...x}))}),selectPair:(sym,scroll=false)=>selectPair(sym,scroll),setInterval:iv=>{S.interval=String(iv);loadKlines();loadTradingView();return S.interval},reload:()=>{loadKlines();loadTradingView()},format:{price,compact,pct}};
