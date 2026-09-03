@@ -61,7 +61,7 @@ jobs:
             echo "Qualified wrapper set already synchronized"
             exit 0
           fi
-          git commit -m "chore(gold10b): sync exact selected Python/MT5 wrapper set [skip ci]"
+          git commit -m "chore(gold10b): sync exact selected Python/MT5 wrapper set"
           for TRY in 1 2 3 4 5; do
             if git pull --rebase origin main && git push origin HEAD:main; then exit 0; fi
             git rebase --abort 2>/dev/null || true
