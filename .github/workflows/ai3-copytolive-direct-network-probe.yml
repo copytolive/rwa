@@ -1,0 +1,65 @@
+name: AI3 CopyToLive Direct Network Probe
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ai3-direct-probe-requests/**"
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - id: req
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^ai3-direct-probe-requests/.*\.json$' | tail -n1)"
+          ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$FILE")"
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+      - name: Probe direct CopyToLive service surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ai3-direct-probe-results
+          python3 - <<'PY' > "ai3-direct-probe-results/${{ steps.req.outputs.id }}.json"
+          import json,urllib.request,urllib.error,socket
+          urls=[
+            "http://109.123.239.76:8000/openapi.json",
+            "http://109.123.239.76:8000/docs",
+            "http://109.123.239.76:8000/health",
+            "http://109.123.239.76:8000/trading/signals/unified/modes",
+            "http://109.123.239.76:3001/health",
+            "http://109.123.239.76:3001/api/version",
+            "http://109.123.239.76:3001/api/trading/health",
+            "http://109.123.239.76:11175/health",
+            "http://109.123.239.76:11175/openapi.json",
+          ]
+          out={}
+          for u in urls:
+            try:
+              req=urllib.request.Request(u,headers={"User-Agent":"Mozilla/5.0"})
+              with urllib.request.urlopen(req,timeout=8) as r:
+                b=r.read(300000)
+                out[u]={"status":r.status,"type":r.headers.get("content-type"),"bytes":len(b),"body":b.decode("utf-8","replace")[:250000]}
+            except Exception as e:
+              out[u]={"error":repr(e)}
+          print(json.dumps(out))
+          PY
+      - name: Commit result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "CopyToLive AI3 Direct Probe"
+          git config user.email "copytolive-ai3-directprobe@local.invalid"
+          git add ai3-direct-probe-results
+          git commit -m "ai3 direct network probe: ${{ steps.req.outputs.id }}" || true
+          for i in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort || true; sleep "$i"; continue; }
+            if git push origin HEAD:main; then exit 0; fi
+          done
+          exit 1
