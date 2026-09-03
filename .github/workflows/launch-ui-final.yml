@@ -7,7 +7,7 @@ on:
       - "index.html"
       - "app.js"
       - "chart-core.js"
-      - "rwa-live-home-v1.js"
+      - "rwa-live-home-v1.js"\n      - "rwa-terminal-v5.js"\n      - "rwa-terminal-v5.css"
       - "rwa-live-home-v1.css"
       - "rwa-live-orderbook-v1.css"
       - "rwa-multichain.js"
@@ -34,21 +34,21 @@ jobs:
           node --check app.js
           node --check chart-core.js
           node --check rwa-live-home-v1.js
+          node --check rwa-terminal-v5.js
           node --check rwa-multichain.js
           node --check rwa-multichain-engine.js
           grep -Fq '<strong>Real World Asset</strong>' index.html
           grep -Fq 'Markets</button>' index.html
-          ! grep -Fq 'data-rwa-target-nav="trade"' index.html
-          ! grep -Fq 'data-rwa-target-nav="portfolio"' index.html
-          ! grep -Fq 'data-rwa-target-nav="orders"' index.html
-          ! grep -Fq 'data-rwa-target-nav="analytics"' index.html
-          ! grep -Fq 'data-rwa-target-nav="rewards"' index.html
-          grep -Fq 'live-rail-section-nav' rwa-live-home-v1.js
-          grep -Fq 'data-rwa-target-nav="trade"' rwa-live-home-v1.js
-          grep -Fq 'data-rwa-target-nav="portfolio"' rwa-live-home-v1.js
-          grep -Fq 'data-rwa-target-nav="orders"' rwa-live-home-v1.js
-          grep -Fq 'data-rwa-target-nav="analytics"' rwa-live-home-v1.js
-          grep -Fq 'data-rwa-target-nav="rewards"' rwa-live-home-v1.js
+          grep -Fq 'rwa-terminal-v5.css?v=1.0.0' index.html
+          grep -Fq 'data-v5-nav="trade"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-nav="discover"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-nav="portfolio"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-nav="analytics"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-nav="rewards"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-bottom="positions"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-mobile-mode="chart"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-mobile-mode="book"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-mobile-mode="trade"' rwa-terminal-v5.js
           grep -Fq 'rwaMultiChainLazyBootstrap' index.html
           grep -Fq 'Hyperliquid Testnet' rwa-live-home-v1.js
           grep -Fq 'Mainnet locked' rwa-live-home-v1.js
