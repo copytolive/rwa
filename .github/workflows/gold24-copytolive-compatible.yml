@@ -147,7 +147,7 @@ jobs:
           set -euo pipefail
           rm -rf "$OUT_DIR"
           mkdir -p "$OUT_DIR"
-          python backtest/gold24/copytolive_active_replay.py             --dataset "$DATA_FILE"             --out-dir "$OUT_DIR"
+          python backtest/gold24/copytolive_active_replay.py --dataset "$DATA_FILE" --d1-dataset "$D1_FILE" --out-dir "$OUT_DIR"
           test -s "$OUT_DIR/latest_copytolive_active_replay.json"
           test -s "$OUT_DIR/latest_copytolive_active_replay.csv"
           test -s "$OUT_DIR/latest_copytolive_active_replay_summary.json"
@@ -167,6 +167,7 @@ jobs:
           assert x['source']['active_gold_count']==118
           assert x['source']['timeframe_counts']=={'H1':118}
           assert int(x['dataset']['rows'])>10000
+          assert int(x['d1_dataset']['rows'])>1000
           c=x['execution_contract']
           assert float(c['deposit_usd'])==10000.0
           assert float(c['risk_usd_per_trade'])==200.0
@@ -249,6 +250,9 @@ jobs:
               'max_abs_delta':max_abs,
               'worst_delta':worst,
               'dataset':x['dataset'],
+              'd1_dataset':x['d1_dataset'],
+              'producer_reference':x.get('producer_reference'),
+              'producer_filter_modes':x.get('producer_filter_modes'),
               'source':x['source'],
               'execution_contract':x['execution_contract'],
               'strict_gate_counts':{
