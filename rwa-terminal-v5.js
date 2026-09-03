@@ -153,7 +153,7 @@ function setMobile(mode){mobileMode=mode;document.body.dataset.v5MobileMode=mode
 function applyMobileState(){
  document.body.dataset.v5MobileMode=mobileMode;
  const feed=$('#rwaV5MobileFeed');if(feed){feed.hidden=mobileMode!=='feed';if(!feed.hidden)feed.innerHTML=feedHtml()}
- if(innerWidth<681){setMobileMarketsCloseVisible(document.body.classList.contains('rwa-v5-mobile-markets'));if(mobileMode==='workspace')$('#rwaV5Bottom')?.scrollIntoView?.({block:'start'})}
+ if(innerWidth<681&&mobileMode==='workspace')$('#rwaV5Bottom')?.scrollIntoView?.({block:'start'})
 }
 function setMobileMarketsCloseVisible(on){
  const b=$('[data-v5-action="close-markets"]');if(!b)return;
@@ -198,6 +198,7 @@ function apply(){
  document.body.classList.add('rwa-terminal-v5');document.documentElement.dataset.rwaTerminal='v5';unlockLegacyGeometry();keepMarket();ensureHeader();ensureLeft();ensureBottom();ensureTrade();ensureMobile();ensureFooter();lockV5Geometry();renderFavorite();renderStatus();renderFooter()
 }
 function bind(){
+ const depth=$('#depth');if(depth&&!depth.dataset.v5BookBound){depth.dataset.v5BookBound='1';depth.addEventListener('pointerdown',e=>orderBookClick(e),true)}
  document.addEventListener('click',e=>{
   const lockSign=e.target.closest('.rwa-v5-lock .signin');if(lockSign){e.preventDefault();$('.top-actions .signin')?.click();return}
   const nav=e.target.closest('[data-v5-nav]');if(nav){e.preventDefault();e.stopPropagation();navigate(nav.dataset.v5Nav);return}
@@ -220,7 +221,7 @@ function bind(){
  },true);
  document.addEventListener('input',e=>{if(e.target.matches('[data-v5-thesis-text]')){const c=$('[data-v5-thesis-count]');if(c)c.textContent=e.target.value.length+' / 280'}});
  document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#rwaV5GlobalSearch input')?.focus()}if(e.key==='Escape'){$('[data-v5-more-menu]')?.setAttribute('hidden','');document.body.classList.remove('rwa-v5-mobile-markets')}});
- window.addEventListener('resize',()=>{ensureMobile();applyMobileState()},{passive:true});
+ window.addEventListener('resize',()=>{if(innerWidth>680){document.body.classList.remove('rwa-v5-mobile-markets');setMobileMarketsCloseVisible(false)}ensureMobile();applyMobileState()},{passive:true});
  window.addEventListener('rwa:wallet-login',()=>setTimeout(()=>{refreshAccount().then(()=>renderBottom())},50));
  window.addEventListener('rwa:wallet-logout',()=>renderBottom());
  window.addEventListener('rwa:exchange-state',()=>renderStatus())
