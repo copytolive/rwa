@@ -55,7 +55,7 @@ jobs:
           test -s rwa-multichain-registry.json
           test -s execution-api.js
           test -s exchange-core.js
-          grep -Fq '<strong>RWA</strong>' index.html
+          grep -Fq '<strong>Real World Asset</strong>' index.html
           grep -Fq 'data-rwa-target-nav="markets"' index.html
           grep -Fq 'id="fallbackChart"' index.html
           grep -Fq 'id="tvHost"' index.html
@@ -78,7 +78,7 @@ jobs:
           ! grep -Fq 'rwa-seablueprint-commerce-bridge.js' chart-core.js
           ! grep -Fq '/rwa/_next/' index.html
           ! grep -Eiq 'renko' index.html
-          echo RWA_TRADING_UI_V3_SOURCE_PASS
+          echo RWA_TARGET_V4_SOURCE_PASS
 
       - name: Compose trading-only Pages artifact
         shell: bash
@@ -132,7 +132,7 @@ jobs:
           done
           test "$PASS" = 1
           curl -fsSL "$BASE/" > /tmp/root.html
-          grep -Fq '<strong>RWA</strong>' /tmp/root.html
+          grep -Fq '<strong>Real World Asset</strong>' /tmp/root.html
           grep -Fq 'id="fallbackChart"' /tmp/root.html
           grep -Fq 'id="tvHost"' /tmp/root.html
           grep -Fq 'rwaMultiChainLazyBootstrap' /tmp/root.html

@@ -36,16 +36,17 @@ jobs:
           node --check rwa-live-home-v1.js
           node --check rwa-multichain.js
           node --check rwa-multichain-engine.js
-          grep -Fq '<strong>RWA</strong>' index.html
+          grep -Fq '<strong>Real World Asset</strong>' index.html
           grep -Fq 'Markets</button>' index.html
-          grep -Fq 'Intelligence</button>' index.html
+          grep -Fq 'Trade</button>' index.html
           grep -Fq 'Portfolio</button>' index.html
           grep -Fq 'Orders</button>' index.html
-          grep -Fq 'Reports</button>' index.html
+          grep -Fq 'Analytics</button>' index.html
+          grep -Fq 'Rewards</button>' index.html
           grep -Fq 'rwaMultiChainLazyBootstrap' index.html
           grep -Fq 'Hyperliquid Testnet' rwa-live-home-v1.js
           grep -Fq 'Mainnet locked' rwa-live-home-v1.js
           ! grep -Eiq 'seablueprint|ecommerce|in-page commerce' index.html
           test ! -e commerce-service
           test ! -e rwa-commerce-config.json
-          echo RWA_TRADING_UI_FINAL_PASS
+          echo RWA_TARGET_V4_UI_FINAL_PASS
