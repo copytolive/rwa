@@ -86,6 +86,7 @@ async function desktop(){
 async function mobile(width,height,name){
  const ctx=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,serviceWorkers:'block'}),page=await ctx.newPage();page.on('pageerror',e=>pageErrors.push(name+': '+String(e?.message||e)));
  await ready(page);
+ if(await page.locator('#rwaV5FirstPaintShell').count())fail(name+' fake first-paint shell still exists');
  let m=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,mode:document.body.dataset.v5MobileMode,chart:getComputedStyle(document.querySelector('.chart-wrap')).display,book:getComputedStyle(document.querySelector('.right')).display,trade:getComputedStyle(document.querySelector('#liveRail')).display,mini:getComputedStyle(document.querySelector('#rwaV5MiniBook')).display}));
  if(m.sw>m.cw+2)fail(name+' horizontal overflow',m);if(m.mode!=='chart'||m.chart==='none'||m.mini==='none'||m.book!=='none'||m.trade!=='none')fail(name+' default Chart state invalid',m);
  await page.locator('.rwa-v5-mobile-worktabs [data-v5-mobile-mode="book"]').click();await page.waitForTimeout(50);m=await page.evaluate(()=>({mode:document.body.dataset.v5MobileMode,chart:getComputedStyle(document.querySelector('.chart-wrap')).display,book:getComputedStyle(document.querySelector('.right')).display,trade:getComputedStyle(document.querySelector('#liveRail')).display}));if(m.mode!=='book'||m.chart!=='none'||m.book==='none'||m.trade!=='none')fail(name+' Book state invalid',m);
