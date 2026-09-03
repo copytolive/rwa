@@ -23,10 +23,12 @@ import pandas as pd
 
 from core import pearson_log_equity
 from copytolive_compat import (
+    ENGINE_ID,
     COPYTOLIVE_DEPOSIT_USD,
     COPYTOLIVE_RISK_USD,
     COPYTOLIVE_STRESSED_FEE,
     CopyToLiveExecutionConfig,
+    apply_production_filter,
     compute_copytolive_metrics,
     execution_digest,
     run_copytolive_backtest,
@@ -106,6 +108,50 @@ def load_h1(path: Path) -> pd.DataFrame:
     if ((d["open"] < d["low"]) | (d["open"] > d["high"]) |
         (d["close"] < d["low"]) | (d["close"] > d["high"])).any():
         raise RuntimeError("open/close outside H1 bar range")
+    return d
+
+
+def load_d1(path: Path) -> pd.DataFrame:
+    if path.suffix.lower() in {".parquet", ".pq"}:
+        raw = pd.read_parquet(path)
+    else:
+        raw = pd.read_csv(path)
+
+    rename = {}
+    for col in raw.columns:
+        lo = str(col).lower()
+        if lo in {"date", "time", "timestamp", "datetime"}:
+            rename[col] = "Date"
+        elif lo in {"open", "high", "low", "close", "volume"}:
+            rename[col] = lo
+    d = raw.rename(columns=rename).copy()
+
+    if "Date" not in d.columns and isinstance(d.index, pd.DatetimeIndex):
+        d.insert(0, "Date", pd.DatetimeIndex(d.index))
+
+    required = {"Date", "open", "high", "low", "close"}
+    missing = required - set(d.columns)
+    if missing:
+        raise RuntimeError(f"D1 dataset missing columns: {sorted(missing)}")
+    if "volume" not in d:
+        d["volume"] = 0.0
+
+    if pd.api.types.is_numeric_dtype(d["Date"]):
+        dt = pd.to_datetime(d["Date"], unit="ms", errors="coerce")
+    else:
+        dt = pd.to_datetime(d["Date"], errors="coerce")
+    if dt.isna().any():
+        raise RuntimeError("invalid D1 timestamps")
+    d["Date"] = dt
+    for col in ("open", "high", "low", "close", "volume"):
+        d[col] = pd.to_numeric(d[col], errors="coerce")
+    d = d.dropna(subset=["open", "high", "low", "close"])
+    d = d.drop_duplicates(subset=["Date"], keep="last").sort_values("Date").reset_index(drop=True)
+
+    if len(d) < 201:
+        raise RuntimeError(f"D1 dataset unexpectedly short: {len(d)}")
+    if (d["high"] < d["low"]).any():
+        raise RuntimeError("high < low in D1 dataset")
     return d
 
 
@@ -201,7 +247,7 @@ def parity_expected(s: dict, m: dict, oos: dict) -> dict:
     }
 
 
-def replay_one(s: dict, source: str, d: pd.DataFrame):
+def replay_one(s: dict, source: str, d: pd.DataFrame, d1: pd.DataFrame):
     run = compile_signal(s, source)
     close = d["close"].to_numpy(np.float64)
     high = d["high"].to_numpy(np.float64)
@@ -211,6 +257,12 @@ def replay_one(s: dict, source: str, d: pd.DataFrame):
         raise RuntimeError(f"signal length mismatch: {s['id']}")
     if not np.isin(sig, [-1, 0, 1]).all():
         raise RuntimeError(f"non -1/0/+1 signal: {s['id']}")
+    sig = apply_production_filter(
+        sig,
+        d,
+        signal_type=s.get("signalType"),
+        d1=d1,
+    )
 
     cfg = CopyToLiveExecutionConfig(sl_pct=float(s["sl_pct"]), tp_ratio=float(s["tp_ratio"]))
     result = run_copytolive_backtest(d, sig, cfg)
@@ -371,7 +423,8 @@ def write_csv(path: Path, rows: list[dict]):
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--dataset", required=True)
+    ap.add_argument("--dataset", required=True, help="Canonical GOLD H1 dataset")
+    ap.add_argument("--d1-dataset", required=True, help="Canonical GOLD D1 dataset")
     ap.add_argument("--manifest", default=str(DEFAULT_MANIFEST))
     ap.add_argument("--sources", default=str(DEFAULT_SOURCES))
     ap.add_argument("--out-dir", required=True)
@@ -379,6 +432,7 @@ def main() -> int:
 
     manifest, scripts = load_sources(Path(args.manifest), Path(args.sources))
     d = load_h1(Path(args.dataset))
+    d1 = load_d1(Path(args.d1_dataset))
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
 
@@ -388,7 +442,7 @@ def main() -> int:
     errors = []
     for i, s in enumerate(manifest["strategies"], 1):
         try:
-            row, bp, pnl = replay_one(s, scripts[s["id"]], d)
+            row, bp, pnl = replay_one(s, scripts[s["id"]], d, d1)
             rows.append(row)
             barpnls[s["id"]] = bp
             tradepnls[s["id"]] = pnl
@@ -431,17 +485,27 @@ def main() -> int:
         parity_abs[metric] = float(np.mean(vals)) if vals else None
 
     payload = {
-        "schema": "gold24-copytolive-active-replay-v1",
+        "schema": "gold24-copytolive-active-replay-v2",
         "status": "PASS",
+        "engine_id": ENGINE_ID,
         "engine_mode": "COPYTOLIVE_EXACT_ACTIVE_REPLAY",
         "active_gold_input": len(rows),
         "source": manifest["snapshot"],
         "dataset": {
-            "path": str(Path(args.dataset)),
-            "sha256": sha256_file(Path(args.dataset)),
-            "rows": int(len(d)),
-            "start_utc": str(d["Date"].iloc[0]),
-            "end_utc": str(d["Date"].iloc[-1]),
+            "h1": {
+                "path": str(Path(args.dataset)),
+                "sha256": sha256_file(Path(args.dataset)),
+                "rows": int(len(d)),
+                "start_utc": str(d["Date"].iloc[0]),
+                "end_utc": str(d["Date"].iloc[-1]),
+            },
+            "d1": {
+                "path": str(Path(args.d1_dataset)),
+                "sha256": sha256_file(Path(args.d1_dataset)),
+                "rows": int(len(d1)),
+                "start_utc": str(d1["Date"].iloc[0]),
+                "end_utc": str(d1["Date"].iloc[-1]),
+            },
         },
         "execution_contract": {
             "deposit_usd": COPYTOLIVE_DEPOSIT_USD,
