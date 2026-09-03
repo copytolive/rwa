@@ -9,21 +9,21 @@ async function root(page){
  await page.goto(base,{waitUntil:'domcontentloaded',timeout:50000});
  await page.waitForFunction(()=>window.RWALiveHome?.version==='5.0.0'&&window.RWATerminalV5?.version==='1.0.0'&&window.RWAMarketRuntime?.state?.().pairs?.length>50,{timeout:50000});
  await page.waitForFunction(()=>document.querySelector('#liveRail #rwaTargetOrderTicket')&&document.querySelectorAll('#asks .bookrow').length>=5,{timeout:30000});
- await page.waitForTimeout(450);
+ await page.waitForTimeout(0);
 }
-async function snap(page,name){await page.waitForTimeout(160);const path=proof+'/'+name+'.png';try{await page.screenshot({path,fullPage:false,timeout:12000})}catch{const cdp=await page.context().newCDPSession(page);try{const out=await cdp.send('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});await writeFile(path,Buffer.from(out.data,'base64'))}finally{await cdp.detach().catch(()=>{})}}}
+async function snap(page,name){await page.waitForTimeout(0);const path=proof+'/'+name+'.png';try{await page.screenshot({path,fullPage:false,timeout:12000})}catch{const cdp=await page.context().newCDPSession(page);try{const out=await cdp.send('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});await writeFile(path,Buffer.from(out.data,'base64'))}finally{await cdp.detach().catch(()=>{})}}}
 async function invariant(page,label){
  const x=await page.evaluate(()=>({route:location.hash,globalNav:[...document.querySelectorAll('.topnav [data-v5-global]')].map(e=>e.dataset.v5Global),marketNav:[...document.querySelectorAll('#liveRail .rwa-v5-market-nav>button[data-v5-nav]')].map(e=>e.dataset.v5Nav),ticket:!!document.querySelector('#liveRail #rwaTargetOrderTicket'),mock:!!document.querySelector('#rwaScreenshotParity'),commerce:/seablueprint|ecommerce|in-page commerce/i.test(document.body.innerText)}));
- if(x.route!=='#markets'||!x.ticket||x.mock||x.commerce||JSON.stringify(x.globalNav)!==JSON.stringify(['markets'])||JSON.stringify(x.marketNav)!==JSON.stringify(['trade','portfolio','orders','analytics','rewards','more']))errors.push(label+': '+JSON.stringify(x));
+ if(x.route!=='#markets'||!x.ticket||x.mock||x.commerce||JSON.stringify(x.globalNav)!==JSON.stringify(['trade','discover','portfolio','analytics','rewards','more'])||JSON.stringify(x.marketNav)!==JSON.stringify(['trade','portfolio','orders','analytics','rewards','more']))errors.push(label+': '+JSON.stringify(x));
 }
 const ctx=await browser.newContext({viewport:{width:1672,height:941},deviceScaleFactor:1,serviceWorkers:'block'}),page=await ctx.newPage();page.on('pageerror',e=>errors.push('desktop: '+String(e?.message||e)));
 await root(page);await invariant(page,'market');await snap(page,'01-market-desktop');
-await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="more"]').click();await page.locator('#liveRail [data-v5-more-menu] [data-v5-nav="discover"]').click();await invariant(page,'discover');await snap(page,'02-discover-desktop');
-await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="portfolio"]').click();await invariant(page,'portfolio');await snap(page,'03-portfolio-desktop');
+await page.locator('.topnav>button[data-v5-nav="discover"]').click();await invariant(page,'discover');await snap(page,'02-discover-desktop');
+await page.locator('.topnav>button[data-v5-nav="portfolio"]').click();await invariant(page,'portfolio');await snap(page,'03-portfolio-desktop');
 await page.locator('#rwaV5Bottom [data-v5-bottom="orders"]').click();await invariant(page,'orders');await snap(page,'04-orders-desktop');
-await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="analytics"]').click();await invariant(page,'analytics');await snap(page,'05-analytics-desktop');
-await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="rewards"]').click();await invariant(page,'rewards');await snap(page,'06-rewards-desktop');
-await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="trade"]').click();await page.locator('#liveRail [data-v5-trade-tab="alerts"]').click();await invariant(page,'alerts');await snap(page,'07-alerts-desktop');
+await page.locator('.topnav>button[data-v5-nav="analytics"]').click();await invariant(page,'analytics');await snap(page,'05-analytics-desktop');
+await page.locator('.topnav>button[data-v5-nav="rewards"]').click();await invariant(page,'rewards');await snap(page,'06-rewards-desktop');
+await page.locator('.topnav>button[data-v5-nav="trade"]').click();await page.locator('#liveRail [data-v5-trade-tab="alerts"]').click();await invariant(page,'alerts');await snap(page,'07-alerts-desktop');
 await page.locator('#rwaMultiChainLaunch').click();await page.waitForFunction(()=>window.RWAMultiChain?.status?.().open===true,{timeout:15000});await snap(page,'08-multichain-desktop');await page.locator('#rwaMultiChainPanel .rwa-mc-close').click();
 const summary=await page.evaluate(()=>({route:location.hash,pairs:window.RWAMarketRuntime.state().pairs.length,terminal:window.RWATerminalV5.audit(),market:window.RWALiveHome.audit(),multichain:window.RWAMultiChain?.status?.()}));await ctx.close();
 
