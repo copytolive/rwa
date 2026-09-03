@@ -18,6 +18,7 @@ jobs:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
       - name: Wait exact SHA
+        id: collect
         shell: bash
         run: |
           set -euo pipefail
@@ -35,7 +36,14 @@ jobs:
           jq '. + {complete:((.workflows|map(.name)|unique|length)>=7 and ([.workflows[]|select(.status!="completed")]|length)==0),all_success:((.workflows|map(.name)|unique|length)>=7 and ([.workflows[]|select(.conclusion!="success")]|length)==0)}' "$OUT" > "$OUT.tmp"
           mv "$OUT.tmp" "$OUT"
           cat "$OUT"
+          if [ "$(jq -r '.all_success' "$OUT")" = "true" ]; then
+            echo "publish_status=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish_status=false" >> "$GITHUB_OUTPUT"
+            echo "Exact SHA is not fully green; preserve the last published green certification receipt."
+          fi
       - name: Publish
+        if: steps.collect.outputs.publish_status == 'true'
         shell: bash
         run: |
           set -euo pipefail
