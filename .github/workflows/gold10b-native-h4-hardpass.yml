@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     env:
-      H4_STATE: ${{ github.workspace }}/.gold10b-native-h4
+      H4_STATE: ${{ runner.temp }}/gold10b-native-h4
     steps:
       - uses: actions/checkout@v4
         with:
