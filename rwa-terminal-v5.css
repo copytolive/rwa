@@ -264,7 +264,7 @@ body.rwa-terminal-v5 #rwaTargetOrderTicket .rwa-target-trade-note{font-size:6.5p
  body.rwa-terminal-v5 #asks .bookrow,body.rwa-terminal-v5 #bids .bookrow{height:34px!important;min-height:34px!important;padding:0 10px!important;font-size:9px!important}
  body.rwa-terminal-v5 .midprice{height:42px!important;min-height:42px!important;padding:0 10px!important}
  body.rwa-terminal-v5 #liveRail{display:none!important;position:relative!important;inset:auto!important;width:100%!important;min-width:0!important;max-width:none!important;height:auto!important;min-height:0!important;border:0!important;background:#06111b!important}
- body.rwa-terminal-v5[data-v5-mobile-mode="trade"] #liveRail{display:flex!important;min-height:650px!important}
+ body.rwa-terminal-v5[data-v5-mobile-mode="trade"] #liveRail{display:flex!important;flex-direction:column!important;align-items:stretch!important;min-height:650px!important}
  body.rwa-terminal-v5 #rwaTargetOrderTicket{min-height:600px!important;padding:10px!important}
  body.rwa-terminal-v5 #rwaV5Bottom{display:none!important;position:relative!important;width:100%!important;height:auto!important;min-height:540px!important;background:#04101a!important}
  body.rwa-terminal-v5[data-v5-mobile-mode="workspace"] #rwaV5Bottom{display:block!important}
