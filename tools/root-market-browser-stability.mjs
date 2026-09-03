@@ -48,7 +48,7 @@ async function open(browser,width,height){
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:25000});
   await page.waitForFunction(()=>window.RWALiveHome?.version==='5.0.0'&&window.RWATerminalV5?.version==='1.0.0'&&window.RWAMarketRuntime?.version==='1.4.3'&&window.RWAMarketRuntime.state().pairs.length===520,{timeout:25000});
   await page.waitForFunction(()=>document.querySelectorAll('#bids .bookrow').length>=5&&document.querySelectorAll('#asks .bookrow').length>=5&&document.querySelector('#liveRail #rwaTargetOrderTicket'),{timeout:15000});
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(0);
   return {context,page,errors};
 }
 async function desktop(browser){
@@ -79,29 +79,29 @@ async function desktop(browser){
   assert.equal(info.commerce,false);
   assert.equal(info.mock,false);
   assert.equal(info.brand,'Real World Asset');
-  assert.deepEqual(info.globalNav,['markets']);
+  assert.deepEqual(info.globalNav,['trade','discover','portfolio','analytics','rewards','more']);
   assert.deepEqual(info.marketNav,['trade','portfolio','orders','analytics','rewards','more']);
-  const navRects=await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav]').evaluateAll(xs=>xs.map(x=>{const r=x.getBoundingClientRect(),s=getComputedStyle(x);return{x:r.x,y:r.y,w:r.width,h:r.height,display:s.display,visibility:s.visibility,opacity:s.opacity}}));
+  const navRects=await page.locator('.topnav>button[data-v5-nav]').evaluateAll(xs=>xs.map(x=>{const r=x.getBoundingClientRect(),s=getComputedStyle(x);return{x:r.x,y:r.y,w:r.width,h:r.height,display:s.display,visibility:s.visibility,opacity:s.opacity}}));
   assert.equal(navRects.length,6);assert.ok(navRects.every(r=>r.w>=20&&r.h>=30&&r.y>=0&&r.y<=8&&r.display!=='none'&&r.visibility!=='hidden'&&Number(r.opacity)>0));
-  assert.equal(await page.locator('.topnav [data-v5-nav]').count(),0);
+  assert.equal(await page.locator('#liveRail>.rwa-v5-market-nav').isVisible(),false);
   assert.deepEqual(info.bottomTabs,['positions','orders','holders','feed','analytics','thesis','history']);
   assert.deepEqual(info.leftTabs,['watchlist','feed','pulse','live']);
   assert.equal(info.ticketInside,true);
-  assert.ok(Math.abs(info.left.w-238)<=3);
-  assert.ok(Math.abs(info.book.w-250)<=3);
-  assert.ok(Math.abs(info.trade.w-300)<=3);
+  assert.ok(Math.abs(info.left.w-310)<=3);
+  assert.ok(Math.abs(info.book.w-280)<=3);
+  assert.ok(Math.abs(info.trade.w-230)<=3);
   assert.ok(Math.abs(info.bottom.h-220)<=3);
   assert.ok(Math.abs(info.footer.h-28)<=2);
   assert.equal(await locationHash(page),'#markets');
 
-  await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="more"]').click();await page.locator('#liveRail [data-v5-more-menu] [data-v5-nav="discover"]').click();await page.waitForTimeout(40);
+  await page.locator('.topnav>button[data-v5-nav="discover"]').click();await page.waitForTimeout(0);
   assert.match(await page.locator('[data-v5-bottom-body]').innerText(),/Top movers|Top volume/i);
-  await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="analytics"]').click();await page.waitForTimeout(40);
+  await page.locator('.topnav>button[data-v5-nav="analytics"]').click();await page.waitForTimeout(0);
   assert.match(await page.locator('[data-v5-bottom-body]').innerText(),/LIVE PAIRS|RWA-LINKED/i);
-  await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="rewards"]').click();await page.waitForTimeout(40);
+  await page.locator('.topnav>button[data-v5-nav="rewards"]').click();await page.waitForTimeout(0);
   assert.match(await page.locator('[data-v5-bottom-body]').innerText(),/INACTIVE|No verified rewards|Rewards ledger unavailable|LOCKED/i);
 
-  await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="trade"]').click();
+  await page.locator('.topnav>button[data-v5-nav="trade"]').click();
   await page.locator('.rwa-v5-side-switch [data-v5-side="SELL"]').click();
   assert.equal(await page.locator('#rwaTargetOrderTicket').getAttribute('data-v5-side'),'SELL');
   await page.locator('.rwa-v5-side-switch [data-v5-side="BUY"]').click();
@@ -148,8 +148,9 @@ async function mobile(browser,width,height){
   await page.locator('.rwa-v5-mobile-worktabs [data-v5-action="open-markets"]').click();assert.ok(await page.locator('.left').isVisible());
   await page.locator('[data-v5-action="close-markets"]').click();
   await page.locator('.rwa-v5-mobile-worktabs [data-v5-mobile-mode="trade"]').click();
-  await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="portfolio"]').click();assert.ok(await page.locator('#rwaV5Bottom').isVisible());
-  assert.equal(await page.locator('.mobile-tabs [data-v5-mobile-nav],.topnav [data-v5-nav]').count(),0);
+  await page.locator('.mobile-tabs [data-v5-mobile-nav="portfolio"]').click();assert.ok(await page.locator('#rwaV5Bottom').isVisible());
+  assert.equal(await page.locator('.mobile-tabs [data-v5-mobile-nav]').count(),5);
+  assert.equal(await page.locator('.topnav').isVisible(),false);
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);assert.ok(overflow<=2);
   assert.equal(errors.length,0,`mobile page errors: ${errors.join(' | ')}`);
   await context.close();return x;
