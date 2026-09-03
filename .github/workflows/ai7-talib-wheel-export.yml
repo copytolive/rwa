@@ -1,0 +1,32 @@
+name: AI7 TA-Lib Wheel Export
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/ai7-talib-wheel-export.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  wheel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Download TA-Lib wheel
+        run: |
+          set -euo pipefail
+          mkdir -p wheelhouse
+          python -m pip download --only-binary=:all: --no-deps "TA-Lib==0.6.8" -d wheelhouse
+          ls -lh wheelhouse
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ai7-talib-wheel-${{ github.run_id }}
+          path: wheelhouse
+          if-no-files-found: error
+          retention-days: 7

@@ -1,0 +1,53 @@
+name: AI7 GOLD H1 D1 Export
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/ai7-gold-h1d1-export.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      FROM_DATE: "2003-05-05"
+      TO_DATE: "2026-04-29"
+      DATA_DIR: ${{ github.workspace }}/.copytolive-gold-h1
+      DATA_FILE: ${{ github.workspace }}/.copytolive-gold-h1/GOLD_H1.csv
+      D1_FILE: ${{ github.workspace }}/.copytolive-gold-h1/GOLD_D1.csv
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Dukascopy client
+        run: npm install --no-save --ignore-scripts dukascopy-node@1.50.0
+      - name: Restore canonical reconstruction cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .copytolive-gold-h1
+            .dukascopy-cache-copytolive-gold
+          key: copytolive-xauusd-m1-resampled-h1d1-v5-${{ env.FROM_DATE }}-${{ env.TO_DATE }}
+      - name: Build H1 and D1
+        run: |
+          set -euo pipefail
+          mkdir -p "$DATA_DIR"
+          if [ ! -s "$DATA_FILE" ] || [ ! -s "$D1_FILE" ]; then
+            node backtest/gold24/fetch_copytolive_gold_h1.cjs "$DATA_FILE" "$D1_FILE" "$FROM_DATE" "$TO_DATE"
+          fi
+          wc -l "$DATA_FILE" "$D1_FILE"
+          sha256sum "$DATA_FILE" "$D1_FILE"
+      - name: Upload H1 and D1
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai7-gold-h1d1-${{ github.run_id }}
+          path: |
+            .copytolive-gold-h1/GOLD_H1.csv
+            .copytolive-gold-h1/GOLD_D1.csv
+          if-no-files-found: error
+          retention-days: 7

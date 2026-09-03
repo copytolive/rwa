@@ -1,0 +1,29 @@
+name: AI7 GOLD Source Pack Export
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/ai7-gold-source-pack-export.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Upload parity source pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai7-gold-source-pack-${{ github.run_id }}
+          path: |
+            backtest/gold24/copytolive_active_replay.py
+            backtest/gold24/copytolive_active_gold_manifest.json
+            backtest/gold24/copytolive_gold_strategy_sources.json
+            backtest/gold24/copytolive_compat.py
+            backtest/gold24/test_copytolive_compat.py
+          if-no-files-found: error
+          retention-days: 7

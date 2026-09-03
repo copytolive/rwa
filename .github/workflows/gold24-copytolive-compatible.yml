@@ -47,6 +47,7 @@ jobs:
       TO_DATE: ${{ github.event.inputs.to_date || '2026-05-01' }}
       DATA_DIR: ${{ github.workspace }}/.copytolive-gold-h1
       DATA_FILE: ${{ github.workspace }}/.copytolive-gold-h1/GOLD_H1.csv
+      D1_FILE: ${{ github.workspace }}/.copytolive-gold-h1/GOLD_D1.csv
       OUT_DIR: ${{ github.workspace }}/backtest/gold24/runtime_copytolive_active
 
     steps:
@@ -75,6 +76,11 @@ jobs:
           set -euo pipefail
           cd backtest/gold24
           python -m unittest -v test_copytolive_compat.py
+
+      - name: Compile exact replay producer path
+        run: |
+          set -euo pipefail
+          python -m py_compile backtest/gold24/copytolive_active_replay.py
 
       - name: Validate exact active source pack
         run: |
@@ -110,28 +116,29 @@ jobs:
           path: |
             .copytolive-gold-h1
             .dukascopy-cache-copytolive-gold
-          key: copytolive-xauusd-m1-resampled-h1-v3-${{ env.FROM_DATE }}-${{ env.TO_DATE }}
+          key: copytolive-xauusd-m1-resampled-h1d1-v6-noflats-${{ env.FROM_DATE }}-${{ env.TO_DATE }}
 
       - name: Fetch GOLD H1 on GitHub runner
         run: |
           set -euo pipefail
           mkdir -p "$DATA_DIR"
-          if [ ! -s "$DATA_FILE" ]; then
-            node backtest/gold24/fetch_copytolive_gold_h1.cjs "$DATA_FILE" "$FROM_DATE" "$TO_DATE"
+          if [ ! -s "$DATA_FILE" ] || [ ! -s "$D1_FILE" ]; then
+            node backtest/gold24/fetch_copytolive_gold_h1.cjs "$DATA_FILE" "$D1_FILE" "$FROM_DATE" "$TO_DATE"
           else
-            echo "Using cached $DATA_FILE"
+            echo "Using cached $DATA_FILE and $D1_FILE"
           fi
           python - <<'PY'
           import hashlib, os, pandas as pd
-          p=os.environ['DATA_FILE']
-          d=pd.read_csv(p)
-          assert len(d)>10000
+          p=os.environ['DATA_FILE']; p1=os.environ['D1_FILE']
+          d=pd.read_csv(p); d1=pd.read_csv(p1)
+          assert len(d)>10000 and len(d1)>1000
           assert {'Date','open','high','low','close'}.issubset(d.columns)
+          assert {'Date','open','high','low','close'}.issubset(d1.columns)
           print({
-              'rows':len(d),
-              'start':d['Date'].iloc[0],
-              'end':d['Date'].iloc[-1],
-              'sha256':hashlib.sha256(open(p,'rb').read()).hexdigest(),
+              'h1_rows':len(d),'h1_start':d['Date'].iloc[0],'h1_end':d['Date'].iloc[-1],
+              'h1_sha256':hashlib.sha256(open(p,'rb').read()).hexdigest(),
+              'd1_rows':len(d1),'d1_start':d1['Date'].iloc[0],'d1_end':d1['Date'].iloc[-1],
+              'd1_sha256':hashlib.sha256(open(p1,'rb').read()).hexdigest(),
           })
           PY
 
@@ -140,7 +147,7 @@ jobs:
           set -euo pipefail
           rm -rf "$OUT_DIR"
           mkdir -p "$OUT_DIR"
-          python backtest/gold24/copytolive_active_replay.py             --dataset "$DATA_FILE"             --out-dir "$OUT_DIR"
+          python backtest/gold24/copytolive_active_replay.py --dataset "$DATA_FILE" --d1-dataset "$D1_FILE" --out-dir "$OUT_DIR"
           test -s "$OUT_DIR/latest_copytolive_active_replay.json"
           test -s "$OUT_DIR/latest_copytolive_active_replay.csv"
           test -s "$OUT_DIR/latest_copytolive_active_replay_summary.json"
@@ -160,6 +167,7 @@ jobs:
           assert x['source']['active_gold_count']==118
           assert x['source']['timeframe_counts']=={'H1':118}
           assert int(x['dataset']['rows'])>10000
+          assert int(x['d1_dataset']['rows'])>1000
           c=x['execution_contract']
           assert float(c['deposit_usd'])==10000.0
           assert float(c['risk_usd_per_trade'])==200.0
@@ -242,6 +250,9 @@ jobs:
               'max_abs_delta':max_abs,
               'worst_delta':worst,
               'dataset':x['dataset'],
+              'd1_dataset':x['d1_dataset'],
+              'producer_reference':x.get('producer_reference'),
+              'producer_filter_modes':x.get('producer_filter_modes'),
               'source':x['source'],
               'execution_contract':x['execution_contract'],
               'strict_gate_counts':{
