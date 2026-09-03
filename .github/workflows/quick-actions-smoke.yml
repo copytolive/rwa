@@ -3,10 +3,8 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "index.html"
       - "quick-actions.js"
-      - "suite.js"
-      - "suite-ui.js"
+      - "rwa-live-home-v1.js"
       - ".github/workflows/quick-actions-smoke.yml"
   workflow_dispatch:
 permissions:
@@ -18,12 +16,15 @@ concurrency:
 jobs:
   quick-actions:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Validate source
+      - name: Validate lazy real-action source
+        shell: bash
         run: |
+          set -euo pipefail
           node --check quick-actions.js
-          grep -Fq 'quick-actions.js?v=1' index.html
+          node --check rwa-live-home-v1.js
           grep -Fq 'RWAQuickActions' quick-actions.js
           grep -Fq 'data-rwa-trade-now' quick-actions.js
           grep -Fq "openTab('watch')" quick-actions.js
@@ -31,24 +32,30 @@ jobs:
           grep -Fq "new URL('trade/'" quick-actions.js
           grep -Fq 'navigator.share' quick-actions.js
           grep -Fq 'navigator.clipboard.writeText' quick-actions.js
+          grep -Fq "loadScript('quick-actions.js?v=2','RWAQuickActions')" rwa-live-home-v1.js
+          grep -Fq "RWAQuickActions?.alert" rwa-live-home-v1.js
           ! grep -Fq 'ExchangeClient' quick-actions.js
+          echo RWA_QUICK_ACTIONS_LAZY_SOURCE_PASS
       - name: Publish source status
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/quick-actions-source' -f description='Watch, alert, share, RWA access and perps routing verified'
-      - name: Verify live bundle
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/quick-actions-source' -f description='Lazy watch alert share and trading shortcuts verified'
+      - name: Verify public lazy bundle
         shell: bash
         run: |
+          set -euo pipefail
+          BASE='https://copytolive.github.io/rwa'
           ok=0
-          for i in {1..120}; do
-            q="${GITHUB_RUN_ID}-${i}"
-            html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/?v=$q" || true)"
-            js="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/quick-actions.js?v=$q" || true)"
-            if grep -Fq 'quick-actions.js?v=1' <<<"$html" \
-              && grep -Fq 'RWAQuickActions' <<<"$js" \
+          for i in $(seq 1 90); do
+            live_sha="$(curl -fsSL --max-time 15 "$BASE/deployment-sha.txt?v=$i" 2>/dev/null | tr -d '\r\n' || true)"
+            q="${live_sha:-none}-$i"
+            home="$(curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$BASE/rwa-live-home-v1.js?v=$q" 2>/dev/null || true)"
+            js="$(curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$BASE/quick-actions.js?v=$q" 2>/dev/null || true)"
+            if grep -Fq 'RWAQuickActions' <<<"$js" \
               && grep -Fq 'data-rwa-trade-now' <<<"$js" \
               && grep -Fq "openTab('watch')" <<<"$js" \
-              && grep -Fq "new URL('trade/'" <<<"$js"; then ok=1; break; fi
+              && grep -Fq "new URL('trade/'" <<<"$js" \
+              && grep -Fq "loadScript('quick-actions.js?v=2','RWAQuickActions')" <<<"$home"; then ok=1; break; fi
             sleep 5
           done
           test "$ok" = "1"
@@ -56,9 +63,9 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/quick-actions-live' -f description='Actionable market shortcuts verified live on GitHub Pages'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/quick-actions-live' -f description='Lazy market shortcuts verified on copytolive Pages'
       - name: Publish failure status
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/quick-actions-live' -f description='Quick actions live verification failed'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/quick-actions-live' -f description='Quick actions verification failed'
