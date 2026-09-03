@@ -47,7 +47,7 @@ SL_FREQ = [5.0, 7.5, 10.0, 12.5, 15.0, 17.5, 19.5, 20.0]
 TP_FREQ = [7.5, 10.0, 12.5, 15.0, 17.5, 20.0, 22.5, 24.0, 24.5, 25.0]
 OFFSET_FREQ = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.25]
 EXPIRY_FREQ = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20]
-PRIOR_TARGETED_EVALUATED_UNIQUE = 50000
+PRIOR_TARGETED_EVALUATED_UNIQUE = 100000
 
 def _init_worker(dataset: str, receipt: str) -> None:
     global _WORKER_D
@@ -55,55 +55,59 @@ def _init_worker(dataset: str, receipt: str) -> None:
 
 
 def _candidate(rng: random.Random) -> Candidate:
-    # Weight the two 7/8 seeds most heavily, while adding real family-level
-    # discovery rather than only cosmetic parameter remixing.
+    # v3 expands the actual signal-frequency thresholds into regions that were
+    # absent from master discovery and both prior targeted batches.  This keeps
+    # candidate accounting exact (no overlap) while attacking the observed
+    # Entry>=300 bottleneck directly.
     family = rng.choices(
         list(TARGET_FAMILIES),
-        weights=[0.30, 0.30, 0.18, 0.14, 0.08],
+        weights=[0.27, 0.25, 0.20, 0.18, 0.10],
         k=1,
     )[0]
 
-    if family not in BASES:
-        # Reuse the canonical family-aware generator for genuinely different
-        # signal engines.  Prior master hashes are filtered later.
-        return impl._fresh_candidate_for_family(rng, family)
-
-    b = dict(BASES[family])
-    if rng.random() < 0.88:
-        fast = rng.choice(FAST)
-        valid_slow = [x for x in SLOW if x > fast]
-        slow = rng.choice(valid_slow)
+    fast = rng.choice([2, 3, 5, 7, 8, 10, 13])
+    valid_slow = [x for x in [5, 7, 8, 10, 13, 14, 20, 21, 26, 34, 50] if x > fast]
+    slow = rng.choice(valid_slow)
+    entry = "LIMIT" if rng.random() < 0.72 else "STOP"
+    direction = "BOTH" if rng.random() < 0.72 else "LONG_ONLY"
+    sl = float(rng.choice([5.0, 7.5, 10.0, 12.5, 15.0]))
+    tp_pool = [7.5, 10.0, 12.5, 15.0, 17.5, 20.0, 22.5, 25.0]
+    if rng.random() < 0.80:
+        tps = [x for x in tp_pool if x >= sl]
+        tp = float(rng.choice(tps or tp_pool))
     else:
-        fast, slow = int(b["fast"]), int(b["slow"])
+        tp = float(rng.choice(tp_pool))
+    offset = float(rng.choice([0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5]))
+    expiry = int(rng.choice([4, 6, 8, 10, 12, 16, 20]))
 
-    p1 = rng.choice(P1_SR_CHART)
-    entry = "LIMIT" if rng.random() < 0.82 else "STOP"
-    # BOTH is intentionally explored more often than v1 to test whether higher
-    # signal frequency can reach Entry>=300 without relaxing any quality gate.
-    direction = "BOTH" if rng.random() < 0.58 else "LONG_ONLY"
-    sl = rng.choice(SL_FREQ)
-    if rng.random() < 0.78:
-        tps = [x for x in TP_FREQ if x >= sl]
-        tp = rng.choice(tps or TP_FREQ)
+    if family in {"SUPPORT_RESISTANCE", "CHART_PATTERN"}:
+        # Prior master used <=1.0; targeted-v1 maxed at 2.5; v2 maxed at 1.0.
+        # ATR tolerance >=3.0 is therefore a new, frequency-expanding region.
+        p1 = float(rng.choice([3.0, 3.5, 4.0, 5.0, 6.0]))
+        p2, p3 = 55.0, 1.0
+    elif family == "VOLATILITY_REGIME":
+        # Master/v2 p1 started at 1.05.  Lower expansion thresholds increase
+        # trend-event density while p2 broadens the quiet-regime reversion arm.
+        p1 = float(rng.choice([0.85, 0.90, 0.95, 1.00]))
+        p2 = float(rng.choice([0.85, 0.90, 0.95, 1.00, 1.05, 1.10]))
+        p3 = 1.0
+    elif family == "BOLLINGER_REVERSION_V2":
+        # Master/v2 p1 started at 1.2 and RSI p2 ended at 40.
+        p1 = float(rng.choice([0.80, 0.90, 1.00, 1.10]))
+        p2 = float(rng.choice([42.0, 45.0, 48.0, 50.0]))
+        p3 = 1.0
+    elif family == "CHANDELIER_TREND":
+        # Master/v2 capped the ATR chandelier multiplier at 4.0.
+        p1 = float(rng.choice([4.5, 5.0, 5.5, 6.0]))
+        p2, p3 = 55.0, 1.0
     else:
-        tp = rng.choice(TP_FREQ)
-    offset = rng.choice(OFFSET_FREQ)
-    expiry = rng.choice(EXPIRY_FREQ)
-
-    # Guarantee no overlap with the prior 50k SR/chart targeted run:
-    # v1 had p1>=0.5, SL>=10 and TP>=17.5 simultaneously.
-    if p1 >= 0.5 and sl >= 10.0 and tp >= 17.5:
-        if rng.random() < 0.50:
-            p1 = rng.choice([0.2, 0.3])
-        else:
-            sl = rng.choice([5.0, 7.5])
+        raise RuntimeError(f"unexpected targeted family {family}")
 
     c = Candidate(
         symbol="GOLD", timeframe="D1", family=family,
-        fast=int(fast), slow=int(slow), p1=float(p1),
-        p2=float(b["p2"]), p3=float(b["p3"]),
+        fast=int(fast), slow=int(slow), p1=p1, p2=p2, p3=p3,
         entry_method=entry, direction_mode=direction,
-        sl=float(sl), tp=float(tp), offset=float(offset), expiry=int(expiry),
+        sl=sl, tp=tp, offset=offset, expiry=expiry,
     )
     validate_candidate(c)
     return c
@@ -286,7 +290,7 @@ def main() -> int:
     )[:50]
 
     payload = {
-        "schema": "gold10b-hardpass-targeted-search-v2-frequency-disjoint",
+        "schema": "gold10b-hardpass-targeted-search-v3-frequency-expansion",
         "status": "PASS",
         "dataset": {
             "provider": audit.get("crosscheck_provider"),
@@ -310,10 +314,10 @@ def main() -> int:
         "cumulative_targeted_evaluated_unique": PRIOR_TARGETED_EVALUATED_UNIQUE + len(generated),
         "combined_candidate_evaluated": int(prior.get("evaluated_config_hash_count_cumulative", len(prior_eval))) + PRIOR_TARGETED_EVALUATED_UNIQUE + len(generated),
         "generation_profile": {
-            "name": "frequency-v2-disjoint",
+            "name": "frequency-v3-expansion-disjoint",
             "families": list(TARGET_FAMILIES),
             "disjoint_from_prior_targeted_50k": True,
-            "disjoint_rule": "SR/CHART require p1<0.5 or SL<10 or TP<17.5; other families were absent from prior targeted v1",
+            "disjoint_rule": "family-specific p1/p2 regions are outside master + targeted-v1 + targeted-v2 search domains",
             "threshold_relaxation": False,
         },
         "prefilter_survivors": len(prelim),
