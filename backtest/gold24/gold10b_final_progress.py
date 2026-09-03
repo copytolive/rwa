@@ -77,6 +77,45 @@ def main() -> int:
     cross_distinct = int(cross.get("distinct_family", family_count) or 0) if cross_status == "PASS" else family_count
     cross_max_share = float(cross.get("max_family_concentration", max_share) or 0.0) if cross_status == "PASS" else max_share
 
+    # Frequency-v4 recomputes the exact GLOBAL D1 correlation graph against the
+    # complete existing 118-method source set plus any new 7/7 non-correlation
+    # survivors. When published, it is the newer D1-global authority. It does
+    # not override H4 cross-timeframe eligibility, which remains a separate gate.
+    v4_ok = str(hardpass_v4.get("status","")) == "PASS"
+    if v4_ok:
+        d1_global_selected = int(hardpass_v4.get("global_selected", global_kept) or 0)
+        d1_global_hard = int(hardpass_v4.get("hard_pass_global", hard_all) or 0)
+        d1_global_watch = int(hardpass_v4.get("watch_global", watch_all) or 0)
+        d1_global_fail = int(hardpass_v4.get("fail_global", fail_all) or 0)
+        d1_global_pair_count = int(hardpass_v4.get("global_pair_count", pair_count) or 0)
+        d1_corr_violations = int(hardpass_v4.get("raw_corr_violations_gt_0_50", corr_viol) or 0)
+        d1_distinct = int(hardpass_v4.get("distinct_family", family_count) or 0)
+        d1_max_share = float(hardpass_v4.get("max_family_concentration", max_share) or 0.0)
+        d1_portfolio_readiness = str(hardpass_v4.get("portfolio_readiness", "NOT_READY"))
+        d1_source_input = int(hardpass_v4.get("global_methods_input_with_new", source_input) or 0)
+    else:
+        d1_global_selected = global_kept
+        d1_global_hard = hard_all
+        d1_global_watch = watch_all
+        d1_global_fail = fail_all
+        d1_global_pair_count = pair_count
+        d1_corr_violations = corr_viol
+        d1_distinct = family_count
+        d1_max_share = max_share
+        d1_portfolio_readiness = str(port.get("portfolio_readiness", "NOT_READY"))
+        d1_source_input = source_input
+
+    # With no H4 HARD PASS, D1 is also the all-timeframe selected authority.
+    # If H4 later produces globally eligible methods, the dedicated cross-timeframe
+    # proof remains authoritative for combined selection.
+    if h4_global_eligible == 0:
+        cross_global_hard = d1_global_hard
+        cross_global_watch = d1_global_watch
+        cross_global_fail = d1_global_fail
+        cross_selected = d1_global_selected
+        cross_distinct = d1_distinct
+        cross_max_share = d1_max_share
+
     payload = {
         "schema": "gold10b-final-progress-v1",
         "rules": {
@@ -118,25 +157,25 @@ def main() -> int:
             "candidate_evaluated_all_timeframes_minimum_unique": all_tf_min_unique,
             "candidate_evaluated_broker_h4_separate": broker_h4_eval,
             "broker_h4_added_to_unique_total": False,
-            "candidate_pass_global_d1": global_kept,
-            "hard_pass_portfolio_audit": hard_all,
-            "watch_portfolio_audit": watch_all,
-            "fail_portfolio_audit": fail_all,
-            "source_methods_input": source_input,
-            "global_corr_kept_d1": global_kept,
+            "candidate_pass_global_d1": d1_global_selected,
+            "hard_pass_portfolio_audit": d1_global_hard,
+            "watch_portfolio_audit": d1_global_watch,
+            "fail_portfolio_audit": d1_global_fail,
+            "source_methods_input": d1_source_input,
+            "global_corr_kept_d1": d1_global_selected,
             "global_corr_kept_all_timeframes": cross_selected,
-            "global_pair_count": pair_count,
-            "corr_violations": corr_viol if corr_viol else None,
-            "distinct_family_d1": family_count,
+            "global_pair_count": d1_global_pair_count,
+            "corr_violations": d1_corr_violations if d1_corr_violations else None,
+            "distinct_family_d1": d1_distinct,
             "distinct_family_all_timeframes": cross_distinct,
-            "max_family_concentration_d1": max_share,
+            "max_family_concentration_d1": d1_max_share,
             "max_family_concentration_all_timeframes": cross_max_share,
             "sample_ge_300_count": int(port.get("sample_ge_300_count", 0) or 0),
             "max_dd_le_25_count": int(port.get("max_dd_le_25_count", 0) or 0),
             "python_verified": python_verified,
             "mt5_verified": mt5_verified,
             "native_mt5_certification_run": int(cert.get("github_run_id",0) or 0) if cert_ok else None,
-            "portfolio_readiness": str(port.get("portfolio_readiness", "NOT_READY")),
+            "portfolio_readiness": d1_portfolio_readiness,
         },
         "latest_targeted_search": {
             "schema": target.get("schema"),
@@ -203,6 +242,7 @@ def main() -> int:
             "correlation_rule": cross.get("correlation_rule", "absolute Pearson(log-return equity), global per-symbol"),
         },
         "hard_pass_global_final": cross_global_hard,
+        "authoritative_d1_global_source": "hardpass_frequency_v4" if v4_ok else "combined_portfolio_audit",
         "live_ready": False,
         "live_ready_reason": (
             "no globally selected HARD PASS method yet; margin/slippage/broker interaction is not validated"
