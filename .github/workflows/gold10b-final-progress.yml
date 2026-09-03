@@ -1,0 +1,72 @@
+name: GOLD10B Final Progress Consolidation
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - GOLD10B Targeted HARD PASS Search
+      - GOLD10B Targeted HARD PASS Search v3
+      - GOLD10B Native H4 HARD PASS Discovery
+      - GOLD10B Global D1-H4 Correlation Gate
+      - GOLD24 Screening GPT Real Audit
+    types: [completed]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gold10b-final-progress
+  cancel-in-progress: true
+
+jobs:
+  consolidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build exact progress snapshot from published evidence only
+        run: |
+          set -euo pipefail
+          python backtest/gold24/gold10b_final_progress.py
+          python - <<'PY'
+          import json
+          p='backtest/gold24/runtime_final_progress/latest_final_progress.json'
+          x=json.load(open(p))
+          assert x['rules']['xauusd_pip_usd']==0.01
+          assert x['rules']['candidate_gate']=={'entry_min':100,'net_profit_usd_min':20000.0,'corr_max':0.5}
+          assert x['rules']['hard_pass']['entry_min']==300
+          assert x['rules']['hard_pass']['pf_min']==1.2
+          assert x['rules']['hard_pass']['max_dd_pct_max']==25.0
+          assert x['rules']['hard_pass']['oos_pf_min']==1.0
+          assert x['rules']['hard_pass']['positive_year_pct_min']==60.0
+          assert x['rules']['hard_pass']['corr_max']==0.5
+          assert x['after']['finalized_backtest']>=65357
+          print('GOLD10B_FINAL_PROGRESS_CONSOLIDATION_PASS')
+          PY
+
+      - name: Publish snapshot race-safe
+        run: |
+          set -euo pipefail
+          PAYLOAD="$RUNNER_TEMP/latest_final_progress.json"
+          cp backtest/gold24/runtime_final_progress/latest_final_progress.json "$PAYLOAD"
+          git config user.name "gold10b-bot"
+          git config user.email "gold10b-bot@users.noreply.github.com"
+          for TRY in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p backtest/gold24/runtime_final_progress
+            cp "$PAYLOAD" backtest/gold24/runtime_final_progress/latest_final_progress.json
+            git add backtest/gold24/runtime_final_progress/latest_final_progress.json
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m "chore(gold10b): publish final progress snapshot [skip ci]"
+            if git push origin HEAD:main; then exit 0; fi
+            sleep $((TRY*2))
+          done
+          exit 1

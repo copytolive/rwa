@@ -1,0 +1,71 @@
+name: AI3 CopyToLive Nav Audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ai3-nav-audit-requests/**"
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: req
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^ai3-nav-audit-requests/.*\.json$' | tail -n1)"
+          ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$FILE")"
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+          echo "out=ai3-nav-audit-results/$ID" >> "$GITHUB_OUTPUT"
+      - name: Capture live desktop/mobile nav
+        shell: bash
+        env:
+          ACCEPT_ID: ${{ steps.req.outputs.id }}
+          OUT_DIR: ${{ steps.req.outputs.out }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$OUT_DIR"
+          python3 -m pip install --quiet websocket-client
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium)"
+          "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu --remote-debugging-address=127.0.0.1 --remote-debugging-port=9779 --remote-allow-origins=* about:blank >/tmp/ai3-nav-audit-chrome.out 2>/tmp/ai3-nav-audit-chrome.err &
+          PID=$!
+          trap 'kill $PID 2>/dev/null || true' EXIT
+          python3 tools/ai3_copytolive_nav_audit.py
+      - name: Commit report
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="${{ steps.req.outputs.out }}"
+          test -f "$OUT/report.json"
+          git config user.name "CopyToLive AI3 Nav Audit"
+          git config user.email "copytolive-ai3-navaudit@local.invalid"
+          git add "$OUT"
+          git commit -m "ai3 nav audit: ${{ steps.req.outputs.id }}" || true
+          for attempt in 1 2 3 4 5 6; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort || true; sleep "$attempt"; continue; }
+            if git push origin HEAD:main; then exit 0; fi
+            sleep "$attempt"
+          done
+          exit 1
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.req.outputs.id }}
+          path: ${{ steps.req.outputs.out }}
+          if-no-files-found: error
+      - name: Enforce
+        if: always()
+        shell: bash
+        run: |
+          python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); raise SystemExit(0 if d.get("ok") and d.get("acceptance")=="PASS" else 1)' "${{ steps.req.outputs.out }}/report.json"

@@ -1,0 +1,105 @@
+name: RWA Terminal Backend Cloudflare
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "agent-worker/cloudflare/**"
+      - "agent-worker/public-config.json"
+      - "rwa-terminal-service.js"
+      - ".github/workflows/cloudflare-terminal-service.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rwa-terminal-backend-cloudflare
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      PROOF: validation/terminal-backend-cloudflare.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate worker source
+        run: |
+          set -euo pipefail
+          node --check agent-worker/cloudflare/src/index.mjs
+          node --check rwa-terminal-service.js
+          grep -Fq "/terminal/readyz" agent-worker/cloudflare/src/index.mjs
+          grep -Fq "/v1/alerts/create" agent-worker/cloudflare/src/index.mjs
+          grep -Fq "/v1/social/post" agent-worker/cloudflare/src/index.mjs
+          grep -Fq "/v1/rewards/summary" agent-worker/cloudflare/src/index.mjs
+          grep -Fq "/v1/holders" agent-worker/cloudflare/src/index.mjs
+
+      - name: Install worker dependencies
+        working-directory: agent-worker/cloudflare
+        run: npm install --no-audit --no-fund
+
+      - name: Deploy when Cloudflare credentials exist
+        id: deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "$PROOF")"
+          if [ -z "$CF_API_TOKEN" ] || [ -z "$CF_ACCOUNT_ID" ]; then
+            cat > "$PROOF" <<JSON
+          {"schema":1,"configured":false,"deployed":false,"ready":false,"reason":"cloudflare_github_secrets_missing"}
+          JSON
+            echo "deployed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          export CLOUDFLARE_API_TOKEN="$CF_API_TOKEN"
+          export CLOUDFLARE_ACCOUNT_ID="$CF_ACCOUNT_ID"
+          (cd agent-worker/cloudflare && npx wrangler deploy) | tee /tmp/wrangler-deploy.log
+          subdomain="$(curl -fsSL -H "Authorization: Bearer $CF_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/workers/subdomain" | jq -r '.result.subdomain // empty')"
+          test -n "$subdomain"
+          url="https://rwa-agent-worker.$subdomain.workers.dev"
+          curl -fsSL --retry 5 --retry-delay 2 "$url/terminal/readyz" > /tmp/terminal-ready.json
+          test "$(jq -r '.ok' /tmp/terminal-ready.json)" = "true"
+          jq -n --arg url "$url" --argjson ready "$(cat /tmp/terminal-ready.json)" '{
+            schema:1,configured:true,deployed:true,ready:true,base_url:$url,terminal_ready:$ready
+          }' > "$PROOF"
+          echo "deployed=true" >> "$GITHUB_OUTPUT"
+          echo "base_url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Activate public terminal backend config
+        if: steps.deploy.outputs.deployed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="${{ steps.deploy.outputs.base_url }}"
+          jq --arg url "$url" '.schema=3 | .enabled=true | .base_url=$url | .candidate_base_url=$url | .mode="terminal+delegated-agent" | .terminal_service={sessions:true,alerts_24x7:true,social:true,rewards_ledger:true,holders_source_gated:true}' agent-worker/public-config.json > /tmp/public-config.json
+          mv /tmp/public-config.json agent-worker/public-config.json
+          cat agent-worker/public-config.json
+
+      - name: Publish deployment receipt and config
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "rwa-terminal-backend-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add "$PROOF"
+          if [ "${{ steps.deploy.outputs.deployed }}" = "true" ]; then git add agent-worker/public-config.json; fi
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "chore(terminal): publish backend deployment receipt [skip ci]"
+          for i in $(seq 1 8); do
+            git fetch origin main
+            if git rebase origin/main && git push origin HEAD:main; then exit 0; fi
+            git rebase --abort || true
+            sleep $((i*3))
+          done
+          exit 1

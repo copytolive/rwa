@@ -1,0 +1,13 @@
+name: RENKO V10 Gate (Legacy / Manual)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  legacy-note:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "RENKO V10 is archived. Production gate moved to RENKO V12 tick-native."

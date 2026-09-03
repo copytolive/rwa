@@ -1,0 +1,87 @@
+name: GOLD24 Temporary DEV Diagnostic
+
+on:
+  push:
+    paths:
+      - 'backtest/gold24/github_dev_runner.py'
+      - 'backtest/gold24/github_goal_rr12_runner.py'
+      - 'backtest/gold24/RULES_GOAL_RR12_2026.md'
+      - '.github/workflows/gold24-github-runner.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: gold24-github-temporary-runner
+  cancel-in-progress: false
+
+jobs:
+  dev-backtest:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      GOLD24_STATE_DIR: ${{ github.workspace }}/.gold24-dev
+      GOLD24_DEV_MAX_BATCHES: '20'
+      GOLD24_DEV_BATCH_SIZE: '32'
+      GOLD24_FLAT_LOT: '1.0'
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Governance guard
+        run: |
+          echo 'This workflow is DEV diagnostic only, manual-only, and never counts as compliant.'
+          echo 'Compliant strategy execution must use the canonical fail-closed worker after Gate A PASS.'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install GOLD24 dependencies
+        run: |
+          pip install -r backtest/gold24/requirements.txt
+          pip install 'yfinance>=0.2.65,<1'
+
+      - name: Restore latest successful GitHub runner state
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$GOLD24_STATE_DIR" "$RUNNER_TEMP/gold24-restore"
+          PREV="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow gold24-github-runner.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId' 2>/dev/null || true)"
+          if [ -n "$PREV" ]; then
+            if gh run download "$PREV" --repo "$GITHUB_REPOSITORY" -n gold24-state -D "$RUNNER_TEMP/gold24-restore"; then
+              cp -a "$RUNNER_TEMP/gold24-restore/." "$GOLD24_STATE_DIR/"
+              echo "Restored state from run $PREV"
+            else
+              echo "Previous run has no downloadable state artifact; starting a fresh DEV diagnostic state."
+            fi
+          else
+            echo "No previous successful DEV diagnostic run."
+          fi
+
+      - name: Run RR1:2 WR50 weekly-entry DEV diagnostic
+        working-directory: backtest/gold24
+        run: python github_goal_rr12_runner.py
+
+      - name: Show status
+        if: always()
+        run: |
+          if [ -f "$GOLD24_STATE_DIR/status.json" ]; then
+            cat "$GOLD24_STATE_DIR/status.json"
+          else
+            echo 'status.json missing'
+          fi
+
+      - name: Upload resumable DEV diagnostic state
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold24-state
+          path: ${{ env.GOLD24_STATE_DIR }}/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 7
+          compression-level: 6

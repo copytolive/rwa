@@ -1,0 +1,51 @@
+name: RWA Enterprise UI V12 Legacy Proof
+
+on:
+  push:
+    branches:
+      - 'fix/top-company-ui-pair-stability-v12-20260827'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install browser runtime
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@1.52.0 --no-save
+          npx playwright install --with-deps chromium
+      - name: Verify legacy static contracts
+        run: |
+          grep -q 'market-performance.js?v=12' index.html
+          ! grep -q 'user-scalable=no' index.html
+          grep -q 'enterprise-ui-v12.css?v=12' market-performance.js
+          grep -q 'asset_pair_geometry=.route-owned-440px-v12' <(tr "'" '"' < market-performance.js) || grep -q "asset_pair_geometry='route-owned-440px-v12'" market-performance.js
+          grep -q 'grid-template-columns:repeat(5,minmax(0,1fr))' enterprise-ui-v12.css
+          test "$(grep -o '<script src=' index.html | wc -l | tr -d ' ')" = '14'
+      - name: Start legacy source page
+        run: |
+          python3 -m http.server 4173 >/tmp/rwa-v12-http.log 2>&1 &
+          echo $! >/tmp/rwa-v12-http.pid
+          for i in {1..30}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/rwa-v12-http.log
+          exit 1
+      - name: Run legacy pair stability proof
+        env:
+          RWA_BASE_URL: http://127.0.0.1:4173/
+          RWA_ARTIFACT_DIR: artifacts/enterprise-ui-v12
+        run: node tools/enterprise-ui-v12-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: enterprise-ui-v12-proof
+          path: artifacts/enterprise-ui-v12
+          if-no-files-found: warn

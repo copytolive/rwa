@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "updated_at": "2026-08-23",
+  "admins": [],
+  "note": "Only allowlisted wallets may publish repository-level 24x7 monitor rules. Monitor config is public because this repository is public."
+}

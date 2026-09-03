@@ -1,0 +1,19 @@
+{
+  "schema": 4,
+  "enabled": true,
+  "candidate_base_url": "https://rwa-terminal-service.vercel.app",
+  "base_url": "https://rwa-terminal-service.vercel.app",
+  "mode": "terminal+delegated-agent",
+  "master_private_key_required": false,
+  "agent_private_key_scope": "trade-only delegated Hyperliquid agent",
+  "note": "Production RWA Terminal Service validated on Vercel. Signed sessions, durable 24/7 alerts, signed social, rewards ledger, and authoritative source-gated holders are enabled. Trading remains delegated Hyperliquid testnet/mainnet according to explicit execution configuration.",
+  "terminal_service": {
+    "sessions": true,
+    "alerts_24x7": true,
+    "social": true,
+    "rewards_ledger": true,
+    "holders_source_gated": true,
+    "worker": "vercel-workflow"
+  },
+  "deployment_probe": "terminal-prod-vercel-1.3.2-2026-09-03"
+}

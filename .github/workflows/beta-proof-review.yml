@@ -1,0 +1,59 @@
+name: RWA Beta Proof Review
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: rwa-beta-proof-review
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: startsWith(github.event.issue.title, '[BETA-PROOF]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+      - name: Install signature verifier
+        run: npm install ethers@6.15.0 --no-save --ignore-scripts
+      - name: Verify wallet + worker + venue beta evidence
+        id: verify
+        continue-on-error: true
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: node tools/beta-proof.mjs
+      - name: Publish verified beta registry entry
+        if: steps.verify.outcome == 'success'
+        run: |
+          python -m json.tool launch/beta-registry.json >/dev/null
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add launch/beta-registry.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'launch: publish verified beta proof'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+      - name: Report beta proof accepted
+        if: steps.verify.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          DATA=$(cat beta-proof-success.txt)
+          gh issue comment "${{ github.event.issue.number }}" --body "Beta proof VERIFIED. Wallet signature, official worker safety contract, and Hyperliquid TESTNET open/close activity passed. Registry data: \`$DATA\`."
+          gh issue close "${{ github.event.issue.number }}" --reason completed
+      - name: Report beta proof rejected
+        if: steps.verify.outcome != 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          REASON=$(cat beta-proof-error.txt 2>/dev/null || echo 'Beta verification failed')
+          gh issue comment "${{ github.event.issue.number }}" --body "Beta proof rejected: $REASON"
+          gh issue close "${{ github.event.issue.number }}" --reason 'not planned'

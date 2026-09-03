@@ -1,0 +1,1073 @@
+{
+  "status": "PASS",
+  "schema": "gold24-engine-family-smoke-v2",
+  "dataset_rows": 6500,
+  "dataset_sha256": "817f128232b2ce4d84269d328a6c8ec279307792bda2cc06947e6f9378369fca",
+  "implemented_family_count": 48,
+  "tested_family_count": 48,
+  "all_implemented_families_executed": true,
+  "failures": [],
+  "rows": [
+    {
+      "family": "ADAPTIVE_TREND",
+      "config_hash": "4f566426b444036f56d456255c26828923330ff145c9892ba4c362c285b28270",
+      "signal_nonzero": 3568,
+      "trades": 938,
+      "execution_hash": "3230111206674715309036a8b198c36b",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "ADX_TREND",
+      "config_hash": "d5c5da9676a510d7c35ea6cb4362ebcf01df184f15f9bac2ece140aa83eb0dee",
+      "signal_nonzero": 2746,
+      "trades": 722,
+      "execution_hash": "4696dc5b233ac2c0fcae34704e7c8c4a",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "ATR_BREAKOUT",
+      "config_hash": "bd9d2716444a3a107c0b4361a651484bf398b40490371646f15715c931dfd285",
+      "signal_nonzero": 3395,
+      "trades": 1164,
+      "execution_hash": "03394e9313d3e8f48f53f7bb15f42f02",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "ATR_CHANNEL",
+      "config_hash": "78d71ea0c136713937d598ca40bb30e4fb839ee8a153ac21a103fd4d73917a8d",
+      "signal_nonzero": 191,
+      "trades": 123,
+      "execution_hash": "340ec8f67f35f7c9701892f8238b7a9a",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "ATR_MEANREV_REGIME",
+      "config_hash": "b7c04468bd2e3dfc0e502c2f9ce42a88774ca48a2dc63888d1b66d309f4665a6",
+      "signal_nonzero": 1259,
+      "trades": 851,
+      "execution_hash": "50e5132abdb10aaf55438084b6611894",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "BAND_HYBRID",
+      "config_hash": "84d0a71f84c502190eef5d4ed3577ced56d158e4ce244d945f77ae6e0823baa5",
+      "signal_nonzero": 25,
+      "trades": 22,
+      "execution_hash": "80b7925e101e8d24a1451036227f68ba",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "BOLLINGER_REVERSION",
+      "config_hash": "fd4dc6ef046130156363b2f787af6683c9ab9c0b2249f0948b03f25f6d3a4e5f",
+      "signal_nonzero": 1243,
+      "trades": 854,
+      "execution_hash": "72d7d482d9e5074c99c2741e675c78d0",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "BOLLINGER_REVERSION_V2",
+      "config_hash": "9242d724e3713534c49398e6111f41e6614ca7a0bc59d98adca6b628bc03e2e4",
+      "signal_nonzero": 105,
+      "trades": 88,
+      "execution_hash": "178049f1e5f4f0eebc8169f672fbe68c",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "BOLLINGER_SQUEEZE",
+      "config_hash": "cfe6ee0fc41fe0b87f4c8e2508261fc6cef685bfbd01b5d3efe37978194729db",
+      "signal_nonzero": 0,
+      "trades": 0,
+      "execution_hash": "",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "BOS_CHOCH",
+      "config_hash": "314c411c7f06042fc53531ea72638a336e1494281c60c9bb341d8e8a092fcebc",
+      "signal_nonzero": 1574,
+      "trades": 805,
+      "execution_hash": "fd25c897a89c9543ab245258aff438b7",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "CANDLE_ENGULFING",
+      "config_hash": "8102f49fefbc605034797b272a40821775a2289581403edf80709f37fcd52bd1",
+      "signal_nonzero": 218,
+      "trades": 185,
+      "execution_hash": "29613f847305b214424019ebe0ff6f19",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "CHANDELIER_TREND",
+      "config_hash": "d09f02f97c5d679dad88a62398cef979f19b56e4789e211f0152c61dfaf6d51b",
+      "signal_nonzero": 3260,
+      "trades": 1189,
+      "execution_hash": "bf4fc20269e035785e600245bd3277ac",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "CHART_PATTERN",
+      "config_hash": "b1d0ca27bbfa17f9d80292fb544a7a5ad8b8da0137a9cd8b1b136819b14316a4",
+      "signal_nonzero": 2,
+      "trades": 2,
+      "execution_hash": "d4d53859bbb1b06933571d74ebe8335b",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "DIVERGENCE",
+      "config_hash": "17af5571b25c556e4fa3504cdf6753473b6a1364fcebe37ee173de75be88f650",
+      "signal_nonzero": 122,
+      "trades": 90,
+      "execution_hash": "5c3869bfb49513375bf0a14775cb4843",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "DONCHIAN",
+      "config_hash": "a5bca4d3797a511d1cfdd7e3203a08d06d4f724cfea1b271a3b9a394ea90907a",
+      "signal_nonzero": 602,
+      "trades": 473,
+      "execution_hash": "f566b7c8d61a7026e07fba0bc7b07788",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "EMA_PULLBACK",
+      "config_hash": "ce1beb5d4369f5165e0004b9a992dd8ca97762b4db784d176636d69febf7abe7",
+      "signal_nonzero": 2110,
+      "trades": 1019,
+      "execution_hash": "220787a405b4ae7e3f7abb7e4bdee6d4",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "FIBONACCI",
+      "config_hash": "3e345f3ee5df3191527dce44451ec186d949577b496ddcb32ccc999aaa6696a0",
+      "signal_nonzero": 480,
+      "trades": 309,
+      "execution_hash": "4fb5394c44c5e8040ca4300cab4a2a91",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "FIB_PULLBACK",
+      "config_hash": "c2e6ff86d1d5ce7a01a3fd1f2a9e6dae21827006a74687b71d5317944728e1f1",
+      "signal_nonzero": 152,
+      "trades": 126,
+      "execution_hash": "5394983b94280c0d2b996b7f30cba390",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "FRACTAL_BREAKOUT",
+      "config_hash": "f11c715f1e14e79b5c8afc462925247b37cc5e5d650744ac998e0ea61ff6a63f",
+      "signal_nonzero": 1373,
+      "trades": 921,
+      "execution_hash": "8d5d735ed91251d4b49aa7bf13479259",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "HYBRID",
+      "config_hash": "0c67e6d0ccc612e1cf38cf46362c34e3b6b70aa67a2bcb121c9e6dff5ad4a439",
+      "signal_nonzero": 2270,
+      "trades": 901,
+      "execution_hash": "66b77e15dddf93cab9f314e90578cce9",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "ICHIMOKU",
+      "config_hash": "0423a1fb8db98aec9bdf1d1b4dd437b02e7a61e343b189e656fac9a8706c18a3",
+      "signal_nonzero": 1535,
+      "trades": 394,
+      "execution_hash": "566329df4674c2839a9f249c0af73b7c",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "ICHIMOKU_KUMO_BREAKOUT",
+      "config_hash": "9135d07546b10175d7e7251a4e074afc32df52630e2310ab95627f85f2f70a25",
+      "signal_nonzero": 142,
+      "trades": 101,
+      "execution_hash": "87320eacc24725a254d2a73b6fdbb171",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "ICHIMOKU_PULLBACK",
+      "config_hash": "bfa34d53bfe34ea144ec29af7149f5ed4b2eadaaf1e67f6a0e42334e1a16d46e",
+      "signal_nonzero": 389,
+      "trades": 248,
+      "execution_hash": "d32ba891ceff7bd7046f2969fa485a29",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "KELTNER_BREAKOUT",
+      "config_hash": "a6b2c99666b4906175f01795ec5b150a0c1523d911663e7a77b4470be8c7db52",
+      "signal_nonzero": 816,
+      "trades": 342,
+      "execution_hash": "833d903cc0325a5e3163805974246cfd",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "KELTNER_SQUEEZE",
+      "config_hash": "776e74bd5e0efc8d6de93f81bd9bb959f31958329cae51c3fb080deea5ee4ece",
+      "signal_nonzero": 12,
+      "trades": 10,
+      "execution_hash": "582afa2380d65292b63d75a9da1be48f",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "LINEAR_REGRESSION",
+      "config_hash": "97a8972a40a7d4af66d37cebb12119768206bce9eab355b1ad36e2edb4efdaa1",
+      "signal_nonzero": 1021,
+      "trades": 502,
+      "execution_hash": "673edf7c8d8b0ac9c3abfbfdd23269d5",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "MACD_MOMENTUM",
+      "config_hash": "5b8a382181043cae26a0c2f5c4c9ea9394bc4ca321e08f2aca0434b8e41ad7e9",
+      "signal_nonzero": 2724,
+      "trades": 934,
+      "execution_hash": "8673282b7f816083e4d335f68dc0f680",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "MARKET_STRUCTURE",
+      "config_hash": "4caba843908907aaa003eb7255bb74aeca84ea48ea29fbafdc30ce4fab138d22",
+      "signal_nonzero": 139,
+      "trades": 93,
+      "execution_hash": "57c99e2e49b32bccc78f6b15dd14509b",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "MOMENTUM_RSI_ROC",
+      "config_hash": "2286bda3a8e7026d761ad9ecee5946cf579e5aaf0c7f03aad08d1989f47dbfe0",
+      "signal_nonzero": 973,
+      "trades": 657,
+      "execution_hash": "6e070fde7a7b75d5843267ac06c7003e",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "MULTI_TIMEFRAME",
+      "config_hash": "0f940f6e8358e201468f7d9d73b89077e5b5c36775bfc4a779ea73e0106ebaf0",
+      "signal_nonzero": 1570,
+      "trades": 809,
+      "execution_hash": "9ba3ae385e980de029551ea872db89c4",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "PIVOT_SR",
+      "config_hash": "8731db2c2039dca5d1fc0bc2566c9d16c173af10741c3bbc24b00f739009395f",
+      "signal_nonzero": 3635,
+      "trades": 1133,
+      "execution_hash": "19cba5ed3e901b10ea0707218299dc41",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "PRICE_STRUCTURE",
+      "config_hash": "9aa5720ef9b67b7efb9d4e5812aaebee75dee782f420dd56522a5a37326048f6",
+      "signal_nonzero": 285,
+      "trades": 222,
+      "execution_hash": "3deb52dd8e19b960caf7e97cc7404aa8",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "REGRESSION_CHANNEL_BREAKOUT",
+      "config_hash": "9f9d6db12eb2ac03050a3aff5126aad3b6a810e922e7037ebdd6cce5153c6f95",
+      "signal_nonzero": 549,
+      "trades": 377,
+      "execution_hash": "5619790185b5fd92e2bafb5500e1fb8f",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "RELATIVE_STRENGTH",
+      "config_hash": "dc05501b8c89dce65969349de143382eaeeba4449780883fff7c06ac275325cf",
+      "signal_nonzero": 3893,
+      "trades": 1012,
+      "execution_hash": "a2bf2c50c2dfc79b57e768993ee7d639",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "ROLLING_ZSCORE",
+      "config_hash": "962b183abd4185e0ca20a2c3ec5069657ccd9aab322737f3aa3acae044c0225c",
+      "signal_nonzero": 108,
+      "trades": 95,
+      "execution_hash": "746d1f6ecf0d8425c0c070ac11bad98c",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "RSI_MOMENTUM",
+      "config_hash": "22d1ba94562a4fa24e267bbfc223929f7178251a604ff0c72e67afd78ca5674b",
+      "signal_nonzero": 4407,
+      "trades": 1807,
+      "execution_hash": "db8f9d5616da40a41b6c1a374ef24b44",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "RSI_REVERSION",
+      "config_hash": "0cbc2ba0c094c69c9fe0724039a5438e7dbae85d13fd20ad4cfe97b3386df23f",
+      "signal_nonzero": 321,
+      "trades": 243,
+      "execution_hash": "c3030e67ff91d11995bfbdd0d023a91d",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "STATISTICAL",
+      "config_hash": "5ac4803917957a7b55c64625190283ebbdc3e9c32d06fd990a9dee8ae83a9dae",
+      "signal_nonzero": 2188,
+      "trades": 886,
+      "execution_hash": "a2ba8e027de80b6072e265060958ccdf",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "SUPERTREND_ATR",
+      "config_hash": "2ada2cb2956fad1e1fb8a4ebb2a6a727f405c7d33d4f3ec11baa5cf724c6aea5",
+      "signal_nonzero": 4741,
+      "trades": 1202,
+      "execution_hash": "2eb621b960f036f3c3ce31b36af1da5f",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "SUPPORT_RESISTANCE",
+      "config_hash": "4b1cd8ea28366fbec6b5dc661487322d641ecd21d0a544eeb831b7ef8e48cd48",
+      "signal_nonzero": 7,
+      "trades": 7,
+      "execution_hash": "f6f28841dc2335eee7dfa1a2b67083a1",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "TREND_EMA",
+      "config_hash": "db709634588d2f474eedc68bf2143840b3a7a591774659fc98ce9b7f1c137c45",
+      "signal_nonzero": 1994,
+      "trades": 710,
+      "execution_hash": "0605284d1687403a445c15a234efd120",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "TREND_MEANREV_ENSEMBLE",
+      "config_hash": "9cc8ea305dd1f5d4cc4a9ab6c8995c3e170d27fe49c6e41f43adf2008c460ab4",
+      "signal_nonzero": 16,
+      "trades": 10,
+      "execution_hash": "cb09411743d1c9d755520d02661d092f",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "TURTLE_BREAKOUT",
+      "config_hash": "f4cd0083e225be32dcd0b28db594b834e0cbfc01008bc2d195b928bd652a3346",
+      "signal_nonzero": 941,
+      "trades": 626,
+      "execution_hash": "1ed844e2b02ea50dec49f0d4ddf27432",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "VOLATILITY",
+      "config_hash": "237445aeb68ef079d878b1fe337d25211a578582d7e565e32cbcd82c613d6a48",
+      "signal_nonzero": 0,
+      "trades": 0,
+      "execution_hash": "",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "VOLATILITY_REGIME",
+      "config_hash": "260bbeb2a9ab67649345529c99236e3fc3e95855714562190bc373bbfac5f429",
+      "signal_nonzero": 1299,
+      "trades": 434,
+      "execution_hash": "0e8baf0d5ce12467ba700c1d9b89a1b6",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "VOLUME",
+      "config_hash": "1f49d507b647d155cadcb1db69cadf3dd19f611c7237117333ca9f481b719146",
+      "signal_nonzero": 121,
+      "trades": 70,
+      "execution_hash": "106738358f58ae38e05d513d4ab06a6a",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "VWAP",
+      "config_hash": "862799cf268528beb6c04dc9fd46ebd42d730eab52e2962ae3c75dcfc0face0d",
+      "signal_nonzero": 550,
+      "trades": 377,
+      "execution_hash": "9f04fcdc5babe752e4443ad8a6a2b8cf",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    },
+    {
+      "family": "ZSCORE_REVERSION",
+      "config_hash": "11baf5c1d615088683464772482605ea67aa8a0a83a96d0a462d3b8c493aa969",
+      "signal_nonzero": 1377,
+      "trades": 614,
+      "execution_hash": "946c0b3ecc21061d67fb280d9ae86d68",
+      "causal_prefix_pass": true,
+      "causal_checks": [
+        {
+          "cut": 4550,
+          "same_prefix": true
+        },
+        {
+          "cut": 5200,
+          "same_prefix": true
+        },
+        {
+          "cut": 5850,
+          "same_prefix": true
+        }
+      ]
+    }
+  ],
+  "data_blocked_native_mtf": [
+    "H4_D1_MTF_NATIVE",
+    "D1_H4_PULLBACK_NATIVE"
+  ],
+  "note": "Blocked native-MTF families are intentionally not executed until real canonical H4 data exists."
+}

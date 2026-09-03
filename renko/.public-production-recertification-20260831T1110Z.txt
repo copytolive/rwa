@@ -1,0 +1,5 @@
+RENKO public production recertification marker.
+Parent target: current main after scheduled launch/readiness refresh.
+Runtime semantics: none.
+Purpose: fresh same-SHA final certification before the next scheduled repository refresh.
+Final evidence must use only the resulting commit SHA.

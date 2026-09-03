@@ -1,0 +1,43 @@
+name: RWA Unified Trading Product Smoke
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "index.html"
+      - "app.js"
+      - "chart-core.js"
+      - "rwa-live-home-v1.js"
+      - "rwa-multichain.js"
+      - "execution-api.js"
+      - "exchange-core.js"
+      - "wallet-core.js"
+      - ".github/workflows/unified-product-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unified:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Smoke trading product contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check rwa-live-home-v1.js
+          node --check execution-api.js
+          node --check exchange-core.js
+          node --check wallet-core.js
+          node --check rwa-multichain.js
+          grep -Fq 'Connect Wallet' index.html
+          grep -Fq 'rwaMultiChainLazyBootstrap' index.html
+          grep -Fq "riskGate:'mandatory-internal-v1'" execution-api.js
+          grep -Fq "protection:'atomic-normal-tpsl-v1'" exchange-core.js
+          ! grep -Eiq 'seablueprint|ecommerce' index.html
+          test ! -e commerce-service
+          test ! -e rwa-commerce-config.json
+          echo RWA_UNIFIED_TRADING_PRODUCT_PASS

@@ -1,0 +1,4 @@
+RENKO public-production recertification marker.
+Runtime semantics unchanged.
+Basis HEAD before marker: d0189e50fafe5540e801767fd0781b31317c134d
+Purpose: force all RENKO launch gates and canonical Pages validation to run on one fresh SHA.

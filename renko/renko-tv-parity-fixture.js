@@ -1,0 +1,42 @@
+/* Browser-visible long-history parity witness.
+ * Activate with ?fixture=gold20y. The fixture injects a compact multi-decade
+ * algorithm witness directly into the Renko engine. It never unlocks or changes
+ * the production runtime interval, which remains hard-locked to 1s.
+ */
+(()=>{
+'use strict';
+const p=new URLSearchParams(location.search);if(p.get('fixture')!=='gold20y')return;
+async function apply(){
+  const T=window.RWARenkoTV;if(!T)return;
+  const r=await fetch('fixtures/gold-20y-close-parity.json',{cache:'no-store'});if(!r.ok)throw new Error(`fixture HTTP ${r.status}`);
+  const f=await r.json(),bars=(f.bars||[]).map(([t,c])=>({openTime:Number(t),closeTime:Number(t)+86400000-1,open:Number(c),high:Number(c),low:Number(c),close:Number(c),volume:0,_renkoFixturePoint:'gold20y-daily-witness'}));
+  T.state.generation++;
+  T.state.symbol='GOLD20Y';T.state.tickSize=.1;T.state.lastPrice=Number(bars.at(-1)?.close);T.state.closedBars=bars;T.state.currentBar=null;T.state.status='live';
+  T.state.historyPages=99;T.state.parityFixture='gold20y';T.state.parityFixtureSourceRowsDaily=f.source_rows_daily;T.state.parityFixtureGateAValidated=f.gate_a_validated;
+  T.settings.source='close';T.settings.method='traditional';T.settings.boxSize=900;T.settings.wicks=true;
+  document.getElementById('sourceSelect')&&(document.getElementById('sourceSelect').value='close');
+  document.getElementById('traditionalBox')&&(document.getElementById('traditionalBox').value='900');
+  T.rebuild({fit:true});
+  const from=bars[0]?.openTime||0,to=bars.at(-1)?.closeTime||0,years=(to-from)/(365.2425*86400000);
+  const repaint=()=>{
+    if(T.state.parityFixture!=='gold20y')return;
+    const count=T.state.confirmed?.length||0,box=Number(T.state.box),pure=years>=20&&T.state.closedBars.length===bars.length&&T.settings.interval==='1s';
+    document.documentElement.dataset.renkoParityFixture='gold20y';
+    document.documentElement.dataset.renkoParityFixtureReady=pure?'true':'false';
+    document.documentElement.dataset.renkoParityFixtureExpectedCount=(box===900||box===1000)?'5':box===1200?'4':'';
+    document.documentElement.dataset.renkoParityFixtureBrickCount=String(count);
+    document.documentElement.dataset.renkoParityFixtureSpanYears=years.toFixed(2);
+    document.documentElement.dataset.renkoParityFixtureSourceBars=String(T.state.closedBars.length);
+    const pair=document.getElementById('pairName');if(pair)pair.textContent='GOLD · 20Y PARITY WITNESS';
+    const icon=document.getElementById('pairIcon');if(icon)icon.textContent='AU';
+    const source=document.getElementById('sourceText');if(source)source.textContent=`GOLD visual/algorithm witness · ${years.toFixed(2)} years preserved · ${bars.length} witness points from ${Number(f.source_rows_daily).toLocaleString()} raw D1 rows · production runtime remains fixed 1s`;
+    const total=document.getElementById('sourceBarCount');if(total)total.textContent=`${bars.length} witness / ${Number(f.source_rows_daily).toLocaleString()} D1 raw`;
+    const cov=document.getElementById('tvCoverage');if(cov)cov.textContent=`SOURCE RANGE ${new Date(from).toISOString().slice(0,10)} → ${new Date(to).toISOString().slice(0,10)} · ${years.toFixed(2)} YEARS · ${count} RENKO BRICKS`;
+    const load=document.getElementById('tvLoadState');if(load){load.textContent=`PARITY WITNESS · GOLD 20Y · BOX ${Number.isFinite(box)?box.toLocaleString():'—'} · ${count} BRICKS · runtime 1s lock intact`;load.className='load-state live'}
+  };
+  repaint();
+  const timer=setInterval(repaint,80);window.addEventListener('beforeunload',()=>clearInterval(timer),{once:true});
+  window.RENKO_GOLD20Y_FIXTURE={fixture:f,count:T.state.confirmed?.length||0,years,bars,repaint};
+}
+if(window.RWARenkoTV?.state?.status==='live')void apply();else window.addEventListener('renko:tv-ready',()=>void apply(),{once:true});
+})();

@@ -1,0 +1,126 @@
+name: GOLD10B Native H4 HARD PASS Discovery
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/gold10b-native-h4-hardpass.yml'
+      - 'backtest/gold24/tradingview_native_h4_gate_a.py'
+      - 'backtest/gold24/native_h4_hardpass_search.py'
+      - 'backtest/gold24/NATIVE_H4_HARDPASS_KICK'
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: gold10b-native-h4-hardpass
+  cancel-in-progress: true
+
+jobs:
+  native_h4:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      H4_STATE: ${{ github.workspace }}/.gold10b-native-h4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install backtest and direct TradingView H4 dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install -r backtest/gold24/requirements.txt
+          python -m pip install 'git+https://github.com/rongardF/tvdatafeed.git'
+
+      - name: Fetch and audit direct native H4 source bars
+        run: |
+          set -euo pipefail
+          rm -rf "$H4_STATE"
+          mkdir -p "$H4_STATE"
+          python -u backtest/gold24/tradingview_native_h4_gate_a.py --out-dir "$H4_STATE" --bars 20000
+          python - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ['H4_STATE'])/'gate_a_h4_receipt.json'
+          x=json.loads(p.read_text())
+          assert x['crosscheck_pass'] is True
+          assert x['timeframe']=='H4'
+          assert x['source_interval']=='H4'
+          assert x['construction']=='DIRECT_SOURCE_H4_BARS_NO_RESAMPLING'
+          assert x['no_resampling_attested'] is True
+          assert int(x['primary_rows'])>=3000
+          print(json.dumps({
+            'gate_a':'PASS','rows':x['primary_rows'],'start':x['primary_start_utc'],
+            'end':x['primary_end_utc'],'sha256':x['primary_sha256'],
+            'return_corr':x['h4_log_return_correlation']
+          },indent=2))
+          PY
+
+      - name: Run 48-family native H4 hard-pass discovery
+        run: |
+          set -euo pipefail
+          python -u backtest/gold24/native_h4_hardpass_search.py             --state-dir "$H4_STATE"             --out "$H4_STATE/native_h4_hardpass.json"             --candidate-count 60000             --workers 8             --seed 2026090404
+          python - <<'PY'
+          import json,os,pathlib
+          x=json.loads((pathlib.Path(os.environ['H4_STATE'])/'native_h4_hardpass.json').read_text())
+          assert x['status']=='PASS'
+          assert x['dataset']['timeframe']=='H4'
+          assert x['dataset']['construction']=='DIRECT_SOURCE_H4_BARS_NO_RESAMPLING'
+          assert x['candidate_evaluated_unique']==60000
+          assert x['candidate_gate']=={'entry_min':100,'net_profit_usd_min':20000.0,'corr_max':0.5}
+          assert x['hard_pass_gate']['entry_min']==300
+          assert x['hard_pass_gate']['pf_min']==1.2
+          assert x['hard_pass_gate']['max_dd_pct_max']==25.0
+          assert x['hard_pass_gate']['oos_pf_min']==1.0
+          assert x['hard_pass_gate']['positive_year_pct_min']==60.0
+          assert x['hard_pass_gate']['corr_max']==0.5
+          print(json.dumps({
+            'candidate_evaluated_unique':x['candidate_evaluated_unique'],
+            'primitive_survivors':x['primitive_survivors'],
+            'full_pre_corr_hardpass':x['full_pre_corr_hardpass'],
+            'native_h4_hardpass_kept':x['native_h4_hardpass_kept'],
+            'portfolio_readiness':x['portfolio_readiness']
+          },indent=2))
+          PY
+
+      - name: Publish H4 evidence race-safe
+        run: |
+          set -euo pipefail
+          PAYLOAD="$RUNNER_TEMP/native-h4-evidence"
+          rm -rf "$PAYLOAD"; mkdir -p "$PAYLOAD"
+          cp "$H4_STATE/gate_a_h4_receipt.json" "$PAYLOAD/latest_native_h4_gate_a.json"
+          cp "$H4_STATE/native_h4_hardpass.json" "$PAYLOAD/latest_native_h4_hardpass.json"
+          git config user.name "gold10b-bot"
+          git config user.email "gold10b-bot@users.noreply.github.com"
+          for TRY in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd
+            mkdir -p backtest/gold24/runtime_native_h4
+            cp "$PAYLOAD/"* backtest/gold24/runtime_native_h4/
+            git add backtest/gold24/runtime_native_h4
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m "chore(gold10b): publish native H4 hard-pass evidence [skip ci]"
+            if git push origin HEAD:main; then exit 0; fi
+            sleep $((TRY*2))
+          done
+          exit 1
+
+      - name: Upload native H4 reproducibility evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold10b-native-h4-${{ github.run_id }}
+          path: |
+            ${{ env.H4_STATE }}/GC1_COMEX_TRADINGVIEW_H4_PRIMARY.csv
+            ${{ env.H4_STATE }}/XAUUSD_OANDA_TRADINGVIEW_H4_CROSSCHECK.csv
+            ${{ env.H4_STATE }}/gate_a_h4_receipt.json
+            ${{ env.H4_STATE }}/native_h4_hardpass.json
+          if-no-files-found: warn
+          retention-days: 90

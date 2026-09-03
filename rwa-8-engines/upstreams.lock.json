@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "policy": "Adapter-first. Keep upstream integrations replaceable. Do not vendor code or data with incompatible or unclear licensing without explicit review.",
+  "upstreams": [
+    {"engine":"passport","repo":"decentralized-identity/veramo","license":"Apache-2.0","role":"DID and Verifiable Credential adapter","integration":"adapter"},
+    {"engine":"registry","repo":"hyperledger/firefly","license":"Apache-2.0","role":"asset/data orchestration and event integration","integration":"service-adapter"},
+    {"engine":"proof","repo":"sigstore/rekor-tiles","license":"Apache-2.0","role":"transparency-proof architecture","integration":"service-adapter"},
+    {"engine":"valuation","repo":"lballabio/QuantLib","license":"QuantLib license","role":"quantitative valuation model service","integration":"valuation-service"},
+    {"engine":"legal","repo":"open-policy-agent/opa","license":"Apache-2.0","role":"jurisdiction and policy decision engine","integration":"policy-service"},
+    {"engine":"compliance","repo":"opensanctions/yente","license":"MIT; screening data has separate licensing","role":"sanctions and entity screening adapter","integration":"screening-service"},
+    {"engine":"factory","repo":"hashgraph/asset-tokenization-studio","license":"Apache-2.0","role":"regulated-asset issuance architecture and standards adapter","integration":"factory-adapter","standards":["ERC-1400","ERC-3643"]},
+    {"engine":"marketplace","repo":"0xProject/protocol","license":"review package-specific upstream licenses","role":"optional execution primitive after eligibility gate","integration":"optional-execution-adapter","restriction":"Never bypass instrument, investor, jurisdiction, venue or transfer restrictions. A licensed venue adapter may be required instead."}
+  ]
+}

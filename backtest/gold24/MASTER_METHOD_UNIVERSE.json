@@ -1,0 +1,498 @@
+{
+  "schema": "gold24-master-method-universe-v2",
+  "purpose": "Authoritative GOLD24 method universe, real-data policy, global correlation contract, hard-pass gates, script validation, and portfolio diversification policy.",
+  "gold_execution_rules": {
+    "symbol": "GOLD",
+    "allowed_timeframes": [
+      "H1",
+      "H4",
+      "D1"
+    ],
+    "canonical_current_timeframe": "D1",
+    "pending_order_only": true,
+    "allowed_entry_methods": [
+      "STOP",
+      "LIMIT"
+    ],
+    "direction_modes": [
+      "LONG_ONLY",
+      "SHORT_ONLY",
+      "BOTH"
+    ],
+    "fixed_sl_price_usd": {
+      "min": 5,
+      "max": 25,
+      "step": 0.5
+    },
+    "fixed_tp_price_usd": {
+      "min": 5,
+      "max": 25,
+      "step": 0.5
+    },
+    "gold_pip_size_usd": 0.01,
+    "sl_pips_range": {
+      "min": 500,
+      "max": 2500
+    },
+    "tp_pips_range": {
+      "min": 500,
+      "max": 2500
+    },
+    "flat_lot_backtest": true,
+    "compounding_backtest": false,
+    "cost_floor_round_trip": 0.0032
+  },
+  "selection_contract": {
+    "candidate_pass": {
+      "min_entry": 100,
+      "min_net_profit_usd": 20000,
+      "max_abs_pearson_log_return_equity_corr": 0.5,
+      "corr_scope": "GLOBAL per-symbol across the complete selected set",
+      "corr_selection": "quality-ordered greedy; when abs Pearson(log-return equity) >0.50 remove the lower-quality/ranking method"
+    },
+    "hard_pass": {
+      "note": "Candidate PASS is not final validation.",
+      "min_entry": 300,
+      "min_pf_net": 1.2,
+      "max_dd_pct": 25,
+      "min_ev_per_trade_usd_exclusive": 0,
+      "min_oos_pf": 1,
+      "monte_carlo_pass_required": true,
+      "monte_carlo_probability_positive_min_pct": 95,
+      "positive_year_min_pct": 60,
+      "max_corr": 0.5,
+      "classification": {
+        "HARD_PASS": "Candidate PASS + 8/8 hard gates",
+        "WATCH": "Candidate PASS + at least 5/8 hard gates",
+        "FAIL": "otherwise"
+      }
+    },
+    "script_validation": {
+      "python": "real .py file + CANDIDATE + EXPECTED + config_hash + exact canonical qty parity PASS",
+      "mt5": "real .mq5 file + identical config/hash + real engine/include + native MetaEditor compile PASS + native MT5 Strategy Tester PASS",
+      "failure_rule": "If either side fails, do not label the method VERIFIED."
+    }
+  },
+  "diversification_policy": {
+    "discovery": "balanced across every IMPLEMENTED engine family; seed exploitation only within the target family",
+    "portfolio_ready_min_distinct_families": 6,
+    "portfolio_target_distinct_families": 10,
+    "portfolio_ready_max_single_family_share": 0.25,
+    "portfolio_ideal_max_single_family_share": 0.2,
+    "global_corr_required": true,
+    "library_may_exceed_family_cap": true,
+    "rationale": "Do not delete useful research rows merely to make the library look diversified; final portfolio must pass global correlation and family concentration."
+  },
+  "categories": [
+    {
+      "id": "TREND",
+      "name": "Moving Average / Trend",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "TREND_EMA",
+        "ADX_TREND",
+        "EMA_PULLBACK"
+      ],
+      "methods": [
+        "SMA Cross",
+        "EMA Cross",
+        "WMA Cross",
+        "HMA Trend",
+        "EMA Slope",
+        "Triple MA",
+        "MA Pullback"
+      ]
+    },
+    {
+      "id": "CHANNEL_BREAKOUT",
+      "name": "Channel / Breakout",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "ATR_BREAKOUT",
+        "KELTNER_BREAKOUT",
+        "PRICE_STRUCTURE",
+        "DONCHIAN",
+        "TURTLE_BREAKOUT",
+        "ATR_CHANNEL",
+        "FRACTAL_BREAKOUT"
+      ],
+      "methods": [
+        "Donchian",
+        "N-Bar High/Low",
+        "Price Structure Breakout",
+        "ATR Breakout",
+        "Keltner Breakout",
+        "Bollinger Breakout"
+      ]
+    },
+    {
+      "id": "MOMENTUM",
+      "name": "Momentum",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "MOMENTUM_RSI_ROC",
+        "MACD_MOMENTUM",
+        "RSI_MOMENTUM"
+      ],
+      "methods": [
+        "RSI Momentum",
+        "ROC",
+        "Stochastic",
+        "MACD",
+        "CCI",
+        "Williams %R",
+        "Momentum Oscillator",
+        "TSI"
+      ]
+    },
+    {
+      "id": "MEAN_REVERSION",
+      "name": "Mean Reversion",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "BOLLINGER_REVERSION",
+        "ZSCORE_REVERSION",
+        "RSI_REVERSION",
+        "BOLLINGER_REVERSION_V2"
+      ],
+      "methods": [
+        "Bollinger Reversion",
+        "Z-Score Reversion",
+        "RSI Reversion",
+        "Keltner Reversion",
+        "MA Deviation",
+        "VWAP Deviation"
+      ]
+    },
+    {
+      "id": "CANDLESTICK",
+      "name": "Candlestick",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "CANDLE_ENGULFING"
+      ],
+      "methods": [
+        "Engulfing",
+        "Pin Bar",
+        "Inside Bar",
+        "Outside Bar",
+        "Doji Reversal",
+        "Harami",
+        "Morning Star",
+        "Evening Star",
+        "3 Soldiers",
+        "3 Crows"
+      ]
+    },
+    {
+      "id": "HYBRID",
+      "name": "Hybrid / Ensemble",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "HYBRID",
+        "TREND_MEANREV_ENSEMBLE",
+        "ATR_MEANREV_REGIME"
+      ],
+      "methods": [
+        "Trend+Momentum",
+        "Trend+Breakout",
+        "Breakout+Volume",
+        "Mean Reversion+Volatility",
+        "Structure+Momentum",
+        "3-factor confirmation",
+        "ATR-regime mean reversion"
+      ]
+    },
+    {
+      "id": "CHART_PATTERN",
+      "name": "Chart Pattern",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "CHART_PATTERN"
+      ],
+      "methods": [
+        "Double Top",
+        "Double Bottom",
+        "Head & Shoulders",
+        "Inverse H&S",
+        "Triangle",
+        "Wedge",
+        "Flag",
+        "Pennant",
+        "Rectangle"
+      ]
+    },
+    {
+      "id": "MARKET_STRUCTURE",
+      "name": "Market Structure",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "MARKET_STRUCTURE",
+        "BOS_CHOCH"
+      ],
+      "methods": [
+        "Higher High/Low",
+        "Lower High/Low",
+        "Swing Break",
+        "Break of Structure",
+        "Change of Character",
+        "Range Break"
+      ]
+    },
+    {
+      "id": "SUPPORT_RESISTANCE",
+      "name": "Support / Resistance",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "SUPPORT_RESISTANCE",
+        "PIVOT_SR"
+      ],
+      "methods": [
+        "Horizontal S/R",
+        "Previous High/Low",
+        "Daily High/Low",
+        "Weekly High/Low",
+        "Dynamic S/R"
+      ]
+    },
+    {
+      "id": "FIBONACCI",
+      "name": "Fibonacci",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "FIBONACCI",
+        "FIB_PULLBACK"
+      ],
+      "methods": [
+        "38.2 Pullback",
+        "50 Pullback",
+        "61.8 Pullback",
+        "78.6 Pullback",
+        "Fib Extension Breakout"
+      ]
+    },
+    {
+      "id": "VOLATILITY",
+      "name": "Volatility",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "VOLATILITY",
+        "VOLATILITY_REGIME"
+      ],
+      "methods": [
+        "ATR Expansion",
+        "ATR Compression",
+        "Bollinger Width",
+        "Volatility Breakout",
+        "Volatility Contraction"
+      ]
+    },
+    {
+      "id": "BAND_HYBRID",
+      "name": "Keltner / Bollinger Hybrid",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "BAND_HYBRID",
+        "BOLLINGER_SQUEEZE",
+        "KELTNER_SQUEEZE"
+      ],
+      "methods": [
+        "BB inside Keltner Squeeze",
+        "Keltner Expansion",
+        "BB+ATR Breakout",
+        "Band Re-entry"
+      ]
+    },
+    {
+      "id": "ICHIMOKU",
+      "name": "Ichimoku",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "ICHIMOKU",
+        "ICHIMOKU_KUMO_BREAKOUT",
+        "ICHIMOKU_PULLBACK"
+      ],
+      "methods": [
+        "Tenkan/Kijun Cross",
+        "Kumo Breakout",
+        "Kumo Trend",
+        "Chikou Confirmation"
+      ]
+    },
+    {
+      "id": "ADAPTIVE_TREND",
+      "name": "SuperTrend / Adaptive Trend",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "ADAPTIVE_TREND",
+        "SUPERTREND_ATR",
+        "CHANDELIER_TREND"
+      ],
+      "methods": [
+        "SuperTrend",
+        "ATR SuperTrend",
+        "Adaptive MA",
+        "KAMA",
+        "VIDYA Trend"
+      ]
+    },
+    {
+      "id": "DIVERGENCE",
+      "name": "Divergence",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "DIVERGENCE"
+      ],
+      "methods": [
+        "RSI Divergence",
+        "MACD Divergence",
+        "Stochastic Divergence",
+        "CCI Divergence",
+        "Hidden Divergence"
+      ]
+    },
+    {
+      "id": "VOLUME",
+      "name": "Volume",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "VOLUME"
+      ],
+      "methods": [
+        "Volume Breakout",
+        "Volume Spike",
+        "OBV Trend",
+        "OBV Divergence",
+        "MFI",
+        "Volume MA",
+        "Price+Volume Confirmation"
+      ]
+    },
+    {
+      "id": "VWAP",
+      "name": "VWAP",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "VWAP"
+      ],
+      "methods": [
+        "VWAP Reversion",
+        "VWAP Breakout",
+        "Anchored VWAP",
+        "VWAP Trend/Pullback"
+      ]
+    },
+    {
+      "id": "STATISTICAL",
+      "name": "Statistical",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "STATISTICAL",
+        "ROLLING_ZSCORE",
+        "LINEAR_REGRESSION",
+        "REGRESSION_CHANNEL_BREAKOUT"
+      ],
+      "methods": [
+        "Z-Score",
+        "Rolling Regression",
+        "Linear Regression Channel",
+        "Mean/Std Bands",
+        "Percentile Breakout",
+        "Regression channel breakout"
+      ]
+    },
+    {
+      "id": "RELATIVE_STRENGTH",
+      "name": "Relative Strength",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "RELATIVE_STRENGTH"
+      ],
+      "methods": [
+        "Price vs MA Relative Strength",
+        "Rolling Momentum Relative Strength"
+      ],
+      "implementation_note": "Current implementation is single-asset price-vs-MA relative strength because no canonical DXY/cross-asset series is present in the repo/Drive source set."
+    },
+    {
+      "id": "MULTI_TIMEFRAME",
+      "name": "Multi-Timeframe",
+      "status": "IMPLEMENTED",
+      "engine_families": [
+        "MULTI_TIMEFRAME"
+      ],
+      "methods": [
+        "Completed 5D Higher-Timeframe Regime + D1 Entry",
+        "D1 trend confirmed by completed higher-timeframe aggregate"
+      ],
+      "implementation_note": "Current canonical production source is D1 only. Existing MULTI_TIMEFRAME uses a causal completed 5-business-day aggregate from D1 and is explicitly not labeled native H4. H4_D1_MTF_NATIVE and D1_H4_PULLBACK_NATIVE remain DATA_BLOCKED until real canonical H4 is Gate-A audited.",
+      "data_blocked_engine_families": [
+        "H4_D1_MTF_NATIVE",
+        "D1_H4_PULLBACK_NATIVE"
+      ]
+    }
+  ],
+  "implemented_engine_family_count": 48,
+  "implemented_category_count": 20,
+  "all_required_categories_backtestable": true,
+  "implementation_notes": {
+    "multi_timeframe": "Causal completed 5D aggregate + D1 entry; no fabricated H1/H4.",
+    "relative_strength": "Price-vs-MA relative strength until canonical DXY/cross-asset series is added.",
+    "expansion_2026_09_03": "24 new causal D1-real engine families implemented; native H4→D1 and D1→H4 research families remain DATA_BLOCKED until real H4 exists and are not counted toward the 48 real implemented-family target.",
+    "target": "48 implemented real families now; 2 native-H4 MTF research families remain additional DATA_BLOCKED items and are excluded from the 48 count until Gate-A real H4 exists."
+  },
+  "registered_target_engine_family_count": 48,
+  "data_blocked_engine_family_count": 2,
+  "data_blocked_engine_families": [
+    {
+      "family": "H4_D1_MTF_NATIVE",
+      "status": "DATA_BLOCKED",
+      "required_data": "real canonical H4 + D1",
+      "reason": "No canonical H4 dataset exists in repository/source state; resampling D1 is forbidden."
+    },
+    {
+      "family": "D1_H4_PULLBACK_NATIVE",
+      "status": "DATA_BLOCKED",
+      "required_data": "real canonical H4 + D1",
+      "reason": "No canonical H4 dataset exists in repository/source state; resampling D1 is forbidden."
+    }
+  ],
+  "real_dataset_policy": {
+    "traceable_fields": [
+      "provider",
+      "symbol",
+      "timeframe",
+      "rows",
+      "period",
+      "dataset_sha256",
+      "cost_model",
+      "quantity_lot",
+      "starting_equity",
+      "config_hash",
+      "execution_hash"
+    ],
+    "forbid_fake_timeframes": true,
+    "rule": "Never synthesize/resample a timeframe and label it real H1/H4. The 48 implemented target is satisfied with causal real-D1 engines. Native H1/H4 becomes eligible only after its own canonical data and Gate-A audit exist."
+  },
+  "progress_contract": {
+    "before_after_required": [
+      "total_finalized_backtest",
+      "candidate_evaluated",
+      "candidate_pass",
+      "hard_pass",
+      "watch",
+      "fail",
+      "selected_methods",
+      "distinct_family",
+      "max_family_concentration",
+      "corr_violations",
+      "global_corr_kept",
+      "python_verified",
+      "mt5_verified",
+      "sample_ge_300",
+      "max_dd_le_25",
+      "portfolio_readiness"
+    ],
+    "no_progress_action": "identify cause, fix engine/data/discovery, rerun, validate, then publish"
+  }
+}

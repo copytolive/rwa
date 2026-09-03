@@ -1,0 +1,67 @@
+name: RENKO Revisit Stress
+# harness v3: all RENKO runtime reads execute inside Chromium; only the known websocket close-race console message is ignored.
+on:
+  push:
+    branches:
+      - fix/renko-total-history-origin-20260829
+    paths:
+      - 'renko/**'
+      - '.github/workflows/renko-revisit-stress.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'renko/**'
+      - '.github/workflows/renko-revisit-stress.yml'
+permissions:
+  contents: read
+jobs:
+  zec-comp-revisit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0 lightweight-charts@5.1.0
+          npx playwright install --with-deps chromium
+      - name: Serve exact checkout
+        run: |
+          mkdir -p /tmp/renko-stress/rwa
+          cp -a . /tmp/renko-stress/rwa/
+          cd /tmp/renko-stress
+          python3 -m http.server 8080 >/tmp/renko-stress-http.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/rwa/renko/ >/dev/null && exit 0; sleep 1; done
+          exit 1
+      - name: Rebuild ZEC/COMP origin repeatedly
+        run: |
+          node --input-type=module <<'NODE'
+          import { chromium } from 'playwright';
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage({viewport:{width:430,height:932}});
+          const errors=[];
+          const benignCloseRace=s=>/WebSocket connection to .* failed: (Ping|Close) received after close/i.test(String(s||''));
+          page.on('pageerror',e=>errors.push(String(e.message||e)));
+          page.on('console',m=>{if(m.type()==='error'&&!benignCloseRace(m.text()))errors.push(m.text())});
+          await page.addInitScript(()=>localStorage.setItem('rwa_renko_tradingview_settings_v1',JSON.stringify({source:'close',method:'traditional',boxSize:1,atrLength:14,wicks:true})));
+          await page.goto('http://127.0.0.1:8080/rwa/renko/?symbol=COMP',{waitUntil:'domcontentloaded',timeout:60000});
+          await page.waitForFunction(()=>window.RWARenkoTV?.state?.status==='live'&&window.RWARenkoTotalHistory?.jumpOrigin&&window.RWARenkoStableChart?.version==='2.1.0',null,{timeout:90000});
+          for(let i=0;i<30;i++){
+            for(const s of ['COMPUSDT','ZECUSDT']){
+              const live=await page.evaluate(s=>window.RWARenkoTV.state.symbol===s&&window.RWARenkoTV.state.status==='live',s);
+              if(!live){
+                await page.evaluate(s=>window.RWARenkoSwitchFast.load(s,{fit:true}),s);
+                await page.waitForFunction(s=>window.RWARenkoTV.state.symbol===s&&window.RWARenkoTV.state.status==='live',s,{timeout:45000});
+              }
+              await page.evaluate(s=>window.RWARenkoTotalHistory.jumpOrigin(s),s);
+              await page.waitForFunction(s=>window.RWARenkoTV.state.symbol===s&&window.RWARenkoTV.state.status==='history-origin',s,{timeout:45000});
+              const st=await page.evaluate(()=>({bars:window.RWARenkoTV.state.closedBars.length,canvas:document.querySelectorAll('#chartHost canvas').length,dropped:Number(document.documentElement.dataset.renkoStableDataRowsDropped||0),invalidC:Number(document.documentElement.dataset.renkoInvalidConfirmedDropped||0),invalidP:Number(document.documentElement.dataset.renkoInvalidProjectionDropped||0)}));
+              if(st.bars<900||st.canvas<1||st.dropped||st.invalidC||st.invalidP)throw Error(JSON.stringify({s,i,st}));
+            }
+          }
+          if(errors.length)throw Error(JSON.stringify(errors.slice(0,10)));
+          console.log('RENKO_REVISIT_STRESS_PASS',JSON.stringify({cycles:30,origins:60,dropped:0}));
+          await browser.close();
+          NODE

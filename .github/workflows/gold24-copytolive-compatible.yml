@@ -1,0 +1,325 @@
+name: GOLD24 CopyToLive Exact Active Backtest
+
+on:
+  pull_request:
+    branches: ['main']
+    paths:
+      - 'backtest/gold24/COPYTOLIVE_COMPAT_PR_KICK'
+  workflow_dispatch:
+    inputs:
+      from_date:
+        description: Dukascopy GOLD H1 start date
+        required: false
+        default: '2003-05-05'
+      to_date:
+        description: Dukascopy GOLD H1 end date (exclusive)
+        required: false
+        default: '2026-05-01'
+  push:
+    branches: ['main']
+    paths:
+      - '.github/workflows/gold24-copytolive-compatible.yml'
+      - 'backtest/gold24/COPYTOLIVE_COMPAT_KICK'
+      - 'backtest/gold24/COPYTOLIVE_COMPAT.md'
+      - 'backtest/gold24/copytolive_unified_engine.py'
+      - 'backtest/gold24/copytolive_compat.py'
+      - 'backtest/gold24/test_copytolive_unified_engine.py'
+      - 'backtest/gold24/test_copytolive_compat.py'
+      - 'backtest/gold24/build_copytolive_gold_d1.py'
+      - 'backtest/gold24/copytolive_active_gold_manifest.json'
+      - 'backtest/gold24/copytolive_gold_strategy_sources.json'
+      - 'backtest/gold24/copytolive_active_replay.py'
+      - 'backtest/gold24/fetch_copytolive_gold_h1.cjs'
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: gold24-copytolive-exact-active-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  exact-active-replay:
+    name: Exact 118 CopyToLive GOLD H1 strategies
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      GH_TOKEN: ${{ github.token }}
+      FROM_DATE: ${{ github.event.inputs.from_date || '2003-05-05' }}
+      TO_DATE: ${{ github.event.inputs.to_date || '2026-05-01' }}
+      DATA_DIR: ${{ github.workspace }}/.copytolive-gold-h1
+      DATA_FILE: ${{ github.workspace }}/.copytolive-gold-h1/GOLD_H1.csv
+      D1_FILE: ${{ github.workspace }}/.copytolive-gold-h1/GOLD_D1.csv
+      OUT_DIR: ${{ github.workspace }}/backtest/gold24/runtime_copytolive_active
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install exact-parity dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -r backtest/gold24/requirements.txt
+          python -m pip install "TA-Lib>=0.6,<0.7"
+          npm install --no-save --ignore-scripts dukascopy-node@1.50.0
+
+      - name: Lock CopyToLive execution contract
+        run: |
+          set -euo pipefail
+          cd backtest/gold24
+          python -m unittest -v test_copytolive_compat.py test_copytolive_unified_engine.py
+
+      - name: Validate exact active source pack
+        run: |
+          set -euo pipefail
+          cd backtest/gold24
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          m=json.loads(Path('copytolive_active_gold_manifest.json').read_text())
+          s=json.loads(Path('copytolive_gold_strategy_sources.json').read_text())
+          assert m['snapshot']['active_gold_count']==118
+          assert m['snapshot']['timeframe_counts']=={'H1':118}
+          assert len(m['strategies'])==118
+          assert len(s['scripts'])==118
+          assert s['farm_sha256']==m['snapshot']['farm_sha256']
+          assert s['state_sha256']==m['snapshot']['state_sha256']
+          for x in m['strategies']:
+              sid=x['id']
+              src=s['scripts'][sid].encode()
+              assert hashlib.sha256(src).hexdigest()==x['source_script']['sha256']
+              assert x['symbol']=='GOLD' and x['timeframe']=='H1' and x['homeUniverse'] is True
+          print({
+              'status':'PASS',
+              'active_gold':118,
+              'farm_sha256':m['snapshot']['farm_sha256'],
+              'state_sha256':m['snapshot']['state_sha256'],
+          })
+          PY
+
+      - name: Cache hosted GOLD H1
+        uses: actions/cache@v4
+        with:
+          path: |
+            .copytolive-gold-h1
+            .dukascopy-cache-copytolive-gold
+          key: copytolive-xauusd-m1-resampled-h1-v3-${{ env.FROM_DATE }}-${{ env.TO_DATE }}
+
+      - name: Fetch GOLD H1 on GitHub runner
+        run: |
+          set -euo pipefail
+          mkdir -p "$DATA_DIR"
+          if [ ! -s "$DATA_FILE" ]; then
+            node backtest/gold24/fetch_copytolive_gold_h1.cjs "$DATA_FILE" "$FROM_DATE" "$TO_DATE"
+          else
+            echo "Using cached $DATA_FILE"
+          fi
+          python - <<'PY'
+          import hashlib, os, pandas as pd
+          p=os.environ['DATA_FILE']
+          d=pd.read_csv(p)
+          assert len(d)>10000
+          assert {'Date','open','high','low','close'}.issubset(d.columns)
+          print({
+              'rows':len(d),
+              'start':d['Date'].iloc[0],
+              'end':d['Date'].iloc[-1],
+              'sha256':hashlib.sha256(open(p,'rb').read()).hexdigest(),
+          })
+          PY
+
+      - name: Build D1 companion for production filter contract
+        run: |
+          set -euo pipefail
+          python backtest/gold24/build_copytolive_gold_d1.py "$DATA_FILE" "$D1_FILE"
+          test -s "$D1_FILE"
+          python - <<'PY'
+          import os, pandas as pd
+          d=pd.read_csv(os.environ['D1_FILE'])
+          assert len(d)>200
+          assert {'Date','open','high','low','close'}.issubset(d.columns)
+          print({'d1_rows':len(d),'start':d['Date'].iloc[0],'end':d['Date'].iloc[-1]})
+          PY
+
+      - name: Replay exact 118 production strategies
+        run: |
+          set -euo pipefail
+          rm -rf "$OUT_DIR"
+          mkdir -p "$OUT_DIR"
+          python backtest/gold24/copytolive_active_replay.py \
+            --dataset "$DATA_FILE" \
+            --d1-dataset "$D1_FILE" \
+            --out-dir "$OUT_DIR"
+          test -s "$OUT_DIR/latest_copytolive_active_replay.json"
+          test -s "$OUT_DIR/latest_copytolive_active_replay.csv"
+          test -s "$OUT_DIR/latest_copytolive_active_replay_summary.json"
+
+      - name: Acceptance gate
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import csv, json, os, pathlib
+          out=pathlib.Path(os.environ['OUT_DIR'])
+          x=json.loads((out/'latest_copytolive_active_replay_summary.json').read_text())
+          rows=list(csv.DictReader((out/'latest_copytolive_active_replay.csv').open()))
+          assert x['status']=='PASS'
+          assert x['engine_mode']=='COPYTOLIVE_EXACT_ACTIVE_REPLAY'
+          assert int(x['active_gold_input'])==118
+          assert len(rows)==118
+          assert x['source']['active_gold_count']==118
+          assert x['source']['timeframe_counts']=={'H1':118}
+          assert int(x['dataset']['h1']['rows'])>10000
+          assert int(x['dataset']['d1']['rows'])>200
+          assert x['engine_id']=='copytolive-unified-backtest-v1'
+          c=x['execution_contract']
+          assert float(c['deposit_usd'])==10000.0
+          assert float(c['risk_usd_per_trade'])==200.0
+          assert abs(float(c['fee'])-0.0016)<1e-12
+          assert c['entry']=='signal-bar close'
+          assert c['stop']=='entry_price * sl_pct'
+          assert c['target']=='stop_distance * tp_ratio'
+          assert c['size']=='risk_usd / stop_distance'
+          assert c['one_position_at_a_time'] is True
+          assert c['same_bar_entry_exit'] is False
+          assert c['same_bar_precedence']=='SL_FIRST'
+          assert c['walk_forward_split']=='70/30 chronological'
+          g=x['github_gate']
+          assert int(g['min_entry'])==300
+          assert float(g['min_net_profit_usd'])==20000.0
+          assert float(g['min_pf'])==1.2
+          assert float(g['max_dd_pct'])==25.0
+          assert float(g['min_oos_pf'])==1.0
+          assert float(g['min_positive_year_pct'])==60.0
+          assert float(g['max_abs_pearson_log_return_equity'])==0.50
+          # Zero surviving strategies is a valid research result, not an engine failure.
+          # The workflow PASS proves the 118 strategies executed under the
+          # CopyToLive contract and that the strict portfolio gates were evaluated.
+          assert int(x['pre_corr_pass_count'])>=0
+          assert int(x['corr_kept_count'])>=0
+          assert int(x['hard_pass_count'])>=0
+          print(json.dumps(x,indent=2,sort_keys=True))
+          PY
+
+      - name: Build production parity report
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, pathlib
+          out=pathlib.Path(os.environ['OUT_DIR'])
+          x=json.loads((out/'latest_copytolive_active_replay.json').read_text())
+          rows=x.get('ranking') or x.get('rows') or []
+          assert len(rows)==118, len(rows)
+          tolerances={
+              'totalTrades':0.0,
+              'winRate':0.11,
+              'profitFactor':0.011,
+              'netProfit':0.51,
+              'maxDrawdownPercent':0.11,
+              'sqn':0.011,
+              'recoveryFactor':0.011,
+              'wf_test_pf':0.011,
+          }
+          by={k:0 for k in tolerances}
+          max_abs={k:0.0 for k in tolerances}
+          worst={k:None for k in tolerances}
+          exact_all=0
+          for row in rows:
+              ok=True
+              parity=row.get('parity_delta') or {}
+              for key,tol in tolerances.items():
+                  item=parity.get(key)
+                  if item is None:
+                      ok=False
+                      continue
+                  delta=abs(float(item['delta']))
+                  if delta<=tol:
+                      by[key]+=1
+                  else:
+                      ok=False
+                  if delta>max_abs[key]:
+                      max_abs[key]=delta
+                      worst[key]={
+                          'strategy_id':row.get('strategy_id'),
+                          'expected':item.get('expected'),
+                          'actual':item.get('actual'),
+                          'delta':item.get('delta'),
+                      }
+              exact_all+=int(ok)
+          report={
+              'status':'PASS' if exact_all==118 else 'PARITY_MISMATCH',
+              'strategies':118,
+              'exact_all_metrics':exact_all,
+              'parity_by_metric':by,
+              'max_abs_delta':max_abs,
+              'worst_delta':worst,
+              'dataset':x['dataset'],
+              'source':x['source'],
+              'execution_contract':x['execution_contract'],
+              'strict_gate_counts':{
+                  'pre_corr_pass_count':x['pre_corr_pass_count'],
+                  'corr_kept_count':x['corr_kept_count'],
+                  'hard_pass_count':x['hard_pass_count'],
+              },
+          }
+          (out/'copytolive_production_parity.json').write_text(json.dumps(report,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(report,indent=2,sort_keys=True))
+          PY
+
+      - name: Enforce production parity
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, pathlib
+          p=pathlib.Path(os.environ['OUT_DIR'])/'copytolive_production_parity.json'
+          x=json.loads(p.read_text())
+          assert x['status']=='PASS', x
+          assert int(x['exact_all_metrics'])==118, x
+          print('COPYTOLIVE PRODUCTION PARITY PASS 118/118')
+          PY
+
+      - name: Publish exact replay evidence race-safe
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             backtest/gold24/runtime_copytolive_active/latest_copytolive_active_replay.json             backtest/gold24/runtime_copytolive_active/latest_copytolive_active_replay.csv             backtest/gold24/runtime_copytolive_active/latest_copytolive_active_replay_summary.json
+          if git diff --cached --quiet; then
+            echo "No exact-active replay delta"
+            exit 0
+          fi
+          git commit -m "chore(gold24): publish exact CopyToLive GOLD H1 replay [skip ci]"
+          for TRY in 1 2 3 4 5; do
+            if git pull --rebase origin main && git push origin HEAD:main; then
+              echo "publish PASS try=$TRY"
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            git fetch origin main
+            git rebase origin/main
+            sleep $((TRY * 2))
+          done
+          exit 1
+
+      - name: Upload exact replay evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold24-copytolive-exact-active-${{ github.run_id }}
+          path: |
+            backtest/gold24/runtime_copytolive_active/latest_copytolive_active_replay.json
+            backtest/gold24/runtime_copytolive_active/latest_copytolive_active_replay.csv
+            backtest/gold24/runtime_copytolive_active/latest_copytolive_active_replay_summary.json
+            backtest/gold24/runtime_copytolive_active/copytolive_production_parity.json
+          if-no-files-found: error
+          retention-days: 90

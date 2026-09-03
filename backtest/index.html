@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head><script src="../legacy-canonical.js?v=7"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="VectorForge public multi-asset historical market simulation and auditable GitHub backtest research lab.">
+  <title>VectorForge Historical Simulation Lab</title>
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./assets.css">
+</head>
+<body>
+<main class="shell">
+  <header class="hero">
+    <div>
+      <div class="eyebrow">OPEN RESEARCH ENGINE · GITHUB PAGES</div>
+      <h1>VectorForge <span>Historical Simulation Lab</span></h1>
+      <p>Public multi-asset historical research using auditable market data, browser simulation and GitHub compute. No local IDE required.</p>
+    </div>
+    <div class="status-stack"><span class="badge ok">● ENGINE ONLINE</span><span class="badge">PUBLIC GITHUB HOSTING</span><span class="badge">MULTI-ASSET</span></div>
+  </header>
+
+  <section class="notice"><strong>Multi-asset data:</strong> the public universe is standardized on Dukascopy historical bid/ask tick data for major FX, large FX crosses, Gold, Silver, BTCUSD and ETHUSD. Raw archives remain at Dukascopy and are fetched on demand; this public repository stores instrument metadata, source verification fingerprints, simulation requests and audit results.</section>
+
+  <section class="campaign-strip">
+    <article><span>Campaign Target</span><strong id="cTarget">1,000,000,000,000</strong><small>unique evaluations</small></article>
+    <article><span>Verified Completed</span><strong id="cVerified">—</strong><small>actual computed hashes</small></article>
+    <article><span>EURUSD Coverage</span><strong id="cCoverage">—</strong><small id="cRemaining">processed / 111 months</small></article>
+    <article><span>Verified Samples</span><strong id="cSamples">—</strong><small>source samples</small></article>
+    <article><span>Last Batch</span><strong id="cBatch">—</strong><small id="cBatchMonth">loading</small></article>
+    <article><span>Dataset SHA-256</span><code id="cHash">loading…</code><small id="cStatus">campaign ledger</small></article>
+  </section>
+
+  <section class="panel asset-universe">
+    <div class="panel-title split"><span>Public Instrument Universe</span><span id="assetSummary" class="muted">Loading…</span></div>
+    <div class="catalog-tools"><input id="assetSearch" placeholder="Search EURUSD, XAUUSD, BTC, JPY…"><span class="muted">Primary source: Dukascopy bid/ask tick</span></div>
+    <div id="assetGrid" class="asset-grid"></div>
+    <div class="hint">A VERIFIED badge means the automated GitHub source verifier successfully obtained real historical source data and recorded a SHA-256 sample fingerprint. PENDING means the catalog entry exists but its latest automated verification result is not yet published.</div>
+  </section>
+
+  <section class="grid">
+    <aside class="panel controls">
+      <div class="panel-title">Browser Simulation Configuration</div>
+
+      <label>Dataset
+        <select id="dataset">
+          <option value="eurusd1s">EURUSD · 1-second · legacy public GitHub stream</option>
+          <option value="custom">Custom tick/quote TXT or CSV · local browser upload</option>
+        </select>
+      </label>
+
+      <div id="customFields" class="hidden-field">
+        <label>Custom file<input id="customFile" type="file" accept=".txt,.csv,.tsv,text/plain,text/csv"></label>
+        <div class="row3">
+          <label>Bid column (1-based)<input id="bidCol" type="number" min="1" step="1" value="1"></label>
+          <label>Ask column (0 = fallback)<input id="askCol" type="number" min="0" step="1" value="2"></label>
+          <label>Sample interval (sec)<input id="sampleSeconds" type="number" min="0.001" step="0.001" value="1"></label>
+        </div>
+      </div>
+
+      <div id="monthRange" class="row2">
+        <label>From month<select id="fromMonth"></select></label>
+        <label>To month<select id="toMonth"></select></label>
+      </div>
+
+      <label>Model
+        <select id="strategy">
+          <option value="price_sma">Price / SMA cross</option>
+          <option value="sma_cross">SMA fast / slow cross</option>
+          <option value="ema_cross">EMA fast / slow cross</option>
+          <option value="rsi_revert">RSI mean-reversion model</option>
+          <option value="donchian">Donchian breakout model</option>
+        </select>
+      </label>
+
+      <div class="row3">
+        <label>Direction<select id="tradeSide"><option value="both">Long + Short</option><option value="long">Long only</option><option value="short">Short only</option></select></label>
+        <label>Fast / period<input id="fast" type="number" min="2" value="50"></label>
+        <label>Slow / lookback<input id="slow" type="number" min="3" value="1000"></label>
+      </div>
+
+      <div class="row3">
+        <label>Stop distance (points)<input id="slPips" type="number" min="0.1" step="0.1" value="15"></label>
+        <label>Target ratio<input id="rr" type="number" min="0.1" step="0.1" value="2"></label>
+        <label>Point size<input id="pointSize" type="number" min="0.00000001" step="0.00000001" value="0.0001"></label>
+      </div>
+
+      <div class="row3">
+        <label>Fallback spread (points)<input id="spreadPips" type="number" min="0" step="0.1" value="1"></label>
+        <label>Slippage / side (points)<input id="slippagePoints" type="number" min="0" step="0.1" value="0"></label>
+        <label>Round-trip cost (R)<input id="costR" type="number" min="0" step="0.001" value="0"></label>
+      </div>
+
+      <div class="row2">
+        <label>RSI lower<input id="rsiBuy" type="number" min="1" max="49" value="30"></label>
+        <label>RSI upper<input id="rsiSell" type="number" min="51" max="99" value="70"></label>
+      </div>
+
+      <div class="actions"><button id="runBtn" class="primary">Run Historical Simulation</button><button id="stopBtn" class="secondary" disabled>Stop</button></div>
+      <button id="exportBtn" class="export" disabled>Export Last Result JSON</button>
+      <div class="hint">The browser engine currently streams the legacy EURUSD catalog or a local custom file. Full multi-asset Dukascopy execution is available through the GitHub chat runner and public request workflow.</div>
+    </aside>
+
+    <section class="panel output">
+      <div class="panel-title split"><span>Results</span><span id="runState" class="muted">IDLE</span></div>
+      <div id="progressWrap" class="progress-wrap hidden"><div id="progressBar" class="progress-bar"></div></div>
+      <div id="progressText" class="progress-text">Ready.</div>
+
+      <div class="metrics">
+        <article><span>Net outcome (R)</span><strong id="mReturn">—</strong></article>
+        <article><span>Positive outcomes</span><strong id="mWr">—</strong></article>
+        <article><span>Gain / loss ratio</span><strong id="mPf">—</strong></article>
+        <article><span>Max drawdown (R)</span><strong id="mDd">—</strong></article>
+        <article><span>Completed events</span><strong id="mTrades">—</strong></article>
+        <article><span>Events / week</span><strong id="mFreq">—</strong></article>
+        <article><span>Expectancy / event</span><strong id="mExpectancy">—</strong></article>
+        <article><span>Max loss streak</span><strong id="mLossStreak">—</strong></article>
+        <article><span>Long / Short</span><strong id="mSides">—</strong></article>
+        <article><span>Signals observed</span><strong id="mSignals">—</strong></article>
+        <article><span>Evaluated samples</span><strong id="mSamples">—</strong></article>
+        <article><span>Source segments</span><strong id="mSegments">—</strong></article>
+      </div>
+
+      <div class="subpanel"><div class="subhead">Verification fingerprint</div><code id="fingerprint">Run a simulation to generate SHA-256.</code></div>
+      <div class="subpanel"><div class="subhead">Execution log</div><div id="log" class="log"></div></div>
+    </section>
+  </section>
+
+  <section class="panel chat-mode">
+    <div class="panel-title">Full Tick Backtest · Chat + Public GitHub Requests</div>
+    <p>For the multi-asset universe above, GitHub downloads the required Dukascopy historical bid/ask ticks, runs the simulation, and saves a public JSON result with dataset SHA-256 and evaluation ID.</p>
+    <div class="formula">Example chat: Backtest XAUUSD 2020-01-01 to 2025-01-01, SMA 50/1000, RR 1:2, both directions.</div>
+    <p class="muted">Public GitHub requests are capped at 7 calendar days per job to protect shared compute. Longer research campaigns can be issued through the owner/chat workflow. Historical simulation only; no broker execution.</p>
+  </section>
+
+  <section class="panel catalog">
+    <div class="panel-title split"><span>Legacy EURUSD Source File Catalog</span><span id="fileCount" class="muted"></span></div>
+    <div class="catalog-tools"><input id="catalogSearch" placeholder="Filter month, e.g. 2017-03"><a id="sourceRepo" target="_blank" rel="noopener">Open source repository ↗</a></div>
+    <div id="catalogList" class="catalog-list"></div>
+  </section>
+
+  <section class="panel verified-panel">
+    <div class="panel-title split"><span>Latest Verified GitHub Batch</span><a href="./results/latest_batch.json" target="_blank" rel="noopener">Open raw JSON ↗</a></div>
+    <div id="batchMeta" class="progress-text">Loading verified batch ledger…</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>SMA</th><th>Samples</th><th>Flips</th><th>Buy %</th><th>Sell %</th><th>Mean distance %</th></tr></thead>
+        <tbody id="batchTable"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel methodology">
+    <div class="panel-title">Auditable evaluation count</div>
+    <p>One verified factory evaluation is one actually computed unique combination of dataset hash, source period, model, parameters and engine version. Browser runs receive their own SHA-256 fingerprint including execution assumptions.</p>
+    <div class="formula">evaluation_id = SHA256(dataset_hash + period + model + parameters + engine_version)</div>
+    <p class="muted">The 1-trillion figure is a campaign target, not a completed-count claim. GitHub Pages is the public interactive layer; large-scale execution is handled by resumable GitHub Actions / distributed compute.</p>
+  </section>
+
+  <footer>VectorForge · historical research and simulation software · no broker execution.</footer>
+</main>
+<script type="module" src="./app.js"></script>
+<script type="module" src="./public-request.js"></script>
+</body>
+</html>

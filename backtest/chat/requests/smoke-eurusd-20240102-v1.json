@@ -1,0 +1,15 @@
+{
+  "request_id": "smoke-eurusd-20240102-v1",
+  "asset": "EURUSD",
+  "start": "2024-01-02",
+  "end": "2024-01-03",
+  "strategy": "sma_cross",
+  "trade_side": "both",
+  "fast": 50,
+  "slow": 1000,
+  "stop_points": 15,
+  "rr": 2,
+  "spread_points": 1,
+  "slippage_points": 0,
+  "cost_r": 0
+}

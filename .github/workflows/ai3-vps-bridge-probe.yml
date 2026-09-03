@@ -1,0 +1,62 @@
+name: AI3 CopyToLive VPS Bridge Probe
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ai3-vps-bridge-requests/**"
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: req
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^ai3-vps-bridge-requests/.*\.json$' | tail -n1)"
+          ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$FILE")"
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+          echo "out=ai3-vps-bridge-results/$ID.json" >> "$GITHUB_OUTPUT"
+      - name: Probe secret and SSH
+        shell: bash
+        env:
+          SSH_KEY: ${{ secrets.COPYTOLIVE_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          OUT="${{ steps.req.outputs.out }}"
+          mkdir -p "$(dirname "$OUT")" "$HOME/.ssh"
+          if [ -z "${SSH_KEY:-}" ]; then
+            printf '%s\n' '{"ok":false,"secret_present":false,"ssh_ok":false,"error":"COPYTOLIVE_SSH_KEY unavailable in copytolive/rwa"}' > "$OUT"
+            exit 0
+          fi
+          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/copytolive_ai3"
+          chmod 600 "$HOME/.ssh/copytolive_ai3"
+          ssh-keyscan -H 109.123.239.76 >> "$HOME/.ssh/known_hosts" 2>/dev/null
+          set +e
+          HOST="$(ssh -o BatchMode=yes -o ConnectTimeout=10 -i "$HOME/.ssh/copytolive_ai3" root@109.123.239.76 'hostname' 2>/dev/null)"
+          RC=$?
+          set -e
+          python3 -c 'import json,sys; rc=int(sys.argv[2]); json.dump({"ok":rc==0,"secret_present":True,"ssh_ok":rc==0,"hostname":sys.argv[3] if rc==0 else None},open(sys.argv[1],"w"),indent=2)' "$OUT" "$RC" "$HOST"
+      - name: Commit result
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="${{ steps.req.outputs.out }}"
+          test -s "$OUT"
+          git config user.name "CopyToLive AI3 VPS Probe"
+          git config user.email "copytolive-ai3-vps-probe@local.invalid"
+          git add "$OUT"
+          git commit -m "ai3 vps bridge probe: ${{ steps.req.outputs.id }}" || true
+          for n in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort || true; sleep "$n"; continue; }
+            if git push origin HEAD:main; then exit 0; fi
+            sleep "$n"
+          done
+          exit 1

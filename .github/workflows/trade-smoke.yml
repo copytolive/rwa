@@ -1,0 +1,209 @@
+name: RWA Trade Live Smoke
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "trade/**"
+      - "execution-api.js"
+      - "tools/trade-ui-contract.mjs"
+      - ".github/workflows/trade-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: rwa-trade-live-smoke
+  cancel-in-progress: true
+
+jobs:
+  trade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate RWA Trade source
+        run: |
+          node --check trade/app.js
+          node --check trade/hyperliquid.js
+          node --check trade/terminal-pro.js
+          node --check trade/provider-runtime.js
+          node --check trade/margin-runtime.js
+          node --check trade/chart-overlays.js
+          node --check trade/release-runtime.js
+          node --check trade/fund-modal.js
+          node --check trade/e2e-resilience.js
+          node --check trade/e2e.js
+          node --check trade/config.js
+          node --check execution-api.js
+          node --check tools/trade-ui-contract.mjs
+          node tools/trade-ui-contract.mjs
+
+          test -s trade/index.html
+          test -s trade/styles.css
+          test -s trade/terminal-pro.css
+          test -s trade/terminal-pro.js
+          test -s trade/provider-runtime.js
+          test -s trade/margin-runtime.js
+          test -s trade/chart-overlays.js
+          test -s trade/fund-modal.css
+          test -s trade/e2e.css
+
+          grep -Fq "frame-src 'none'" trade/index.html
+          ! grep -Fq '<iframe' trade/index.html
+          ! grep -Fq 'Fund Hyperliquid first' trade/index.html
+          ! grep -Fq 'Fund Hyperliquid first' trade/app.js
+          ! grep -Fq 'window.open(' trade/app.js
+          grep -Fq 'Get test balance' trade/index.html
+          grep -Fq 'terminal-pro.css?v=1' trade/index.html
+          grep -Fq 'terminal-pro.js?v=1' trade/index.html
+          grep -Fq 'id="priceChart"' trade/index.html
+          grep -Fq 'id="marketPickerModal"' trade/index.html
+          grep -Fq 'id="positionModal"' trade/index.html
+          grep -Fq 'id="riskModal"' trade/index.html
+          grep -Fq 'data-side-btn="BUY"' trade/index.html
+          grep -Fq 'data-close-fraction="0.5"' trade/index.html
+          grep -Fq 'e2e-resilience.js?v=1' trade/index.html
+          grep -Fq 'e2e.js?v=4' trade/index.html
+
+          grep -Fq "version:'1.5.0'" trade/config.js
+          grep -Fq "uiRelease:'terminal-pro-commerce-v2'" trade/config.js
+          grep -Fq "import './provider-runtime.js?v=1'" trade/config.js
+          grep -Fq "import('./margin-runtime.js?v=1')" trade/config.js
+          grep -Fq "import('./chart-overlays.js?v=1')" trade/config.js
+          grep -Fq '../launch/readiness.json' trade/config.js
+          grep -Fq '../launch/e2e-registry.json' trade/config.js
+          grep -Fq "status==='READY_FOR_MAINNET'" trade/config.js
+          grep -Fq "x?.status==='E2E_VERIFIED'" trade/config.js
+          grep -Fq "Object.defineProperty(BASE,'mainnetEnabled'" trade/config.js
+          grep -Fq "get:()=>canMainnet()" trade/config.js
+          grep -Fq "toggle.dispatchEvent(new Event('change'" trade/config.js
+          ! grep -Eq 'mainnetEnabled[[:space:]]*:[[:space:]]*true' trade/config.js
+
+          grep -Fq 'RWAProviderRuntime' trade/provider-runtime.js
+          grep -Fq 'eip6963:requestProvider' trade/provider-runtime.js
+          grep -Fq 'RWAMarginRuntime' trade/margin-runtime.js
+          grep -Fq "rwa_trade_margin_mode_v1" trade/margin-runtime.js
+          grep -Fq 'api.risk.setLeverage' trade/margin-runtime.js
+          grep -Fq 'isCross' trade/margin-runtime.js
+          ! grep -Fq 'ExchangeClient' trade/margin-runtime.js
+          ! grep -Eq "api\.hyperliquid(-testnet)?\.xyz/exchange|['\"]\/exchange['\"]" trade/margin-runtime.js
+          grep -Fq 'RWAChartTradeOverlay' trade/chart-overlays.js
+          grep -Fq 'chartTradeOverlay' trade/chart-overlays.js
+          grep -Fq 'api.account.state' trade/chart-overlays.js
+          grep -Fq 'api.orders.open' trade/chart-overlays.js
+          ! grep -Fq 'orders.market' trade/chart-overlays.js
+          ! grep -Fq 'orders.limit' trade/chart-overlays.js
+          ! grep -Fq 'orders.bracket' trade/chart-overlays.js
+
+          grep -Fq 'candleSnapshot' trade/terminal-pro.js
+          grep -Fq 'metaAndAssetCtxs' trade/terminal-pro.js
+          grep -Fq 'RWAExecutionAPI' trade/terminal-pro.js
+          grep -Fq 'orders.market' trade/terminal-pro.js
+          grep -Fq 'reduceOnly:true' trade/terminal-pro.js
+          grep -Fq 'orders.trigger' trade/terminal-pro.js
+          grep -Fq 'orders.modify' trade/terminal-pro.js
+          grep -Fq 'rwa_risk_v2' trade/terminal-pro.js
+          grep -Fq 'RWATradePro' trade/terminal-pro.js
+          ! grep -Fq 'ExchangeClient' trade/terminal-pro.js
+          ! grep -Eq "api\.hyperliquid(-testnet)?\.xyz/exchange|['\"]\/exchange['\"]" trade/terminal-pro.js
+
+          grep -Fq "type:'claimDrip'" trade/fund-modal.js
+          grep -Fq 'Get 1,000 test USDC' trade/fund-modal.js
+          grep -Fq 'currentMarkPrice' trade/app.js
+          ! grep -Fq "marketPrice').textContent.replace" trade/app.js
+
+          grep -Fq "version:'1.0.4'" trade/e2e.js
+          grep -Fq 'const restingPrice=mid*0.95' trade/e2e.js
+          grep -Fq 'price:mid*0.96' trade/e2e.js
+          grep -Fq 'const protectionPct=0.005' trade/e2e.js
+          grep -Fq 'replacementOid' trade/e2e.js
+          grep -Fq 'Run full TESTNET verification' trade/e2e.js
+          grep -Fq 'E2E_PROOF_JSON_START' trade/e2e.js
+          ! grep -Fq 'ExchangeClient' trade/e2e.js
+
+          grep -Fq "const MARKER='e2e-read-backoff-v1'" trade/e2e-resilience.js
+          grep -Fq "wrapMethod(api.account,'state')" trade/e2e-resilience.js
+          grep -Fq "wrapMethod(api.orders,'open')" trade/e2e-resilience.js
+
+          grep -Fq 'WebSocketTransport' execution-api.js
+          grep -Fq "transport:'websocket-write-v1'" execution-api.js
+          grep -Fq "riskSigner:'agent-only-fail-closed-v1'" execution-api.js
+          grep -Fq 'allowMaster:false' execution-api.js
+          grep -Fq "riskGate:'mandatory-internal-v1'" execution-api.js
+          grep -Fq "grouping:'normalTpsl'" execution-api.js
+
+      - name: Publish source status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/trade-source' -f description='Professional terminal + margin + overlays + machine gate verified'
+
+      - name: Verify deployed GitHub Pages trade bundle
+        shell: bash
+        run: |
+          ok=0
+          for i in {1..120}; do
+            q="${GITHUB_RUN_ID}-${i}"
+            html="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/?v=$q" || true)"
+            app="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/app.js?v=$q" || true)"
+            pro="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/terminal-pro.js?v=$q" || true)"
+            proc="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/terminal-pro.css?v=$q" || true)"
+            cfg="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/config.js?v=$q" || true)"
+            provider="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/provider-runtime.js?v=$q" || true)"
+            margin="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/margin-runtime.js?v=$q" || true)"
+            overlay="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/chart-overlays.js?v=$q" || true)"
+            fund="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/fund-modal.js?v=$q" || true)"
+            resilience="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/e2e-resilience.js?v=$q" || true)"
+            e2e="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/trade/e2e.js?v=$q" || true)"
+            execapi="$(curl --connect-timeout 5 --max-time 12 -fsSL "https://narzulalistiqlal.github.io/rwa/execution-api.js?v=$q" || true)"
+            if grep -Fq 'Get test balance' <<<"$html" \
+              && grep -Fq "frame-src 'none'" <<<"$html" \
+              && ! grep -Fq '<iframe' <<<"$html" \
+              && grep -Fq 'terminal-pro.js?v=1' <<<"$html" \
+              && grep -Fq 'id="priceChart"' <<<"$html" \
+              && grep -Fq 'id="positionModal"' <<<"$html" \
+              && grep -Fq 'currentMarkPrice' <<<"$app" \
+              && grep -Fq 'candleSnapshot' <<<"$pro" \
+              && grep -Fq 'orders.trigger' <<<"$pro" \
+              && grep -Fq 'orders.modify' <<<"$pro" \
+              && ! grep -Fq 'ExchangeClient' <<<"$pro" \
+              && grep -Fq '.mobile-trade-bar' <<<"$proc" \
+              && grep -Fq "version:'1.5.0'" <<<"$cfg" \
+              && grep -Fq "uiRelease:'terminal-pro-commerce-v2'" <<<"$cfg" \
+              && grep -Fq "import './provider-runtime.js?v=1'" <<<"$cfg" \
+              && grep -Fq "import('./margin-runtime.js?v=1')" <<<"$cfg" \
+              && grep -Fq "import('./chart-overlays.js?v=1')" <<<"$cfg" \
+              && grep -Fq '../launch/readiness.json' <<<"$cfg" \
+              && grep -Fq '../launch/e2e-registry.json' <<<"$cfg" \
+              && grep -Fq "status==='READY_FOR_MAINNET'" <<<"$cfg" \
+              && grep -Fq "Object.defineProperty(BASE,'mainnetEnabled'" <<<"$cfg" \
+              && ! grep -Eq 'mainnetEnabled[[:space:]]*:[[:space:]]*true' <<<"$cfg" \
+              && grep -Fq 'RWAProviderRuntime' <<<"$provider" \
+              && grep -Fq 'RWAMarginRuntime' <<<"$margin" \
+              && ! grep -Fq 'ExchangeClient' <<<"$margin" \
+              && grep -Fq 'RWAChartTradeOverlay' <<<"$overlay" \
+              && grep -Fq "type:'claimDrip'" <<<"$fund" \
+              && grep -Fq "const MARKER='e2e-read-backoff-v1'" <<<"$resilience" \
+              && grep -Fq "version:'1.0.4'" <<<"$e2e" \
+              && grep -Fq "transport:'websocket-write-v1'" <<<"$execapi" \
+              && grep -Fq "riskSigner:'agent-only-fail-closed-v1'" <<<"$execapi"; then
+              ok=1
+              break
+            fi
+            sleep 5
+          done
+          test "$ok" = "1"
+
+      - name: Publish live status
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/trade-live' -f description='RWA Trade v1.5 verified live on GitHub Pages'
+
+      - name: Publish failure status
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/trade-live' -f description='RWA Trade live verification failed'

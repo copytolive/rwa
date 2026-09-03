@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "campaign": "vectorforge-trillion-evaluation-research",
+  "target_unique_evaluations": 1000000000000,
+  "claim_policy": {
+    "completed_count_source": "verified shard ledger only",
+    "target_is_not_completed": true,
+    "synthetic_counter_forbidden": true,
+    "duplicate_evaluations_do_not_count": true
+  },
+  "evaluation_identity": {
+    "algorithm": "SHA-256",
+    "canonical_encoding": "UTF-8 JSON with sorted keys and compact separators",
+    "required_dimensions": [
+      "dataset_sha256",
+      "instrument",
+      "source_period",
+      "model",
+      "parameters",
+      "execution_assumptions",
+      "engine_version"
+    ]
+  },
+  "dataset_identity": {
+    "algorithm": "SHA-256",
+    "scope": "exact raw source bytes consumed by the evaluator"
+  },
+  "shard_verification": {
+    "algorithm": "binary SHA-256 Merkle root over sorted evaluation-ID bytes",
+    "leaf": "32-byte evaluation ID",
+    "odd_node_rule": "duplicate final node at each odd tree layer",
+    "shard_id_algorithm": "SHA-256 over canonical shard metadata",
+    "required_metadata": [
+      "shard_id",
+      "dataset_sha256",
+      "engine_version",
+      "evaluation_count",
+      "merkle_root",
+      "completed_at"
+    ]
+  },
+  "count_rule": {
+    "current_phase": "exact unique evaluation-ID ledger plus Merkle shards",
+    "trillion_phase": "sum evaluation_count across accepted unique shard_id values after shard validation",
+    "collision_or_overlap_rule": "a distributed planner must assign non-overlapping canonical parameter ranges; overlapping shard ranges are rejected before count aggregation"
+  },
+  "compute_architecture": {
+    "github_pages": "static interactive dashboard",
+    "github_actions": "control plane, bounded verified jobs, ledger publication",
+    "distributed_runners": "large-scale evaluation workers",
+    "browser": "interactive single-user historical simulation"
+  },
+  "reproducibility": {
+    "required": true,
+    "minimum_artifacts": [
+      "engine_version",
+      "dataset_sha256",
+      "canonical parameter specification",
+      "execution assumptions",
+      "evaluation_count",
+      "merkle_root"
+    ]
+  }
+}

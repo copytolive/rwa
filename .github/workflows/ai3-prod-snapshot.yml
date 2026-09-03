@@ -1,0 +1,77 @@
+name: AI3 CopyToLive Production Snapshot
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ai3-prod-snapshot-requests/**"
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: req
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^ai3-prod-snapshot-requests/.*\.json$' | tail -n1)"
+          ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$FILE")"
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+          echo "out=ai3-prod-snapshots/$ID" >> "$GITHUB_OUTPUT"
+      - name: Fetch live production files
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="${{ steps.req.outputs.out }}"
+          mkdir -p "$OUT/assets/js"
+          BASE="https://copytolive.com"
+          curl -fsSL --retry 3 -H 'Cache-Control: no-cache' "$BASE/?snapshot=${{ steps.req.outputs.id }}-$RANDOM" -o "$OUT/index.html"
+          curl -fsSL --retry 3 -H 'Cache-Control: no-cache' "$BASE/assets/js/ai3_public_shell_v1.js?snapshot=${{ steps.req.outputs.id }}-$RANDOM" -o "$OUT/assets/js/ai3_public_shell_v1.js"
+          curl -fsSL --retry 3 -H 'Cache-Control: no-cache' "$BASE/fundamental.html?snapshot=${{ steps.req.outputs.id }}-$RANDOM" -o "$OUT/fundamental.html"
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,os
+          out=Path(os.environ["OUT"])
+          idx=(out/"index.html").read_text("utf-8","ignore")
+          m=re.search(r'<script[^>]+src="([^"]*index-renko-final-[^"]+\.js[^"]*)"',idx)
+          if m:
+            (out/"index-current-url.txt").write_text(("https://copytolive.com"+m.group(1).split("?")[0])+"\n")
+          PY
+          if [ -s "$OUT/index-current-url.txt" ]; then
+            URL="$(cat "$OUT/index-current-url.txt")"
+            curl -fsSL --retry 3 -A 'Mozilla/5.0' -H 'Cache-Control: no-cache' "$URL?snapshot=${{ steps.req.outputs.id }}-$RANDOM" -o "$OUT/assets/js/index-current.js" || true
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,os
+          out=Path(os.environ["OUT"]); rows={}
+          for p in out.rglob("*"):
+            if p.is_file():
+              b=p.read_bytes(); rows[str(p.relative_to(out))]={"bytes":len(b),"sha256":hashlib.sha256(b).hexdigest()}
+          (out/"manifest.json").write_text(json.dumps(rows,indent=2)+"\\n")
+          PY
+        env:
+          OUT: ${{ steps.req.outputs.out }}
+      - name: Commit snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="${{ steps.req.outputs.out }}"
+          git config user.name "CopyToLive AI3 Snapshot"
+          git config user.email "copytolive-ai3-snapshot@local.invalid"
+          git add "$OUT"
+          git commit -m "ai3 production snapshot: ${{ steps.req.outputs.id }}"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort || true; sleep "$attempt"; continue; }
+            if git push origin HEAD:main; then exit 0; fi
+            sleep "$attempt"
+          done
+          exit 1

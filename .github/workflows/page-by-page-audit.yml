@@ -1,0 +1,61 @@
+name: Real World Asset V4 Public Page-by-Page Audit
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "index.html"
+      - "app.js"
+      - "chart-core.js"
+      - "rwa-live-home-v1.js"
+      - "rwa-terminal-v5.js"
+      - "rwa-terminal-v5.css"
+      - "rwa-live-home-v1.css"
+      - "rwa-target-dashboard-v2.css"
+      - "rwa-multichain.js"
+      - "rwa-multichain-engine.js"
+      - "rwa-multichain-registry.json"
+      - "tools/page-by-page-audit.mjs"
+      - ".github/workflows/page-by-page-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for final public UI markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://copytolive.github.io/rwa'
+          for i in $(seq 1 90); do
+            ROOT="$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "$BASE/?v=$i" 2>/dev/null || true)"
+            CORE="$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "$BASE/chart-core.js?v=$i" 2>/dev/null || true)"
+            if printf '%s' "$ROOT" | grep -Fq 'id="bookPrecision"' && printf '%s' "$ROOT" | grep -Fq 'id="watchAdd"' && printf '%s' "$ROOT" | grep -Fq 'app.js?v=20' && printf '%s' "$CORE" | grep -Fq 'rwa-terminal-v5.js?v=1.0.24'; then
+              echo "Final public UI markers are live"
+              exit 0
+            fi
+            sleep 10
+          done
+          exit 1
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Capture every public page state
+        env:
+          RWA_UI_URL: https://copytolive.github.io/rwa/
+          RWA_UI_PROOF_DIR: proof/page-by-page-audit
+        run: node tools/page-by-page-audit.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rwa-page-by-page-audit-${{ github.sha }}
+          path: proof/page-by-page-audit/
+          if-no-files-found: error
+          retention-days: 30

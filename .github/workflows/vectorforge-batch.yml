@@ -1,0 +1,106 @@
+name: VectorForge Verified Batch
+
+on:
+  workflow_dispatch:
+    inputs:
+      month:
+        description: 'EURUSD source month (YYYY-MM) or auto'
+        required: false
+        default: 'auto'
+      batch_count:
+        description: 'Sequential source months to process when month=auto'
+        required: false
+        default: '1'
+  schedule:
+    - cron: '17 */6 * * *'
+  push:
+    branches: ['main']
+    paths:
+      - 'backtest/factory/**'
+      - 'backtest/data/manifest.json'
+      - '.github/workflows/vectorforge-batch.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: vectorforge-verified-batch
+  cancel-in-progress: false
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      VF_MONTH: ${{ github.event.inputs.month || 'auto' }}
+      VF_BATCH_COUNT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.batch_count || '8' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install numeric engine
+        run: python -m pip install --disable-pip-version-check numpy
+
+      - name: Run verified batch campaign
+        run: |
+          set -e
+          COUNT="$VF_BATCH_COUNT"
+          if ! [[ "$COUNT" =~ ^[0-9]+$ ]] || [ "$COUNT" -lt 1 ] || [ "$COUNT" -gt 8 ]; then
+            echo "batch_count must be an integer from 1 to 8"
+            exit 2
+          fi
+          for i in $(seq 1 "$COUNT"); do
+            echo "=== VectorForge batch $i/$COUNT · request=$VF_MONTH ==="
+            VF_MONTH="$VF_MONTH" python backtest/factory/run_batch.py
+            if [ "$VF_MONTH" != "auto" ]; then
+              break
+            fi
+          done
+
+      - name: Rebuild scalable Merkle shard ledger
+        run: python backtest/factory/rebuild_shards.py
+
+      - name: Run audit contract self-test
+        run: python backtest/factory/test_contract.py
+
+      - name: Validate result JSON and ledger invariants
+        run: |
+          python -m json.tool backtest/factory/scale_contract.json >/dev/null
+          python -m json.tool backtest/results/campaign.json >/dev/null
+          python -m json.tool backtest/results/latest_batch.json >/dev/null
+          python -m json.tool backtest/results/evaluation_ids.json >/dev/null
+          python -m json.tool backtest/results/batches.json >/dev/null
+          python -m json.tool backtest/results/shards.json >/dev/null
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          ids = json.loads(Path('backtest/results/evaluation_ids.json').read_text())['ids']
+          campaign = json.loads(Path('backtest/results/campaign.json').read_text())
+          batches = json.loads(Path('backtest/results/batches.json').read_text())['batches']
+          shards = json.loads(Path('backtest/results/shards.json').read_text())['shards']
+          assert len(ids) == len(set(ids)), 'duplicate evaluation IDs persisted'
+          assert campaign['verified_completed'] == len(ids), 'campaign verified count mismatch'
+          assert sum(int(s['evaluation_count']) for s in shards) == len(ids), 'Merkle shard count mismatch'
+          assert len({s['shard_id'] for s in shards}) == len(shards), 'duplicate shard IDs'
+          assert all(x.get('dataset_sha256') and len(x['dataset_sha256']) == 64 for x in batches)
+          assert all(len(x.get('merkle_root','')) == 64 for x in shards)
+          print(f"PASS · unique evaluations={len(ids):,} · batches={len(batches):,} · shards={len(shards):,}")
+          PY
+
+      - name: Persist verified results
+        run: |
+          git config user.name 'vectorforge-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add backtest/results/
+          if git diff --cached --quiet; then
+            echo 'No result changes.'
+          else
+            git commit -m "VectorForge verified campaign update"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi

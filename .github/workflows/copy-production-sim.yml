@@ -1,0 +1,46 @@
+name: RWA Copy Production Simulation
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "agent-worker/**"
+      - "copy-24x7-client.js"
+      - ".github/workflows/copy-production-sim.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+      - name: Install worker dependencies
+        working-directory: agent-worker
+        run: npm install --ignore-scripts
+      - name: Run copy production simulations
+        working-directory: agent-worker
+        run: |
+          node --test test/copy-engine.test.mjs test/copy-production.test.mjs
+          grep -Fq "deterministic-cloid-v1" execution.mjs
+          grep -Fq "copy.retry_pending" worker.mjs
+          grep -Fq "copy.replay_confirmed" worker.mjs
+          grep -Fq "sessionLoss" worker.mjs
+          grep -Fq "sourceTestnet" worker.mjs
+          grep -Fq "reduceOnly" worker.mjs
+      - name: Publish simulation success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/copy-production-sim' -f description='Partial/multi-fill, cap, reduce, duplicate, restart, max-loss and retry simulations PASS'
+      - name: Publish simulation failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/copy-production-sim' -f description='Copy production simulation failed'

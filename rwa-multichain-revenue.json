@@ -1,0 +1,44 @@
+{
+  "version": "3.0.0",
+  "mode": "EXTERNAL_WALLET_SETUP_REQUIRED",
+  "currency": "USD",
+  "integrator": "copytolive-rwa",
+  "disclosure": "Application fees are included in route/order economics only after the corresponding fee wallet or builder authorization is verified and visibly disclosed before signing.",
+  "lifi": {
+    "enabled": false,
+    "integrator_verified": false,
+    "portal_configured": false,
+    "fee_wallet_configured_externally": false,
+    "partner_configured": false,
+    "payout_wallet_configured_externally": false,
+    "fee_bps": 20,
+    "fee_decimal": 0.002,
+    "activation_gate": "LI_FI_PORTAL_INTEGRATOR_AND_FEE_WALLET_VERIFIED",
+    "evidence_url": "",
+    "provider_docs_url": "https://docs.li.fi/introduction/integrating-lifi/monetizing-integration"
+  },
+  "hyperliquid": {
+    "enabled": false,
+    "builder_wallet_configured": false,
+    "builder_address": "",
+    "builder_min_account_value_usdc": 100,
+    "builder_account_value_verified": false,
+    "user_approval_required": true,
+    "approval_action": "approveBuilderFee",
+    "approval_query": "maxBuilderFee",
+    "perp_fee_tenths_bp": 10,
+    "spot_fee_tenths_bp": 10,
+    "activation_gate": "BUILDER_ADDRESS_FUNDED_AND_USER_APPROVAL_FLOW_VERIFIED",
+    "evidence_url": "",
+    "provider_docs_url": "https://hyperliquid.gitbook.io/hyperliquid-docs/trading/builder-codes"
+  },
+  "policy": {
+    "never_charge_without_provider_confirmation": true,
+    "never_bypass_ready_for_mainnet": true,
+    "no_hidden_fee": true,
+    "fee_must_be_visible_in_quote": true,
+    "provider_setup_evidence_required": true,
+    "user_builder_approval_required": true,
+    "fail_closed": true
+  }
+}

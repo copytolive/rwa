@@ -1,0 +1,55 @@
+name: RWA Registry Review
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: rwa-registry-review
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: startsWith(github.event.issue.title, '[RWA-VERIFY]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install signature verifier
+        run: npm install ethers@6.15.0 --no-save --ignore-scripts
+      - name: Verify wallet approval package
+        id: verify
+        continue-on-error: true
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: node tools/rwa-verify.mjs
+      - name: Publish VERIFIED registry entry
+        if: steps.verify.outcome == 'success'
+        run: |
+          python -m json.tool rwa-assets.json >/dev/null
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add rwa-assets.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'registry: publish wallet-approved VERIFIED RWA asset'
+            git push
+          fi
+      - name: Report approval
+        if: steps.verify.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          DATA=$(cat verify-success.txt)
+          gh issue comment "${{ github.event.issue.number }}" --body "VERIFIED registry approval accepted. Wallet signature, reviewer allowlist, legal checklist, and asset package passed. Registry publication data: \`$DATA\`."
+          gh issue close "${{ github.event.issue.number }}" --reason completed
+      - name: Report rejection
+        if: steps.verify.outcome != 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          REASON=$(cat verify-error.txt 2>/dev/null || echo 'Verification failed')
+          gh issue comment "${{ github.event.issue.number }}" --body "RWA verification rejected: $REASON"
+          gh issue close "${{ github.event.issue.number }}" --reason 'not planned'

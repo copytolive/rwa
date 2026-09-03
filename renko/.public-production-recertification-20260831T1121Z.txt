@@ -1,0 +1,5 @@
+RENKO public production recertification marker.
+Parent target: current main 1053d0356426d6b868aefe9b57a1772caae90d2d after non-RENKO status refresh commits.
+Runtime semantics: none.
+Purpose: trigger fresh same-SHA final certification.
+Evidence rule: every final RENKO gate, Pages SHA witness, byte-parity check, public browser validation, artifact, and screenshot must refer only to the commit created by this marker.

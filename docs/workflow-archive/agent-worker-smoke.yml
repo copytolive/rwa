@@ -1,0 +1,60 @@
+name: RWA Agent Worker Smoke
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "agent-worker/**"
+      - ".github/workflows/agent-worker-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  worker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+      - name: Install worker dependencies
+        working-directory: agent-worker
+        run: npm install --ignore-scripts
+      - name: Validate worker safety contract
+        working-directory: agent-worker
+        run: |
+          npm run check
+          grep -Fq "RWAWorkerExecutionAPI" execution.mjs
+          grep -Fq "WORKER_SINGLE_WRITE_PATH" execution.mjs
+          grep -Fq "WORKER_IDEMPOTENCY='deterministic-cloid-v1'" execution.mjs
+          grep -Fq "orderStatus" execution.mjs
+          grep -Fq "CLOID_TERMINAL" execution.mjs
+          grep -Fq "copy.retry_pending" worker.mjs
+          grep -Fq "consumeNonce" worker.mjs
+          grep -Fq "RWA_PUBLIC_ORIGIN" worker.mjs
+          grep -Fq "RWA_ALLOWED_ORIGINS" worker.mjs
+          grep -Fq "sourceTestnet" worker.mjs
+          grep -Fq "kill_switch" worker.mjs
+          grep -Fq "RWA_MAINNET_APPROVED" worker.mjs
+          grep -Fq "HEALTHCHECK" Dockerfile
+          grep -Fq "copy-engine.mjs" Dockerfile
+          ! grep -Fq "ExchangeClient" worker.mjs
+          ! grep -Eq "withdraw3|usdClassTransfer|spotSend|sendAsset" execution.mjs worker.mjs
+          python -m json.tool control.json >/dev/null
+          python -m json.tool public-config.json >/dev/null
+          grep -Fq '"enabled": false' control.json
+          grep -Fq '"kill_switch": true' control.json
+          grep -Fq '"mainnet_enabled": false' control.json
+      - name: Publish worker source success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/agent-worker-source' -f description='24x7 delegated worker: single-write + deterministic CLOID + replay protection verified'
+      - name: Publish worker source failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/agent-worker-source' -f description='Delegated agent worker safety verification failed'

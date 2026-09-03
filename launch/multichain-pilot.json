@@ -1,0 +1,40 @@
+{
+  "schema": 2,
+  "status": "PILOT_ONLY",
+  "enabled": true,
+  "unrestricted_mainnet": false,
+  "explicit_wallet_confirmation_required": true,
+  "max_total_usd_per_session": 125,
+  "routes": {
+    "EVM_TO_EVM": {"from":"base","to":"arbitrum","from_token":"USDC","to_token":"USDC","max_amount":2},
+    "EVM_TO_SOLANA": {"from":"base","to":"solana","from_token":"USDC","to_token":"USDC","max_amount":2},
+    "SOLANA_TO_EVM": {"from":"solana","to":"arbitrum","from_token":"USDC","to_token":"USDC","max_amount":2},
+    "SAME_CHAIN": {"from":"base","to":"base","from_token":"USDC","to_token":"USDT","max_amount":2},
+    "HYPERLIQUID_FUNDING": {"from":"arbitrum","token":"USDC","min_amount":5,"max_amount":105,"target_account_value_usdc":100}
+  },
+  "failure_or_refund": {
+    "intentional_failure_forbidden": true,
+    "accept_existing_real_failed_or_refunded_provider_receipt": true
+  },
+  "evidence": {
+    "require_https_url": true,
+    "evm_explorers": {
+      "base": "https://basescan.org/tx/",
+      "arbitrum": "https://arbiscan.io/tx/",
+      "ethereum": "https://etherscan.io/tx/",
+      "bnb": "https://bscscan.com/tx/",
+      "polygon": "https://polygonscan.com/tx/",
+      "avalanche": "https://snowtrace.io/tx/"
+    },
+    "solana_explorer": "https://solscan.io/tx/",
+    "lifi_status_api": "https://li.quest/v1/status"
+  },
+  "policy": {
+    "never_store_private_keys": true,
+    "never_request_seed_phrase": true,
+    "no_background_signing": true,
+    "no_unrestricted_execution": true,
+    "receipt_export_requires_real_hash": true,
+    "builder_activation_requires_user_signature": true
+  }
+}

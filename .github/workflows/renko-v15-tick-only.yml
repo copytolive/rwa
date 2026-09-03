@@ -1,0 +1,10 @@
+name: RENKO TradingView Official Contract Gate — Legacy Manual Only
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  legacy-scope:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'Legacy broad TradingView contract gate retained manually. GOLD Traditional and ATR Chromium gates are the production contract.'

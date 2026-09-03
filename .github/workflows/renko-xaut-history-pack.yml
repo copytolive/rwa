@@ -1,0 +1,98 @@
+name: RENKO XAUT Fixed 1s History Pack
+on:
+  push:
+    branches:
+      - main
+      - fix/renko-xaut-atr-matrix-20260828
+    paths:
+      - 'tools/build-xaut-okx-1s-pack.py'
+      - '.github/workflows/renko-xaut-history-pack.yml'
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: renko-xaut-okx-1s-pack-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      RENKO_FIXED_INTERVAL: '1s'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Build XAUT OKX fixed 1s pack
+        run: python3 tools/build-xaut-okx-1s-pack.py
+      - name: Validate fixed 1s pack and provenance
+        run: |
+          python3 - <<'PY'
+          import gzip, hashlib, json
+          from pathlib import Path
+
+          p=Path('renko/xaut-okx-1s-pack.csv.gz')
+          m=json.loads(Path('renko/xaut-okx-1s-pack.meta.json').read_text())
+          assert m['schema']=='renko-xaut-okx-1s-pack-v2',m
+          assert m['provider']=='OKX Spot',m
+          assert m['instrument']=='XAUT-USDT',m
+          assert m['interval']=='1s' and m['intervalMs']==1000,m
+          assert m['rows']==1_005_000,m
+          provenance=m.get('provenance') or {}
+          assert provenance.get('sourceBar')=='1s',provenance
+          assert provenance.get('sourceIntervalMs')==1000,provenance
+          assert provenance.get('upsampled') is False,provenance
+          assert provenance.get('synthetic1s') is False,provenance
+          assert provenance.get('continuity')=='provider-native OKX 1s candles',provenance
+
+          digest=hashlib.sha256()
+          count=0
+          first_ms=None
+          last_ms=None
+          prev_ms=None
+          with gzip.open(p,'rb') as f:
+              for raw in f:
+                  digest.update(raw)
+                  cols=raw.rstrip(b'\r\n').split(b',')
+                  assert len(cols)>=6,(count,raw[:120])
+                  ts=int(cols[0])
+                  if first_ms is None: first_ms=ts
+                  if prev_ms is not None:
+                      assert ts-prev_ms==1000,(count,prev_ms,ts,ts-prev_ms)
+                  prev_ms=ts
+                  last_ms=ts
+                  count+=1
+          assert count==1_005_000==(m['rows']),(count,m['rows'])
+          assert first_ms==m['fromMs'],(first_ms,m['fromMs'])
+          assert last_ms==m['toMs'],(last_ms,m['toMs'])
+          assert digest.hexdigest()==m['sha256UncompressedCsv'],(digest.hexdigest(),m['sha256UncompressedCsv'])
+          print('RENKO_XAUT_OKX_1S_PACK_PASS',json.dumps({
+              'rows':count,
+              'fromUtc':m['fromUtc'],
+              'toUtc':m['toUtc'],
+              'interval':m['interval'],
+              'intervalMs':m['intervalMs'],
+              'provider':m['provider'],
+              'instrument':m['instrument'],
+              'upsampled':provenance['upsampled'],
+              'synthetic1s':provenance['synthetic1s'],
+              'sha256UncompressedCsv':m['sha256UncompressedCsv']
+          },sort_keys=True))
+          PY
+      - name: Commit refreshed pack onto latest source branch
+        run: |
+          set -euo pipefail
+          cp renko/xaut-okx-1s-pack.csv.gz /tmp/xaut-okx-1s-pack.csv.gz
+          cp renko/xaut-okx-1s-pack.meta.json /tmp/xaut-okx-1s-pack.meta.json
+          git fetch origin "${GITHUB_REF_NAME}"
+          git reset --hard "origin/${GITHUB_REF_NAME}"
+          cp /tmp/xaut-okx-1s-pack.csv.gz renko/xaut-okx-1s-pack.csv.gz
+          cp /tmp/xaut-okx-1s-pack.meta.json renko/xaut-okx-1s-pack.meta.json
+          git config user.name 'copytolive-renko-bot'
+          git config user.email 'copytolive@gmail.com'
+          git add -f renko/xaut-okx-1s-pack.csv.gz renko/xaut-okx-1s-pack.meta.json
+          if git diff --cached --quiet; then echo 'pack unchanged'; exit 0; fi
+          git commit -m 'data(renko): refresh XAUT OKX fixed 1s history pack'
+          git push origin HEAD:${GITHUB_REF_NAME}

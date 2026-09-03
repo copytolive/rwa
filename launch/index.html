@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#08090c">
+  <title>RWA Launch Readiness</title>
+  <meta name="description" content="Machine-evaluated RWA launch readiness and safety gates.">
+  <link rel="stylesheet" href="./styles.css?v=1">
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <a class="brand" href="../trade/">R</a>
+      <div><small>RWA RELEASE CONTROL</small><h1>Launch readiness</h1></div>
+      <a class="trade" href="../trade/">Open Trade</a>
+    </header>
+    <section class="hero card">
+      <div><small>MACHINE STATUS</small><b id="status">LOADING</b><p id="summary">Reading signed evidence and launch gates…</p></div>
+      <div class="meter"><span id="meter"></span></div>
+    </section>
+    <section id="checks" class="grid"></section>
+    <section class="card beta">
+      <div><small>BETA EVIDENCE</small><h2>Verified wallets</h2></div>
+      <div class="beta-grid"><div><b id="internal">0/3</b><span>Internal</span></div><div><b id="closed">0/20</b><span>Closed</span></div><div><b id="public">0/100</b><span>Public</span></div></div>
+    </section>
+    <section class="card free"><small>ZERO-COST STACK</small><p>Frontend: GitHub Pages · CI: GitHub Actions · 24/7 worker target: Cloudflare Workers Free + SQLite Durable Object · Replit/Vercel/paid worker hosting excluded.</p></section>
+    <footer><span id="updated">—</span><span>MAINNET stays locked until every required gate is PASS.</span></footer>
+  </main>
+  <script src="./status.js?v=1"></script>
+</body>
+</html>

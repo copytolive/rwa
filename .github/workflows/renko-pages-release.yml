@@ -1,0 +1,10 @@
+name: RENKO Verified Pages Release — Legacy Manual Only
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  legacy-scope:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'Legacy RENKO Pages release gate retired from automatic main. GOLD current-main closure owns exact-SHA Pages deployment and public verification.'

@@ -1,0 +1,89 @@
+name: RENKO 50 Pair 1s Symbol Probe
+on:
+  push:
+    branches:
+      - fix/renko-50pair-zero-ms-switch-20260828
+    paths:
+      - '.github/workflows/renko-50pair-symbol-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe all 50 launch symbols in parallel
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/symbols <<'EOF'
+          BTCUSDT
+          ETHUSDT
+          BNBUSDT
+          SOLUSDT
+          XRPUSDT
+          DOGEUSDT
+          ADAUSDT
+          TRXUSDT
+          AVAXUSDT
+          LINKUSDT
+          DOTUSDT
+          LTCUSDT
+          BCHUSDT
+          UNIUSDT
+          AAVEUSDT
+          XLMUSDT
+          ETCUSDT
+          NEARUSDT
+          ICPUSDT
+          FILUSDT
+          APTUSDT
+          ARBUSDT
+          OPUSDT
+          SUIUSDT
+          SHIBUSDT
+          PEPEUSDT
+          HBARUSDT
+          INJUSDT
+          ATOMUSDT
+          IMXUSDT
+          GRTUSDT
+          ALGOUSDT
+          VETUSDT
+          SEIUSDT
+          TIAUSDT
+          WLDUSDT
+          STXUSDT
+          LDOUSDT
+          QNTUSDT
+          FETUSDT
+          ENAUSDT
+          PENDLEUSDT
+          RUNEUSDT
+          THETAUSDT
+          SANDUSDT
+          MANAUSDT
+          CRVUSDT
+          COMPUSDT
+          ZECUSDT
+          EGLDUSDT
+          EOF
+          probe(){
+            s="$1"
+            m=$(curl -m 8 -sS -w '\n%{http_code}' "https://data-api.binance.vision/api/v3/exchangeInfo?symbol=$s" || true)
+            mc=$(printf '%s' "$m" | tail -n1); mb=$(printf '%s' "$m" | sed '$d')
+            k=$(curl -m 8 -sS -w '\n%{http_code}' "https://data-api.binance.vision/api/v3/klines?symbol=$s&interval=1s&limit=2" || true)
+            kc=$(printf '%s' "$k" | tail -n1); kb=$(printf '%s' "$k" | sed '$d')
+            status=$(printf '%s' "$mb" | jq -r '.symbols[0].status // ""' 2>/dev/null || true)
+            rows=$(printf '%s' "$kb" | jq 'if type=="array" then length else 0 end' 2>/dev/null || echo 0)
+            if [[ "$mc" == 200 && "$kc" == 200 && "$status" == TRADING && "$rows" -ge 1 ]]; then
+              echo "PASS $s meta=$mc status=$status kline=$kc rows=$rows"
+            else
+              echo "FAIL $s meta=$mc status=$status kline=$kc rows=$rows metaBody=$(printf '%s' "$mb" | head -c 120) klineBody=$(printf '%s' "$kb" | head -c 120)"
+            fi
+          }
+          export -f probe
+          xargs -n1 -P10 bash -c 'probe "$0"' < /tmp/symbols | sort | tee /tmp/result
+          echo "pass=$(grep -c '^PASS ' /tmp/result || true) fail=$(grep -c '^FAIL ' /tmp/result || true)"
+          test "$(grep -c '^PASS ' /tmp/result || true)" -eq 50

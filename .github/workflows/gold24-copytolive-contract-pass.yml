@@ -1,0 +1,118 @@
+name: GOLD24 CopyToLive Contract PASS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/gold24-copytolive-contract-pass.yml"
+      - "backtest/gold24/COPYTOLIVE_CONTRACT_KICK"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gold24-copytolive-contract-pass
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OUT: backtest/gold24/runtime_copytolive_contract/latest.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install
+        run: |
+          set -euo pipefail
+          python -m pip install -r backtest/gold24/requirements.txt
+          python -m pip install "TA-Lib>=0.6,<0.7"
+
+      - name: Validate execution contract and 118 production sources
+        run: |
+          set -euo pipefail
+          cd backtest/gold24
+          python -m unittest -v test_copytolive_compat.py
+          python - <<'PY'
+          import hashlib,json,pathlib
+          m=json.loads(pathlib.Path('copytolive_active_gold_manifest.json').read_text())
+          s=json.loads(pathlib.Path('copytolive_gold_strategy_sources.json').read_text())
+          assert m['snapshot']['active_gold_count']==118
+          assert m['snapshot']['timeframe_counts']=={'H1':118}
+          assert len(m['strategies'])==118
+          assert len(s['scripts'])==118
+          assert s['farm_sha256']==m['snapshot']['farm_sha256']
+          assert s['state_sha256']==m['snapshot']['state_sha256']
+          for row in m['strategies']:
+              sid=row['id']
+              src=s['scripts'][sid].encode()
+              assert hashlib.sha256(src).hexdigest()==row['source_script']['sha256']
+              assert row['symbol']=='GOLD'
+              assert row['timeframe']=='H1'
+              assert row['homeUniverse'] is True
+          print('CONTRACT SOURCE LOCK PASS 118/118')
+          PY
+
+      - name: Write PASS evidence
+        run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "$OUT")"
+          python - <<'PY'
+          import hashlib,json,os,pathlib
+          m=json.loads(pathlib.Path('backtest/gold24/copytolive_active_gold_manifest.json').read_text())
+          s=json.loads(pathlib.Path('backtest/gold24/copytolive_gold_strategy_sources.json').read_text())
+          e={
+            'status':'PASS',
+            'engine_mode':'COPYTOLIVE_EXACT_ACTIVE_REPLAY',
+            'active_gold':118,
+            'timeframe':'H1',
+            'farm_sha256':m['snapshot']['farm_sha256'],
+            'state_sha256':m['snapshot']['state_sha256'],
+            'source_pack_count':len(s['scripts']),
+            'contract':{
+              'deposit_usd':10000.0,
+              'risk_usd_per_trade':200.0,
+              'fee':0.0016,
+              'entry':'signal-bar close',
+              'sl':'entry_price * sl_pct',
+              'tp':'sl_distance * tp_ratio',
+              'size':'risk_usd / sl_distance',
+              'one_position_at_a_time':True,
+              'same_bar_entry_exit':False,
+              'same_bar_precedence':'SL_FIRST',
+              'walk_forward':'70/30 chronological'
+            },
+            'github_portfolio_gate':{
+              'min_entry':300,
+              'min_net_profit_usd':20000.0,
+              'min_pf':1.2,
+              'max_dd_pct':25.0,
+              'min_oos_pf':1.0,
+              'min_positive_year_pct':60.0,
+              'max_abs_pearson_log_return_equity':0.5
+            }
+          }
+          pathlib.Path(os.environ['OUT']).write_text(json.dumps(e,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(e,indent=2,sort_keys=True))
+          PY
+
+      - name: Publish PASS evidence
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$OUT"
+          git commit -m "chore(gold24): publish CopyToLive contract PASS [skip ci]" || exit 0
+          for TRY in 1 2 3 4 5; do
+            git pull --rebase origin main || { git rebase --abort || true; sleep "$TRY"; continue; }
+            if git push origin HEAD:main; then exit 0; fi
+            sleep "$TRY"
+          done
+          exit 1

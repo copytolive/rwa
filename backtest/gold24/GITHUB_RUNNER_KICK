@@ -1,0 +1,5 @@
+GOLD Canonical v11 recovery kick
+requested_by=ChatGPT
+reason=Run authoritative GOLD24 only from main after hardening push trigger to branches:[main]. Current workflow uses RAW_CURSOR_COUNT=100000 with 20 logical workers to keep each batch below hosted-runner shutdown window. Preserve cumulative DB, cursor, exact-ledger dedupe, Gate A, robustness, and single-writer promotion; do not reset canonical state. Source remains latest finalized PASS batch 310 / run 33667987913 until this run publishes a newer PASS.
+local_time=2026-09-03T02:44:00+07:00
+2026-09-03T19:55+07:00 preemption-safe canonical slice 25000

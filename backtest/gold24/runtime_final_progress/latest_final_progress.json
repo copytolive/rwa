@@ -1,0 +1,112 @@
+{
+  "after": {
+    "candidate_evaluated_discovery_total": 1291912,
+    "candidate_pass_global_d1": 115,
+    "corr_violations": 8,
+    "distinct_family_all_timeframes": 25,
+    "distinct_family_d1": 25,
+    "fail_portfolio_audit": 94,
+    "finalized_backtest": 65357,
+    "global_corr_kept_all_timeframes": 115,
+    "global_corr_kept_d1": 115,
+    "global_pair_count": 6903,
+    "hard_pass_portfolio_audit": 0,
+    "master_candidate_evaluated": 1091912,
+    "max_dd_le_25_count": 5,
+    "max_family_concentration_all_timeframes": 0.1565217391304348,
+    "max_family_concentration_d1": 0.1565217391304348,
+    "portfolio_readiness": "NOT_READY",
+    "sample_ge_300_count": 2,
+    "source_methods_input": 118,
+    "targeted_candidate_evaluated_unique": 200000,
+    "watch_portfolio_audit": 24
+  },
+  "before": {
+    "candidate_evaluated": 1191912,
+    "candidate_pass_global": 115,
+    "distinct_family": 25,
+    "fail": 94,
+    "finalized_backtest": 65357,
+    "hard_pass": 0,
+    "max_dd_le_25_count": 5,
+    "max_family_concentration": 0.1565217391304348,
+    "mt5_verified": 118,
+    "portfolio_readiness": "NOT_READY",
+    "python_verified": 118,
+    "sample_ge_300_count": 2,
+    "selected_methods": 115,
+    "watch": 24
+  },
+  "global_cross_timeframe": {
+    "correlation_rule": "absolute Pearson(log-return equity), global per-symbol",
+    "distinct_family": 25,
+    "fail_global": 94,
+    "h4_hard_pass_after_global_corr": 0,
+    "hard_pass_global": 0,
+    "max_family_concentration": 0.1565217391304348,
+    "methods_input_total": 118,
+    "selected_global": 115,
+    "status": "PASS",
+    "watch_global": 24
+  },
+  "hard_pass_global_final": 0,
+  "latest_targeted_search": {
+    "combined_candidate_evaluated_reported": 1291912,
+    "cumulative_targeted_evaluated_unique": 200000,
+    "fail_count": 92,
+    "full_pre_corr_survivors": 0,
+    "global_corr_rejected": 0,
+    "hard_pass_count": 0,
+    "hard_pass_new_count": 0,
+    "prefilter_survivors": 0,
+    "schema": "gold10b-hardpass-targeted-search-v3-outside-grid-frequency",
+    "status": "PASS",
+    "targeted_evaluated_unique_this_run": 100000,
+    "threshold_relaxation": false,
+    "watch_count": 23
+  },
+  "live_ready": false,
+  "live_ready_reason": "margin/slippage/broker interaction is not validated; native H4 methods are excluded until global cross-timeframe correlation is PASS",
+  "native_h4": {
+    "candidate_evaluated_unique": 60000,
+    "dataset": {
+      "construction": "DIRECT_SOURCE_H4_BARS_NO_RESAMPLING",
+      "cost_model": "core.py COST_FLOOR_RT=0.0032",
+      "dataset_sha256": "e3b6c32b199be6ace97e2bebb2636792018dbbade9cb2065177afe4784a46728",
+      "end_utc": "2026-09-03 18:00:00+00:00",
+      "provider": "TradingView",
+      "quantity_gold_units": 100.0,
+      "rows": 5679,
+      "start_utc": "2023-01-02 23:00:00+00:00",
+      "starting_equity_usd": 10000.0,
+      "symbol": "COMEX:GC1!",
+      "timeframe": "H4"
+    },
+    "global_cross_timeframe_corr_status": "PASS",
+    "globally_eligible_hard_pass": 0,
+    "internal_hard_pass_kept": 0,
+    "portfolio_readiness": "NOT_READY",
+    "status": "PASS"
+  },
+  "rules": {
+    "candidate_gate": {
+      "corr_max": 0.5,
+      "entry_min": 100,
+      "net_profit_usd_min": 20000.0
+    },
+    "correlation": "absolute Pearson(log-return equity), global per-symbol",
+    "hard_pass": {
+      "corr_max": 0.5,
+      "entry_min": 300,
+      "ev_gt": 0.0,
+      "max_dd_pct_max": 25.0,
+      "monte_carlo": "PASS",
+      "oos_pf_min": 1.0,
+      "pf_min": 1.2,
+      "positive_year_pct_min": 60.0
+    },
+    "total_backtest_definition": "finalized canonical only; candidate discovery is separate",
+    "xauusd_pip_usd": 0.01
+  },
+  "schema": "gold10b-final-progress-v1"
+}

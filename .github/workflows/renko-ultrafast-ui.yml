@@ -1,0 +1,10 @@
+name: RENKO Ultra Fast UI Gate — Legacy Manual Only
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  legacy-scope:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'Legacy multi-pair UI gate retained manually. GOLD production browser validation is authoritative.'

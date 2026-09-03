@@ -1,0 +1,76 @@
+name: GOLD24 MT5 Account Context Preflight
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/gold24-mt5-account-preflight.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gold24-mt5-account-preflight
+  cancel-in-progress: true
+
+jobs:
+  account-context:
+    runs-on: ubuntu-latest
+    env:
+      MT5_LOGIN_S: ${{ secrets.MT5_LOGIN }}
+      MT5_PASSWORD_S: ${{ secrets.MT5_PASSWORD }}
+      MT5_SERVER_S: ${{ secrets.MT5_SERVER }}
+      MT5_LOGIN_V: ${{ vars.MT5_LOGIN }}
+      MT5_PASSWORD_V: ${{ vars.MT5_PASSWORD }}
+      MT5_SERVER_V: ${{ vars.MT5_SERVER }}
+
+      EXNESS_MT5_LOGIN_S: ${{ secrets.EXNESS_MT5_LOGIN }}
+      EXNESS_MT5_PASSWORD_S: ${{ secrets.EXNESS_MT5_PASSWORD }}
+      EXNESS_MT5_SERVER_S: ${{ secrets.EXNESS_MT5_SERVER }}
+      EXNESS_MT5_LOGIN_V: ${{ vars.EXNESS_MT5_LOGIN }}
+      EXNESS_MT5_PASSWORD_V: ${{ vars.EXNESS_MT5_PASSWORD }}
+      EXNESS_MT5_SERVER_V: ${{ vars.EXNESS_MT5_SERVER }}
+
+      EXNESS_LOGIN_S: ${{ secrets.EXNESS_LOGIN }}
+      EXNESS_PASSWORD_S: ${{ secrets.EXNESS_PASSWORD }}
+      EXNESS_SERVER_S: ${{ secrets.EXNESS_SERVER }}
+      EXNESS_LOGIN_V: ${{ vars.EXNESS_LOGIN }}
+      EXNESS_PASSWORD_V: ${{ vars.EXNESS_PASSWORD }}
+      EXNESS_SERVER_V: ${{ vars.EXNESS_SERVER }}
+
+      GOLD24_MT5_LOGIN_S: ${{ secrets.GOLD24_MT5_LOGIN }}
+      GOLD24_MT5_PASSWORD_S: ${{ secrets.GOLD24_MT5_PASSWORD }}
+      GOLD24_MT5_SERVER_S: ${{ secrets.GOLD24_MT5_SERVER }}
+      GOLD24_MT5_LOGIN_V: ${{ vars.GOLD24_MT5_LOGIN }}
+      GOLD24_MT5_PASSWORD_V: ${{ vars.GOLD24_MT5_PASSWORD }}
+      GOLD24_MT5_SERVER_V: ${{ vars.GOLD24_MT5_SERVER }}
+
+      METATRADER_LOGIN_S: ${{ secrets.METATRADER_LOGIN }}
+      METATRADER_PASSWORD_S: ${{ secrets.METATRADER_PASSWORD }}
+      METATRADER_SERVER_S: ${{ secrets.METATRADER_SERVER }}
+      METATRADER_LOGIN_V: ${{ vars.METATRADER_LOGIN }}
+      METATRADER_PASSWORD_V: ${{ vars.METATRADER_PASSWORD }}
+      METATRADER_SERVER_V: ${{ vars.METATRADER_SERVER }}
+    steps:
+      - name: Detect complete credential alias without exposing values
+        shell: bash
+        run: |
+          set -euo pipefail
+          pick() {
+            local alias="$1" login_s="$2" pass_s="$3" server_s="$4" login_v="$5" pass_v="$6" server_v="$7"
+            local login="${login_s:-${login_v:-}}"
+            local pass="${pass_s:-${pass_v:-}}"
+            local server="${server_s:-${server_v:-}}"
+            if [[ -n "$login" && -n "$pass" && -n "$server" ]]; then
+              echo "ACCOUNT_CONTEXT_PRESENT alias=$alias"
+              return 0
+            fi
+            return 1
+          }
+          pick MT5 "$MT5_LOGIN_S" "$MT5_PASSWORD_S" "$MT5_SERVER_S" "$MT5_LOGIN_V" "$MT5_PASSWORD_V" "$MT5_SERVER_V" && exit 0
+          pick EXNESS_MT5 "$EXNESS_MT5_LOGIN_S" "$EXNESS_MT5_PASSWORD_S" "$EXNESS_MT5_SERVER_S" "$EXNESS_MT5_LOGIN_V" "$EXNESS_MT5_PASSWORD_V" "$EXNESS_MT5_SERVER_V" && exit 0
+          pick EXNESS "$EXNESS_LOGIN_S" "$EXNESS_PASSWORD_S" "$EXNESS_SERVER_S" "$EXNESS_LOGIN_V" "$EXNESS_PASSWORD_V" "$EXNESS_SERVER_V" && exit 0
+          pick GOLD24_MT5 "$GOLD24_MT5_LOGIN_S" "$GOLD24_MT5_PASSWORD_S" "$GOLD24_MT5_SERVER_S" "$GOLD24_MT5_LOGIN_V" "$GOLD24_MT5_PASSWORD_V" "$GOLD24_MT5_SERVER_V" && exit 0
+          pick METATRADER "$METATRADER_LOGIN_S" "$METATRADER_PASSWORD_S" "$METATRADER_SERVER_S" "$METATRADER_LOGIN_V" "$METATRADER_PASSWORD_V" "$METATRADER_SERVER_V" && exit 0
+          echo 'ACCOUNT_CONTEXT_MISSING: no complete supported GitHub Actions credential alias is configured'
+          exit 2

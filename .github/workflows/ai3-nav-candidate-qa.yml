@@ -1,0 +1,52 @@
+name: AI3 Nav Candidate QA
+on:
+  push:
+    branches: [main]
+    paths: ["ai3-nav-candidate-requests/**"]
+permissions: {contents: write}
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - id: req
+        shell: bash
+        run: |
+          F="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^ai3-nav-candidate-requests/.*json$' | tail -n1)"
+          ID="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["id"])' "$F")"
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+          echo "out=ai3-nav-candidate-results/$ID" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Test patched assets against live production
+        env:
+          QA_ID: ${{ steps.req.outputs.id }}
+          OUT_DIR: ${{ steps.req.outputs.out }}
+        run: node tools/ai3_nav_candidate_qa.mjs
+      - name: Commit report
+        if: always()
+        shell: bash
+        run: |
+          OUT="${{ steps.req.outputs.out }}";test -f "$OUT/report.json"
+          git config user.name "AI3 Nav Candidate QA";git config user.email "ai3@local.invalid"
+          git add "$OUT/report.json"
+          git commit -m "ai3 nav candidate QA: ${{ steps.req.outputs.id }}" || true
+          for i in 1 2 3 4 5; do git fetch origin main;git rebase origin/main || { git rebase --abort || true;sleep $i;continue;};git push origin HEAD:main && exit 0;sleep $i;done;exit 1
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.req.outputs.id }}
+          path: ${{ steps.req.outputs.out }}
+          if-no-files-found: error
+      - name: Enforce PASS
+        if: always()
+        shell: bash
+        run: |
+          python3 -c 'import json,sys;d=json.load(open(sys.argv[1]));raise SystemExit(0 if d.get("ok") and d.get("acceptance")=="PASS" else 1)' "${{ steps.req.outputs.out }}/report.json"

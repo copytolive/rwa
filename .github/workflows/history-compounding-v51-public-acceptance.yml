@@ -1,0 +1,130 @@
+name: History Compounding V51 Public Acceptance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "history-compounding-v51-requests/**"
+
+permissions:
+  contents: write
+
+jobs:
+  accept:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: req
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^history-compounding-v51-requests/.*\.json$' | tail -n 1)"
+          ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$FILE")"
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+          echo "response=history-compounding-v51-responses/$ID.json" >> "$GITHUB_OUTPUT"
+
+      - name: Browser acceptance
+        env:
+          ACCEPT_ID: ${{ steps.req.outputs.id }}
+          RESP: ${{ steps.req.outputs.response }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p history-compounding-v51-responses
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium)"
+          "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu --remote-debugging-port=9222 about:blank >/tmp/hc51.chrome.out 2>/tmp/hc51.chrome.err &
+          PID=$!
+          trap 'kill $PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 80); do curl -fsS http://127.0.0.1:9222/json/list >/tmp/hc51-pages.json && break; sleep .25; done
+
+          cat >/tmp/hc51.mjs <<'NODE'
+          import fs from 'node:fs';
+          const ID=process.env.ACCEPT_ID, OUT=process.env.RESP;
+          const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+          const result={ok:false,id:ID,acceptance:'FAIL',pages:{},consoleErrors:[],exceptions:[],failed:[],httpErrors:[]};
+          let ws=null,seq=0;const pending=new Map(),reqUrls=new Map();
+          try{
+            const pages=JSON.parse(fs.readFileSync('/tmp/hc51-pages.json','utf8'));
+            const target=pages.find(x=>x.type==='page');
+            if(!target?.webSocketDebuggerUrl) throw Error('NO_CDP_PAGE');
+            ws=new WebSocket(target.webSocketDebuggerUrl);
+            const send=(method,params={})=>new Promise((resolve,reject)=>{
+              const id=++seq,t=setTimeout(()=>{pending.delete(id);reject(Error('CDP_TIMEOUT '+method));},20000);
+              pending.set(id,{resolve:v=>{clearTimeout(t);resolve(v)},reject:e=>{clearTimeout(t);reject(e)}});
+              ws.send(JSON.stringify({id,method,params}));
+            });
+            ws.onmessage=e=>{
+              const m=JSON.parse(e.data);
+              if(m.id&&pending.has(m.id)){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result);return;}
+              if(m.method==='Runtime.exceptionThrown') result.exceptions.push(String(m.params?.exceptionDetails?.exception?.description||m.params?.exceptionDetails?.text||'exception'));
+              if(m.method==='Runtime.consoleAPICalled'&&m.params?.type==='error') result.consoleErrors.push((m.params.args||[]).map(a=>String(a.value??a.description??'')).join(' '));
+              if(m.method==='Network.requestWillBeSent') reqUrls.set(m.params.requestId,m.params?.request?.url||'');
+              if(m.method==='Network.loadingFailed'&&!m.params?.canceled) result.failed.push((reqUrls.get(m.params.requestId)||'')+' :: '+(m.params.errorText||''));
+              if(m.method==='Network.responseReceived'){const r=m.params?.response;if(r&&Number(r.status)>=400)result.httpErrors.push({status:Number(r.status),url:r.url||''});}
+            };
+            await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('CDP_OPEN_TIMEOUT')),10000);ws.onopen=()=>{clearTimeout(t);resolve()};ws.onerror=reject;});
+            await send('Runtime.enable'); await send('Network.enable'); await send('Page.enable');
+            const ev=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text||'EVAL');return r.result.value;};
+            const j=async expression=>{const v=await ev(expression);return typeof v==='string'?JSON.parse(v):v;};
+            async function wait(expr,timeout=45000){const end=Date.now()+timeout;while(Date.now()<end){try{if(await ev(expr))return true}catch{}await sleep(120)}return false;}
+
+            for(const cfg of [{name:'desktop',w:2048,h:933,mobile:false},{name:'mobile',w:390,h:844,mobile:true}]){
+              await send('Emulation.setDeviceMetricsOverride',{width:cfg.w,height:cfg.h,deviceScaleFactor:1,mobile:cfg.mobile,screenWidth:cfg.w,screenHeight:cfg.h});
+              await send('Page.navigate',{url:'https://copytolive.com/compounding_live.html?accept='+encodeURIComponent(ID)+'&vp='+cfg.name});
+              const ready=await wait("document.readyState==='complete'&&document.querySelector('#historyTypeFilters')&&window.__CTL_NATIVE_FILTER_V51__?.ready&&window.__CTL_HISTORY_STABLE__?.render?.__ctlV51===true&&window.__CTL_HL_LEDGER_V32__?.version>=33");
+              if(!ready) throw Error('COMPOUNDING_V51_NOT_READY '+cfg.name);
+              const out=await j(`(()=>{const st=window.__CTL_HISTORY_STABLE__,nat=window.__CTL_NATIVE_FILTER_V51__,led=window.__CTL_HL_LEDGER_V32__,v=window.__CTL_REAL_FILTERS_V36__;try{if(led.timer)clearInterval(led.timer)}catch{};try{v.stop&&v.stop()}catch{};const root=document.getElementById('historyTypeFilters'),tbody=document.getElementById('historyTableBody');const res=performance.getEntriesByType('resource').map(x=>x.name).filter(x=>x.includes('/assets/history/history_'));const styles=[...root.querySelectorAll('[data-history-type]')].map(b=>{const cs=getComputedStyle(b);return{mode:b.dataset.historyType,text:b.textContent.trim(),animationName:cs.animationName,animationDuration:cs.animationDuration,transitionProperty:cs.transitionProperty,transitionDuration:cs.transitionDuration}});const root0=root;const tabs={};for(const mode of ['pending','direct','all']){st.setMode(mode);tabs[mode]={mode:st.mode,title:(document.querySelector('#backtestHistoryPanel')?.firstElementChild?.firstElementChild?.textContent||''),active:[...document.querySelectorAll('#historyTypeFilters [data-history-type].active')].map(x=>x.dataset.historyType),rootSame:root0===document.getElementById('historyTypeFilters')}}let fm=0,tm=0;const fo=new MutationObserver(x=>fm+=x.length),to=new MutationObserver(x=>tm+=x.length);fo.observe(root,{subtree:true,childList:true,attributes:true,characterData:true});to.observe(tbody,{subtree:true,childList:true,attributes:true,characterData:true});for(let i=0;i<6;i++){st.render();window.dispatchEvent(new CustomEvent('ctl-real-filters-v36'));window.dispatchEvent(new CustomEvent('ctl-hl-ledger-v32'));}window.__hc51={fo,to,get:()=>({fm,tm})};return JSON.stringify({resources:res,styles,tabs,owner:nat.source,render51:!!st.render.__ctlV51,ledgerVersion:led.version,rootSame:root0===document.getElementById('historyTypeFilters')})})()`);
+              await sleep(300);
+              const stab=await j("(()=>{const x=window.__hc51,g=x.get();x.fo.disconnect();x.to.disconnect();return JSON.stringify(g)})()");
+              out.stability=stab;
+              if(!out.resources.some(x=>x.includes('history_real_filters_v36.js?v=20260903-exact-history-v51'))) throw Error('COMPOUNDING_V36_CACHE '+cfg.name);
+              if(!out.resources.some(x=>x.includes('history_filter_native_v43.js?v=20260903-exact-history-v51'))) throw Error('COMPOUNDING_V43_CACHE '+cfg.name);
+              if(!out.resources.some(x=>x.includes('history_hl_ledger_v32.js?v=20260903-exact-history-v51'))) throw Error('COMPOUNDING_LEDGER_CACHE '+cfg.name);
+              if(out.owner!=='single-writer-exact-hyperliquid-v51'||!out.render51||out.ledgerVersion<33) throw Error('COMPOUNDING_OWNER_FAIL '+cfg.name+' '+JSON.stringify(out));
+              if(out.styles.some(x=>x.animationName!=='none'||(x.transitionProperty!=='none'&&x.transitionDuration!=='0s'))) throw Error('COMPOUNDING_FILTER_ANIMATION '+cfg.name+' '+JSON.stringify(out.styles));
+              for(const mode of ['pending','direct','all']){if(out.tabs[mode].mode!==mode||out.tabs[mode].active[0]!==mode||!out.tabs[mode].rootSame)throw Error('COMPOUNDING_TAB_FAIL '+cfg.name+' '+mode+' '+JSON.stringify(out.tabs[mode]));}
+              if(stab.fm!==0||stab.tm!==0||!out.rootSame) throw Error('COMPOUNDING_MUTATION_FAIL '+cfg.name+' '+JSON.stringify(stab));
+              result.pages[cfg.name]=out;
+            }
+            result.consoleErrors=[...new Set(result.consoleErrors)].filter(Boolean).slice(0,50);
+            result.exceptions=[...new Set(result.exceptions)].filter(Boolean).slice(0,50);
+            result.failed=[...new Set(result.failed)].filter(x=>x&&!/ERR_ABORTED|favicon/i.test(x)).slice(0,50);
+            result.httpErrors=[...new Map(result.httpErrors.map(x=>[x.status+'|'+x.url,x])).values()].filter(x=>x.status!==401&&!/favicon/i.test(x.url)).slice(0,70);
+            const serious=result.consoleErrors.concat(result.exceptions).filter(x=>/SyntaxError|already been declared|Uncaught/i.test(x));
+            if(serious.length) throw Error('JS_ERRORS '+JSON.stringify(serious));
+            if(result.failed.length) throw Error('NETWORK_FAILURES '+JSON.stringify(result.failed));
+            const bad=result.httpErrors.filter(x=>!((x.status===429&&/hyperliquid/i.test(x.url))||(/googleapis|gstatic/i.test(x.url)&&[403,404,429].includes(x.status))));
+            if(bad.length) throw Error('HTTP_ERRORS '+JSON.stringify(bad));
+            result.ok=true; result.acceptance='PASS';
+          }catch(e){result.error=String(e?.stack||e);}
+          finally{try{ws?.close()}catch{};fs.writeFileSync(OUT,JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result,null,2));}
+          NODE
+          node /tmp/hc51.mjs || true
+          test -s "$RESP"
+
+      - name: Commit response
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESP="${{ steps.req.outputs.response }}"
+          git config user.name "CopyToLive History Compounding V51"
+          git config user.email "copytolive-history-compounding-v51@local.invalid"
+          git add "$RESP"
+          git commit -m "history compounding v51: ${{ steps.req.outputs.id }}" || true
+          for n in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort || true; sleep "$n"; continue; }
+            git push origin HEAD:main && exit 0
+            sleep "$n"
+          done
+          exit 1
+
+      - name: Enforce
+        if: always()
+        shell: bash
+        run: python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); raise SystemExit(0 if d.get("ok") else 1)' "${{ steps.req.outputs.response }}"

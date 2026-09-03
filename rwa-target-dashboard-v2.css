@@ -1,0 +1,69 @@
+/* RWA trading-only target shell — Watchlist | Chart/Trade | Order Book. */
+:root{--rwa2-bg:#030812;--rwa2-panel:#06101b;--rwa2-line:#1b2a40;--rwa2-text:#eef4ff;--rwa2-muted:#7c8ca3;--rwa2-blue:#6578ff;--rwa2-green:#20c997;--rwa2-red:#ef5366}
+body.rwa-target-dashboard-v2{background:var(--rwa2-bg)!important;color:var(--rwa2-text)!important;overflow-x:hidden!important}
+body.rwa-target-dashboard-v2 .app{background:#030812!important;min-height:100vh!important}
+body.rwa-target-dashboard-v2 .productbar,body.rwa-target-dashboard-v2 .trustbar,body.rwa-target-dashboard-v2 #rwaExperienceRail{display:none!important}
+body.rwa-target-dashboard-v2 .topbar{height:59px!important;min-height:59px!important;top:0!important;padding:0 16px!important;gap:14px!important;background:#030812f7!important;border-bottom:1px solid var(--rwa2-line)!important;box-shadow:none!important;z-index:200!important}
+body.rwa-target-dashboard-v2 .brand{min-width:250px!important;gap:10px!important}
+body.rwa-target-dashboard-v2 .brandmark{width:34px!important;height:34px!important;border-radius:8px!important;background:#03101f!important}
+body.rwa-target-dashboard-v2 .brandcopy{display:block!important}
+body.rwa-target-dashboard-v2 .brandcopy strong{font-size:18px!important;letter-spacing:.01em!important;color:#f6f8ff!important}
+body.rwa-target-dashboard-v2 .brandcopy small{display:none!important}
+body.rwa-target-dashboard-v2 .topnav{display:flex!important;align-items:center!important;gap:4px!important;height:100%!important;min-width:0!important;overflow:hidden!important;flex:1 1 auto!important}
+body.rwa-target-dashboard-v2 .topnav button{height:39px!important;padding:0 15px!important;border:0!important;border-radius:7px!important;background:transparent!important;color:#a9b4c7!important;font-size:12px!important;font-weight:700!important;white-space:nowrap!important}
+body.rwa-target-dashboard-v2 .topnav button:hover{background:#0b1627!important;color:#fff!important}
+body.rwa-target-dashboard-v2 .topnav button.active{background:#111c37!important;color:#fff!important;box-shadow:inset 0 -2px 0 #7584ff!important}
+body.rwa-target-dashboard-v2 .top-actions{display:flex!important;align-items:center!important;gap:7px!important;margin-left:auto!important;min-width:max-content!important}
+body.rwa-target-dashboard-v2 .top-actions .signin{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:38px!important;min-width:138px!important;padding:0 15px!important;border-radius:7px!important;background:linear-gradient(180deg,#5869ed,#3b4bbf)!important;border:1px solid #6c79f1!important;color:#fff!important;font-size:10px!important;font-weight:850!important}
+body.rwa-target-dashboard-v2 .layout{display:grid!important;grid-template-columns:290px minmax(0,1fr) 250px!important;min-height:calc(100vh - 97px)!important;background:#040a13!important;padding:0!important;align-items:stretch!important}
+body.rwa-target-dashboard-v2 .left,body.rwa-target-dashboard-v2 .right{background:#06101b!important;min-width:0!important;overflow:hidden!important}
+body.rwa-target-dashboard-v2 .left{border-right:1px solid var(--rwa2-line)!important}
+body.rwa-target-dashboard-v2 .right{border-left:1px solid var(--rwa2-line)!important}
+body.rwa-target-dashboard-v2 .main{min-width:0!important;background:#050b14!important;overflow:hidden!important}
+body.rwa-target-dashboard-v2 .aside-label{height:42px!important;padding:0 12px!important;background:#06101b!important;border-bottom:1px solid #18263a!important;display:flex!important;align-items:center!important;justify-content:space-between!important}
+body.rwa-target-dashboard-v2 .aside-label span{font-size:9px!important;letter-spacing:.04em!important;color:#f2f6fc!important;font-weight:800!important}
+body.rwa-target-dashboard-v2 .aside-label small{font-size:7px!important;color:#70819a!important}
+body.rwa-target-dashboard-v2 .market-head{padding:10px!important;background:#07111e!important;border-bottom:1px solid #17253a!important}
+body.rwa-target-dashboard-v2 .search{height:36px!important;background:#050d17!important;border:1px solid #1b2a40!important;border-radius:8px!important}
+body.rwa-target-dashboard-v2 .filters{gap:4px!important;margin-top:8px!important}
+body.rwa-target-dashboard-v2 .filter{height:27px!important;padding:0 8px!important;font-size:8px!important}
+body.rwa-target-dashboard-v2 .filter.active{background:#14234a!important;color:#eaf0ff!important}
+body.rwa-target-dashboard-v2 .pairlist{background:#050c16!important;overflow:auto!important}
+body.rwa-target-dashboard-v2 .pairrow{min-height:56px!important;padding:7px 10px!important;border-bottom:1px solid #142135!important}
+body.rwa-target-dashboard-v2 .pairrow.active{background:linear-gradient(90deg,#111d38,#08111e)!important;box-shadow:inset 2px 0 0 #6a7aff!important}
+body.rwa-target-dashboard-v2 .terminal-header{height:72px!important;min-height:72px!important;padding:8px 13px!important;background:#07101c!important;border-bottom:1px solid #1b2a40!important}
+body.rwa-target-dashboard-v2 .instrument-line b{font-size:16px!important}
+body.rwa-target-dashboard-v2 .quickstats{gap:16px!important}
+body.rwa-target-dashboard-v2 .qstat small{font-size:7px!important;color:#7588a1!important;text-transform:uppercase!important}
+body.rwa-target-dashboard-v2 .qstat b{font-size:10px!important}
+body.rwa-target-dashboard-v2 .chart-wrap{height:430px!important;min-height:430px!important;background:#030812!important;border-bottom:1px solid #1b2a40!important}
+body.rwa-target-dashboard-v2 .bottom{display:none!important}
+body.rwa-target-dashboard-v2 .right .activity-section,body.rwa-target-dashboard-v2 .right .institutional-card,body.rwa-target-dashboard-v2 .right .mover-section,body.rwa-target-dashboard-v2 .right>.aside-label{display:none!important}
+body.rwa-target-dashboard-v2 .right .order-section{height:100%!important;min-height:100%!important;background:#060f1a!important;margin:0!important;padding:0!important}
+body.rwa-target-dashboard-v2 .right-title{height:42px!important;padding:0 10px!important;display:flex!important;align-items:center!important;justify-content:space-between!important}
+body.rwa-target-dashboard-v2 .right-title span{font-size:11px!important;font-weight:800!important}
+body.rwa-target-dashboard-v2 .right-title small{font-size:8px!important;color:#8191a6!important}
+body.rwa-target-dashboard-v2 .book-head{height:29px!important;padding:0 10px!important;font-size:8px!important;display:grid!important;align-items:center!important}
+body.rwa-target-dashboard-v2 .bookrow{height:25px!important;min-height:25px!important;padding:0 10px!important;font-size:9px!important;display:grid!important;align-items:center!important}
+body.rwa-target-dashboard-v2 .midprice{height:58px!important;padding:0 10px!important;font-size:15px!important;background:#091821!important;display:flex!important;align-items:center!important}
+body.rwa-target-dashboard-v2 .rwa-target-order-ticket{display:block!important;border-top:1px solid #18283d!important;background:#050d17!important;color:#eaf1fc!important}
+body.rwa-target-dashboard-v2 .rwa-target-trade-nav{height:40px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;padding:0 12px!important;border-bottom:1px solid #1b2a40!important;background:#07111e!important}
+body.rwa-target-dashboard-v2 .rwa-target-order-modes{height:38px!important;display:flex!important;align-items:center!important;gap:5px!important;padding:0 12px!important;border-bottom:1px solid #16253a!important}
+body.rwa-target-dashboard-v2 .rwa-target-order-grid{display:grid!important;grid-template-columns:minmax(0,1fr) 38px minmax(0,1fr)!important;gap:9px!important;padding:10px 12px 7px!important}
+body.rwa-target-dashboard-v2 .rwa-target-order-side>button{height:36px!important;border:0!important;border-radius:5px!important;color:#fff!important;font-size:9px!important;font-weight:850!important}
+body.rwa-target-dashboard-v2 .rwa-target-order-side.buy>button{background:linear-gradient(180deg,#20bf88,#11966e)!important}
+body.rwa-target-dashboard-v2 .rwa-target-order-side.sell>button{background:linear-gradient(180deg,#ef5366,#c9374a)!important}
+@media(max-width:1120px){
+ body.rwa-target-dashboard-v2 .topbar{height:56px!important;min-height:56px!important;padding:0 9px!important}
+ body.rwa-target-dashboard-v2 .brand{min-width:max-content!important}
+ body.rwa-target-dashboard-v2 .brandcopy strong{font-size:14px!important}
+ body.rwa-target-dashboard-v2 .topnav{display:none!important}
+ body.rwa-target-dashboard-v2 .layout{display:block!important;min-height:calc(100vh - 56px)!important}
+ body.rwa-target-dashboard-v2 .left,body.rwa-target-dashboard-v2 .right{position:relative!important;top:auto!important;height:auto!important}
+ body.rwa-target-dashboard-v2 .right{display:none!important}
+ body.rwa-target-dashboard-v2 .bottom{display:grid!important}
+}
+@media(max-width:680px){
+ body.rwa-target-dashboard-v2 .top-actions .signin{min-width:106px!important;height:34px!important;padding:0 10px!important;font-size:8px!important}
+ body.rwa-target-dashboard-v2 .rwa-target-order-ticket{display:block!important}
+}

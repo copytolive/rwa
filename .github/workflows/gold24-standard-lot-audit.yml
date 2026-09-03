@@ -1,0 +1,198 @@
+name: GOLD Standard Lot Audit
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - 'GOLD Canonical v11 Recovery Continuation'
+    types:
+      - completed
+  push:
+    paths:
+      - '.github/workflows/gold24-standard-lot-audit.yml'
+      - 'backtest/gold24/mt5_standard_lot_audit.py'
+      - 'backtest/gold24/mt5_standard_lot_audit_20k.py'
+      - 'backtest/gold24/mt5_standard_lot_full_metrics.py'
+      - 'backtest/gold24/runtime_v11/latest_validation_summary.json'
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: gold24-standard-lot-audit
+  cancel-in-progress: true
+
+jobs:
+  standard-lot-audit:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      STATE_DIR: ${{ github.workspace }}/.gold24-canonical-v11
+      OUT_DIR: ${{ github.workspace }}/gold24-standard-lot-audit-out
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned dependencies
+        run: |
+          set -euo pipefail
+          pip install -r backtest/gold24/requirements.txt
+
+      - name: Restore exact latest published canonical state
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$STATE_DIR" "$RUNNER_TEMP/gold24-standard-lot-prev"
+          mkdir -p "$STATE_DIR" "$RUNNER_TEMP/gold24-standard-lot-prev"
+
+          read -r SOURCE_RUN SOURCE_ATTEMPT SOURCE_ARCHIVED < <(python - <<'PY'
+          import json, pathlib
+          x=json.loads(pathlib.Path('backtest/gold24/runtime_v11/latest_validation_summary.json').read_text())
+          print(x.get('github_run_id',''), x.get('github_run_attempt','1'), x.get('cumulative_configs_archived',''))
+          PY
+          )
+          test -n "$SOURCE_RUN"
+          test -n "$SOURCE_ATTEMPT"
+          test -n "$SOURCE_ARCHIVED"
+          echo "restoring source run=$SOURCE_RUN attempt=$SOURCE_ATTEMPT archived=$SOURCE_ARCHIVED"
+
+          gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN/artifacts?per_page=100" > "$RUNNER_TEMP/gold24-artifacts.json"
+          ARTIFACT_URL="$(python - "$RUNNER_TEMP/gold24-artifacts.json" "$SOURCE_ATTEMPT" <<'PY'
+          import json,sys
+          x=json.load(open(sys.argv[1])); attempt=max(1,int(sys.argv[2]))
+          arts=sorted([a for a in x.get('artifacts',[]) if a.get('name')=='gold24-canonical-v11-state' and not a.get('expired')], key=lambda a:a.get('created_at',''))
+          if len(arts) < attempt:
+              raise SystemExit(f'ARTIFACT_FAIL: need attempt {attempt}, only {len(arts)} matching artifacts')
+          print(arts[attempt-1]['archive_download_url'])
+          PY
+          )"
+          test -n "$ARTIFACT_URL"
+          curl -L --fail --retry 3 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "$ARTIFACT_URL" -o "$RUNNER_TEMP/gold24-v11-state.zip"
+          unzip -q "$RUNNER_TEMP/gold24-v11-state.zip" -d "$RUNNER_TEMP/gold24-standard-lot-prev"
+          cp -a "$RUNNER_TEMP/gold24-standard-lot-prev/." "$STATE_DIR/"
+
+          test -s "$STATE_DIR/gold24-v11.db"
+          test -s "$STATE_DIR/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv"
+          test -s "$STATE_DIR/gate_a/gate_a_receipt.json"
+          python - "$STATE_DIR/gold24-v11.db" "$SOURCE_ARCHIVED" <<'PY'
+          import sqlite3,sys
+          db=sqlite3.connect(sys.argv[1]); n=db.execute('SELECT COUNT(*) FROM configs').fetchone()[0]; db.close()
+          expected=int(sys.argv[2]); assert n==expected, f'restore count mismatch {n}!={expected}'
+          print(f'canonical restore count PASS: {n}')
+          PY
+
+      - name: Re-backtest positive Entry100 candidates at 1 standard lot and apply USD20k
+        working-directory: backtest/gold24
+        run: |
+          set -euo pipefail
+          rm -rf "$OUT_DIR"
+          python mt5_standard_lot_audit_20k.py --state-dir "$STATE_DIR" --out-dir "$OUT_DIR"
+          python mt5_standard_lot_full_metrics.py --state-dir "$STATE_DIR" --out-dir "$OUT_DIR"
+
+      - name: Verify standard-lot and strict USD20k correlation audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, pathlib
+          out=pathlib.Path(os.environ['OUT_DIR'])
+          x=json.loads((out/'latest_standard_lot_audit.json').read_text())
+          s=json.loads((out/'latest_entry100_net20000_standard_lot.json').read_text())
+          assert x['status']=='PASS'
+          assert x['count'] > 0
+          assert x['report_minimum_trades']==100
+          assert x['standard_lot_reference']['contract_size_oz']==100.0
+          assert x['standard_lot_reference']['gold_units']==100.0
+          assert x['standard_lot_reference']['pip_size_usd']==0.01
+          assert x['standard_lot_reference']['pip_value_usd']==1.0
+          for r in x['ranking']:
+              assert r['trades'] >= 100
+              assert r['standard_lot_gold_units']==100.0
+              assert r['standard_lot_net_profit_usd_same_cost_model'] > 0
+          assert s['status']=='PASS'
+          assert s['full_metrics_status']=='PASS'
+          assert s['minimum_trades']==100
+          assert s['minimum_net_profit_usd_standard_lot']==20000.0
+          assert s['exact_rebacktest_qty_100'] is True
+          assert s['simple_relabel_forbidden'] is True
+          assert s['canonical_qty_gold_units']==1.0
+          assert s['audited_qty_gold_units']==100.0
+          assert s['gold_units_per_standard_lot']==100.0
+          assert s['economic_count_before_correlation'] >= s['count']
+          assert s['count'] > 0, 'USD20k list unexpectedly empty after exact standard-lot re-backtest'
+          assert s['correlation_rule']['wording']=='Maks 0.50 (pearson, log-return equity). Metode: per-symbol greedy filter. > 0.50 → yang kualitas lebih rendah DIHAPUS.'
+          required=['sl_pips','tp_pips','total_entry','total_trades','standard_lot_win_rate_pct','probability_positive_pct','standard_lot_profit_factor_same_cost_model','standard_lot_net_profit_usd_same_cost_model','standard_lot_ev_per_trade_usd_same_cost_model','avg_win_loss_ratio','standard_lot_max_dd_pct_starting_equity_10000','recovery_factor','max_consecutive_loss','standard_lot_sqn_same_cost_model','oos_profit_factor','monte_carlo_pass','mc_95pct_max_drawdown_pct','positive_years_pct','worst_year','worst_year_net_profit_usd','backtest_start_utc','backtest_end_utc','history_years','sample_v11','correlation_max','correlation_gate']
+          for r in s['ranking']:
+              assert r['trades'] >= 100
+              assert r['standard_lot_net_profit_usd_same_cost_model'] >= 20000.0
+              assert r['correlation_max'] <= 0.50 + 1e-12
+              assert r['correlation_gate']=='PASS'
+              missing=[k for k in required if k not in r or r[k] is None]
+              assert not missing, f'missing full real metrics {missing}'
+              assert not any(str(v).strip().upper()=='N/A' for v in r.values())
+          print('standard-lot Entry100 + USD20000 + correlation + full real metrics verification: PASS')
+          print(json.dumps({
+              'positive_entry100': x['count'],
+              'economic_before_corr': s['economic_count_before_correlation'],
+              'removed_corr': s['removed_by_correlation_count'],
+              'strict_after_corr': s['count'],
+              'source_run_id': s['source_run_id'],
+              'full_metrics_status': s['full_metrics_status'],
+          }, indent=2))
+          PY
+
+      - name: Publish standard-lot audit race-safe
+        shell: bash
+        run: |
+          set -euo pipefail
+          PAYLOAD="$RUNNER_TEMP/gold24-standard-lot-publish"
+          rm -rf "$PAYLOAD"
+          mkdir -p "$PAYLOAD"
+          cp -a "$OUT_DIR/." "$PAYLOAD/"
+
+          git config user.name 'gold24-bot'
+          git config user.email 'gold24-bot@users.noreply.github.com'
+          for TRY in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            rm -rf backtest/gold24/runtime_mt5_lot
+            mkdir -p backtest/gold24/runtime_mt5_lot
+            cp -a "$PAYLOAD/." backtest/gold24/runtime_mt5_lot/
+            git add backtest/gold24/runtime_mt5_lot
+            if git diff --cached --quiet; then
+              echo 'standard-lot runtime already current'
+              break
+            fi
+            git commit -m 'chore(gold24): publish Entry100 USD20k full real metrics [skip ci]'
+            if git push origin HEAD:main; then
+              echo 'standard-lot audit publish: PASS'
+              break
+            fi
+            if [ "$TRY" -eq 5 ]; then
+              echo 'standard-lot audit publish failed after retries' >&2
+              exit 1
+            fi
+            sleep $((TRY * 2))
+          done
+
+      - name: Upload audit artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold24-standard-lot-audit
+          path: ${{ env.OUT_DIR }}/
+          if-no-files-found: error
+          retention-days: 14
+
+# manual refresh trigger for authoritative batch 239

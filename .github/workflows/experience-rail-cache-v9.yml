@@ -1,0 +1,69 @@
+name: RWA Experience Viewport Cache V12
+
+on:
+  push:
+    branches:
+      - fix/top-company-ui-pair-stability-v12-20260827
+    paths:
+      - 'index.html'
+      - 'market-performance.js'
+      - 'persistent-market-operability-patch-v1.css'
+      - 'enterprise-ui-v12.css'
+      - 'tools/experience-rail-visual-parity-v9.mjs'
+      - '.github/workflows/experience-rail-cache-v9.yml'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'market-performance.js'
+      - 'persistent-market-operability-patch-v1.css'
+      - 'enterprise-ui-v12.css'
+      - 'tools/experience-rail-visual-parity-v9.mjs'
+      - '.github/workflows/experience-rail-cache-v9.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache and viewport contract
+        run: |
+          grep -Fq 'market-performance.js?v=12' index.html
+          grep -Fq 'persistent-market-operability-patch-v1.css?v=11' market-performance.js
+          grep -Fq 'enterprise-ui-v12.css?v=12' market-performance.js
+          test "$(grep -o '<script src=' index.html | wc -l | tr -d ' ')" = "6"
+          grep -Fq 'padding:0!important' persistent-market-operability-patch-v1.css
+          grep -Fq 'gap:0!important' persistent-market-operability-patch-v1.css
+          grep -Fq 'outline:0!important' persistent-market-operability-patch-v1.css
+          grep -Fq 'WORKFLOW VIEWPORT PARITY V10' persistent-market-operability-patch-v1.css
+          grep -Fq 'ACTION ZERO-FLICKER TRANSITION LOCK V11' persistent-market-operability-patch-v1.css
+          grep -Fq 'grid-template-columns:minmax(220px,250px) minmax(0,1fr)!important' persistent-market-operability-patch-v1.css
+          grep -Fq '[data-rwa-route^="asset/"]' enterprise-ui-v12.css
+          node --check market-performance.js
+          node --check tools/experience-rail-visual-parity-v9.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Serve canonical app
+        run: |
+          mkdir -p /tmp/rwa-rail-cache-v12/rwa
+          cp -a . /tmp/rwa-rail-cache-v12/rwa/
+          cd /tmp/rwa-rail-cache-v12
+          python -m http.server 4173 >/tmp/rwa-rail-cache-v12-http.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
+      - name: Validate 2048px and 1600px viewport parity
+        env:
+          RWA_TEST_URL: http://127.0.0.1:4173/rwa/
+          RWA_PROOF_DIR: proof/experience-viewport-cache-v12
+        run: node tools/experience-rail-visual-parity-v9.mjs
+      - name: Upload visual proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: experience-viewport-cache-v12-proof
+          path: proof/experience-viewport-cache-v12
+          retention-days: 30

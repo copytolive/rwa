@@ -1,0 +1,46 @@
+{
+  "schema_version": 4,
+  "primary_provider": "dukascopy",
+  "assets": [
+    {"symbol":"EURUSD","name":"EUR / USD","class":"forex-major","provider":"dukascopy","provider_symbol":"eurusd","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2007-01-01"},
+    {"symbol":"GBPUSD","name":"GBP / USD","class":"forex-major","provider":"dukascopy","provider_symbol":"gbpusd","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"USDJPY","name":"USD / JPY","class":"forex-major","provider":"dukascopy","provider_symbol":"usdjpy","point_size":0.01,"mode":"bid_ask_tick","earliest_tick":"2007-03-27"},
+    {"symbol":"USDCHF","name":"USD / CHF","class":"forex-major","provider":"dukascopy","provider_symbol":"usdchf","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"AUDUSD","name":"AUD / USD","class":"forex-major","provider":"dukascopy","provider_symbol":"audusd","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2003-08-04"},
+    {"symbol":"USDCAD","name":"USD / CAD","class":"forex-major","provider":"dukascopy","provider_symbol":"usdcad","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"NZDUSD","name":"NZD / USD","class":"forex-major","provider":"dukascopy","provider_symbol":"nzdusd","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2007-03-27"},
+
+    {"symbol":"EURGBP","name":"EUR / GBP","class":"forex-cross","provider":"dukascopy","provider_symbol":"eurgbp","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"EURJPY","name":"EUR / JPY","class":"forex-cross","provider":"dukascopy","provider_symbol":"eurjpy","point_size":0.01,"mode":"bid_ask_tick","earliest_tick":"2007-04-01"},
+    {"symbol":"EURCHF","name":"EUR / CHF","class":"forex-cross","provider":"dukascopy","provider_symbol":"eurchf","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"EURAUD","name":"EUR / AUD","class":"forex-cross","provider":"dukascopy","provider_symbol":"euraud","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"EURCAD","name":"EUR / CAD","class":"forex-cross","provider":"dukascopy","provider_symbol":"eurcad","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"EURNZD","name":"EUR / NZD","class":"forex-cross","provider":"dukascopy","provider_symbol":"eurnzd","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"GBPJPY","name":"GBP / JPY","class":"forex-cross","provider":"dukascopy","provider_symbol":"gbpjpy","point_size":0.01,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"GBPCHF","name":"GBP / CHF","class":"forex-cross","provider":"dukascopy","provider_symbol":"gbpchf","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"GBPAUD","name":"GBP / AUD","class":"forex-cross","provider":"dukascopy","provider_symbol":"gbpaud","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"GBPCAD","name":"GBP / CAD","class":"forex-cross","provider":"dukascopy","provider_symbol":"gbpcad","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"GBPNZD","name":"GBP / NZD","class":"forex-cross","provider":"dukascopy","provider_symbol":"gbpnzd","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"AUDJPY","name":"AUD / JPY","class":"forex-cross","provider":"dukascopy","provider_symbol":"audjpy","point_size":0.01,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"AUDCAD","name":"AUD / CAD","class":"forex-cross","provider":"dukascopy","provider_symbol":"audcad","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-15"},
+    {"symbol":"AUDCHF","name":"AUD / CHF","class":"forex-cross","provider":"dukascopy","provider_symbol":"audchf","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"AUDNZD","name":"AUD / NZD","class":"forex-cross","provider":"dukascopy","provider_symbol":"audnzd","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"CADJPY","name":"CAD / JPY","class":"forex-cross","provider":"dukascopy","provider_symbol":"cadjpy","point_size":0.01,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"CADCHF","name":"CAD / CHF","class":"forex-cross","provider":"dukascopy","provider_symbol":"cadchf","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"CHFJPY","name":"CHF / JPY","class":"forex-cross","provider":"dukascopy","provider_symbol":"chfjpy","point_size":0.01,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"NZDCAD","name":"NZD / CAD","class":"forex-cross","provider":"dukascopy","provider_symbol":"nzdcad","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+    {"symbol":"NZDCHF","name":"NZD / CHF","class":"forex-cross","provider":"dukascopy","provider_symbol":"nzdchf","point_size":0.0001,"mode":"bid_ask_tick","earliest_tick":"2012-02-09"},
+
+    {"symbol":"XAUUSD","name":"Gold / USD","class":"metal","provider":"dukascopy","provider_symbol":"xauusd","point_size":0.01,"mode":"bid_ask_tick","earliest_tick":"2003-05-05"},
+    {"symbol":"XAGUSD","name":"Silver / USD","class":"metal","provider":"dukascopy","provider_symbol":"xagusd","point_size":0.001,"mode":"bid_ask_tick","earliest_tick":"2014-07-25"},
+
+    {"symbol":"BTCUSD","name":"Bitcoin / USD","class":"crypto","provider":"dukascopy","provider_symbol":"btcusd","point_size":0.01,"mode":"bid_ask_tick","earliest_tick":"2017-05-07"},
+    {"symbol":"ETHUSD","name":"Ether / USD","class":"crypto","provider":"dukascopy","provider_symbol":"ethusd","point_size":0.01,"mode":"bid_ask_tick","earliest_tick":"2017-12-11"}
+  ],
+  "notes": [
+    "All public catalog instruments use Dukascopy as the primary historical bid/ask tick source.",
+    "Only instruments that pass automated source verification are retained in the public production universe.",
+    "Raw Dukascopy archives are fetched on demand and are not duplicated into the GitHub Pages repository.",
+    "The public repository stores instrument metadata, source verification fingerprints, simulation requests and audit results."
+  ]
+}

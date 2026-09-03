@@ -1,0 +1,7 @@
+GOLD24_COMPLETE_HANDOFF_EXPORT
+request_serial=2
+source_main_sha_before_kick=905da2d01c66fe86e312b901c7ffde2e8ac9d948
+source_canonical_batch=282
+source_candidate_cursor=44242557
+destination_google_drive_folder=1bajrhwSeNNo1ysCO5_MSLhS8pCA6Ckaz
+purpose=final complete backtest consolidation to Google Drive after latest canonical and Entry100 publication

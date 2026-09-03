@@ -1,0 +1,49 @@
+/* RENKO stable-chart v2 — source-interval agnostic.
+ * Redundant realtime writes are suppressed only when projected Renko geometry is
+ * identical. Closed source bars always reach the base runtime and remain the
+ * confirmation boundary for the currently selected interval.
+ * Cross-symbol/deep-origin replacements reset the underlying series first so
+ * Lightweight Charts never carries stale candlestick state across distant time domains.
+ */
+(()=>{
+'use strict';
+if(window.RWARenkoStableChart?.version==='2.2.0')return;
+const stats={partialEvents:0,partialForwarded:0,partialSuppressed:0,closedForwarded:0,dataWrites:0,dataWritesSkipped:0,dataRowsDropped:0,dataDomainResets:0,dataWriteRecoveries:0,rangeWrites:0,rangeWritesSkipped:0,programmaticRangeCallbacksSuppressed:0,priceWrites:0,priceWritesSkipped:0,lastSuppressedAt:0,lastGeometryWriteAt:0};
+const num=v=>Number(v),fmt=n=>{n=Number(n);if(!Number.isFinite(n))return'—';const a=Math.abs(n),d=a>=1000?2:a>=100?3:a>=1?4:a>=.01?6:8;try{return n.toLocaleString(undefined,{maximumFractionDigits:d})}catch{return String(n)}};
+function brickSig(bricks){const a=Array.isArray(bricks)?bricks:[],n=a.length;if(!n)return'0';const p=[0,Math.floor((n-1)/4),Math.floor((n-1)/2),Math.floor((n-1)*3/4),n-1];return`${n}|${p.map(i=>{const b=a[i]||{};return[num(b.sourceTime)||0,num(b.open)||0,num(b.high)||0,num(b.low)||0,num(b.close)||0,num(b.direction)||0].join(',')}).join('|')}`}
+function validDatum(b){return !!b&&Number.isFinite(Number(b.time))&&Number(b.time)>0&&[b.open,b.high,b.low,b.close].every(v=>Number.isFinite(Number(v)))}
+function sanitizeData(data){const a=Array.isArray(data)?data:[],clean=a.filter(validDatum),d=a.length-clean.length;if(d){stats.dataRowsDropped+=d;document.documentElement.dataset.renkoStableDataRowsDropped=String(stats.dataRowsDropped);console.error('[RENKO stable setData invalid rows]',d)}return clean}
+function dataSig(data){const a=Array.isArray(data)?data:[],n=a.length;if(!n)return'0';const p=[0,Math.floor((n-1)/4),Math.floor((n-1)/2),Math.floor((n-1)*3/4),n-1];return`${n}|${p.map(i=>{const b=a[i]||{};return[num(b.time)||0,num(b.open)||0,num(b.high)||0,num(b.low)||0,num(b.close)||0].join(',')}).join('|')}`}
+function rangeSig(r){return r?`${Number(r.from).toFixed(5)}|${Number(r.to).toFixed(5)}`:''}
+function updateRealLast(price){const T=window.RWARenkoTV;if(T){T.state.lastPrice=Number(price);T.state.lastEventAt=Date.now()}const el=document.getElementById('lastPrice');if(el)el.textContent=fmt(price)}
+function lastRenkoClose(){return Number(window.RWARenkoTV?.state?.confirmed?.at?.(-1)?.close)}
+(function chartWrapper(){
+  const L=window.LightweightCharts;if(!L?.createChart)return;const create=L.createChart.bind(L);
+  function wrapLine(line){let last=NaN;return new Proxy(line,{get(t,p,r){if(p==='applyOptions')return opts=>{const renko=lastRenkoClose(),next=Number.isFinite(renko)?renko:Number(opts?.price);if(Number.isFinite(next)&&next===last){stats.priceWritesSkipped++;return}last=next;stats.priceWrites++;return t.applyOptions({...opts,price:next,title:'RENKO'})};const v=Reflect.get(t,p,r);return typeof v==='function'?v.bind(t):v}})}
+  function wrapSeries(series){
+    let sig='',lastFirst=NaN,lastLast=NaN,lastCount=0;
+    return new Proxy(series,{get(t,p,r){
+      if(p==='setData')return data=>{
+        const clean=sanitizeData(data),next=dataSig(clean);if(next===sig){stats.dataWritesSkipped++;return}
+        const first=Number(clean[0]?.time),last=Number(clean.at(-1)?.time),hasOld=lastCount>0&&Number.isFinite(lastFirst)&&Number.isFinite(lastLast),hasNew=clean.length>0&&Number.isFinite(first)&&Number.isFinite(last);
+        const overlap=hasOld&&hasNew&&first<=lastLast&&last>=lastFirst;
+        const distant=hasOld&&hasNew&&!overlap&&(Math.abs(first-lastFirst)>3600||Math.abs(last-lastLast)>3600);
+        if(distant){t.setData([]);stats.dataDomainResets++;document.documentElement.dataset.renkoStableDomainResets=String(stats.dataDomainResets)}
+        stats.dataWrites++;stats.lastGeometryWriteAt=performance.now();
+        try{t.setData(clean)}catch(e){
+          if(!clean.length)throw e;
+          try{t.setData([]);t.setData(clean);stats.dataWriteRecoveries++;document.documentElement.dataset.renkoStableWriteRecoveries=String(stats.dataWriteRecoveries);console.warn('[RENKO stable setData recovered after series reset]',String(e?.message||e))}catch{throw e}
+        }
+        sig=next;lastFirst=hasNew?first:NaN;lastLast=hasNew?last:NaN;lastCount=clean.length;
+      };
+      if(p==='createPriceLine')return opts=>{const renko=lastRenkoClose(),line=t.createPriceLine({...opts,price:Number.isFinite(renko)?renko:opts?.price,title:'RENKO'});stats.priceWrites++;return wrapLine(line)};
+      const v=Reflect.get(t,p,r);return typeof v==='function'?v.bind(t):v
+    }})
+  }
+  function wrapTs(ts){let sig='',programmaticSig='',until=0;return new Proxy(ts,{get(t,p,r){if(p==='setVisibleLogicalRange')return range=>{const next=rangeSig(range);if(next&&next===sig){stats.rangeWritesSkipped++;return}sig=next;stats.rangeWrites++;programmaticSig=next;until=performance.now()+120;return t.setVisibleLogicalRange(range)};if(p==='subscribeVisibleLogicalRangeChange')return cb=>t.subscribeVisibleLogicalRangeChange(range=>{const next=rangeSig(range);if(next&&next===programmaticSig&&performance.now()<=until){stats.programmaticRangeCallbacksSuppressed++;return}return cb(range)});const v=Reflect.get(t,p,r);return typeof v==='function'?v.bind(t):v}})}
+  function wrapChart(chart){let ts=null;return new Proxy(chart,{get(t,p,r){if(p==='addSeries'&&typeof t.addSeries==='function')return(...a)=>wrapSeries(t.addSeries(...a));if(p==='addCandlestickSeries'&&typeof t.addCandlestickSeries==='function')return(...a)=>wrapSeries(t.addCandlestickSeries(...a));if(p==='timeScale')return()=>ts||(ts=wrapTs(t.timeScale()));const v=Reflect.get(t,p,r);return typeof v==='function'?v.bind(t):v}})}
+  try{window.LightweightCharts={...L,createChart:(...a)=>wrapChart(create(...a))};document.documentElement.dataset.renkoStableChart='true';document.documentElement.dataset.renkoStableDataRowsDropped='0';document.documentElement.dataset.renkoStableDomainResets='0';document.documentElement.dataset.renkoStableWriteRecoveries='0'}catch(e){console.warn('[RENKO stable chart v2]',e);document.documentElement.dataset.renkoStableChart='failed'}
+})();
+(function socketGuard(){const Native=window.WebSocket;if(typeof Native!=='function')return;const isKline=url=>/binance.*\/ws\/.+@kline_[^/?]+/i.test(String(url||''));function StableWebSocket(url,protocols){const socket=protocols===undefined?new Native(url):new Native(url,protocols);if(!isKline(url))return socket;let userMessage=null,lastProjectionSig='0';const proxy=new Proxy(socket,{get(t,p,r){if(p==='onmessage')return userMessage;const v=Reflect.get(t,p,t);return typeof v==='function'?v.bind(t):v},set(t,p,v){if(p==='onmessage'){userMessage=v;t.onmessage=ev=>{let m,k;try{m=JSON.parse(ev.data);k=m?.k}catch{}if(!k||typeof userMessage!=='function')return userMessage?.call(proxy,ev);const price=Number(k.c);if(Number.isFinite(price))updateRealLast(price);if(k.x){stats.closedForwarded++;lastProjectionSig='0';return userMessage.call(proxy,ev)}stats.partialEvents++;const T=window.RWARenkoTV,E=window.RWARenkoTVEngine;if(!T?.state?.base||!E?.project){stats.partialForwarded++;return userMessage.call(proxy,ev)}const b={openTime:Number(k.t),closeTime:Number(k.T),open:Number(k.o),high:Number(k.h),low:Number(k.l),close:Number(k.c),volume:Number(k.v)||0};let sig='0';try{sig=brickSig(E.project(T.state.base,b,T.settings,T.state.tickSize))}catch{}if(sig===lastProjectionSig){stats.partialSuppressed++;stats.lastSuppressedAt=Date.now();document.documentElement.dataset.renkoHeartbeatSuppressed='true';return}lastProjectionSig=sig;stats.partialForwarded++;return userMessage.call(proxy,ev)};return true}return Reflect.set(t,p,v,t)}});return proxy}for(const k of['CONNECTING','OPEN','CLOSING','CLOSED'])try{Object.defineProperty(StableWebSocket,k,{value:Native[k]})}catch{}try{StableWebSocket.prototype=Native.prototype}catch{}window.WebSocket=StableWebSocket})();
+window.RWARenkoStableChart={version:'2.2.0',rule:'render-only-on-renko-geometry-change-plus-finite-boundary-and-cross-domain-series-reset',stats,brickSig,dataSig,validDatum,sanitizeData};
+})();

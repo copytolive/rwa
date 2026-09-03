@@ -1,0 +1,805 @@
+{
+  "id": "ai3-copytolive-nav-current-20260903-004",
+  "ok": false,
+  "acceptance": "FAIL",
+  "issues": [
+    "desktop: Home button widths differ [51.02, 95.56, 87.67, 57.09, 52.98]",
+    "desktop: Home icon widths differ [36, 36, 32, 36, 32]",
+    "desktop: Fundamental top Hyperliquid still visible",
+    "desktop: Fundamental nav item count 6",
+    "desktop: Fundamental filter width 1549",
+    "desktop: Fundamental filter height 70",
+    "desktop: Crypto nav geometry drift 5.0",
+    "desktop: Renko nav geometry drift 27.0",
+    "desktop: Signal back did not restore Home",
+    "mobile: Fundamental top Hyperliquid still visible",
+    "mobile: Signal back button not found"
+  ],
+  "desktop": {
+    "home": {
+      "nav": {
+        "x": 598.8359375,
+        "y": 8,
+        "w": 456.328125,
+        "h": 66
+      },
+      "items": [
+        {
+          "name": "Home",
+          "raw": "Home",
+          "x": 598.8359375,
+          "y": 8,
+          "w": 51.015625,
+          "h": 66,
+          "icon": {
+            "w": 36,
+            "h": 36
+          },
+          "label": {
+            "w": 37.015625,
+            "h": 2,
+            "fontSize": 14,
+            "fontWeight": "400"
+          }
+        },
+        {
+          "name": "Fundamental",
+          "raw": "Fundamental",
+          "x": 677.8515625,
+          "y": 8,
+          "w": 95.5625,
+          "h": 66,
+          "icon": {
+            "w": 36,
+            "h": 36
+          },
+          "label": {
+            "w": 81.5625,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Signal Scan",
+          "raw": "Signal Scan",
+          "x": 801.4140625,
+          "y": 8,
+          "w": 87.671875,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 73.671875,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Crypto",
+          "raw": "₿ Crypto",
+          "x": 917.0859375,
+          "y": 8,
+          "w": 57.09375,
+          "h": 66,
+          "icon": {
+            "w": 36,
+            "h": 36
+          },
+          "label": {
+            "w": 43.09375,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Renko",
+          "raw": "Renko",
+          "x": 1002.1796875,
+          "y": 8,
+          "w": 52.984375,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 38.984375,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600"
+          }
+        }
+      ],
+      "scrollWidth": 1600,
+      "innerWidth": 1600,
+      "viewMode": "home",
+      "url": "https://copytolive.com/?ai3full=ai3-copytolive-nav-current-20260903-004&s=desktop-base-home&t=1788401282.0603042"
+    },
+    "fundamental": {
+      "nav": {
+        "x": 355.5,
+        "y": 12,
+        "w": 874,
+        "h": 98
+      },
+      "items": [
+        {
+          "name": "Home",
+          "x": 363.5,
+          "y": 12,
+          "w": 128,
+          "h": 98,
+          "icon": {
+            "w": 36,
+            "h": 36
+          },
+          "label": {
+            "w": 38.90625,
+            "h": 14,
+            "fontSize": 14,
+            "fontWeight": "850"
+          }
+        },
+        {
+          "name": "Fundamental",
+          "x": 509.5,
+          "y": 12,
+          "w": 128,
+          "h": 98,
+          "icon": {
+            "w": 36,
+            "h": 36
+          },
+          "label": {
+            "w": 87.125,
+            "h": 14,
+            "fontSize": 14,
+            "fontWeight": "850"
+          }
+        },
+        {
+          "name": "Signal Scan",
+          "x": 655.5,
+          "y": 12,
+          "w": 128,
+          "h": 98,
+          "icon": {
+            "w": 36,
+            "h": 36
+          },
+          "label": {
+            "w": 79.359375,
+            "h": 14,
+            "fontSize": 14,
+            "fontWeight": "850"
+          }
+        },
+        {
+          "name": "Crypto",
+          "x": 801.5,
+          "y": 12,
+          "w": 128,
+          "h": 98,
+          "icon": {
+            "w": 36,
+            "h": 36
+          },
+          "label": {
+            "w": 45.125,
+            "h": 14,
+            "fontSize": 14,
+            "fontWeight": "850"
+          }
+        },
+        {
+          "name": "Hyperliquid",
+          "x": 947.5,
+          "y": 12,
+          "w": 128,
+          "h": 98,
+          "icon": {
+            "w": 36,
+            "h": 36
+          },
+          "label": {
+            "w": 77.015625,
+            "h": 14,
+            "fontSize": 14,
+            "fontWeight": "850"
+          }
+        },
+        {
+          "name": "Renko",
+          "x": 1093.5,
+          "y": 12,
+          "w": 128,
+          "h": 98,
+          "icon": {
+            "w": 36,
+            "h": 36
+          },
+          "label": {
+            "w": 42.796875,
+            "h": 14,
+            "fontSize": 14,
+            "fontWeight": "850"
+          }
+        }
+      ],
+      "filter": {
+        "x": 18,
+        "y": 130,
+        "w": 1549,
+        "h": 70
+      },
+      "scrollWidth": 1585,
+      "innerWidth": 1600
+    },
+    "crypto": {
+      "nav": {
+        "x": 603.8359375,
+        "y": 8,
+        "w": 456.328125,
+        "h": 66
+      },
+      "items": [
+        {
+          "name": "Home",
+          "raw": "Home",
+          "x": 603.8359375,
+          "y": 8,
+          "w": 51.015625,
+          "h": 66,
+          "icon": {
+            "w": 36,
+            "h": 36
+          },
+          "label": {
+            "w": 37.015625,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Fundamental",
+          "raw": "Fundamental",
+          "x": 682.8515625,
+          "y": 8,
+          "w": 95.5625,
+          "h": 66,
+          "icon": {
+            "w": 36,
+            "h": 36
+          },
+          "label": {
+            "w": 81.5625,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Signal Scan",
+          "raw": "Signal Scan",
+          "x": 806.4140625,
+          "y": 8,
+          "w": 87.671875,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 73.671875,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Crypto",
+          "raw": "₿ Crypto",
+          "x": 922.0859375,
+          "y": 8,
+          "w": 57.09375,
+          "h": 66,
+          "icon": {
+            "w": 36,
+            "h": 36
+          },
+          "label": {
+            "w": 43.09375,
+            "h": 2,
+            "fontSize": 14,
+            "fontWeight": "400"
+          }
+        },
+        {
+          "name": "Renko",
+          "raw": "Renko",
+          "x": 1007.1796875,
+          "y": 8,
+          "w": 52.984375,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 38.984375,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600"
+          }
+        }
+      ],
+      "scrollWidth": 1600,
+      "innerWidth": 1600,
+      "viewMode": "home",
+      "url": "https://copytolive.com/?ai3full=ai3-copytolive-nav-current-20260903-004&s=desktop-crypto-home&t=1788401295.9464772"
+    },
+    "cryptoDeltaPx": 5.0,
+    "renko": {
+      "nav": {
+        "x": 571.8359375,
+        "y": 7,
+        "w": 456.328125,
+        "h": 66
+      },
+      "items": [
+        {
+          "name": "Home",
+          "raw": "Home",
+          "x": 571.8359375,
+          "y": 7,
+          "w": 51.015625,
+          "h": 66,
+          "icon": {
+            "w": 36,
+            "h": 36
+          },
+          "label": {
+            "w": 37.015625,
+            "h": 2,
+            "fontSize": 14,
+            "fontWeight": "400"
+          }
+        },
+        {
+          "name": "Fundamental",
+          "raw": "Fundamental",
+          "x": 650.8515625,
+          "y": 7,
+          "w": 95.5625,
+          "h": 66,
+          "icon": {
+            "w": 36,
+            "h": 36
+          },
+          "label": {
+            "w": 81.5625,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Signal Scan",
+          "raw": "Signal Scan",
+          "x": 774.4140625,
+          "y": 7,
+          "w": 87.671875,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 73.671875,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Crypto",
+          "raw": "₿ Crypto",
+          "x": 890.0859375,
+          "y": 7,
+          "w": 57.09375,
+          "h": 66,
+          "icon": {
+            "w": 36,
+            "h": 36
+          },
+          "label": {
+            "w": 43.09375,
+            "h": 19.5,
+            "fontSize": 13,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Renko",
+          "raw": "Renko",
+          "x": 975.1796875,
+          "y": 7,
+          "w": 52.984375,
+          "h": 66,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 38.984375,
+            "h": 2,
+            "fontSize": 14,
+            "fontWeight": "400"
+          }
+        }
+      ],
+      "scrollWidth": 1600,
+      "innerWidth": 1600,
+      "viewMode": "renko",
+      "url": "https://copytolive.com/"
+    },
+    "renkoDeltaPx": 27.0,
+    "signalState": {
+      "viewMode": "scanner-signal",
+      "text": "CTL Scanner Signal Market Scanner Ready Ã¢ÂÂ¢ 34 ENGINES Instruments 7 Results 0 Instruments 7 selected Timeframe 15m 1h 4h 1d R:R 1:1 1:1.5 1:2 1:2.5 1:3 Mode Strict Moderate Aggressive ⌕ Cari Instruments 7/163 Ã¢ÂÂ¾ HL Hyperliquid Major 7/7 BTC ETH SOL HYPE XRP DOGE BNB Ã¢ÂÂ¸ HL Hyperliquid Perpetuals 0/156 34 Deep AI Engines Regime Detection AI Reasoning 7 instrument selected Ã¢ÂÂ tekan Scan untuk mulai 15m 1h 4h 1d R:R 1:1 1:1.5 1:2 1:2.5 1:3 SL 0.5% Ã¢ÂÂ TP 1% MODE Ã°ÂÂÂ Strict Ã¢ÂÂÃ¯Â¸Â Moderate Ã¢ÂÂ¡ Aggressive Scan 7 Instruments Pilih pairs di kiri, atur timeframe & R:R, lalu Scan. AI engines akan menilai regime + sinyal. \\n",
+      "scrollWidth": 1600,
+      "innerWidth": 1600,
+      "url": "https://copytolive.com/"
+    },
+    "signalBackClick": {
+      "ok": true,
+      "text": "CTL",
+      "aria": null
+    },
+    "afterSignalBack": {
+      "viewMode": "scanner-signal",
+      "text": "CTL Scanner Signal Market Scanner Ready Ã¢ÂÂ¢ 34 ENGINES Instruments 7 Results 0 Instruments 7 selected Timeframe 15m 1h 4h 1d R:R 1:1 1:1.5 1:2 1:2.5 1:3 Mode Strict Moderate Aggressive ⌕ Cari Instruments 7/163 Ã¢ÂÂ¾ HL Hyperliquid Major 7/7 BTC ETH SOL HYPE XRP DOGE BNB Ã¢ÂÂ¸ HL Hyperliquid Perpetuals 0/156 34 Deep AI Engines Regime Detection AI Reasoning 7 instrument selected Ã¢ÂÂ tekan Scan untuk mulai 15m 1h 4h 1d R:R 1:1 1:1.5 1:2 1:2.5 1:3 SL 0.5% Ã¢ÂÂ TP 1% MODE Ã°ÂÂÂ Strict Ã¢ÂÂÃ¯Â¸Â Moderate Ã¢ÂÂ¡ Aggressive Scan 7 Instruments Pilih pairs di kiri, atur timeframe & R:R, lalu Scan. AI engines akan menilai regime + sinyal. \\n",
+      "scrollWidth": 1600,
+      "innerWidth": 1600,
+      "url": "https://copytolive.com/"
+    },
+    "cycles": [
+      [
+        {
+          "label": "Crypto",
+          "clicked": true,
+          "state": {
+            "viewMode": "home",
+            "text": "CTL Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Metode Breakout ⌄ Position Any ⌄ Market Any ⌄ Status Any ⌄ Cari 🚀 Multi-TF Hyperliquid Screener· BREAKOUT AREA 177 Hyperliquid perp | ditampilkan 9 | diperbarui 12:26:57 AM | refresh UI 60s 🎯 Signal Mode 🔬 Pro Mode · HL ONLY 60+ 70+ 80+ TF·ANY M15 M30 H1 H4 D1 3 actionable (3 long · 0 short) BTC NEUTRAL conf 15% 24h -0.23% ↑ PENDING BUY (Weak) 0.31% away BSV HL PERP Bitcoin SV $16.09 +3.06% 68 ENTRY 16.1410 SL 15.8183 −2.0% TP1 2R 16.7865 +4.0% TP2 3R 17.1092 R:R 1:2.0 H1 breakout 2/5 TF str 69 2/5 TF aligned ↑ · vol×8.5 · squeeze release 💎 · fresh 🔥 · confluence ⭐×3 | Risk $10 -> ~500 notional 📋 Copy 🧪 Paper View → ⚠️ Trading involves substantial risk of loss. AI signals are for informational purposes only, not financial advice. Past performance does not guarantee future results. \\n",
+            "scrollWidth": 1600,
+            "innerWidth": 1600,
+            "url": "https://copytolive.com/?ai3full=ai3-copytolive-nav-current-20260903-004&s=desktop-cycle-1-home&t=1788401337.6319013"
+          }
+        },
+        {
+          "label": "Home",
+          "clicked": true,
+          "state": {
+            "viewMode": "home",
+            "text": "CTL Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Max Loss Any Profit Factor Any Win Rate Any Risk Reward Any Cari Analisis Semua Strategi Terbaru 100/118 STRATEGY ▼ ENTRIES PERIOD PROB RR PF PROFIT DD GROWTH ACTIONS ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 319 2003–2026 (23Y) 44.5% 2.3 1.84 $31517 8.8% +315.2% ND ALL OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 50% 1.8 1.82 $27730 12.8% +277.3% ND MTF ROC_ZERO — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 39.4% 2.8 1.79 $31632 10.8% +316.3% ND ALL DONCH_BO — GOLD GOLD/USDC H1 CANDLE 306 2003–2026 (23Y) 43.8% 2.3 1.78 $28683 10.8% +286.8% ND ALL EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 324 2003–2026 (23Y) 39.5% 2.7 1.77 $32416 18.2% +324.2% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 334 2003–2026 (23Y) 39.5% 2.7 1.77 $33456 23.1% +334.6% ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 376 2003–2026 (23Y) 39.4% 2.7 1.76 $37184 15.5% +371.8% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 43.5% 2.3 1.76 $28258 22.5% +282.6% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 357 2003–2026 (23Y) 39.5% 2.7 1.76 $35688 10.9% +356.9% ND MTF SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.9% 1.8 1.74 $26066 7.4% +260.7% ND ALL ADX_DI — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL ADX_STRONG — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 48.7% 1.8 1.73 $23934 12.5% +239.3% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 43% 2.3 1.73 $27345 22.5% +273.4% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 385 2003–2026 (23Y) 39% 2.7 1.73 $36840 19.9% +368.4% ND ALL ATR_BO — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 48.6% 1.8 1.72 $24419 9.6% +244.2% ND MTF KELTNER_BO — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 48.6% 1.8 1.72 $24942 8.9% +249.4% ND VM EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 355 2003–2026 (23Y) 38.9% 2.7 1.72 $33720 14.2% +337.2% ND VM LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 38.8% 2.7 1.72 $29256 18.3% +292.6% ND VM HARAMI — GOLD GOLD/USDC H1 CANDLE 339 2003–2026 (23Y) 48.4% 1.8 1.71 $26261 11.9% +262.6% ND ALL SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.3% 1.8 1.7 $24866 12.9% +248.7% ND MTF CORREL_REV — GOLD GOLD/USDC H1 CANDLE 314 2003–2026 (23Y) 42.7% 2.3 1.7 $26981 11.8% +269.8% ND MTF ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 336 2003–2026 (23Y) 38.1% 2.8 1.7 $30899 16.9% +309.0% ND VM ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 38.2% 2.8 1.7 $29342 11.4% +293.4% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 328 2003–2026 (23Y) 38.4% 2.7 1.69 $29952 19.2% +299.5% ND ALL ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 325 2003–2026 (23Y) 38.5% 2.7 1.69 $29800 14.7% +298.0% ND MTF AROON_XO — GOLD GOLD/USDC H1 CANDLE 320 2003–2026 (23Y) 42.5% 2.3 1.69 $27104 12.8% +271.0% ND MTF EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 38.1% 2.8 1.69 $29130 13.5% +291.3% ND MTF NATR_EXPAND — GOLD GOLD/USDC H1 CANDLE 315 2003–2026 (23Y) 42.5% 2.3 1.69 $26768 9.7% +267.7% ND MTF REGCH_BO — GOLD GOLD/USDC H1 CANDLE 306 2003–2026 (23Y) 42.5% 2.3 1.69 $25883 19.9% +258.8% ND MTF WILLR_TREND — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 42.4% 2.3 1.69 $26219 24.0% +262.2% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 327 2003–2026 (23Y) 42.8% 2.2 1.68 $27368 14.3% +273.7% ND ALL HMA_CROSS — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 47.9% 1.8 1.68 $23742 14.4% +237.4% ND ALL KAMA_TREND — GOLD GOLD/USDC H1 CANDLE 354 2003–2026 (23Y) 48% 1.8 1.68 $26669 17.9% +266.7% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 305 2003–2026 (23Y) 38.4% 2.7 1.68 $27720 18.3% +277.2% ND VM KAMA_TREND — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 47.6% 1.9 1.68 $23104 8.3% +231.0% ND VM ROC_ZERO — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 42.3% 2.3 1.68 $25732 10.2% +257.3% ND ALL ADX_DI — GOLD GOLD/USDC H1 CANDLE 389 2003–2026 (23Y) 42.7% 2.2 1.67 $32176 10.5% +321.8% ND ALL ADX_STRONG — GOLD GOLD/USDC H1 CANDLE 389 2003–2026 (23Y) 42.7% 2.2 1.67 $32176 10.5% +321.8% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 305 2003–2026 (23Y) 47.5% 1.9 1.67 $22747 11.5% +227.5% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 341 2003–2026 (23Y) 38.1% 2.7 1.67 $30344 18.1% +303.4% ND VM DONCH_BO — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 42.1% 2.3 1.67 $26466 10.6% +264.7% ND VM KAMA_TREND — GOLD GOLD/USDC H1 CANDLE 325 2003–2026 (23Y) 42.2% 2.3 1.67 $26740 11.2% +267.4% ND ALL ATR_BO — GOLD GOLD/USDC H1 CANDLE 350 2003–2026 (23Y) 42.6% 2.2 1.66 $28700 19.8% +287.0% ND ALL INSIDE_BAR — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 42.1% 2.3 1.66 $24634 15.8% +246.3% ND ALL KAMA_TREND — GOLD GOLD/USDC H1 CANDLE 369 2003–2026 (23Y) 47.7% 1.8 1.66 $27077 7.3% +270.8% ND ALL KELTNER_BO — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 47.7% 1.8 1.66 $23491 12.9% +234.9% ND ALL SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 312 2003–2026 (23Y) 38.8% 2.6 1.66 $27744 11.2% +277.4% ND ALL T3_TREND — GOLD GOLD/USDC H1 CANDLE 358 2003–2026 (23Y) 38% 2.7 1.66 $31472 15.3% +314.7% ND MTF CCI_REV — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 42.1% 2.3 1.66 $26191 10.3% +261.9% ND VM OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 331 2003–2026 (23Y) 42.6% 2.2 1.66 $27204 17.9% +272.0% ND VM OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 300 2003–2026 (23Y) 38% 2.7 1.66 $26400 14.5% +264.0% ND VM RSI_MA — GOLD GOLD/USDC H1 CANDLE 300 2003–2026 (23Y) 47.3% 1.9 1.66 $22000 11.0% +220.0% ND VM STDDEV_BO — GOLD GOLD/USDC H1 CANDLE 300 2003–2026 (23Y) 42% 2.3 1.66 $24360 10.3% +243.6% ND ALL OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 359 2003–2026 (23Y) 42.3% 2.2 1.65 $28856 15.7% +288.6% ND ALL SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 324 2003–2026 (23Y) 47.5% 1.8 1.65 $23453 14.8% +234.5% ND ALL TRIX_ZERO — GOLD GOLD/USDC H1 CANDLE 324 2003–2026 (23Y) 38% 2.7 1.65 $28416 12.2% +284.2% ND MTF KELTNER_BO — GOLD GOLD/USDC H1 CANDLE 315 2003–2026 (23Y) 41.9% 2.3 1.65 $25368 18.0% +253.7% ND VM CCI_REV — GOLD GOLD/USDC H1 CANDLE 320 2003–2026 (23Y) 41.9% 2.3 1.65 $25704 14.6% +257.0% ND VM MOMENTUM_XO — GOLD GOLD/USDC H1 CANDLE 326 2003–2026 (23Y) 47.5% 1.8 1.65 $23627 14.5% +236.3% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 335 2003–2026 (23Y) 47.5% 1.8 1.64 $24112 21.1% +241.1% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 46.9% 1.9 1.64 $22083 11.1% +220.8% ND ALL STDDEV_BO — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 47.4% 1.8 1.64 $22232 7.8% +222.3% ND MTF NATR_EXPAND — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 47% 1.9 1.64 $21579 10.3% +215.8% ND MTF REGCH_BO — GOLD GOLD/USDC H1 CANDLE 333 2003–2026 (23Y) 41.7% 2.3 1.64 $26438 14.8% +264.4% ND VM MACD_HIST — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 47% 1.9 1.64 $21579 9.5% +215.8% ND VM MOMENTUM_XO — GOLD GOLD/USDC H1 CANDLE 312 2003–2026 (23Y) 41.7% 2.3 1.64 $24606 11.4% +246.1% ND VM SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 356 2003–2026 (23Y) 38.5% 2.6 1.64 $30805 12.3% +308.1% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 42.1% 2.2 1.63 $25164 16.9% +251.6% ND ALL ZLEMA_CROSS — GOLD GOLD/USDC H1 CANDLE 332 2003–2026 (23Y) 47.3% 1.8 1.63 $23550 12.3% +235.5% MTF WILLR_TREND — GOLD GOLD/USDC H1 CANDLE TRACE READY 379 2003–2026 (23Y) 47.2% 1.8 1.63 $26749 16.2% +267.5% ND VM DEMA_TEMA — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 41.6% 2.3 1.63 $24058 9.9% +240.6% ND VM ROC_ZERO — GOLD GOLD/USDC H1 CANDLE 366 2003–2026 (23Y) 47.3% 1.8 1.63 $25915 10.9% +259.2% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 582 2003–2026 (23Y) 39% 2.5 1.62 $49680 15.0% +496.8% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 466 2003–2026 (23Y) 38.2% 2.6 1.62 $39259 22.5% +392.6% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 399 2003–2026 (23Y) 47.6% 1.8 1.62 $27816 14.6% +278.2% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 46.8% 1.9 1.62 $21693 11.1% +216.9% ND ALL INSIDE_BAR — GOLD GOLD/USDC H1 CANDLE 335 2003–2026 (23Y) 47.2% 1.8 1.62 $23512 11.4% +235.1% ND ALL RSI_MA — GOLD GOLD/USDC H1 CANDLE 365 2003–2026 (23Y) 47.1% 1.8 1.62 $25528 15.1% +255.3% ND MTF REGCH_BO — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 46.7% 1.9 1.62 $22019 11.5% +220.2% ND MTF SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 41.4% 2.3 1.62 $24791 18.0% +247.9% ND VM ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 377 2003–2026 (23Y) 41.4% 2.3 1.62 $28974 10.6% +289.7% ND ALL ATR_BO — GOLD GOLD/USDC H1 CANDLE 349 2003–2026 (23Y) 41.8% 2.2 1.61 $26816 17.9% +268.2% ND ALL DONCH_BO — GOLD GOLD/USDC H1 CANDLE 366 2003–2026 (23Y) 47% 1.8 1.61 $25315 18.2% +253.2% ND ALL DONCH_BO — GOLD GOLD/USDC H1 CANDLE 334 2003–2026 (23Y) 41.3% 2.3 1.61 $25525 13.2% +255.2% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 46.9% 1.8 1.61 $21419 11.4% +214.2% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 41.9% 2.2 1.61 $23772 23.0% +237.7% ND ALL MOMENTUM_XO — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 46.9% 1.8 1.61 $21245 12.5% +212.4% ND ALL REGCH_BO — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 46.9% 1.8 1.61 $21245 20.1% +212.4% ND ALL T3_TREND — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 41.2% 2.3 1.61 $23358 14.2% +233.6% ND ALL TRIX_ZERO — GOLD GOLD/USDC H1 CANDLE 330 2003–2026 (23Y) 47% 1.8 1.61 $22776 9.9% +227.8% ND MTF PIVOT_BO — GOLD GOLD/USDC H1 CANDLE 352 2003–2026 (23Y) 46.9% 1.8 1.61 $24094 8.2% +240.9% ND VM MACD_HIST — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 46.9% 1.8 1.61 $21245 14.6% +212.4% ND ALL CORREL_REV — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 46.4% 1.9 1.6 $21776 14.6% +217.8% ND ALL EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 333 2003–2026 (23Y) 46.8% 1.8 1.6 $22738 11.8% +227.4% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 316 2003–2026 (23Y) 41.1% 2.3 1.6 $23755 9.2% +237.6% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 319 2003–2026 (23Y) 46.4% 1.9 1.6 $21597 9.1% +216.0% ND ALL ICHI_TK — GOLD GOLD/USDC H1 CANDLE 343 2003–2026 (23Y) 41.1% 2.3 1.6 $25710 17.1% +257.1% ND MTF EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 330 2003–2026 (23Y) 46.4% 1.9 1.6 $22280 11.2% +222.8% ND MTF HURST_CH — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 41.1% 2.3 1.6 $23145 12.6% +231.4% LOAD MORE (18 MORE) ⚠️ Trading involves substantial risk of loss. AI signals are for informational purposes only, not financial advice. Past performance does not guarantee future results. \\n",
+            "scrollWidth": 1600,
+            "innerWidth": 1600,
+            "url": "https://copytolive.com/?ai3full=ai3-copytolive-nav-current-20260903-004&s=desktop-cycle-1-home&t=1788401337.6319013"
+          }
+        },
+        {
+          "label": "Renko",
+          "clicked": true,
+          "state": {
+            "viewMode": "renko",
+            "text": "Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Metode Renko OOS Auto Pair EIGEN/USDC · OOS 76.3% GRASS/USDC · OOS 75.1% PURR/USDC · OOS 71.7% WLD/USDC · OOS 71.7% DASH/USDC · OOS 69.8% MORPHO/USDC · OOS 69.8% XPL/USDC · OOS 69.7% JTO/USDC · OOS 69.3% DOT/USDC · OOS 69.2% AAVE/USDC · OOS 69.0% AVAX/USDC · OOS 68.2% ALGO/USDC · OOS 68.1% SPX/USDC · OOS 68.0% IO/USDC · OOS 67.6% NIL/USDC · OOS 67.5% STABLE/USDC · OOS 66.8% HBAR/USDC · OOS 66.6% TNSR/USDC · OOS 66.6% ADA/USDC · OOS 66.5% TIA/USDC · OOS 66.3% BIO/USDC · OOS 66.1% SOL/USDC · OOS 65.8% XAI/USDC · OOS 65.7% APE/USDC · OOS 65.7% JUP/USDC · OOS 65.5% RESOLV/USDC · OOS 65.4% NEO/USDC · OOS 65.3% LINK/USDC · OOS 65.0% BANANA/USDC · OOS 64.9% XLM/USDC · OOS 64.9% ACE/USDC · OOS 64.9% KAITO/USDC · OOS 64.6% ATOM/USDC · OOS 64.5% LIT/USDC · OOS 64.1% BLUR/USDC · OOS 64.0% MON/USDC · OOS 63.9% ETC/USDC · OOS 63.7% LDO/USDC · OOS 63.7% VVV/USDC · OOS 63.5% DYDX/USDC · OOS 63.3% ALT/USDC · OOS 62.8% PYTH/USDC · OOS 62.7% ENA/USDC · OOS 62.7% POPCAT/USDC · OOS 62.6% SKR/USDC · OOS 62.4% SKY/USDC · OOS 62.4% PENDLE/USDC · OOS 62.2% CRV/USDC · OOS 62.1% NOT/USDC · OOS 61.8% FET/USDC · OOS 61.3% KLUNC/USDC · OOS 61.2% CELO/USDC · OOS 61.1% W/USDC · OOS 61.1% XRP/USDC · OOS 60.9% HEMI/USDC · OOS 60.7% ETHFI/USDC · OOS 60.7% ETH/USDC · OOS 60.6% MANTA/USDC · OOS 60.5% WIF/USDC · OOS 60.3% OP/USDC · OOS 60.1% BABY/USDC · OOS 60.1% DOGE/USDC · OOS 59.9% LTC/USDC · OOS 59.7% AERO/USDC · OOS 59.4% STBL/USDC · OOS 59.0% SNX/USDC · OOS 59.0% POLYX/USDC · OOS 59.0% AR/USDC · OOS 59.0% UNI/USDC · OOS 58.9% XMR/USDC · OOS 58.8% VIRTUAL/USDC · OOS 58.7% SUSHI/USDC · OOS 58.7% KNEIRO/USDC · OOS 58.7% MET/USDC · OOS 58.6% NXPC/USDC · OOS 58.4% NEAR/USDC · OOS 58.3% AVNT/USDC · OOS 58.2% ORDI/USDC · OOS 58.2% PENGU/USDC · OOS 57.8% RSR/USDC · OOS 57.8% BNB/USDC · OOS 57.7% MERL/USDC · OOS 57.7% GMX/USDC · OOS 57.6% BCH/USDC · OOS 57.6% FIL/USDC · OOS 57.4% REZ/USDC · OOS 57.4% SEI/USDC · OOS 57.2% MOVE/USDC · OOS 57.1% BRETT/USDC · OOS 57.1% MEME/USDC · OOS 57.0% ZORA/USDC · OOS 56.3% AIXBT/USDC · OOS 56.1% GOAT/USDC · OOS 56.1% RUNE/USDC · OOS 55.7% APEX/USDC · OOS 55.6% TURBO/USDC · OOS 55.4% BOME/USDC · OOS 55.4% FARTCOIN/USDC · OOS 55.2% INIT/USDC · OOS 55.2% S/USDC · OOS 55.0% TRB/USDC · OOS 54.9% USUAL/USDC · OOS 54.8% DYM/USDC · OOS 54.4% KAS/USDC · OOS 54.3% STX/USDC · OOS 54.3% 2Z/USDC · OOS 54.3% MELANIA/USDC · OOS 54.3% MINA/USDC · OOS 54.2% ZETA/USDC · OOS 54.1% ENS/USDC · OOS 54.0% ARB/USDC · OOS 54.0% CFX/USDC · OOS 54.0% MEGA/USDC · OOS 53.9% RENDER/USDC · OOS 53.8% ME/USDC · OOS 53.6% STRK/USDC · OOS 53.5% CAKE/USDC · OOS 53.5% ZK/USDC · OOS 53.2% ZEN/USDC · OOS 53.0% KFLOKI/USDC · OOS 52.3% PNUT/USDC · OOS 52.3% MOODENG/USDC · OOS 52.1% KBONK/USDC · OOS 51.8% SUPER/USDC · OOS 51.7% GMT/USDC · OOS 51.7% INJ/USDC · OOS 51.6% TAO/USDC · OOS 51.5% IOTA/USDC · OOS 51.4% PEOPLE/USDC · OOS 51.2% SAGA/USDC · OOS 51.0% ICP/USDC · OOS 50.8% KPEPE/USDC · OOS 50.7% HYPE/USDC · OOS 50.4% WLFI/USDC · OOS 50.2% ZEC/USDC · OOS 50.1% BERA/USDC · OOS 49.6% IMX/USDC · OOS 49.3% BTC/USDC · OOS 49.3% WCT/USDC · OOS 46.9% COMP/USDC · OOS 46.3% LINEA/USDC · OOS 46.0% GOLD/USD SILVER/USD WTI OIL/USD BRENT OIL/USD NATGAS/USD COPPER/USD PLATINUM/USD S&P 500/USD NASDAQ 100/USD NIKKEI 225/USD RUSSELL 2000/USD MAG 7/USD EUR/USD USD/JPY TSLA/USD NVDA/USD AAPL/USD GOOGL/USD AMZN/USD META/USD MSFT/USD AMD/USD Market Any Crypto Non-Crypto OOS WR Any ≥ 55% ≥ 60% ≥ 65% Cari SOL/USDC · RENKO 0.20947 🔒 SMA10 · entry lock 🔒 Klik untuk aktifkan chart › CRYPTO 141 NON-CRYPTO 22 QUICK ENTRY RENKO SMA GOLD ETC UNI AVAX XLM DOT BTC/USDC · OOS 49.3% ETH/USDC · OOS 60.6% ATOM/USDC · OOS 64.5% DYDX/USDC · OOS 63.3% SOL/USDC · OOS 65.8% AVAX/USDC · OOS 68.2% BNB/USDC · OOS 57.7% APE/USDC · OOS 65.7% OP/USDC · OOS 60.1% LTC/USDC · OOS 59.7% ARB/USDC · OOS 54.0% DOGE/USDC · OOS 59.9% INJ/USDC · OOS 51.6% KPEPE/USDC · OOS 50.7% CRV/USDC · OOS 62.1% LDO/USDC · OOS 63.7% LINK/USDC · OOS 65.0% STX/USDC · OOS 54.3% CFX/USDC · OOS 54.0% GMX/USDC · OOS 57.6% SNX/USDC · OOS 59.0% XRP/USDC · OOS 60.9% BCH/USDC · OOS 57.6% AAVE/USDC · OOS 69.0% COMP/USDC · OOS 46.3% WLD/USDC · OOS 71.7% UNI/USDC · OOS 58.9% SEI/USDC · OOS 57.2% RUNE/USDC · OOS 55.7% DOT/USDC · OOS 69.2% BANANA/USDC · OOS 64.9% TRB/USDC · OOS 54.9% KAS/USDC · OOS 54.3% BLUR/USDC · OOS 64.0% TIA/USDC · OOS 66.3% ADA/USDC · OOS 66.5% MINA/USDC · OOS 54.2% POLYX/USDC · OOS 59.0% PENDLE/USDC · OOS 62.2% FET/USDC · OOS 61.3% NEAR/USDC · OOS 58.3% MEME/USDC · OOS 57.0% ORDI/USDC · OOS 58.2% NEO/USDC · OOS 65.3% ZEN/USDC · OOS 53.0% FIL/USDC · OOS 57.4% PYTH/USDC · OOS 62.7% SUSHI/USDC · OOS 58.7% IMX/USDC · OOS 49.3% KBONK/USDC · OOS 51.8% GMT/USDC · OOS 51.7% SUPER/USDC · OOS 51.7% JUP/USDC · OOS 65.5% KLUNC/USDC · OOS 61.2% RSR/USDC · OOS 57.8% JTO/USDC · OOS 69.3% ACE/USDC · OOS 64.9% WIF/USDC · OOS 60.3% CAKE/USDC · OOS 53.5% PEOPLE/USDC · OOS 51.2% ENS/USDC · OOS 54.0% ETC/USDC · OOS 63.7% XAI/USDC · OOS 65.7% MANTA/USDC · OOS 60.5% ALT/USDC · OOS 62.8% ZETA/USDC · OOS 54.1% DYM/USDC · OOS 54.4% W/USDC · OOS 61.1% STRK/USDC · OOS 53.5% TAO/USDC · OOS 51.5% AR/USDC · OOS 59.0% KFLOKI/USDC · OOS 52.3% BOME/USDC · OOS 55.4% ETHFI/USDC · OOS 60.7% ENA/USDC · OOS 62.7% TNSR/USDC · OOS 66.6% SAGA/USDC · OOS 51.0% MERL/USDC · OOS 57.7% HBAR/USDC · OOS 66.6% POPCAT/USDC · OOS 62.6% EIGEN/USDC · OOS 76.3% REZ/USDC · OOS 57.4% NOT/USDC · OOS 61.8% TURBO/USDC · OOS 55.4% BRETT/USDC · OOS 57.1% IO/USDC · OOS 67.6% ZK/USDC · OOS 53.2% RENDER/USDC · OOS 53.8% CELO/USDC · OOS 61.1% KNEIRO/USDC · OOS 58.7% GOAT/USDC · OOS 56.1% MOODENG/USDC · OOS 52.1% GRASS/USDC · OOS 75.1% PURR/USDC · OOS 71.7% PNUT/USDC · OOS 52.3% XLM/USDC · OOS 64.9% IOTA/USDC · OOS 51.4% ALGO/USDC · OOS 68.1% HYPE/USDC · OOS 50.4% ME/USDC · OOS 53.6% MOVE/USDC · OOS 57.1% VIRTUAL/USDC · OOS 58.7% PENGU/USDC · OOS 57.8% USUAL/USDC · OOS 54.8% FARTCOIN/USDC · OOS 55.2% AIXBT/USDC · OOS 56.1% BIO/USDC · OOS 66.1% SPX/USDC · OOS 68.0% S/USDC · OOS 55.0% MORPHO/USDC · OOS 69.8% MELANIA/USDC · OOS 54.3% VVV/USDC · OOS 63.5% BERA/USDC · OOS 49.6% KAITO/USDC · OOS 64.6% NIL/USDC · OOS 67.5% BABY/USDC · OOS 60.1% WCT/USDC · OOS 46.9% ZORA/USDC · OOS 56.3% INIT/USDC · OOS 55.2% NXPC/USDC · OOS 58.4% RESOLV/USDC · OOS 65.4% XPL/USDC · OOS 69.7% WLFI/USDC · OOS 50.2% LINEA/USDC · OOS 46.0% SKY/USDC · OOS 62.4% AVNT/USDC · OOS 58.2% STBL/USDC · OOS 59.0% HEMI/USDC · OOS 60.7% APEX/USDC · OOS 55.6% 2Z/USDC · OOS 54.3% ZEC/USDC · OOS 50.1% MON/USDC · OOS 63.9% MET/USDC · OOS 58.6% MEGA/USDC · OOS 53.9% ICP/USDC · OOS 50.8% AERO/USDC · OOS 59.4% STABLE/USDC · OOS 66.8% LIT/USDC · OOS 64.1% XMR/USDC · OOS 58.8% DASH/USDC · OOS 69.8% SKR/USDC · OOS 62.4% 🔒 0.20947 · SMA10 SELL · di bawah SMA LIVE History 402 / 159.308 99.913 DATA RENKO Crypto perpetual · parameter terkunci OOS LOCK COVERAGE Agu 2026–NOW OHLCV 53.649 · 1H TICKS N/A +25K BACKTEST OOS 30% 65.84% WR PF 10.38 TRADES 2.670 MAX DD 4.26% INDIKATOR 162 ACCBANDS BBANDS DEMA EMA HT_TRENDLINE KAMA MA MAMA MAVP MIDPOINT MIDPRICE SAR SAREXT SMA T3 TEMA TRIMA WMA ADX ADXR APO AROON AROONOSC BOP CCI CMO DX IMI MACD MACDEXT MACDFIX MFI MINUS_DI MINUS_DM MOM PLUS_DI PLUS_DM PPO ROC ROCP ROCR ROCR100 RSI STOCH STOCHF STOCHRSI TRIX ULTOSC WILLR ATR NATR TRANGE AD ADOSC OBV HT_DCPERIOD HT_DCPHASE HT_PHASOR HT_SINE HT_TRENDMODE CDL2CROWS CDL3BLACKCROWS CDL3INSIDE CDL3LINESTRIKE CDL3OUTSIDE CDL3STARSINSOUTH CDL3WHITESOLDIERS CDLABANDONEDBABY CDLADVANCEBLOCK CDLBELTHOLD CDLBREAKAWAY CDLCLOSINGMARUBOZU CDLCONCEALBABYSWALL CDLCOUNTERATTACK CDLDARKCLOUDCOVER CDLDOJI CDLDOJISTAR CDLDRAGONFLYDOJI CDLENGULFING CDLEVENINGDOJISTAR CDLEVENINGSTAR CDLGAPSIDESIDEWHITE CDLGRAVESTONEDOJI CDLHAMMER CDLHANGINGMAN CDLHARAMI CDLHARAMICROSS CDLHIGHWAVE CDLHIKKAKE CDLHIKKAKEMOD CDLHOMINGPIGEON CDLIDENTICAL3CROWS CDLINNECK CDLINVERTEDHAMMER CDLKICKING CDLKICKINGBYLENGTH CDLLADDERBOTTOM CDLLONGLEGGEDDOJI CDLLONGLINE CDLMARUBOZU CDLMATCHINGLOW CDLMATHOLD CDLMORNINGDOJISTAR CDLMORNINGSTAR CDLONNECK CDLPIERCING CDLRICKSHAWMAN CDLRISEFALL3METHODS CDLSEPARATINGLINES CDLSHOOTINGSTAR CDLSHORTLINE CDLSPINNINGTOP CDLSTALLEDPATTERN CDLSTICKSANDWICH CDLTAKURI CDLTASUKIGAP CDLTHRUSTING CDLTRISTAR CDLUNIQUE3RIVER CDLUPSIDEGAP2CROWS CDLXSIDEGAP3METHODS AVGDEV AVGPRICE MEDPRICE TYPPRICE WCLPRICE BETA CORREL LINEARREG LINEARREG_ANGLE LINEARREG_INTERCEPT LINEARREG_SLOPE STDDEV TSF VAR ADD DIV MAX MAXINDEX MIN MININDEX MINMAX MINMAXINDEX MULT SUB SUM ACOS ASIN ATAN CEIL COS COSH EXP FLOOR LN LOG10 SIN SINH SQRT TAN TANH VWAP + PASANG \\n",
+            "scrollWidth": 1600,
+            "innerWidth": 1600,
+            "url": "https://copytolive.com/"
+          }
+        },
+        {
+          "label": "Home",
+          "clicked": true,
+          "state": {
+            "viewMode": "home",
+            "text": "CTL Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Max Loss Any Profit Factor Any Win Rate Any Risk Reward Any Cari Analisis Semua Strategi Terbaru 100/118 STRATEGY ▼ ENTRIES PERIOD PROB RR PF PROFIT DD GROWTH ACTIONS ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 319 2003–2026 (23Y) 44.5% 2.3 1.84 $31517 8.8% +315.2% ND ALL OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 50% 1.8 1.82 $27730 12.8% +277.3% ND MTF ROC_ZERO — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 39.4% 2.8 1.79 $31632 10.8% +316.3% ND ALL DONCH_BO — GOLD GOLD/USDC H1 CANDLE 306 2003–2026 (23Y) 43.8% 2.3 1.78 $28683 10.8% +286.8% ND ALL EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 324 2003–2026 (23Y) 39.5% 2.7 1.77 $32416 18.2% +324.2% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 334 2003–2026 (23Y) 39.5% 2.7 1.77 $33456 23.1% +334.6% ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 376 2003–2026 (23Y) 39.4% 2.7 1.76 $37184 15.5% +371.8% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 43.5% 2.3 1.76 $28258 22.5% +282.6% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 357 2003–2026 (23Y) 39.5% 2.7 1.76 $35688 10.9% +356.9% ND MTF SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.9% 1.8 1.74 $26066 7.4% +260.7% ND ALL ADX_DI — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL ADX_STRONG — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 48.7% 1.8 1.73 $23934 12.5% +239.3% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 43% 2.3 1.73 $27345 22.5% +273.4% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 385 2003–2026 (23Y) 39% 2.7 1.73 $36840 19.9% +368.4% ND ALL ATR_BO — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 48.6% 1.8 1.72 $24419 9.6% +244.2% ND MTF KELTNER_BO — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 48.6% 1.8 1.72 $24942 8.9% +249.4% ND VM EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 355 2003–2026 (23Y) 38.9% 2.7 1.72 $33720 14.2% +337.2% ND VM LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 38.8% 2.7 1.72 $29256 18.3% +292.6% ND VM HARAMI — GOLD GOLD/USDC H1 CANDLE 339 2003–2026 (23Y) 48.4% 1.8 1.71 $26261 11.9% +262.6% ND ALL SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.3% 1.8 1.7 $24866 12.9% +248.7% ND MTF CORREL_REV — GOLD GOLD/USDC H1 CANDLE 314 2003–2026 (23Y) 42.7% 2.3 1.7 $26981 11.8% +269.8% ND MTF ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 336 2003–2026 (23Y) 38.1% 2.8 1.7 $30899 16.9% +309.0% ND VM ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 38.2% 2.8 1.7 $29342 11.4% +293.4% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 328 2003–2026 (23Y) 38.4% 2.7 1.69 $29952 19.2% +299.5% ND ALL ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 325 2003–2026 (23Y) 38.5% 2.7 1.69 $29800 14.7% +298.0% ND MTF AROON_XO — GOLD GOLD/USDC H1 CANDLE 320 2003–2026 (23Y) 42.5% 2.3 1.69 $27104 12.8% +271.0% ND MTF EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 38.1% 2.8 1.69 $29130 13.5% +291.3% ND MTF NATR_EXPAND — GOLD GOLD/USDC H1 CANDLE 315 2003–2026 (23Y) 42.5% 2.3 1.69 $26768 9.7% +267.7% ND MTF REGCH_BO — GOLD GOLD/USDC H1 CANDLE 306 2003–2026 (23Y) 42.5% 2.3 1.69 $25883 19.9% +258.8% ND MTF WILLR_TREND — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 42.4% 2.3 1.69 $26219 24.0% +262.2% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 327 2003–2026 (23Y) 42.8% 2.2 1.68 $27368 14.3% +273.7% ND ALL HMA_CROSS — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 47.9% 1.8 1.68 $23742 14.4% +237.4% ND ALL KAMA_TREND — GOLD GOLD/USDC H1 CANDLE 354 2003–2026 (23Y) 48% 1.8 1.68 $26669 17.9% +266.7% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 305 2003–2026 (23Y) 38.4% 2.7 1.68 $27720 18.3% +277.2% ND VM KAMA_TREND — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 47.6% 1.9 1.68 $23104 8.3% +231.0% ND VM ROC_ZERO — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 42.3% 2.3 1.68 $25732 10.2% +257.3% ND ALL ADX_DI — GOLD GOLD/USDC H1 CANDLE 389 2003–2026 (23Y) 42.7% 2.2 1.67 $32176 10.5% +321.8% ND ALL ADX_STRONG — GOLD GOLD/USDC H1 CANDLE 389 2003–2026 (23Y) 42.7% 2.2 1.67 $32176 10.5% +321.8% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 305 2003–2026 (23Y) 47.5% 1.9 1.67 $22747 11.5% +227.5% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 341 2003–2026 (23Y) 38.1% 2.7 1.67 $30344 18.1% +303.4% ND VM DONCH_BO — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 42.1% 2.3 1.67 $26466 10.6% +264.7% ND VM KAMA_TREND — GOLD GOLD/USDC H1 CANDLE 325 2003–2026 (23Y) 42.2% 2.3 1.67 $26740 11.2% +267.4% ND ALL ATR_BO — GOLD GOLD/USDC H1 CANDLE 350 2003–2026 (23Y) 42.6% 2.2 1.66 $28700 19.8% +287.0% ND ALL INSIDE_BAR — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 42.1% 2.3 1.66 $24634 15.8% +246.3% ND ALL KAMA_TREND — GOLD GOLD/USDC H1 CANDLE 369 2003–2026 (23Y) 47.7% 1.8 1.66 $27077 7.3% +270.8% ND ALL KELTNER_BO — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 47.7% 1.8 1.66 $23491 12.9% +234.9% ND ALL SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 312 2003–2026 (23Y) 38.8% 2.6 1.66 $27744 11.2% +277.4% ND ALL T3_TREND — GOLD GOLD/USDC H1 CANDLE 358 2003–2026 (23Y) 38% 2.7 1.66 $31472 15.3% +314.7% ND MTF CCI_REV — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 42.1% 2.3 1.66 $26191 10.3% +261.9% ND VM OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 331 2003–2026 (23Y) 42.6% 2.2 1.66 $27204 17.9% +272.0% ND VM OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 300 2003–2026 (23Y) 38% 2.7 1.66 $26400 14.5% +264.0% ND VM RSI_MA — GOLD GOLD/USDC H1 CANDLE 300 2003–2026 (23Y) 47.3% 1.9 1.66 $22000 11.0% +220.0% ND VM STDDEV_BO — GOLD GOLD/USDC H1 CANDLE 300 2003–2026 (23Y) 42% 2.3 1.66 $24360 10.3% +243.6% ND ALL OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 359 2003–2026 (23Y) 42.3% 2.2 1.65 $28856 15.7% +288.6% ND ALL SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 324 2003–2026 (23Y) 47.5% 1.8 1.65 $23453 14.8% +234.5% ND ALL TRIX_ZERO — GOLD GOLD/USDC H1 CANDLE 324 2003–2026 (23Y) 38% 2.7 1.65 $28416 12.2% +284.2% ND MTF KELTNER_BO — GOLD GOLD/USDC H1 CANDLE 315 2003–2026 (23Y) 41.9% 2.3 1.65 $25368 18.0% +253.7% ND VM CCI_REV — GOLD GOLD/USDC H1 CANDLE 320 2003–2026 (23Y) 41.9% 2.3 1.65 $25704 14.6% +257.0% ND VM MOMENTUM_XO — GOLD GOLD/USDC H1 CANDLE 326 2003–2026 (23Y) 47.5% 1.8 1.65 $23627 14.5% +236.3% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 335 2003–2026 (23Y) 47.5% 1.8 1.64 $24112 21.1% +241.1% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 46.9% 1.9 1.64 $22083 11.1% +220.8% ND ALL STDDEV_BO — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 47.4% 1.8 1.64 $22232 7.8% +222.3% ND MTF NATR_EXPAND — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 47% 1.9 1.64 $21579 10.3% +215.8% ND MTF REGCH_BO — GOLD GOLD/USDC H1 CANDLE 333 2003–2026 (23Y) 41.7% 2.3 1.64 $26438 14.8% +264.4% ND VM MACD_HIST — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 47% 1.9 1.64 $21579 9.5% +215.8% ND VM MOMENTUM_XO — GOLD GOLD/USDC H1 CANDLE 312 2003–2026 (23Y) 41.7% 2.3 1.64 $24606 11.4% +246.1% ND VM SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 356 2003–2026 (23Y) 38.5% 2.6 1.64 $30805 12.3% +308.1% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 42.1% 2.2 1.63 $25164 16.9% +251.6% ND ALL ZLEMA_CROSS — GOLD GOLD/USDC H1 CANDLE 332 2003–2026 (23Y) 47.3% 1.8 1.63 $23550 12.3% +235.5% MTF WILLR_TREND — GOLD GOLD/USDC H1 CANDLE TRACE READY 379 2003–2026 (23Y) 47.2% 1.8 1.63 $26749 16.2% +267.5% ND VM DEMA_TEMA — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 41.6% 2.3 1.63 $24058 9.9% +240.6% ND VM ROC_ZERO — GOLD GOLD/USDC H1 CANDLE 366 2003–2026 (23Y) 47.3% 1.8 1.63 $25915 10.9% +259.2% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 582 2003–2026 (23Y) 39% 2.5 1.62 $49680 15.0% +496.8% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 466 2003–2026 (23Y) 38.2% 2.6 1.62 $39259 22.5% +392.6% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 399 2003–2026 (23Y) 47.6% 1.8 1.62 $27816 14.6% +278.2% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 46.8% 1.9 1.62 $21693 11.1% +216.9% ND ALL INSIDE_BAR — GOLD GOLD/USDC H1 CANDLE 335 2003–2026 (23Y) 47.2% 1.8 1.62 $23512 11.4% +235.1% ND ALL RSI_MA — GOLD GOLD/USDC H1 CANDLE 365 2003–2026 (23Y) 47.1% 1.8 1.62 $25528 15.1% +255.3% ND MTF REGCH_BO — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 46.7% 1.9 1.62 $22019 11.5% +220.2% ND MTF SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 41.4% 2.3 1.62 $24791 18.0% +247.9% ND VM ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 377 2003–2026 (23Y) 41.4% 2.3 1.62 $28974 10.6% +289.7% ND ALL ATR_BO — GOLD GOLD/USDC H1 CANDLE 349 2003–2026 (23Y) 41.8% 2.2 1.61 $26816 17.9% +268.2% ND ALL DONCH_BO — GOLD GOLD/USDC H1 CANDLE 366 2003–2026 (23Y) 47% 1.8 1.61 $25315 18.2% +253.2% ND ALL DONCH_BO — GOLD GOLD/USDC H1 CANDLE 334 2003–2026 (23Y) 41.3% 2.3 1.61 $25525 13.2% +255.2% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 46.9% 1.8 1.61 $21419 11.4% +214.2% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 41.9% 2.2 1.61 $23772 23.0% +237.7% ND ALL MOMENTUM_XO — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 46.9% 1.8 1.61 $21245 12.5% +212.4% ND ALL REGCH_BO — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 46.9% 1.8 1.61 $21245 20.1% +212.4% ND ALL T3_TREND — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 41.2% 2.3 1.61 $23358 14.2% +233.6% ND ALL TRIX_ZERO — GOLD GOLD/USDC H1 CANDLE 330 2003–2026 (23Y) 47% 1.8 1.61 $22776 9.9% +227.8% ND MTF PIVOT_BO — GOLD GOLD/USDC H1 CANDLE 352 2003–2026 (23Y) 46.9% 1.8 1.61 $24094 8.2% +240.9% ND VM MACD_HIST — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 46.9% 1.8 1.61 $21245 14.6% +212.4% ND ALL CORREL_REV — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 46.4% 1.9 1.6 $21776 14.6% +217.8% ND ALL EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 333 2003–2026 (23Y) 46.8% 1.8 1.6 $22738 11.8% +227.4% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 316 2003–2026 (23Y) 41.1% 2.3 1.6 $23755 9.2% +237.6% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 319 2003–2026 (23Y) 46.4% 1.9 1.6 $21597 9.1% +216.0% ND ALL ICHI_TK — GOLD GOLD/USDC H1 CANDLE 343 2003–2026 (23Y) 41.1% 2.3 1.6 $25710 17.1% +257.1% ND MTF EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 330 2003–2026 (23Y) 46.4% 1.9 1.6 $22280 11.2% +222.8% ND MTF HURST_CH — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 41.1% 2.3 1.6 $23145 12.6% +231.4% LOAD MORE (18 MORE) ⚠️ Trading involves substantial risk of loss. AI signals are for informational purposes only, not financial advice. Past performance does not guarantee future results. \\n",
+            "scrollWidth": 1600,
+            "innerWidth": 1600,
+            "url": "https://copytolive.com/"
+          }
+        }
+      ],
+      [
+        {
+          "label": "Renko",
+          "clicked": true,
+          "state": {
+            "viewMode": "renko",
+            "text": "Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Metode Renko OOS Auto Pair EIGEN/USDC · OOS 76.3% GRASS/USDC · OOS 75.1% PURR/USDC · OOS 71.7% WLD/USDC · OOS 71.7% DASH/USDC · OOS 69.8% MORPHO/USDC · OOS 69.8% XPL/USDC · OOS 69.7% JTO/USDC · OOS 69.3% DOT/USDC · OOS 69.2% AAVE/USDC · OOS 69.0% AVAX/USDC · OOS 68.2% ALGO/USDC · OOS 68.1% SPX/USDC · OOS 68.0% IO/USDC · OOS 67.6% NIL/USDC · OOS 67.5% STABLE/USDC · OOS 66.8% HBAR/USDC · OOS 66.6% TNSR/USDC · OOS 66.6% ADA/USDC · OOS 66.5% TIA/USDC · OOS 66.3% BIO/USDC · OOS 66.1% SOL/USDC · OOS 65.8% XAI/USDC · OOS 65.7% APE/USDC · OOS 65.7% JUP/USDC · OOS 65.5% RESOLV/USDC · OOS 65.4% NEO/USDC · OOS 65.3% LINK/USDC · OOS 65.0% BANANA/USDC · OOS 64.9% XLM/USDC · OOS 64.9% ACE/USDC · OOS 64.9% KAITO/USDC · OOS 64.6% ATOM/USDC · OOS 64.5% LIT/USDC · OOS 64.1% BLUR/USDC · OOS 64.0% MON/USDC · OOS 63.9% ETC/USDC · OOS 63.7% LDO/USDC · OOS 63.7% VVV/USDC · OOS 63.5% DYDX/USDC · OOS 63.3% ALT/USDC · OOS 62.8% PYTH/USDC · OOS 62.7% ENA/USDC · OOS 62.7% POPCAT/USDC · OOS 62.6% SKR/USDC · OOS 62.4% SKY/USDC · OOS 62.4% PENDLE/USDC · OOS 62.2% CRV/USDC · OOS 62.1% NOT/USDC · OOS 61.8% FET/USDC · OOS 61.3% KLUNC/USDC · OOS 61.2% CELO/USDC · OOS 61.1% W/USDC · OOS 61.1% XRP/USDC · OOS 60.9% HEMI/USDC · OOS 60.7% ETHFI/USDC · OOS 60.7% ETH/USDC · OOS 60.6% MANTA/USDC · OOS 60.5% WIF/USDC · OOS 60.3% OP/USDC · OOS 60.1% BABY/USDC · OOS 60.1% DOGE/USDC · OOS 59.9% LTC/USDC · OOS 59.7% AERO/USDC · OOS 59.4% STBL/USDC · OOS 59.0% SNX/USDC · OOS 59.0% POLYX/USDC · OOS 59.0% AR/USDC · OOS 59.0% UNI/USDC · OOS 58.9% XMR/USDC · OOS 58.8% VIRTUAL/USDC · OOS 58.7% SUSHI/USDC · OOS 58.7% KNEIRO/USDC · OOS 58.7% MET/USDC · OOS 58.6% NXPC/USDC · OOS 58.4% NEAR/USDC · OOS 58.3% AVNT/USDC · OOS 58.2% ORDI/USDC · OOS 58.2% PENGU/USDC · OOS 57.8% RSR/USDC · OOS 57.8% BNB/USDC · OOS 57.7% MERL/USDC · OOS 57.7% GMX/USDC · OOS 57.6% BCH/USDC · OOS 57.6% FIL/USDC · OOS 57.4% REZ/USDC · OOS 57.4% SEI/USDC · OOS 57.2% MOVE/USDC · OOS 57.1% BRETT/USDC · OOS 57.1% MEME/USDC · OOS 57.0% ZORA/USDC · OOS 56.3% AIXBT/USDC · OOS 56.1% GOAT/USDC · OOS 56.1% RUNE/USDC · OOS 55.7% APEX/USDC · OOS 55.6% TURBO/USDC · OOS 55.4% BOME/USDC · OOS 55.4% FARTCOIN/USDC · OOS 55.2% INIT/USDC · OOS 55.2% S/USDC · OOS 55.0% TRB/USDC · OOS 54.9% USUAL/USDC · OOS 54.8% DYM/USDC · OOS 54.4% KAS/USDC · OOS 54.3% STX/USDC · OOS 54.3% 2Z/USDC · OOS 54.3% MELANIA/USDC · OOS 54.3% MINA/USDC · OOS 54.2% ZETA/USDC · OOS 54.1% ENS/USDC · OOS 54.0% ARB/USDC · OOS 54.0% CFX/USDC · OOS 54.0% MEGA/USDC · OOS 53.9% RENDER/USDC · OOS 53.8% ME/USDC · OOS 53.6% STRK/USDC · OOS 53.5% CAKE/USDC · OOS 53.5% ZK/USDC · OOS 53.2% ZEN/USDC · OOS 53.0% KFLOKI/USDC · OOS 52.3% PNUT/USDC · OOS 52.3% MOODENG/USDC · OOS 52.1% KBONK/USDC · OOS 51.8% SUPER/USDC · OOS 51.7% GMT/USDC · OOS 51.7% INJ/USDC · OOS 51.6% TAO/USDC · OOS 51.5% IOTA/USDC · OOS 51.4% PEOPLE/USDC · OOS 51.2% SAGA/USDC · OOS 51.0% ICP/USDC · OOS 50.8% KPEPE/USDC · OOS 50.7% HYPE/USDC · OOS 50.4% WLFI/USDC · OOS 50.2% ZEC/USDC · OOS 50.1% BERA/USDC · OOS 49.6% IMX/USDC · OOS 49.3% BTC/USDC · OOS 49.3% WCT/USDC · OOS 46.9% COMP/USDC · OOS 46.3% LINEA/USDC · OOS 46.0% GOLD/USD SILVER/USD WTI OIL/USD BRENT OIL/USD NATGAS/USD COPPER/USD PLATINUM/USD S&P 500/USD NASDAQ 100/USD NIKKEI 225/USD RUSSELL 2000/USD MAG 7/USD EUR/USD USD/JPY TSLA/USD NVDA/USD AAPL/USD GOOGL/USD AMZN/USD META/USD MSFT/USD AMD/USD Market Any Crypto Non-Crypto OOS WR Any ≥ 55% ≥ 60% ≥ 65% Cari SOL/USDC · RENKO 0.20947 🔒 SMA10 · entry lock 🔒 Klik untuk aktifkan chart › CRYPTO 141 NON-CRYPTO 22 QUICK ENTRY RENKO SMA GOLD ETC UNI AVAX XLM DOT BTC/USDC · OOS 49.3% ETH/USDC · OOS 60.6% ATOM/USDC · OOS 64.5% DYDX/USDC · OOS 63.3% SOL/USDC · OOS 65.8% AVAX/USDC · OOS 68.2% BNB/USDC · OOS 57.7% APE/USDC · OOS 65.7% OP/USDC · OOS 60.1% LTC/USDC · OOS 59.7% ARB/USDC · OOS 54.0% DOGE/USDC · OOS 59.9% INJ/USDC · OOS 51.6% KPEPE/USDC · OOS 50.7% CRV/USDC · OOS 62.1% LDO/USDC · OOS 63.7% LINK/USDC · OOS 65.0% STX/USDC · OOS 54.3% CFX/USDC · OOS 54.0% GMX/USDC · OOS 57.6% SNX/USDC · OOS 59.0% XRP/USDC · OOS 60.9% BCH/USDC · OOS 57.6% AAVE/USDC · OOS 69.0% COMP/USDC · OOS 46.3% WLD/USDC · OOS 71.7% UNI/USDC · OOS 58.9% SEI/USDC · OOS 57.2% RUNE/USDC · OOS 55.7% DOT/USDC · OOS 69.2% BANANA/USDC · OOS 64.9% TRB/USDC · OOS 54.9% KAS/USDC · OOS 54.3% BLUR/USDC · OOS 64.0% TIA/USDC · OOS 66.3% ADA/USDC · OOS 66.5% MINA/USDC · OOS 54.2% POLYX/USDC · OOS 59.0% PENDLE/USDC · OOS 62.2% FET/USDC · OOS 61.3% NEAR/USDC · OOS 58.3% MEME/USDC · OOS 57.0% ORDI/USDC · OOS 58.2% NEO/USDC · OOS 65.3% ZEN/USDC · OOS 53.0% FIL/USDC · OOS 57.4% PYTH/USDC · OOS 62.7% SUSHI/USDC · OOS 58.7% IMX/USDC · OOS 49.3% KBONK/USDC · OOS 51.8% GMT/USDC · OOS 51.7% SUPER/USDC · OOS 51.7% JUP/USDC · OOS 65.5% KLUNC/USDC · OOS 61.2% RSR/USDC · OOS 57.8% JTO/USDC · OOS 69.3% ACE/USDC · OOS 64.9% WIF/USDC · OOS 60.3% CAKE/USDC · OOS 53.5% PEOPLE/USDC · OOS 51.2% ENS/USDC · OOS 54.0% ETC/USDC · OOS 63.7% XAI/USDC · OOS 65.7% MANTA/USDC · OOS 60.5% ALT/USDC · OOS 62.8% ZETA/USDC · OOS 54.1% DYM/USDC · OOS 54.4% W/USDC · OOS 61.1% STRK/USDC · OOS 53.5% TAO/USDC · OOS 51.5% AR/USDC · OOS 59.0% KFLOKI/USDC · OOS 52.3% BOME/USDC · OOS 55.4% ETHFI/USDC · OOS 60.7% ENA/USDC · OOS 62.7% TNSR/USDC · OOS 66.6% SAGA/USDC · OOS 51.0% MERL/USDC · OOS 57.7% HBAR/USDC · OOS 66.6% POPCAT/USDC · OOS 62.6% EIGEN/USDC · OOS 76.3% REZ/USDC · OOS 57.4% NOT/USDC · OOS 61.8% TURBO/USDC · OOS 55.4% BRETT/USDC · OOS 57.1% IO/USDC · OOS 67.6% ZK/USDC · OOS 53.2% RENDER/USDC · OOS 53.8% CELO/USDC · OOS 61.1% KNEIRO/USDC · OOS 58.7% GOAT/USDC · OOS 56.1% MOODENG/USDC · OOS 52.1% GRASS/USDC · OOS 75.1% PURR/USDC · OOS 71.7% PNUT/USDC · OOS 52.3% XLM/USDC · OOS 64.9% IOTA/USDC · OOS 51.4% ALGO/USDC · OOS 68.1% HYPE/USDC · OOS 50.4% ME/USDC · OOS 53.6% MOVE/USDC · OOS 57.1% VIRTUAL/USDC · OOS 58.7% PENGU/USDC · OOS 57.8% USUAL/USDC · OOS 54.8% FARTCOIN/USDC · OOS 55.2% AIXBT/USDC · OOS 56.1% BIO/USDC · OOS 66.1% SPX/USDC · OOS 68.0% S/USDC · OOS 55.0% MORPHO/USDC · OOS 69.8% MELANIA/USDC · OOS 54.3% VVV/USDC · OOS 63.5% BERA/USDC · OOS 49.6% KAITO/USDC · OOS 64.6% NIL/USDC · OOS 67.5% BABY/USDC · OOS 60.1% WCT/USDC · OOS 46.9% ZORA/USDC · OOS 56.3% INIT/USDC · OOS 55.2% NXPC/USDC · OOS 58.4% RESOLV/USDC · OOS 65.4% XPL/USDC · OOS 69.7% WLFI/USDC · OOS 50.2% LINEA/USDC · OOS 46.0% SKY/USDC · OOS 62.4% AVNT/USDC · OOS 58.2% STBL/USDC · OOS 59.0% HEMI/USDC · OOS 60.7% APEX/USDC · OOS 55.6% 2Z/USDC · OOS 54.3% ZEC/USDC · OOS 50.1% MON/USDC · OOS 63.9% MET/USDC · OOS 58.6% MEGA/USDC · OOS 53.9% ICP/USDC · OOS 50.8% AERO/USDC · OOS 59.4% STABLE/USDC · OOS 66.8% LIT/USDC · OOS 64.1% XMR/USDC · OOS 58.8% DASH/USDC · OOS 69.8% SKR/USDC · OOS 62.4% 🔒 0.20947 · SMA10 SELL · di bawah SMA LIVE History 402 / 159.308 99.931 DATA RENKO Crypto perpetual · parameter terkunci OOS LOCK COVERAGE Agu 2026–NOW OHLCV 53.649 · 1H TICKS N/A +25K BACKTEST OOS 30% 65.84% WR PF 10.38 TRADES 2.670 MAX DD 4.26% INDIKATOR 162 ACCBANDS BBANDS DEMA EMA HT_TRENDLINE KAMA MA MAMA MAVP MIDPOINT MIDPRICE SAR SAREXT SMA T3 TEMA TRIMA WMA ADX ADXR APO AROON AROONOSC BOP CCI CMO DX IMI MACD MACDEXT MACDFIX MFI MINUS_DI MINUS_DM MOM PLUS_DI PLUS_DM PPO ROC ROCP ROCR ROCR100 RSI STOCH STOCHF STOCHRSI TRIX ULTOSC WILLR ATR NATR TRANGE AD ADOSC OBV HT_DCPERIOD HT_DCPHASE HT_PHASOR HT_SINE HT_TRENDMODE CDL2CROWS CDL3BLACKCROWS CDL3INSIDE CDL3LINESTRIKE CDL3OUTSIDE CDL3STARSINSOUTH CDL3WHITESOLDIERS CDLABANDONEDBABY CDLADVANCEBLOCK CDLBELTHOLD CDLBREAKAWAY CDLCLOSINGMARUBOZU CDLCONCEALBABYSWALL CDLCOUNTERATTACK CDLDARKCLOUDCOVER CDLDOJI CDLDOJISTAR CDLDRAGONFLYDOJI CDLENGULFING CDLEVENINGDOJISTAR CDLEVENINGSTAR CDLGAPSIDESIDEWHITE CDLGRAVESTONEDOJI CDLHAMMER CDLHANGINGMAN CDLHARAMI CDLHARAMICROSS CDLHIGHWAVE CDLHIKKAKE CDLHIKKAKEMOD CDLHOMINGPIGEON CDLIDENTICAL3CROWS CDLINNECK CDLINVERTEDHAMMER CDLKICKING CDLKICKINGBYLENGTH CDLLADDERBOTTOM CDLLONGLEGGEDDOJI CDLLONGLINE CDLMARUBOZU CDLMATCHINGLOW CDLMATHOLD CDLMORNINGDOJISTAR CDLMORNINGSTAR CDLONNECK CDLPIERCING CDLRICKSHAWMAN CDLRISEFALL3METHODS CDLSEPARATINGLINES CDLSHOOTINGSTAR CDLSHORTLINE CDLSPINNINGTOP CDLSTALLEDPATTERN CDLSTICKSANDWICH CDLTAKURI CDLTASUKIGAP CDLTHRUSTING CDLTRISTAR CDLUNIQUE3RIVER CDLUPSIDEGAP2CROWS CDLXSIDEGAP3METHODS AVGDEV AVGPRICE MEDPRICE TYPPRICE WCLPRICE BETA CORREL LINEARREG LINEARREG_ANGLE LINEARREG_INTERCEPT LINEARREG_SLOPE STDDEV TSF VAR ADD DIV MAX MAXINDEX MIN MININDEX MINMAX MINMAXINDEX MULT SUB SUM ACOS ASIN ATAN CEIL COS COSH EXP FLOOR LN LOG10 SIN SINH SQRT TAN TANH VWAP + PASANG \\n",
+            "scrollWidth": 1600,
+            "innerWidth": 1600,
+            "url": "https://copytolive.com/"
+          }
+        },
+        {
+          "label": "Home",
+          "clicked": true,
+          "state": {
+            "viewMode": "home",
+            "text": "CTL Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Max Loss Any Profit Factor Any Win Rate Any Risk Reward Any Cari Analisis Semua Strategi Terbaru 100/118 STRATEGY ▼ ENTRIES PERIOD PROB RR PF PROFIT DD GROWTH ACTIONS ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 319 2003–2026 (23Y) 44.5% 2.3 1.84 $31517 8.8% +315.2% ND ALL OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 50% 1.8 1.82 $27730 12.8% +277.3% ND MTF ROC_ZERO — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 39.4% 2.8 1.79 $31632 10.8% +316.3% ND ALL DONCH_BO — GOLD GOLD/USDC H1 CANDLE 306 2003–2026 (23Y) 43.8% 2.3 1.78 $28683 10.8% +286.8% ND ALL EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 324 2003–2026 (23Y) 39.5% 2.7 1.77 $32416 18.2% +324.2% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 334 2003–2026 (23Y) 39.5% 2.7 1.77 $33456 23.1% +334.6% ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 376 2003–2026 (23Y) 39.4% 2.7 1.76 $37184 15.5% +371.8% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 43.5% 2.3 1.76 $28258 22.5% +282.6% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 357 2003–2026 (23Y) 39.5% 2.7 1.76 $35688 10.9% +356.9% ND MTF SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.9% 1.8 1.74 $26066 7.4% +260.7% ND ALL ADX_DI — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL ADX_STRONG — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 48.7% 1.8 1.73 $23934 12.5% +239.3% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 43% 2.3 1.73 $27345 22.5% +273.4% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 385 2003–2026 (23Y) 39% 2.7 1.73 $36840 19.9% +368.4% ND ALL ATR_BO — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 48.6% 1.8 1.72 $24419 9.6% +244.2% ND MTF KELTNER_BO — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 48.6% 1.8 1.72 $24942 8.9% +249.4% ND VM EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 355 2003–2026 (23Y) 38.9% 2.7 1.72 $33720 14.2% +337.2% ND VM LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 38.8% 2.7 1.72 $29256 18.3% +292.6% ND VM HARAMI — GOLD GOLD/USDC H1 CANDLE 339 2003–2026 (23Y) 48.4% 1.8 1.71 $26261 11.9% +262.6% ND ALL SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.3% 1.8 1.7 $24866 12.9% +248.7% ND MTF CORREL_REV — GOLD GOLD/USDC H1 CANDLE 314 2003–2026 (23Y) 42.7% 2.3 1.7 $26981 11.8% +269.8% ND MTF ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 336 2003–2026 (23Y) 38.1% 2.8 1.7 $30899 16.9% +309.0% ND VM ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 38.2% 2.8 1.7 $29342 11.4% +293.4% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 328 2003–2026 (23Y) 38.4% 2.7 1.69 $29952 19.2% +299.5% ND ALL ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 325 2003–2026 (23Y) 38.5% 2.7 1.69 $29800 14.7% +298.0% ND MTF AROON_XO — GOLD GOLD/USDC H1 CANDLE 320 2003–2026 (23Y) 42.5% 2.3 1.69 $27104 12.8% +271.0% ND MTF EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 38.1% 2.8 1.69 $29130 13.5% +291.3% ND MTF NATR_EXPAND — GOLD GOLD/USDC H1 CANDLE 315 2003–2026 (23Y) 42.5% 2.3 1.69 $26768 9.7% +267.7% ND MTF REGCH_BO — GOLD GOLD/USDC H1 CANDLE 306 2003–2026 (23Y) 42.5% 2.3 1.69 $25883 19.9% +258.8% ND MTF WILLR_TREND — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 42.4% 2.3 1.69 $26219 24.0% +262.2% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 327 2003–2026 (23Y) 42.8% 2.2 1.68 $27368 14.3% +273.7% ND ALL HMA_CROSS — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 47.9% 1.8 1.68 $23742 14.4% +237.4% ND ALL KAMA_TREND — GOLD GOLD/USDC H1 CANDLE 354 2003–2026 (23Y) 48% 1.8 1.68 $26669 17.9% +266.7% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 305 2003–2026 (23Y) 38.4% 2.7 1.68 $27720 18.3% +277.2% ND VM KAMA_TREND — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 47.6% 1.9 1.68 $23104 8.3% +231.0% ND VM ROC_ZERO — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 42.3% 2.3 1.68 $25732 10.2% +257.3% ND ALL ADX_DI — GOLD GOLD/USDC H1 CANDLE 389 2003–2026 (23Y) 42.7% 2.2 1.67 $32176 10.5% +321.8% ND ALL ADX_STRONG — GOLD GOLD/USDC H1 CANDLE 389 2003–2026 (23Y) 42.7% 2.2 1.67 $32176 10.5% +321.8% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 305 2003–2026 (23Y) 47.5% 1.9 1.67 $22747 11.5% +227.5% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 341 2003–2026 (23Y) 38.1% 2.7 1.67 $30344 18.1% +303.4% ND VM DONCH_BO — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 42.1% 2.3 1.67 $26466 10.6% +264.7% ND VM KAMA_TREND — GOLD GOLD/USDC H1 CANDLE 325 2003–2026 (23Y) 42.2% 2.3 1.67 $26740 11.2% +267.4% ND ALL ATR_BO — GOLD GOLD/USDC H1 CANDLE 350 2003–2026 (23Y) 42.6% 2.2 1.66 $28700 19.8% +287.0% ND ALL INSIDE_BAR — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 42.1% 2.3 1.66 $24634 15.8% +246.3% ND ALL KAMA_TREND — GOLD GOLD/USDC H1 CANDLE 369 2003–2026 (23Y) 47.7% 1.8 1.66 $27077 7.3% +270.8% ND ALL KELTNER_BO — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 47.7% 1.8 1.66 $23491 12.9% +234.9% ND ALL SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 312 2003–2026 (23Y) 38.8% 2.6 1.66 $27744 11.2% +277.4% ND ALL T3_TREND — GOLD GOLD/USDC H1 CANDLE 358 2003–2026 (23Y) 38% 2.7 1.66 $31472 15.3% +314.7% ND MTF CCI_REV — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 42.1% 2.3 1.66 $26191 10.3% +261.9% ND VM OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 331 2003–2026 (23Y) 42.6% 2.2 1.66 $27204 17.9% +272.0% ND VM OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 300 2003–2026 (23Y) 38% 2.7 1.66 $26400 14.5% +264.0% ND VM RSI_MA — GOLD GOLD/USDC H1 CANDLE 300 2003–2026 (23Y) 47.3% 1.9 1.66 $22000 11.0% +220.0% ND VM STDDEV_BO — GOLD GOLD/USDC H1 CANDLE 300 2003–2026 (23Y) 42% 2.3 1.66 $24360 10.3% +243.6% ND ALL OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 359 2003–2026 (23Y) 42.3% 2.2 1.65 $28856 15.7% +288.6% ND ALL SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 324 2003–2026 (23Y) 47.5% 1.8 1.65 $23453 14.8% +234.5% ND ALL TRIX_ZERO — GOLD GOLD/USDC H1 CANDLE 324 2003–2026 (23Y) 38% 2.7 1.65 $28416 12.2% +284.2% ND MTF KELTNER_BO — GOLD GOLD/USDC H1 CANDLE 315 2003–2026 (23Y) 41.9% 2.3 1.65 $25368 18.0% +253.7% ND VM CCI_REV — GOLD GOLD/USDC H1 CANDLE 320 2003–2026 (23Y) 41.9% 2.3 1.65 $25704 14.6% +257.0% ND VM MOMENTUM_XO — GOLD GOLD/USDC H1 CANDLE 326 2003–2026 (23Y) 47.5% 1.8 1.65 $23627 14.5% +236.3% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 335 2003–2026 (23Y) 47.5% 1.8 1.64 $24112 21.1% +241.1% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 46.9% 1.9 1.64 $22083 11.1% +220.8% ND ALL STDDEV_BO — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 47.4% 1.8 1.64 $22232 7.8% +222.3% ND MTF NATR_EXPAND — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 47% 1.9 1.64 $21579 10.3% +215.8% ND MTF REGCH_BO — GOLD GOLD/USDC H1 CANDLE 333 2003–2026 (23Y) 41.7% 2.3 1.64 $26438 14.8% +264.4% ND VM MACD_HIST — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 47% 1.9 1.64 $21579 9.5% +215.8% ND VM MOMENTUM_XO — GOLD GOLD/USDC H1 CANDLE 312 2003–2026 (23Y) 41.7% 2.3 1.64 $24606 11.4% +246.1% ND VM SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 356 2003–2026 (23Y) 38.5% 2.6 1.64 $30805 12.3% +308.1% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 42.1% 2.2 1.63 $25164 16.9% +251.6% ND ALL ZLEMA_CROSS — GOLD GOLD/USDC H1 CANDLE 332 2003–2026 (23Y) 47.3% 1.8 1.63 $23550 12.3% +235.5% MTF WILLR_TREND — GOLD GOLD/USDC H1 CANDLE TRACE READY 379 2003–2026 (23Y) 47.2% 1.8 1.63 $26749 16.2% +267.5% ND VM DEMA_TEMA — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 41.6% 2.3 1.63 $24058 9.9% +240.6% ND VM ROC_ZERO — GOLD GOLD/USDC H1 CANDLE 366 2003–2026 (23Y) 47.3% 1.8 1.63 $25915 10.9% +259.2% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 582 2003–2026 (23Y) 39% 2.5 1.62 $49680 15.0% +496.8% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 466 2003–2026 (23Y) 38.2% 2.6 1.62 $39259 22.5% +392.6% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 399 2003–2026 (23Y) 47.6% 1.8 1.62 $27816 14.6% +278.2% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 46.8% 1.9 1.62 $21693 11.1% +216.9% ND ALL INSIDE_BAR — GOLD GOLD/USDC H1 CANDLE 335 2003–2026 (23Y) 47.2% 1.8 1.62 $23512 11.4% +235.1% ND ALL RSI_MA — GOLD GOLD/USDC H1 CANDLE 365 2003–2026 (23Y) 47.1% 1.8 1.62 $25528 15.1% +255.3% ND MTF REGCH_BO — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 46.7% 1.9 1.62 $22019 11.5% +220.2% ND MTF SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 41.4% 2.3 1.62 $24791 18.0% +247.9% ND VM ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 377 2003–2026 (23Y) 41.4% 2.3 1.62 $28974 10.6% +289.7% ND ALL ATR_BO — GOLD GOLD/USDC H1 CANDLE 349 2003–2026 (23Y) 41.8% 2.2 1.61 $26816 17.9% +268.2% ND ALL DONCH_BO — GOLD GOLD/USDC H1 CANDLE 366 2003–2026 (23Y) 47% 1.8 1.61 $25315 18.2% +253.2% ND ALL DONCH_BO — GOLD GOLD/USDC H1 CANDLE 334 2003–2026 (23Y) 41.3% 2.3 1.61 $25525 13.2% +255.2% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 46.9% 1.8 1.61 $21419 11.4% +214.2% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 41.9% 2.2 1.61 $23772 23.0% +237.7% ND ALL MOMENTUM_XO — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 46.9% 1.8 1.61 $21245 12.5% +212.4% ND ALL REGCH_BO — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 46.9% 1.8 1.61 $21245 20.1% +212.4% ND ALL T3_TREND — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 41.2% 2.3 1.61 $23358 14.2% +233.6% ND ALL TRIX_ZERO — GOLD GOLD/USDC H1 CANDLE 330 2003–2026 (23Y) 47% 1.8 1.61 $22776 9.9% +227.8% ND MTF PIVOT_BO — GOLD GOLD/USDC H1 CANDLE 352 2003–2026 (23Y) 46.9% 1.8 1.61 $24094 8.2% +240.9% ND VM MACD_HIST — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 46.9% 1.8 1.61 $21245 14.6% +212.4% ND ALL CORREL_REV — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 46.4% 1.9 1.6 $21776 14.6% +217.8% ND ALL EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 333 2003–2026 (23Y) 46.8% 1.8 1.6 $22738 11.8% +227.4% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 316 2003–2026 (23Y) 41.1% 2.3 1.6 $23755 9.2% +237.6% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 319 2003–2026 (23Y) 46.4% 1.9 1.6 $21597 9.1% +216.0% ND ALL ICHI_TK — GOLD GOLD/USDC H1 CANDLE 343 2003–2026 (23Y) 41.1% 2.3 1.6 $25710 17.1% +257.1% ND MTF EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 330 2003–2026 (23Y) 46.4% 1.9 1.6 $22280 11.2% +222.8% ND MTF HURST_CH — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 41.1% 2.3 1.6 $23145 12.6% +231.4% LOAD MORE (18 MORE) ⚠️ Trading involves substantial risk of loss. AI signals are for informational purposes only, not financial advice. Past performance does not guarantee future results. \\n",
+            "scrollWidth": 1600,
+            "innerWidth": 1600,
+            "url": "https://copytolive.com/"
+          }
+        },
+        {
+          "label": "Crypto",
+          "clicked": true,
+          "state": {
+            "viewMode": "home",
+            "text": "CTL Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Metode Breakout ⌄ Position Any ⌄ Market Any ⌄ Status Any ⌄ Cari 🚀 Multi-TF Hyperliquid Screener· BREAKOUT AREA 🎯 Signal Mode 🔬 Pro Mode · HL ONLY 60+ 70+ 80+ TF·ANY M15 M30 H1 H4 D1 📡 Scanning ... koin. Mencari signal confidence ≥ 60 (multi-TF + volume + trend match) Memuat data scanner... Sistem auto-scan tiap 60 detik. Signal akan muncul otomatis bila ditemukan. ⚠️ Trading involves substantial risk of loss. AI signals are for informational purposes only, not financial advice. Past performance does not guarantee future results. \\n",
+            "scrollWidth": 1600,
+            "innerWidth": 1600,
+            "url": "https://copytolive.com/"
+          }
+        },
+        {
+          "label": "Home",
+          "clicked": true,
+          "state": {
+            "viewMode": "home",
+            "text": "CTL Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Max Loss Any Profit Factor Any Win Rate Any Risk Reward Any Cari Analisis Semua Strategi Terbaru 100/118 STRATEGY ▼ ENTRIES PERIOD PROB RR PF PROFIT DD GROWTH ACTIONS ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 319 2003–2026 (23Y) 44.5% 2.3 1.84 $31517 8.8% +315.2% ND ALL OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 50% 1.8 1.82 $27730 12.8% +277.3% ND MTF ROC_ZERO — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 39.4% 2.8 1.79 $31632 10.8% +316.3% ND ALL DONCH_BO — GOLD GOLD/USDC H1 CANDLE 306 2003–2026 (23Y) 43.8% 2.3 1.78 $28683 10.8% +286.8% ND ALL EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 324 2003–2026 (23Y) 39.5% 2.7 1.77 $32416 18.2% +324.2% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 334 2003–2026 (23Y) 39.5% 2.7 1.77 $33456 23.1% +334.6% ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 376 2003–2026 (23Y) 39.4% 2.7 1.76 $37184 15.5% +371.8% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 43.5% 2.3 1.76 $28258 22.5% +282.6% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 357 2003–2026 (23Y) 39.5% 2.7 1.76 $35688 10.9% +356.9% ND MTF SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.9% 1.8 1.74 $26066 7.4% +260.7% ND ALL ADX_DI — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL ADX_STRONG — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 48.7% 1.8 1.73 $23934 12.5% +239.3% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 43% 2.3 1.73 $27345 22.5% +273.4% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 385 2003–2026 (23Y) 39% 2.7 1.73 $36840 19.9% +368.4% ND ALL ATR_BO — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 48.6% 1.8 1.72 $24419 9.6% +244.2% ND MTF KELTNER_BO — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 48.6% 1.8 1.72 $24942 8.9% +249.4% ND VM EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 355 2003–2026 (23Y) 38.9% 2.7 1.72 $33720 14.2% +337.2% ND VM LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 38.8% 2.7 1.72 $29256 18.3% +292.6% ND VM HARAMI — GOLD GOLD/USDC H1 CANDLE 339 2003–2026 (23Y) 48.4% 1.8 1.71 $26261 11.9% +262.6% ND ALL SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.3% 1.8 1.7 $24866 12.9% +248.7% ND MTF CORREL_REV — GOLD GOLD/USDC H1 CANDLE 314 2003–2026 (23Y) 42.7% 2.3 1.7 $26981 11.8% +269.8% ND MTF ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 336 2003–2026 (23Y) 38.1% 2.8 1.7 $30899 16.9% +309.0% ND VM ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 38.2% 2.8 1.7 $29342 11.4% +293.4% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 328 2003–2026 (23Y) 38.4% 2.7 1.69 $29952 19.2% +299.5% ND ALL ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 325 2003–2026 (23Y) 38.5% 2.7 1.69 $29800 14.7% +298.0% ND MTF AROON_XO — GOLD GOLD/USDC H1 CANDLE 320 2003–2026 (23Y) 42.5% 2.3 1.69 $27104 12.8% +271.0% ND MTF EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 38.1% 2.8 1.69 $29130 13.5% +291.3% ND MTF NATR_EXPAND — GOLD GOLD/USDC H1 CANDLE 315 2003–2026 (23Y) 42.5% 2.3 1.69 $26768 9.7% +267.7% ND MTF REGCH_BO — GOLD GOLD/USDC H1 CANDLE 306 2003–2026 (23Y) 42.5% 2.3 1.69 $25883 19.9% +258.8% ND MTF WILLR_TREND — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 42.4% 2.3 1.69 $26219 24.0% +262.2% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 327 2003–2026 (23Y) 42.8% 2.2 1.68 $27368 14.3% +273.7% ND ALL HMA_CROSS — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 47.9% 1.8 1.68 $23742 14.4% +237.4% ND ALL KAMA_TREND — GOLD GOLD/USDC H1 CANDLE 354 2003–2026 (23Y) 48% 1.8 1.68 $26669 17.9% +266.7% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 305 2003–2026 (23Y) 38.4% 2.7 1.68 $27720 18.3% +277.2% ND VM KAMA_TREND — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 47.6% 1.9 1.68 $23104 8.3% +231.0% ND VM ROC_ZERO — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 42.3% 2.3 1.68 $25732 10.2% +257.3% ND ALL ADX_DI — GOLD GOLD/USDC H1 CANDLE 389 2003–2026 (23Y) 42.7% 2.2 1.67 $32176 10.5% +321.8% ND ALL ADX_STRONG — GOLD GOLD/USDC H1 CANDLE 389 2003–2026 (23Y) 42.7% 2.2 1.67 $32176 10.5% +321.8% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 305 2003–2026 (23Y) 47.5% 1.9 1.67 $22747 11.5% +227.5% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 341 2003–2026 (23Y) 38.1% 2.7 1.67 $30344 18.1% +303.4% ND VM DONCH_BO — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 42.1% 2.3 1.67 $26466 10.6% +264.7% ND VM KAMA_TREND — GOLD GOLD/USDC H1 CANDLE 325 2003–2026 (23Y) 42.2% 2.3 1.67 $26740 11.2% +267.4% ND ALL ATR_BO — GOLD GOLD/USDC H1 CANDLE 350 2003–2026 (23Y) 42.6% 2.2 1.66 $28700 19.8% +287.0% ND ALL INSIDE_BAR — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 42.1% 2.3 1.66 $24634 15.8% +246.3% ND ALL KAMA_TREND — GOLD GOLD/USDC H1 CANDLE 369 2003–2026 (23Y) 47.7% 1.8 1.66 $27077 7.3% +270.8% ND ALL KELTNER_BO — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 47.7% 1.8 1.66 $23491 12.9% +234.9% ND ALL SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 312 2003–2026 (23Y) 38.8% 2.6 1.66 $27744 11.2% +277.4% ND ALL T3_TREND — GOLD GOLD/USDC H1 CANDLE 358 2003–2026 (23Y) 38% 2.7 1.66 $31472 15.3% +314.7% ND MTF CCI_REV — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 42.1% 2.3 1.66 $26191 10.3% +261.9% ND VM OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 331 2003–2026 (23Y) 42.6% 2.2 1.66 $27204 17.9% +272.0% ND VM OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 300 2003–2026 (23Y) 38% 2.7 1.66 $26400 14.5% +264.0% ND VM RSI_MA — GOLD GOLD/USDC H1 CANDLE 300 2003–2026 (23Y) 47.3% 1.9 1.66 $22000 11.0% +220.0% ND VM STDDEV_BO — GOLD GOLD/USDC H1 CANDLE 300 2003–2026 (23Y) 42% 2.3 1.66 $24360 10.3% +243.6% ND ALL OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 359 2003–2026 (23Y) 42.3% 2.2 1.65 $28856 15.7% +288.6% ND ALL SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 324 2003–2026 (23Y) 47.5% 1.8 1.65 $23453 14.8% +234.5% ND ALL TRIX_ZERO — GOLD GOLD/USDC H1 CANDLE 324 2003–2026 (23Y) 38% 2.7 1.65 $28416 12.2% +284.2% ND MTF KELTNER_BO — GOLD GOLD/USDC H1 CANDLE 315 2003–2026 (23Y) 41.9% 2.3 1.65 $25368 18.0% +253.7% ND VM CCI_REV — GOLD GOLD/USDC H1 CANDLE 320 2003–2026 (23Y) 41.9% 2.3 1.65 $25704 14.6% +257.0% ND VM MOMENTUM_XO — GOLD GOLD/USDC H1 CANDLE 326 2003–2026 (23Y) 47.5% 1.8 1.65 $23627 14.5% +236.3% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 335 2003–2026 (23Y) 47.5% 1.8 1.64 $24112 21.1% +241.1% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 46.9% 1.9 1.64 $22083 11.1% +220.8% ND ALL STDDEV_BO — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 47.4% 1.8 1.64 $22232 7.8% +222.3% ND MTF NATR_EXPAND — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 47% 1.9 1.64 $21579 10.3% +215.8% ND MTF REGCH_BO — GOLD GOLD/USDC H1 CANDLE 333 2003–2026 (23Y) 41.7% 2.3 1.64 $26438 14.8% +264.4% ND VM MACD_HIST — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 47% 1.9 1.64 $21579 9.5% +215.8% ND VM MOMENTUM_XO — GOLD GOLD/USDC H1 CANDLE 312 2003–2026 (23Y) 41.7% 2.3 1.64 $24606 11.4% +246.1% ND VM SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 356 2003–2026 (23Y) 38.5% 2.6 1.64 $30805 12.3% +308.1% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 42.1% 2.2 1.63 $25164 16.9% +251.6% ND ALL ZLEMA_CROSS — GOLD GOLD/USDC H1 CANDLE 332 2003–2026 (23Y) 47.3% 1.8 1.63 $23550 12.3% +235.5% MTF WILLR_TREND — GOLD GOLD/USDC H1 CANDLE TRACE READY 379 2003–2026 (23Y) 47.2% 1.8 1.63 $26749 16.2% +267.5% ND VM DEMA_TEMA — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 41.6% 2.3 1.63 $24058 9.9% +240.6% ND VM ROC_ZERO — GOLD GOLD/USDC H1 CANDLE 366 2003–2026 (23Y) 47.3% 1.8 1.63 $25915 10.9% +259.2% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 582 2003–2026 (23Y) 39% 2.5 1.62 $49680 15.0% +496.8% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 466 2003–2026 (23Y) 38.2% 2.6 1.62 $39259 22.5% +392.6% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 399 2003–2026 (23Y) 47.6% 1.8 1.62 $27816 14.6% +278.2% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 46.8% 1.9 1.62 $21693 11.1% +216.9% ND ALL INSIDE_BAR — GOLD GOLD/USDC H1 CANDLE 335 2003–2026 (23Y) 47.2% 1.8 1.62 $23512 11.4% +235.1% ND ALL RSI_MA — GOLD GOLD/USDC H1 CANDLE 365 2003–2026 (23Y) 47.1% 1.8 1.62 $25528 15.1% +255.3% ND MTF REGCH_BO — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 46.7% 1.9 1.62 $22019 11.5% +220.2% ND MTF SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 41.4% 2.3 1.62 $24791 18.0% +247.9% ND VM ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 377 2003–2026 (23Y) 41.4% 2.3 1.62 $28974 10.6% +289.7% ND ALL ATR_BO — GOLD GOLD/USDC H1 CANDLE 349 2003–2026 (23Y) 41.8% 2.2 1.61 $26816 17.9% +268.2% ND ALL DONCH_BO — GOLD GOLD/USDC H1 CANDLE 366 2003–2026 (23Y) 47% 1.8 1.61 $25315 18.2% +253.2% ND ALL DONCH_BO — GOLD GOLD/USDC H1 CANDLE 334 2003–2026 (23Y) 41.3% 2.3 1.61 $25525 13.2% +255.2% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 46.9% 1.8 1.61 $21419 11.4% +214.2% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 41.9% 2.2 1.61 $23772 23.0% +237.7% ND ALL MOMENTUM_XO — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 46.9% 1.8 1.61 $21245 12.5% +212.4% ND ALL REGCH_BO — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 46.9% 1.8 1.61 $21245 20.1% +212.4% ND ALL T3_TREND — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 41.2% 2.3 1.61 $23358 14.2% +233.6% ND ALL TRIX_ZERO — GOLD GOLD/USDC H1 CANDLE 330 2003–2026 (23Y) 47% 1.8 1.61 $22776 9.9% +227.8% ND MTF PIVOT_BO — GOLD GOLD/USDC H1 CANDLE 352 2003–2026 (23Y) 46.9% 1.8 1.61 $24094 8.2% +240.9% ND VM MACD_HIST — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 46.9% 1.8 1.61 $21245 14.6% +212.4% ND ALL CORREL_REV — GOLD GOLD/USDC H1 CANDLE 321 2003–2026 (23Y) 46.4% 1.9 1.6 $21776 14.6% +217.8% ND ALL EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 333 2003–2026 (23Y) 46.8% 1.8 1.6 $22738 11.8% +227.4% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 316 2003–2026 (23Y) 41.1% 2.3 1.6 $23755 9.2% +237.6% ND ALL ENGULF — GOLD GOLD/USDC H1 CANDLE 319 2003–2026 (23Y) 46.4% 1.9 1.6 $21597 9.1% +216.0% ND ALL ICHI_TK — GOLD GOLD/USDC H1 CANDLE 343 2003–2026 (23Y) 41.1% 2.3 1.6 $25710 17.1% +257.1% ND MTF EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 330 2003–2026 (23Y) 46.4% 1.9 1.6 $22280 11.2% +222.8% ND MTF HURST_CH — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 41.1% 2.3 1.6 $23145 12.6% +231.4% LOAD MORE (18 MORE) ⚠️ Trading involves substantial risk of loss. AI signals are for informational purposes only, not financial advice. Past performance does not guarantee future results. \\n",
+            "scrollWidth": 1600,
+            "innerWidth": 1600,
+            "url": "https://copytolive.com/"
+          }
+        }
+      ]
+    ]
+  },
+  "mobile": {
+    "home": {
+      "nav": {
+        "x": 0,
+        "y": 69.5,
+        "w": 390,
+        "h": 73
+      },
+      "items": [
+        {
+          "name": "Home",
+          "raw": "Home",
+          "x": 10.5,
+          "y": 80,
+          "w": 32,
+          "h": 59,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 32,
+            "h": 2,
+            "fontSize": 14,
+            "fontWeight": "400"
+          }
+        },
+        {
+          "name": "Fundamental",
+          "raw": "Fundamental",
+          "x": 53,
+          "y": 80,
+          "w": 69.015625,
+          "h": 59,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 69.015625,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Signal Scan",
+          "raw": "Signal Scan",
+          "x": 132.515625,
+          "y": 80,
+          "w": 62.328125,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 62.328125,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Crypto",
+          "raw": "₿ Crypto",
+          "x": 205.34375,
+          "y": 80,
+          "w": 36.46875,
+          "h": 59,
+          "icon": {
+            "w": 32,
+            "h": 32
+          },
+          "label": {
+            "w": 36.46875,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600"
+          }
+        },
+        {
+          "name": "Renko",
+          "raw": "Renko",
+          "x": 252.3125,
+          "y": 80,
+          "w": 32.984375,
+          "h": 59,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 32.984375,
+            "h": 16.5,
+            "fontSize": 11,
+            "fontWeight": "600"
+          }
+        }
+      ],
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "viewMode": "home",
+      "url": "https://copytolive.com/?ai3full=ai3-copytolive-nav-current-20260903-004&s=mobile-base-home&t=1788401374.931742"
+    },
+    "fundamental": {
+      "nav": {
+        "x": 4,
+        "y": 0,
+        "w": 382,
+        "h": 76
+      },
+      "items": [
+        {
+          "name": "Home",
+          "x": 8,
+          "y": 0,
+          "w": 76,
+          "h": 76,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 27.796875,
+            "h": 10,
+            "fontSize": 10,
+            "fontWeight": "850"
+          }
+        },
+        {
+          "name": "Fundamental",
+          "x": 86,
+          "y": 0,
+          "w": 76,
+          "h": 76,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 62.234375,
+            "h": 10,
+            "fontSize": 10,
+            "fontWeight": "850"
+          }
+        },
+        {
+          "name": "Signal Scan",
+          "x": 164,
+          "y": 0,
+          "w": 76,
+          "h": 76,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 56.6875,
+            "h": 10,
+            "fontSize": 10,
+            "fontWeight": "850"
+          }
+        },
+        {
+          "name": "Crypto",
+          "x": 242,
+          "y": 0,
+          "w": 76,
+          "h": 76,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 32.234375,
+            "h": 10,
+            "fontSize": 10,
+            "fontWeight": "850"
+          }
+        },
+        {
+          "name": "Hyperliquid",
+          "x": 320,
+          "y": 0,
+          "w": 76,
+          "h": 76,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 55.015625,
+            "h": 10,
+            "fontSize": 10,
+            "fontWeight": "850"
+          }
+        },
+        {
+          "name": "Renko",
+          "x": 398,
+          "y": 0,
+          "w": 76,
+          "h": 76,
+          "icon": {
+            "w": 28,
+            "h": 28
+          },
+          "label": {
+            "w": 30.5625,
+            "h": 10,
+            "fontSize": 10,
+            "fontWeight": "850"
+          }
+        }
+      ],
+      "filter": {
+        "x": 10,
+        "y": 92,
+        "w": 760,
+        "h": 62
+      },
+      "scrollWidth": 390,
+      "innerWidth": 390
+    },
+    "signalState": {
+      "viewMode": "scanner-signal",
+      "text": "Scanner Signal Market Scanner Ready Ã¢ÂÂ¢ 34 ENGINES Instruments 7 Results 0 Instruments 7 selected Timeframe 15m 1h 4h 1d R:R 1:1 1:1.5 1:2 1:2.5 1:3 Mode Strict Moderate Aggressive ⌕ Cari Instruments 7/163 Ã¢ÂÂ¾ HL Hyperliquid Major 7/7 BTC ETH SOL HYPE XRP DOGE BNB Ã¢ÂÂ¸ HL Hyperliquid Perpetuals 0/156 34 Deep AI Engines Regime Detection AI Reasoning 7 instrument selected Ã¢ÂÂ tekan Scan untuk mulai 15m 1h 4h 1d R:R 1:1 1:1.5 1:2 1:2.5 1:3 SL 0.5% Ã¢ÂÂ TP 1% MODE Ã°ÂÂÂ Strict Ã¢ÂÂÃ¯Â¸Â Moderate Ã¢ÂÂ¡ Aggressive Scan 7 Instruments Pilih pairs di kiri, atur timeframe & R:R, lalu Scan. AI engines akan menilai regime + sinyal. CopyToLive Admin \\n",
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "url": "https://copytolive.com/"
+    },
+    "signalBackClick": {
+      "ok": false,
+      "why": "button"
+    },
+    "cycles": []
+  }
+}

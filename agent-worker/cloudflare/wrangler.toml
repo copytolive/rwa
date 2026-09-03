@@ -1,0 +1,25 @@
+name = "rwa-agent-worker"
+main = "src/index.mjs"
+compatibility_date = "2026-08-24"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[durable_objects]
+bindings = [
+  { name = "RWA_STATE", class_name = "RWAState" }
+]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RWAState"]
+
+[triggers]
+crons = ["* * * * *"]
+
+[vars]
+RWA_CONTROL_URL = "https://narzulalistiqlal.github.io/rwa/agent-worker/control.json"
+RWA_ALLOWED_ORIGINS = "https://copytolive.github.io,https://copytolive.com,https://narzulalistiqlal.github.io"
+RWA_RISK_JSON = "{\"dailyLoss\":250,\"maxLeverage\":5,\"maxExposure\":5000,\"perAsset\":2000,\"kill\":false}"
+
+RWA_REWARD_PROGRAM = "{\"active\":false,\"name\":\"RWA Rewards\",\"rates\":{\"post\":0,\"comment\":0,\"alert_trigger\":0}}"
+RWA_HOLDER_SOURCES = "{}"

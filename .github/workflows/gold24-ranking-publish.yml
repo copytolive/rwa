@@ -1,0 +1,226 @@
+name: GOLD v11 Compact Rankings Publisher
+
+on:
+  workflow_run:
+    workflows: ["GOLD Canonical v11 Recovery Continuation"]
+    types: [completed]
+  workflow_dispatch:
+  push:
+    paths:
+      - 'backtest/gold24/GOLD24_RANKING_REFRESH_KICK'
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: gold24-v11-compact-rankings
+  cancel-in-progress: false
+
+jobs:
+  publish-rankings:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve canonical source run
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            RID="${{ github.event.workflow_run.id }}"
+          else
+            RID="$(python - <<'PY'
+          import json, pathlib
+          p=pathlib.Path('backtest/gold24/runtime_v11/latest_validation_summary.json')
+          print(json.loads(p.read_text()).get('github_run_id',''))
+          PY
+            )"
+          fi
+          test -n "$RID"
+          echo "run_id=$RID" >> "$GITHUB_OUTPUT"
+          echo "source run: $RID"
+
+      - name: Download exact canonical state
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$RUNNER_TEMP/gold24-ranking-state"
+          mkdir -p "$RUNNER_TEMP/gold24-ranking-state"
+          gh run download "${{ steps.source.outputs.run_id }}" --repo "$GITHUB_REPOSITORY" \
+            -n gold24-canonical-v11-state -D "$RUNNER_TEMP/gold24-ranking-state"
+          test -s "$RUNNER_TEMP/gold24-ranking-state/gold24-v11.db"
+
+      - name: Build compact positive rankings and strict USD report
+        shell: bash
+        env:
+          SOURCE_RUN_ID: ${{ steps.source.outputs.run_id }}
+        run: |
+          set -euo pipefail
+          PAYLOAD="$RUNNER_TEMP/gold24-ranking-payload"
+          rm -rf "$PAYLOAD"
+          mkdir -p "$PAYLOAD"
+          python - <<'PY'
+          import csv, json, math, os, pathlib, sqlite3
+
+          MIN_REPORT_TRADES = 100
+          MIN_REPORT_NET_PROFIT_USD = 3000.0
+
+          db_path = pathlib.Path(os.environ['RUNNER_TEMP']) / 'gold24-ranking-state' / 'gold24-v11.db'
+          out_dir = pathlib.Path(os.environ['RUNNER_TEMP']) / 'gold24-ranking-payload'
+          source_run_id = os.environ['SOURCE_RUN_ID']
+          db = sqlite3.connect(f'file:{db_path}?mode=ro', uri=True)
+          rows = db.execute('SELECT config_hash,canonical_json,execution_hash,metrics_json FROM configs').fetchall()
+          db.close()
+
+          parsed=[]
+          for config_hash,canonical_raw,execution_hash,metrics_raw in rows:
+              c=json.loads(canonical_raw); m=json.loads(metrics_raw) if metrics_raw else {}
+              trades=int(m.get('trades',0) or 0); net_profit=float(m.get('net_profit',0.0) or 0.0)
+              if trades<=0 or net_profit<=0 or bool(m.get('exact_execution_duplicate',False)):
+                  continue
+              parsed.append({'config_hash':config_hash,'execution_hash':execution_hash,'candidate':c,'metrics':m})
+
+          def finite(v, default=0.0):
+              try:
+                  x=float(v)
+                  return x if math.isfinite(x) else default
+              except Exception:
+                  return default
+
+          def compact(row,rank):
+              c,m=row['candidate'],row['metrics']
+              sl=finite(c.get('sl',0)); tp=finite(c.get('tp',0))
+              net_profit=finite(m.get('net_profit',0.0))
+              net_expectancy=finite(m.get('net_expectancy',m.get('expectancy',0.0)))
+              method=f"{c.get('family')} f{c.get('fast')}/s{c.get('slow')} p1={c.get('p1')} p2={c.get('p2')} p3={c.get('p3')} off={c.get('offset')} exp={c.get('expiry')}"
+              return {
+                  'rank':rank,'config_hash':row['config_hash'],'execution_hash':row['execution_hash'],
+                  'method':method,'family':c.get('family'),'timeframe':c.get('timeframe'),
+                  'entry_method':c.get('entry_method'),'direction_mode':c.get('direction_mode'),
+                  'sl':sl,'tp':tp,
+                  'sl_usd_price_distance':sl,'tp_usd_price_distance':tp,
+                  'trades':int(m.get('trades',0) or 0),
+                  'win_rate_pct':finite(m.get('win_rate_pct',m.get('wr',0.0))),
+                  'profit_factor_net':finite(m.get('profit_factor_net',m.get('profit_factor',0.0))),
+                  'net_profit':net_profit,'net_profit_usd_canonical':net_profit,
+                  'net_expectancy':net_expectancy,'net_expectancy_usd_per_trade':net_expectancy,
+                  'max_dd_pct':finite(m.get('max_dd_pct',0.0)),'sqn':finite(m.get('sqn',0.0)),
+                  'history_years':finite(m.get('history_years',0.0)),
+                  'sample_pass_v11':bool(m.get('sample_pass_v11',False)),
+                  'baseline_qualified_v11':bool(m.get('baseline_qualified_v11',False)),
+                  'target_candidate_v11':bool(m.get('target_candidate_v11',False)),
+                  'correlation_max':None,'correlation_gate':'N/A — belum pre-portfolio',
+                  'unit_policy':'canonical flat_lot/quantity=1.0; no x100 contract multiplier'
+              }
+
+          profit_sorted=sorted(parsed,key=lambda r:(float(r['metrics'].get('net_profit',0) or 0),int(r['metrics'].get('trades',0) or 0)),reverse=True)
+          entry_sorted=sorted(parsed,key=lambda r:(int(r['metrics'].get('trades',0) or 0),float(r['metrics'].get('net_profit',0) or 0)),reverse=True)
+          strict_sorted=sorted(
+              [r for r in parsed if int(r['metrics'].get('trades',0) or 0)>=MIN_REPORT_TRADES and float(r['metrics'].get('net_profit',0) or 0)>=MIN_REPORT_NET_PROFIT_USD],
+              key=lambda r:(float(r['metrics'].get('net_profit',0) or 0),int(r['metrics'].get('trades',0) or 0)),
+              reverse=True,
+          )
+
+          profit_top=[compact(r,i) for i,r in enumerate(profit_sorted[:200],1)]
+          entry_top=[compact(r,i) for i,r in enumerate(entry_sorted[:200],1)]
+          strict_report=[compact(r,i) for i,r in enumerate(strict_sorted,1)]
+
+          summary={
+              'schema':'gold-v11-positive-ranking-summary-v3','source_run_id':source_run_id,
+              'configs_archived':len(rows),'positive_unique_count':len(parsed),
+              'positive_entry_ge_100_count':sum(int(x['metrics'].get('trades',0) or 0)>=MIN_REPORT_TRADES for x in parsed),
+              'entry_ge_100_net_profit_ge_3000_usd_count':len(strict_sorted),
+              'qualified_v11_count':sum(bool(x['metrics'].get('baseline_qualified_v11',False)) for x in parsed),
+              'target_v11_count':sum(bool(x['metrics'].get('target_candidate_v11',False)) for x in parsed),
+              'profit_top200_count':len(profit_top),'entry_profit_top200_count':len(entry_top),
+              'report_filter':{
+                  'minimum_trades':MIN_REPORT_TRADES,
+                  'minimum_net_profit_usd_canonical':MIN_REPORT_NET_PROFIT_USD,
+                  'scaling_multiplier':1.0,
+                  'unit_policy':'canonical net_profit directly; x100 standard-lot conversion forbidden unless separately broker-validated'
+              },
+              'correlation_rule':{'metric':'abs Pearson correlation of log-return equity','maximum':0.50,'selection':'per-symbol greedy filter','action':'>0.50 remove lower-quality method from final selection'}
+          }
+
+          (out_dir/'latest_positive_summary.json').write_text(json.dumps(summary,indent=2,sort_keys=True))
+          (out_dir/'latest_profit_top200.json').write_text(json.dumps({'schema':'gold-v11-profit-top200-positive-v2','source_run_id':source_run_id,'count':len(profit_top),'ranking':profit_top},indent=2,sort_keys=True))
+          (out_dir/'latest_entry_profit_top200.json').write_text(json.dumps({'schema':'gold-v11-entry-profit-top200-positive-v2','source_run_id':source_run_id,'count':len(entry_top),'ranking':entry_top},indent=2,sort_keys=True))
+          (out_dir/'latest_entry100_net3000.json').write_text(json.dumps({'schema':'gold-v11-entry100-net3000-canonical-usd-v1','source_run_id':source_run_id,'count':len(strict_report),'minimum_trades':MIN_REPORT_TRADES,'minimum_net_profit_usd_canonical':MIN_REPORT_NET_PROFIT_USD,'correlation_rule':summary['correlation_rule'],'ranking':strict_report},indent=2,sort_keys=True))
+
+          def write_csv(path, ranking):
+              with path.open('w', newline='', encoding='utf-8') as f:
+                  w=csv.writer(f)
+                  w.writerow(['source_rank','config_hash','method','family','timeframe','entry_method','direction_mode','sl','tp','trades','win_rate_pct','profit_factor_net','net_profit','net_expectancy','max_dd_pct','sqn','history_years','sample_pass_v11','baseline_qualified_v11','target_candidate_v11','correlation_max','correlation_gate'])
+                  for x in ranking:
+                      w.writerow([x['rank'],x['config_hash'],x['method'],x['family'],x['timeframe'],x['entry_method'],x['direction_mode'],f"{x['sl']:.2f}",f"{x['tp']:.2f}",x['trades'],f"{x['win_rate_pct']:.8f}",f"{x['profit_factor_net']:.8f}",f"{x['net_profit']:.8f}",f"{x['net_expectancy']:.8f}",f"{x['max_dd_pct']:.8f}",f"{x['sqn']:.8f}",f"{x['history_years']:.8f}",str(x['sample_pass_v11']).lower(),str(x['baseline_qualified_v11']).lower(),str(x['target_candidate_v11']).lower(),x['correlation_max'],x['correlation_gate']])
+
+          write_csv(out_dir/'latest_profit_top200.csv', profit_top)
+          write_csv(out_dir/'latest_entry_profit_top200.csv', entry_top)
+          write_csv(out_dir/'latest_entry100_net3000.csv', strict_report)
+          print(json.dumps(summary,indent=2,sort_keys=True))
+          PY
+
+      - name: Publish compact rankings race-safe
+        shell: bash
+        run: |
+          set -euo pipefail
+          PAYLOAD="$RUNNER_TEMP/gold24-ranking-payload"
+          git config user.name 'gold24-bot'
+          git config user.email 'gold24-bot@users.noreply.github.com'
+          for TRY in 1 2 3 4 5; do
+            echo "ranking publish attempt $TRY/5"
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p backtest/gold24/runtime_v11
+            cp -a "$PAYLOAD/." backtest/gold24/runtime_v11/
+            git add backtest/gold24/runtime_v11/latest_positive_summary.json \
+              backtest/gold24/runtime_v11/latest_profit_top200.json \
+              backtest/gold24/runtime_v11/latest_entry_profit_top200.json \
+              backtest/gold24/runtime_v11/latest_profit_top200.csv \
+              backtest/gold24/runtime_v11/latest_entry_profit_top200.csv \
+              backtest/gold24/runtime_v11/latest_entry100_net3000.json \
+              backtest/gold24/runtime_v11/latest_entry100_net3000.csv
+            if git diff --cached --quiet; then
+              echo 'No ranking changes.'
+              exit 0
+            fi
+            git commit -m 'chore(gold24): publish compact v11 rankings + strict usd report [skip ci]'
+            if git push origin HEAD:main; then
+              echo 'ranking publish: PASS'
+              exit 0
+            fi
+            sleep $((TRY * 2))
+          done
+          echo 'ranking publish failed after 5 attempts' >&2
+          exit 1
+
+      - name: Verify ranking read-back
+        env:
+          SOURCE_RUN_ID: ${{ steps.source.outputs.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:backtest/gold24/runtime_v11/latest_positive_summary.json > "$RUNNER_TEMP/readback.json"
+          git show origin/main:backtest/gold24/runtime_v11/latest_entry100_net3000.json > "$RUNNER_TEMP/strict.json"
+          python - <<'PY'
+          import json, os
+          x=json.load(open(os.environ['RUNNER_TEMP'] + '/readback.json'))
+          s=json.load(open(os.environ['RUNNER_TEMP'] + '/strict.json'))
+          assert str(x.get('source_run_id')) == str(os.environ['SOURCE_RUN_ID'])
+          assert x.get('schema') == 'gold-v11-positive-ranking-summary-v3'
+          assert int(x.get('positive_unique_count',-1)) >= 0
+          assert int(x.get('entry_ge_100_net_profit_ge_3000_usd_count',-1)) == int(s.get('count',-2))
+          assert float(x['report_filter']['minimum_net_profit_usd_canonical']) == 3000.0
+          assert float(x['report_filter']['scaling_multiplier']) == 1.0
+          assert s.get('schema') == 'gold-v11-entry100-net3000-canonical-usd-v1'
+          print('ranking readback: PASS')
+          PY

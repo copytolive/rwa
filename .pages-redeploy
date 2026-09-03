@@ -1,0 +1,3 @@
+GitHub Pages redeploy sentinel.
+Reason: main advanced through CI-skipped commits while the public Pages deployment remained stale/404.
+Baseline before redeploy: 09b8cdf075ec5536b8c1b4eeff33dec3a24e1e27

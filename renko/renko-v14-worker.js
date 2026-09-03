@@ -1,0 +1,37 @@
+/* RENKO V14.2 - TradingView documented-parity historical builder.
+ * Historical input = chart-resolution bars. Source = Close or OHLC.
+ * Traditional = fixed user box.
+ * Percentage(LTP) = symbol-load LTP snapshot, fixed across all bars.
+ * ATR = latest completed regular-chart Wilder ATR snapshot, fixed across the current rebuilt chart.
+ * Every confirmed brick body is exactly 1 box. Reversal threshold = 2 boxes.
+ * Wicks represent discarded source movement and MAY extend beyond the uniform body.
+ */
+(function(root){
+'use strict';
+const EPS=Number.EPSILON,num=v=>Number(v);
+function decimals(x){const s=String(x);if(s.includes('e-'))return Math.min(12,Number(s.split('e-')[1])||0);const i=s.indexOf('.');return i<0?0:Math.min(12,s.length-i-1)}
+function roundTick(v,t){v=num(v);t=num(t);if(!(v>0))return EPS;if(!(t>0))return v;const q=Math.max(1,Math.round(v/t)),d=decimals(t);return Number((q*t).toFixed(d))}
+function roundSig1(v){v=num(v);if(!(v>0))return v;const mag=10**Math.floor(Math.log10(v));return Math.round(v/mag)*mag}
+function floorTick(v,t){if(!(t>0))return v;const d=decimals(t);return Number((Math.floor((v/t)+1e-10)*t).toFixed(d))}
+function init(anchor){return{lastClose:anchor,direction:0,pendingHigh:anchor,pendingLow:anchor,anchor,lastTime:0}}
+function clone(s){return s?{lastClose:num(s.lastClose),direction:num(s.direction)||0,pendingHigh:num(s.pendingHigh),pendingLow:num(s.pendingLow),anchor:num(s.anchor),lastTime:num(s.lastTime)||0}:null}
+function touch(s,p){if(!Number.isFinite(s.pendingHigh))s.pendingHigh=p;if(!Number.isFinite(s.pendingLow))s.pendingLow=p;if(p>s.pendingHigh)s.pendingHigh=p;if(p<s.pendingLow)s.pendingLow=p}
+function resetPending(s,p){s.pendingHigh=p;s.pendingLow=p}
+function emit(s,out,open,close,dir,time,box,wicks,rev,sourceTime){let high=Math.max(open,close),low=Math.min(open,close);if(wicks){if(dir>0&&Number.isFinite(s.pendingLow))low=Math.min(low,s.pendingLow);if(dir<0&&Number.isFinite(s.pendingHigh))high=Math.max(high,s.pendingHigh)}out.push({time:num(time)||0,open,high,low,close,direction:dir,box,isReversal:!!rev,sourceTime:num(sourceTime)||num(time)||0});s.lastClose=close;s.direction=dir;s.lastTime=num(time)||s.lastTime;resetPending(s,close)}
+function processPrice(s,p,time,box,wicks,out,sourceTime=time){p=num(p);box=num(box);if(!Number.isFinite(p)||!(box>0))return 0;touch(s,p);const before=out.length;let guard=0;while(guard++<20000){const lc=s.lastClose,d=s.direction;if(d===0){if(p>=lc+box){emit(s,out,lc,lc+box,1,time,box,wicks,false,sourceTime);continue}if(p<=lc-box){emit(s,out,lc,lc-box,-1,time,box,wicks,false,sourceTime);continue}break}if(d>0){if(p>=lc+box){emit(s,out,lc,lc+box,1,time,box,wicks,false,sourceTime);continue}if(p<=lc-2*box){emit(s,out,lc-box,lc-2*box,-1,time,box,wicks,true,sourceTime);continue}break}if(p<=lc-box){emit(s,out,lc,lc-box,-1,time,box,wicks,false,sourceTime);continue}if(p>=lc+2*box){emit(s,out,lc+box,lc+2*box,1,time,box,wicks,true,sourceTime);continue}break}touch(s,p);return out.length-before}
+function ohlcPath(bar){const o=num(bar?.[1]),h=num(bar?.[2]),l=num(bar?.[3]),c=num(bar?.[4]);if(![o,h,l,c].every(Number.isFinite))return[];/* Intrabar tick order is not available historically. Deterministic approximation for optional OHLC source. */return c>=o?[o,l,h,c]:[o,h,l,c]}
+function atrSeries(bars,len){len=Math.max(1,Math.floor(num(len)||14));const out=[],trs=[];let prev=NaN,atr=NaN;for(const b of bars){const h=num(b?.[2]),l=num(b?.[3]),c=num(b?.[4]);if(![h,l,c].every(Number.isFinite)){out.push(atr);continue}const tr=Number.isFinite(prev)?Math.max(h-l,Math.abs(h-prev),Math.abs(l-prev)):h-l;prev=c;trs.push(Math.max(0,tr));if(trs.length===len)atr=trs.reduce((a,x)=>a+x,0)/len;else if(trs.length>len)atr=((atr*(len-1))+tr)/len;out.push(atr)}return out}
+function latestPositive(series){for(let i=(series?.length||0)-1;i>=0;i--){const v=num(series[i]);if(v>0)return v}return NaN}
+function fixedBox(o,lastPrice){const method=String(o.method||'traditional').toLowerCase(),tick=num(o.tickSize)>0?num(o.tickSize):EPS;if(method==='traditional')return roundTick(num(o.traditionalBox),tick);if(method==='percentage'){const ltp=Math.abs(num(o.ltpSnapshot)||num(lastPrice)),raw=ltp*Math.max(.000001,num(o.percentage)||.01);return roundTick(roundSig1(raw),tick)}return NaN}
+function uniformAudit(bricks,box,tick){const tol=Math.max((num(tick)>0?num(tick):EPS)*.51,Math.abs(num(box))*1e-9,1e-10);let maxError=0,badIndex=-1;for(let i=0;i<(bricks||[]).length;i++){const b=bricks[i],err=Math.abs(Math.abs(num(b.close)-num(b.open))-num(box));if(err>maxError)maxError=err;if(err>tol){badIndex=i;break}if(Math.abs(num(b.box)-num(box))>tol){badIndex=i;break}}return{ok:badIndex<0,badIndex,maxError,tolerance:tol,count:(bricks||[]).length,box:num(box)}}
+function buildBars(o){const bars=(Array.isArray(o?.bars)?o.bars:[]).filter(b=>Number.isFinite(num(b?.[4]))).sort((a,b)=>num(a?.[0])-num(b?.[0])),method=String(o.method||'traditional').toLowerCase(),source=String(o.source||'close').toLowerCase()==='ohlc'?'ohlc':'close',tick=num(o.tickSize)>0?num(o.tickSize):EPS,wicks=o.wicks!==false,atr=atrSeries(bars,o.atrLength),out=[];if(!bars.length)return{bricks:[],box:NaN,tailState:null,anchor:null,atrValue:NaN,audit:{ok:true,count:0}};
+  const lastPrice=num(bars.at(-1)?.[4]),lastAtr=latestPositive(atr);
+  let activeBox=method==='atr'?roundTick(lastAtr>0?lastAtr:Math.abs(lastPrice)*.001,tick):fixedBox(o,lastPrice);
+  if(!(activeBox>0))activeBox=tick;
+  const first=num(bars[0]?.[4]),anchor=floorTick(Math.floor(first/activeBox)*activeBox,tick),state=init(anchor);
+  for(const b of bars){const time=num(b?.[6]||b?.[0]);if(source==='close')processPrice(state,num(b?.[4]),time,activeBox,wicks,out,num(b?.[0]));else for(const p of ohlcPath(b))processPrice(state,p,time,activeBox,wicks,out,num(b?.[0]))}
+  const audit=uniformAudit(out,activeBox,tick);if(!audit.ok)throw Error(`uniform brick invariant failed at ${audit.badIndex}`);
+  return{bricks:out,box:activeBox,tailState:clone(state),anchor,atrValue:lastAtr,audit}
+}
+const API={buildBars,processPrice,roundTick,roundSig1,fixedBox,atrSeries,ohlcPath,cloneState:clone,uniformAudit};root.RenkoV14Engine=API;root.onmessage=e=>{const m=e.data||{};if(m.type!=='build')return;try{const r=buildBars(m);root.postMessage({type:'built',id:m.id,generation:m.generation,bricks:r.bricks,box:r.box,tailState:r.tailState,anchor:r.anchor,atrValue:r.atrValue,audit:r.audit,barCount:Array.isArray(m.bars)?m.bars.length:0})}catch(err){root.postMessage({type:'error',id:m.id,generation:m.generation,message:String(err?.message||err)})}};
+})(typeof self!=='undefined'?self:globalThis);

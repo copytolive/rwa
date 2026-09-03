@@ -1,0 +1,59 @@
+name: RWA Experience Viewport Visual Parity V10
+
+on:
+  push:
+    branches:
+      - fix/experience-rail-viewport-parity-v10-20260827
+      - main
+    paths:
+      - 'persistent-market-operability-patch-v1.css'
+      - 'tools/experience-rail-visual-parity-v9.mjs'
+      - '.github/workflows/experience-rail-visual-parity-v9.yml'
+  pull_request:
+    paths:
+      - 'persistent-market-operability-patch-v1.css'
+      - 'tools/experience-rail-visual-parity-v9.mjs'
+      - '.github/workflows/experience-rail-visual-parity-v9.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static contract
+        run: |
+          node --check tools/experience-rail-visual-parity-v9.mjs
+          grep -Fq 'grid-template-columns:repeat(3,minmax(0,1fr))!important' persistent-market-operability-patch-v1.css
+          grep -Fq 'padding:0!important' persistent-market-operability-patch-v1.css
+          grep -Fq 'gap:0!important' persistent-market-operability-patch-v1.css
+          grep -Fq 'outline:0!important' persistent-market-operability-patch-v1.css
+          grep -Fq 'border-radius:0!important' persistent-market-operability-patch-v1.css
+          grep -Fq 'WORKFLOW VIEWPORT PARITY V10' persistent-market-operability-patch-v1.css
+          grep -Fq 'grid-template-columns:minmax(220px,250px) minmax(0,1fr)!important' persistent-market-operability-patch-v1.css
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Serve canonical app
+        run: |
+          mkdir -p /tmp/rwa-rail-v10/rwa
+          cp -a . /tmp/rwa-rail-v10/rwa/
+          cd /tmp/rwa-rail-v10
+          python -m http.server 4173 >/tmp/rwa-rail-v10-http.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && break; sleep 1; done
+      - name: Validate 2048px and 1600px viewport parity
+        env:
+          RWA_TEST_URL: http://127.0.0.1:4173/rwa/
+          RWA_PROOF_DIR: proof/experience-viewport-v10
+        run: node tools/experience-rail-visual-parity-v9.mjs
+      - name: Upload visual proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: experience-viewport-v10-proof
+          path: proof/experience-viewport-v10
+          retention-days: 30

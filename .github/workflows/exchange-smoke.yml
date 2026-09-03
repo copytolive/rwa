@@ -1,0 +1,102 @@
+name: RWA Exchange Core Smoke
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "index.html"
+      - "rwa-live-home-v1.js"
+      - "wallet-core.js"
+      - "walletconnect.js"
+      - "execution-api.js"
+      - "exchange-core.js"
+      - "launch/readiness.json"
+      - ".github/workflows/exchange-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  exchange:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate protected exchange source
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in wallet-core.js walletconnect.js execution-api.js exchange-core.js rwa-live-home-v1.js; do
+            test -s "$f"
+            node --check "$f"
+          done
+          python -m json.tool launch/readiness.json >/dev/null
+
+          grep -Fq "version:'4.0.0'" walletconnect.js
+          grep -Fq "version:'4.0.0'" wallet-core.js
+          grep -Fq 'Wallet account switched' wallet-core.js
+          grep -Fq "version:'2.0.0'" execution-api.js
+          grep -Fq "hardening:'single-write-path-v1'" execution-api.js
+          grep -Fq "riskGate:'mandatory-internal-v1'" execution-api.js
+          grep -Fq "bracket:'atomic-normal-tpsl-v1'" execution-api.js
+          grep -Fq "grouping:'normalTpsl'" execution-api.js
+          grep -Fq "version:'1.1.0'" exchange-core.js
+          grep -Fq "safety:'wallet-and-global-launch-gate-v3'" exchange-core.js
+          grep -Fq "protection:'atomic-normal-tpsl-v1'" exchange-core.js
+          grep -Fq "const state={env:'testnet'" exchange-core.js
+          grep -Fq "localE2EVerified()&&globalMainnetReady()" exchange-core.js
+          grep -Fq 'orders.bracket' exchange-core.js
+          grep -Fq 'Hyperliquid Testnet' rwa-live-home-v1.js
+          grep -Fq 'Mainnet locked' rwa-live-home-v1.js
+
+          node - <<'NODE'
+          const r=require('./launch/readiness.json');
+          if(r.engineering_ready!==true) throw Error('engineering readiness missing');
+          if(r.mainnet_ready!==false) throw Error('mainnet unexpectedly unlocked');
+          if(r.status!=='BLOCKED') throw Error('launch status must remain BLOCKED until production evidence passes');
+          console.log('RWA_EXCHANGE_SOURCE_PASS');
+          NODE
+
+      - name: Verify public protected execution bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://copytolive.github.io/rwa'
+          LIVE=''
+          for i in $(seq 1 60); do
+            LIVE="$(curl -fsSL --max-time 20 "$BASE/deployment-sha.txt?v=$GITHUB_RUN_ID-$i" 2>/dev/null | tr -d '\r\n' || true)"
+            [[ "$LIVE" =~ ^[0-9a-f]{40}$ ]] && break
+            sleep 5
+          done
+          [[ "$LIVE" =~ ^[0-9a-f]{40}$ ]]
+
+          root="$(curl -fsSL "$BASE/?v=$GITHUB_RUN_ID")"
+          execapi="$(curl -fsSL "$BASE/execution-api.js?v=$GITHUB_RUN_ID")"
+          core="$(curl -fsSL "$BASE/exchange-core.js?v=$GITHUB_RUN_ID")"
+          wallet="$(curl -fsSL "$BASE/wallet-core.js?v=$GITHUB_RUN_ID")"
+          ready="$(curl -fsSL "$BASE/launch/readiness.json?v=$GITHUB_RUN_ID")"
+
+          grep -Fq '<strong>Real World Asset</strong>' <<<"$root"
+          grep -Fq 'rwaMultiChainLazyBootstrap' <<<"$root"
+          ! grep -Eiq 'seablueprint|ecommerce' <<<"$root"
+          grep -Fq "hardening:'single-write-path-v1'" <<<"$execapi"
+          grep -Fq "riskGate:'mandatory-internal-v1'" <<<"$execapi"
+          grep -Fq "protection:'atomic-normal-tpsl-v1'" <<<"$core"
+          grep -Fq "const state={env:'testnet'" <<<"$core"
+          grep -Fq "version:'4.0.0'" <<<"$wallet"
+          grep -Eq '"mainnet_ready"[[:space:]]*:[[:space:]]*false' <<<"$ready"
+          echo RWA_EXCHANGE_PUBLIC_PASS
+
+      - name: Publish exchange status
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/exchange-live' -f description='Protected Hyperliquid testnet trading verified; mainnet remains gated'
+
+      - name: Publish failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/exchange-live' -f description='Protected exchange verification failed'

@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "updated_at": "2026-08-24",
+  "reviewers": [
+    {
+      "wallet": "0xe88de1de1d621e95f21641b9cbaaa439da3cf3d3",
+      "role": "founder-launch-reviewer",
+      "enabled": true,
+      "authorized_at": "2026-08-24T02:18:00Z",
+      "basis": "repository owner launch authorization + independently verified TESTNET E2E wallet"
+    }
+  ],
+  "note": "Only wallet addresses explicitly listed here may sign a public VERIFIED asset approval. Asset verification still requires a distinct signed approval package plus five public evidence URLs."
+}

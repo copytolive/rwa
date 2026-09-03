@@ -1,0 +1,100 @@
+name: MULTI CHAIN Revenue Gate
+
+on:
+  push:
+    branches: [main, feat/multichain-real-execution-fees-v3-20260828]
+    paths:
+      - rwa-multichain-revenue.json
+      - rwa-multichain-engine.js
+      - rwa-execution-config.json
+      - execution-api.js
+      - tools/multichain-revenue-contract.mjs
+      - .github/workflows/multichain-revenue-gate.yml
+  pull_request:
+    paths:
+      - rwa-multichain-revenue.json
+      - rwa-multichain-engine.js
+      - rwa-execution-config.json
+      - execution-api.js
+      - tools/multichain-revenue-contract.mjs
+      - .github/workflows/multichain-revenue-gate.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  revenue-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static revenue safety contract
+        run: node tools/multichain-revenue-contract.mjs
+      - name: Verify standard Base to Solana route remains available
+        shell: bash
+        run: |
+          set -euo pipefail
+          code="$(curl --connect-timeout 5 --max-time 30 --get -sS -o /tmp/base.json -w '%{http_code}' 'https://li.quest/v1/quote' \
+            --data-urlencode 'fromChain=8453' \
+            --data-urlencode 'toChain=1151111081099710' \
+            --data-urlencode 'fromToken=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' \
+            --data-urlencode 'toToken=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' \
+            --data-urlencode 'fromAmount=10000000' \
+            --data-urlencode 'fromAddress=0x1111111111111111111111111111111111111111' \
+            --data-urlencode 'toAddress=11111111111111111111111111111111' \
+            --data-urlencode 'slippage=0.005' \
+            --data-urlencode 'integrator=copytolive-rwa')"
+          test "$code" = "200"
+          python - <<'PY'
+          import json
+          q=json.load(open('/tmp/base.json'))
+          assert q.get('transactionRequest')
+          assert int((q.get('estimate') or {}).get('toAmountMin') or 0)>0
+          print('MULTICHAIN_STANDARD_ROUTE=PASS')
+          PY
+      - name: Probe application-fee provider readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          read -r enabled partner payout fee < <(python - <<'PY'
+          import json
+          r=json.load(open('rwa-multichain-revenue.json'))['lifi']
+          print(str(bool(r.get('enabled'))).lower(),str(bool(r.get('partner_configured'))).lower(),str(bool(r.get('payout_wallet_configured_externally'))).lower(),r.get('fee_decimal',0))
+          PY
+          )
+          code="$(curl --connect-timeout 5 --max-time 30 --get -sS -o /tmp/fee.json -w '%{http_code}' 'https://li.quest/v1/quote' \
+            --data-urlencode 'fromChain=8453' \
+            --data-urlencode 'toChain=1151111081099710' \
+            --data-urlencode 'fromToken=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' \
+            --data-urlencode 'toToken=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' \
+            --data-urlencode 'fromAmount=10000000' \
+            --data-urlencode 'fromAddress=0x1111111111111111111111111111111111111111' \
+            --data-urlencode 'toAddress=11111111111111111111111111111111' \
+            --data-urlencode 'slippage=0.005' \
+            --data-urlencode 'integrator=copytolive-rwa' \
+            --data-urlencode "fee=$fee")"
+          echo "LI_FI_FEE_HTTP=$code"
+          if [ "$enabled" = true ] || [ "$partner" = true ] || [ "$payout" = true ]; then
+            test "$enabled" = true && test "$partner" = true && test "$payout" = true
+            test "$code" = "200"
+            python - <<'PY'
+          import json
+          q=json.load(open('/tmp/fee.json'))
+          assert q.get('transactionRequest')
+          print('MULTICHAIN_REVENUE_PROVIDER=READY')
+          PY
+          else
+            if [ "$code" = "200" ]; then
+              echo 'Provider accepts fees but local revenue config is still disabled; owner must verify payout wallet and explicitly promote config.'
+              echo 'MULTICHAIN_REVENUE_PROVIDER=PROVIDER_READY_CONFIG_DISABLED'
+            else
+              python - <<'PY'
+          import json
+          q=json.load(open('/tmp/fee.json'))
+          msg=str(q.get('message',''))
+          assert q.get('code')==1011 or 'not configured for collecting fees' in msg, q
+          print('MULTICHAIN_REVENUE_PROVIDER=EXTERNAL_SETUP_REQUIRED')
+          PY
+            fi
+          fi

@@ -1,0 +1,10 @@
+name: RENKO Current Production Browser Contract — Legacy Manual Only
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  legacy-scope:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'Legacy browser contract retained manually. GOLD Traditional/ATR Chromium plus GOLD current-main public browser are authoritative.'

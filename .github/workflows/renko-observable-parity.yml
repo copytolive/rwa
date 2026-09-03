@@ -1,0 +1,10 @@
+name: RENKO Fixed 1s Public Production Closure — Legacy Manual Only
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  legacy-scope:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'Legacy public closure retained manually. GOLD current-main closure now performs public Chromium, same-dataset backtest, and no-drift certification.'

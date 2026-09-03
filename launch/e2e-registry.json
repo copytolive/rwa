@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "updated_at": "2026-08-24T02:09:24.904Z",
+  "wallets": [
+    {
+      "wallet": "0xe88de1de1d621e95f21641b9cbaaa439da3cf3d3",
+      "status": "E2E_VERIFIED",
+      "environment": "testnet",
+      "verified_at": 1787537219403,
+      "proof_hash": "6af80cf49f7f3f5fae158b1fb968b8bc70bfb6c56261d4f80d320872e5dd0b1c",
+      "issue": 42,
+      "venue_checked_at": 1787537364904,
+      "venue_window": {
+        "start": 1787537036952,
+        "end": 1787537291912
+      },
+      "venue_summary": {
+        "fills": 2,
+        "historical_orders": 12,
+        "trigger_orders": 4,
+        "agents": 1,
+        "agent": "0x6e9000e5f1ec2dbda726faea1f7ae2d4f18e5a9b"
+      }
+    }
+  ],
+  "note": "Only wallet-bound, venue-backed testnet E2E proofs belong here. Empty means mainnet launch remains blocked."
+}
+

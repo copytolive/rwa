@@ -1,0 +1,36 @@
+name: RENKO ATR Length Diagnostic
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/renko-atr-diagnostic.yml']
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compare ATR 14 vs 140 on live SOL trades
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL 'https://data-api.binance.vision/api/v3/aggTrades?symbol=SOLUSDT&limit=1000' -o /tmp/agg.json
+          node - <<'NODE'
+          const rows=require('/tmp/agg.json');
+          const ticks=rows.map(x=>({price:Number(x.p),time:Number(x.T)}));
+          function tickWindowAtr(ticks,len){
+            len=Math.max(2,Math.min(200,Math.floor(Number(len)||14)));
+            const prices=[];let prev=NaN;
+            for(const t of ticks){const p=Number(t.price);if(!Number.isFinite(p)||p===prev)continue;prices.push(p);prev=p}
+            if(prices.length<2)return NaN;
+            const a=prices.slice(-Math.min(len,prices.length));
+            const prior=prices[Math.max(0,prices.length-a.length-1)] ?? a[0];
+            const hi=Math.max(...a),lo=Math.min(...a);
+            return Math.max(hi-lo,Math.abs(hi-prior),Math.abs(lo-prior));
+          }
+          const a14=tickWindowAtr(ticks,14),a140=tickWindowAtr(ticks,140),tick=.01;
+          const r=v=>Math.max(tick,Math.round(v/tick)*tick);
+          const out={ticks:ticks.length,atr14:a14,atr140:a140,box14:r(a14),box140:r(a140)};
+          console.log('ATR_WINDOW_DIAGNOSTIC',JSON.stringify(out));
+          if(!(out.box14>0&&out.box140>0&&out.box14!==out.box140)) throw Error('ATR 14/140 must produce different market-tick boxes');
+          NODE

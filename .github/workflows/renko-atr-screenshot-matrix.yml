@@ -1,0 +1,31 @@
+name: RENKO ATR Screenshot Matrix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/renko-atr-screenshot-matrix.mjs'
+      - '.github/workflows/renko-atr-screenshot-matrix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  production-screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Capture ATR 14 140 500 6000 10000 on live production
+        run: RWA_TEST_URL=https://copytolive.github.io/rwa node tools/renko-atr-screenshot-matrix.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renko-atr-screenshot-matrix-${{ github.sha }}
+          path: artifacts/renko-atr-screenshot-matrix
+          retention-days: 7

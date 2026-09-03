@@ -1,0 +1,13 @@
+name: RENKO V10 Pages (Legacy / Manual)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  legacy-note:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "RENKO V10 Pages is archived. Production deploy moved to RENKO V11 Production Pages."

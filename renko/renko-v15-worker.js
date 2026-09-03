@@ -1,0 +1,29 @@
+/* RENKO V15 tick-native formation engine.
+ * Formation input is trade events only: no timeframe, candle close or source bar lock.
+ * One trade may immediately lock one or many bricks.
+ * Brick body is always exactly 1x active box; reversal threshold is 2x box.
+ * ATR is a box-sizing snapshot supplied by the runtime; it never controls formation timing.
+ * V15.15: the exact same engine is safe to load on the browser main thread for
+ * instant cached parameter rebuilds; Worker message handling is enabled only in workers.
+ */
+(function(root){
+'use strict';
+const EPS=Number.EPSILON,num=v=>Number(v);
+function decimals(x){const s=String(x);if(s.includes('e-'))return Math.min(12,Number(s.split('e-')[1])||0);const i=s.indexOf('.');return i<0?0:Math.min(12,s.length-i-1)}
+function roundTick(v,t){v=num(v);t=num(t);if(!(v>0))return EPS;if(!(t>0))return v;const q=Math.max(1,Math.round(v/t)),d=decimals(t);return Number((q*t).toFixed(d))}
+function roundSig1(v){v=num(v);if(!(v>0))return v;const mag=10**Math.floor(Math.log10(v));return Math.round(v/mag)*mag}
+function floorTick(v,t){if(!(t>0))return v;const d=decimals(t);return Number((Math.floor((v/t)+1e-10)*t).toFixed(d))}
+function boxFor(o,lastPrice){const method=String(o.method||'traditional').toLowerCase(),tick=num(o.tickSize)>0?num(o.tickSize):EPS;if(method==='traditional')return roundTick(num(o.traditionalBox),tick);if(method==='percentage'){const ltp=Math.abs(num(o.ltpSnapshot)||num(lastPrice)),raw=ltp*Math.max(.000001,num(o.percentage)||.01);return roundTick(raw,tick)}if(method==='atr')return roundTick(num(o.atrValue),tick);return roundTick(num(o.traditionalBox)||tick,tick)}
+function init(anchor){return{lastClose:anchor,direction:0,pendingHigh:anchor,pendingLow:anchor,anchor,lastTime:0}}
+function clone(s){return s?{lastClose:num(s.lastClose),direction:num(s.direction)||0,pendingHigh:num(s.pendingHigh),pendingLow:num(s.pendingLow),anchor:num(s.anchor),lastTime:num(s.lastTime)||0}:null}
+function touch(s,p){if(!Number.isFinite(s.pendingHigh))s.pendingHigh=p;if(!Number.isFinite(s.pendingLow))s.pendingLow=p;if(p>s.pendingHigh)s.pendingHigh=p;if(p<s.pendingLow)s.pendingLow=p}
+function resetPending(s,p){s.pendingHigh=p;s.pendingLow=p}
+function emit(s,out,open,close,dir,time,box,wicks,rev,sourceId){let high=Math.max(open,close),low=Math.min(open,close);if(wicks){if(dir>0&&Number.isFinite(s.pendingLow))low=Math.min(low,s.pendingLow);if(dir<0&&Number.isFinite(s.pendingHigh))high=Math.max(high,s.pendingHigh)}out.push({time:num(time)||0,open,high,low,close,direction:dir,box,isReversal:!!rev,sourceId:sourceId??null});s.lastClose=close;s.direction=dir;s.lastTime=num(time)||s.lastTime;resetPending(s,close)}
+function processTick(s,tick,out,o,box){const p=num(tick?.price),tm=num(tick?.time)||0;if(!Number.isFinite(p)||!(box>0))return 0;touch(s,p);const before=out.length;let guard=0;while(guard++<20000){const lc=s.lastClose,d=s.direction;if(d===0){if(p>=lc+box){emit(s,out,lc,lc+box,1,tm,box,o.wicks!==false,false,tick?.id);continue}if(p<=lc-box){emit(s,out,lc,lc-box,-1,tm,box,o.wicks!==false,false,tick?.id);continue}break}if(d>0){if(p>=lc+box){emit(s,out,lc,lc+box,1,tm,box,o.wicks!==false,false,tick?.id);continue}if(p<=lc-2*box){emit(s,out,lc-box,lc-2*box,-1,tm,box,o.wicks!==false,true,tick?.id);continue}break}if(p<=lc-box){emit(s,out,lc,lc-box,-1,tm,box,o.wicks!==false,false,tick?.id);continue}if(p>=lc+2*box){emit(s,out,lc+box,lc+2*box,1,tm,box,o.wicks!==false,true,tick?.id);continue}break}touch(s,p);return out.length-before}
+function uniformAudit(bricks,box){const tol=Math.max(1e-10,Math.abs(box)*1e-9);let maxError=0;for(const b of bricks||[]){const e=Math.abs(Math.abs(num(b.close)-num(b.open))-box);maxError=Math.max(maxError,e);if(e>tol||Math.abs(num(b.box)-box)>tol)return{ok:false,maxError,count:bricks.length,box}}return{ok:true,maxError,count:(bricks||[]).length,box}}
+function buildTicks(o){const ticks=(Array.isArray(o?.ticks)?o.ticks:[]).filter(x=>Number.isFinite(num(x?.price))).sort((a,b)=>(num(a.time)-num(b.time))||((num(a.id)||0)-(num(b.id)||0)));if(!ticks.length)return{bricks:[],box:NaN,tailState:null,anchor:null,audit:{ok:true,maxError:0,count:0,box:NaN}};const tickSize=num(o?.tickSize)>0?num(o.tickSize):EPS,lastPrice=num(ticks.at(-1)?.price),box=boxFor(o,lastPrice);if(!(box>0))throw Error('Active box is invalid');const first=num(ticks[0]?.price),anchor=floorTick(Math.floor(first/box)*box,tickSize),state=init(anchor),bricks=[];for(const t of ticks)processTick(state,t,bricks,o||{},box);return{bricks,box,tailState:clone(state),anchor,audit:uniformAudit(bricks,box)}}
+const API={buildTicks,processTick,boxFor,roundTick,roundSig1,cloneState:clone,initState:init,uniformAudit};
+root.RenkoV15Engine=API;
+const isWorker=typeof WorkerGlobalScope!=='undefined'&&typeof self!=='undefined'&&self instanceof WorkerGlobalScope;
+if(isWorker){root.onmessage=e=>{const m=e.data||{};if(m.type!=='build')return;try{const r=buildTicks(m);root.postMessage({type:'built',id:m.id,generation:m.generation,bricks:r.bricks,box:r.box,tailState:r.tailState,anchor:r.anchor,audit:r.audit,tickCount:Array.isArray(m.ticks)?m.ticks.length:0})}catch(err){root.postMessage({type:'error',id:m.id,generation:m.generation,message:String(err?.message||err)})}}}
+})(typeof self!=='undefined'?self:globalThis);

@@ -1,0 +1,10 @@
+name: RENKO ATR Zero Blocking Gate — Legacy Manual Only
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  legacy-scope:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'Legacy multi-pair ATR gate retained for manual archaeology only. Production RENKO scope is GOLD/XAUUSD and is certified by RENKO GOLD Current Main Canonical Closure + GOLD ATR Chromium Gate.'

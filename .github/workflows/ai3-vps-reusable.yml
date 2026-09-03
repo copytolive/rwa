@@ -1,0 +1,30 @@
+name: AI3 Reusable VPS Probe
+
+on:
+  workflow_call:
+    secrets:
+      COPYTOLIVE_SSH_KEY:
+        required: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe SSH from reusable public workflow
+        env:
+          SSH_KEY: ${{ secrets.COPYTOLIVE_SSH_KEY }}
+          SSH_HOST: 109.123.239.76
+          SSH_USER: root
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$SSH_KEY"
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/copytolive_control"
+          chmod 600 "$HOME/.ssh/copytolive_control"
+          ssh-keyscan -p 22 -H "$SSH_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null
+          ssh -o BatchMode=yes -o ConnectTimeout=8 -i "$HOME/.ssh/copytolive_control" "$SSH_USER@$SSH_HOST" 'python3 - <<'"'"'PY'"'"'
+          import os,json
+          print(json.dumps({"ok":True,"web_root":os.path.isdir("/var/www/copytolive"),"source_root":os.path.isdir("/opt/copytolive-source")}))
+          PY'

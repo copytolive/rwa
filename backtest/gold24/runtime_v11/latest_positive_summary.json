@@ -1,0 +1,24 @@
+{
+  "configs_archived": 65357,
+  "correlation_rule": {
+    "action": ">0.50 remove lower-quality method from final selection",
+    "maximum": 0.5,
+    "metric": "abs Pearson correlation of log-return equity",
+    "selection": "per-symbol greedy filter"
+  },
+  "entry_ge_100_net_profit_ge_3000_usd_count": 0,
+  "entry_profit_top200_count": 200,
+  "positive_entry_ge_100_count": 51,
+  "positive_unique_count": 443,
+  "profit_top200_count": 200,
+  "qualified_v11_count": 0,
+  "report_filter": {
+    "minimum_net_profit_usd_canonical": 3000.0,
+    "minimum_trades": 100,
+    "scaling_multiplier": 1.0,
+    "unit_policy": "canonical net_profit directly; x100 standard-lot conversion forbidden unless separately broker-validated"
+  },
+  "schema": "gold-v11-positive-ranking-summary-v3",
+  "source_run_id": "33667987913",
+  "target_v11_count": 0
+}

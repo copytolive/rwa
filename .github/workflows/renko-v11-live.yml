@@ -1,0 +1,69 @@
+# live-smoke-trigger: 12
+name: RENKO V12 Public Live Tick Smoke
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/renko-v11-live.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify deployed RENKO V12 page and assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://copytolive.github.io/rwa/renko"
+          ok=0
+          for i in $(seq 1 36); do
+            echo "Public V12 smoke attempt $i"
+            if curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "${BASE}/?v12-smoke=${GITHUB_RUN_ID}-${i}" -o /tmp/renko.html \
+              && grep -Fq 'RENKO V12' /tmp/renko.html \
+              && grep -Fq 'renko-v12.js?v=120' /tmp/renko.html \
+              && grep -Fq 'Every trade' /tmp/renko.html \
+              && ! grep -Fq 'id="v11Interval"' /tmp/renko.html; then
+              ok=1
+              break
+            fi
+            sleep 5
+          done
+          test "$ok" = 1
+          curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "${BASE}/renko-v12.js?v=120&smoke=${GITHUB_RUN_ID}" -o /tmp/renko-v12.js
+          curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "${BASE}/renko-v12-worker.js?v=120&smoke=${GITHUB_RUN_ID}" -o /tmp/renko-v12-worker.js
+          grep -Fq "version:'12.0.0'" /tmp/renko-v12.js
+          grep -Fq "formation:'tick-by-tick'" /tmp/renko-v12.js
+          grep -Fq "lockRule:'every-trade-threshold'" /tmp/renko-v12.js
+          grep -Fq "liveSource:'binance-individual-@trade'" /tmp/renko-v12.js
+          grep -Fq 'processTick' /tmp/renko-v12-worker.js
+          echo "RENKO V12 PUBLIC LIVE PAGE PASS"
+      - name: Verify tick-history and sizing endpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          fetch_market () {
+            local path="$1" out="$2"
+            for root in 'https://data-api.binance.vision' 'https://api.binance.com'; do
+              if curl -fsSL --max-time 20 "${root}${path}" -o "$out"; then return 0; fi
+            done
+            return 1
+          }
+          fetch_market '/api/v3/exchangeInfo?symbol=BTCUSDT' /tmp/exchange.json
+          fetch_market '/api/v3/ticker/price?symbol=BTCUSDT' /tmp/ticker.json
+          fetch_market '/api/v3/aggTrades?symbol=BTCUSDT&limit=5' /tmp/agg.json
+          fetch_market '/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=20' /tmp/klines.json
+          python - <<'PY'
+          import json
+          ex=json.load(open('/tmp/exchange.json')); ticker=json.load(open('/tmp/ticker.json')); agg=json.load(open('/tmp/agg.json')); kl=json.load(open('/tmp/klines.json'))
+          s=ex.get('symbols',[{}])[0]; pf=next((x for x in s.get('filters',[]) if x.get('filterType')=='PRICE_FILTER'),{})
+          assert float(pf.get('tickSize',0))>0
+          assert float(ticker.get('price',0))>0
+          assert isinstance(agg,list) and agg and all('p' in x and 'T' in x and 'a' in x for x in agg)
+          assert isinstance(kl,list) and kl and len(kl[0])>=7
+          print('RENKO V12 MARKET DATA ENDPOINTS PASS')
+          PY

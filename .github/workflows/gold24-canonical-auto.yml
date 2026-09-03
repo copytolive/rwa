@@ -1,0 +1,45 @@
+name: GOLD Canonical v11 Auto Guardrail
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canonical-v11-authority-guardrail:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify canonical policy authority and anti-race ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          canonical = Path('backtest/gold24/RULES_GOLD_V11_2026.md').read_text()
+          retired = Path('backtest/gold24/RULES_GOAL_RR12_2026.md').read_text()
+          recovery = Path('.github/workflows/gold24-canonical-recovery.yml').read_text()
+
+          assert 'CANONICAL SOURCE OF TRUTH FOR ALL NEW GOLD SEARCHES' in canonical
+          assert 'GOLD_CANONICAL_V11_20260828' in retired
+          assert 'RETIRED / NOT CANONICAL FOR NEW RUNS' in retired
+          assert "backtest/gold24/GITHUB_RUNNER_KICK" in recovery
+          assert 'GOLD_CANONICAL_V11_20260828' not in recovery or 'v11_runner.py' in recovery
+
+          print('policy=GOLD_CANONICAL_V11_20260828')
+          print('authority=RULES_GOLD_V11_2026.md')
+          print('legacy_rr12=RETIRED_NOT_CANONICAL')
+          print('continuation_owner=gold24-canonical-recovery.yml')
+          print('runner_kick_owner=RECOVERY_ONLY')
+          print('auto_simulation=DISABLED_TO_PREVENT_DOUBLE_RUN')
+          print('governance_guardrail=PASS')
+          PY
+
+      - name: Explain execution ownership
+        run: |
+          echo 'Canonical GOLD v11 continuation is intentionally Recovery-only.'
+          echo 'This Auto workflow does not simulate and does not react to GITHUB_RUNNER_KICK.'
+          echo 'Use the Recovery workflow schedule or recovery-only kick path for canonical continuation.'

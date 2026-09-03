@@ -1,0 +1,80 @@
+name: RWA Verified Live + Rewards Smoke
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "index.html"
+      - "app.js"
+      - "rwa-live-home-v1.js"
+      - "rwa-execution-config.json"
+      - ".github/workflows/growth-suite-smoke.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  statuses: write
+concurrency:
+  group: rwa-growth-suite-smoke
+  cancel-in-progress: true
+jobs:
+  growth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate verified LIVE and fail-closed rewards source
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check app.js
+          node --check rwa-live-home-v1.js
+          python -m json.tool rwa-execution-config.json >/dev/null
+          grep -Fq "recentTrades" app.js
+          grep -Fq "renderLiveRail" rwa-live-home-v1.js
+          grep -Fq "s?.recentTrades" rwa-live-home-v1.js
+          grep -Fq "openRewards" rwa-live-home-v1.js
+          grep -Fq "No verified rewards program is active" rwa-live-home-v1.js
+          grep -Fq "No points, leaderboard, APR or balances are fabricated" rwa-live-home-v1.js
+          grep -Fq 'id="liveRail"' index.html
+          ! grep -Fq "social-trading-pro.js" index.html
+          ! grep -Fq "social-notification-defaults.js" index.html
+          ! grep -Eiq 'Alex|Sarah|James|CryptoNomad|RWA_Investor|AssetHawk' index.html
+          grep -Fq '"enabled": false' rwa-execution-config.json
+          echo RWA_VERIFIED_LIVE_REWARDS_SOURCE_PASS
+      - name: Publish source status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/growth-suite-source' -f description='Venue-backed LIVE rail and fail-closed rewards verified'
+      - name: Verify public target
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://copytolive.github.io/rwa'
+          ok=0
+          for i in $(seq 1 90); do
+            live_sha="$(curl -fsSL --max-time 15 "$BASE/deployment-sha.txt?v=$i" 2>/dev/null | tr -d '\r\n' || true)"
+            q="${live_sha:-none}-$i"
+            html="$(curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$BASE/?v=$q" 2>/dev/null || true)"
+            home="$(curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$BASE/rwa-live-home-v1.js?v=$q" 2>/dev/null || true)"
+            app="$(curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$BASE/app.js?v=$q" 2>/dev/null || true)"
+            cfg="$(curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$BASE/rwa-execution-config.json?v=$q" 2>/dev/null || true)"
+            if grep -Fq 'id="liveRail"' <<<"$html" \
+              && ! grep -Fq 'social-trading-pro.js' <<<"$html" \
+              && grep -Fq 'renderLiveRail' <<<"$home" \
+              && grep -Fq 'No verified rewards program is active' <<<"$home" \
+              && grep -Fq 'recentTrades' <<<"$app" \
+              && grep -Fq '"enabled": false' <<<"$cfg"; then ok=1; break; fi
+            sleep 5
+          done
+          test "$ok" = "1"
+      - name: Publish live status
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/growth-suite-live' -f description='Real LIVE activity + honest inactive rewards verified publicly'
+      - name: Publish failure statuses
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/growth-suite-source' -f description='Verified LIVE/rewards source validation failed'
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=failure -f context='rwa/growth-suite-live' -f description='Verified LIVE/rewards public validation failed'
