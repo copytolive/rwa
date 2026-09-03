@@ -16,8 +16,8 @@ def load(rel: str, default=None):
 def main() -> int:
     v11 = load("runtime_v11/latest_validation_summary.json")
     multi = load("runtime_multimethod_v1/latest_multimethod_v1_discovery_summary.json")
-    target_v4 = load("runtime_hardpass_targeted_v4/latest_hardpass_targeted_v4.json")
-    target = target_v4 if target_v4 else load("runtime_hardpass_targeted/latest_hardpass_targeted.json")
+    target = load("runtime_hardpass_targeted/latest_hardpass_targeted.json")
+    target_v4_external = load("runtime_hardpass_targeted_v4/latest_hardpass_targeted_v4.json")
     port = load("runtime_screening_gpt/combined_portfolio_audit.json")
     audit = load("runtime_screening_gpt/screening_gpt_real_audit.json")
     h4 = load("runtime_native_h4/latest_native_h4_hardpass.json")
@@ -35,6 +35,7 @@ def main() -> int:
                    target.get("targeted_evaluated_unique", 0)) or 0
     )
     discovery_total = master_eval + targeted_eval
+    target_v4_external_eval = int(target_v4_external.get("targeted_evaluated_unique", 0) or 0)
     h4_eval = int(h4.get("candidate_evaluated_unique", 0) or 0)
     broker_h4_eval = int(broker_h4.get("candidate_evaluated_unique", 0) or 0)
     v4_eval = int(hardpass_v4.get("candidate_evaluated_unique", 0) or 0)
@@ -144,6 +145,14 @@ def main() -> int:
             "fail_count": target_fail,
             "global_corr_rejected": int(target.get("global_corr_rejected", 0) or 0),
             "threshold_relaxation": target.get("generation_profile", {}).get("threshold_relaxation"),
+        },
+        "targeted_v4_external_separate": {
+            "status": target_v4_external.get("status", "NOT_PUBLISHED"),
+            "claimed_candidate_evaluated_unique": target_v4_external_eval,
+            "claimed_cumulative_targeted_evaluated_unique": int(target_v4_external.get("cumulative_targeted_evaluated_unique", 0) or 0),
+            "hard_pass_new_count": int(target_v4_external.get("hard_pass_new_count", 0) or 0),
+            "counted_in_authoritative_unique_total": False,
+            "reason_not_counted": "generator overlaps earlier targeted S/R and chart p1 domains; exact disjoint config-hash proof was not published",
         },
         "native_h4": {
             "status": h4.get("status", "NOT_PUBLISHED"),
