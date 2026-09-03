@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 24
     env:
-      TARGET_SHA: 2d8bcc734cfb578cd8ec7855f2b287bfca96fe90
+      TARGET_SHA: f851c46dc593f48681d3082d8d0820e50fe386a9
       GH_TOKEN: ${{ github.token }}
       OUT: validation/market-rail-v42-20260903/status.json
     steps:
