@@ -25,6 +25,21 @@ function unlockLegacyGeometry(){
  const props=['position','inset','left','right','top','bottom','width','min-width','max-width','height','min-height','max-height','display','grid-template-columns','grid-template-rows','overflow','margin','padding','transform','box-sizing'];
  for(const el of [document.documentElement,document.body,$('.app'),$('.topbar'),$('.layout'),$('.left'),$('.main'),$('.right'),$('#liveRail')].filter(Boolean))for(const p of props)el.style.removeProperty(p)
 }
+function lockV5Geometry(){
+ if(innerWidth<1281)return;
+ const imp=(el,p,v)=>el?.style?.setProperty(p,v,'important'),top=$('.topbar'),layout=$('.layout'),left=$('.layout>.left'),main=$('.layout>.main'),right=$('.layout>.right'),trade=$('#liveRail'),bottom=$('#rwaV5Bottom'),footer=$('#rwaV5Footer'),app=$('.app');
+ for(const root of [document.documentElement,document.body]){imp(root,'width','100vw');imp(root,'height','100vh');imp(root,'overflow','hidden')}
+ imp(app,'width','100vw');imp(app,'height','100vh');imp(app,'overflow','hidden');imp(app,'padding','0');
+ imp(top,'position','fixed');imp(top,'inset','0 0 auto 0');imp(top,'width','100vw');imp(top,'height','55px');imp(top,'min-height','55px');imp(top,'max-height','55px');imp(top,'box-sizing','border-box');
+ imp(layout,'position','fixed');imp(layout,'inset','55px 0 28px 0');imp(layout,'width','100vw');imp(layout,'height','calc(100vh - 83px)');imp(layout,'min-height','0');imp(layout,'margin','0');imp(layout,'padding','0');imp(layout,'display','grid');imp(layout,'grid-template-columns','238px minmax(0,1fr) 250px 300px');imp(layout,'grid-template-rows','minmax(0,1fr) 220px');imp(layout,'overflow','hidden');imp(layout,'box-sizing','border-box');
+ for(const el of [left,main,right,trade,bottom]){imp(el,'position','relative');imp(el,'inset','auto');imp(el,'margin','0');imp(el,'transform','none');imp(el,'min-height','0');imp(el,'max-height','none');imp(el,'box-sizing','border-box')}
+ imp(left,'grid-column','1');imp(left,'grid-row','1 / 3');imp(left,'width','238px');imp(left,'min-width','238px');imp(left,'max-width','238px');imp(left,'height','100%');
+ imp(main,'grid-column','2');imp(main,'grid-row','1');imp(main,'width','auto');imp(main,'min-width','0');imp(main,'height','100%');imp(main,'display','grid');imp(main,'grid-template-rows','74px minmax(0,1fr)');imp(main,'overflow','hidden');
+ imp(right,'grid-column','3');imp(right,'grid-row','1');imp(right,'width','250px');imp(right,'min-width','250px');imp(right,'max-width','250px');imp(right,'height','100%');imp(right,'overflow','hidden');
+ imp(trade,'grid-column','4');imp(trade,'grid-row','1 / 3');imp(trade,'width','300px');imp(trade,'min-width','300px');imp(trade,'max-width','300px');imp(trade,'height','100%');imp(trade,'overflow','hidden');
+ imp(bottom,'grid-column','2 / 4');imp(bottom,'grid-row','2');imp(bottom,'width','auto');imp(bottom,'height','220px');imp(bottom,'min-height','220px');imp(bottom,'max-height','220px');imp(bottom,'overflow','hidden');
+ imp(footer,'position','fixed');imp(footer,'left','0');imp(footer,'right','0');imp(footer,'bottom','0');imp(footer,'width','100vw');imp(footer,'height','28px');imp(footer,'min-height','28px');imp(footer,'max-height','28px')
+}
 function ensureHeader(){
  const nav=$('.topnav');if(nav&&nav.dataset.v5!=='1'){nav.dataset.v5='1';nav.innerHTML='<button data-v5-nav="trade" data-rwa-target-nav="trade" class="active">Trade</button><button data-v5-nav="discover" data-rwa-target-nav="discover">Discover</button><button data-v5-nav="portfolio" data-rwa-target-nav="portfolio">Portfolio</button><button data-v5-nav="analytics" data-rwa-target-nav="analytics">Analytics</button><button data-v5-nav="rewards" data-rwa-target-nav="rewards">Rewards</button><button data-v5-nav="more" data-rwa-target-nav="more" aria-haspopup="menu">More⌄</button><div class="rwa-v5-more" data-v5-more-menu hidden><button data-v5-bottom="holders">Holders</button><button data-v5-bottom="feed">Feed</button><button data-v5-bottom="thesis">Thesis</button><button data-v5-bottom="history">History</button><button data-v5-action="alerts">Alerts</button><button data-v5-action="network">Network</button></div>'}
  const top=$('.topbar');if(top&&!$('#rwaV5GlobalSearch')){const box=document.createElement('div');box.id='rwaV5GlobalSearch';box.className='rwa-v5-search';box.innerHTML='<span>⌕</span><input type="search" autocomplete="off" placeholder="Search tokens or markets…" aria-label="Search tokens or markets"><kbd>⌘K</kbd><div class="rwa-v5-search-results" hidden></div>';top.insertBefore(box,$('.top-actions'));const input=box.querySelector('input');input.addEventListener('input',renderSearch);input.addEventListener('focus',renderSearch);input.addEventListener('keydown',e=>{if(e.key==='Escape'){box.querySelector('.rwa-v5-search-results').hidden=true;input.blur()}})}
@@ -165,7 +180,7 @@ function ensureFooter(){
 function renderFooter(){const f=$('#rwaV5Footer');if(!f)return;const rows=[...(market()?.pairs||[])].sort((a,b)=>num(b.vol)-num(a.vol)).slice(0,4);f.innerHTML='<span><i></i> System Status · Operational</span><div>'+rows.map(x=>'<button data-v5-symbol="'+esc(x.symbol)+'"><b>'+esc(x.base)+'</b> <i class="'+(num(x.change)>=0?'pos':'neg')+'">'+pct(x.change)+'</i></button>').join('')+'</div><small>Real market data · account data only when connected</small>'}
 function apply(){
  window.__RWA_FIRST_PAINT_HEADER_LOCK__?.disconnect?.();document.documentElement.classList.remove('rwa-target-prepaint');document.documentElement.classList.add('rwa-target-runtime-ready');
- document.body.classList.add('rwa-terminal-v5');document.documentElement.dataset.rwaTerminal='v5';unlockLegacyGeometry();keepMarket();ensureHeader();ensureLeft();ensureBottom();ensureTrade();ensureMobile();ensureFooter();renderFavorite();renderStatus();renderFooter()
+ document.body.classList.add('rwa-terminal-v5');document.documentElement.dataset.rwaTerminal='v5';unlockLegacyGeometry();keepMarket();ensureHeader();ensureLeft();ensureBottom();ensureTrade();ensureMobile();ensureFooter();lockV5Geometry();renderFavorite();renderStatus();renderFooter()
 }
 function bind(){
  document.addEventListener('click',e=>{
