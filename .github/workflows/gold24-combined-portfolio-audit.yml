@@ -2,11 +2,21 @@ name: GOLD24 Combined Portfolio Audit
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/gold24-combined-portfolio-audit.yml'
+      - 'backtest/gold24/screening_gpt_combined_portfolio_audit.py'
+      - 'backtest/gold24/qualified_scripts/**'
+      - 'backtest/gold24/runtime_mt5_lot/latest_entry100_net20000_standard_lot.csv'
+      - 'backtest/gold24/runtime_multimethod_v1/latest_multimethod_v1_discovery.csv'
   push:
     branches: [main]
     paths:
       - '.github/workflows/gold24-combined-portfolio-audit.yml'
       - 'backtest/gold24/screening_gpt_combined_portfolio_audit.py'
+      - 'backtest/gold24/qualified_scripts/**'
+      - 'backtest/gold24/runtime_mt5_lot/latest_entry100_net20000_standard_lot.csv'
+      - 'backtest/gold24/runtime_multimethod_v1/latest_multimethod_v1_discovery.csv'
 
 permissions:
   contents: write
