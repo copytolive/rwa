@@ -1,0 +1,79 @@
+name: AI3 GOLD24 Bridge Probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ai3-gold24-bridge-requests/**"
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    environment: gold24-production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: req
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^ai3-gold24-bridge-requests/.*\.json$' | tail -n1)"
+          ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$FILE")"
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+          echo "out=ai3-gold24-bridge-results/$ID.json" >> "$GITHUB_OUTPUT"
+      - name: Probe existing GOLD24 SSH path safely
+        env:
+          HOST: ${{ secrets.GOLD24_HOST }}
+          USER: ${{ secrets.GOLD24_USER }}
+          KEY: ${{ secrets.GOLD24_SSH_KEY }}
+        shell: bash
+        run: |
+          set +e
+          mkdir -p ai3-gold24-bridge-results "$HOME/.ssh"
+          OUT="${{ steps.req.outputs.out }}"
+          if [ -z "$HOST" ] || [ -z "$USER" ] || [ -z "$KEY" ]; then
+            python3 - <<'PY' > "$OUT"
+          import json
+          print(json.dumps({"ok":False,"secret_present":False,"ssh_ok":False,"reason":"gold24_secret_missing"}))
+          PY
+            exit 1
+          fi
+          printf '%s\n' "$KEY" > "$HOME/.ssh/gold24"
+          chmod 600 "$HOME/.ssh/gold24"
+          ssh-keyscan -H "$HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null
+          ssh -o BatchMode=yes -o ConnectTimeout=8 -i "$HOME/.ssh/gold24" "$USER@$HOST" 'python3 - <<'"'"'PY'"'"'
+          import os,json,socket
+          paths=["/opt/rwa","/var/www/copytolive","/opt/copytolive-source"]
+          print(json.dumps({"ok":True,"secret_present":True,"ssh_ok":True,"host_name":socket.gethostname(),"paths":{p:os.path.isdir(p) for p in paths},"uid":os.geteuid()}))
+          PY' > "$OUT"
+          RC=$?
+          if [ "$RC" -ne 0 ] || [ ! -s "$OUT" ]; then
+            python3 - <<'PY' > "$OUT"
+          import json
+          print(json.dumps({"ok":False,"secret_present":True,"ssh_ok":False,"reason":"ssh_failed"}))
+          PY
+            exit 1
+          fi
+      - name: Commit result
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="${{ steps.req.outputs.out }}"
+          test -s "$OUT"
+          git config user.name "CopyToLive AI3 Bridge"
+          git config user.email "copytolive-ai3-bridge@local.invalid"
+          git add "$OUT"
+          git commit -m "ai3 gold24 bridge: ${{ steps.req.outputs.id }}" || true
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort || true; sleep "$attempt"; continue; }
+            if git push origin HEAD:main; then exit 0; fi
+            sleep "$attempt"
+          done
+          exit 1
