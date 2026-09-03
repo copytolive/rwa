@@ -1,0 +1,48 @@
+name: AI3 Public Selfhosted CopyToLive Probe
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ai3-public-selfhosted-probe/**"
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: req
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^ai3-public-selfhosted-probe/.*\.json$' | tail -n1)"
+          ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$FILE")"
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+      - name: Probe local CopyToLive VPS paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ai3-public-selfhosted-probe-results
+          python3 - <<'PY' > "ai3-public-selfhosted-probe-results/${{ steps.req.outputs.id }}.json"
+          import os,json,socket
+          print(json.dumps({
+            "ok":True,
+            "hostname":socket.gethostname(),
+            "web":os.path.isdir("/var/www/copytolive"),
+            "backend":os.path.isdir("/home/opentrue-platform/backend"),
+            "uid":os.geteuid()
+          }))
+          PY
+      - name: Commit result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "CopyToLive AI3 Selfhosted"
+          git config user.email "copytolive-ai3-selfhosted@local.invalid"
+          git add ai3-public-selfhosted-probe-results
+          git commit -m "ai3 public selfhosted probe: ${{ steps.req.outputs.id }}" || true
+          git pull --rebase origin main
+          git push origin HEAD:main
