@@ -52,6 +52,19 @@ jobs:
               b=p.read_bytes();rows[str(p.relative_to(out))]={"bytes":len(b),"sha256":hashlib.sha256(b).hexdigest()}
           (out/"manifest.json").write_text(json.dumps(rows,indent=2)+"\n")
           PY
+          if [ -s "$OUT/index-current-url.txt" ]; then
+            URL="$(cat "$OUT/index-current-url.txt")"
+            curl -fsSL --retry 3 -A 'Mozilla/5.0' -H 'Cache-Control: no-cache' "$URL?snapshot=${{ steps.req.outputs.id }}-$RANDOM" -o "$OUT/assets/js/index-current.js" || true
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,os
+          out=Path(os.environ["OUT"]); rows={}
+          for p in out.rglob("*"):
+            if p.is_file():
+              b=p.read_bytes(); rows[str(p.relative_to(out))]={"bytes":len(b),"sha256":hashlib.sha256(b).hexdigest()}
+          (out/"manifest.json").write_text(json.dumps(rows,indent=2)+"\\n")
+          PY
         env:
           OUT: ${{ steps.req.outputs.out }}
       - name: Commit snapshot
