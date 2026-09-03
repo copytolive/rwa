@@ -1,0 +1,81 @@
+name: AI6 Private Control Bridge Probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ai6-private-control-bridge/**"
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: req
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^ai6-private-control-bridge/.*\.json$' | tail -n1)"
+          ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$FILE")"
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+          echo "out=ai6-private-control-bridge-results/$ID.json" >> "$GITHUB_OUTPUT"
+
+      - name: Probe VPS private-control availability
+        env:
+          SSH_KEY: ${{ secrets.COPYTOLIVE_SSH_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="${{ steps.req.outputs.out }}"
+          mkdir -p "$(dirname "$OUT")" "$HOME/.ssh"
+          test -n "$SSH_KEY"
+          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/ai6bridge"
+          chmod 600 "$HOME/.ssh/ai6bridge"
+          ssh-keyscan -H 109.123.239.76 >> "$HOME/.ssh/known_hosts" 2>/dev/null
+          ssh -i "$HOME/.ssh/ai6bridge" root@109.123.239.76 'python3 -' > "$OUT" <<'PY'
+          import json,os,shutil,subprocess
+          def run(cmd):
+              p=subprocess.run(cmd,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True)
+              return p.returncode,(p.stdout or "").strip()
+          gh=shutil.which("gh")
+          auth_ok=False
+          if gh:
+              rc,_=run([gh,"auth","status","-h","github.com"])
+              auth_ok=rc==0
+          rc,found=run(["bash","-lc","find /root /opt /home -maxdepth 5 -type d -name archive-bridge-private 2>/dev/null | head -20"])
+          rc2,deploy=run(["bash","-lc","find /root /opt /home -maxdepth 7 -type f -path '*/ai6-live-pending/deploy.py' 2>/dev/null | head -20"])
+          print(json.dumps({
+              "ok":True,
+              "gh_present":bool(gh),
+              "gh_auth_ok":auth_ok,
+              "gh_hosts_exists":os.path.isfile("/root/.config/gh/hosts.yml"),
+              "private_repo_dirs":[x for x in found.splitlines() if x],
+              "deploy_files":[x for x in deploy.splitlines() if x],
+          },indent=2))
+          PY
+
+      - name: Commit result
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="${{ steps.req.outputs.out }}"
+          test -s "$OUT"
+          git config user.name "CopyToLive AI6 Bridge"
+          git config user.email "copytolive-ai6-bridge@local.invalid"
+          git add "$OUT"
+          git commit -m "ai6 private bridge probe: ${{ steps.req.outputs.id }}" || true
+          for n in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort || true; sleep "$n"; continue; }
+            if git push origin HEAD:main; then exit 0; fi
+            sleep "$n"
+          done
+          exit 1
