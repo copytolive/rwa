@@ -25,7 +25,7 @@ window.addEventListener('resize',queueDraw,{passive:true});window.addEventListen
   if(!window.RWATerminalService)await import('./rwa-terminal-service.js?v=1.0.0');
   document.querySelectorAll('link[data-rwa-terminal-v5]').forEach(x=>x.remove());
   {const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-terminal-v5.css?v=1.0.16';l.dataset.rwaTerminalV5='1';document.head.appendChild(l)}
-  if(!window.RWATerminalV5)await import('./rwa-terminal-v5.js?v=1.0.24');
+  if(!window.RWATerminalV5)await import('./rwa-terminal-v5.js?v=1.0.25');
   document.documentElement.classList.add('rwa-target-runtime-ready')
 }catch(e){console.error('RWA live HOME failed to load',e)}})();
 /* RWA_REAL_BUSINESS_VALIDATION_CONSOLE_V1_BOOTSTRAP */
