@@ -49,9 +49,8 @@ void OnStart()
    CustomSymbolSetDouble(InpCustomSymbol,SYMBOL_VOLUME_STEP,0.01);
    CustomSymbolSetInteger(InpCustomSymbol,SYMBOL_SPREAD,0);
    CustomSymbolSetInteger(InpCustomSymbol,SYMBOL_SPREAD_FLOAT,false);
-   // The canonical TradingView H4 archive is the execution calendar for parity.
-   // Do not inherit broker/XAUUSD market-session closures into the custom symbol,
-   // otherwise valid canonical bar-open order/delete operations return retcode 10018.
+   // Canonical source-native H4 bars define the execution calendar. Never
+   // resample D1 or inherit broker sessions that can invalidate canonical bars.
    datetime session_from=D'1970.01.01 00:00:00';
    datetime session_to=D'1970.01.01 23:59:59';
    for(int d=0;d<7;d++)
@@ -72,11 +71,14 @@ void OnStart()
    const int CHUNK=2000;
    MqlRates rates[]; ArrayResize(rates,CHUNK);
    int used=0,total=0,rows=0;
+   datetime first_bar=0,last_bar=0;
    while(!FileIsEnding(h))
    {
       string ds=FileReadString(h); if(ds=="" && FileIsEnding(h)) break;
       string os=FileReadString(h),hs=FileReadString(h),ls=FileReadString(h),cs=FileReadString(h),vs=FileReadString(h);
       datetime t=StringToTime(ds); if(t<=0) continue;
+      if(first_bar==0 || t<first_bar) first_bar=t;
+      if(t>last_bar) last_bar=t;
       rates[used].time=t;
       rates[used].open=StringToDouble(os);
       rates[used].high=StringToDouble(hs);
@@ -90,12 +92,14 @@ void OnStart()
    FileClose(h);
    if(used>0) FlushChunk(rates,used,total);
    Sleep(1000);
-   int bars=Bars(InpCustomSymbol,PERIOD_H4,D'2023.01.01 00:00:00',D'2027.01.01 00:00:00');
+   // Count the exact source window, not a recent sub-window. This guarantees
+   // the native Strategy Tester receives the same number of source H4 bars.
+   int bars=(first_bar>0 && last_bar>=first_bar)?Bars(InpCustomSymbol,PERIOD_H4,first_bar,last_bar):0;
    bool ok=(rows>=3000 && bars==rows && (InpExpectedRows<=0 || rows==InpExpectedRows));
    int r=FileOpen(InpReceiptFile,FILE_WRITE|FILE_TXT|FILE_ANSI|FILE_COMMON);
    if(r!=INVALID_HANDLE)
    {
-      FileWriteString(r,StringFormat("status=%s\nrows_read=%d\nbars_mt5=%d\nupdates=%d\ncustom_symbol=%s\ndigits=2\npoint=0.01\nspread_points=0\ncontract_size=100\n",ok?"PASS":"FAIL",rows,bars,total,InpCustomSymbol));
+      FileWriteString(r,StringFormat("status=%s\nrows_read=%d\nbars_mt5=%d\nupdates=%d\nfirst_bar=%s\nlast_bar=%s\ncustom_symbol=%s\ndigits=2\npoint=0.01\nspread_points=0\ncontract_size=100\n",ok?"PASS":"FAIL",rows,bars,total,TimeToString(first_bar,TIME_DATE|TIME_MINUTES),TimeToString(last_bar,TIME_DATE|TIME_MINUTES),InpCustomSymbol));
       FileClose(r);
    }
    PrintFormat("GOLD10B_H4_IMPORT_DONE status=%s rows=%d bars=%d updates=%d",ok?"PASS":"FAIL",rows,bars,total);
