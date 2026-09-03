@@ -55,6 +55,30 @@ function ensureHeader(){
  const top=$('.topbar');if(top&&!$('#rwaV5GlobalSearch')){const box=document.createElement('div');box.id='rwaV5GlobalSearch';box.className='rwa-v5-search';box.innerHTML='<span>⌕</span><input type="search" autocomplete="off" placeholder="Search tokens or markets…" aria-label="Search tokens or markets"><kbd>⌘K</kbd><div class="rwa-v5-search-results" hidden></div>';top.insertBefore(box,$('.top-actions'));const input=box.querySelector('input');input.addEventListener('input',renderSearch);input.addEventListener('focus',renderSearch);input.addEventListener('keydown',e=>{if(e.key==='Escape'){box.querySelector('.rwa-v5-search-results').hidden=true;input.blur()}})}
  const brand=$('.brand');if(brand&&!brand.dataset.v5){brand.dataset.v5='1';brand.addEventListener('click',e=>{e.preventDefault();keepMarket();setBottom('positions');setMobile('chart')})}
 }
+function ensureTargetHeaderStats(){
+ const h=$('.terminal-header'),qs=h?.querySelector('.quickstats');if(!h||!qs)return;
+ if(!h.querySelector('.rwa-v5-asset-badges')){const copy=h.querySelector('.instrument-copy');if(copy){const badges=document.createElement('div');badges.className='rwa-v5-asset-badges';badges.innerHTML='<span data-v5-asset-kind>Spot</span><span data-v5-asset-network>Live Market</span>';copy.appendChild(badges)}}
+ if(!qs.querySelector('[data-v5-stat="market-cap"]')){const mk=document.createElement('div');mk.className='qstat rwa-v5-extra-stat';mk.dataset.v5Stat='market-cap';mk.innerHTML='<small>Market Cap</small><b>—</b>';qs.appendChild(mk)}
+ if(!qs.querySelector('[data-v5-stat="liquidity"]')){const li=document.createElement('div');li.className='qstat rwa-v5-extra-stat';li.dataset.v5Stat='liquidity';li.innerHTML='<small>Liquidity</small><b>—</b>';qs.appendChild(li)}
+ if(!qs.querySelector('[data-v5-stat="holders"]')){const ho=document.createElement('div');ho.className='qstat rwa-v5-extra-stat';ho.dataset.v5Stat='holders';ho.innerHTML='<small>Holders</small><b>—</b>';qs.appendChild(ho)}
+ const price=$('#statPrice')?.closest('.qstat'),change=$('#statChange')?.closest('.qstat'),vol=$('#statVol')?.closest('.qstat');
+ if(price)price.querySelector('small').textContent='Price';
+ if(change)change.querySelector('small').textContent='24h Change';
+ if(vol)vol.querySelector('small').textContent='24h Volume'
+}
+function renderTargetHeaderStats(){
+ ensureTargetHeaderStats();const p=pair(),fmt=window.RWAMarketRuntime?.format;
+ const kind=$('[data-v5-asset-kind]'),net=$('[data-v5-asset-network]');
+ if(kind)kind.textContent=p.rwa?'RWA':'Spot';if(net)net.textContent=p.rwa?'Real World Asset':'Live Market';
+ const cap=$('[data-v5-stat="market-cap"] b'),liq=$('[data-v5-stat="liquidity"] b'),hold=$('[data-v5-stat="holders"] b');
+ if(cap)cap.textContent='—';if(liq)liq.textContent='—';
+ if(hold){const h=serverHolders;hold.textContent=h?.available&&Array.isArray(h.holders)?Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1}).format(h.holders.length):'—'}
+ const icon=$('#selIcon');if(icon)icon.setAttribute('aria-label',p.base+' market');
+ const label=$('#selLabel');if(label)label.textContent=(p.rwa?'RWA-linked · ':'')+'Binance Spot';
+}
+function pruneLegacyUi(){
+ for(const sel of ['.productbar','.trustbar','.social-screen','.suite-screen','.mobile-home','.mobile-tabs','#rwaExperienceRail','#rwaContextBrief','#rwaQualityBadge','#rwaQualityPanel','#rwaMobileAssetActions','#rwaSuperWorkspace','#rwaQuickDock','#rwaGlobalTicker'])qa(sel).forEach(x=>x.remove())
+}
 function renderSearch(){
  const box=$('#rwaV5GlobalSearch'),input=box?.querySelector('input'),out=box?.querySelector('.rwa-v5-search-results');if(!input||!out)return;
  const q=input.value.trim().toUpperCase(),pairs=market()?.pairs||[];if(!q){out.hidden=true;out.innerHTML='';return}
@@ -66,11 +90,20 @@ function ensureLeft(){
  if(!left.querySelector('.rwa-v5-left-tabs')){const tabs=document.createElement('nav');tabs.className='rwa-v5-left-tabs';tabs.innerHTML='<button class="active" data-v5-left="watchlist">Watchlist</button><button data-v5-left="feed">Feed</button><button data-v5-left="pulse">Pulse</button><button data-v5-left="live">LIVE <i></i></button>';left.prepend(tabs)}
  if(!left.querySelector('[data-v5-left-pane="watchlist"]')){const pane=document.createElement('section');pane.className='rwa-v5-left-pane';pane.dataset.v5LeftPane='watchlist';const nodes=[left.querySelector('.aside-label'),left.querySelector('.market-head'),left.querySelector('.rwa-pair-head'),left.querySelector('.pairlist')].filter(Boolean);nodes.forEach(n=>pane.appendChild(n));left.appendChild(pane)}
  for(const mode of ['feed','pulse','live'])if(!left.querySelector('[data-v5-left-pane="'+mode+'"]')){const pane=document.createElement('section');pane.className='rwa-v5-left-pane rwa-v5-dynamic-pane';pane.dataset.v5LeftPane=mode;pane.hidden=true;left.appendChild(pane)}
+ const watch=left.querySelector('[data-v5-left-pane="watchlist"]');if(watch&&!watch.querySelector('[data-v5-watch-target]')){const target=document.createElement('section');target.className='rwa-v5-watch-target';target.dataset.v5WatchTarget='1';watch.prepend(target)}
 }
 function renderLeft(){
  qa('[data-v5-left-pane]').forEach(p=>p.hidden=p.dataset.v5LeftPane!==leftMode);setActive('.rwa-v5-left-tabs [data-v5-left]',leftMode,'v5Left');
  const s=market(),pairs=s?.pairs||[],fmt=window.RWAMarketRuntime?.format;
- const feed=$('[data-v5-left-pane="feed"]'),pulse=$('[data-v5-left-pane="pulse"]'),live=$('[data-v5-left-pane="live"]');
+ const feed=$('[data-v5-left-pane="feed"]'),pulse=$('[data-v5-left-pane="pulse"]'),live=$('[data-v5-left-pane="live"]'),watch=$('[data-v5-left-pane="watchlist"]'),target=$('[data-v5-watch-target]');
+ if(watch&&!watch.hidden&&target){
+  const movers=[...pairs].filter(x=>Number.isFinite(num(x.change))).sort((a,b)=>Math.abs(num(b.change))-Math.abs(num(a.change))).slice(0,3);
+  const signed=serverFeed.slice(0,4),local=theses().slice(-4).reverse();
+  const posts=signed.length?signed.map(p=>({wallet:p.wallet||'Signed wallet',symbol:p.symbol||'',side:p.side||'',text:p.text||'',ts:p.createdAt||p.ts||Date.now(),signed:true})):local.map(p=>({wallet:'Local thesis',symbol:p.symbol||'',side:p.side||'',text:p.text||'',ts:p.ts||Date.now(),signed:false}));
+  const fallback=movers.slice(0,3).map(x=>({wallet:'Market signal',symbol:x.symbol,side:num(x.change)>=0?'Bullish':'Bearish',text:(num(x.change)>=0?'Positive':'Negative')+' 24h move '+pct(x.change)+' · verified live market data.',ts:Date.now(),signed:false,market:true}));
+  const rows=posts.length?posts:fallback;
+  target.innerHTML='<div class="rwa-v5-target-section"><header><b>Top Movers</b><span>24h⌄</span></header><div class="rwa-v5-target-movers">'+movers.map(x=>'<button data-v5-symbol="'+esc(x.symbol)+'"><span><i>'+esc(x.base.slice(0,2))+'</i><b>'+esc(x.base)+'/USDT</b><small>'+(x.rwa?'Real World Asset':'Live market')+'</small></span><strong class="'+(num(x.change)>=0?'pos':'neg')+'">'+pct(x.change)+'</strong></button>').join('')+'</div><button class="rwa-v5-view-watch" data-v5-watch-expand>View all watchlist</button></div><div class="rwa-v5-target-section rwa-v5-discussions"><header><b>Signals & Discussions</b><span>'+(serverReady?'Signed':'Live')+'⌄</span></header><div class="rwa-v5-target-posts">'+rows.map(p=>'<article><header><span><i>'+esc(String(p.wallet||'M').slice(0,2).toUpperCase())+'</i><b>'+esc(shortWallet(p.wallet||'Market signal'))+'</b>'+(p.signed?'<em>✓</em>':'')+'</span><small>'+new Date(p.ts||Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+'</small></header><p>'+esc(p.text||'')+'</p><footer><span>'+esc((p.side||'Signal').toUpperCase())+'</span>'+(p.symbol?'<button data-v5-symbol="'+esc(p.symbol)+'">'+esc(String(p.symbol).replace(/USDT$/,'/USDT'))+'</button>':'')+'</footer></article>').join('')+'</div><button class="rwa-v5-post-idea" data-v5-bottom="thesis">Post an idea</button></div>'
+ }
  if(feed&&!feed.hidden){const local=theses().slice(0,5),moves=[...pairs].filter(x=>Number.isFinite(num(x.change))).sort((a,b)=>Math.abs(num(b.change))-Math.abs(num(a.change))).slice(0,5);feed.innerHTML='<div class="rwa-v5-pane-head"><b>Signals & Discussions</b><button data-v5-bottom="thesis">Post an idea</button></div>'+(local.length?local.map(t=>'<article class="rwa-v5-signal"><header><b>Local thesis · '+esc(t.side)+'</b><small>'+new Date(t.ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+'</small></header><p>'+esc(t.text)+'</p><button data-v5-symbol="'+esc(t.symbol)+'">'+esc(t.symbol.replace(/USDT$/,'/USDT'))+'</button></article>').join(''):'<div class="rwa-v5-empty">No local thesis yet. Live market signals appear below.</div>')+'<div class="rwa-v5-signal-list">'+moves.map(x=>'<button data-v5-symbol="'+esc(x.symbol)+'"><span>MOVE</span><b>'+esc(x.base)+'/USDT</b><i class="'+(num(x.change)>=0?'pos':'neg')+'">'+pct(x.change)+'</i></button>').join('')+'</div>'}
  if(pulse&&!pulse.hidden){const rows=[...pairs].filter(x=>Number.isFinite(num(x.change))).sort((a,b)=>Math.abs(num(b.change))-Math.abs(num(a.change))).slice(0,12);pulse.innerHTML='<div class="rwa-v5-pane-head"><b>Top Movers</b><span>24h</span></div><div class="rwa-v5-mover-list">'+rows.map(x=>'<button data-v5-symbol="'+esc(x.symbol)+'"><span><b>'+esc(x.base)+'/USDT</b><small>'+compact(x.vol)+'</small></span><strong class="'+(num(x.change)>=0?'pos':'neg')+'">'+pct(x.change)+'</strong></button>').join('')+'</div>'}
  if(live&&!live.hidden){const rows=(s?.recentTrades||[]).slice(0,18);live.innerHTML='<div class="rwa-v5-pane-head"><b>LIVE</b><span class="rwa-v5-live-state"><i></i> market stream</span></div>'+(rows.length?'<div class="rwa-v5-live-list">'+rows.map(t=>'<div><span class="'+(t.buy?'pos':'neg')+'">'+(t.buy?'BUY':'SELL')+'</span><b>'+esc(base())+'/USDT</b><strong>'+esc(fmt?.price?.(t.p)||String(t.p))+'</strong><small>'+new Date(t.time||Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})+'</small></div>').join('')+'</div>':'<div class="rwa-v5-empty">Waiting for verified live trades…</div>')}
@@ -269,18 +302,20 @@ function orderBookClick(e){const row=e.target.closest('.bookrow');if(!row||!$('#
 function renderStatus(){
  const p=pair();if(lastPair!==p.symbol){lastPair=p.symbol;renderFavorite();renderMiniBook();if(bottomMode==='analytics'||bottomMode==='feed'||bottomMode==='discover')renderBottom()}
  const ex=exchange(),stamp=num(ex?.lastUpdated);if(stamp&&stamp!==lastExchangeStamp){lastExchangeStamp=stamp;if(['positions','orders','portfolio','history'].includes(bottomMode))renderBottom()}
- renderLeft();renderMiniBook();renderAlertCount();renderFooter()
+ renderTargetHeaderStats();renderLeft();renderMiniBook();renderAlertCount();renderFooter()
 }
 function ensureFooter(){
  if($('#rwaV5Footer'))return;const f=document.createElement('footer');f.id='rwaV5Footer';f.className='rwa-v5-footer';document.body.appendChild(f);renderFooter()
 }
 function renderFooter(){const f=$('#rwaV5Footer');if(!f)return;const rows=[...(market()?.pairs||[])].sort((a,b)=>num(b.vol)-num(a.vol)).slice(0,4);f.innerHTML='<span><i></i> System Status · Operational</span><div>'+rows.map(x=>'<button data-v5-symbol="'+esc(x.symbol)+'"><b>'+esc(x.base)+'</b> <i class="'+(num(x.change)>=0?'pos':'neg')+'">'+pct(x.change)+'</i></button>').join('')+'</div><small>Real market data · account data only when connected</small>'}
 function apply(){
- window.__RWA_FIRST_PAINT_HEADER_LOCK__?.disconnect?.();document.documentElement.classList.remove('rwa-target-prepaint');document.documentElement.classList.add('rwa-target-runtime-ready');
+ window.__RWA_FIRST_PAINT_HEADER_LOCK__?.disconnect?.();
  const preserveMobileMarkets=innerWidth<681&&document.body.classList.contains('rwa-v5-mobile-markets');
- document.body.classList.add('rwa-terminal-v5');document.documentElement.dataset.rwaTerminal='v5';unlockLegacyGeometry();keepMarket();ensureHeader();ensureLeft();ensureBottom();ensureTrade();ensureMobile();ensureFooter();lockV5Geometry();
+ document.body.classList.add('rwa-terminal-v5');document.documentElement.dataset.rwaTerminal='v5';unlockLegacyGeometry();keepMarket();ensureHeader();ensureLeft();ensureBottom();ensureTrade();ensureMobile();ensureFooter();ensureTargetHeaderStats();lockV5Geometry();pruneLegacyUi();
  if(preserveMobileMarkets||document.body.classList.contains('rwa-v5-mobile-markets')){setMobileMarketsDrawerVisible(true);setMobileMarketsCloseVisible(true)}
- renderFavorite();renderStatus();renderFooter()
+ renderFavorite();renderStatus();renderFooter();
+ document.documentElement.classList.add('rwa-target-runtime-ready');
+ const shell=$('#rwaV5FirstPaintShell');requestAnimationFrame(()=>{document.documentElement.classList.remove('rwa-target-prepaint');shell?.remove()})
 }
 function bind(){
  const depth=$('#depth');if(depth&&!depth.dataset.v5BookBound){depth.dataset.v5BookBound='1';depth.addEventListener('pointerdown',e=>orderBookClick(e),true)}
@@ -305,6 +340,7 @@ function bind(){
   const lockSign=e.target.closest('.rwa-v5-lock .signin');if(lockSign){e.preventDefault();$('.top-actions .signin')?.click();return}
   const nav=e.target.closest('[data-v5-nav]');if(nav){e.preventDefault();e.stopPropagation();navigate(nav.dataset.v5Nav);return}
   const left=e.target.closest('[data-v5-left]');if(left){leftMode=left.dataset.v5Left;renderLeft();return}
+  const watchExpand=e.target.closest('[data-v5-watch-expand]');if(watchExpand){const pane=$('[data-v5-left-pane="watchlist"]');pane?.classList.toggle('rwa-v5-watch-expanded');watchExpand.textContent=pane?.classList.contains('rwa-v5-watch-expanded')?'Back to signals':'View all watchlist';return}
   const sym=e.target.closest('[data-v5-symbol]');if(sym){window.RWAMarketRuntime?.selectPair?.(sym.dataset.v5Symbol,false);if(innerWidth<681)closeMarketsMobile();return}
   const bottom=e.target.closest('[data-v5-bottom]');if(bottom){setBottom(bottom.dataset.v5Bottom);if(innerWidth<681)setMobile('workspace');return}
   const mode=e.target.closest('[data-v5-mobile-mode]');if(mode){setMobile(mode.dataset.v5MobileMode);return}
@@ -345,3 +381,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 /* RWA_TERMINAL_V5_MARKET_CONTAINMENT_FINAL_2026_09_03 */
 
 /* RWA_TERMINAL_V5_MARKET_CONTAINMENT_ACCEPTANCE_2026_09_03 */
+
+/* RWA_TERMINAL_V5_NO_LEGACY_FIRST_PAINT_2026_09_03 */
