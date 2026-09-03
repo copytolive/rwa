@@ -6,7 +6,7 @@ on:
       - "index.html"
       - "app.js"
       - "chart-core.js"
-      - "rwa-live-home-v1.js"
+      - "rwa-live-home-v1.js"\n      - "rwa-terminal-v5.js"\n      - "rwa-terminal-v5.css"
       - "rwa-live-home-v1.css"
       - "rwa-target-dashboard-v2.css"
       - "rwa-multichain.js"
@@ -59,6 +59,7 @@ jobs:
           node --check app.js
           node --check chart-core.js
           node --check rwa-live-home-v1.js
+          node --check rwa-terminal-v5.js
           node --check tools/root-market-browser-stability.mjs
           grep -Fq '<strong>Real World Asset</strong>' index.html
           grep -Fq 'app.js?v=19' index.html
@@ -74,16 +75,21 @@ jobs:
           grep -Fq "recentTrades" app.js
           grep -Fq "bookLevels:5" app.js
           grep -Fq "bindBookControls" app.js
-          grep -Fq "VERSION='4.2.1'" rwa-live-home-v1.js
+          grep -Fq "VERSION='5.0.0'" rwa-live-home-v1.js
           grep -Fq "renderLiveRail" rwa-live-home-v1.js
           grep -Fq "keepMarketRoute" rwa-live-home-v1.js
-          grep -Fq "workspace-open" rwa-live-home-v1.js
+          grep -Fq "RWATerminalV5" rwa-live-home-v1.js
+          grep -Fq "rwa-terminal-v5.js?v=1.0.0" chart-core.js
+          grep -Fq "rwa-terminal-v5.css?v=1.0.0" chart-core.js
+          grep -Fq "data-v5-nav=\"discover\"" rwa-terminal-v5.js
+          grep -Fq "data-v5-bottom=\"positions\"" rwa-terminal-v5.js
+          grep -Fq "data-v5-mobile-mode=\"book\"" rwa-terminal-v5.js
           grep -Fq "openPortfolio" rwa-live-home-v1.js
           grep -Fq "openOrders" rwa-live-home-v1.js
           grep -Fq "openRewards" rwa-live-home-v1.js
           grep -Fq "workspaceOpen('analytics'" rwa-live-home-v1.js
-          grep -Fq "rwa-live-home-v1.js?v=4.2.1" chart-core.js
-          grep -Fq "rwa-live-home-v1.css?v=4.2.1" chart-core.js
+          grep -Fq "rwa-live-home-v1.js?v=5.0.0" chart-core.js
+          grep -Fq "rwa-live-home-v1.css?v=5.0.0" chart-core.js
           grep -Fq "POLICY='chain-abstraction-fail-closed-v2'" rwa-multichain.js
           ! grep -Eiq 'seablueprint|ecommerce|in-page commerce' index.html
           ! grep -Fq '/rwa/_next/' index.html
