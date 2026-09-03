@@ -34,7 +34,10 @@ from multimethod_v1_full_rescan import (
 WINDOWS = [3, 5, 7, 8, 10, 13, 14, 20, 21, 26, 34, 50, 55, 89, 100, 144]
 SL_TP_FOCUSED = [x / 2 for x in range(30, 51)]  # $15.0-$25.0
 SL_TP_FULL = [x / 2 for x in range(10, 51)]
+HARDPASS_SL_TP = [x / 2 for x in range(10, 31)]  # $5.0-$15.0: legitimate low-risk search region
 OFFSETS = [x / 4 for x in range(2, 21)]
+HARDPASS_OFFSETS = [x / 4 for x in range(2, 11)]
+HARDPASS_WINDOWS = [3, 5, 7, 8, 10, 13, 14, 20, 21, 26, 34]
 DIRECTIONS = ["LONG_ONLY", "BOTH", "SHORT_ONLY"]
 
 MASTER_UNIVERSE_PATH = Path(__file__).resolve().with_name("MASTER_METHOD_UNIVERSE.json")
@@ -174,6 +177,10 @@ def _family_params(rng: random.Random, family: str, current: dict | None = None)
         return float(rng.choice([1.05, 1.10, 1.20, 1.30, 1.50])), float(rng.choice([0.60, 0.70, 0.80, 0.90, 1.00])), 1.0
     if family == "TREND_MEANREV_ENSEMBLE":
         return float(rng.choice([0.5, 0.7, 1.0, 1.3, 1.7])), float(rng.choice([30, 35, 40, 45])), 1.0
+    if family == "REGRESSION_CHANNEL_BREAKOUT":
+        return float(rng.choice([0.005, 0.01, 0.02, 0.03, 0.05, 0.08])), float(rng.choice([0.8, 1.0, 1.2, 1.5, 1.8, 2.0])), 1.0
+    if family == "ATR_MEANREV_REGIME":
+        return float(rng.choice([0.5, 0.7, 1.0, 1.3, 1.7, 2.0])), float(rng.choice([0.65, 0.75, 0.85, 0.95, 1.05])), 1.0
     if family == "BAND_HYBRID":
         return float(rng.choice([1.0, 1.2, 1.5, 1.8, 2.0])), float(rng.choice([1.5, 1.8, 2.0, 2.2, 2.5])), 1.0
     if family in {"BOLLINGER_REVERSION", "VWAP"}:
@@ -198,13 +205,15 @@ def _fresh_candidate_for_family(rng: random.Random, family: str) -> Candidate:
     c0 = generate_candidate(rng, timeframe="D1")
     d = c0.canonical_dict()
     d["family"] = family
-    fast, slow = sorted(rng.sample(WINDOWS, 2))
+    window_pool = HARDPASS_WINDOWS if rng.random() < 0.60 else WINDOWS
+    fast, slow = sorted(rng.sample(window_pool, 2))
     d["fast"], d["slow"] = int(fast), int(slow)
     p1, p2, p3 = _family_params(rng, family, None)
     d["p1"], d["p2"], d["p3"] = p1, p2, p3
     d["entry_method"] = "LIMIT" if rng.random() < 0.90 else "STOP"
     d["direction_mode"] = _weighted_direction(rng)
-    choices = SL_TP_FOCUSED if rng.random() < 0.85 else SL_TP_FULL
+    x = rng.random()
+    choices = HARDPASS_SL_TP if x < 0.55 else (SL_TP_FOCUSED if x < 0.90 else SL_TP_FULL)
     sl = float(rng.choice(choices))
     if rng.random() < 0.82:
         tps = [x for x in choices if x + 1e-12 >= sl]
@@ -212,8 +221,8 @@ def _fresh_candidate_for_family(rng: random.Random, family: str) -> Candidate:
     else:
         tp = float(rng.choice(choices))
     d["sl"], d["tp"] = sl, tp
-    d["offset"] = float(rng.choice(OFFSETS))
-    d["expiry"] = int(rng.randint(1, 8))
+    d["offset"] = float(rng.choice(HARDPASS_OFFSETS if rng.random() < 0.60 else OFFSETS))
+    d["expiry"] = int(rng.randint(4, 12) if rng.random() < 0.60 else rng.randint(1, 8))
     c = Candidate(**d)
     validate_candidate(c)
     return c
@@ -233,13 +242,15 @@ def _mutated_candidate(rng: random.Random, seeds: list[dict], target_family: str
         base["family"] = target_family
 
         if rng.random() < 0.80:
-            fast, slow = sorted(rng.sample(WINDOWS, 2))
+            window_pool = HARDPASS_WINDOWS if rng.random() < 0.60 else WINDOWS
+            fast, slow = sorted(rng.sample(window_pool, 2))
             base["fast"], base["slow"] = int(fast), int(slow)
         p1, p2, p3 = _family_params(rng, target_family, base)
         base["p1"], base["p2"], base["p3"] = p1, p2, p3
         base["entry_method"] = "LIMIT" if rng.random() < 0.90 else "STOP"
         base["direction_mode"] = _weighted_direction(rng)
-        choices = SL_TP_FOCUSED if rng.random() < 0.88 else SL_TP_FULL
+        x = rng.random()
+        choices = HARDPASS_SL_TP if x < 0.55 else (SL_TP_FOCUSED if x < 0.92 else SL_TP_FULL)
         sl = float(rng.choice(choices))
         if rng.random() < 0.84:
             tps = [x for x in choices if x + 1e-12 >= sl]
@@ -247,8 +258,8 @@ def _mutated_candidate(rng: random.Random, seeds: list[dict], target_family: str
         else:
             tp = float(rng.choice(choices))
         base["sl"], base["tp"] = sl, tp
-        base["offset"] = float(rng.choice(OFFSETS))
-        base["expiry"] = int(rng.randint(1, 8))
+        base["offset"] = float(rng.choice(HARDPASS_OFFSETS if rng.random() < 0.60 else OFFSETS))
+        base["expiry"] = int(rng.randint(4, 12) if rng.random() < 0.60 else rng.randint(1, 8))
         c = Candidate(**base)
         validate_candidate(c)
         return c
@@ -315,8 +326,25 @@ def _library_pre_corr(row: dict) -> bool:
     )
 
 
+def _hard_gate_count_pre_mc_corr(row: dict) -> int:
+    """Six hard gates available before Monte Carlo and global-correlation selection."""
+    checks = (
+        int(row["total_entry"]) >= 300,
+        float(row["standard_lot_profit_factor_same_cost_model"]) >= 1.20,
+        float(row["standard_lot_max_dd_pct_starting_equity_10000"]) <= 25.0,
+        float(row["standard_lot_ev_per_trade_usd_same_cost_model"]) > 0.0,
+        float(row["oos_profit_factor"]) >= 1.00,
+        float(row["positive_years_pct"]) >= 60.0,
+    )
+    return sum(bool(x) for x in checks)
+
+
 def _quality(row: dict) -> tuple:
+    """Hard-pass-oriented quality order used by the global greedy correlation filter."""
     return (
+        _hard_gate_count_pre_mc_corr(row),
+        int(int(row["total_entry"]) >= 300),
+        int(float(row["standard_lot_max_dd_pct_starting_equity_10000"]) <= 25.0),
         float(row["standard_lot_profit_factor_same_cost_model"]),
         float(row["standard_lot_net_profit_usd_same_cost_model"]),
         -float(row["standard_lot_max_dd_pct_starting_equity_10000"]),
@@ -621,7 +649,7 @@ def main() -> int:
             "maximum": CORR_HARD_MAX,
             "ideal": CORR_IDEAL,
             "metric": "absolute Pearson correlation of log-return equity",
-            "selection": "PF first, then net profit, lower DD, larger sample; old and new candidates share one greedy authority",
+            "selection": "Hard-pass pre-gate count first, then sample>=300, DD<=25, PF, net profit, lower DD, larger sample; old and new candidates share one global greedy authority",
             "wording": CORR_WORDING,
         },
         "standard_lot_reference": {

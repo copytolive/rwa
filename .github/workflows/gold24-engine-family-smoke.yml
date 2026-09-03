@@ -1,4 +1,4 @@
-name: GOLD24 46-Family Real Engine Smoke
+name: GOLD24 48-Family Real Engine Smoke
 
 on:
   workflow_dispatch:
@@ -50,11 +50,11 @@ jobs:
           p='backtest/gold24/runtime_screening_gpt/engine_family_smoke.json'
           x=json.load(open(p))
           assert x['status']=='PASS'
-          assert x['implemented_family_count']==46
-          assert x['tested_family_count']==46
+          assert x['implemented_family_count']==48
+          assert x['tested_family_count']==48
           assert x['all_implemented_families_executed'] is True
           assert len(x['data_blocked_native_mtf'])==2
-          print('46 implemented families execution/causality PASS; 2 native MTF DATA_BLOCKED')
+          print('48 implemented real D1 families execution/causality PASS; 2 native MTF DATA_BLOCKED')
           PY
       - name: Publish smoke evidence
         run: |
@@ -68,7 +68,7 @@ jobs:
           git push origin HEAD:main
       - uses: actions/upload-artifact@v4
         with:
-          name: gold24-46-family-real-engine-smoke
+          name: gold24-48-family-real-engine-smoke
           path: backtest/gold24/runtime_screening_gpt/engine_family_smoke.json
           if-no-files-found: error
           retention-days: 90

@@ -6,7 +6,7 @@ on:
       candidate_count:
         description: New targeted configs to simulate
         required: false
-        default: '20000'
+        default: '100000'
       base_seed:
         description: Deterministic discovery seed
         required: false
@@ -39,7 +39,7 @@ jobs:
       STATE_DIR: ${{ github.workspace }}/.gold24-multimethod-v1-discovery-state
       OUT_DIR: ${{ github.workspace }}/backtest/gold24/runtime_multimethod_v1
       SOURCE_SUMMARY: ${{ github.workspace }}/backtest/gold24/runtime_v11/latest_validation_summary.json
-      CANDIDATE_COUNT: ${{ github.event.inputs.candidate_count || '20000' }}
+      CANDIDATE_COUNT: ${{ github.event.inputs.candidate_count || '100000' }}
       BASE_SEED: ${{ github.event.inputs.base_seed || '2026090304' }}
     steps:
       - uses: actions/checkout@v4
@@ -129,11 +129,11 @@ jobs:
           assert x['all_implemented_categories_sampled'] is True
           assert len(x['generated_category_counts_this_run']) == 20
           assert all(int(v) > 0 for v in x['generated_category_counts_this_run'].values())
-          assert int(x['implemented_family_count']) == 46
+          assert int(x['implemented_family_count']) == 48
           family_counts={str(k):int(v) for k,v in x['generated_family_counts_this_run'].items()}
-          assert len(family_counts)==46
+          assert len(family_counts)==48
           assert max(family_counts.values())-min(family_counts.values()) <= 1
-          assert int(x['implemented_family_count']) == 46
+          assert int(x['implemented_family_count']) == 48
           assert int(x.get('registered_target_engine_family_count', 48)) == 48
           assert int(x.get('data_blocked_engine_family_count', 2)) == 2
           assert int(x['library_count']) >= 1
