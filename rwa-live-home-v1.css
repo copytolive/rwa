@@ -352,3 +352,31 @@ body.rwa-target-dashboard-v2 .orderbook-tools{display:flex;align-items:center;ga
 body.rwa-target-dashboard-v2 .orderbook-tools button{height:25px;min-width:42px;padding:0 7px;border:1px solid #1b2b40;border-radius:5px;background:#071321;color:#aebbd0;font-size:8px;font-weight:750;cursor:pointer}
 body.rwa-target-dashboard-v2 .orderbook-tools button:last-child{min-width:28px;width:28px;padding:0}
 body.rwa-target-dashboard-v2 .orderbook-tools button:hover{background:#0d1b2d;color:#fff;border-color:#2a405e}
+
+
+/* ===== TARGET PARITY FINAL V4.1 ===== */
+@media(min-width:1281px){
+  body.rwa-target-dashboard-v2 .brand{min-width:286px!important}
+  body.rwa-target-dashboard-v2 .brandmark{display:none!important}
+  body.rwa-target-dashboard-v2 .brandcopy strong{font-size:18px!important;font-weight:760!important}
+  body.rwa-target-dashboard-v2 .aside-label .watch-actions{display:flex;align-items:center;gap:3px}
+  body.rwa-target-dashboard-v2 .watch-actions button{width:27px;height:27px;border:0;background:transparent;color:#95a5b9;border-radius:5px;font-size:14px;line-height:1;cursor:pointer}
+  body.rwa-target-dashboard-v2 .watch-actions button:hover{background:#0b1929;color:#fff}
+  body.rwa-target-dashboard-v2 .market-head .search{display:none!important;margin:0 0 7px!important}
+  body.rwa-target-dashboard-v2.rwa-watch-search-open .market-head .search,
+  body.rwa-watch-search-open.rwa-target-dashboard-v2 .market-head .search{display:flex!important}
+  body.rwa-target-dashboard-v2 .pairrow{height:38px!important;min-height:38px!important;padding:3px 9px!important}
+  body.rwa-target-dashboard-v2.rwa-watch-comfortable .pairrow,
+  body.rwa-watch-comfortable.rwa-target-dashboard-v2 .pairrow{height:46px!important;min-height:46px!important;padding:5px 9px!important}
+  body.rwa-target-dashboard-v2 .pairrow .tokenicon{width:20px!important;height:20px!important;font-size:9px!important}
+  body.rwa-target-dashboard-v2 .pairrow .pairmeta b{font-size:8.6px!important}
+  body.rwa-target-dashboard-v2 .pairrow .pairmeta small{font-size:6.6px!important}
+  body.rwa-target-dashboard-v2 .midprice{justify-content:space-between!important;gap:8px!important}
+  body.rwa-target-dashboard-v2 .midprice strong{font-size:15px;color:#34dfa6}
+  body.rwa-target-dashboard-v2 .midprice span{font-size:7.5px;color:#8192a8;font-weight:600}
+  body.rwa-target-dashboard-v2 #asks .bookrow,
+  body.rwa-target-dashboard-v2 #bids .bookrow{height:31px!important;min-height:31px!important}
+}
+@media(max-width:680px){
+  .watch-actions{display:none!important}
+}

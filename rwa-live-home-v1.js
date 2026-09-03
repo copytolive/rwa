@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
-if(window.RWALiveHome?.version==='4.0.1')return;
-const VERSION='4.0.1',$=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)];
+if(window.RWALiveHome?.version==='4.1.0')return;
+const VERSION='4.1.0',$=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const num=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
 const money=v=>Number.isFinite(Number(v))?'$'+Number(v).toLocaleString(undefined,{maximumFractionDigits:2}):'—';
@@ -74,7 +74,7 @@ function ensureLiveRail(){
 function renderLiveRail(){
  const rail=ensureLiveRail();if(!rail)return;const s=marketState(),pairs=s?.pairs||[],fmt=window.RWAMarketRuntime?.format;
  const feed=rail.querySelector('[data-live-pane="feed"]'),trending=rail.querySelector('[data-live-pane="trending"]'),top=rail.querySelector('[data-live-pane="top"]'),alerts=rail.querySelector('[data-live-pane="alerts"]');
- if(feed&&!feed.hidden){const trades=[...qa('#tradeTape .trade')].slice(0,11);feed.innerHTML=trades.length?trades.map((row,i)=>{const cols=[...row.children].map(x=>x.textContent.trim()),side=row.querySelector('.up')?'BUY':'SELL';return '<div class="live-feed-row"><span class="live-tag '+side.toLowerCase()+'">'+side+'</span><b>'+esc(selectedBase())+'/USDT</b><span>'+esc(cols[0]||'—')+'</span><small>'+esc(cols[2]||'live')+'</small></div>'}).join(''):'<div class="live-rail-empty">Waiting for verified live trades…</div>'}
+ if(feed&&!feed.hidden){const trades=(s?.recentTrades||[]).slice(0,11);feed.innerHTML=trades.length?trades.map(t=>{const side=t.buy?'BUY':'SELL';return '<div class="live-feed-row"><span class="live-tag '+side.toLowerCase()+'">'+side+'</span><b>'+esc(selectedBase())+'/USDT</b><span>'+esc(fmt?.price?.(t.p)||String(t.p||'—'))+'</span><small>'+esc(new Date(t.time||Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}))+'</small></div>'}).join(''):'<div class="live-rail-empty">Waiting for verified live trades…</div>'}
  if(trending&&!trending.hidden){const rows=[...pairs].filter(x=>Number.isFinite(num(x.change))).sort((a,b)=>Math.abs(num(b.change))-Math.abs(num(a.change))).slice(0,10);trending.innerHTML=rows.map(x=>'<button class="live-market-row" data-live-symbol="'+esc(x.symbol)+'"><span class="live-tag trend">TREND</span><b>'+esc(x.base)+'/USDT</b><span class="'+(num(x.change)>=0?'pos':'neg')+'">'+(num(x.change)>=0?'+':'')+num(x.change).toFixed(2)+'%</span></button>').join('')}
  if(top&&!top.hidden){const rows=[...pairs].sort((a,b)=>num(b.vol)-num(a.vol)).slice(0,10);top.innerHTML=rows.map(x=>'<button class="live-market-row" data-live-symbol="'+esc(x.symbol)+'"><span class="live-tag top">TOP</span><b>'+esc(x.base)+'/USDT</b><span>'+esc(fmt?.compact?.(x.vol)||String(x.vol||'—'))+'</span></button>').join('')}
  if(alerts&&!alerts.hidden){alerts.innerHTML='<div class="live-rail-empty"><b>No active verified alerts</b><p>Create an alert for the selected live market.</p><button type="button" data-live-configure-alert>Configure alert</button></div>';alerts.querySelector('[data-live-configure-alert]')?.addEventListener('click',async()=>{try{if(!window.RWAQuickActions)await loadScript('quick-actions.js?v=2','RWAQuickActions');await window.RWAQuickActions?.alert?.()}catch(e){toast(String(e?.message||e))}})}
