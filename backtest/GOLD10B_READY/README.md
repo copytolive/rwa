@@ -136,14 +136,14 @@ Jika salah satu belum PASS, jangan diberi label VERIFIED.
 
 ## 7. Packaging
 
-Workflow `GOLD10B Ready Package` membuat ZIP reproducible berisi:
+Workflow `GOLD10B Ready Package` membuat artifact ZIP yang langsung berisi:
 - seluruh `backtest/gold24/`;
 - folder panduan `backtest/GOLD10B_READY/`;
 - workflow utama GOLD24;
 - `PACKAGE_SHA256SUMS.txt`;
 - `PACKAGE_GIT_SHA.txt`.
 
-ZIP tersebut adalah paket yang diunggah ke Google Drive sebagai **total script + panduan backtest**, sedangkan GitHub tetap source of truth.
+Artifact ZIP itu sendiri adalah paket siap-pakai yang diunggah ke Google Drive sebagai **total script + panduan backtest** (tidak perlu ZIP di dalam ZIP), sedangkan GitHub tetap source of truth.
 
 ## 8. Google Drive
 

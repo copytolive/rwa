@@ -48,17 +48,10 @@ jobs:
             cd dist_gold10b/GOLD10B_READY
             find . -type f ! -name PACKAGE_SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > PACKAGE_SHA256SUMS.txt
           )
-          (
-            cd dist_gold10b
-            zip -qr "GOLD10B_READY_PACKAGE_${GITHUB_SHA}.zip" GOLD10B_READY
-          )
-          sha256sum dist_gold10b/GOLD10B_READY_PACKAGE_*.zip > dist_gold10b/ZIP_SHA256.txt
-
       - uses: actions/upload-artifact@v4
         with:
           name: GOLD10B_READY_PACKAGE
-          path: |
-            dist_gold10b/GOLD10B_READY_PACKAGE_*.zip
-            dist_gold10b/ZIP_SHA256.txt
+          path: dist_gold10b/GOLD10B_READY/
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 90
