@@ -7,7 +7,7 @@ const browser=await chromium.launch({headless:true});
 const failures=[],errors=[];const fail=(m,d=null)=>failures.push({message:m,detail:d});
 async function ready(page){
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:50000});
-  await page.waitForFunction(()=>window.RWALiveHome?.version==='3.2.1'&&window.RWAMarketRuntime?.state?.().pairs?.length>50,{timeout:35000});
+  await page.waitForFunction(()=>window.RWALiveHome?.version==='4.0.0'&&window.RWAMarketRuntime?.state?.().pairs?.length>50,{timeout:35000});
   await page.waitForFunction(()=>document.querySelectorAll('#bids .bookrow').length>0&&document.querySelectorAll('#asks .bookrow').length>0,{timeout:30000});
   await page.waitForFunction(()=>document.querySelector('#rwaTargetOrderTicket'),{timeout:15000});
   await page.waitForTimeout(500);
@@ -41,10 +41,12 @@ async function desktop(){
   if(data.navFont<12)fail('nav font below 12px',data.navFont);
   if(data.chartH<330||data.chartH>435)fail('responsive chart height out of range',data.chartH);
   if(Math.abs(data.rightW-250)>3)fail('orderbook rail must be 250px',data.rightW);
-  if(Math.abs(data.tickerH-38)>2)fail('ticker must be 38px',data.tickerH);
+  if(Math.abs(data.tickerH-34)>2)fail('ticker must be 34px',data.tickerH);
   if(!data.buyAmount||!data.sellAmount||data.sellCopy)fail('BUY/SELL independent amounts missing',data);
   if(!data.stopDisabled)fail('unsupported Stop Limit must be disabled');
   if(!/MULTI CHAIN/.test(data.mc)||!/NETWORKS/.test(data.mc))fail('MULTI CHAIN live status missing',data.mc);
+  const liveRail=await page.locator('#liveRail').evaluate(el=>({display:getComputedStyle(el).display,width:Math.round(el.getBoundingClientRect().width),text:el.innerText}));
+  if(liveRail.display==='none'||Math.abs(liveRail.width-330)>3||!/LIVE/.test(liveRail.text)||!/TOP 3/.test(liveRail.text))fail('LIVE rail missing or invalid',liveRail);
   const parity=await page.evaluate(()=>({
     marketCardH:document.querySelector('#rwaTargetMarketCard')?.getBoundingClientRect().height||0,
     logoText:document.querySelector('.brandmark b')?getComputedStyle(document.querySelector('.brandmark b')).display:'missing',
@@ -58,8 +60,10 @@ async function desktop(){
   if(parity.priceFont<18)fail('headline price typography too small',parity);
   if(parity.sliderCount!==2)fail('functional percentage sliders missing',parity);
 
-  await page.locator('[data-rwa-target-nav="intelligence"]').click();await page.waitForSelector('#rwaTradingWorkspace:not([hidden])');
-  let nativeTxt=await page.locator('#rwaTradingWorkspace').innerText();if(!/Intelligence/.test(nativeTxt)||!/LIVE PAIRS|Top gainers/.test(nativeTxt))fail('Intelligence does not open native workspace',nativeTxt);await page.locator('[data-workspace-close]').click();
+  await page.locator('[data-rwa-target-nav="analytics"]').click();await page.waitForSelector('#rwaTradingWorkspace:not([hidden])');
+  let nativeTxt=await page.locator('#rwaTradingWorkspace').innerText();if(!/Intelligence/.test(nativeTxt)||!/LIVE PAIRS|Top gainers/.test(nativeTxt))fail('Analytics does not open native workspace',nativeTxt);await page.locator('[data-workspace-close]').click();
+  await page.locator('[data-rwa-target-nav="rewards"]').click();await page.waitForSelector('#rwaTradingWorkspace:not([hidden])');
+  nativeTxt=await page.locator('#rwaTradingWorkspace').innerText();if(!/Rewards/.test(nativeTxt)||!/No verified rewards program/.test(nativeTxt))fail('Rewards does not open native workspace',nativeTxt);await page.locator('[data-workspace-close]').click();
   await page.locator('[data-rwa-target-nav="portfolio"]').click();await page.waitForSelector('#rwaTradingWorkspace:not([hidden])');
   nativeTxt=await page.locator('#rwaTradingWorkspace').innerText();if(!/Portfolio/.test(nativeTxt)||!/Wallet required|ACCOUNT VALUE/.test(nativeTxt))fail('Portfolio does not open native workspace',nativeTxt);await page.locator('[data-workspace-close]').click();
   await page.locator('[data-rwa-target-nav="orders"]').click();await page.waitForSelector('#rwaTradingWorkspace:not([hidden])');
@@ -80,7 +84,7 @@ async function desktop(){
   const vw=await page.evaluate(()=>document.documentElement.clientWidth),vh=941,mainW=vw-290-250;
   const expect={topbar:{left:0,top:0,width:vw,height:59},layout:{left:0,top:59,width:vw,height:vh-59-38},left:{left:0,top:59,width:290,height:vh-59-38},main:{left:290,top:59,width:mainW,height:vh-59-38},right:{left:vw-250,top:59,width:250,height:vh-59-38},header:{left:290,top:59,width:mainW,height:72},footer:{left:0,top:vh-38,width:vw,height:38}};
   for(const [k,w] of Object.entries(expect)){const a=g[k];if(!a){fail('missing geometry '+k);continue}for(const p of Object.keys(w))if(Math.abs(Number(a[p])-Number(w[p]))>3)fail('placement mismatch '+k+'.'+p,{want:w[p],got:a[p],full:a})}
-  if(!g.chart||Math.abs(g.chart.top-(59+72))>4)fail('chart must begin below terminal header',g.chart);
+  if(!g.chart||Math.abs(g.chart.top-(55+67))>4)fail('chart must begin below terminal header',g.chart);
   await page.screenshot({path:proof+'/desktop-1672x941.png',fullPage:false});await ctx.close();return{data,g,note};
 }
 async function mobile(width,height,name){
