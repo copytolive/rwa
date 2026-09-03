@@ -837,3 +837,6 @@ body.rwa-terminal-v5 #rwaMobileInstrumentStrip{display:none!important;visibility
  body.rwa-terminal-v5 .rwa-v5-mini-book [data-v5-mini-rows]>div{height:23px!important}
  body.rwa-terminal-v5 .rwa-v5-mobile-quicktrade{padding-top:7px!important;padding-bottom:9px!important}
 }
+
+/* R14 ZERO-DELAY FIRST-READY CLEANUP */
+body.rwa-terminal-v5 #rwaFirstLoadStatus{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}

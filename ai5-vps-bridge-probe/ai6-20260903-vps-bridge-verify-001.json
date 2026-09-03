@@ -1,5 +1,0 @@
-{
-  "id": "ai6-20260903-vps-bridge-verify-001",
-  "requested_by": "ai6",
-  "purpose": "verify existing gold24-production SSH bridge reaches CopyToLive before guarded write"
-}

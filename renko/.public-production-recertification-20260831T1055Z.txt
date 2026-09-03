@@ -1,4 +1,0 @@
-RENKO public production recertification marker.
-Purpose: trigger a fresh same-SHA certification from the current main HEAD after unrelated repository changes.
-Runtime semantics: none.
-Evidence rule: all final RENKO gates, Pages SHA witness, browser validation, artifacts, and screenshots must refer to the commit created by this marker.

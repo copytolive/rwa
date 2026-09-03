@@ -1,8 +1,0 @@
-RENKO V12.0.0
-formation=tick-by-tick
-lock_rule=every-trade-threshold
-continuation_boxes=1
-reversal_boxes=2
-historical_source=binance-public-aggTrades
-live_source=binance-individual-@trade
-interval_control=removed

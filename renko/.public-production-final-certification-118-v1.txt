@@ -1,5 +1,0 @@
-RENKO final public production certification trigger.
-Base main before trigger: 1dc8d217dacb85c26d8b53399e23b48617d4af4d
-Purpose: run the complete RENKO closure gates once on the current main after the canonical Pages serialization/witness fix.
-Acceptance ledger: 118 controls, one candidate SHA, no mixed evidence.
-No RENKO runtime behavior is changed by this marker.

@@ -1,3 +1,0 @@
-RENKO public production recertification marker.
-Purpose: force all RENKO closure gates to certify the current main after the canonical Pages serialization/witness fix.
-No runtime behavior is changed by this marker.

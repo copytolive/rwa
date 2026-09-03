@@ -1,4 +1,0 @@
-RENKO FINAL PUBLIC PRODUCTION CLOSURE TRIGGER
-Date: 2026-08-29
-Purpose: comment-free runtime-neutral path trigger so every RENKO workflow that watches renko/** revalidates the exact final main SHA after PR #77.
-Runtime semantics changed by this file: none.

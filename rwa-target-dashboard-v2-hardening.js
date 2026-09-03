@@ -1,1 +1,0 @@
-(()=>{'use strict';if(window.RWATargetDashboardV2Hardening)return;const apply=()=>window.RWALiveHome?.apply?.();window.RWATargetDashboardV2Hardening={version:'2.2.0-live-compat',apply};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply()})();

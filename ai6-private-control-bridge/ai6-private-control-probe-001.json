@@ -1,4 +1,0 @@
-{
-  "id": "ai6-private-control-probe-001",
-  "goal": "check whether VPS can access private control repo without exposing credentials"
-}

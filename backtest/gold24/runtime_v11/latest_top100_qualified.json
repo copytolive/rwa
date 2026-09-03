@@ -1,9 +1,0 @@
-{
-  "classification": "TIER1_TIER2_QUALIFIED_NOT_ROBUSTNESS_FINAL",
-  "count": 0,
-  "policy": "GOLD_CANONICAL_V11_20260828",
-  "ranking": [],
-  "rules_sha256": "a3aadd7dd1f68fc751b8b8b1d51555c63a894e02273b5636cecb60d1d0dfba4f",
-  "schema": "gold-v11-top100-qualified",
-  "target_pf_2_to_8_count": 0
-}

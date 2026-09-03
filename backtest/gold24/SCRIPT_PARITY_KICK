@@ -1,8 +1,0 @@
-GOLD24_LATEST_SCRIPT_PARITY_KICK
-source_batch=300
-source_run_id=33609229071
-strict_count=3
-multi_count=8
-total_pairs=11
-requested_at=2026-09-02T16:42:00+07:00
-reason=certify latest batch300 selected 3 strict + 8 Multi scripts after Multi run33614883205 SUCCESS; require exact canonical Python parity, wrapper config/hash/metric parity, and native Exness MetaEditor clean compile for all 11 selected EAs

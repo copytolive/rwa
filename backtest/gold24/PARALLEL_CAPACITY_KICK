@@ -1,8 +1,0 @@
-policy=GOLD_CANONICAL_V11_20260828
-mode=CAPACITY_ONLY_NON_AUTHORITATIVE
-workers=20
-source_checkpoint=batch225_cursor22152069
-canonical_state_mutation=false
-counter_increment=0
-requested_by=user_continue_until_complete
-nonce=20260830T0518+0700

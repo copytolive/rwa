@@ -1,4 +1,0 @@
-GOLD10B current selected package certification trigger.
-Expected package: 3 STRICT + 15 MULTI = 18 exact Python/MT5 pairs.
-Canonical authority: Batch310 / run 33667987913 / 65,357 finalized configs.
-This file is a trigger only; it does not alter candidate parameters or expected metrics.

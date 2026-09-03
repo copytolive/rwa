@@ -1,8 +1,0 @@
-policy=GOLD_CANONICAL_V11_20260828
-mode=NON_CANONICAL_SIMULATION_PROBE_NO_PROMOTION
-workers=20
-source=latest_published_canonical_v11
-canonical_state_mutation=false
-counter_increment=0
-requested_by=user_continue_until_complete
-nonce=20260830T0526+0700

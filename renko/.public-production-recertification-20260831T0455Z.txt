@@ -1,4 +1,0 @@
-RENKO FINAL PUBLIC PRODUCTION RECERTIFICATION
-Purpose: trigger all RENKO fixed-1s hard gates on one fresh main SHA after XAUT v2/provider-native refresh.
-Parent before marker: cf3591664626765b532769d22651798c6c27991a
-No runtime semantics changed by this marker.

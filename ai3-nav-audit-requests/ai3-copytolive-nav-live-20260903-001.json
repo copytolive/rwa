@@ -1,8 +1,0 @@
-{
-  "id": "ai3-copytolive-nav-live-20260903-001",
-  "production": "https://copytolive.com/",
-  "screenshots": true,
-  "compare_nav_geometry": true,
-  "test_signal_back": true,
-  "cycle_routes": true
-}

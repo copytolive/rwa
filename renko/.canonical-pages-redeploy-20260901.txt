@@ -1,4 +1,0 @@
-CANONICAL_PAGES_REDEPLOY=REQUESTED
-PAGES_DEPLOY_AUTHORITY=.github/workflows/pages.yml
-RENKO_DEPLOY_WORKFLOW=VERIFY_ONLY
-PURPOSE=recertify one combined apps/realworldasset plus renko GitHub Pages artifact after removing the competing root-repository deployer
