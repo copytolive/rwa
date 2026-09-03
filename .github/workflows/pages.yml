@@ -57,11 +57,17 @@ jobs:
           test -s exchange-core.js
           grep -Fq '<strong>Real World Asset</strong>' index.html
           grep -Fq 'data-rwa-target-nav="markets"' index.html
+          ! grep -Fq 'data-rwa-target-nav="portfolio"' index.html # Market rail navigation must not live in global index topnav
+          grep -Fq 'live-rail-section-nav' rwa-live-home-v1.js
+          grep -Fq 'data-rwa-target-nav="portfolio"' rwa-live-home-v1.js
+          grep -Fq 'data-rwa-target-nav="orders"' rwa-live-home-v1.js
+          grep -Fq 'data-rwa-target-nav="analytics"' rwa-live-home-v1.js
+          grep -Fq 'data-rwa-target-nav="rewards"' rwa-live-home-v1.js
           grep -Fq 'id="fallbackChart"' index.html
           grep -Fq 'id="tvHost"' index.html
           grep -Fq 'rwaMultiChainLazyBootstrap' index.html
-          grep -Fq "rwa-live-home-v1.js?v=4.2.0" chart-core.js
-          grep -Fq "rwa-live-home-v1.css?v=4.2.0" chart-core.js
+          grep -Fq "rwa-live-home-v1.js?v=4.2.1" chart-core.js
+          grep -Fq "rwa-live-home-v1.css?v=4.2.1" chart-core.js
           ! grep -Fq "rwa-live-orderbook-v1.css" chart-core.js
           grep -Fq "openIntelligence" rwa-live-home-v1.js
           grep -Fq "openPortfolio" rwa-live-home-v1.js
