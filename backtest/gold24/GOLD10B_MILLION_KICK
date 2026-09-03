@@ -4,3 +4,5 @@ baseline evaluated=292000
 candidate gate fix merged: PF/OOS/Positive-Year/SQN are not Candidate admission filters
 Candidate Gate: Entry>=100; Net Profit>=USD20000; global Corr<=0.50
 HARD PASS 8/8 unchanged
+
+rerun_after_candidate_gate_fix=2026-09-03T20:52:00+07:00
