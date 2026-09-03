@@ -3,10 +3,13 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import random
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
+
+import numpy as np
 
 from core import Candidate, audit_dataset, pearson_log_equity, validate_candidate
 import multimethod_v1_discovery as impl
@@ -219,6 +222,18 @@ def main() -> int:
             by_exec[ex] = row
     ordered = sorted(by_exec.values(), key=impl._quality, reverse=True)
 
+    raw_pair_count = 0
+    raw_corr_violations = 0
+    raw_max_pair = {"corr_abs":0.0,"a":None,"b":None}
+    for i in range(len(ordered)):
+        for j in range(i+1,len(ordered)):
+            corr = abs(float(pearson_log_equity(bars[ordered[i]["config_hash"]], bars[ordered[j]["config_hash"]])))
+            raw_pair_count += 1
+            if corr > 0.50 + 1e-12:
+                raw_corr_violations += 1
+            if corr > raw_max_pair["corr_abs"]:
+                raw_max_pair = {"corr_abs":float(corr),"a":ordered[i]["config_hash"],"b":ordered[j]["config_hash"]}
+
     selected, rejected = [], []
     comparisons = 0
     for row in ordered:
@@ -244,6 +259,37 @@ def main() -> int:
     watch = [r for r in selected if r.get("classification") == "WATCH"]
     fail = [r for r in selected if r.get("classification") == "FAIL"]
 
+    family_counts_final = Counter(str(r["family"]) for r in selected)
+    distinct_family = len(family_counts_final)
+    max_family_concentration = max(family_counts_final.values(), default=0) / max(len(selected),1)
+
+    def portfolio_metrics(rows: list[dict], scale: float) -> dict:
+        if not rows:
+            return {"methods":0,"scale_per_strategy":float(scale),"net_profit_usd":0.0,"max_dd_pct":0.0,"ending_equity_usd":10000.0,"min_equity_usd":10000.0}
+        bp = sum((bars[r["config_hash"]] for r in rows), np.zeros(len(d),dtype=float)) * float(scale)
+        eq = 10000.0 + np.cumsum(bp)
+        peak = np.maximum.accumulate(eq)
+        dd = np.where(peak>0.0,(peak-eq)/peak*100.0,0.0)
+        return {
+            "methods":len(rows),"scale_per_strategy":float(scale),"net_profit_usd":float(bp.sum()),
+            "max_dd_pct":float(dd.max(initial=0.0)),"ending_equity_usd":float(eq[-1]),"min_equity_usd":float(eq.min()),
+        }
+
+    full_stack = portfolio_metrics(selected,1.0)
+    equal_budget = portfolio_metrics(selected,1.0/max(len(selected),1))
+    diversified = []
+    for target in range(min(10,len(selected)),5,-1):
+        cap=max(1,int(math.floor(0.25*target+1e-12))); trial=[]; counts=Counter()
+        for r in selected:
+            if counts[r["family"]] >= cap:
+                continue
+            trial.append(r); counts[r["family"]] += 1
+            if len(trial)==target:
+                break
+        if len(trial)==target and len(counts)>=6 and max(counts.values())/target <= 0.25+1e-12:
+            diversified=trial; break
+    diversified_counts=Counter(str(r["family"]) for r in diversified)
+    diversified_equal_budget=portfolio_metrics(diversified,1.0/max(len(diversified),1))
     payload = {
         "schema": "gold10b-hardpass-frequency-v4",
         "status": "PASS",
@@ -272,6 +318,9 @@ def main() -> int:
         "noncorr_7_of_7_survivors":len(new_exact),
         "global_methods_input_existing":len(input_hashes),
         "global_methods_input_with_new":len(current),
+        "global_pair_count":raw_pair_count,
+        "raw_corr_violations_gt_0_50":raw_corr_violations,
+        "raw_max_pair":raw_max_pair,
         "global_selected":len(selected),
         "global_rejected":len(rejected),
         "global_comparisons_executed":comparisons,
@@ -281,6 +330,16 @@ def main() -> int:
         "fail_global":len(fail),
         "new_hard_pass_rows":hard_new,
         "top50_primitive_near_miss":near,
+        "family_counts_final":dict(sorted(family_counts_final.items())),
+        "distinct_family":distinct_family,
+        "max_family_concentration":float(max_family_concentration),
+        "portfolio_min_6_family_gate":bool(distinct_family>=6 and max_family_concentration<=0.25+1e-12),
+        "portfolio_target_10_family_gate":bool(distinct_family>=10 and max_family_concentration<=0.25+1e-12),
+        "full_size_stack_final":full_stack,
+        "equal_budget_total_1x_final":equal_budget,
+        "diversified_subset_count":len(diversified),
+        "diversified_family_counts":dict(sorted(diversified_counts.items())),
+        "diversified_equal_budget_total_1x":diversified_equal_budget,
         "portfolio_readiness":"NOT_READY" if not hard else "HARD_PASS_FOUND_REQUIRES_SCRIPT_MT5_AND_PORTFOLIO_CERTIFICATION",
         "note":"Discovery does not confer VERIFIED. Any new HARD PASS still requires exact Python/MQ5 pair generation, native MetaEditor compile, native MT5 Strategy Tester and final portfolio validation.",
     }
