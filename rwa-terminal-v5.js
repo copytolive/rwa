@@ -58,6 +58,7 @@ function ensureHeader(){
 function ensureTargetHeaderStats(){
  const h=$('.terminal-header'),qs=h?.querySelector('.quickstats');if(!h||!qs)return;
  if(!h.querySelector('.rwa-v5-asset-badges')){const copy=h.querySelector('.instrument-copy');if(copy){const badges=document.createElement('div');badges.className='rwa-v5-asset-badges';badges.innerHTML='<span data-v5-asset-kind>Spot</span><span data-v5-asset-network>Live Market</span>';copy.appendChild(badges)}}
+ const acts=h.querySelector('.instrument-actions');if(acts&&!acts.querySelector('[data-v5-mobile-wallet]')){const b=document.createElement('button');b.type='button';b.dataset.v5MobileWallet='1';b.setAttribute('aria-label','Connect wallet');b.textContent='◎';acts.appendChild(b)}
  if(!qs.querySelector('[data-v5-stat="market-cap"]')){const mk=document.createElement('div');mk.className='qstat rwa-v5-extra-stat';mk.dataset.v5Stat='market-cap';mk.innerHTML='<small>Market Cap</small><b>—</b>';qs.appendChild(mk)}
  if(!qs.querySelector('[data-v5-stat="liquidity"]')){const li=document.createElement('div');li.className='qstat rwa-v5-extra-stat';li.dataset.v5Stat='liquidity';li.innerHTML='<small>Liquidity</small><b>—</b>';qs.appendChild(li)}
  if(!qs.querySelector('[data-v5-stat="holders"]')){const ho=document.createElement('div');ho.className='qstat rwa-v5-extra-stat';ho.dataset.v5Stat='holders';ho.innerHTML='<small>Holders</small><b>—</b>';qs.appendChild(ho)}
@@ -346,6 +347,7 @@ function bind(){
   const mode=e.target.closest('[data-v5-mobile-mode]');if(mode){setMobile(mode.dataset.v5MobileMode);return}
   const side=e.target.closest('[data-v5-side]');if(side){e.preventDefault();setTradeSide(side.dataset.v5Side);return}
   const ttab=e.target.closest('[data-v5-trade-tab]');if(ttab){ttab.dataset.v5TradeTab==='alerts'?openAlerts():openTrade();return}
+  const mobileWallet=e.target.closest('[data-v5-mobile-wallet]');if(mobileWallet){e.preventDefault();$('.top-actions .signin')?.click();return}
   const act=e.target.closest('[data-v5-action]');if(act){if(act.dataset.v5Action==='alerts')openAlerts();if(act.dataset.v5Action==='network')$('#rwaMultiChainLaunch')?.click();if(act.dataset.v5Action==='open-markets')openMarketsMobile();if(act.dataset.v5Action==='close-markets')closeMarketsMobile();return}
   const mn=e.target.closest('[data-v5-mobile-nav]');if(mn){const k=mn.dataset.v5MobileNav;qa('[data-v5-mobile-nav]').forEach(x=>x.classList.toggle('active',x===mn));if(k==='home')setMobile('feed');if(k==='markets')openMarketsMobile();if(k==='trade')setMobile('trade');if(k==='portfolio'){setBottom('portfolio');setMobile('workspace')}if(k==='profile')$('.signin')?.click();return}
   const dir=e.target.closest('[data-v5-alert-dir]');if(dir){qa('[data-v5-alert-dir]').forEach(x=>x.classList.toggle('active',x===dir));return}
