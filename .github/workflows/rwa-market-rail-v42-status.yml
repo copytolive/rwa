@@ -1,0 +1,68 @@
+name: RWA Market Rail V42 Status
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/rwa-market-rail-v42-status.yml"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    env:
+      TARGET_SHA: 4a7bf8a4df33ea1c719df714479be79ebed661ed
+      GH_TOKEN: ${{ github.token }}
+      OUT: validation/market-rail-v42-20260903/status.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Wait and export exact-SHA workflow state
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "$OUT")"
+          names='["Deploy Real World Asset Target V4","RWA Target V4 Browser Gate","Real World Asset V4 Public Page-by-Page Audit","RWA Root Market Stability","Real World Asset V4 UI Final"]'
+          done_flag=0
+          for i in $(seq 1 80); do
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$TARGET_SHA&per_page=100" > /tmp/runs.json
+            jq --argjson names "$names" '{
+              target_sha: env.TARGET_SHA,
+              observed_at:(now|todateiso8601),
+              workflows:[
+                .workflow_runs[]
+                | select(.name as $n | $names | index($n))
+                | {name,id,status,conclusion,head_sha,event,run_attempt,html_url,created_at,updated_at}
+              ]
+            }' /tmp/runs.json > "$OUT"
+            count="$(jq '.workflows | map(.name) | unique | length' "$OUT")"
+            pending="$(jq '[.workflows[] | select(.status!="completed")] | length' "$OUT")"
+            echo "attempt=$i count=$count pending=$pending"
+            if [ "$count" -ge 5 ] && [ "$pending" -eq 0 ]; then done_flag=1; break; fi
+            sleep 15
+          done
+          jq '. + {complete: ((.workflows | map(.name) | unique | length) >= 5 and ([.workflows[] | select(.status!="completed")] | length)==0), all_success: ((.workflows | map(.name) | unique | length) >= 5 and ([.workflows[] | select(.conclusion!="success")] | length)==0)}' "$OUT" > "$OUT.tmp"
+          mv "$OUT.tmp" "$OUT"
+          cat "$OUT"
+
+      - name: Publish status snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "rwa-market-rail-status-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add "$OUT"
+          git commit -m "chore(validation): publish Market rail v4.2 exact-SHA status [skip ci]"
+          for i in $(seq 1 10); do
+            git fetch origin main
+            if git rebase origin/main && git push origin HEAD:main; then exit 0; fi
+            git rebase --abort || true
+            sleep $((i*3))
+          done
+          exit 1
