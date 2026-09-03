@@ -85,7 +85,7 @@ jobs:
           grep -Fq "keepMarketRoute" rwa-live-home-v1.js
           grep -Fq "RWATerminalV5" rwa-live-home-v1.js
           grep -Fq "rwa-terminal-v5.js?v=1.0.23" chart-core.js
-          grep -Fq "rwa-terminal-v5.css?v=1.0.13" chart-core.js
+          grep -Fq "rwa-terminal-v5.css?v=1.0.14" chart-core.js
           grep -Fq "data-v5-nav=\"discover\"" rwa-terminal-v5.js
           grep -Fq 'data-v5-global="trade"' rwa-terminal-v5.js
           grep -Fq 'data-v5-global="discover"' rwa-terminal-v5.js
