@@ -47,7 +47,7 @@ async function open(browser,width,height){
   const page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(String(e?.message||e)));
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:25000});
-  await page.waitForFunction(()=>window.RWALiveHome?.version==='4.1.0'&&window.RWAMarketRuntime?.version==='1.4.2'&&window.RWAMarketRuntime.state().pairs.length===520,{timeout:20000});
+  await page.waitForFunction(()=>window.RWALiveHome?.version==='4.1.0'&&window.RWAMarketRuntime?.version==='1.4.3'&&window.RWAMarketRuntime.state().pairs.length===520,{timeout:20000});
   await page.waitForFunction(()=>document.querySelectorAll('#bids .bookrow').length>=5&&document.querySelectorAll('#asks .bookrow').length>=5,{timeout:15000});
   await page.waitForTimeout(250);
   return {context,page,errors};
@@ -146,5 +146,5 @@ async function mobile(browser,width,height){
 const browser=await chromium.launch({headless:true});
 try{
   const result={desktop:await desktop(browser),compact:await compact(browser),mobile390:await mobile(browser,390,844),mobile430:await mobile(browser,430,932)};
-  console.log(JSON.stringify({ok:true,contract:'rwa-root-market-stability-v6-trading-only',result},null,2));
+  console.log(JSON.stringify({ok:true,contract:'rwa-root-market-stability-v7-target-v4',result},null,2));
 }finally{await browser.close()}
