@@ -34,16 +34,6 @@ jobs:
           python-version: '3.12'
       - name: Install dependencies
         run: python -m pip install -r backtest/gold24/requirements.txt
-      - name: Restore authoritative canonical D1
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          rm -rf .hardpass-state
-          mkdir -p .hardpass-state
-          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" -n "$STATE_ARTIFACT" -D .hardpass-state
-          test -s .hardpass-state/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv
-          test -s .hardpass-state/gate_a/gate_a_receipt.json
       - name: Refuse stale targeted generation before expensive discovery
         run: |
           set -euo pipefail
@@ -66,6 +56,17 @@ jobs:
           else
             echo "SKIP_TARGETED=false" >> "$GITHUB_ENV"
           fi
+      - name: Restore authoritative canonical D1
+        if: env.SKIP_TARGETED != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -rf .hardpass-state
+          mkdir -p .hardpass-state
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" -n "$STATE_ARTIFACT" -D .hardpass-state
+          test -s .hardpass-state/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv
+          test -s .hardpass-state/gate_a/gate_a_receipt.json
       - name: Run targeted hard-pass discovery without threshold relaxation
         if: env.SKIP_TARGETED != 'true'
         run: |
