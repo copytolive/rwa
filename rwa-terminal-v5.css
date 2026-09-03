@@ -512,3 +512,17 @@ body.rwa-terminal-v5 .rwa-v5-bottom-body{height:calc(100% - 39px)!important;back
  body.rwa-terminal-v5 .topbar>.top-actions{pointer-events:auto!important}
  body.rwa-terminal-v5 #liveRail>.rwa-v5-market-nav{z-index:2147482000!important;pointer-events:auto!important}
 }
+
+
+/* R4 MOBILE MARKET CLOSE + AUTHORITATIVE HOLDER BADGE */
+#rwaV5MarketsClose{display:none!important}
+.rwa-v5-source-gated{height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid var(--v5-target-line);background:#06131f;color:#7f91a6;font-size:7px}
+.rwa-v5-source-gated b{color:var(--v5-target-green);font-size:7px;letter-spacing:.25px}
+@media(max-width:680px){
+ body.rwa-terminal-v5.rwa-v5-mobile-markets>#rwaV5MarketsClose{
+  display:grid!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;place-items:center!important;
+  position:fixed!important;right:10px!important;top:10px!important;z-index:2147483000!important;width:38px!important;height:38px!important;
+  border:1px solid #2a4057!important;border-radius:50%!important;background:#081522!important;color:#d7e1ee!important;
+  font:500 22px/1 system-ui!important;box-shadow:0 8px 24px #0009!important
+ }
+}
