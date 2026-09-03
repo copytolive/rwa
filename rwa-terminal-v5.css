@@ -736,4 +736,6 @@ body.rwa-terminal-v5 .rwa-v5-header-more{top:49px!important;right:0!important;le
  body.rwa-terminal-v5 .rwa-v5-footer{display:none!important}
 }
 /* R7 AGREED IMAGE PARITY END */
+/* R9 MOBILE OVERLAY BLOCKER REMOVAL */
+body.rwa-terminal-v5 #rwaMobileInstrumentStrip{display:none!important;visibility:hidden!important;pointer-events:none!important}
 
