@@ -14,6 +14,10 @@ permissions:
   contents: write
   actions: read
 
+concurrency:
+  group: gold10b-broker-native-h4-discovery
+  cancel-in-progress: true
+
 jobs:
   fetch_broker_native_h4:
     runs-on: windows-2022
@@ -39,11 +43,21 @@ jobs:
           python -m pip install 'git+https://github.com/rongardF/tvdatafeed.git'
           $setup=Join-Path $env:RUNNER_TEMP 'exness5setup.exe'
           Invoke-WebRequest -UseBasicParsing 'https://download.terminal.free/cdn/web/exness.technologies.ltd/mt5/exness5setup.exe' -OutFile $setup
-          Start-Process -FilePath $setup -ArgumentList '/auto' -Wait
-          Start-Sleep -Seconds 12
-          $c=@();foreach($r in @('C:\Program Files','C:\Program Files (x86)',"$env:LOCALAPPDATA\Programs")){if(Test-Path $r){$c+=Get-ChildItem $r -Filter terminal64.exe -File -Recurse -ErrorAction SilentlyContinue}}
-          $terminal=($c|Sort-Object LastWriteTime -Descending|Select-Object -First 1).FullName
-          if([string]::IsNullOrWhiteSpace($terminal)){throw 'terminal64.exe not found'}
+          $installer=Start-Process -FilePath $setup -ArgumentList '/auto' -PassThru
+          $terminal=$null
+          $deadline=(Get-Date).AddMinutes(4)
+          do {
+            Start-Sleep -Seconds 10
+            $c=@();foreach($r in @('C:\Program Files','C:\Program Files (x86)',"$env:LOCALAPPDATA\Programs")){if(Test-Path $r){$c+=Get-ChildItem $r -Filter terminal64.exe -File -Recurse -ErrorAction SilentlyContinue}}
+            if($c.Count -gt 0){$terminal=($c|Sort-Object LastWriteTime -Descending|Select-Object -First 1).FullName}
+            if(-not [string]::IsNullOrWhiteSpace($terminal)){break}
+          } while((-not $installer.HasExited) -and (Get-Date) -lt $deadline)
+          if(-not $installer.HasExited){Stop-Process -Id $installer.Id -Force -ErrorAction SilentlyContinue}
+          if([string]::IsNullOrWhiteSpace($terminal)){
+            $c=@();foreach($r in @('C:\Program Files','C:\Program Files (x86)',"$env:LOCALAPPDATA\Programs")){if(Test-Path $r){$c+=Get-ChildItem $r -Filter terminal64.exe -File -Recurse -ErrorAction SilentlyContinue}}
+            if($c.Count -gt 0){$terminal=($c|Sort-Object LastWriteTime -Descending|Select-Object -First 1).FullName}
+          }
+          if([string]::IsNullOrWhiteSpace($terminal)){throw 'terminal64.exe not found after bounded installer bootstrap'}
           "MT5_TERMINAL=$terminal"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Fetch independent TradingView OANDA native H4 crosscheck fresh
         shell: powershell
