@@ -76,7 +76,7 @@ jobs:
           grep -Fq "rwa-terminal-v5.js?v=1.0.20" chart-core.js
           ! grep -Fq 'id="rwaV5FirstPaintShell"' index.html
           grep -Fq "rwa-terminal-service.js?v=1.0.0" chart-core.js
-          grep -Fq "rwa-terminal-v5.css?v=1.0.10" chart-core.js
+          grep -Fq "rwa-terminal-v5.css?v=1.0.11" chart-core.js
           grep -Fq "RWATerminalV5" rwa-terminal-v5.js
           grep -Fq 'data-v5-global="markets"' rwa-terminal-v5.js
           grep -Fq 'rwa-v5-market-nav' rwa-terminal-v5.js
