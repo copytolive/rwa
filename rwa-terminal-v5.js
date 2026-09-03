@@ -59,6 +59,7 @@ function ensureHeader(){
 function ensureTargetHeaderStats(){
  const h=$('.terminal-header'),qs=h?.querySelector('.quickstats');if(!h||!qs)return;
  if(!h.querySelector('.rwa-v5-asset-badges')){const copy=h.querySelector('.instrument-copy');if(copy){const badges=document.createElement('div');badges.className='rwa-v5-asset-badges';badges.innerHTML='<span data-v5-asset-kind>Spot</span><span data-v5-asset-network>Live Market</span>';copy.appendChild(badges)}}
+ if(!h.querySelector('.rwa-v5-mobile-price')){const copy=h.querySelector('.instrument-copy');if(copy){const m=document.createElement('div');m.className='rwa-v5-mobile-price';m.innerHTML='<b data-v5-mobile-price>—</b><span data-v5-mobile-change>—</span>';copy.appendChild(m)}}
  const acts=h.querySelector('.instrument-actions');if(acts&&!acts.querySelector('[data-v5-mobile-wallet]')){const b=document.createElement('button');b.type='button';b.dataset.v5MobileWallet='1';b.setAttribute('aria-label','Connect wallet');b.textContent='◎';acts.appendChild(b)}
  if(!qs.querySelector('[data-v5-stat="market-cap"]')){const mk=document.createElement('div');mk.className='qstat rwa-v5-extra-stat';mk.dataset.v5Stat='market-cap';mk.innerHTML='<small>Market Cap</small><b>—</b>';qs.appendChild(mk)}
  if(!qs.querySelector('[data-v5-stat="liquidity"]')){const li=document.createElement('div');li.className='qstat rwa-v5-extra-stat';li.dataset.v5Stat='liquidity';li.innerHTML='<small>Liquidity</small><b>—</b>';qs.appendChild(li)}
@@ -72,6 +73,9 @@ function renderTargetHeaderStats(){
  ensureTargetHeaderStats();const p=pair(),fmt=window.RWAMarketRuntime?.format;
  const kind=$('[data-v5-asset-kind]'),net=$('[data-v5-asset-network]');
  if(kind)kind.textContent=p.rwa?'RWA':'Spot';if(net)net.textContent=p.rwa?'Real World Asset':'Live Market';
+ const mp=$('[data-v5-mobile-price]'),mc=$('[data-v5-mobile-change]'),fmt=window.RWAMarketRuntime?.format;
+ if(mp)mp.textContent=fmt?.price?.(p.price)||money(p.price);
+ if(mc){mc.textContent=pct(p.change);mc.className=num(p.change)>=0?'pos':'neg'}
  const cap=$('[data-v5-stat="market-cap"] b'),liq=$('[data-v5-stat="liquidity"] b'),hold=$('[data-v5-stat="holders"] b');
  if(cap)cap.textContent='—';if(liq)liq.textContent='—';
  if(hold){const h=serverHolders;hold.textContent=h?.available&&Array.isArray(h.holders)?Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1}).format(h.holders.length):'—'}
