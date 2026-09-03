@@ -21,7 +21,7 @@ window.addEventListener('resize',queueDraw,{passive:true});window.addEventListen
     const l=document.createElement('link');l.rel='stylesheet';l.href=href;l.dataset[`rwaTarget${key[0].toUpperCase()+key.slice(1)}`]='1';document.head.appendChild(l)
   }
   if(!document.querySelector('link[data-rwa-target-livehome]')){const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-live-home-v1.css?v=5.0.0';l.dataset.rwaTargetLivehome='1';document.head.appendChild(l)}
-  if(!window.RWALiveHome)await import('./rwa-live-home-v1.js?v=5.0.1');
+  if(!window.RWALiveHome)await import('./rwa-live-home-v1.js?v=5.0.2');
   if(!window.RWATerminalService)await import('./rwa-terminal-service.js?v=1.0.0');
   document.querySelectorAll('link[data-rwa-terminal-v5]').forEach(x=>x.remove());
   {const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-terminal-v5.css?v=1.0.4';l.dataset.rwaTerminalV5='1';document.head.appendChild(l)}
