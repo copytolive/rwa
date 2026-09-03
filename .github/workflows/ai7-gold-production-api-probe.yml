@@ -1,0 +1,49 @@
+name: AI7 GOLD Production API Probe
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "backtest/gold24/AI7_API_PROBE_KICK"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Query production trading API
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          BASE="http://109.123.239.76:8000"
+          curl -fsSL --retry 3 "$BASE/trading/farm/strategies?pair=GOLD&timeframe=H1&limit=500" -o out/farm-gold-h1.json
+          for ID in             ND_MTF_LINREG_SLP_f21s55_GOLD_H1_SL0.025_TP2.5             ND_ALL_OBV_CROSS_f8s21_GOLD_H1_SL0.025_TP2.0             ND_ALL_BB_SQZ_f13s34_GOLD_H1_SL0.012_TP3.0; do
+            curl -fsSL --retry 3 "$BASE/trading/farm/strategies/$ID" -o "out/$ID.json"
+          done
+          for SYM in GOLD XAUUSD; do
+            curl -fsSL --retry 3 "$BASE/trading/market-data/ohlcv/FOREX/$SYM?tf=1h&limit=50000" -o "out/ohlcv-$SYM-h1.json" || true
+          done
+          python3 - <<'PY'
+          import json,pathlib
+          for p in sorted(pathlib.Path("out").glob("*.json")):
+              try:
+                  x=json.loads(p.read_text())
+                  print(p.name, type(x).__name__, (len(x) if hasattr(x,"__len__") else ""))
+                  if isinstance(x,dict):
+                      print("keys", list(x)[:80])
+              except Exception as e:
+                  print(p.name,"PARSE_ERR",e)
+          PY
+      - name: Upload probe
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai7-gold-production-api-probe-${{ github.run_id }}
+          path: out
+          if-no-files-found: error
+          retention-days: 30
