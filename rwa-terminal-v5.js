@@ -21,6 +21,10 @@ function favorites(){return store.get(LS.fav,[]).filter(Boolean)}
 function theses(){return store.get(LS.thesis,[]).filter(Boolean)}
 function alerts(){return store.get(LS.alerts,[]).filter(Boolean)}
 function setActive(selector,value,attr='v5Nav'){qa(selector).forEach(b=>b.classList.toggle('active',b.dataset[attr]===value))}
+function unlockLegacyGeometry(){
+ const props=['position','inset','left','right','top','bottom','width','min-width','max-width','height','min-height','max-height','display','grid-template-columns','grid-template-rows','overflow','margin','padding','transform','box-sizing'];
+ for(const el of [document.documentElement,document.body,$('.app'),$('.topbar'),$('.layout'),$('.left'),$('.main'),$('.right'),$('#liveRail')].filter(Boolean))for(const p of props)el.style.removeProperty(p)
+}
 function ensureHeader(){
  const nav=$('.topnav');if(nav&&nav.dataset.v5!=='1'){nav.dataset.v5='1';nav.innerHTML='<button data-v5-nav="trade" class="active">Trade</button><button data-v5-nav="discover">Discover</button><button data-v5-nav="portfolio">Portfolio</button><button data-v5-nav="analytics">Analytics</button><button data-v5-nav="rewards">Rewards</button><button data-v5-nav="more" aria-haspopup="menu">More⌄</button><div class="rwa-v5-more" data-v5-more-menu hidden><button data-v5-bottom="holders">Holders</button><button data-v5-bottom="feed">Feed</button><button data-v5-bottom="thesis">Thesis</button><button data-v5-bottom="history">History</button><button data-v5-action="alerts">Alerts</button><button data-v5-action="network">Network</button></div>'}
  const top=$('.topbar');if(top&&!$('#rwaV5GlobalSearch')){const box=document.createElement('div');box.id='rwaV5GlobalSearch';box.className='rwa-v5-search';box.innerHTML='<span>⌕</span><input type="search" autocomplete="off" placeholder="Search tokens or markets…" aria-label="Search tokens or markets"><kbd>⌘K</kbd><div class="rwa-v5-search-results" hidden></div>';top.insertBefore(box,$('.top-actions'));const input=box.querySelector('input');input.addEventListener('input',renderSearch);input.addEventListener('focus',renderSearch);input.addEventListener('keydown',e=>{if(e.key==='Escape'){box.querySelector('.rwa-v5-search-results').hidden=true;input.blur()}})}
@@ -154,7 +158,7 @@ function orderBookClick(e){const row=e.target.closest('.bookrow');if(!row||!$('#
 function renderStatus(){
  const p=pair();if(lastPair!==p.symbol){lastPair=p.symbol;renderFavorite();renderMiniBook();if(bottomMode==='analytics'||bottomMode==='feed'||bottomMode==='discover')renderBottom()}
  const ex=exchange(),stamp=num(ex?.lastUpdated);if(stamp&&stamp!==lastExchangeStamp){lastExchangeStamp=stamp;if(['positions','orders','portfolio','history'].includes(bottomMode))renderBottom()}
- renderLeft();renderMiniBook();renderAlertCount()
+ renderLeft();renderMiniBook();renderAlertCount();renderFooter()
 }
 function ensureFooter(){
  if($('#rwaV5Footer'))return;const f=document.createElement('footer');f.id='rwaV5Footer';f.className='rwa-v5-footer';document.body.appendChild(f);renderFooter()
@@ -165,6 +169,7 @@ function apply(){
 }
 function bind(){
  document.addEventListener('click',e=>{
+  const lockSign=e.target.closest('.rwa-v5-lock .signin');if(lockSign){e.preventDefault();$('.top-actions .signin')?.click();return}
   const nav=e.target.closest('[data-v5-nav]');if(nav){e.preventDefault();e.stopPropagation();navigate(nav.dataset.v5Nav);return}
   const left=e.target.closest('[data-v5-left]');if(left){leftMode=left.dataset.v5Left;renderLeft();return}
   const sym=e.target.closest('[data-v5-symbol]');if(sym){window.RWAMarketRuntime?.selectPair?.(sym.dataset.v5Symbol,false);if(innerWidth<681)closeMarketsMobile();return}
@@ -191,6 +196,6 @@ function bind(){
  window.addEventListener('rwa:exchange-state',()=>renderStatus())
 }
 function boot(){apply();bind();renderBottom();clearInterval(renderTimer);renderTimer=setInterval(renderStatus,1000);clearInterval(alertTimer);alertTimer=setInterval(monitorAlerts,1000);window.dispatchEvent(new CustomEvent('rwa:terminal-v5-ready',{detail:{version:VERSION}}))}
-window.RWATerminalV5={version:VERSION,active:true,apply,navigate,setBottom,setMobile,openAlerts,openTrade,toggleFavorite,share,audit:()=>({version:VERSION,route:location.hash||'#markets,',leftMode,bottomMode,mobileMode,tradeSide,globalNav:qa('.topnav [data-v5-nav]').map(x=>x.dataset.v5Nav),bottomTabs:qa('#rwaV5Bottom [data-v5-bottom]').map(x=>x.dataset.v5Bottom),railTrade:$('#liveRail')?.dataset.v5Trade==='1',orderTicketInside:!!$('#liveRail #rwaTargetOrderTicket'),favorites:favorites().length,alerts:alerts().length,theses:theses().length})};
+window.RWATerminalV5={version:VERSION,active:true,apply,navigate,setBottom,setMobile,openAlerts,openTrade,toggleFavorite,share,audit:()=>({version:VERSION,route:location.hash||'#markets',leftMode,bottomMode,mobileMode,tradeSide,globalNav:qa('.topnav [data-v5-nav]').map(x=>x.dataset.v5Nav),bottomTabs:qa('#rwaV5Bottom [data-v5-bottom]').map(x=>x.dataset.v5Bottom),railTrade:$('#liveRail')?.dataset.v5Trade==='1',orderTicketInside:!!$('#liveRail #rwaTargetOrderTicket'),favorites:favorites().length,alerts:alerts().length,theses:theses().length})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
