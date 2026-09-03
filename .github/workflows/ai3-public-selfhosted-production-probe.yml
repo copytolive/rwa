@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - "ai3-public-selfhosted-probe/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "ai3-public-selfhosted-probe/**"
 
 permissions:
   contents: write
