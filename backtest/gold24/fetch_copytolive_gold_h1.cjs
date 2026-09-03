@@ -44,7 +44,7 @@ function timestampMs(x) {
 }
 
 (async () => {
-  const [, , outPath, d1OutPath, fromIso = '2003-05-05', toIso = '2026-04-29'] = process.argv;
+  const [, , outPath, d1OutPath, fromIso = '2003-05-05', toIso = '2026-05-01'] = process.argv;
   if (!outPath || !d1OutPath) {
     console.error('usage: node fetch_copytolive_gold_h1.cjs <h1-output.csv> <d1-output.csv> [from] [to-exclusive]');
     process.exit(2);
@@ -54,11 +54,10 @@ function timestampMs(x) {
   const end = utcDate(toIso);
   if (!(start < end)) throw new Error('invalid date window');
 
-  // The original production CSV snapshot contains market-session M1 bars,
-  // not Dukascopy's synthetic flat/weekend filler. The converter itself does
-  // not delete flat bars because they were already absent from that snapshot.
-  // Use ignoreFlats=true when rebuilding the historical source through the API.
-  const ignoreFlats = String(process.env.COPYTOLIVE_IGNORE_FLATS || 'true').toLowerCase() === 'true';
+  // The production source is explicitly a "No Session" Dukascopy M1 snapshot.
+  // Preserve flat/weekend filler when rebuilding the source so the positional
+  // H1/D1 alignment and the producer's n//D1 mapping stay canonical.
+  const ignoreFlats = String(process.env.COPYTOLIVE_IGNORE_FLATS || 'false').toLowerCase() === 'true';
   const chunkMonths = Math.max(1, Number(process.env.COPYTOLIVE_M1_CHUNK_MONTHS || 12));
 
   const hours = new Map();
