@@ -14,7 +14,6 @@ function boot(){const host=$('tvHost');if(host){host.style.transition='opacity .
 window.addEventListener('resize',queueDraw,{passive:true});window.addEventListener('visibilitychange',()=>{if(!document.hidden){queueDraw();const h=$('tvHost');if(h&&!h.querySelector('iframe'))openTradingView(false)}});window.RWAChartCore={openTradingView,liveCandle,redraw:queueDraw};boot();
 })();
 /* RWA_UI_LAYOUT_INTEGRITY_V16_2_BOOTSTRAP */
-(()=>{if(document.querySelector('script[data-rwa-ui-layout-v15]'))return;const s=document.createElement('script');s.src='ui-layout-integrity-v15.js?v=16.2';s.async=false;s.dataset.rwaUiLayoutV15='1';s.onerror=()=>console.error('RWA UI Layout Integrity V16.2 failed to load');document.head.appendChild(s)})();
 /* RWA_TARGET_DASHBOARD_V2_TRADING_ONLY */
 (async()=>{try{
   for(const[key,href]of[['v2','rwa-target-dashboard-v2.css?v=2.0.0']]){
