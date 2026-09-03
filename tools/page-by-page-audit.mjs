@@ -9,6 +9,7 @@ async function root(page){
  await page.goto(base,{waitUntil:'domcontentloaded',timeout:50000});
  await page.waitForFunction(()=>window.RWALiveHome?.version==='5.0.0'&&window.RWATerminalV5?.version==='1.0.0'&&window.RWAMarketRuntime?.state?.().pairs?.length>50,{timeout:50000});
  await page.waitForFunction(()=>document.querySelector('#liveRail #rwaTargetOrderTicket')&&document.querySelectorAll('#asks .bookrow').length>=5,{timeout:30000});
+ await page.waitForFunction(()=>{const t=document.querySelector('#statPrice')?.textContent||'';const n=Number(t.replace(/,/g,'').replace(/[^0-9.-]/g,''));return Number.isFinite(n)&&n>0},{timeout:30000});
  await page.waitForTimeout(0);
 }
 async function snap(page,name){await page.waitForTimeout(0);const path=proof+'/'+name+'.png';try{await page.screenshot({path,fullPage:false,timeout:12000})}catch{const cdp=await page.context().newCDPSession(page);try{const out=await cdp.send('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});await writeFile(path,Buffer.from(out.data,'base64'))}finally{await cdp.detach().catch(()=>{})}}}
