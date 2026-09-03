@@ -18,5 +18,8 @@ crons = ["* * * * *"]
 
 [vars]
 RWA_CONTROL_URL = "https://narzulalistiqlal.github.io/rwa/agent-worker/control.json"
-RWA_ALLOWED_ORIGINS = "https://narzulalistiqlal.github.io"
+RWA_ALLOWED_ORIGINS = "https://copytolive.github.io,https://copytolive.com,https://narzulalistiqlal.github.io"
 RWA_RISK_JSON = "{\"dailyLoss\":250,\"maxLeverage\":5,\"maxExposure\":5000,\"perAsset\":2000,\"kill\":false}"
+
+RWA_REWARD_PROGRAM = "{\"active\":false,\"name\":\"RWA Rewards\",\"rates\":{\"post\":0,\"comment\":0,\"alert_trigger\":0}}"
+RWA_HOLDER_SOURCES = "{}"
