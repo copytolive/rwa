@@ -54,10 +54,15 @@ async function trigger({coin,side,size,triggerPx,tpsl}){
  throw Error('TP/SL execution API unavailable');
 }
 async function submit(o={}){
- const coin=normalizeCoin(o.coin),side=String(o.side||'BUY').toUpperCase()==='SELL'?'SELL':'BUY',kind=String(o.type||'MARKET').toUpperCase()==='LIMIT'?'LIMIT':'MARKET';
- const size=n(o.size),lev=Math.max(1,Math.floor(n(o.leverage,1))),price=n(o.price),tp=n(o.tp),sl=n(o.sl);if(!(size>0))throw Error('Size must be greater than zero');if(kind==='LIMIT'&&!(price>0))throw Error('Limit price is required');
+ const coin=normalizeCoin(o.coin),side=String(o.side||'BUY').toUpperCase()==='SELL'?'SELL':'BUY',rawKind=String(o.type||'MARKET').toUpperCase(),kind=rawKind==='LIMIT'?'LIMIT':rawKind==='STOP'?'STOP':'MARKET';
+ const size=n(o.size),lev=Math.max(1,Math.floor(n(o.leverage,1))),price=n(o.price),tp=n(o.tp),sl=n(o.sl);if(!(size>0))throw Error('Size must be greater than zero');if((kind==='LIMIT'||kind==='STOP')&&!(price>0))throw Error(kind==='STOP'?'Stop price is required':'Limit price is required');if(kind==='STOP'&&(tp>0||sl>0))throw Error('Attach TP/SL after the Stop entry triggers; atomic TP/SL on an unfilled Stop entry is not enabled');
  return withSubmit(async()=>{
   const a=api(),common={coin,side,size,reduceOnly:!!o.reduceOnly,leverage:lev,testnet:testnet(),preferAgent:true};
+  if(kind==='STOP'){
+   if(!a?.orders?.trigger)throw Error('Stop Market execution API unavailable');
+   const entry=await a.orders.trigger({...common,triggerPx:price,tpsl:'sl',reduceOnly:false,isMarket:true});
+   return{entry,protection:[],atomic:false,waitingForTrigger:true};
+  }
   if(tp>0||sl>0){
    if(!a?.orders?.bracket||a?.bracket!=='atomic-normal-tpsl-v1')throw Error('Atomic TP/SL bracket API unavailable');
    const bracket=await a.orders.bracket({coin,side,size,type:kind,price:kind==='LIMIT'?price:null,tp:tp||null,sl:sl||null,tif:o.tif||'Gtc',leverage:lev,testnet:testnet(),preferAgent:true});
@@ -66,7 +71,7 @@ async function submit(o={}){
   }
   const entry=kind==='MARKET'?await a.orders.market(common):await a.orders.limit({...common,price,tif:o.tif||'Gtc'});
   return{entry,protection:[],atomic:false};
- },{coin,side,kind,size,leverage:lev,env:state.env,tp:tp||null,sl:sl||null,atomic:tp>0||sl>0});
+ },{coin,side,kind,size,leverage:lev,env:state.env,tp:tp||null,sl:sl||null,atomic:kind!=='STOP'&&(tp>0||sl>0)});
 }
 async function cancel(coin,oid){return withSubmit(()=>api().orders.cancel({coin:normalizeCoin(coin),oid:Number(oid),testnet:testnet(),preferAgent:true}),{action:'cancel',coin,oid,env:state.env})}
 async function cancelAll(){return withSubmit(()=>api().orders.cancelAll({testnet:testnet(),preferAgent:true}),{action:'cancelAll',env:state.env})}
@@ -82,6 +87,6 @@ async function preflight(){await refreshLaunchGate(true);const out={env:state.en
 }
 function start(){clearInterval(state.poll);if(localStorage.getItem(ENV_KEY)==='mainnet')localStorage.setItem(ENV_KEY,'testnet');state.env='testnet';refreshLaunchGate(true).finally(()=>refresh());state.poll=setInterval(()=>{if(document.visibilityState==='visible'){refreshLaunchGate();if(wallet())refresh({silent:true})}},2500)}
 window.addEventListener('rwa:wallet-login',()=>{state.wallet=wallet();if(!mainnetUnlocked()&&state.env!=='testnet')setEnv('testnet');else refresh()});window.addEventListener('rwa:wallet-logout',()=>{state.wallet='';state.env='testnet';localStorage.setItem(ENV_KEY,'testnet');refresh()});window.addEventListener('rwa:agent-changed',()=>refresh({silent:true}));document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh({silent:true})});
-window.RWAExchangeCore={version:'1.1.0',safety:'wallet-and-global-launch-gate-v3',protection:'atomic-normal-tpsl-v1',state:()=>snapshotLocal(),refresh,refreshLaunchGate,setEnv,testnet,localE2EVerified,globalMainnetReady,mainnetUnlocked,selectedCoin,submit,cancel,cancelAll,modify,closePosition,preflight,start};
+window.RWAExchangeCore={version:'1.2.0',safety:'wallet-and-global-launch-gate-v3',protection:'atomic-normal-tpsl-v1',state:()=>snapshotLocal(),refresh,refreshLaunchGate,setEnv,testnet,localE2EVerified,globalMainnetReady,mainnetUnlocked,selectedCoin,submit,cancel,cancelAll,modify,closePosition,preflight,start};
 start();
 })();
