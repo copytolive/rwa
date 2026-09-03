@@ -1,0 +1,65 @@
+name: AI7 Unified CopyToLive Backtest Engine
+
+on:
+  push:
+    branches:
+      - ai7-unified-backtest-engine-20260903
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'backtest/gold24/copytolive_unified_engine.py'
+      - 'backtest/gold24/copytolive_compat.py'
+      - 'backtest/gold24/copytolive_active_replay.py'
+      - 'backtest/gold24/test_copytolive_unified_engine.py'
+      - '.github/workflows/ai7-unified-backtest-engine.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install runtime
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install 'numpy>=2,<3' 'pandas>=2.2,<3' 'numba>=0.60,<1'
+
+      - name: Compile unified engine
+        run: |
+          set -euo pipefail
+          python -m py_compile backtest/gold24/copytolive_unified_engine.py
+          python -m py_compile backtest/gold24/copytolive_compat.py
+          python -m py_compile backtest/gold24/copytolive_active_replay.py
+
+      - name: Verify production semantic lock
+        working-directory: backtest/gold24
+        run: |
+          set -euo pipefail
+          python -m unittest -v test_copytolive_unified_engine.py
+          python -m unittest -v test_copytolive_compat.py
+
+      - name: Verify single-engine imports
+        working-directory: backtest/gold24
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import copytolive_compat as compat
+          import copytolive_unified_engine as engine
+          assert compat.run_copytolive_backtest is engine.run_copytolive_backtest
+          assert compat.compute_vol_mask is engine.compute_vol_mask
+          assert compat.compute_mtf_bias is engine.compute_mtf_bias
+          assert compat.compute_session_mask is engine.compute_session_mask
+          assert compat.vs is engine.vs
+          assert engine.ENGINE_ID == 'copytolive-unified-backtest-v1'
+          print('SINGLE ENGINE CONTRACT PASS')
+          PY
