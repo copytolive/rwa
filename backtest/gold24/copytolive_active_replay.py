@@ -109,6 +109,199 @@ def load_h1(path: Path) -> pd.DataFrame:
     return d
 
 
+
+def load_d1(path: Path) -> pd.DataFrame:
+    if path.suffix.lower() in {".parquet", ".pq"}:
+        raw = pd.read_parquet(path)
+    else:
+        raw = pd.read_csv(path)
+
+    rename = {}
+    for col in raw.columns:
+        lo = str(col).lower()
+        if lo in {"date", "time", "timestamp", "datetime"}:
+            rename[col] = "Date"
+        elif lo in {"open", "high", "low", "close", "volume"}:
+            rename[col] = lo
+    d = raw.rename(columns=rename).copy()
+
+    if "Date" not in d.columns:
+        if isinstance(raw.index, pd.DatetimeIndex):
+            d["Date"] = raw.index
+        else:
+            raise RuntimeError("D1 dataset missing Date/timestamp")
+    if "close" not in d.columns:
+        raise RuntimeError("D1 dataset missing close")
+
+    if pd.api.types.is_numeric_dtype(d["Date"]):
+        dt = pd.to_datetime(d["Date"], unit="ms", utc=True, errors="coerce")
+    else:
+        dt = pd.to_datetime(d["Date"], utc=True, errors="coerce")
+    if dt.isna().any():
+        raise RuntimeError("invalid D1 timestamps")
+    d["Date"] = dt
+    d["close"] = pd.to_numeric(d["close"], errors="coerce")
+    d = d.dropna(subset=["close"])
+    d = d.drop_duplicates(subset=["Date"], keep="last").sort_values("Date").reset_index(drop=True)
+    if len(d) < 200:
+        raise RuntimeError(f"D1 dataset unexpectedly short: {len(d)}")
+    return d
+
+
+def compute_nondex_vol_mask(close: np.ndarray, high: np.ndarray, low: np.ndarray,
+                            period: int = 14, ma_period: int = 50) -> np.ndarray:
+    """Exact wf_nondex_btc_gold.py volatility mask."""
+    n = len(close)
+    mask = np.zeros(n, dtype=np.int8)
+    tr = np.zeros(n, dtype=float)
+    for i in range(1, n):
+        tr[i] = max(
+            high[i] - low[i],
+            abs(high[i] - close[i - 1]),
+            abs(low[i] - close[i - 1]),
+        )
+    atr = np.zeros(n, dtype=float)
+    for i in range(period, n):
+        atr[i] = np.mean(tr[i - period + 1:i + 1])
+    atr_ma = np.zeros(n, dtype=float)
+    for i in range(ma_period, n):
+        atr_ma[i] = np.mean(atr[i - ma_period + 1:i + 1])
+    for i in range(ma_period, n):
+        if atr[i] > atr_ma[i]:
+            mask[i] = 1
+    return mask
+
+
+def compute_nondex_mtf_bias(close_h1: np.ndarray, d1: pd.DataFrame) -> np.ndarray:
+    """Exact historical ND generator's D1 EMA50/EMA200 -> H1 integer-block mapping."""
+    n = len(close_h1)
+    bias = np.zeros(n, dtype=np.int8)
+    if d1 is None or len(d1) < 200:
+        return bias
+    d1c = d1["close"].to_numpy(np.float64)
+    ema50 = pd.Series(d1c).ewm(span=50).mean().to_numpy()
+    ema200 = pd.Series(d1c).ewm(span=200).mean().to_numpy()
+    d1_len = len(d1c)
+    h1_per_d1 = n // max(d1_len, 1)
+    for i in range(200, d1_len):
+        h1_start = i * h1_per_d1
+        h1_end = min((i + 1) * h1_per_d1, n)
+        if h1_start >= n:
+            break
+        bias[h1_start:h1_end] = 1 if ema50[i] > ema200[i] else -1
+    return bias
+
+
+def compute_nondex_session_mask(h1: pd.DataFrame, start_hour: int = 7, end_hour: int = 21) -> np.ndarray:
+    """Exact GOLD session gate from wf_nondex_btc_gold.py."""
+    hours = pd.DatetimeIndex(h1["Date"]).hour
+    mask = np.ones(len(h1), dtype=np.int8)
+    mask[(hours < start_hour) | (hours > end_hour)] = 0
+    return mask
+
+
+def build_nondex_masks(h1: pd.DataFrame, d1: pd.DataFrame) -> dict[str, tuple[np.ndarray, np.ndarray]]:
+    close = h1["close"].to_numpy(np.float64)
+    high = h1["high"].to_numpy(np.float64)
+    low = h1["low"].to_numpy(np.float64)
+    n = len(h1)
+    vol = compute_nondex_vol_mask(close, high, low)
+    mtf = compute_nondex_mtf_bias(close, d1)
+    session = compute_nondex_session_mask(h1)
+    zeros = np.zeros(n, dtype=np.int8)
+    ones = np.ones(n, dtype=np.int8)
+    return {
+        "VOL": (vol, zeros),
+        "MTF": (ones, mtf),
+        "VM": (vol, mtf),
+        "VS": (vol * session, zeros),
+        "ALL": (vol * session, mtf),
+    }
+
+
+def nondex_filter_mode(strategy_id: str) -> str:
+    parts = str(strategy_id).split("_", 2)
+    if len(parts) < 3 or parts[0] != "ND" or parts[1] not in {"VOL", "MTF", "VM", "VS", "ALL"}:
+        raise RuntimeError(f"unsupported canonical ND strategy id: {strategy_id}")
+    return parts[1]
+
+
+def apply_nondex_filter(strategy_id: str, raw_signal: np.ndarray,
+                        masks: dict[str, tuple[np.ndarray, np.ndarray]]) -> tuple[np.ndarray, str]:
+    mode = nondex_filter_mode(strategy_id)
+    vmask, bmask = masks[mode]
+    if len(raw_signal) != len(vmask) or len(raw_signal) != len(bmask):
+        raise RuntimeError(f"canonical filter length mismatch: {strategy_id}")
+    out = np.asarray(raw_signal, dtype=np.int8).copy()
+    out[vmask != 1] = 0
+    conflict = (bmask != 0) & (out != bmask)
+    out[conflict] = 0
+    return out, mode
+
+
+def compute_nondex_metrics(trades: list[dict], deposit_usd: float = COPYTOLIVE_DEPOSIT_USD) -> dict:
+    """Metrics exactly matching pipeline/wf_nondex_btc_gold.py::vs, without its selection gates."""
+    if not trades:
+        return {
+            "totalTrades": 0, "winningTrades": 0, "losingTrades": 0,
+            "winRate": 0.0, "profitFactor": 0.0, "maxDrawdown": 0.0,
+            "netProfit": 0.0, "expectancy": 0.0, "sqn": 0.0,
+            "recoveryFactor": 0.0, "grossProfit": 0.0, "grossLoss": 0.0,
+            "avgProfit": 0.0, "avgLoss": 0.0, "rr": 0.0,
+            "maxConsecLoss": 0,
+        }
+
+    pnl = np.asarray([float(t["profit"]) for t in trades], dtype=float)
+    wins = pnl[pnl > 0]
+    losses = pnl[pnl <= 0]
+    n = int(len(pnl))
+    gp = float(wins.sum()) if len(wins) else 0.0
+    gl = abs(float(losses.sum())) if len(losses) else 0.0
+    wr = len(wins) / n * 100.0 if n else 0.0
+    pf = gp / gl if gl > 0 else 0.0
+
+    # Canonical ND generator starts peak tracking at the first post-trade
+    # equity value (it does not prepend initial deposit).
+    eq = float(deposit_usd) + np.cumsum(pnl)
+    peak = np.maximum.accumulate(eq)
+    mdd = float(((peak - eq) / np.maximum(peak, 1.0) * 100.0).max()) if len(eq) else 0.0
+
+    net = gp - gl
+    avg_win = float(wins.mean()) if len(wins) else 0.0
+    avg_loss = float(abs(losses.mean())) if len(losses) else 0.0
+    std = float(pnl.std())
+    sqn = float((pnl.mean() / std) * np.sqrt(n)) if std > 0 else 0.0
+    recovery = float(net / (mdd / 100.0 * float(deposit_usd))) if mdd > 0.01 else 0.0
+    rr = float(avg_win / avg_loss) if avg_loss > 0 else 0.0
+
+    max_consec_loss = 0
+    cur = 0
+    for p in pnl:
+        if p > 0:
+            cur = 0
+        else:
+            cur += 1
+            max_consec_loss = max(max_consec_loss, cur)
+
+    return {
+        "totalTrades": n,
+        "winningTrades": int(len(wins)),
+        "losingTrades": int(len(losses)),
+        "winRate": wr,
+        "profitFactor": pf,
+        "maxDrawdown": mdd,
+        "netProfit": net,
+        "expectancy": net / n if n else 0.0,
+        "sqn": sqn,
+        "recoveryFactor": recovery,
+        "grossProfit": gp,
+        "grossLoss": gl,
+        "avgProfit": avg_win,
+        "avgLoss": avg_loss,
+        "rr": rr,
+        "maxConsecLoss": int(max_consec_loss),
+    }
+
 def load_sources(manifest_path: Path, sources_path: Path):
     manifest = json.loads(manifest_path.read_text())
     pack = json.loads(sources_path.read_text())
@@ -164,18 +357,10 @@ def compile_signal(s: dict, source: str):
 
 
 def oos_metrics(trades: list[dict], d: pd.DataFrame) -> dict:
-    split_i = min(max(int(len(d) * 0.70), 1), len(d) - 1)
-    split_ts = pd.Timestamp(d["Date"].iloc[split_i])
-    test = []
-    for t in trades:
-        ts = pd.Timestamp(t["closeTime"])
-        if ts.tzinfo is None:
-            ts = ts.tz_localize("UTC")
-        else:
-            ts = ts.tz_convert("UTC")
-        if ts > split_ts:
-            test.append(t)
-    m = compute_copytolive_metrics(test)
+    # Canonical ND generator: si=int(n*0.70); train iff exit_index <= si.
+    split_i = int(len(d) * 0.70)
+    test = [t for t in trades if int(t.get("exitBar", -1)) > split_i]
+    m = compute_nondex_metrics(test)
     return {
         "oos_trades": int(m["totalTrades"]),
         "oos_profit_factor": finite(m["profitFactor"]),
@@ -201,21 +386,23 @@ def parity_expected(s: dict, m: dict, oos: dict) -> dict:
     }
 
 
-def replay_one(s: dict, source: str, d: pd.DataFrame):
+def replay_one(s: dict, source: str, d: pd.DataFrame,
+               masks: dict[str, tuple[np.ndarray, np.ndarray]]):
     run = compile_signal(s, source)
     close = d["close"].to_numpy(np.float64)
     high = d["high"].to_numpy(np.float64)
     low = d["low"].to_numpy(np.float64)
-    sig = np.asarray(run(close, high, low), dtype=np.int8)
-    if len(sig) != len(d):
+    raw_sig = np.asarray(run(close, high, low), dtype=np.int8)
+    if len(raw_sig) != len(d):
         raise RuntimeError(f"signal length mismatch: {s['id']}")
-    if not np.isin(sig, [-1, 0, 1]).all():
+    if not np.isin(raw_sig, [-1, 0, 1]).all():
         raise RuntimeError(f"non -1/0/+1 signal: {s['id']}")
 
+    sig, filter_mode = apply_nondex_filter(s["id"], raw_sig, masks)
     cfg = CopyToLiveExecutionConfig(sl_pct=float(s["sl_pct"]), tp_ratio=float(s["tp_ratio"]))
     result = run_copytolive_backtest(d, sig, cfg)
     trades = list(result["trades"])
-    m = dict(result["metrics"])
+    m = compute_nondex_metrics(trades)
     bar_pnl = np.asarray(result["bar_pnl"], dtype=float)
     pnl = np.asarray([float(t["profit"]) for t in trades], dtype=float)
     oos = oos_metrics(trades, d)
@@ -228,6 +415,9 @@ def replay_one(s: dict, source: str, d: pd.DataFrame):
     row = {
         "strategy_id": s["id"],
         "signal_type": s.get("signalType"),
+        "canonical_filter_mode": filter_mode,
+        "raw_signal_count": int(np.count_nonzero(raw_sig)),
+        "filtered_signal_count": int(np.count_nonzero(sig)),
         "timeframe": "H1",
         "order": "PENDING",
         "direction": (
@@ -372,6 +562,7 @@ def write_csv(path: Path, rows: list[dict]):
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", required=True)
+    ap.add_argument("--dataset-d1", required=True)
     ap.add_argument("--manifest", default=str(DEFAULT_MANIFEST))
     ap.add_argument("--sources", default=str(DEFAULT_SOURCES))
     ap.add_argument("--out-dir", required=True)
@@ -379,6 +570,8 @@ def main() -> int:
 
     manifest, scripts = load_sources(Path(args.manifest), Path(args.sources))
     d = load_h1(Path(args.dataset))
+    d1 = load_d1(Path(args.dataset_d1))
+    masks = build_nondex_masks(d, d1)
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
 
@@ -388,7 +581,7 @@ def main() -> int:
     errors = []
     for i, s in enumerate(manifest["strategies"], 1):
         try:
-            row, bp, pnl = replay_one(s, scripts[s["id"]], d)
+            row, bp, pnl = replay_one(s, scripts[s["id"]], d, masks)
             rows.append(row)
             barpnls[s["id"]] = bp
             tradepnls[s["id"]] = pnl
@@ -442,6 +635,20 @@ def main() -> int:
             "rows": int(len(d)),
             "start_utc": str(d["Date"].iloc[0]),
             "end_utc": str(d["Date"].iloc[-1]),
+            "d1_path": str(Path(args.dataset_d1)),
+            "d1_sha256": sha256_file(Path(args.dataset_d1)),
+            "d1_rows": int(len(d1)),
+            "d1_start_utc": str(d1["Date"].iloc[0]),
+            "d1_end_utc": str(d1["Date"].iloc[-1]),
+        },
+        "canonical_generator": {
+            "path": "pipeline/wf_nondex_btc_gold.py",
+            "sha256": "188000f5676d684c780ba91b40e9546eb9b1acf754ed293cceadffc40ffa32b3",
+            "filter_modes": {"MTF": 33, "ALL": 57, "VM": 28},
+            "volatility_filter": "ATR14 > SMA50(ATR14)",
+            "mtf_filter": "D1 EWM50/EWM200 integer-block mapped to H1",
+            "gold_session_filter_utc_hour": "07..21 inclusive for ALL/VS",
+            "walk_forward_split": "trade exit index <= int(n*0.70) train; later exit test",
         },
         "execution_contract": {
             "deposit_usd": COPYTOLIVE_DEPOSIT_USD,
@@ -455,6 +662,7 @@ def main() -> int:
             "same_bar_entry_exit": False,
             "same_bar_precedence": "SL_FIRST",
             "walk_forward_split": "70/30 chronological",
+            "outer_signal_filter": "canonical ND VOL/MTF/VM/VS/ALL before entry",
         },
         "github_gate": {
             "min_entry": MIN_ENTRY,
