@@ -416,3 +416,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 /* RWA_TERMINAL_R7_REFERENCE_PARITY_FINAL_2026_09_04 */
 
 /* RWA_TERMINAL_R7_ZERO_DELAY_PUBLIC_RECERT_2026_09_04 */
+
+/* RWA_TERMINAL_R8_FINAL_PARITY_RECERT_2026_09_04 */
