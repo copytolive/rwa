@@ -14,29 +14,40 @@ import multimethod_v1_discovery as impl
 
 _WORKER_D = None
 
-BASES = (
-    {
-        "family": "SUPPORT_RESISTANCE",
+TARGET_FAMILIES = (
+    "SUPPORT_RESISTANCE",
+    "CHART_PATTERN",
+    "VOLATILITY_REGIME",
+    "BOLLINGER_REVERSION_V2",
+    "CHANDELIER_TREND",
+)
+
+# Two 7/8 empirical seeds remain the priority, but v2 also explores three
+# independent families with useful complementary gate profiles.  The SR/chart
+# branch deliberately uses at least one parameter region that the prior 50k
+# targeted run could not generate (p1<0.5 or SL<10 or TP<17.5).  Therefore the
+# new targeted batch is provably disjoint from that prior targeted batch.
+BASES = {
+    "SUPPORT_RESISTANCE": {
         "fast": 3, "slow": 21, "p1": 0.7, "p2": 55.0, "p3": 1.0,
         "entry_method": "LIMIT", "direction_mode": "LONG_ONLY",
         "sl": 20.0, "tp": 25.0, "offset": 4.25, "expiry": 6,
     },
-    {
-        "family": "CHART_PATTERN",
+    "CHART_PATTERN": {
         "fast": 5, "slow": 26, "p1": 0.7, "p2": 55.0, "p3": 1.0,
         "entry_method": "LIMIT", "direction_mode": "LONG_ONLY",
         "sl": 19.5, "tp": 24.5, "offset": 3.5, "expiry": 12,
     },
-)
+}
 
 FAST = [2, 3, 5, 7, 8, 10, 13]
 SLOW = [5, 7, 8, 10, 13, 14, 20, 21, 26, 34, 50]
-P1 = [0.5, 0.7, 0.9, 1.0, 1.2, 1.5, 1.8, 2.0, 2.5]
-SL = [10.0, 12.5, 15.0, 17.5, 19.5, 20.0, 22.5]
-TP = [17.5, 20.0, 22.5, 24.0, 24.5, 25.0]
-OFFSET = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.25]
-EXPIRY = [4, 6, 8, 10, 12, 16, 20]
-
+P1_SR_CHART = [0.2, 0.3, 0.5, 0.7, 1.0]
+SL_FREQ = [5.0, 7.5, 10.0, 12.5, 15.0, 17.5, 19.5, 20.0]
+TP_FREQ = [7.5, 10.0, 12.5, 15.0, 17.5, 20.0, 22.5, 24.0, 24.5, 25.0]
+OFFSET_FREQ = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.25]
+EXPIRY_FREQ = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20]
+PRIOR_TARGETED_EVALUATED_UNIQUE = 50000
 
 def _init_worker(dataset: str, receipt: str) -> None:
     global _WORKER_D
@@ -44,33 +55,58 @@ def _init_worker(dataset: str, receipt: str) -> None:
 
 
 def _candidate(rng: random.Random) -> Candidate:
-    b = dict(rng.choice(BASES))
-    family = b["family"]
+    # Weight the two 7/8 seeds most heavily, while adding real family-level
+    # discovery rather than only cosmetic parameter remixing.
+    family = rng.choices(
+        list(TARGET_FAMILIES),
+        weights=[0.30, 0.30, 0.18, 0.14, 0.08],
+        k=1,
+    )[0]
 
-    if rng.random() < 0.82:
+    if family not in BASES:
+        # Reuse the canonical family-aware generator for genuinely different
+        # signal engines.  Prior master hashes are filtered later.
+        return impl._fresh_candidate_for_family(rng, family)
+
+    b = dict(BASES[family])
+    if rng.random() < 0.88:
         fast = rng.choice(FAST)
         valid_slow = [x for x in SLOW if x > fast]
         slow = rng.choice(valid_slow)
     else:
         fast, slow = int(b["fast"]), int(b["slow"])
 
-    p1 = rng.choice(P1) if rng.random() < 0.88 else float(b["p1"])
-    entry = "LIMIT" if rng.random() < 0.95 else "STOP"
-    direction = "LONG_ONLY" if rng.random() < 0.88 else "BOTH"
-    sl = rng.choice(SL)
-    tp = rng.choice([x for x in TP if x >= sl] or TP)
-    offset = rng.choice(OFFSET)
-    expiry = rng.choice(EXPIRY)
+    p1 = rng.choice(P1_SR_CHART)
+    entry = "LIMIT" if rng.random() < 0.82 else "STOP"
+    # BOTH is intentionally explored more often than v1 to test whether higher
+    # signal frequency can reach Entry>=300 without relaxing any quality gate.
+    direction = "BOTH" if rng.random() < 0.58 else "LONG_ONLY"
+    sl = rng.choice(SL_FREQ)
+    if rng.random() < 0.78:
+        tps = [x for x in TP_FREQ if x >= sl]
+        tp = rng.choice(tps or TP_FREQ)
+    else:
+        tp = rng.choice(TP_FREQ)
+    offset = rng.choice(OFFSET_FREQ)
+    expiry = rng.choice(EXPIRY_FREQ)
+
+    # Guarantee no overlap with the prior 50k SR/chart targeted run:
+    # v1 had p1>=0.5, SL>=10 and TP>=17.5 simultaneously.
+    if p1 >= 0.5 and sl >= 10.0 and tp >= 17.5:
+        if rng.random() < 0.50:
+            p1 = rng.choice([0.2, 0.3])
+        else:
+            sl = rng.choice([5.0, 7.5])
 
     c = Candidate(
         symbol="GOLD", timeframe="D1", family=family,
-        fast=int(fast), slow=int(slow), p1=float(p1), p2=55.0, p3=1.0,
+        fast=int(fast), slow=int(slow), p1=float(p1),
+        p2=float(b["p2"]), p3=float(b["p3"]),
         entry_method=entry, direction_mode=direction,
         sl=float(sl), tp=float(tp), offset=float(offset), expiry=int(expiry),
     )
     validate_candidate(c)
     return c
-
 
 def _worker(cdict: dict) -> dict:
     if _WORKER_D is None:
@@ -250,7 +286,7 @@ def main() -> int:
     )[:50]
 
     payload = {
-        "schema": "gold10b-hardpass-targeted-search-v1",
+        "schema": "gold10b-hardpass-targeted-search-v2-frequency-disjoint",
         "status": "PASS",
         "dataset": {
             "provider": audit.get("crosscheck_provider"),
@@ -269,8 +305,17 @@ def main() -> int:
             "oos_pf_min": 1.00, "monte_carlo": "PASS", "positive_year_pct_min": 60.0, "corr_max": 0.50,
         },
         "prior_evaluated": int(prior.get("evaluated_config_hash_count_cumulative", len(prior_eval))),
+        "prior_targeted_evaluated_unique": PRIOR_TARGETED_EVALUATED_UNIQUE,
         "targeted_evaluated_unique": len(generated),
-        "combined_candidate_evaluated": int(prior.get("evaluated_config_hash_count_cumulative", len(prior_eval))) + len(generated),
+        "cumulative_targeted_evaluated_unique": PRIOR_TARGETED_EVALUATED_UNIQUE + len(generated),
+        "combined_candidate_evaluated": int(prior.get("evaluated_config_hash_count_cumulative", len(prior_eval))) + PRIOR_TARGETED_EVALUATED_UNIQUE + len(generated),
+        "generation_profile": {
+            "name": "frequency-v2-disjoint",
+            "families": list(TARGET_FAMILIES),
+            "disjoint_from_prior_targeted_50k": True,
+            "disjoint_rule": "SR/CHART require p1<0.5 or SL<10 or TP<17.5; other families were absent from prior targeted v1",
+            "threshold_relaxation": False,
+        },
         "prefilter_survivors": len(prelim),
         "full_pre_corr_survivors": len(new_exact),
         "selected_after_global_corr": len(selected),
