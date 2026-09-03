@@ -37,6 +37,7 @@ jobs:
           node --check chart-core.js
           node --check rwa-live-home-v1.js
           node --check rwa-terminal-v5.js
+          node --check rwa-terminal-service.js
           node --check rwa-multichain.js
           node --check rwa-multichain-engine.js
           grep -Fq '<strong>Real World Asset</strong>' index.html
