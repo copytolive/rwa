@@ -1,0 +1,174 @@
+name: GOLD24 CopyToLive-Compatible Backtest
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_count:
+        description: CopyToLive-compatible candidates to simulate
+        required: false
+        default: '2000'
+      base_seed:
+        description: Deterministic discovery seed
+        required: false
+        default: '2026090307'
+  push:
+    paths:
+      - '.github/workflows/gold24-copytolive-compatible.yml'
+      - 'backtest/gold24/COPYTOLIVE_COMPAT_KICK'
+      - 'backtest/gold24/copytolive_compat.py'
+      - 'backtest/gold24/test_copytolive_compat.py'
+      - 'backtest/gold24/copytolive_discovery.py'
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: gold24-copytolive-compatible
+  cancel-in-progress: true
+
+jobs:
+  parity-and-discovery:
+    name: CopyToLive execution parity + discovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      GH_TOKEN: ${{ github.token }}
+      STATE_DIR: ${{ github.workspace }}/.gold24-copytolive-state
+      OUT_DIR: ${{ github.workspace }}/backtest/gold24/runtime_copytolive_compat
+      SOURCE_SUMMARY: ${{ github.workspace }}/backtest/gold24/runtime_v11/latest_validation_summary.json
+      CANDIDATE_COUNT: ${{ github.event.inputs.candidate_count || '1000' }}
+      BASE_SEED: ${{ github.event.inputs.base_seed || '2026090307' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install -r backtest/gold24/requirements.txt
+
+      - name: Run CopyToLive execution contract tests
+        run: |
+          set -euo pipefail
+          cd backtest/gold24
+          python -m unittest -v test_copytolive_compat.py
+
+      - name: Freeze authoritative canonical source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY' > "$RUNNER_TEMP/source.env"
+          import json, os, pathlib
+          p=pathlib.Path(os.environ['SOURCE_SUMMARY'])
+          x=json.loads(p.read_text())
+          assert x.get('validation') == 'PASS'
+          assert x.get('gate_a_strict',{}).get('gate_a') == 'PASS'
+          assert x.get('simulation_executed') is True
+          print('SOURCE_RUN_ID=' + str(x['github_run_id']))
+          print('SOURCE_BATCH=' + str(x['batch']))
+          print('SOURCE_CURSOR=' + str(x['candidate_cursor']))
+          print('SOURCE_ARCHIVED=' + str(x['cumulative_configs_archived']))
+          PY
+          cat "$RUNNER_TEMP/source.env" >> "$GITHUB_ENV"
+          cat "$RUNNER_TEMP/source.env"
+
+      - name: Restore canonical GOLD dataset
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$STATE_DIR"
+          mkdir -p "$STATE_DIR"
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" -n gold24-canonical-v11-state -D "$STATE_DIR"
+          test -s "$STATE_DIR/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv"
+          test -s "$STATE_DIR/gate_a/gate_a_receipt.json"
+
+      - name: Run CopyToLive-compatible discovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$OUT_DIR"
+          mkdir -p "$OUT_DIR"
+          python backtest/gold24/copytolive_discovery.py \
+            --dataset "$STATE_DIR/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv" \
+            --receipt "$STATE_DIR/gate_a/gate_a_receipt.json" \
+            --out-dir "$OUT_DIR" \
+            --timeframe D1 \
+            --candidate-count "$CANDIDATE_COUNT" \
+            --base-seed "$BASE_SEED"
+          test -s "$OUT_DIR/latest_copytolive_compatible_discovery.json"
+          test -s "$OUT_DIR/latest_copytolive_compatible_discovery.csv"
+          test -s "$OUT_DIR/latest_copytolive_compatible_discovery_summary.json"
+
+      - name: Acceptance gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, pathlib
+          out=pathlib.Path(os.environ['OUT_DIR'])
+          x=json.loads((out/'latest_copytolive_compatible_discovery_summary.json').read_text())
+          assert x['status']=='PASS'
+          assert x['engine_mode']=='COPYTOLIVE_COMPATIBLE'
+          c=x['compatibility_contract']
+          assert float(c['deposit_usd'])==10000.0
+          assert float(c['risk_usd_per_trade'])==200.0
+          assert abs(float(c['fee'])-0.0016)<1e-12
+          assert c['one_position_at_a_time'] is True
+          assert c['same_bar_precedence']=='SL_FIRST'
+          assert c['same_bar_entry_exit'] is False
+          assert c['walk_forward_split']=='70/30 chronological'
+          assert int(x['generated_count'])==int(os.environ['CANDIDATE_COUNT'])
+          assert int(x['simulated_count'])==int(os.environ['CANDIDATE_COUNT'])
+          gate=x['selection_gate']
+          assert int(gate['min_entry'])==300
+          assert float(gate['min_pf'])==1.2
+          assert float(gate['max_dd_pct'])==25.0
+          assert float(gate['min_oos_pf'])==1.0
+          assert float(gate['min_positive_year_pct'])==60.0
+          assert float(gate['max_abs_pearson_log_return_equity'])==0.50
+          print(json.dumps(x,indent=2,sort_keys=True))
+          PY
+
+      - name: Publish compatibility evidence race-safe
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            backtest/gold24/runtime_copytolive_compat/latest_copytolive_compatible_discovery.json \
+            backtest/gold24/runtime_copytolive_compat/latest_copytolive_compatible_discovery.csv \
+            backtest/gold24/runtime_copytolive_compat/latest_copytolive_compatible_discovery_summary.json
+          if git diff --cached --quiet; then
+            echo "No compatibility output delta"
+            exit 0
+          fi
+          git commit -m "chore(gold24): publish CopyToLive-compatible discovery [skip ci]"
+          for TRY in 1 2 3 4 5; do
+            if git pull --rebase origin main && git push origin HEAD:main; then
+              echo "publish PASS try=$TRY"
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            git fetch origin main
+            git rebase origin/main
+            sleep $((TRY * 2))
+          done
+          exit 1
+
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold24-copytolive-compatible
+          path: |
+            backtest/gold24/runtime_copytolive_compat/latest_copytolive_compatible_discovery.json
+            backtest/gold24/runtime_copytolive_compat/latest_copytolive_compatible_discovery.csv
+            backtest/gold24/runtime_copytolive_compat/latest_copytolive_compatible_discovery_summary.json
+          if-no-files-found: error
+          retention-days: 30
