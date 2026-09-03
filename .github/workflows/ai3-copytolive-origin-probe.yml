@@ -1,0 +1,61 @@
+name: AI3 CopyToLive Origin Probe
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ai3-origin-probe-requests/**"
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: req
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^ai3-origin-probe-requests/.*\.json$' | tail -n1)"
+          ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$FILE")"
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+          echo "out=ai3-origin-probe-results/$ID.json" >> "$GITHUB_OUTPUT"
+      - name: Probe public origin
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="${{ steps.req.outputs.out }}"
+          mkdir -p "$(dirname "$OUT")"
+          python3 - <<'PY' > "$OUT"
+          import json,socket,urllib.request,ssl,hashlib
+          d={}
+          try:d["ips"]=sorted(set(x[4][0] for x in socket.getaddrinfo("copytolive.com",443,type=socket.SOCK_STREAM)))
+          except Exception as e:d["dns_error"]=repr(e)
+          for u,k in [("https://copytolive.com/","root"),("https://copytolive.github.io/rwa/","pages")]:
+            try:
+              req=urllib.request.Request(u,headers={"User-Agent":"Mozilla/5.0"})
+              with urllib.request.urlopen(req,timeout=20,context=ssl.create_default_context()) as r:
+                body=r.read()
+                d[k]={"status":r.status,"url":r.geturl(),"headers":dict(r.headers.items()),"sha256":hashlib.sha256(body).hexdigest(),"bytes":len(body),"prefix":body[:300].decode("utf-8","replace")}
+            except Exception as e:d[k]={"error":repr(e)}
+          d["ok"]=True
+          print(json.dumps(d,indent=2))
+          PY
+      - name: Commit result
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="${{ steps.req.outputs.out }}"
+          git config user.name "CopyToLive AI3 Origin Probe"
+          git config user.email "copytolive-ai3-origin@local.invalid"
+          git add "$OUT"
+          git commit -m "ai3 origin probe: ${{ steps.req.outputs.id }}" || true
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort || true; sleep "$attempt"; continue; }
+            if git push origin HEAD:main; then exit 0; fi
+            sleep "$attempt"
+          done
+          exit 1
