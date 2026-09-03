@@ -12,7 +12,7 @@ permissions:
 jobs:
   diagnose:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout caller repository
         uses: actions/checkout@v4
@@ -31,11 +31,9 @@ jobs:
           test -n "$FILE"
           ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("id","ai7-gold-diag"))' "$FILE")"
           SAFE_ID="$(printf '%s' "$ID" | tr -cs 'A-Za-z0-9._-' '-')"
-          echo "file=$FILE" >> "$GITHUB_OUTPUT"
           echo "id=$SAFE_ID" >> "$GITHUB_OUTPUT"
-          echo "response=ai7-gold-diag-responses/$SAFE_ID.json" >> "$GITHUB_OUTPUT"
 
-      - name: Run read-only production GOLD diagnostic
+      - name: Run read-only VPS replays
         shell: bash
         env:
           SSH_HOST: 109.123.239.76
@@ -43,228 +41,72 @@ jobs:
           SSH_PORT: "22"
           SSH_KEY: ${{ secrets.COPYTOLIVE_SSH_KEY }}
         run: |
-          set -euo pipefail
-          mkdir -p "$HOME/.ssh" ai7-gold-diag-responses
-          chmod 700 "$HOME/.ssh"
-          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/copytolive_ai7"
-          chmod 600 "$HOME/.ssh/copytolive_ai7"
-          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null
-
-          RESP="${{ steps.req.outputs.response }}"
-          REMOTE_SCRIPT="/tmp/ai7-gold-prod-diag-${GITHUB_RUN_ID}.py"
-          cat > /tmp/ai7-gold-prod-diag.py <<'PY'
-import hashlib, importlib.util, json, os, re, subprocess, sys
-from pathlib import Path
-from datetime import datetime, timezone
-
-TRADING = Path('/home/opentrue-platform/backend/trading-service')
-WEB = Path('/var/www/copytolive')
-SOURCE = Path('/opt/copytolive-source')
-DATASET = TRADING / 'data/ohlcv/GOLD_H1.parquet'
-FARM = WEB / 'data/backtest_farm.json'
-STATE = TRADING / 'app/data/compounding_state.json'
-STRAT_ROOT = TRADING / 'strategies/scripts/python/GOLD'
-
-def sha(p):
-    h=hashlib.sha256()
-    with open(p,'rb') as f:
-        for b in iter(lambda:f.read(1024*1024),b''): h.update(b)
-    return h.hexdigest()
-
-def stat(p):
-    s=p.stat()
-    return {'path':str(p),'bytes':s.st_size,'mtime_utc':datetime.fromtimestamp(s.st_mtime,timezone.utc).isoformat(),'sha256':sha(p)}
-
-def safe_json(p):
-    return json.loads(p.read_text('utf-8'))
-
-def git_info(root):
-    if not (root/'.git').exists(): return {'is_git':False}
-    def run(args):
-        cp=subprocess.run(args,cwd=root,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=30)
-        return {'rc':cp.returncode,'out':(cp.stdout or '')[-12000:]}
-    return {
-      'is_git':True,
-      'head':run(['git','rev-parse','HEAD']),
-      'status':run(['git','status','--short','--branch']),
-      'farm_history':run(['git','log','--all','--oneline','-Sbacktest_farm','--','.',]),
-      'metric_history':run(['git','log','--all','--oneline','-StotalTrades','--','.',]),
-    }
-
-def search_code(roots, needles, max_hits=500):
-    exts={'.py','.js','.mjs','.cjs','.ts','.tsx','.jsx','.json','.yml','.yaml','.sh','.md'}
-    hits=[]
-    for root in roots:
-        if not root.exists(): continue
-        scanned=0
-        for p in root.rglob('*'):
-            if len(hits)>=max_hits: break
-            try:
-                if not p.is_file() or p.suffix.lower() not in exts or p.stat().st_size>2_000_000: continue
-                scanned += 1
-                if scanned>8000: break
-                txt=p.read_text('utf-8',errors='ignore')
-            except Exception:
-                continue
-            for i,line in enumerate(txt.splitlines(),1):
-                low=line.lower()
-                if any(n.lower() in low for n in needles):
-                    hits.append({'path':str(p),'line':i,'text':line[:900]})
-                    if len(hits)>=max_hits: break
-    return hits
-
-import numpy as np
-import pandas as pd
-
-raw=DATASET.read_bytes()
-df=pd.read_parquet(DATASET)
-orig_cols=[str(x) for x in df.columns]
-rename={}
-for col in df.columns:
-    lc=str(col).lower()
-    if lc in ('open','high','low','close','volume','date','time','timestamp','datetime'):
-        rename[col]=lc
-df=df.rename(columns=rename)
-for c in ('open','high','low','close'):
-    df[c]=pd.to_numeric(df[c],errors='coerce')
-df=df.dropna(subset=['open','high','low','close'])
-if isinstance(df.index,pd.DatetimeIndex):
-    ts=pd.DatetimeIndex(df.index)
-else:
-    tcol=next((x for x in ('date','datetime','time','timestamp') if x in df.columns),None)
-    if tcol:
-        ser=df[tcol]
-        if pd.api.types.is_numeric_dtype(ser):
-            vals=pd.to_numeric(ser,errors='coerce')
-            med=float(vals.dropna().abs().median()) if vals.notna().any() else 0
-            unit='ms' if med>10_000_000_000 else 's'
-            ts=pd.DatetimeIndex(pd.to_datetime(vals,unit=unit,utc=True,errors='coerce'))
-        else:
-            ts=pd.DatetimeIndex(pd.to_datetime(ser,utc=True,errors='coerce'))
-    else:
-        ts=pd.RangeIndex(len(df))
-
-close=df['close'].to_numpy(np.float64)
-high=df['high'].to_numpy(np.float64)
-low=df['low'].to_numpy(np.float64)
-farm=safe_json(FARM)
-state=safe_json(STATE)
-farm_by_id={str(x.get('id')):x for x in farm if isinstance(x,dict) and x.get('id')}
-
-all_ids=sorted(p.stem for p in STRAT_ROOT.glob('*.py'))
-def pick(substr, fallback=None):
-    candidates=[x for x in all_ids if substr.lower() in x.lower() and x in farm_by_id]
-    return candidates[0] if candidates else fallback
-
-ids=[
- 'ND_MTF_LINREG_SLP_f21s55_GOLD_H1_SL0.025_TP2.5',
- pick('OBV'),
- pick('ENGULF'),
-]
-ids=[x for x in ids if x]
-
-def replay(sid):
-    sp=STRAT_ROOT/(sid+'.py')
-    spec=importlib.util.spec_from_file_location('ai7_'+re.sub(r'\W','_',sid),sp)
-    mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
-    sig=np.asarray(mod.run(close,high,low),dtype=np.int8)
-    sl_pct=float(mod.SL_PCT); tp_ratio=float(mod.TP_RATIO)
-    risk=float(mod.RISK); dep=float(mod.DEPOSIT); fee=0.0016
-    trades=[]; pos=None
-    for i in range(len(close)):
-        if pos is None:
-            if sig[i]!=0:
-                ep=float(close[i]); sl=ep*sl_pct; tp=sl*tp_ratio
-                if sl<=0: continue
-                lot=risk/sl
-                pos=(int(sig[i]),ep,sl,tp,lot)
-        else:
-            side,ep,sl,tp,lot=pos
-            fe=fee*ep*lot; pnl=None
-            if side==1:
-                if low[i] <= ep-sl: pnl=-sl*lot-fe
-                elif high[i] >= ep+tp: pnl=tp*lot-fe
-            else:
-                if high[i] >= ep+sl: pnl=-sl*lot-fe
-                elif low[i] <= ep-tp: pnl=tp*lot-fe
-            if pnl is not None:
-                trades.append(float(pnl)); pos=None
-    p=np.asarray(trades,dtype=float)
-    wins=p[p>0]; losses=p[p<=0]
-    gp=float(wins.sum()) if len(wins) else 0; gl=abs(float(losses.sum())) if len(losses) else 0
-    n=int(len(p)); wr=100*len(wins)/n if n else 0; pf=gp/gl if gl else 999; net=float(p.sum()) if n else 0
-    eqs=dep+np.cumsum(p) if n else np.asarray([],dtype=float)
-    peaks=np.maximum.accumulate(np.r_[dep,eqs])[1:] if n else np.asarray([],dtype=float)
-    dd=np.where(peaks>0,(peaks-eqs)/peaks*100,0) if n else np.asarray([],dtype=float)
-    mdd=float(dd.max()) if len(dd) else 0
-    std=float(np.std(p)) if n else 0
-    sqn=float(np.mean(p)/std*np.sqrt(n)) if std>0 else 0
-    recovery=float(net/(mdd/100*dep)) if mdd>0.01 else 0
-    exp=farm_by_id.get(sid,{})
-    return {
-      'strategy_id':sid,
-      'strategy_sha256':sha(sp),
-      'constants':{'SL_PCT':sl_pct,'TP_RATIO':tp_ratio,'RISK':risk,'DEPOSIT':dep},
-      'signal':{'nonzero':int(np.count_nonzero(sig)),'long':int(np.sum(sig>0)),'short':int(np.sum(sig<0))},
-      'replay':{'totalTrades':n,'winRate':wr,'profitFactor':pf,'netProfit':net,'maxDrawdownPercent':mdd,'sqn':sqn,'recoveryFactor':recovery},
-      'expected':{k:exp.get(k) for k in ('totalTrades','winRate','profitFactor','netProfit','maxDrawdownPercent','sqn','recoveryFactor','wf_test_pf','oosProfitFactor')},
-    }
-
-valid=ts[~ts.isna()] if isinstance(ts,pd.DatetimeIndex) else []
-dataset_info=stat(DATASET)
-dataset_info.update({
- 'rows':int(len(df)),
- 'columns':orig_cols,
- 'start':str(valid.min()) if len(valid) else None,
- 'end':str(valid.max()) if len(valid) else None,
- 'head_ohlc':df[['open','high','low','close']].head(3).to_dict('records'),
- 'tail_ohlc':df[['open','high','low','close']].tail(3).to_dict('records'),
-})
-
-state_summary={}
-if isinstance(state,dict):
-    for k in ('homeUniverse','strategies','activeStrategies','universe','gold','GOLD'):
-        if k in state:
-            v=state[k]
-            state_summary[k]=v if isinstance(v,(str,int,float,bool)) else {'type':type(v).__name__,'len':len(v) if hasattr(v,'__len__') else None}
-
-needles=['backtest_farm','totalTrades','maxDrawdownPercent','wf_test_pf','recoveryFactor','farm_sha256','homeUniverse','GOLD_H1.parquet','convert_dukascopy','run_backtest']
-hits=search_code([TRADING,SOURCE,Path('/home/opentrue-platform/backend')],needles)
-
-out={
- 'ok':True,
- 'dataset':dataset_info,
- 'farm':{**stat(FARM),'rows':len(farm) if isinstance(farm,list) else None,'gold_rows':sum(1 for x in farm if isinstance(x,dict) and 'GOLD' in str(x.get('id',''))) if isinstance(farm,list) else None},
- 'state':{**stat(STATE),'summary':state_summary},
- 'strategy_root':str(STRAT_ROOT),
- 'strategy_count':len(all_ids),
- 'representatives':[replay(x) for x in ids],
- 'search_hits':hits,
- 'git':{'trading':git_info(TRADING),'source':git_info(SOURCE)},
-}
-print(json.dumps(out,ensure_ascii=False))
-PY
-
-          scp -q -i "$HOME/.ssh/copytolive_ai7" -P "$SSH_PORT" /tmp/ai7-gold-prod-diag.py "$SSH_USER@$SSH_HOST:$REMOTE_SCRIPT"
           set +e
-          ssh -i "$HOME/.ssh/copytolive_ai7" -p "$SSH_PORT" -o BatchMode=yes -o ConnectTimeout=15 "$SSH_USER@$SSH_HOST"             "/home/opentrue-platform/backend/trading-service/venv/bin/python '$REMOTE_SCRIPT'" > "$RESP"
-          RC=$?
-          set -e
-          ssh -i "$HOME/.ssh/copytolive_ai7" -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "rm -f '$REMOTE_SCRIPT'" >/dev/null 2>&1 || true
-          if [ "$RC" -ne 0 ] || [ ! -s "$RESP" ]; then
-            python3 -c 'import json,sys,pathlib; pathlib.Path(sys.argv[1]).write_text(json.dumps({"ok":False,"error":"AI7_REMOTE_DIAG_FAILED","exit_code":int(sys.argv[2])},indent=2)+"\n")' "$RESP" "$RC"
+          ID="${{ steps.req.outputs.id }}"
+          OUT="ai7-gold-diag-responses"
+          mkdir -p "$OUT" "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+
+          if [ -z "${SSH_KEY:-}" ]; then
+            printf '%s\n' '{"ok":false,"error":"MISSING_SSH_KEY"}' > "$OUT/$ID-status.json"
+            exit 0
           fi
-          python3 -m json.tool "$RESP" >/dev/null
+
+          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/ai7_gold_diag"
+          chmod 600 "$HOME/.ssh/ai7_gold_diag"
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null
+          REMOTE="/tmp/ai7-gold-diag-${GITHUB_RUN_ID}"
+
+          ssh -i "$HOME/.ssh/ai7_gold_diag" -p "$SSH_PORT" -o BatchMode=yes -o ConnectTimeout=15 "$SSH_USER@$SSH_HOST" "mkdir -p '$REMOTE'" >"$OUT/$ID-ssh-mkdir.log" 2>&1
+          RC=$?
+          if [ "$RC" -ne 0 ]; then
+            printf '{"ok":false,"stage":"ssh_mkdir","exit_code":%s}\n' "$RC" > "$OUT/$ID-status.json"
+            rm -f "$HOME/.ssh/ai7_gold_diag"
+            exit 0
+          fi
+
+          scp -q -i "$HOME/.ssh/ai7_gold_diag" -P "$SSH_PORT" server-control/handler.py "$SSH_USER@$SSH_HOST:$REMOTE/handler.py" >"$OUT/$ID-scp-handler.log" 2>&1
+          RC=$?
+          if [ "$RC" -ne 0 ]; then
+            printf '{"ok":false,"stage":"scp_handler","exit_code":%s}\n' "$RC" > "$OUT/$ID-status.json"
+            ssh -i "$HOME/.ssh/ai7_gold_diag" -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "rm -rf '$REMOTE'" >/dev/null 2>&1
+            rm -f "$HOME/.ssh/ai7_gold_diag"
+            exit 0
+          fi
+
+          printf '%s\n' '{"id":"ai7-replay-linreg","op":"gold_h1_diag","strategy_id":"ND_MTF_LINREG_SLP_f21s55_GOLD_H1_SL0.025_TP2.5"}' > req1.json
+          printf '%s\n' '{"id":"ai7-replay-obv","op":"gold_h1_diag","strategy_id":"ND_ALL_OBV_CROSS_f13s34_GOLD_H1_SL0.02_TP2.0"}' > req2.json
+          printf '%s\n' '{"id":"ai7-replay-engulf","op":"gold_h1_diag","strategy_id":"ND_ALL_ENGULF_f21s55_GOLD_H1_SL0.025_TP2.5"}' > req3.json
+
+          OVERALL=0
+          for N in 1 2 3; do
+            scp -q -i "$HOME/.ssh/ai7_gold_diag" -P "$SSH_PORT" "req${N}.json" "$SSH_USER@$SSH_HOST:$REMOTE/req${N}.json" >"$OUT/$ID-scp-${N}.log" 2>&1
+            RC=$?
+            if [ "$RC" -ne 0 ]; then
+              OVERALL=$RC
+              printf '{"ok":false,"stage":"scp_req","n":%s,"exit_code":%s}\n' "$N" "$RC" > "$OUT/$ID-diag-${N}.json"
+              continue
+            fi
+            ssh -i "$HOME/.ssh/ai7_gold_diag" -p "$SSH_PORT" -o BatchMode=yes -o ConnectTimeout=15 "$SSH_USER@$SSH_HOST"               "cd '$REMOTE' && python3 handler.py req${N}.json" > "$OUT/$ID-diag-${N}.json" 2>"$OUT/$ID-ssh-${N}.err"
+            RC=$?
+            if [ "$RC" -ne 0 ]; then OVERALL=$RC; fi
+          done
+
+          ssh -i "$HOME/.ssh/ai7_gold_diag" -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "rm -rf '$REMOTE'" >/dev/null 2>&1
+          rm -f "$HOME/.ssh/ai7_gold_diag"
+          printf '{"ok":%s,"stage":"remote_replays","exit_code":%s}\n' "$([ "$OVERALL" -eq 0 ] && echo true || echo false)" "$OVERALL" > "$OUT/$ID-status.json"
+          exit 0
 
       - name: Commit diagnostic response
+        if: always()
         shell: bash
         run: |
           set -euo pipefail
-          RESP="${{ steps.req.outputs.response }}"
+          ID="${{ steps.req.outputs.id }}"
           git config user.name "CopyToLive AI7 Diagnostic"
           git config user.email "copytolive-ai7@local.invalid"
-          git add "$RESP"
-          git commit -m "ai7: respond GOLD production diagnostic ${{ steps.req.outputs.id }}" || true
+          git add "ai7-gold-diag-responses/$ID-"*
+          git commit -m "ai7: respond GOLD production diagnostic $ID" || true
           for attempt in 1 2 3 4 5; do
             git fetch origin main
             git rebase origin/main || { git rebase --abort || true; sleep "$attempt"; continue; }
