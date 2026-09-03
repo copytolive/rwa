@@ -87,7 +87,7 @@ async function desktop(browser){
   assert.ok(Math.abs(info.trade.w-300)<=3);
   assert.ok(Math.abs(info.bottom.h-220)<=3);
   assert.ok(Math.abs(info.footer.h-28)<=2);
-  assert.equal(locationHash(await page),'#markets');
+  assert.equal(await locationHash(page),'#markets');
 
   await page.locator('.topnav [data-v5-nav="discover"]').click();await page.waitForTimeout(40);
   assert.match(await page.locator('[data-v5-bottom-body]').innerText(),/Top movers|Top volume/i);
@@ -126,13 +126,13 @@ async function mobile(browser,width,height){
   let x=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,mode:document.body.dataset.v5MobileMode,chart:getComputedStyle(document.querySelector('.chart-wrap')).display,mini:getComputedStyle(document.querySelector('#rwaV5MiniBook')).display,book:getComputedStyle(document.querySelector('.right')).display,trade:getComputedStyle(document.querySelector('#liveRail')).display}));
   assert.ok(x.overflow<=2,`mobile overflow ${x.overflow}`);
   assert.equal(x.mode,'chart');assert.notEqual(x.chart,'none');assert.notEqual(x.mini,'none');assert.equal(x.book,'none');assert.equal(x.trade,'none');
-  await page.locator('[data-v5-mobile-mode="book"]').click();await page.waitForTimeout(30);
+  await page.locator('.rwa-v5-mobile-worktabs [data-v5-mobile-mode="book"]').click();await page.waitForTimeout(30);
   x=await page.evaluate(()=>({mode:document.body.dataset.v5MobileMode,book:getComputedStyle(document.querySelector('.right')).display,chart:getComputedStyle(document.querySelector('.chart-wrap')).display}));
   assert.equal(x.mode,'book');assert.notEqual(x.book,'none');assert.equal(x.chart,'none');
-  await page.locator('[data-v5-mobile-mode="trade"]').click();await page.waitForTimeout(30);
+  await page.locator('.rwa-v5-mobile-worktabs [data-v5-mobile-mode="trade"]').click();await page.waitForTimeout(30);
   x=await page.evaluate(()=>({mode:document.body.dataset.v5MobileMode,trade:getComputedStyle(document.querySelector('#liveRail')).display,ticket:!!document.querySelector('#liveRail #rwaTargetOrderTicket')}));
   assert.equal(x.mode,'trade');assert.notEqual(x.trade,'none');assert.equal(x.ticket,true);
-  await page.locator('[data-v5-mobile-mode="feed"]').click();assert.ok(await page.locator('#rwaV5MobileFeed').isVisible());
+  await page.locator('.rwa-v5-mobile-worktabs [data-v5-mobile-mode="feed"]').click();assert.ok(await page.locator('#rwaV5MobileFeed').isVisible());
   await page.locator('[data-v5-mobile-nav="markets"]').click();assert.ok(await page.locator('.left').isVisible());
   await page.locator('[data-v5-action="close-markets"]').click();
   await page.locator('[data-v5-mobile-nav="portfolio"]').click();assert.ok(await page.locator('#rwaV5Bottom').isVisible());
