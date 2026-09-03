@@ -164,10 +164,41 @@ function setMobileMarketsCloseVisible(on){
  b.style.setProperty('visibility',on?'visible':'hidden','important');
  b.style.setProperty('opacity',on?'1':'0','important');
  b.style.setProperty('pointer-events',on?'auto':'none','important');
+ b.style.setProperty('position','fixed','important');
+ b.style.setProperty('right','10px','important');
+ b.style.setProperty('top','64px','important');
+ b.style.setProperty('z-index','2147483000','important');
+ b.style.setProperty('width','36px','important');
+ b.style.setProperty('height','36px','important');
  b.setAttribute('aria-hidden',String(!on))
 }
-function openMarketsMobile(){document.body.classList.add('rwa-v5-mobile-markets','market-drawer-open');leftMode='watchlist';renderLeft();setMobileMarketsCloseVisible(true)}
-function closeMarketsMobile(){document.body.classList.remove('rwa-v5-mobile-markets','market-drawer-open');setMobileMarketsCloseVisible(false);setMobile('chart')}
+function setMobileMarketsDrawerVisible(on){
+ const left=$('.layout>.left')||$('.left');if(!left)return;
+ if(on){
+  left.style.setProperty('display','flex','important');
+  left.style.setProperty('position','fixed','important');
+  left.style.setProperty('inset','56px 0 56px 0','important');
+  left.style.setProperty('width','100%','important');
+  left.style.setProperty('min-width','0','important');
+  left.style.setProperty('max-width','none','important');
+  left.style.setProperty('height','auto','important');
+  left.style.setProperty('z-index','2147482000','important');
+  left.style.setProperty('visibility','visible','important');
+  left.style.setProperty('opacity','1','important')
+ }else{
+  for(const p of ['position','inset','width','min-width','max-width','height','z-index','visibility','opacity'])left.style.removeProperty(p);
+  if(innerWidth<681)left.style.setProperty('display','none','important');else left.style.removeProperty('display')
+ }
+}
+function openMarketsMobile(){
+ document.body.classList.add('rwa-v5-mobile-markets','market-drawer-open');leftMode='watchlist';
+ setMobileMarketsDrawerVisible(true);setMobileMarketsCloseVisible(true);
+ try{renderLeft()}catch(e){console.error('RWA V5 mobile markets render failed',e)}
+}
+function closeMarketsMobile(){
+ document.body.classList.remove('rwa-v5-mobile-markets','market-drawer-open');
+ setMobileMarketsCloseVisible(false);setMobileMarketsDrawerVisible(false);setMobile('chart')
+}
 function renderFavorite(){
  const w=$('.instrument-actions button:first-child');if(!w)return;const on=favorites().includes(selected());w.textContent=on?'★':'☆';w.classList.toggle('active',on);w.title=on?'Remove from watchlist':'Add to watchlist';w.setAttribute('aria-label',w.title)
 }
@@ -224,7 +255,7 @@ function bind(){
  },true);
  document.addEventListener('input',e=>{if(e.target.matches('[data-v5-thesis-text]')){const c=$('[data-v5-thesis-count]');if(c)c.textContent=e.target.value.length+' / 280'}});
  document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#rwaV5GlobalSearch input')?.focus()}if(e.key==='Escape'){$('[data-v5-more-menu]')?.setAttribute('hidden','');document.body.classList.remove('rwa-v5-mobile-markets')}});
- window.addEventListener('resize',()=>{if(innerWidth>680){document.body.classList.remove('rwa-v5-mobile-markets','market-drawer-open');setMobileMarketsCloseVisible(false)}ensureMobile();applyMobileState()},{passive:true});
+ window.addEventListener('resize',()=>{if(innerWidth>680){document.body.classList.remove('rwa-v5-mobile-markets','market-drawer-open');setMobileMarketsCloseVisible(false);setMobileMarketsDrawerVisible(false)}ensureMobile();applyMobileState()},{passive:true});
  window.addEventListener('rwa:wallet-login',()=>setTimeout(()=>{refreshAccount().then(()=>renderBottom())},50));
  window.addEventListener('rwa:wallet-logout',()=>renderBottom());
  window.addEventListener('rwa:exchange-state',()=>renderStatus())
@@ -233,4 +264,4 @@ function boot(){apply();bind();renderBottom();clearInterval(renderTimer);renderT
 window.RWATerminalV5={version:VERSION,active:true,apply,navigate,setBottom,setMobile,setTradeSide,openAlerts,openTrade,toggleFavorite,share,audit:()=>({version:VERSION,route:location.hash||'#markets',leftMode,bottomMode,mobileMode,tradeSide,globalNav:qa('.topnav [data-v5-nav]').map(x=>x.dataset.v5Nav),bottomTabs:qa('#rwaV5Bottom [data-v5-bottom]').map(x=>x.dataset.v5Bottom),railTrade:$('#liveRail')?.dataset.v5Trade==='1',orderTicketInside:!!$('#liveRail #rwaTargetOrderTicket'),mobileMarketsOpen:document.body.classList.contains('rwa-v5-mobile-markets'),favorites:favorites().length,alerts:alerts().length,theses:theses().length})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
-/* RWA_TERMINAL_V5_ACCEPTANCE_2026_09_03_R11 */
+/* RWA_TERMINAL_V5_ACCEPTANCE_2026_09_03_R12 */
