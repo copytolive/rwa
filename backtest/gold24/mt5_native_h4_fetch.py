@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import hashlib
 import json
 import os
@@ -41,11 +42,26 @@ def main() -> int:
         if not mt5.symbol_select(symbol, True):
             raise RuntimeError(f"symbol_select failed {symbol}: {mt5.last_error()}")
 
-        # copy_rates_from_pos asks the broker terminal for its native H4 series.
-        # There is intentionally no pandas/resample or lower-timeframe aggregation.
-        rates = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_H4, 0, 100000)
+        # Ask the broker terminal directly for its source-native H4 series.
+        # copy_rates_range is preferred because some terminals reject oversized
+        # copy_rates_from_pos counts with "Invalid params". Both APIs return
+        # broker H4 bars directly; no lower-TF aggregation/resampling is used.
+        attempts = []
+        utc = dt.timezone.utc
+        rates = mt5.copy_rates_range(
+            symbol, mt5.TIMEFRAME_H4,
+            dt.datetime(2000, 1, 1, tzinfo=utc),
+            dt.datetime.now(tz=utc),
+        )
+        attempts.append({"api":"copy_rates_range","count":0 if rates is None else int(len(rates)),"last_error":mt5.last_error()})
         if rates is None or len(rates) == 0:
-            raise RuntimeError(f"native H4 returned no bars: {mt5.last_error()}")
+            for count in (50000, 20000, 10000, 5000, 2000):
+                rates = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_H4, 0, count)
+                attempts.append({"api":"copy_rates_from_pos","requested":count,"count":0 if rates is None else int(len(rates)),"last_error":mt5.last_error()})
+                if rates is not None and len(rates) > 0:
+                    break
+        if rates is None or len(rates) == 0:
+            raise RuntimeError(f"native H4 returned no bars after bounded direct-H4 fallbacks: {attempts}")
         d = pd.DataFrame(rates)
         d["Date"] = pd.to_datetime(d["time"], unit="s", utc=True)
         vol = d["real_volume"].where(d["real_volume"] > 0, d["tick_volume"]).fillna(0)
@@ -110,6 +126,7 @@ def main() -> int:
             "h4_direction_agreement":direction,
             "median_absolute_price_delta_fraction":med_delta,
             "criteria":criteria,
+            "broker_fetch_attempts":attempts,
             "generated_at":pd.Timestamp.now(tz="UTC").isoformat(),
         }
         receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True)+"\n", encoding="utf-8")
