@@ -18,7 +18,7 @@ async function ensureExecution(){await ensureWallet();if(!window.RWAExecutionAPI
 async function fetchLaunch(force=false){if(!force&&launchState&&Date.now()-launchAt<30000)return launchState;try{const r=await fetch('launch/readiness.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);launchState=await r.json()}catch(e){launchState={status:'UNAVAILABLE',mainnet_ready:false,error:String(e?.message||e)}}launchAt=Date.now();return launchState}
 function lockDesktopGeometry(){
  if(innerWidth<1281)return;
- const imp=(el,p,v)=>el?.style?.setProperty(p,v,'important'),vw=Math.max(1,innerWidth)+'px',top=$('.topbar'),layout=$('.layout'),left=$('.layout>.left'),main=$('.layout>.main'),right=$('.layout>.right'),rail=$('#liveRail'),footer=$('#rwaGlobalTicker'),app=$('.app');
+ const imp=(el,p,v)=>el?.style?.setProperty(p,v,'important'),vw='100vw',top=$('.topbar'),layout=$('.layout'),left=$('.layout>.left'),main=$('.layout>.main'),right=$('.layout>.right'),rail=$('#liveRail'),footer=$('#rwaGlobalTicker'),app=$('.app');
  for(const root of [document.documentElement,document.body]){root.style.setProperty('width','100vw','important');root.style.setProperty('height','100vh','important');root.style.setProperty('overflow','hidden','important')}
  imp(app,'width','100vw');imp(app,'height','100vh');imp(app,'overflow','hidden');
  imp(top,'position','fixed');imp(top,'left','0');imp(top,'top','0');imp(top,'width',vw);imp(top,'height','55px');imp(top,'min-height','55px');imp(top,'max-height','55px');imp(top,'box-sizing','border-box');
