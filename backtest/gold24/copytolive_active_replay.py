@@ -66,7 +66,8 @@ def finite(value, default=0.0) -> float:
         return float(default)
 
 
-def load_h1(path: Path) -> pd.DataFrame:
+def load_ohlcv(path: Path, *, label: str, min_rows: int) -> pd.DataFrame:
+    """Load production-style OHLCV from CSV or parquet without changing wall-clock timestamps."""
     if path.suffix.lower() in {".parquet", ".pq"}:
         raw = pd.read_parquet(path)
     else:
@@ -80,33 +81,53 @@ def load_h1(path: Path) -> pd.DataFrame:
         elif lo in {"open", "high", "low", "close", "volume"}:
             rename[col] = lo
     d = raw.rename(columns=rename).copy()
+
+    # Canonical production parquets store the timestamp in a DatetimeIndex.
+    if "Date" not in d.columns and isinstance(d.index, pd.DatetimeIndex):
+        d.insert(0, "Date", pd.DatetimeIndex(d.index))
+
     required = {"Date", "open", "high", "low", "close"}
     missing = required - set(d.columns)
     if missing:
-        raise RuntimeError(f"H1 dataset missing columns: {sorted(missing)}")
+        raise RuntimeError(f"{label} dataset missing columns: {sorted(missing)}")
     if "volume" not in d:
         d["volume"] = 0.0
 
     if pd.api.types.is_numeric_dtype(d["Date"]):
-        dt = pd.to_datetime(d["Date"], unit="ms", utc=True, errors="coerce")
+        dt = pd.to_datetime(d["Date"], unit="ms", errors="coerce")
     else:
-        dt = pd.to_datetime(d["Date"], utc=True, errors="coerce")
+        dt = pd.to_datetime(d["Date"], errors="coerce")
     if dt.isna().any():
-        raise RuntimeError("invalid H1 timestamps")
+        raise RuntimeError(f"invalid {label} timestamps")
+
+    # The producer uses the parquet index's wall-clock hour directly.  Do not
+    # apply a timezone conversion here; only remove an existing timezone while
+    # preserving the represented UTC wall clock from the canonical dataset.
+    if getattr(dt.dt, "tz", None) is not None:
+        dt = dt.dt.tz_convert("UTC").dt.tz_localize(None)
     d["Date"] = dt
+
     for col in ("open", "high", "low", "close", "volume"):
         d[col] = pd.to_numeric(d[col], errors="coerce")
     d = d.dropna(subset=["open", "high", "low", "close"])
     d = d.drop_duplicates(subset=["Date"], keep="last").sort_values("Date").reset_index(drop=True)
 
-    if len(d) < 10_000:
-        raise RuntimeError(f"H1 dataset unexpectedly short: {len(d)}")
+    if len(d) < min_rows:
+        raise RuntimeError(f"{label} dataset unexpectedly short: {len(d)}")
     if (d["high"] < d["low"]).any():
-        raise RuntimeError("high < low in H1 dataset")
+        raise RuntimeError(f"high < low in {label} dataset")
     if ((d["open"] < d["low"]) | (d["open"] > d["high"]) |
         (d["close"] < d["low"]) | (d["close"] > d["high"])).any():
-        raise RuntimeError("open/close outside H1 bar range")
+        raise RuntimeError(f"open/close outside {label} bar range")
     return d
+
+
+def load_h1(path: Path) -> pd.DataFrame:
+    return load_ohlcv(path, label="H1", min_rows=10_000)
+
+
+def load_d1(path: Path) -> pd.DataFrame:
+    return load_ohlcv(path, label="D1", min_rows=1_000)
 
 
 def load_sources(manifest_path: Path, sources_path: Path):
@@ -170,8 +191,16 @@ def production_filter_mode(strategy_id: str) -> str:
     return parts[1]
 
 
-def build_production_masks(d: pd.DataFrame) -> dict[str, tuple[np.ndarray, np.ndarray]]:
-    """Reproduce pipeline/wf_nondex_btc_gold.py filter construction exactly."""
+def build_production_masks(
+    d: pd.DataFrame,
+    d1: pd.DataFrame,
+) -> dict[str, tuple[np.ndarray, np.ndarray]]:
+    """Reproduce pipeline/wf_nondex_btc_gold.py filter construction exactly.
+
+    Critical lineage detail: production reads GOLD_H1.parquet and
+    GOLD_D1.parquet independently.  The MTF bias therefore MUST use the
+    canonical D1 parquet, not a D1 series reconstructed from H1.
+    """
     c = d["close"].to_numpy(np.float64)
     h = d["high"].to_numpy(np.float64)
     l = d["low"].to_numpy(np.float64)
@@ -192,13 +221,7 @@ def build_production_masks(d: pd.DataFrame) -> dict[str, tuple[np.ndarray, np.nd
         if atr[i] > atr_ma[i]:
             vol_mask[i] = 1
 
-    # Production D1 is built from the same source bars with first/max/min/last.
-    # Rebuilding from H1 preserves those daily OHLC values while keeping the
-    # original positional H1-per-D1 mapping used by compute_mtf_bias().
-    x = d.set_index("Date")[["open","high","low","close","volume"]]
-    d1 = x.resample("1D").agg({
-        "open":"first","high":"max","low":"min","close":"last","volume":"sum"
-    }).dropna(subset=["open","high","low","close"])
+    # compute_mtf_bias(c_h1, df_d1) from the canonical, separate D1 parquet.
     mtf_bias = np.zeros(n, dtype=np.int8)
     if len(d1) >= 200:
         d1c = d1["close"].to_numpy(np.float64)
@@ -212,7 +235,7 @@ def build_production_masks(d: pd.DataFrame) -> dict[str, tuple[np.ndarray, np.nd
                 break
             mtf_bias[h1_start:h1_end] = 1 if ema50[i] > ema200[i] else -1
 
-    # GOLD session filter in production: hours 07:00 through 21:59 inclusive.
+    # GOLD session filter in production: parquet-index hour 07..21 inclusive.
     session = np.ones(n, dtype=np.int8)
     hours = d["Date"].dt.hour.to_numpy()
     session[(hours < 7) | (hours > 21)] = 0
@@ -496,6 +519,7 @@ def write_csv(path: Path, rows: list[dict]):
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", required=True)
+    ap.add_argument("--d1-dataset", required=True)
     ap.add_argument("--manifest", default=str(DEFAULT_MANIFEST))
     ap.add_argument("--sources", default=str(DEFAULT_SOURCES))
     ap.add_argument("--out-dir", required=True)
@@ -503,9 +527,10 @@ def main() -> int:
 
     manifest, scripts = load_sources(Path(args.manifest), Path(args.sources))
     d = load_h1(Path(args.dataset))
+    d1 = load_d1(Path(args.d1_dataset))
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    production_masks = build_production_masks(d)
+    production_masks = build_production_masks(d, d1)
 
     rows = []
     barpnls = {}
@@ -569,6 +594,13 @@ def main() -> int:
             "rows": int(len(d)),
             "start_utc": str(d["Date"].iloc[0]),
             "end_utc": str(d["Date"].iloc[-1]),
+        },
+        "d1_dataset": {
+            "path": str(Path(args.d1_dataset)),
+            "sha256": sha256_file(Path(args.d1_dataset)),
+            "rows": int(len(d1)),
+            "start_utc": str(d1["Date"].iloc[0]),
+            "end_utc": str(d1["Date"].iloc[-1]),
         },
         "execution_contract": {
             "deposit_usd": COPYTOLIVE_DEPOSIT_USD,
