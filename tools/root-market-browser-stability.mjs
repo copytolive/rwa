@@ -96,7 +96,7 @@ async function desktop(browser){
   assert.ok(ten>=8,`10-level book control did not expand DOM rows: ${ten}`);
 
   const search=page.locator('#search');
-  if(await search.count()){
+  if(await search.count() && await search.isVisible()){
     await search.fill('T250');
     await page.waitForTimeout(80);
     assert.equal(await page.locator('#pairList .pairrow').count(),1);
