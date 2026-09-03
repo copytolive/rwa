@@ -47,6 +47,14 @@ jobs:
           probe ohlcv-gold-h1 "$BASE/trading/market-data/ohlcv/FOREX/GOLD?tf=1h&limit=50000"
           probe ohlcv-xauusd-h1 "$BASE/trading/market-data/ohlcv/FOREX/XAUUSD?tf=1h&limit=50000"
           probe symbols-forex "$BASE/trading/market-data/symbols/FOREX"
+          probe dashboard-strategies "$BASE/trading/dashboard/strategies"
+          probe dashboard-linreg "$BASE/trading/dashboard/strategies/ND_MTF_LINREG_SLP_f21s55_GOLD_H1_SL0.025_TP2.5"
+          probe dashboard-obv "$BASE/trading/dashboard/strategies/ND_ALL_OBV_CROSS_f8s21_GOLD_H1_SL0.025_TP2.0"
+          probe dashboard-bbsqz "$BASE/trading/dashboard/strategies/ND_ALL_BB_SQZ_f13s34_GOLD_H1_SL0.012_TP3.0"
+          probe compounding-status "$BASE/trading/compounding/status"
+          probe compounding-strategies "$BASE/trading/compounding/strategies"
+          probe compounding-history "$BASE/trading/compounding/history"
+          probe unified-strategies "$BASE/trading/signals/unified/strategies"
           python3 - <<'PY'
           import json,pathlib
           for p in sorted(pathlib.Path("out").glob("*.json")):
