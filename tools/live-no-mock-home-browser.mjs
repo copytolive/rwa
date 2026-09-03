@@ -61,6 +61,10 @@ async function desktop(){
  await page.locator('.rwa-v5-side-switch [data-v5-side="SELL"]').click();
  const side=await page.locator('#rwaTargetOrderTicket').getAttribute('data-v5-side');if(side!=='SELL')fail('Sell side switch failed',side);
  await page.locator('.rwa-v5-side-switch [data-v5-side="BUY"]').click();
+ await page.locator('#rwaTargetOrderTicket [data-live-mode="STOP"]').click();
+ if(!await page.locator('#rwaTargetOrderTicket [data-live-mode="STOP"]').evaluate(el=>el.classList.contains('active')))fail('STOP mode does not activate');
+ if(await page.locator('#rwaTargetOrderTicket [data-order-side="BUY"] [data-live-price]').isDisabled())fail('STOP price input remains disabled');
+ await page.locator('#rwaTargetOrderTicket [data-live-mode="MARKET"]').click();
  const ask=page.locator('#asks .bookrow').last();await ask.click();await page.waitForTimeout(60);
  if(!await page.locator('#rwaTargetOrderTicket [data-live-mode="LIMIT"]').evaluate(el=>el.classList.contains('active')))fail('Order book click did not select LIMIT');
  const lp=await page.locator('#rwaTargetOrderTicket [data-order-side="BUY"] [data-live-price]').inputValue();if(!(Number(lp)>0))fail('Order book click did not populate limit price',lp);
