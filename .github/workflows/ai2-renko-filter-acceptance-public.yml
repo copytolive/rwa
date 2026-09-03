@@ -55,7 +55,7 @@ jobs:
             ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id&&pending.has(m.id)){const p=pending.get(m.id);pending.delete(m.id);return m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result)}if(m.method==='Runtime.exceptionThrown')R.errors.push(String(m.params?.exceptionDetails?.text||'exception'));if(m.method==='Network.responseReceived'&&Number(m.params?.response?.status)>=400)R.network.push({status:m.params.response.status,url:m.params.response.url})};
             await send('Runtime.enable'); await send('Network.enable'); await send('Page.enable');
             await send('Page.navigate',{url:'https://copytolive.com/?view=renko&symbol=SOL&smaPeriod=10&v='+encodeURIComponent(ID)});
-            const ready=await wait("(()=>document.querySelector('[data-testid=\"renko-top-filter\"]')&&document.querySelector('select[aria-label=\"Pair Renko\"]')&&document.querySelector('select[aria-label=\"Pair futures Hyperliquid\"]'))()",60000);
+            const ready=await wait("(()=>!!(document.querySelector('[data-testid=\"renko-top-filter\"]')&&document.querySelector('select[aria-label=\"Pair Renko\"]')&&document.querySelector('select[aria-label=\"Pair futures Hyperliquid\"]')))()",60000);
             if(!ready){R.diag=await ev("(()=>({href:location.href,readyState:document.readyState,hasShell:!!document.querySelector('[data-testid=\\\"renko-top-filter\\\"]'),selects:[...document.querySelectorAll('select')].map(x=>({aria:x.getAttribute('aria-label')||'',value:x.value})),body:String(document.body?.innerText||'').slice(0,5000),scripts:[...document.scripts].map(x=>x.src).filter(Boolean),resources:performance.getEntriesByType('resource').map(x=>x.name).slice(-80)}))()");throw Error('RENKO_FILTER_SHELL_NOT_READY '+JSON.stringify(R.diag));}
             R.checks.labels=await ev("(()=>[...document.querySelector('[data-testid=\"renko-top-filter\"]')?.querySelectorAll('div')||[]].map(x=>String(x.textContent||'').trim()).filter(x=>['Metode','Pair','Market','OOS WR'].includes(x)))()");
             if(!['Metode','Pair','Market','OOS WR'].every(x=>R.checks.labels.includes(x))) throw Error('FILTER_LABELS');
@@ -79,8 +79,8 @@ jobs:
             const expNon=top('noncrypto','all')[0]?.symbol||'';
             if(expNon&&!await wait("(()=>document.querySelector('select[aria-label=\"Pair Renko\"]')?.value==="+JSON.stringify(expNon)+"&&document.querySelector('select[aria-label=\"Pair futures Hyperliquid\"]')?.value==="+JSON.stringify(expNon)+")()",30000)) throw Error('AUTO_NONCRYPTO_SYNC');
             R.checks.noncrypto={expected:expNon,pair:await ev("document.querySelector('select[aria-label=\"Pair Renko\"]')?.value||''"),terminal:await ev("document.querySelector('select[aria-label=\"Pair futures Hyperliquid\"]')?.value||''")};
-            R.checks.nav=await ev("(()=>{const b=[...document.querySelectorAll('button')].find(x=>String(x.textContent||'').trim()==='Renko');return!!b&&getComputedStyle(b).display!=='none})()");
-            if(!R.checks.nav) throw Error('RENKO_NAV_MISSING');
+            R.checks.nav=!!await wait("(()=>{try{const vis=x=>{const r=x.getBoundingClientRect(),s=getComputedStyle(x);return r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden'};const names=[...document.querySelectorAll('button,a')].filter(vis).map(x=>String(x.textContent||'').replace(/\\s+/g,' ').trim()).filter(Boolean);const h=names.indexOf('Hyperliquid'),r=names.indexOf('Renko');return h>=0&&r===h+1}catch(e){return false}})()",12000);
+            if(!R.checks.nav) throw Error('RENKO_NAV_MISSING_OR_NOT_NEXT_TO_HYPERLIQUID');
             const hard=R.network.filter(x=>![429,502,503,504].includes(Number(x.status)));
             if(R.errors.length||hard.length) throw Error('BROWSER_ERRORS '+JSON.stringify({errors:R.errors,hard}));
             R.ok=true;R.acceptance='PASS';
