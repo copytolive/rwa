@@ -348,6 +348,7 @@ function bind(){
   const bottom=e.target.closest('[data-v5-bottom]');if(bottom){setBottom(bottom.dataset.v5Bottom);if(innerWidth<681)setMobile('workspace');return}
   const mode=e.target.closest('[data-v5-mobile-mode]');if(mode){setMobile(mode.dataset.v5MobileMode);return}
   const side=e.target.closest('[data-v5-side]');if(side){e.preventDefault();setTradeSide(side.dataset.v5Side);return}
+  const quickMode=e.target.closest('[data-v5-quick-mode]');if(quickMode){e.preventDefault();const next=quickMode.dataset.v5QuickMode||'MARKET';qa('[data-v5-quick-mode]').forEach(x=>x.classList.toggle('active',x===quickMode));window.RWALiveHome?.setOrderMode?.(next);const ticket=$('#rwaTargetOrderTicket');if(ticket){ticket.querySelectorAll('[data-live-mode]').forEach(x=>x.classList.toggle('active',x.dataset.liveMode===next));ticket.querySelectorAll('[data-live-price]').forEach(x=>{const market=next==='MARKET';x.disabled=market;if(market)x.value='';x.placeholder=next==='LIMIT'?'Limit price':next==='STOP'?'Stop price':'Market price'})}return}
   const ttab=e.target.closest('[data-v5-trade-tab]');if(ttab){ttab.dataset.v5TradeTab==='alerts'?openAlerts():openTrade();return}
   const mobileWallet=e.target.closest('[data-v5-mobile-wallet]');if(mobileWallet){e.preventDefault();$('.top-actions .signin')?.click();return}
   const act=e.target.closest('[data-v5-action]');if(act){if(act.dataset.v5Action==='alerts')openAlerts();if(act.dataset.v5Action==='network')$('#rwaMultiChainLaunch')?.click();if(act.dataset.v5Action==='open-markets')openMarketsMobile();if(act.dataset.v5Action==='close-markets')closeMarketsMobile();return}
@@ -411,3 +412,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 /* RWA_TERMINAL_EXACT_SHA_RECERT_2026_09_04 */
 
 /* RWA_TERMINAL_MOBILE_TRADE_FIX_RECERT_2026_09_04 */
+
+/* RWA_TERMINAL_R7_REFERENCE_PARITY_FINAL_2026_09_04 */
