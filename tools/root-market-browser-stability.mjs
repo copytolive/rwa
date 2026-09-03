@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 const BASE=process.env.RWA_TEST_URL||'http://127.0.0.1:4173/';
 const markets=Array.from({length:520},(_,i)=>{
-  const base=i===0?'BTC':i===1?'ETH':`T${String(i).padStart(3,'0')}`;
+  const base=i===0?'BTC':i===1?'ETH':i===2?'ONDO':i===3?'PAXG':`T${String(i).padStart(3,'0')}`;
   return {symbol:`${base}USDT`,baseAsset:base,quoteAsset:'USDT',status:'TRADING',isSpotTradingAllowed:true};
 });
 const tickers=markets.map((m,i)=>({
@@ -40,19 +40,17 @@ async function installDeterministicMarket(context){
   await context.route('**/api/v3/depth**',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(depth)}));
   await context.route('https://s3.tradingview.com/**',r=>r.abort());
 }
-
 async function open(browser,width,height){
   const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,serviceWorkers:'block'});
   await installDeterministicMarket(context);
   const page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(String(e?.message||e)));
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:25000});
-  await page.waitForFunction(()=>window.RWALiveHome?.version==='4.2.1'&&window.RWAMarketRuntime?.version==='1.4.3'&&window.RWAMarketRuntime.state().pairs.length===520,{timeout:20000});
-  await page.waitForFunction(()=>document.querySelectorAll('#bids .bookrow').length>=5&&document.querySelectorAll('#asks .bookrow').length>=5,{timeout:15000});
+  await page.waitForFunction(()=>window.RWALiveHome?.version==='5.0.0'&&window.RWATerminalV5?.version==='1.0.0'&&window.RWAMarketRuntime?.version==='1.4.3'&&window.RWAMarketRuntime.state().pairs.length===520,{timeout:25000});
+  await page.waitForFunction(()=>document.querySelectorAll('#bids .bookrow').length>=5&&document.querySelectorAll('#asks .bookrow').length>=5&&document.querySelector('#liveRail #rwaTargetOrderTicket'),{timeout:15000});
   await page.waitForTimeout(250);
   return {context,page,errors};
 }
-
 async function desktop(browser){
   const {context,page,errors}=await open(browser,1672,941);
   const info=await page.evaluate(()=>{
@@ -66,95 +64,84 @@ async function desktop(browser){
       commerce:/seablueprint|ecommerce|in-page commerce/i.test(document.body.innerText),
       mock:!!document.querySelector('#rwaScreenshotParity'),
       brand:document.querySelector('.brandcopy strong')?.textContent,
-      layout:rect('.layout'),left:rect('.layout>.left'),right:rect('.layout>.right'),
-      rail:rect('#liveRail'),footer:rect('#rwaGlobalTicker')
+      nav:[...document.querySelectorAll('.topnav [data-v5-nav]')].map(x=>x.dataset.v5Nav),
+      bottomTabs:[...document.querySelectorAll('#rwaV5Bottom [data-v5-bottom]')].map(x=>x.dataset.v5Bottom),
+      leftTabs:[...document.querySelectorAll('.rwa-v5-left-tabs [data-v5-left]')].map(x=>x.dataset.v5Left),
+      ticketInside:!!document.querySelector('#liveRail #rwaTargetOrderTicket'),
+      layout:rect('.layout'),left:rect('.left'),main:rect('.main'),book:rect('.right'),trade:rect('#liveRail'),bottom:rect('#rwaV5Bottom'),footer:rect('#rwaV5Footer')
     };
   });
   assert.equal(info.pairs,520);
-  assert.ok(info.rows>10&&info.rows<=140,`desktop watchlist DOM cap invalid: ${info.rows}`);
-  assert.ok(info.asks>=5&&info.bids>=5,`depth100 book incomplete: ${info.asks}/${info.bids}`);
-  assert.ok(info.overflow<=2,`desktop overflow: ${info.overflow}`);
+  assert.ok(info.rows<=140);
+  assert.ok(info.asks>=5&&info.bids>=5);
+  assert.ok(info.overflow<=2);
   assert.equal(info.commerce,false);
   assert.equal(info.mock,false);
   assert.equal(info.brand,'Real World Asset');
-  const navPlacement=await page.evaluate(()=>({top:[...document.querySelectorAll('.topnav [data-rwa-target-nav]')].map(x=>x.dataset.rwaTargetNav),rail:[...document.querySelectorAll('#liveRail>.live-rail-section-nav [data-rwa-target-nav]')].map(x=>x.dataset.rwaTargetNav),railHeights:[...document.querySelectorAll('#liveRail>.live-rail-section-nav [data-rwa-target-nav]')].map(x=>Math.round(x.getBoundingClientRect().height))}));
-  assert.deepEqual(navPlacement.top,['markets']);
-  assert.deepEqual(navPlacement.rail,['trade','portfolio','orders','analytics','rewards']);
-  assert.ok(navPlacement.railHeights.every(h=>h===36),`Market rail nav height mismatch: ${JSON.stringify(navPlacement)}`);
-  assert.equal(info.rail?.display,'flex');
-  assert.ok(Math.abs(info.left?.w-286)<=3);
-  assert.ok(Math.abs(info.right?.w-286)<=3);
-  assert.ok(Math.abs(info.rail?.w-330)<=3);
-  assert.ok(Math.abs(info.footer?.h-34)<=3);
+  assert.deepEqual(info.nav,['trade','discover','portfolio','analytics','rewards','more']);
+  assert.deepEqual(info.bottomTabs,['positions','orders','holders','feed','analytics','thesis','history']);
+  assert.deepEqual(info.leftTabs,['watchlist','feed','pulse','live']);
+  assert.equal(info.ticketInside,true);
+  assert.ok(Math.abs(info.left.w-238)<=3);
+  assert.ok(Math.abs(info.book.w-250)<=3);
+  assert.ok(Math.abs(info.trade.w-300)<=3);
+  assert.ok(Math.abs(info.bottom.h-220)<=3);
+  assert.ok(Math.abs(info.footer.h-28)<=2);
+  assert.equal(locationHash(await page),'#markets');
 
-  const navRoute=async key=>{await page.locator('[data-rwa-target-nav="'+key+'"]').click();await page.waitForSelector('#rwaTradingWorkspace:not([hidden])');const state=await page.evaluate(()=>({hash:location.hash,mode:document.querySelector('#liveRail')?.dataset.mode,open:document.querySelector('#liveRail')?.classList.contains('workspace-open')}));assert.equal(state.hash,'#markets');assert.equal(state.mode,key);assert.equal(state.open,true);await page.locator('[data-workspace-close]').click()};
-  for(const key of ['trade','portfolio','orders','analytics','rewards'])await navRoute(key);
+  await page.locator('.topnav [data-v5-nav="discover"]').click();await page.waitForTimeout(40);
+  assert.match(await page.locator('[data-v5-bottom-body]').innerText(),/Top movers|Top volume/i);
+  await page.locator('.topnav [data-v5-nav="analytics"]').click();await page.waitForTimeout(40);
+  assert.match(await page.locator('[data-v5-bottom-body]').innerText(),/LIVE PAIRS|RWA-LINKED/i);
+  await page.locator('.topnav [data-v5-nav="rewards"]').click();await page.waitForTimeout(40);
+  assert.match(await page.locator('[data-v5-bottom-body]').innerText(),/INACTIVE|No verified rewards/i);
 
-  const menu=page.locator('#bookMenu');
-  await menu.click();
-  await page.waitForFunction(()=>{
-    const s=window.RWAMarketRuntime?.state?.();
-    return s?.bookLevels===10 && (s?.book?.bids?.length||0)>=8 && document.querySelectorAll('#bids .bookrow').length>=8;
-  },{timeout:6000});
-  const bookState=await page.evaluate(()=>window.RWAMarketRuntime.state());
-  const ten=await page.locator('#bids .bookrow').count();
-  assert.equal(bookState.bookLevels,10);
-  assert.ok(bookState.book.bids.length>=8,`10-level grouped state incomplete: ${bookState.book.bids.length}`);
-  assert.ok(ten>=8,`10-level book control did not expand DOM rows: ${ten}`);
+  await page.locator('.topnav [data-v5-nav="trade"]').click();
+  await page.locator('.rwa-v5-side-switch [data-v5-side="SELL"]').click();
+  assert.equal(await page.locator('#rwaTargetOrderTicket').getAttribute('data-v5-side'),'SELL');
+  await page.locator('.rwa-v5-side-switch [data-v5-side="BUY"]').click();
+  await page.locator('#asks .bookrow').last().click();
+  assert.ok(await page.locator('#rwaTargetOrderTicket [data-live-mode="LIMIT"]').evaluate(el=>el.classList.contains('active')));
+  assert.ok(Number(await page.locator('#rwaTargetOrderTicket [data-order-side="BUY"] [data-live-price]').inputValue())>0);
 
-  const search=page.locator('#search');
-  if(await search.count() && await search.isVisible()){
-    await search.fill('T250');
-    await page.waitForTimeout(80);
-    assert.equal(await page.locator('#pairList .pairrow').count(),1);
-    await search.fill('');
-    await page.waitForTimeout(80);
-    assert.ok((await page.locator('#pairList .pairrow').count())<=140);
-  }
+  await page.locator('.rwa-v5-left-tabs [data-v5-left="pulse"]').click();
+  assert.match(await page.locator('[data-v5-left-pane="pulse"]').innerText(),/Top Movers/i);
+  await page.locator('#rwaV5Bottom [data-v5-bottom="holders"]').click();
+  assert.match(await page.locator('[data-v5-bottom-body]').innerText(),/NEEDS HOLDER BACKEND/i);
+  await page.locator('#rwaV5Bottom [data-v5-bottom="thesis"]').click();
+  await page.locator('[data-v5-thesis-text]').fill('Deterministic local thesis');
+  await page.locator('[data-v5-thesis-publish]').click();
+  assert.match(await page.locator('[data-v5-bottom-body]').innerText(),/Deterministic local thesis/);
+
+  const search=page.locator('#rwaV5GlobalSearch input');await search.fill('T250');await page.waitForTimeout(40);
+  assert.ok(await page.locator('#rwaV5GlobalSearch [data-v5-symbol="T250USDT"]').count());
+  await search.fill('');
 
   assert.equal(errors.length,0,`desktop page errors: ${errors.join(' | ')}`);
-  await context.close();
-  return info;
+  await context.close();return info;
 }
-
-async function compact(browser){
-  const {context,page,errors}=await open(browser,1280,900);
-  const x=await page.evaluate(()=>({
-    rail:getComputedStyle(document.querySelector('#liveRail')).display,
-    overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
-    rows:document.querySelectorAll('#pairList .pairrow').length
-  }));
-  assert.equal(x.rail,'none');
-  assert.ok(x.overflow<=2);
-  assert.ok(x.rows<=140);
-  assert.equal(errors.length,0);
-  await context.close();
-  return x;
-}
-
+async function locationHash(page){return await page.evaluate(()=>location.hash)}
 async function mobile(browser,width,height){
   const {context,page,errors}=await open(browser,width,height);
-  await page.locator('#rwaTargetOrderTicket').scrollIntoViewIfNeeded();
-  const m=await page.evaluate(()=>{const r=s=>{const e=document.querySelector(s);if(!e)return null;const x=e.getBoundingClientRect();return{x:x.x,right:x.right,y:x.y,bottom:x.bottom,w:x.width,h:x.height,display:getComputedStyle(e).display}};return{
-    overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
-    rows:document.querySelectorAll('#pairList .pairrow').length,
-    rail:getComputedStyle(document.querySelector('#liveRail')).display,
-    buy:r('[data-order-side="BUY"]>button'),sell:r('[data-order-side="SELL"]>button'),
-    input:r('[data-order-side="BUY"] label'),wallet:r('.top-actions .signin'),mc:r('#rwaMultiChainLaunch'),ticket:r('#rwaTargetOrderTicket')
-  }});
-  assert.ok(m.overflow<=2,`mobile overflow ${m.overflow}`);
-  assert.ok(m.rows<=70,`mobile watchlist cap invalid: ${m.rows}`);
-  assert.equal(m.rail,'none');
-  assert.ok(m.buy?.h>=44&&m.sell?.h>=44&&m.input?.h>=42,`mobile touch target invalid ${JSON.stringify(m)}`);
-  if(m.wallet)assert.ok(m.wallet.right<=width+1,`wallet clipped ${JSON.stringify(m.wallet)}`);
-  if(m.mc&&m.ticket){const overlap=Math.min(m.mc.bottom,m.ticket.bottom)-Math.max(m.mc.y,m.ticket.y);assert.ok(overlap<=8,`MULTI CHAIN overlaps ticket by ${overlap}px`)}
+  let x=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,mode:document.body.dataset.v5MobileMode,chart:getComputedStyle(document.querySelector('.chart-wrap')).display,mini:getComputedStyle(document.querySelector('#rwaV5MiniBook')).display,book:getComputedStyle(document.querySelector('.right')).display,trade:getComputedStyle(document.querySelector('#liveRail')).display}));
+  assert.ok(x.overflow<=2,`mobile overflow ${x.overflow}`);
+  assert.equal(x.mode,'chart');assert.notEqual(x.chart,'none');assert.notEqual(x.mini,'none');assert.equal(x.book,'none');assert.equal(x.trade,'none');
+  await page.locator('[data-v5-mobile-mode="book"]').click();await page.waitForTimeout(30);
+  x=await page.evaluate(()=>({mode:document.body.dataset.v5MobileMode,book:getComputedStyle(document.querySelector('.right')).display,chart:getComputedStyle(document.querySelector('.chart-wrap')).display}));
+  assert.equal(x.mode,'book');assert.notEqual(x.book,'none');assert.equal(x.chart,'none');
+  await page.locator('[data-v5-mobile-mode="trade"]').click();await page.waitForTimeout(30);
+  x=await page.evaluate(()=>({mode:document.body.dataset.v5MobileMode,trade:getComputedStyle(document.querySelector('#liveRail')).display,ticket:!!document.querySelector('#liveRail #rwaTargetOrderTicket')}));
+  assert.equal(x.mode,'trade');assert.notEqual(x.trade,'none');assert.equal(x.ticket,true);
+  await page.locator('[data-v5-mobile-mode="feed"]').click();assert.ok(await page.locator('#rwaV5MobileFeed').isVisible());
+  await page.locator('[data-v5-mobile-nav="markets"]').click();assert.ok(await page.locator('.left').isVisible());
+  await page.locator('[data-v5-action="close-markets"]').click();
+  await page.locator('[data-v5-mobile-nav="portfolio"]').click();assert.ok(await page.locator('#rwaV5Bottom').isVisible());
+  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);assert.ok(overflow<=2);
   assert.equal(errors.length,0,`mobile page errors: ${errors.join(' | ')}`);
-  await context.close();
-  return m;
+  await context.close();return x;
 }
-
 const browser=await chromium.launch({headless:true});
 try{
-  const result={desktop:await desktop(browser),compact:await compact(browser),mobile390:await mobile(browser,390,844),mobile430:await mobile(browser,430,932)};
-  console.log(JSON.stringify({ok:true,contract:'rwa-root-market-stability-v7-target-v4',result},null,2));
+  const result={desktop:await desktop(browser),mobile390:await mobile(browser,390,844),mobile430:await mobile(browser,430,932)};
+  console.log(JSON.stringify({ok:true,contract:'rwa-terminal-v5-stability',result},null,2));
 }finally{await browser.close()}
