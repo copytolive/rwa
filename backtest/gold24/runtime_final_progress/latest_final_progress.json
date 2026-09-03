@@ -1,12 +1,12 @@
 {
   "after": {
     "broker_h4_added_to_unique_total": false,
-    "candidate_evaluated_all_timeframes_minimum_unique": 1451912,
+    "candidate_evaluated_all_timeframes_minimum_unique": 1551912,
     "candidate_evaluated_broker_h4_separate": 0,
-    "candidate_evaluated_d1_pre_v4": 1391912,
+    "candidate_evaluated_d1_pre_v4": 1491912,
     "candidate_evaluated_direct_h4_unique": 60000,
-    "candidate_evaluated_discovery_total": 1391912,
-    "candidate_evaluated_discovery_total_d1": 1391912,
+    "candidate_evaluated_discovery_total": 1491912,
+    "candidate_evaluated_discovery_total_d1": 1491912,
     "candidate_evaluated_frequency_v4_unique": 0,
     "candidate_pass_global_d1": 115,
     "corr_violations": 8,
@@ -28,7 +28,7 @@
     "python_verified": 118,
     "sample_ge_300_count": 2,
     "source_methods_input": 118,
-    "targeted_candidate_evaluated_unique": 200000,
+    "targeted_candidate_evaluated_unique": 300000,
     "watch_portfolio_audit": 24
   },
   "authoritative_d1_global_source": "combined_portfolio_audit",
@@ -82,8 +82,8 @@
     "status": "NOT_PUBLISHED"
   },
   "latest_targeted_search": {
-    "combined_candidate_evaluated_reported": 1291912,
-    "cumulative_targeted_evaluated_unique": 200000,
+    "combined_candidate_evaluated_reported": 1391912,
+    "cumulative_targeted_evaluated_unique": 300000,
     "fail_count": 92,
     "full_pre_corr_survivors": 0,
     "global_corr_rejected": 0,
