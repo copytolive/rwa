@@ -7,6 +7,7 @@ on:
       - GOLD10B Targeted HARD PASS Search
       - GOLD10B Targeted HARD PASS Search v3
       - GOLD10B Native H4 HARD PASS Discovery
+      - GOLD10B Global D1-H4 Correlation Gate
       - GOLD24 Screening GPT Real Audit
     types: [completed]
 
