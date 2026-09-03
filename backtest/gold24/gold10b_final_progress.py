@@ -20,6 +20,7 @@ def main() -> int:
     port = load("runtime_screening_gpt/combined_portfolio_audit.json")
     audit = load("runtime_screening_gpt/screening_gpt_real_audit.json")
     h4 = load("runtime_native_h4/latest_native_h4_hardpass.json")
+    cross = load("runtime_global_cross_tf/latest_global_d1_h4_corr.json")
 
     finalized = int(v11.get("cumulative_configs_archived", 0) or 0)
     master_eval = int(
@@ -52,8 +53,15 @@ def main() -> int:
     target_fail = int(target.get("fail_count", 0) or 0)
 
     h4_internal = int(h4.get("native_h4_hardpass_kept", 0) or 0)
-    h4_corr_state = str(h4.get("global_cross_timeframe_corr_status", "NOT_RUN"))
-    h4_global_eligible = h4_internal if h4_corr_state == "PASS" else 0
+    cross_status = str(cross.get("status", "NOT_RUN"))
+    h4_corr_state = "PASS" if cross_status == "PASS" else str(h4.get("global_cross_timeframe_corr_status", "NOT_RUN"))
+    h4_global_eligible = int(cross.get("h4_hard_pass_after_global_corr", 0) or 0) if cross_status == "PASS" else 0
+    cross_global_hard = int(cross.get("hard_pass_global", hard_all) or 0) if cross_status == "PASS" else hard_all
+    cross_global_watch = int(cross.get("watch_global", watch_all) or 0) if cross_status == "PASS" else watch_all
+    cross_global_fail = int(cross.get("fail_global", fail_all) or 0) if cross_status == "PASS" else fail_all
+    cross_selected = int(cross.get("selected_global", global_kept) or 0) if cross_status == "PASS" else global_kept
+    cross_distinct = int(cross.get("distinct_family", family_count) or 0) if cross_status == "PASS" else family_count
+    cross_max_share = float(cross.get("max_family_concentration", max_share) or 0.0) if cross_status == "PASS" else max_share
 
     payload = {
         "schema": "gold10b-final-progress-v1",
@@ -94,11 +102,14 @@ def main() -> int:
             "watch_portfolio_audit": watch_all,
             "fail_portfolio_audit": fail_all,
             "source_methods_input": source_input,
-            "global_corr_kept": global_kept,
+            "global_corr_kept_d1": global_kept,
+            "global_corr_kept_all_timeframes": cross_selected,
             "global_pair_count": pair_count,
             "corr_violations": corr_viol if corr_viol else None,
-            "distinct_family": family_count,
-            "max_family_concentration": max_share,
+            "distinct_family_d1": family_count,
+            "distinct_family_all_timeframes": cross_distinct,
+            "max_family_concentration_d1": max_share,
+            "max_family_concentration_all_timeframes": cross_max_share,
             "sample_ge_300_count": int(port.get("sample_ge_300_count", 0) or 0),
             "max_dd_le_25_count": int(port.get("max_dd_le_25_count", 0) or 0),
             "portfolio_readiness": str(port.get("portfolio_readiness", "NOT_READY")),
@@ -127,7 +138,19 @@ def main() -> int:
             "globally_eligible_hard_pass": h4_global_eligible,
             "portfolio_readiness": h4.get("portfolio_readiness", "NOT_READY"),
         },
-        "hard_pass_global_final": hard_all + h4_global_eligible,
+        "global_cross_timeframe": {
+            "status": cross_status,
+            "methods_input_total": int(cross.get("methods_input_total", 0) or 0),
+            "selected_global": cross_selected if cross_status == "PASS" else 0,
+            "hard_pass_global": cross_global_hard if cross_status == "PASS" else hard_all,
+            "watch_global": cross_global_watch if cross_status == "PASS" else watch_all,
+            "fail_global": cross_global_fail if cross_status == "PASS" else fail_all,
+            "h4_hard_pass_after_global_corr": h4_global_eligible,
+            "distinct_family": cross_distinct if cross_status == "PASS" else family_count,
+            "max_family_concentration": cross_max_share if cross_status == "PASS" else max_share,
+            "correlation_rule": cross.get("correlation_rule", "absolute Pearson(log-return equity), global per-symbol"),
+        },
+        "hard_pass_global_final": cross_global_hard,
         "live_ready": False,
         "live_ready_reason": "margin/slippage/broker interaction is not validated; native H4 methods are excluded until global cross-timeframe correlation is PASS",
     }
