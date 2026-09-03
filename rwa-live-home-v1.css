@@ -329,3 +329,19 @@ body.rwa-target-dashboard-v2 .pairprice b,body.rwa-target-dashboard-v2 .pairpric
   body.rwa-target-dashboard-v2 .top-actions{position:static!important;margin-left:auto!important;padding:0!important;min-width:96px!important;width:96px!important;max-width:96px!important;flex:0 0 96px!important}
   body.rwa-target-dashboard-v2 .top-actions .signin{position:absolute!important;right:8px!important;top:9px!important;width:96px!important;min-width:96px!important;max-width:96px!important;height:34px!important}
 }
+
+/* TARGET_V4_FINAL_VIEWPORT_AND_MOBILE_CHAIN */
+@media(min-width:1281px){
+  body.rwa-target-dashboard-v2 .layout{min-width:100vw!important;max-width:none!important}
+}
+@media(max-width:680px){
+  body.rwa-target-dashboard-v2 #rwaMultiChainLaunch{
+    display:grid!important;place-items:center!important;
+    position:absolute!important;top:9px!important;right:112px!important;bottom:auto!important;left:auto!important;
+    width:38px!important;min-width:38px!important;max-width:38px!important;height:34px!important;
+    padding:0!important;border-radius:7px!important;z-index:9660!important;
+    overflow:hidden!important
+  }
+  body.rwa-target-dashboard-v2 #rwaMultiChainLaunch>.rwa-mc-link-icon{display:block!important;font-size:15px!important;line-height:1!important}
+  body.rwa-target-dashboard-v2 #rwaMultiChainLaunch>span:last-child{display:none!important}
+}
