@@ -30,9 +30,9 @@ const summary=await page.evaluate(()=>({route:location.hash,pairs:window.RWAMark
 for(const [w,h,prefix] of [[390,844,'390'],[430,932,'430']]){
  const c=await browser.newContext({viewport:{width:w,height:h},deviceScaleFactor:1,serviceWorkers:'block'}),p=await c.newPage();p.on('pageerror',e=>errors.push('mobile-'+prefix+': '+String(e?.message||e)));await root(p);
  await snap(p,'09-mobile-'+prefix+'-chart');
- await p.locator('[data-v5-mobile-mode="book"]').click();await snap(p,'10-mobile-'+prefix+'-book');
- await p.locator('[data-v5-mobile-mode="trade"]').click();await snap(p,'11-mobile-'+prefix+'-trade');
- await p.locator('[data-v5-mobile-mode="feed"]').click();await snap(p,'12-mobile-'+prefix+'-feed');
+ await p.locator('.rwa-v5-mobile-worktabs [data-v5-mobile-mode="book"]').click();await snap(p,'10-mobile-'+prefix+'-book');
+ await p.locator('.rwa-v5-mobile-worktabs [data-v5-mobile-mode="trade"]').click();await snap(p,'11-mobile-'+prefix+'-trade');
+ await p.locator('.rwa-v5-mobile-worktabs [data-v5-mobile-mode="feed"]').click();await snap(p,'12-mobile-'+prefix+'-feed');
  const state=await p.evaluate(()=>({route:location.hash,overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,mode:document.body.dataset.v5MobileMode,ticket:!!document.querySelector('#liveRail #rwaTargetOrderTicket')}));
  if(state.route!=='#markets'||state.overflow>2||!state.ticket)errors.push('mobile-'+prefix+' invariant '+JSON.stringify(state));await c.close();
 }
