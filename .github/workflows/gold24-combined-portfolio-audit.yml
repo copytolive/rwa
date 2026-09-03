@@ -2,11 +2,21 @@ name: GOLD24 Combined Portfolio Audit
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/gold24-combined-portfolio-audit.yml'
+      - 'backtest/gold24/screening_gpt_combined_portfolio_audit.py'
+      - 'backtest/gold24/qualified_scripts/**'
+      - 'backtest/gold24/runtime_mt5_lot/latest_entry100_net20000_standard_lot.csv'
+      - 'backtest/gold24/runtime_multimethod_v1/latest_multimethod_v1_discovery.csv'
   push:
     branches: [main]
     paths:
       - '.github/workflows/gold24-combined-portfolio-audit.yml'
       - 'backtest/gold24/screening_gpt_combined_portfolio_audit.py'
+      - 'backtest/gold24/qualified_scripts/**'
+      - 'backtest/gold24/runtime_mt5_lot/latest_entry100_net20000_standard_lot.csv'
+      - 'backtest/gold24/runtime_multimethod_v1/latest_multimethod_v1_discovery.csv'
 
 permissions:
   contents: write
@@ -34,6 +44,7 @@ jobs:
         run: |
           python backtest/gold24/screening_gpt_combined_portfolio_audit.py             --state-dir .audit_state             --out backtest/gold24/runtime_screening_gpt/combined_portfolio_audit.json
       - name: Publish
+        if: github.event_name == 'push'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -42,3 +53,12 @@ jobs:
           git commit -m "chore(gold24): publish combined portfolio audit [skip ci]"
           git pull --rebase origin main
           git push origin HEAD:main
+
+      - name: Upload audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gold24-combined-portfolio-audit-${{ github.run_id }}
+          path: backtest/gold24/runtime_screening_gpt/combined_portfolio_audit.json
+          if-no-files-found: error
+          retention-days: 90
