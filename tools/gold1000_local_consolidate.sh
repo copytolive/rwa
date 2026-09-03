@@ -33,6 +33,7 @@ copy_tree_if_exists() {
   local src_root="$1"
   local rel="$2"
   local dest_root="$3"
+
   if [[ -d "$src_root/$rel" ]]; then
     mkdir -p "$dest_root/$rel"
     rsync -a       --exclude='.git/'       --exclude='node_modules/'       --exclude='.venv/'       --exclude='venv/'       --exclude='__pycache__/'       --exclude='.pytest_cache/'       --exclude='.mypy_cache/'       --exclude='.DS_Store'       --exclude='.env'       --exclude='.env.*'       --exclude='*.pem'       --exclude='*.key'       --exclude='*.parquet'       --exclude='*.csv'       --exclude='*.zip'       --exclude='*.7z'       --exclude='*.tar'       --exclude='*.gz'       --exclude='*.html'       --exclude='*.css'       --exclude='*.js'       --exclude='*.jsx'       --exclude='*.ts'       --exclude='*.tsx'       "$src_root/$rel/" "$dest_root/$rel/"
@@ -43,41 +44,66 @@ copy_file_if_exists() {
   local src_root="$1"
   local rel="$2"
   local dest_root="$3"
+
   if [[ -f "$src_root/$rel" ]]; then
     mkdir -p "$(dirname "$dest_root/$rel")"
     cp -p "$src_root/$rel" "$dest_root/$rel"
   fi
 }
 
+is_site_path() {
+  case "$1" in
+    frontend/*|web/*|website/*|site/*|public/*|static/*|templates/*|assets/*|node_modules/*)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+is_backtest_file() {
+  local name
+  name="$(basename "$1")"
+
+  case "$name" in
+    *backtest*.py|*backtest*.sh|*backtest*.yml|*backtest*.yaml|    *strategy*.py|*gold*.py|*replay*.py|*parity*.py|*scanner*.py)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
 archive_backtest_only() {
   local src_root="$1"
   local dest_root="$2"
+  local rel
+  local f
 
-  # Core execution / research system only.
   for rel in     pipeline     strategies     backtest     app/engines     app/services/backtest     app/services/backtests     scripts/backtest     scripts/backtests     scripts/gold     scripts/strategies     tests/backtest     tests/backtests     tests/engines     tests/strategies
   do
     copy_tree_if_exists "$src_root" "$rel" "$dest_root"
   done
 
-  # Known backtest API integration files only; no website/frontend.
   for rel in     app/api/routes/backtest.py     app/api/routes/historical_backtest.py     requirements.txt     requirements-dev.txt     pyproject.toml     poetry.lock     setup.py     setup.cfg     pytest.ini
   do
     copy_file_if_exists "$src_root" "$rel" "$dest_root"
   done
 
-  # Catch standalone backtest-related code/config while explicitly excluding site/UI trees.
   while IFS= read -r -d '' f; do
-    local rel="${f#$src_root/}"
-    case "$rel" in
-      frontend/*|web/*|website/*|site/*|public/*|static/*|templates/*|assets/*|node_modules/*)
-        continue
-        ;;
-    esac
-    mkdir -p "$(dirname "$dest_root/$rel")"
-    cp -p "$f" "$dest_root/$rel"
-  done < <(
-    find "$src_root"       -type f       (         -iname '*backtest*.py' -o         -iname '*backtest*.sh' -o         -iname '*backtest*.yml' -o         -iname '*backtest*.yaml' -o         -iname '*strategy*.py' -o         -iname '*gold*.py' -o         -iname '*replay*.py' -o         -iname '*parity*.py' -o         -iname '*scanner*.py'       )       -not -path '*/node_modules/*'       -not -path '*/frontend/*'       -not -path '*/web/*'       -not -path '*/website/*'       -not -path '*/site/*'       -not -path '*/public/*'       -not -path '*/static/*'       -not -path '*/templates/*'       -not -path '*/assets/*'       -print0 2>/dev/null
-  )
+    rel="${f#$src_root/}"
+
+    if is_site_path "$rel"; then
+      continue
+    fi
+
+    if is_backtest_file "$rel"; then
+      mkdir -p "$(dirname "$dest_root/$rel")"
+      cp -p "$f" "$dest_root/$rel"
+    fi
+  done < <(find "$src_root" -type f -print0 2>/dev/null)
 
   printf '%s\n' "$src_root" > "$dest_root/ORIGINAL_SOURCE_PATH.txt"
 }
@@ -98,7 +124,10 @@ if [[ -n "$LEGACY_SRC" ]]; then
   MANIFEST="backtest/GOLD1000/manifests/local_legacy_$TS.sha256"
   (
     cd "$DEST"
-    find . -type f -print0 | sort -z | xargs -0 shasum -a 256
+    find . -type f -print0 |
+    while IFS= read -r -d '' F; do
+      shasum -a 256 "$F"
+    done
   ) > "$ROOT/$MANIFEST"
 
   FILES="$(find "$DEST" -type f | wc -l | tr -d ' ')"
@@ -107,8 +136,14 @@ if [[ -n "$LEGACY_SRC" ]]; then
     exit 2
   fi
 
-  if find "$DEST" -type f       ( -name '*.html' -o -name '*.css' -o -name '*.js' -o -name '*.jsx' -o -name '*.ts' -o -name '*.tsx' )       | grep -q .; then
-    echo "ERROR: file site/UI terdeteksi di archive."
+  BAD_SITE="$(
+    find "$DEST" -type f -print |
+    grep -E '\.(html|css|js|jsx|ts|tsx)$' || true
+  )"
+
+  if [[ -n "$BAD_SITE" ]]; then
+    echo "ERROR: file site/UI terdeteksi di archive:"
+    echo "$BAD_SITE"
     exit 3
   fi
 
