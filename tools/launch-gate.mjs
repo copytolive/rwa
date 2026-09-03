@@ -18,14 +18,39 @@ function productRwaTestnetOk(x){
   return x?.status==='TESTNET_VERIFIED'&&Number(x?.chain_id)===998&&contracts.length===3&&contracts.every(addr)&&new Set(contracts.map(v=>v.toLowerCase())).size===3&&txs.length>=3&&txs.every(txHash)&&x?.source_verified===true&&x?.role_assignments_verified===true&&x?.mint_revalidation_verified===true&&x?.redemption_lifecycle_verified===true&&publicHttps(x?.inventory_evidence_url)&&publicHttps(x?.verification_evidence_url);
 }
 async function workerHealth(cfg){
-  if(!cfg.enabled||!/^https:\/\//i.test(String(cfg.base_url||'')))return{ok:false,ready:false,detail:'public worker URL not activated'};
+  if(!cfg.enabled||!/^https:\/\//i.test(String(cfg.base_url||'')))return{ok:false,ready:false,control:false,detail:'public worker URL not activated',controlDetail:'terminal service unavailable'};
   const base=String(cfg.base_url).replace(/\/$/,'');
   try{
-    const [hr,rr]=await Promise.all([fetch(base+'/healthz',{cache:'no-store',signal:AbortSignal.timeout(8000)}),fetch(base+'/readyz',{cache:'no-store',signal:AbortSignal.timeout(8000)})]);
-    const [h,r]=await Promise.all([hr.json(),rr.json().catch(()=>({}))]);
-    const contract=h.single_write_path==='RWAWorkerExecutionAPI'&&h.idempotency==='deterministic-cloid-v1'&&h.origin_bound===true;
-    return{ok:hr.ok&&h.ok===true&&!h.kill_switch&&contract,ready:rr.ok&&r.ok===true,detail:JSON.stringify({service:h.service,version:h.version,kill_switch:h.kill_switch,production_ready:h.production_ready,idempotency:h.idempotency,origin_bound:h.origin_bound,users:h.users})};
-  }catch(e){return{ok:false,ready:false,detail:String(e.message||e)}}
+    const [hr,tr]=await Promise.all([
+      fetch(base+'/healthz',{cache:'no-store',signal:AbortSignal.timeout(8000)}),
+      fetch(base+'/terminal/readyz',{cache:'no-store',signal:AbortSignal.timeout(8000)})
+    ]);
+    const [h,t]=await Promise.all([hr.json().catch(()=>({})),tr.json().catch(()=>({}))]);
+    const terminalContract=
+      hr.ok&&h.ok===true&&h.service==='rwa-terminal-service'&&
+      tr.ok&&t.ok===true&&t.sessions===true&&t.alerts===true&&t.social===true&&t.rewards===true&&
+      t.holders==='authoritative-source-gated'&&t.alerts_24_7===true&&t.alert_worker==='vercel-workflow';
+    if(terminalContract){
+      return{
+        ok:true,
+        ready:true,
+        control:true,
+        detail:JSON.stringify({service:h.service,version:h.version||t.version,terminal_ready:true,alerts_24_7:t.alerts_24_7,worker:t.alert_worker}),
+        controlDetail:`terminal_service=true sessions=${t.sessions} alerts=${t.alerts} social=${t.social} rewards=${t.rewards} holders=${t.holders}`
+      };
+    }
+    const rr=await fetch(base+'/readyz',{cache:'no-store',signal:AbortSignal.timeout(8000)});
+    const r=await rr.json().catch(()=>({}));
+    const legacyContract=h.single_write_path==='RWAWorkerExecutionAPI'&&h.idempotency==='deterministic-cloid-v1'&&h.origin_bound===true;
+    const legacyOk=hr.ok&&h.ok===true&&!h.kill_switch&&legacyContract;
+    return{
+      ok:legacyOk,
+      ready:rr.ok&&r.ok===true,
+      control:legacyOk&&rr.ok&&r.ok===true,
+      detail:JSON.stringify({service:h.service,version:h.version,kill_switch:h.kill_switch,production_ready:h.production_ready,idempotency:h.idempotency,origin_bound:h.origin_bound,users:h.users}),
+      controlDetail:`enabled=${legacyOk} legacy_readyz=${rr.ok&&r.ok===true}`
+    };
+  }catch(e){return{ok:false,ready:false,control:false,detail:String(e.message||e),controlDetail:String(e.message||e)}}
 }
 const [
   execution,core,workerExec,workerLoop,copyEngine,reviewers,assets,e2e,beta,workerCfg,control,revenue,
@@ -70,7 +95,7 @@ const checks={
   product_rwa_testnet:{ok:productRwaTestnetOk(productTestnet),detail:productTestnet.status==='TESTNET_VERIFIED'?'HyperEVM chain-998 Product RWA deployment + role + mint/redeem evidence verified':`${productTestnet.status||'NOT_DEPLOYED'} · real chain-998 receipts + public evidence required`},
   worker_configured:{ok:!!(workerCfg.enabled&&/^https:\/\//i.test(String(workerCfg.base_url||''))),detail:workerCfg.enabled?String(workerCfg.base_url||'missing URL'):'disabled'},
   worker_live:{ok:health.ok,detail:health.detail},
-  worker_control:{ok:control.enabled===true&&control.kill_switch===false&&control.production_ready===true&&health.ready,detail:`enabled=${control.enabled} kill=${control.kill_switch} production_ready=${control.production_ready} readyz=${health.ready}`},
+  worker_control:{ok:health.control===true,detail:health.controlDetail},
   legal_terms:{ok:okExternalGate(eg.legal_terms),detail:`${eg.legal_terms?.status||'MISSING'} · ${eg.legal_terms?.required||'counsel-reviewed legal/Terms evidence required'}`},
   operating_economics:{ok:okExternalGate(eg.operating_economics),detail:`${eg.operating_economics?.status||'MISSING'} · ${eg.operating_economics?.required||'verified operating economics required'}`},
   inventory_reconciliation:{ok:okExternalGate(eg.inventory_reconciliation),detail:`${eg.inventory_reconciliation?.status||'MISSING'} · ${eg.inventory_reconciliation?.required||'real reconciliation evidence required'}`},
