@@ -14,7 +14,7 @@ on:
       to_date:
         description: Dukascopy GOLD H1 end date (exclusive)
         required: false
-        default: '2026-05-01'
+        default: '2026-04-29'
   push:
     branches: ['main']
     paths:
@@ -44,7 +44,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       FROM_DATE: ${{ github.event.inputs.from_date || '2003-05-05' }}
-      TO_DATE: ${{ github.event.inputs.to_date || '2026-05-01' }}
+      TO_DATE: ${{ github.event.inputs.to_date || '2026-04-29' }}
       DATA_DIR: ${{ github.workspace }}/.copytolive-gold-h1
       DATA_FILE: ${{ github.workspace }}/.copytolive-gold-h1/GOLD_H1.csv
       OUT_DIR: ${{ github.workspace }}/backtest/gold24/runtime_copytolive_active
