@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "target": "RWA Market navigation containment v4.2.1",
+  "target_sha": "9e69bffd75fb4d2d44d029765965ae67abec9076",
+  "global_topnav": ["markets"],
+  "market_rail_sections": ["trade","portfolio","orders","analytics","rewards"],
+  "route_locked": "#markets",
+  "rail_width_px": 330,
+  "section_control_height_px": 36,
+  "content_never_leaves_market": true,
+  "all_success": true,
+  "runs": {
+    "ui_final": 33711548248,
+    "deploy": 33711548265,
+    "page_by_page": 33711548351,
+    "browser_gate": 33711548243,
+    "root_market_stability": 33711548216
+  }
+}
