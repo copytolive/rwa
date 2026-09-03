@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-"""Single canonical CopyToLive backtest execution engine.
+"""Single canonical CopyToLive backtest engine.
 
-This module is the one execution kernel intended to be used by:
-- GitHub-hosted replay/certification
-- CopyToLive production trading-service
-- local/macOS reference runs
-
-Strategy discovery, data acquisition, ranking and reporting may differ by lane,
-but order execution and metric semantics must come from this module only.
+This file mirrors the production Non-DEX BTC+GOLD producer contract and is the
+single kernel intended for GitHub, copytolive.com production and local/macOS
+reference runs.  Do not duplicate execution/filter/metric logic elsewhere.
 """
 
 from dataclasses import dataclass
@@ -20,12 +16,19 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
+try:
+    from numba import njit
+except ImportError:
+    def njit(*a, **k):
+        def w(fn):
+            return fn
+        return w if a and callable(a[0]) else w
+
 ENGINE_ID = "copytolive-unified-backtest-v1"
 COPYTOLIVE_DEPOSIT_USD = 10_000.0
 COPYTOLIVE_RISK_USD = 200.0
 COPYTOLIVE_STRESSED_FEE = 0.0016
 COPYTOLIVE_WF_TRAIN_PCT = 0.70
-
 COPYTOLIVE_SL_PCTS = (0.010, 0.012, 0.015, 0.018, 0.020, 0.025, 0.030, 0.040)
 COPYTOLIVE_TP_RATIOS = (1.0, 1.2, 1.5, 2.0, 2.5, 3.0)
 
@@ -89,396 +92,339 @@ def _as_signals(signals: Iterable[int], n: int) -> np.ndarray:
     return np.sign(out).astype(np.int8)
 
 
-def _rolling_mean(x: np.ndarray, n: int) -> np.ndarray:
-    return pd.Series(np.asarray(x, dtype=float)).rolling(int(n), min_periods=int(n)).mean().to_numpy(float)
+@njit(cache=False)
+def bt_filtered(sigs, vol_mask, bias_mask, c, h2, l2, sl_pct, tp_pct, fee, dep=10000.0, rsk=200.0):
+    """Byte-for-byte semantic port of production wf_nondex_btc_gold.bt_filtered."""
+    n=len(c); mx=n//6
+    ei=np.zeros(mx,dtype=np.int64); xi=np.zeros(mx,dtype=np.int64)
+    dr=np.zeros(mx,dtype=np.int8); ep_arr=np.zeros(mx,dtype=np.float64)
+    xp=np.zeros(mx,dtype=np.float64); lt=np.zeros(mx,dtype=np.float64)
+    pf=np.zeros(mx,dtype=np.float64); tc=0; ip=False
+    pe=0.0; ps_=0.0; pt=0.0; pl=0.0; pd_=0; pst=0
+    for i in range(n):
+        if not ip:
+            if sigs[i]!=0 and vol_mask[i]==1:
+                if bias_mask[i]!=0 and sigs[i]!=bias_mask[i]:
+                    continue
+                pe=c[i]; ps_=pe*sl_pct; pt=pe*tp_pct
+                pl=rsk/ps_ if ps_>0 else 0.0
+                pd_=sigs[i]; pst=i; ip=True
+        else:
+            fe=fee*pe*pl; hs=False; ht=False
+            if pd_==1:
+                if l2[i]<=pe-ps_: hs=True
+                elif h2[i]>=pe+pt: ht=True
+            else:
+                if h2[i]>=pe+ps_: hs=True
+                elif l2[i]<=pe-pt: ht=True
+            if hs or ht:
+                pnl=(-ps_*pl-fe) if hs else (pt*pl-fe)
+                if tc<mx:
+                    ei[tc]=pst; xi[tc]=i; dr[tc]=pd_; ep_arr[tc]=pe
+                    xp[tc]=(pe+pt if (pd_==1 and ht) else pe-pt if (pd_==-1 and ht) else pe-ps_ if pd_==1 else pe+ps_)
+                    lt[tc]=pl; pf[tc]=pnl; tc+=1
+                ip=False
+    return (ei[:tc],xi[:tc],dr[:tc],ep_arr[:tc],xp[:tc],lt[:tc],pf[:tc])
 
 
-def compute_vol_mask(df: pd.DataFrame) -> np.ndarray:
-    """Production VOL mask: simple ATR14 > simple MA50(ATR14)."""
-    high = _column(df, "high")
-    low = _column(df, "low")
-    close = _column(df, "close")
-    prev = np.r_[np.nan, close[:-1]]
-    tr = np.nanmax(
-        np.vstack(
-            [
-                high - low,
-                np.abs(high - prev),
-                np.abs(low - prev),
-            ]
-        ),
-        axis=0,
-    )
-    if len(tr):
-        tr[0] = high[0] - low[0]
-    atr14 = _rolling_mean(tr, 14)
-    atr_ma50 = _rolling_mean(atr14, 50)
-    return np.isfinite(atr14) & np.isfinite(atr_ma50) & (atr14 > atr_ma50)
+def compute_vol_mask(c, h=None, l=None, period=14, ma_period=50):
+    """Exact production volatility mask."""
+    if isinstance(c, pd.DataFrame):
+        df=c
+        c=_column(df,"close"); h=_column(df,"high"); l=_column(df,"low")
+    c=np.asarray(c,dtype=np.float64); h=np.asarray(h,dtype=np.float64); l=np.asarray(l,dtype=np.float64)
+    n=len(c); mask=np.zeros(n,dtype=np.int8); tr=np.zeros(n)
+    for i in range(1,n):
+        tr[i]=max(h[i]-l[i],abs(h[i]-c[i-1]),abs(l[i]-c[i-1]))
+    atr=np.zeros(n)
+    for i in range(period,n):
+        atr[i]=np.mean(tr[i-period+1:i+1])
+    atr_ma=np.zeros(n)
+    for i in range(ma_period,n):
+        atr_ma[i]=np.mean(atr[i-ma_period+1:i+1])
+    for i in range(ma_period,n):
+        if atr[i]>atr_ma[i]:
+            mask[i]=1
+    return mask
 
 
-def compute_session_mask(df: pd.DataFrame) -> np.ndarray:
-    """Production session mask: direct wall-clock hour 07:00..21:59 inclusive."""
-    idx = _time_index(df)
-    if not isinstance(idx, pd.DatetimeIndex):
-        raise ValueError("session filter requires a DatetimeIndex or timestamp column")
-    hour = idx.hour.to_numpy()
-    return (hour >= 7) & (hour <= 21)
-
-
-def compute_mtf_bias(h1: pd.DataFrame, d1: pd.DataFrame) -> np.ndarray:
-    """Production MTF bias.
-
-    The historical producer expands D1 EMA50/EMA200 bias by integer blocks:
-    h1_per_d1 = len(H1) // len(D1), starting from D1 row 200.
-    This deliberately preserves the producer's row-count mapping rather than
-    replacing it with timestamp reindexing.
-    """
-    n = len(h1)
-    dclose = _column(d1, "close")
-    out = np.zeros(n, dtype=np.int8)
-    if n == 0 or len(dclose) == 0:
-        return out
-
-    s = pd.Series(dclose, dtype=float)
-    ema50 = s.ewm(span=50).mean().to_numpy(float)
-    ema200 = s.ewm(span=200).mean().to_numpy(float)
-    h1_per_d1 = n // len(dclose)
-    if h1_per_d1 <= 0:
-        return out
-
-    for j in range(200, len(dclose)):
-        if not (np.isfinite(ema50[j]) and np.isfinite(ema200[j])):
-            continue
-        bias = 1 if ema50[j] > ema200[j] else (-1 if ema50[j] < ema200[j] else 0)
-        a = j * h1_per_d1
-        b = min((j + 1) * h1_per_d1, n)
-        if a >= n:
+def compute_mtf_bias(c_h1, df_d1):
+    """Exact production D1 EMA50/EMA200 block expansion."""
+    if isinstance(c_h1, pd.DataFrame):
+        c_h1=_column(c_h1,"close")
+    c_h1=np.asarray(c_h1,dtype=np.float64)
+    n=len(c_h1); bias=np.zeros(n,dtype=np.int8)
+    if df_d1 is None or len(df_d1)<200:
+        return bias
+    d1c=_column(df_d1,"close").astype(np.float64)
+    ema50=pd.Series(d1c).ewm(span=50).mean().values
+    ema200=pd.Series(d1c).ewm(span=200).mean().values
+    d1_len=len(d1c); h1_per_d1=n//max(d1_len,1)
+    for i in range(200,d1_len):
+        h1_start=i*h1_per_d1; h1_end=min((i+1)*h1_per_d1,n)
+        if h1_start>=n:
             break
-        out[a:b] = bias
-    return out
+        bias[h1_start:h1_end]=1 if ema50[i]>ema200[i] else -1
+    return bias
+
+
+def compute_session_mask(df, start_hour=7, end_hour=21):
+    """Exact production session mask, including fail-open index behavior."""
+    n=len(df); mask=np.ones(n,dtype=np.int8)
+    try:
+        hours=df.index.hour
+        for i in range(n):
+            if hours[i]<start_hour or hours[i]>end_hour:
+                mask[i]=0
+    except Exception:
+        pass
+    return mask
+
+
+def vs(profits, mint=100):
+    """Exact production metric/gate function from wf_nondex_btc_gold.py."""
+    profits=np.asarray(profits,dtype=np.float64)
+    n=len(profits)
+    if n<mint:
+        return None
+    w=profits[profits>0]; l=profits[profits<=0]
+    if len(w)==0 or len(l)==0:
+        return None
+    wr=len(w)/n*100; gp=float(w.sum()); gl=float(abs(l.sum()))
+    pf_val=gp/gl if gl>0 else 0
+    if pf_val<1.4 or wr<35 or wr>80:
+        return None
+    eq=COPYTOLIVE_DEPOSIT_USD+np.cumsum(profits); peak=np.maximum.accumulate(eq)
+    mdd=float(((peak-eq)/np.maximum(peak,1)*100).max())
+    if mdd>25:
+        return None
+    net=gp-gl; aw=float(w.mean()); al=float(abs(l.mean()))
+    std=float(profits.std())
+    sqn=(profits.mean()/std)*np.sqrt(n) if std>0 else 0
+    sharpe=(profits.mean()/std)*np.sqrt(252) if std>0 else 0
+    down=profits[profits<0]
+    sortino=(profits.mean()/down.std())*np.sqrt(252) if len(down)>1 and down.std()>0 else 0
+    recov=net/(mdd/100*COPYTOLIVE_DEPOSIT_USD) if mdd>0.01 else 0
+    cal=(net/COPYTOLIVE_DEPOSIT_USD*100)/mdd if mdd>0.01 else 0
+    rr=aw/al if al>0 else 0
+    cw=mcw=cl=mcl=0
+    for p in profits:
+        if p>0:
+            cw+=1; mcw=max(mcw,cw); cl=0
+        else:
+            cl+=1; mcl=max(mcl,cl); cw=0
+    return {
+        "totalTrades":int(n),"winRate":round(wr,1),"profitFactor":round(pf_val,2),
+        "maxDrawdown":round(mdd,1),"netProfit":round(net,2),"sqn":round(sqn,2),
+        "sharpe":round(sharpe,2),"sortino":round(min(sortino,99),2),
+        "calmar":round(min(cal,99),2),"recoveryFactor":round(min(recov,99),2),
+        "grossProfit":round(gp,2),"grossLoss":round(gl,2),
+        "winningTrades":int(len(w)),"losingTrades":int(len(l)),
+        "avgProfit":round(aw,2),"avgLoss":round(al,2),
+        "rr":round(rr,2),"maxConsecWin":mcw,"maxConsecLoss":mcl,
+    }
 
 
 def filter_mode_from_signal_type(signal_type: str | None) -> str:
-    s = str(signal_type or "").upper()
-    for mode in ("VOL", "MTF", "VM", "VS", "ALL"):
-        if s.startswith(mode + "_"):
+    s=str(signal_type or "").upper()
+    for mode in ("VOL","MTF","VM","VS","ALL"):
+        if s.startswith(mode+"_"):
             return mode
     return "NONE"
 
 
-def apply_production_filter(
-    signals: Iterable[int],
-    h1: pd.DataFrame,
-    *,
-    signal_type: str | None = None,
-    d1: pd.DataFrame | None = None,
-) -> np.ndarray:
-    """Apply the producer's external filter family to base strategy signals."""
-    sig = _as_signals(signals, len(h1))
-    mode = filter_mode_from_signal_type(signal_type)
-    if mode == "NONE":
-        return sig
-
-    vol = compute_vol_mask(h1) if mode in {"VOL", "VM", "VS", "ALL"} else np.ones(len(h1), dtype=bool)
-    ses = compute_session_mask(h1) if mode in {"VS", "ALL"} else np.ones(len(h1), dtype=bool)
-
-    if mode in {"MTF", "VM", "ALL"}:
-        if d1 is None:
-            raise ValueError(f"{mode} filter requires D1 data")
-        bias = compute_mtf_bias(h1, d1)
-        mtf = ((sig > 0) & (bias > 0)) | ((sig < 0) & (bias < 0))
-    else:
-        mtf = np.ones(len(h1), dtype=bool)
-
-    keep = vol & ses & mtf
-    return np.where(keep, sig, 0).astype(np.int8)
+def production_masks(h1: pd.DataFrame, d1: pd.DataFrame | None, signal_type: str | None):
+    n=len(h1)
+    c=_column(h1,"close"); h=_column(h1,"high"); l=_column(h1,"low")
+    vol=compute_vol_mask(c,h,l)
+    mtf=compute_mtf_bias(c,d1)
+    ses=compute_session_mask(h1)
+    mode=filter_mode_from_signal_type(signal_type)
+    z=np.zeros(n,dtype=np.int8); o=np.ones(n,dtype=np.int8)
+    masks={
+        "VOL":(vol,z),
+        "MTF":(o,mtf),
+        "VM":(vol,mtf),
+        "VS":(vol*ses,z),
+        "ALL":(vol*ses,mtf),
+        "NONE":(o,z),
+    }
+    return masks[mode]
 
 
-def run_copytolive_backtest(
-    df: pd.DataFrame,
-    signals: Iterable[int],
-    config: CopyToLiveExecutionConfig,
-) -> dict:
-    """Run the canonical CopyToLive single-position execution model."""
+def apply_production_filter(signals: Iterable[int], h1: pd.DataFrame, *, signal_type: str | None=None, d1: pd.DataFrame | None=None) -> np.ndarray:
+    sig=_as_signals(signals,len(h1))
+    vmask,bmask=production_masks(h1,d1,signal_type)
+    keep=(vmask==1) & ((bmask==0) | (sig==bmask))
+    return np.where(keep,sig,0).astype(np.int8)
+
+
+def _arrays_to_trades(df: pd.DataFrame, arrays, config: CopyToLiveExecutionConfig) -> list[dict]:
+    ei,xi,dirs,eps,xps,lots,profits=arrays
+    idx=_time_index(df)
+    trades=[]
+    eq=float(config.deposit_usd)
+    for entry_i,exit_i,direction,ep,xp,lot,pnl in zip(ei,xi,dirs,eps,xps,lots,profits):
+        eq+=float(pnl)
+        gross = float(pnl) + float(config.fee)*float(ep)*float(lot)
+        exit_type = "TP" if gross > 0 else "SL"
+        trades.append({
+            "openTime":str(idx[int(entry_i)])[:32],
+            "closeTime":str(idx[int(exit_i)])[:32],
+            "type":"BUY" if int(direction)==1 else "SELL",
+            "openPrice":float(ep),
+            "closePrice":float(xp),
+            "quantity":float(lot),
+            "lots":float(lot),
+            "grossProfit":gross,
+            "fee":float(config.fee)*float(ep)*float(lot),
+            "profit":float(pnl),
+            "balance":eq,
+            "exitType":exit_type,
+            "entryBar":int(entry_i),
+            "exitBar":int(exit_i),
+            "slDistance":float(ep)*float(config.sl_pct),
+            "tpDistance":float(ep)*float(config.sl_pct)*float(config.tp_ratio),
+            "slPct":float(config.sl_pct),
+            "tpRatio":float(config.tp_ratio),
+            "riskUsd":float(config.risk_usd),
+        })
+    return trades
+
+
+def run_copytolive_backtest(df: pd.DataFrame, signals: Iterable[int], config: CopyToLiveExecutionConfig) -> dict:
+    """Canonical unfiltered execution wrapper over the production kernel."""
     config.validate()
-    if len(df) < 2:
-        return {"trades": [], "bar_pnl": np.zeros(len(df), dtype=float), "metrics": empty_metrics()}
-
-    close = _column(df, "close")
-    high = _column(df, "high")
-    low = _column(df, "low")
-    if np.any(~np.isfinite(close)) or np.any(~np.isfinite(high)) or np.any(~np.isfinite(low)):
-        raise ValueError("OHLC contains non-finite values")
-
-    sigs = _as_signals(signals, len(df))
-    idx = _time_index(df)
-    bar_pnl = np.zeros(len(df), dtype=float)
-    trades: list[dict] = []
-    pos: dict | None = None
-    equity = float(config.deposit_usd)
-
-    for i in range(len(df)):
-        if pos is None:
-            if sigs[i] == 0:
-                continue
-            entry = float(close[i])
-            stop_distance = entry * float(config.sl_pct)
-            if stop_distance <= 0.0:
-                continue
-            target_distance = stop_distance * float(config.tp_ratio)
-            quantity = float(config.risk_usd) / stop_distance
-            pos = {
-                "side": int(sigs[i]),
-                "entry": entry,
-                "stop_distance": stop_distance,
-                "target_distance": target_distance,
-                "quantity": quantity,
-                "entry_bar": int(i),
-                "entry_time": idx[i],
-            }
-            # No same-bar entry+exit.
-            continue
-
-        side = int(pos["side"])
-        entry = float(pos["entry"])
-        sl = float(pos["stop_distance"])
-        tp = float(pos["target_distance"])
-        qty = float(pos["quantity"])
-        fee_usd = float(config.fee) * entry * qty
-
-        exit_price: float | None = None
-        exit_type = ""
-        gross = 0.0
-
-        # Conservative same-bar precedence: SL before TP.
-        if side == 1:
-            if low[i] <= entry - sl:
-                exit_price = entry - sl
-                exit_type = "SL"
-                gross = -sl * qty
-            elif high[i] >= entry + tp:
-                exit_price = entry + tp
-                exit_type = "TP"
-                gross = tp * qty
-        else:
-            if high[i] >= entry + sl:
-                exit_price = entry + sl
-                exit_type = "SL"
-                gross = -sl * qty
-            elif low[i] <= entry - tp:
-                exit_price = entry - tp
-                exit_type = "TP"
-                gross = tp * qty
-
-        if exit_price is None:
-            continue
-
-        net = float(gross - fee_usd)
-        equity += net
-        bar_pnl[i] += net
-        trades.append(
-            {
-                "openTime": str(pos["entry_time"])[:32],
-                "closeTime": str(idx[i])[:32],
-                "type": "BUY" if side == 1 else "SELL",
-                "openPrice": entry,
-                "closePrice": float(exit_price),
-                "quantity": qty,
-                "lots": qty,
-                "grossProfit": float(gross),
-                "fee": float(fee_usd),
-                "profit": net,
-                "balance": float(equity),
-                "exitType": exit_type,
-                "entryBar": int(pos["entry_bar"]),
-                "exitBar": int(i),
-                "slDistance": sl,
-                "tpDistance": tp,
-                "slPct": float(config.sl_pct),
-                "tpRatio": float(config.tp_ratio),
-                "riskUsd": float(config.risk_usd),
-            }
-        )
-        pos = None
-
-    # Production producer discards an unclosed final position.
-    metrics = compute_copytolive_metrics(trades, float(config.deposit_usd))
+    c=_column(df,"close"); h=_column(df,"high"); l=_column(df,"low")
+    sig=_as_signals(signals,len(df))
+    one=np.ones(len(df),dtype=np.int8); zero=np.zeros(len(df),dtype=np.int8)
+    arrays=bt_filtered(sig,one,zero,c,h,l,float(config.sl_pct),float(config.sl_pct)*float(config.tp_ratio),float(config.fee),float(config.deposit_usd),float(config.risk_usd))
+    trades=_arrays_to_trades(df,arrays,config)
+    pnl=np.asarray(arrays[-1],dtype=float)
+    bar_pnl=np.zeros(len(df),dtype=float)
+    for i,p in zip(arrays[1],pnl):
+        bar_pnl[int(i)]+=float(p)
     return {
-        "engine_id": ENGINE_ID,
-        "trades": trades,
-        "bar_pnl": bar_pnl,
-        "metrics": metrics,
-        "execution_config": {
-            "sl_pct": float(config.sl_pct),
-            "tp_ratio": float(config.tp_ratio),
-            "deposit_usd": float(config.deposit_usd),
-            "risk_usd": float(config.risk_usd),
-            "fee": float(config.fee),
+        "engine_id":ENGINE_ID,
+        "trades":trades,
+        "bar_pnl":bar_pnl,
+        "metrics":compute_copytolive_metrics(trades,float(config.deposit_usd)),
+        "producer_metrics":vs(pnl,1) if len(pnl) else None,
+        "execution_config":{
+            "sl_pct":float(config.sl_pct),"tp_ratio":float(config.tp_ratio),
+            "deposit_usd":float(config.deposit_usd),"risk_usd":float(config.risk_usd),
+            "fee":float(config.fee),
         },
-        "open_position_at_end": pos,
+        "open_position_at_end":None,
+    }
+
+
+def run_copytolive_filtered_backtest(df: pd.DataFrame, d1: pd.DataFrame | None, signals: Iterable[int], signal_type: str, config: CopyToLiveExecutionConfig) -> dict:
+    """Canonical filtered production execution using the same masks as producer."""
+    config.validate()
+    c=_column(df,"close"); h=_column(df,"high"); l=_column(df,"low")
+    sig=_as_signals(signals,len(df))
+    vmask,bmask=production_masks(df,d1,signal_type)
+    arrays=bt_filtered(sig,vmask,bmask,c,h,l,float(config.sl_pct),float(config.sl_pct)*float(config.tp_ratio),float(config.fee),float(config.deposit_usd),float(config.risk_usd))
+    trades=_arrays_to_trades(df,arrays,config)
+    pnl=np.asarray(arrays[-1],dtype=float)
+    bar_pnl=np.zeros(len(df),dtype=float)
+    for i,p in zip(arrays[1],pnl):
+        bar_pnl[int(i)]+=float(p)
+    return {
+        "engine_id":ENGINE_ID,
+        "trades":trades,
+        "bar_pnl":bar_pnl,
+        "metrics":compute_copytolive_metrics(trades,float(config.deposit_usd)),
+        "producer_metrics":vs(pnl,1) if len(pnl) else None,
+        "entry_indices":np.asarray(arrays[0],dtype=np.int64),
+        "exit_indices":np.asarray(arrays[1],dtype=np.int64),
+        "profits":pnl,
+        "execution_config":{
+            "sl_pct":float(config.sl_pct),"tp_ratio":float(config.tp_ratio),
+            "deposit_usd":float(config.deposit_usd),"risk_usd":float(config.risk_usd),
+            "fee":float(config.fee),
+        },
     }
 
 
 def empty_metrics() -> dict:
     return {
-        "totalTrades": 0,
-        "winRate": 0.0,
-        "profitFactor": 0.0,
-        "maxDrawdown": 0.0,
-        "netProfit": 0.0,
-        "expectancy": 0.0,
-        "sqn": 0.0,
-        "sharpe": 0.0,
-        "sortino": 0.0,
-        "recoveryFactor": 0.0,
-        "avgProfit": 0.0,
-        "avgLoss": 0.0,
-        "rr": 0.0,
-        "maxConsecLoss": 0,
+        "totalTrades":0,"winRate":0.0,"profitFactor":0.0,"maxDrawdown":0.0,
+        "netProfit":0.0,"expectancy":0.0,"sqn":0.0,"sharpe":0.0,"sortino":0.0,
+        "recoveryFactor":0.0,"avgProfit":0.0,"avgLoss":0.0,"rr":0.0,"maxConsecLoss":0,
     }
 
 
-def compute_copytolive_metrics(trades: list[dict], deposit_usd: float = COPYTOLIVE_DEPOSIT_USD) -> dict:
+def compute_copytolive_metrics(trades: list[dict], deposit_usd: float=COPYTOLIVE_DEPOSIT_USD) -> dict:
     if not trades:
         return empty_metrics()
-
-    pnl = np.asarray([float(t["profit"]) for t in trades], dtype=float)
-    wins = pnl[pnl > 0]
-    losses = pnl[pnl <= 0]
-    gp = float(wins.sum()) if len(wins) else 0.0
-    gl = abs(float(losses.sum())) if len(losses) else 0.0
-    total = int(len(pnl))
-    wr = 100.0 * len(wins) / total
-    pf = gp / gl if gl > 0 else float("inf")
-    net = float(pnl.sum())
-    expectancy = net / total
-
-    equity = float(deposit_usd) + np.cumsum(pnl)
-    peaks = np.maximum.accumulate(np.r_[float(deposit_usd), equity])[1:]
-    dd_pct = np.where(peaks > 0, (peaks - equity) / peaks * 100.0, 0.0)
-    max_dd_pct = float(dd_pct.max(initial=0.0))
-
-    std = float(np.std(pnl))
-    sqn = float(np.mean(pnl) / std * math.sqrt(total)) if std > 0 else 0.0
-    sharpe = float(np.mean(pnl) / std * math.sqrt(252.0)) if std > 0 else 0.0
-    down = pnl[pnl < 0]
-    down_std = float(np.std(down)) if len(down) > 1 else 0.0
-    sortino = float(np.mean(pnl) / down_std * math.sqrt(252.0)) if down_std > 0 else 0.0
-
-    avg_win = float(wins.mean()) if len(wins) else 0.0
-    avg_loss = abs(float(losses.mean())) if len(losses) else 0.0
-    rr = avg_win / avg_loss if avg_loss > 0 else 0.0
-    recovery = net / (max_dd_pct / 100.0 * float(deposit_usd)) if max_dd_pct > 0.01 else 0.0
-
-    max_consec_loss = 0
-    cur = 0
+    pnl=np.asarray([float(t["profit"]) for t in trades],dtype=float)
+    wins=pnl[pnl>0]; losses=pnl[pnl<=0]
+    gp=float(wins.sum()) if len(wins) else 0.0
+    gl=abs(float(losses.sum())) if len(losses) else 0.0
+    total=int(len(pnl)); wr=100.0*len(wins)/total
+    pf=gp/gl if gl>0 else float("inf"); net=float(pnl.sum()); expectancy=net/total
+    equity=float(deposit_usd)+np.cumsum(pnl); peaks=np.maximum.accumulate(equity)
+    dd_pct=np.where(peaks>0,(peaks-equity)/np.maximum(peaks,1)*100.0,0.0)
+    max_dd_pct=float(dd_pct.max(initial=0.0))
+    std=float(np.std(pnl))
+    sqn=float(np.mean(pnl)/std*math.sqrt(total)) if std>0 else 0.0
+    sharpe=float(np.mean(pnl)/std*math.sqrt(252.0)) if std>0 else 0.0
+    down=pnl[pnl<0]; down_std=float(np.std(down)) if len(down)>1 else 0.0
+    sortino=float(np.mean(pnl)/down_std*math.sqrt(252.0)) if down_std>0 else 0.0
+    avg_win=float(wins.mean()) if len(wins) else 0.0
+    avg_loss=abs(float(losses.mean())) if len(losses) else 0.0
+    rr=avg_win/avg_loss if avg_loss>0 else 0.0
+    recovery=net/(max_dd_pct/100.0*float(deposit_usd)) if max_dd_pct>0.01 else 0.0
+    max_consec_loss=0; cur=0
     for p in pnl:
-        if p <= 0:
-            cur += 1
-            max_consec_loss = max(max_consec_loss, cur)
+        if p<=0:
+            cur+=1; max_consec_loss=max(max_consec_loss,cur)
         else:
-            cur = 0
-
+            cur=0
     return {
-        "totalTrades": total,
-        "winningTrades": int(len(wins)),
-        "losingTrades": int(len(losses)),
-        "winRate": float(wr),
-        "profitFactor": float(pf),
-        "maxDrawdown": float(max_dd_pct),
-        "netProfit": net,
-        "expectancy": float(expectancy),
-        "sqn": sqn,
-        "sharpe": sharpe,
-        "sortino": sortino,
-        "recoveryFactor": float(recovery),
-        "grossProfit": gp,
-        "grossLoss": gl,
-        "avgProfit": avg_win,
-        "avgLoss": avg_loss,
-        "rr": float(rr),
-        "maxConsecLoss": int(max_consec_loss),
+        "totalTrades":total,"winningTrades":int(len(wins)),"losingTrades":int(len(losses)),
+        "winRate":float(wr),"profitFactor":float(pf),"maxDrawdown":float(max_dd_pct),
+        "netProfit":net,"expectancy":float(expectancy),"sqn":sqn,"sharpe":sharpe,
+        "sortino":sortino,"recoveryFactor":float(recovery),"grossProfit":gp,"grossLoss":gl,
+        "avgProfit":avg_win,"avgLoss":avg_loss,"rr":float(rr),"maxConsecLoss":int(max_consec_loss),
     }
 
 
-def validate_copytolive_period(
-    trades: list[dict],
-    *,
-    min_trades: int = 100,
-    pf_min: float = 2.0,
-    wr_min: float = 40.0,
-    wr_max: float = 85.0,
-    dd_max: float = 30.0,
-    deposit_usd: float = COPYTOLIVE_DEPOSIT_USD,
-) -> dict | None:
-    metrics = compute_copytolive_metrics(trades, deposit_usd)
-    if int(metrics["totalTrades"]) < int(min_trades):
-        return None
-    if not (float(wr_min) <= float(metrics["winRate"]) <= float(wr_max)):
-        return None
-    if float(metrics["profitFactor"]) < float(pf_min):
-        return None
-    if float(metrics["maxDrawdown"]) > float(dd_max):
-        return None
+def validate_copytolive_period(trades: list[dict], *, min_trades: int=100, pf_min: float=2.0, wr_min: float=40.0, wr_max: float=85.0, dd_max: float=30.0, deposit_usd: float=COPYTOLIVE_DEPOSIT_USD) -> dict | None:
+    metrics=compute_copytolive_metrics(trades,deposit_usd)
+    if int(metrics["totalTrades"])<int(min_trades): return None
+    if not (float(wr_min)<=float(metrics["winRate"])<=float(wr_max)): return None
+    if float(metrics["profitFactor"])<float(pf_min): return None
+    if float(metrics["maxDrawdown"])>float(dd_max): return None
     return metrics
 
 
-def walk_forward_copytolive(
-    trades: list[dict],
-    df: pd.DataFrame,
-    *,
-    train_pct: float = COPYTOLIVE_WF_TRAIN_PCT,
-) -> tuple[dict | None, dict | None, dict | None]:
-    if not trades or len(df) < 2:
-        return None, None, None
-    if not (0.0 < float(train_pct) < 1.0):
-        raise ValueError("train_pct must be between 0 and 1")
-
-    idx = _time_index(df)
-    split_i = min(max(int(len(df) * float(train_pct)), 1), len(df) - 1)
-    split_ts = idx[split_i]
-
-    def _close_ts(t: dict):
-        try:
-            return pd.Timestamp(t["closeTime"])
-        except Exception:
-            return None
-
-    train, test = [], []
-    for t in trades:
-        ts = _close_ts(t)
-        if ts is None:
-            continue
-        (train if ts <= split_ts else test).append(t)
-
+def walk_forward_copytolive(trades: list[dict], df: pd.DataFrame, *, train_pct: float=COPYTOLIVE_WF_TRAIN_PCT):
+    if not trades or len(df)<2: return None,None,None
+    split_i=min(max(int(len(df)*float(train_pct)),1),len(df)-1)
+    train=[t for t in trades if int(t.get("exitBar",-1))<=split_i]
+    test=[t for t in trades if int(t.get("exitBar",-1))>split_i]
     return (
-        validate_copytolive_period(train, min_trades=100),
-        validate_copytolive_period(test, min_trades=50),
-        validate_copytolive_period(trades, min_trades=300),
+        validate_copytolive_period(train,min_trades=100),
+        validate_copytolive_period(test,min_trades=50),
+        validate_copytolive_period(trades,min_trades=300),
     )
 
 
 def execution_digest(trades: list[dict]) -> str:
-    if not trades:
-        return ""
-    canonical = [
-        {
-            "entryBar": int(t["entryBar"]),
-            "exitBar": int(t["exitBar"]),
-            "type": str(t["type"]),
-            "openPrice": round(float(t["openPrice"]), 10),
-            "closePrice": round(float(t["closePrice"]), 10),
-            "quantity": round(float(t.get("quantity", t.get("lots", 0.0))), 10),
-            "profit": round(float(t["profit"]), 10),
-            "exitType": str(t["exitType"]),
-        }
-        for t in trades
-    ]
-    raw = json.dumps(canonical, sort_keys=True, separators=(",", ":")).encode()
-    return hashlib.blake2b(raw, digest_size=16).hexdigest()
+    if not trades: return ""
+    canonical=[{
+        "entryBar":int(t["entryBar"]),"exitBar":int(t["exitBar"]),"type":str(t["type"]),
+        "openPrice":round(float(t["openPrice"]),10),"closePrice":round(float(t["closePrice"]),10),
+        "quantity":round(float(t.get("quantity",t.get("lots",0.0))),10),
+        "profit":round(float(t["profit"]),10),"exitType":str(t["exitType"]),
+    } for t in trades]
+    raw=json.dumps(canonical,sort_keys=True,separators=(",",":")).encode()
+    return hashlib.blake2b(raw,digest_size=16).hexdigest()
 
 
 def adapt_core_candidate_signals(df: pd.DataFrame, candidate) -> np.ndarray:
-    """Reuse legacy public signal families while switching only execution semantics."""
     from core import signal_series
-    return np.asarray(signal_series(df, candidate), dtype=np.int8)
+    return np.asarray(signal_series(df,candidate),dtype=np.int8)
