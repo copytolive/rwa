@@ -81,6 +81,8 @@ async function desktop(browser){
   assert.equal(info.brand,'Real World Asset');
   assert.deepEqual(info.globalNav,['markets']);
   assert.deepEqual(info.marketNav,['trade','portfolio','orders','analytics','rewards','more']);
+  const navRects=await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav]').evaluateAll(xs=>xs.map(x=>{const r=x.getBoundingClientRect(),s=getComputedStyle(x);return{x:r.x,y:r.y,w:r.width,h:r.height,display:s.display,visibility:s.visibility,opacity:s.opacity}}));
+  assert.equal(navRects.length,6);assert.ok(navRects.every(r=>r.w>=20&&r.h>=30&&r.y>=0&&r.y<=8&&r.display!=='none'&&r.visibility!=='hidden'&&Number(r.opacity)>0));
   assert.equal(await page.locator('.topnav [data-v5-nav]').count(),0);
   assert.deepEqual(info.bottomTabs,['positions','orders','holders','feed','analytics','thesis','history']);
   assert.deepEqual(info.leftTabs,['watchlist','feed','pulse','live']);
@@ -135,6 +137,7 @@ async function mobile(browser,width,height){
   let x=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,mode:document.body.dataset.v5MobileMode,chart:getComputedStyle(document.querySelector('.chart-wrap')).display,mini:getComputedStyle(document.querySelector('#rwaV5MiniBook')).display,book:getComputedStyle(document.querySelector('.right')).display,trade:getComputedStyle(document.querySelector('#liveRail')).display}));
   assert.ok(x.overflow<=2,`mobile overflow ${x.overflow}`);
   assert.equal(x.mode,'chart');assert.notEqual(x.chart,'none');assert.notEqual(x.mini,'none');assert.equal(x.book,'none');assert.equal(x.trade,'none');
+  assert.ok(await page.locator('[data-v5-mobile-price]').isVisible());assert.match(await page.locator('[data-v5-mobile-price]').innerText(),/[0-9]/);
   await page.locator('.rwa-v5-mobile-worktabs [data-v5-mobile-mode="book"]').click();await page.waitForTimeout(30);
   x=await page.evaluate(()=>({mode:document.body.dataset.v5MobileMode,book:getComputedStyle(document.querySelector('.right')).display,chart:getComputedStyle(document.querySelector('.chart-wrap')).display}));
   assert.equal(x.mode,'book');assert.notEqual(x.book,'none');assert.equal(x.chart,'none');
