@@ -95,7 +95,7 @@ void AppendTradeError(const string action,const uint rc,const string desc,const 
    gTradeErrorDetails+=StringFormat("%s:%u:%s:%d|",action,rc,clean,err);
 }
 
-string ReceiptPath(){ return StringFormat("Gold24Qualified\\receipt_%I64u.txt",InpMagic); }
+string ReceiptPath(){ return StringFormat("Gold24NativeH4\\receipt_%I64u.txt",InpMagic); }
 
 void WriteReceipt(const string status,const int reason)
 {
