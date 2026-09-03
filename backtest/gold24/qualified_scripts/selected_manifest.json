@@ -1189,20 +1189,8 @@
     }
   ],
   "multi_count": 115,
-  "removed_stale_auto": [
-    "multi_bollinger_reversion_v2_f3_s14_off1_25_exp4",
-    "multi_chart_pattern_f3_s26_off4_exp3",
-    "multi_chart_pattern_f3_s34_off1_25_exp8",
-    "multi_chart_pattern_f5_s20_off3_exp4",
-    "multi_rank07_candle_engulfing_f55_s100_off3_25_exp8"
-  ],
-  "removed_stale_wrappers": [
-    "multi_bollinger_reversion_v2_f3_s14_off1_25_exp4",
-    "multi_chart_pattern_f3_s26_off4_exp3",
-    "multi_chart_pattern_f3_s34_off1_25_exp8",
-    "multi_chart_pattern_f5_s20_off3_exp4",
-    "multi_rank07_candle_engulfing_f55_s100_off3_25_exp8"
-  ],
+  "removed_stale_auto": [],
+  "removed_stale_wrappers": [],
   "reused": [
     "rank01_donchian_f3_s89_off3_exp4",
     "rank02_candle_engulfing_f34_s144_off2_75_exp8",
