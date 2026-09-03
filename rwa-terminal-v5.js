@@ -393,3 +393,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 /* RWA_TERMINAL_PUBLIC_FINAL_VALIDATION_2026_09_03 */
 
 /* RWA_TERMINAL_REAL_FIRST_PAINT_ONLY_2026_09_03 */
+
+/* RWA_TERMINAL_REAL_FIRST_PAINT_FINAL_2026_09_03 */
