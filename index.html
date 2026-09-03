@@ -18,66 +18,14 @@
 <link rel="stylesheet" href="stable-shell.css?v=3">
 <link rel="stylesheet" href="superapp-v5.css?v=13">
 <script id="rwaTargetFirstPaintBoot">(()=>{'use strict';const h=document.documentElement;if(!location.hash){try{history.replaceState(history.state,'',location.pathname+location.search+'#markets')}catch{location.hash='#markets'}}h.classList.add('rwa-target-prepaint');const navHtml='<button class="active" data-rwa-target-nav="markets">Markets</button>';const guard=document.createElement('style');guard.id='rwaTargetFirstPaintHeaderGuardStyle';guard.textContent='html.rwa-target-prepaint body.rwa-target-dashboard-v2 .top-actions>:not(.rwa-target-icon-actions):not(.signin):not(.rwa-multichain-launch){display:none!important;visibility:hidden!important;pointer-events:none!important}html.rwa-target-prepaint body.rwa-target-dashboard-v2 .topnav>[data-v5-route]{display:none!important;visibility:hidden!important}';document.head.appendChild(guard);let obs;const restore=()=>{const brand=document.querySelector('.brandcopy strong');if(brand&&brand.textContent!=='Real World Asset')brand.textContent='Real World Asset';const nav=document.querySelector('.topnav');if(nav){const keys=[...nav.querySelectorAll(':scope>[data-rwa-target-nav]')].map(x=>x.dataset.rwaTargetNav).join('|');if(keys!=='markets')nav.innerHTML=navHtml}if(h.classList.contains('rwa-target-runtime-ready'))obs?.disconnect()};obs=new MutationObserver(restore);obs.observe(h,{subtree:true,childList:true});document.addEventListener('DOMContentLoaded',restore,{once:true});window.__RWA_FIRST_PAINT_HEADER_LOCK__={restore,disconnect:()=>obs.disconnect()};})();</script>
-<link rel="stylesheet" href="rwa-target-dashboard-v2.css?v=2.0.0" data-rwa-target-v2="1">\n<link rel="stylesheet" href="rwa-terminal-v5.css?v=1.0.8" data-rwa-terminal-v5="1">
+<link rel="stylesheet" href="rwa-target-dashboard-v2.css?v=2.0.0" data-rwa-target-v2="1">
+<link rel="stylesheet" href="rwa-terminal-v5.css?v=1.0.9" data-rwa-terminal-v5="1">
 <style id="rwaTargetFirstPaintCritical">
-#rwaV5FirstPaintShell{display:none}
-html.rwa-target-prepaint body{margin:0;background:#030811!important;color:#eef4ff!important;overflow:hidden!important}
+html.rwa-target-prepaint{background:#030811!important}
+html.rwa-target-prepaint body{margin:0!important;background:#030811!important;overflow:hidden!important}
 html.rwa-target-prepaint body>.app{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
-html.rwa-target-prepaint #rwaV5FirstPaintShell{
- display:grid;position:fixed;inset:0;z-index:2147483000;background:#030811;color:#eaf2ff;
- grid-template-rows:55px minmax(0,1fr) 28px;font:12px/1.25 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
-}
-#rwaV5FirstPaintShell *{box-sizing:border-box}
-#rwaV5FirstPaintShell .fp-top{display:grid;grid-template-columns:210px 380px minmax(280px,1fr) auto;align-items:center;border-bottom:1px solid #173046;background:#06101a;padding:0 14px}
-#rwaV5FirstPaintShell .fp-brand{font-size:15px;font-weight:850;white-space:nowrap}
-#rwaV5FirstPaintShell .fp-nav{display:flex;align-items:stretch;height:55px;gap:4px}
-#rwaV5FirstPaintShell .fp-nav span{display:grid;place-items:center;padding:0 11px;color:#a8b6c8;font-size:9px}
-#rwaV5FirstPaintShell .fp-nav .on{color:#fff;box-shadow:inset 0 -2px 0 #36df9a}
-#rwaV5FirstPaintShell .fp-search{justify-self:center;width:min(100%,410px);height:34px;border:1px solid #1b344b;border-radius:8px;background:#081522;color:#6f8299;display:flex;align-items:center;padding:0 12px;font-size:9px}
-#rwaV5FirstPaintShell .fp-actions{display:flex;align-items:center;gap:7px;color:#94a5b9;font-size:8px}
-#rwaV5FirstPaintShell .fp-wallet{height:34px;padding:0 14px;border:1px solid #326d65;border-radius:7px;display:grid;place-items:center;color:#dffdf2;background:#0d5141}
-#rwaV5FirstPaintShell .fp-body{display:grid;grid-template-columns:238px minmax(520px,1fr) 250px 300px;grid-template-rows:minmax(0,1fr) 220px;min-height:0}
-#rwaV5FirstPaintShell .fp-left,#rwaV5FirstPaintShell .fp-main,#rwaV5FirstPaintShell .fp-book,#rwaV5FirstPaintShell .fp-trade,#rwaV5FirstPaintShell .fp-bottom{border-color:#173046;background:#04101a;min-width:0;min-height:0}
-#rwaV5FirstPaintShell .fp-left{grid-row:1/3;border-right:1px solid #173046;padding:0 10px}
-#rwaV5FirstPaintShell .fp-tabs{height:38px;display:grid;grid-template-columns:repeat(4,1fr);align-items:center;border-bottom:1px solid #173046;color:#8193a9;font-size:8px}
-#rwaV5FirstPaintShell .fp-tabs .on{height:38px;display:grid;place-items:center;color:#fff;box-shadow:inset 0 -2px 0 #35dda0}
-#rwaV5FirstPaintShell .fp-section{padding:12px 0 6px;font-size:8px;color:#9baabc;text-transform:uppercase;display:flex;justify-content:space-between}
-#rwaV5FirstPaintShell .fp-mover{height:42px;border-bottom:1px solid #10263a;display:grid;grid-template-columns:1fr auto;align-items:center}
-#rwaV5FirstPaintShell .fp-mover b{font-size:9px}.fp-pos{color:#35dda0}.fp-neg{color:#ff665f}
-#rwaV5FirstPaintShell .fp-post{margin:8px 0;padding:9px;border:1px solid #1a3045;border-radius:8px;background:#071522;color:#b8c5d5;font-size:8px}
-#rwaV5FirstPaintShell .fp-main{grid-column:2;grid-row:1;border-right:1px solid #173046;display:grid;grid-template-rows:74px minmax(0,1fr)}
-#rwaV5FirstPaintShell .fp-instrument{display:grid;grid-template-columns:250px 1fr;align-items:center;padding:0 12px;border-bottom:1px solid #173046}
-#rwaV5FirstPaintShell .fp-asset b{font-size:14px}.fp-asset small{display:block;color:#75889f;font-size:7px;margin-top:2px}
-#rwaV5FirstPaintShell .fp-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}.fp-stat{padding-left:8px;border-left:1px solid #173046}.fp-stat small{display:block;color:#6f8197;font-size:6px;text-transform:uppercase}.fp-stat b{font-size:9px}
-#rwaV5FirstPaintShell .fp-chart{position:relative;overflow:hidden;background:linear-gradient(#04101a,#030811)}
-#rwaV5FirstPaintShell .fp-grid{position:absolute;inset:0;background-image:linear-gradient(#13223588 1px,transparent 1px),linear-gradient(90deg,#13223588 1px,transparent 1px);background-size:100% 54px,88px 100%;opacity:.55}
-#rwaV5FirstPaintShell .fp-candles{position:absolute;left:5%;right:5%;top:22%;bottom:18%;display:flex;align-items:flex-end;gap:6px}
-#rwaV5FirstPaintShell .fp-candles i{display:block;width:7px;border-radius:1px;background:#19c895;box-shadow:0 -22px 0 -3px #19c895,0 18px 0 -3px #19c895}
-#rwaV5FirstPaintShell .fp-candles i:nth-child(3n){height:38%}.fp-candles i:nth-child(4n){height:64%;background:#f45f63}.fp-candles i:nth-child(5n){height:48%}.fp-candles i:nth-child(7n){height:72%;background:#f45f63}
-#rwaV5FirstPaintShell .fp-book{grid-column:3;grid-row:1;border-right:1px solid #173046;padding:0 9px}
-#rwaV5FirstPaintShell .fp-book h4,#rwaV5FirstPaintShell .fp-trade h4{height:42px;margin:0;display:flex;align-items:center;border-bottom:1px solid #173046;font-size:9px}
-#rwaV5FirstPaintShell .fp-row{height:31px;display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;font-size:7px}.fp-row span:nth-child(2),.fp-row span:nth-child(3){text-align:right}
-#rwaV5FirstPaintShell .fp-mid{height:40px;display:flex;align-items:center;color:#35dda0;font-size:14px;font-weight:850;border-top:1px solid #173046;border-bottom:1px solid #173046}
-#rwaV5FirstPaintShell .fp-trade{grid-column:4;grid-row:1/3;padding:0 10px}
-#rwaV5FirstPaintShell .fp-side{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:12px 0}.fp-side span{height:34px;display:grid;place-items:center;border:1px solid #1d354c;border-radius:6px;font-size:8px}.fp-side .on{background:#0d5b46;color:#dffdf2;border-color:#168769}
-#rwaV5FirstPaintShell .fp-field{height:52px;margin:8px 0;border:1px solid #1a3045;border-radius:7px;padding:8px;color:#76889e;font-size:7px}.fp-field b{display:block;margin-top:7px;color:#e8f0fa;font-size:11px}
-#rwaV5FirstPaintShell .fp-buy{height:38px;margin-top:13px;border-radius:6px;background:#25c98f;color:#02140e;display:grid;place-items:center;font-weight:900;font-size:9px}
-#rwaV5FirstPaintShell .fp-bottom{grid-column:2/4;grid-row:2;border-top:1px solid #173046;padding:0 12px}
-#rwaV5FirstPaintShell .fp-bottom-tabs{height:38px;display:flex;gap:24px;align-items:center;border-bottom:1px solid #173046;color:#8293a9;font-size:8px}.fp-bottom-tabs .on{height:38px;display:grid;place-items:center;color:#fff;box-shadow:inset 0 -2px 0 #35dda0}
-#rwaV5FirstPaintShell .fp-empty{height:160px;display:grid;place-items:center;color:#65798f;font-size:8px}
-#rwaV5FirstPaintShell .fp-foot{display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-top:1px solid #173046;background:#04101a;color:#6f8298;font-size:7px}
-@media(max-width:680px){
- html.rwa-target-prepaint #rwaV5FirstPaintShell{grid-template-rows:0 minmax(0,1fr) 0;background:#030811}
- #rwaV5FirstPaintShell .fp-top,#rwaV5FirstPaintShell .fp-foot,#rwaV5FirstPaintShell .fp-left,#rwaV5FirstPaintShell .fp-book,#rwaV5FirstPaintShell .fp-trade,#rwaV5FirstPaintShell .fp-bottom{display:none}
- #rwaV5FirstPaintShell .fp-body{display:block;overflow:hidden}
- #rwaV5FirstPaintShell .fp-main{display:grid;grid-template-rows:154px minmax(0,1fr);height:100vh;border:0}
- #rwaV5FirstPaintShell .fp-instrument{display:block;height:154px;padding:18px 14px 0;background:#04101a}
- #rwaV5FirstPaintShell .fp-asset b{font-size:15px}.fp-asset small{font-size:8px}
- #rwaV5FirstPaintShell .fp-stats{margin-top:16px;grid-template-columns:repeat(4,1fr);gap:5px}.fp-stat{border-left:0;border-right:1px solid #173046;padding:0}.fp-stat:nth-child(5){display:none}
- #rwaV5FirstPaintShell .fp-chart:before{content:"Chart      Book      Trade      Feed";position:absolute;z-index:2;top:0;left:0;right:0;height:42px;display:flex;align-items:center;justify-content:center;word-spacing:38px;border-bottom:1px solid #173046;background:#04101a;color:#dbe5f2;font-size:9px}
- #rwaV5FirstPaintShell .fp-grid{top:42px}
- #rwaV5FirstPaintShell .fp-candles{top:27%;bottom:22%;gap:4px}.fp-candles i{width:5px}
-}
+html.rwa-target-prepaint body>.app *{animation:none!important;transition:none!important}
+html.rwa-target-runtime-ready body>.app{visibility:visible!important;opacity:1!important;pointer-events:auto!important}
 </style>
 <script id="rwaLocaleFallback">/* RWA_LOCALE_FALLBACK_V2 */
 (()=>{'use strict';const F='en-US';const NativeCanonical=Intl.getCanonicalLocales.bind(Intl);const cleanTag=t=>{if(t===undefined||t===null||t==='')return F;let s=String(t).trim();if(!s)return F;s=s.split('@',1)[0].replace(/_/g,'-');try{return NativeCanonical(s)[0]||F}catch{return F}};const defaultLocale=()=>{try{if(typeof navigator!=='undefined'){for(const x of [navigator.language,...(Array.isArray(navigator.languages)?navigator.languages:[])]){const c=cleanTag(x);if(c)return c}}}catch{}return F};const cleanLocales=l=>{if(l===undefined||l===null)return defaultLocale();if(Array.isArray(l)){const out=l.map(cleanTag).filter(Boolean);return out.length?out:[F]}return cleanTag(l)};const wrapProto=(proto,name)=>{const native=proto&&proto[name];if(typeof native!=='function')return;Object.defineProperty(proto,name,{configurable:true,writable:true,value:function(locales,...rest){const safe=cleanLocales(locales);try{return native.call(this,safe,...rest)}catch(e){if(e instanceof RangeError)return native.call(this,F,...rest);throw e}}})};wrapProto(Number.prototype,'toLocaleString');if(typeof BigInt!=='undefined')wrapProto(BigInt.prototype,'toLocaleString');for(const n of ['toLocaleString','toLocaleDateString','toLocaleTimeString'])wrapProto(Date.prototype,n);for(const name of ['NumberFormat','DateTimeFormat','Collator','PluralRules','RelativeTimeFormat','ListFormat','DisplayNames']){const Native=Intl[name];if(typeof Native!=='function')continue;function Safe(locales,...rest){const safe=cleanLocales(locales);try{return new Native(safe,...rest)}catch(e){if(e instanceof RangeError)return new Native(F,...rest);throw e}}Object.setPrototypeOf(Safe,Native);Safe.prototype=Native.prototype;Object.defineProperty(Intl,name,{configurable:true,writable:true,value:Safe})}if(typeof Intl.Locale==='function'){const NativeLocale=Intl.Locale;function SafeLocale(tag,...rest){try{return new NativeLocale(cleanTag(tag),...rest)}catch(e){if(e instanceof RangeError)return new NativeLocale(F,...rest);throw e}}Object.setPrototypeOf(SafeLocale,NativeLocale);SafeLocale.prototype=NativeLocale.prototype;Object.defineProperty(Intl,'Locale',{configurable:true,writable:true,value:SafeLocale})}Object.defineProperty(Intl,'getCanonicalLocales',{configurable:true,writable:true,value:function(locales){try{if(Array.isArray(locales))return NativeCanonical(locales.map(cleanTag));return NativeCanonical(cleanTag(locales))}catch{return NativeCanonical(F)}}});window.__RWA_LOCALE_FALLBACK__=F;window.__RWA_SAFE_LOCALE__=defaultLocale()})();
@@ -85,66 +33,6 @@ html.rwa-target-prepaint #rwaV5FirstPaintShell{
 <!-- RWA_TARGET_V4_FRESH_RECERT_2026-09-03 -->
 </head>
 <body class="mview-overview rwa-target-dashboard-v2">
-<div id="rwaV5FirstPaintShell" aria-hidden="true">
-  <div class="fp-top">
-    <div class="fp-brand">◈ Real World Asset</div>
-    <div class="fp-nav"><span class="on">Trade</span><span>Discover</span><span>Portfolio</span><span>Analytics</span><span>Rewards</span><span>More⌄</span></div>
-    <div class="fp-search">⌕ &nbsp; Search tokens, markets, or users…</div>
-    <div class="fp-actions"><span>● Network · Live</span><span>♧</span><span>⚙</span><span class="fp-wallet">Connect Wallet</span></div>
-  </div>
-  <div class="fp-body">
-    <aside class="fp-left">
-      <div class="fp-tabs"><span class="on">Watchlist</span><span>Feed</span><span>Pulse</span><span>LIVE ●</span></div>
-      <div class="fp-section"><b>Top Movers</b><span>24h⌄</span></div>
-      <div class="fp-mover"><b>RWA / USDT</b><span class="fp-pos">+12.43%</span></div>
-      <div class="fp-mover"><b>PAXG / USDT</b><span class="fp-pos">+4.21%</span></div>
-      <div class="fp-mover"><b>ONDO / USDT</b><span class="fp-neg">−1.18%</span></div>
-      <div class="fp-section"><b>Signals & Discussions</b><span>All⌄</span></div>
-      <div class="fp-post"><b>Signed market feed</b><br><span>Live wallet-authenticated discussions load here.</span></div>
-      <div class="fp-post"><b>Market signal</b><br><span>Real market activity is loading…</span></div>
-      <div class="fp-post"><b>RWA Research</b><br><span>Verified market context loads without placeholders.</span></div>
-    </aside>
-    <main class="fp-main">
-      <div class="fp-instrument">
-        <div class="fp-asset"><b>BTC / USDT ☆</b><small>Live market · Real World Asset terminal</small></div>
-        <div class="fp-stats">
-          <div class="fp-stat"><small>Price</small><b>—</b></div>
-          <div class="fp-stat"><small>24h Volume</small><b>—</b></div>
-          <div class="fp-stat"><small>Liquidity</small><b>—</b></div>
-          <div class="fp-stat"><small>Holders</small><b>—</b></div>
-          <div class="fp-stat"><small>24h Change</small><b>—</b></div>
-        </div>
-      </div>
-      <div class="fp-chart"><div class="fp-grid"></div><div class="fp-candles"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-    </main>
-    <aside class="fp-book">
-      <h4>Order Book</h4>
-      <div class="fp-row fp-neg"><span>78,757.7</span><span>0.0081</span><span>5.51</span></div>
-      <div class="fp-row fp-neg"><span>78,757.5</span><span>0.0073</span><span>574.03</span></div>
-      <div class="fp-row fp-neg"><span>78,757.3</span><span>0.1134</span><span>8.93K</span></div>
-      <div class="fp-row fp-neg"><span>78,756.6</span><span>0.0918</span><span>7.23K</span></div>
-      <div class="fp-mid">—</div>
-      <div class="fp-row fp-pos"><span>78,756.1</span><span>2.2516</span><span>177.33K</span></div>
-      <div class="fp-row fp-pos"><span>78,755.5</span><span>0.1297</span><span>10.21K</span></div>
-      <div class="fp-row fp-pos"><span>78,755.4</span><span>0.1133</span><span>8.92K</span></div>
-      <div class="fp-row fp-pos"><span>78,754.3</span><span>0.0142</span><span>1.12K</span></div>
-    </aside>
-    <aside class="fp-trade">
-      <h4>Trade &nbsp;&nbsp; Alerts</h4>
-      <div class="fp-side"><span class="on">Buy / Long</span><span>Sell / Short</span></div>
-      <div class="fp-side"><span class="on">Market</span><span>Limit</span></div>
-      <div class="fp-field">Available<b>Connect wallet</b></div>
-      <div class="fp-field">Amount<b>0.0000</b></div>
-      <div class="fp-field">Take Profit / Stop Loss<b>—</b></div>
-      <div class="fp-buy">Buy / Long</div>
-    </aside>
-    <section class="fp-bottom">
-      <div class="fp-bottom-tabs"><span class="on">Positions</span><span>Open Orders</span><span>Holders</span><span>Feed</span><span>Analytics</span><span>Thesis</span><span>History</span></div>
-      <div class="fp-empty">Connect a wallet to load verified account data.</div>
-    </section>
-  </div>
-  <div class="fp-foot"><span>● System Status · Loading live market infrastructure</span><span>Real market data · no fabricated account data</span></div>
-</div>
 <div class="app">
 <header class="topbar">
   <a class="brand" href="#markets" aria-label="Real World Asset market home"><span class="brandmark"><i></i><b>R</b></span><span class="brandcopy"><strong>Real World Asset</strong><small>LIVE MARKET NETWORK</small></span></a>
