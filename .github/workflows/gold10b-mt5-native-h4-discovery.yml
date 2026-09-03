@@ -15,8 +15,6 @@ permissions:
   actions: read
 
 env:
-  TV_H4_RUN_ID: '33791624885'
-
 jobs:
   fetch_broker_native_h4:
     runs-on: windows-2022
@@ -25,7 +23,6 @@ jobs:
       MT5_LOGIN: ${{ secrets.MT5_LOGIN }}
       MT5_PASSWORD: ${{ secrets.MT5_PASSWORD }}
       MT5_SERVER: ${{ secrets.MT5_SERVER }}
-      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -40,6 +37,7 @@ jobs:
         shell: powershell
         run: |
           python -m pip install pandas numpy MetaTrader5
+          python -m pip install 'git+https://github.com/rongardF/tvdatafeed.git'
           $setup=Join-Path $env:RUNNER_TEMP 'exness5setup.exe'
           Invoke-WebRequest -UseBasicParsing 'https://download.terminal.free/cdn/web/exness.technologies.ltd/mt5/exness5setup.exe' -OutFile $setup
           Start-Process -FilePath $setup -ArgumentList '/auto' -Wait
@@ -48,11 +46,14 @@ jobs:
           $terminal=($c|Sort-Object LastWriteTime -Descending|Select-Object -First 1).FullName
           if([string]::IsNullOrWhiteSpace($terminal)){throw 'terminal64.exe not found'}
           "MT5_TERMINAL=$terminal"|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-      - name: Download independent TradingView OANDA native H4 crosscheck
+      - name: Fetch independent TradingView OANDA native H4 crosscheck fresh
         shell: powershell
         run: |
-          gh run download $env:TV_H4_RUN_ID --repo $env:GITHUB_REPOSITORY -n "gold10b-native-h4-$env:TV_H4_RUN_ID" -D "$env:RUNNER_TEMP\tvh4"
-          if(!(Test-Path "$env:RUNNER_TEMP\tvh4\XAUUSD_OANDA_TRADINGVIEW_H4_CROSSCHECK.csv")){throw 'TV H4 crosscheck missing'}
+          $tvh4="$env:RUNNER_TEMP\tvh4";New-Item -ItemType Directory -Force $tvh4|Out-Null
+          python backtest/gold24/tradingview_native_h4_gate_a.py --out-dir $tvh4 --bars 20000
+          if($LASTEXITCODE -ne 0){throw 'FRESH_TV_H4_CROSSCHECK_GATE_A_FAIL'}
+          if(!(Test-Path "$tvh4\XAUUSD_OANDA_TRADINGVIEW_H4_CROSSCHECK.csv")){throw 'FRESH_TV_H4_CROSSCHECK_MISSING'}
+          python -c "import json,os; p=os.path.join(os.environ['RUNNER_TEMP'],'tvh4','gate_a_h4_receipt.json'); x=json.load(open(p)); assert x['crosscheck_pass'] and x['construction']=='DIRECT_SOURCE_H4_BARS_NO_RESAMPLING'; print('FRESH_TV_H4_CROSSCHECK_PASS rows='+str(x['crosscheck_rows']))"
       - name: Fetch broker-server native H4 and enforce Gate A
         shell: powershell
         run: |
