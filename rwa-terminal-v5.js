@@ -313,10 +313,9 @@ function apply(){
  window.__RWA_FIRST_PAINT_HEADER_LOCK__?.disconnect?.();
  const preserveMobileMarkets=innerWidth<681&&document.body.classList.contains('rwa-v5-mobile-markets');
  document.body.classList.add('rwa-terminal-v5');document.documentElement.dataset.rwaTerminal='v5';unlockLegacyGeometry();keepMarket();ensureHeader();ensureLeft();ensureBottom();ensureTrade();ensureMobile();ensureFooter();ensureTargetHeaderStats();lockV5Geometry();pruneLegacyUi();
+ document.documentElement.classList.add('rwa-target-runtime-ready');const shell=$('#rwaV5FirstPaintShell');shell?.remove();document.documentElement.classList.remove('rwa-target-prepaint');
  if(preserveMobileMarkets||document.body.classList.contains('rwa-v5-mobile-markets')){setMobileMarketsDrawerVisible(true);setMobileMarketsCloseVisible(true)}
- renderFavorite();renderStatus();renderFooter();
- document.documentElement.classList.add('rwa-target-runtime-ready');
- const shell=$('#rwaV5FirstPaintShell');shell?.remove();document.documentElement.classList.remove('rwa-target-prepaint')
+ renderFavorite();renderStatus();renderFooter()
 }
 function bind(){
  const depth=$('#depth');if(depth&&!depth.dataset.v5BookBound){depth.dataset.v5BookBound='1';depth.addEventListener('pointerdown',e=>orderBookClick(e),true)}
