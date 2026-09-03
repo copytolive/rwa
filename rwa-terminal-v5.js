@@ -42,12 +42,12 @@ function lockV5Geometry(){
  for(const root of [document.documentElement,document.body]){imp(root,'width','100vw');imp(root,'height','100vh');imp(root,'overflow','hidden')}
  imp(app,'width','100vw');imp(app,'height','100vh');imp(app,'overflow','hidden');imp(app,'padding','0');
  imp(top,'position','fixed');imp(top,'inset','0 0 auto 0');imp(top,'width','100vw');imp(top,'height','55px');imp(top,'min-height','55px');imp(top,'max-height','55px');imp(top,'box-sizing','border-box');
- imp(layout,'position','fixed');imp(layout,'inset','55px 0 28px 0');imp(layout,'width','100vw');imp(layout,'height','calc(100vh - 83px)');imp(layout,'min-height','0');imp(layout,'margin','0');imp(layout,'padding','0');imp(layout,'display','grid');imp(layout,'grid-template-columns','238px minmax(0,1fr) 250px 300px');imp(layout,'grid-template-rows','minmax(0,1fr) 220px');imp(layout,'overflow','hidden');imp(layout,'box-sizing','border-box');
+ imp(layout,'position','fixed');imp(layout,'inset','55px 0 28px 0');imp(layout,'width','100vw');imp(layout,'height','calc(100vh - 83px)');imp(layout,'min-height','0');imp(layout,'margin','0');imp(layout,'padding','0');imp(layout,'display','grid');imp(layout,'grid-template-columns','310px minmax(0,1fr) 280px 230px');imp(layout,'grid-template-rows','minmax(0,1fr) 220px');imp(layout,'overflow','hidden');imp(layout,'box-sizing','border-box');
  for(const el of [left,main,right,trade,bottom]){imp(el,'position','relative');imp(el,'inset','auto');imp(el,'margin','0');imp(el,'transform','none');imp(el,'min-height','0');imp(el,'max-height','none');imp(el,'box-sizing','border-box')}
- imp(left,'grid-column','1');imp(left,'grid-row','1 / 3');imp(left,'width','238px');imp(left,'min-width','238px');imp(left,'max-width','238px');imp(left,'height','100%');
+ imp(left,'grid-column','1');imp(left,'grid-row','1 / 3');imp(left,'width','310px');imp(left,'min-width','310px');imp(left,'max-width','310px');imp(left,'height','100%');
  imp(main,'grid-column','2');imp(main,'grid-row','1');imp(main,'width','auto');imp(main,'min-width','0');imp(main,'height','100%');imp(main,'display','grid');imp(main,'grid-template-rows','74px minmax(0,1fr)');imp(main,'overflow','hidden');
- imp(right,'grid-column','3');imp(right,'grid-row','1');imp(right,'width','250px');imp(right,'min-width','250px');imp(right,'max-width','250px');imp(right,'height','100%');imp(right,'overflow','hidden');
- imp(trade,'grid-column','4');imp(trade,'grid-row','1 / 3');imp(trade,'width','300px');imp(trade,'min-width','300px');imp(trade,'max-width','300px');imp(trade,'height','100%');imp(trade,'overflow','hidden');
+ imp(right,'grid-column','3');imp(right,'grid-row','1');imp(right,'width','280px');imp(right,'min-width','280px');imp(right,'max-width','280px');imp(right,'height','100%');imp(right,'overflow','hidden');
+ imp(trade,'grid-column','4');imp(trade,'grid-row','1 / 3');imp(trade,'width','230px');imp(trade,'min-width','230px');imp(trade,'max-width','230px');imp(trade,'height','100%');imp(trade,'overflow','hidden');
  imp(bottom,'grid-column','2 / 4');imp(bottom,'grid-row','2');imp(bottom,'width','auto');imp(bottom,'height','220px');imp(bottom,'min-height','220px');imp(bottom,'max-height','220px');imp(bottom,'overflow','hidden');
  imp(footer,'position','fixed');imp(footer,'left','0');imp(footer,'right','0');imp(footer,'bottom','0');imp(footer,'width','100vw');imp(footer,'height','28px');imp(footer,'min-height','28px');imp(footer,'max-height','28px')
 }
@@ -83,7 +83,7 @@ function renderTargetHeaderStats(){
  const label=$('#selLabel');if(label)label.textContent=(p.rwa?'RWA-linked · ':'')+'Binance Spot';
 }
 function pruneLegacyUi(){
- for(const sel of ['.productbar','.trustbar','.social-screen','.suite-screen','.mobile-home','#rwaExperienceRail','#rwaContextBrief','#rwaQualityBadge','#rwaQualityPanel','#rwaMobileAssetActions','#rwaSuperWorkspace','#rwaQuickDock','#rwaGlobalTicker'])qa(sel).forEach(x=>x.remove())
+ for(const sel of ['.productbar','.trustbar','.social-screen','.suite-screen','.mobile-home','#rwaMobileInstrumentStrip','#rwaExperienceRail','#rwaContextBrief','#rwaQualityBadge','#rwaQualityPanel','#rwaMobileAssetActions','#rwaSuperWorkspace','#rwaQuickDock','#rwaGlobalTicker'])qa(sel).forEach(x=>x.remove())
 }
 function renderSearch(){
  const box=$('#rwaV5GlobalSearch'),input=box?.querySelector('input'),out=box?.querySelector('.rwa-v5-search-results');if(!input||!out)return;
@@ -418,3 +418,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 /* RWA_TERMINAL_R7_ZERO_DELAY_PUBLIC_RECERT_2026_09_04 */
 
 /* RWA_TERMINAL_R8_FINAL_PARITY_RECERT_2026_09_04 */
+
+/* RWA_TERMINAL_R9_GEOMETRY_AND_MOBILE_OVERLAY_FIX_2026_09_04 */
