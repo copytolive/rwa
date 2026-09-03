@@ -1,0 +1,43 @@
+{
+  "schema": "gold10b-native-mt5-certification-receipt-v1",
+  "status": "PASS",
+  "github_run_id": 33778350110,
+  "github_run_conclusion": "success",
+  "canonical_python_parity_job": {
+    "job_id": 100725598561,
+    "status": "completed",
+    "conclusion": "success",
+    "exact_method_pairs": 118
+  },
+  "native_metaquotes_mt5_job": {
+    "job_id": 100725922993,
+    "status": "completed",
+    "conclusion": "success",
+    "qualified_ea_count": 118,
+    "compile_exact_dynamic_set": "PASS",
+    "custom_symbol_import": "PASS",
+    "native_strategy_tester_operational_smoke": "PASS",
+    "official_terminal": "MetaQuotes MT5",
+    "live_trading": "DISABLED"
+  },
+  "selected_manifest": {
+    "path": "backtest/gold24/qualified_scripts/selected_manifest.json",
+    "github_blob_sha": "78f9b4e1f1d1e8f24b3846ecab250d0b4b87409e",
+    "status": "PASS",
+    "strict_count": 3,
+    "multi_count": 115,
+    "total_method_pairs": 118,
+    "quantity_gold_units": 100,
+    "pip_size_usd": 0.01
+  },
+  "canonical_dataset": {
+    "provider": "TradingView",
+    "symbol": "COMEX:GC1!",
+    "timeframe": "D1",
+    "rows": 6500,
+    "sha256": "817f128232b2ce4d84269d328a6c8ec279307792bda2cc06947e6f9378369fca",
+    "start_utc": "2000-10-23 00:00:00+00:00",
+    "end_utc": "2026-08-27 00:00:00+00:00"
+  },
+  "evidence_note": "Derived from successful GitHub Actions run 33778350110: exact Python parity, native MetaEditor compile, canonical custom-symbol import, and native MT5 Strategy Tester operational smoke all completed successfully for the exact 118-method manifest."
+}
