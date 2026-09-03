@@ -54,14 +54,12 @@ async function desktop(){
  if(!g.main||g.main.x!==310||!near(g.main.width,852,5)||!near(g.main.height,638,5))fail('main geometry mismatch',g.main);
  if(!g.book||!near(g.book.x,1162,5)||!near(g.book.width,280,4)||!near(g.book.height,638,5))fail('order book geometry mismatch',g.book);
  const clickNav=async(key,expect)=>{
-   await page.locator('.topnav>button[data-v5-nav="'+key+'"]').click();await page.waitForTimeout(120);
+   await page.locator('.topnav>button[data-v5-nav="'+key+'"]').click();await page.waitForTimeout(0);
    if((await page.evaluate(()=>location.hash))!=='#markets')fail(key+' changed route');
    const txt=await page.locator('#rwaV5Bottom').innerText();
    if(expect&&!expect.test(txt))fail(key+' content mismatch',txt.slice(0,1000));
  };
- await page.locator('.topnav>button[data-v5-nav="more"]').click();
- await page.locator('.topnav [data-v5-more-menu] [data-v5-nav="orders"]').click();await page.waitForTimeout(0);
- await page.locator('.topnav>button[data-v5-nav="discover"]').click();await page.waitForTimeout(120);
+ await page.locator('.topnav>button[data-v5-nav="discover"]').click();await page.waitForTimeout(0);
  if(!/Top movers|Top volume/i.test(await page.locator('#rwaV5Bottom').innerText()))fail('discover content mismatch');
  await clickNav('portfolio',/Portfolio|Connect a wallet|ACCOUNT VALUE/i);
  await page.locator('#rwaV5Bottom [data-v5-bottom="orders"]').click();await page.waitForTimeout(0);if(!/Open Orders|Connect a wallet|No open orders/i.test(await page.locator('#rwaV5Bottom').innerText()))fail('orders content mismatch');
