@@ -29,6 +29,8 @@ async function desktop(){
    const wr=await rect(page,'#rwaTradingWorkspace'),rr=await rect(page,'#liveRail'),mr=await rect(page,'.layout>.main');
    if(!wr||!rr||wr.left<rr.left-1||wr.right>rr.right+1||wr.top<rr.top-1||wr.bottom>rr.bottom+1)fail(key+' workspace escaped LIVE rail',{wr,rr});
    if(!mr||!near(mr.left,baseMain.left,1)||!near(mr.width,baseMain.width,1)||!near(rr.width,baseRail.width,1))fail(key+' changed Market geometry',{baseMain,mr,baseRail,rr});
+   const controlHeights=await page.evaluate(()=>[...document.querySelectorAll('#rwaTradingWorkspace button')].filter(e=>getComputedStyle(e).display!=='none').map(e=>Math.round(e.getBoundingClientRect().height)));
+   if(!controlHeights.length||controlHeights.some(h=>Math.abs(h-36)>1))fail(key+' rail workspace controls must share 36px height',controlHeights);
    await page.locator('[data-workspace-close]').click();await page.waitForTimeout(60);
    const closed=await page.evaluate(()=>({hash:location.hash,open:document.querySelector('#liveRail')?.classList.contains('workspace-open'),market:document.querySelector('[data-rwa-target-nav="markets"]')?.classList.contains('active')}));
    if(closed.hash!=='#markets'||closed.open||!closed.market)fail(key+' did not return to Market LIVE rail',closed);
