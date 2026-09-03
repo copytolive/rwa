@@ -39,6 +39,8 @@ async function desktop(){
  if(!info.bodyClass.includes('rwa-terminal-v5'))fail('V5 body class missing',info.bodyClass);
  if(JSON.stringify(info.globalNav)!==JSON.stringify(['markets']))fail('V5 global nav must contain only Markets',info.globalNav);
  if(JSON.stringify(info.marketNav)!==JSON.stringify(['trade','portfolio','orders','analytics','rewards','more']))fail('V5 Market-owned nav mismatch',info.marketNav);
+ const navRects=await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav]').evaluateAll(xs=>xs.map(x=>{const r=x.getBoundingClientRect(),s=getComputedStyle(x);return{key:x.dataset.v5Nav,x:r.x,y:r.y,w:r.width,h:r.height,display:s.display,visibility:s.visibility,opacity:s.opacity}}));
+ if(navRects.length!==6||navRects.some(r=>r.w<20||r.h<30||r.y<0||r.y>8||r.display==='none'||r.visibility==='hidden'||Number(r.opacity)===0))fail('Market nav is not visibly docked in approved desktop header',navRects);
  if(await page.locator('.topnav [data-v5-nav]').count())fail('non-Market navigation escaped into global topbar');
  if(JSON.stringify(info.bottom)!==JSON.stringify(['positions','orders','holders','feed','analytics','thesis','history']))fail('V5 bottom tabs mismatch',info.bottom);
  if(JSON.stringify(info.leftTabs)!==JSON.stringify(['watchlist','feed','pulse','live']))fail('V5 left tabs mismatch',info.leftTabs);
@@ -87,6 +89,7 @@ async function mobile(width,height,name){
  const ctx=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,serviceWorkers:'block'}),page=await ctx.newPage();page.on('pageerror',e=>pageErrors.push(name+': '+String(e?.message||e)));
  await ready(page);
  if(await page.locator('#rwaV5FirstPaintShell').count())fail(name+' fake first-paint shell still exists');
+ const mobilePrice=page.locator('[data-v5-mobile-price]');if(!await mobilePrice.isVisible())fail(name+' real mobile price header missing');const mobilePriceText=await mobilePrice.innerText();if(!/[0-9]/.test(mobilePriceText))fail(name+' mobile price header has no live numeric value',mobilePriceText);
  let m=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,mode:document.body.dataset.v5MobileMode,chart:getComputedStyle(document.querySelector('.chart-wrap')).display,book:getComputedStyle(document.querySelector('.right')).display,trade:getComputedStyle(document.querySelector('#liveRail')).display,mini:getComputedStyle(document.querySelector('#rwaV5MiniBook')).display}));
  if(m.sw>m.cw+2)fail(name+' horizontal overflow',m);if(m.mode!=='chart'||m.chart==='none'||m.mini==='none'||m.book!=='none'||m.trade!=='none')fail(name+' default Chart state invalid',m);
  await page.locator('.rwa-v5-mobile-worktabs [data-v5-mobile-mode="book"]').click();await page.waitForTimeout(50);m=await page.evaluate(()=>({mode:document.body.dataset.v5MobileMode,chart:getComputedStyle(document.querySelector('.chart-wrap')).display,book:getComputedStyle(document.querySelector('.right')).display,trade:getComputedStyle(document.querySelector('#liveRail')).display}));if(m.mode!=='book'||m.chart!=='none'||m.book==='none'||m.trade!=='none')fail(name+' Book state invalid',m);
