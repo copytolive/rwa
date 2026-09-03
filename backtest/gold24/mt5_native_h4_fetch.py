@@ -85,9 +85,20 @@ def main() -> int:
         cross = pd.read_csv(a.crosscheck)
         cross["Date"] = pd.to_datetime(cross["Date"], utc=True, errors="raise")
         cross = cross.sort_values("Date").drop_duplicates("Date", keep="last")
-        left = primary[["Date","Close"]].rename(columns={"Close":"primary_close"}).sort_values("Date")
-        right = cross[["Date","Close"]].rename(columns={"Close":"cross_close"}).sort_values("Date")
-        overlap = pd.merge_asof(left, right, on="Date", direction="nearest", tolerance=pd.Timedelta(hours=2)).dropna()
+        left = primary[["Date","Close"]].rename(columns={"Close":"primary_close"}).copy()
+        right = cross[["Date","Close"]].rename(columns={"Close":"cross_close"}).copy()
+        # Pandas 3 can preserve different datetime resolutions (for example
+        # broker datetime64[s, UTC] versus CSV datetime64[us, UTC]); merge_asof
+        # requires identical dtypes. Match on explicit epoch nanoseconds so the
+        # comparison remains timestamp-exact and no bar is resampled or shifted.
+        left["_date_ns"] = left["Date"].map(lambda z: int(pd.Timestamp(z).value)).astype("int64")
+        right["_date_ns"] = right["Date"].map(lambda z: int(pd.Timestamp(z).value)).astype("int64")
+        left = left.drop(columns=["Date"]).sort_values("_date_ns")
+        right = right.drop(columns=["Date"]).sort_values("_date_ns")
+        overlap = pd.merge_asof(
+            left, right, on="_date_ns", direction="nearest",
+            tolerance=int(pd.Timedelta(hours=2).value),
+        ).dropna()
         rp = np.log(overlap["primary_close"]).diff(); rx = np.log(overlap["cross_close"]).diff()
         valid = rp.notna() & rx.notna()
         corr = float(rp[valid].corr(rx[valid])) if int(valid.sum()) >= 2 else float("nan")
