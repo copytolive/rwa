@@ -52,7 +52,7 @@ function lockV5Geometry(){
  imp(footer,'position','fixed');imp(footer,'left','0');imp(footer,'right','0');imp(footer,'bottom','0');imp(footer,'width','100vw');imp(footer,'height','28px');imp(footer,'min-height','28px');imp(footer,'max-height','28px')
 }
 function ensureHeader(){
- const nav=$('.topnav');if(nav){nav.dataset.v5='1';nav.innerHTML='<button data-v5-global="markets" data-rwa-target-nav="markets" class="active" aria-current="page">Markets</button>'}
+ const nav=$('.topnav');if(nav){nav.dataset.v5='1';nav.innerHTML='<button class="active" data-v5-global="trade" data-v5-nav="trade" aria-current="page">Trade</button><button data-v5-global="discover" data-v5-nav="discover">Discover</button><button data-v5-global="portfolio" data-v5-nav="portfolio">Portfolio</button><button data-v5-global="analytics" data-v5-nav="analytics">Analytics</button><button data-v5-global="rewards" data-v5-nav="rewards">Rewards</button><button data-v5-global="more" data-v5-nav="more" aria-haspopup="menu">More⌄</button><div class="rwa-v5-more rwa-v5-header-more" data-v5-more-menu hidden><button data-v5-nav="orders">Open Orders</button><button data-v5-bottom="holders">Holders</button><button data-v5-bottom="feed">Feed</button><button data-v5-bottom="thesis">Thesis</button><button data-v5-bottom="history">History</button><button data-v5-action="network">Network</button></div>'}
  const top=$('.topbar');if(top&&!$('#rwaV5GlobalSearch')){const box=document.createElement('div');box.id='rwaV5GlobalSearch';box.className='rwa-v5-search';box.innerHTML='<span>⌕</span><input type="search" autocomplete="off" placeholder="Search tokens or markets…" aria-label="Search tokens or markets"><kbd>⌘K</kbd><div class="rwa-v5-search-results" hidden></div>';top.insertBefore(box,$('.top-actions'));const input=box.querySelector('input');input.addEventListener('input',renderSearch);input.addEventListener('focus',renderSearch);input.addEventListener('keydown',e=>{if(e.key==='Escape'){box.querySelector('.rwa-v5-search-results').hidden=true;input.blur()}})}
  const brand=$('.brand');if(brand&&!brand.dataset.v5){brand.dataset.v5='1';brand.addEventListener('click',e=>{e.preventDefault();keepMarket();setBottom('positions');setMobile('chart')})}
 }
@@ -83,7 +83,7 @@ function renderTargetHeaderStats(){
  const label=$('#selLabel');if(label)label.textContent=(p.rwa?'RWA-linked · ':'')+'Binance Spot';
 }
 function pruneLegacyUi(){
- for(const sel of ['.productbar','.trustbar','.social-screen','.suite-screen','.mobile-home','.mobile-tabs','#rwaExperienceRail','#rwaContextBrief','#rwaQualityBadge','#rwaQualityPanel','#rwaMobileAssetActions','#rwaSuperWorkspace','#rwaQuickDock','#rwaGlobalTicker'])qa(sel).forEach(x=>x.remove())
+ for(const sel of ['.productbar','.trustbar','.social-screen','.suite-screen','.mobile-home','#rwaExperienceRail','#rwaContextBrief','#rwaQualityBadge','#rwaQualityPanel','#rwaMobileAssetActions','#rwaSuperWorkspace','#rwaQuickDock','#rwaGlobalTicker'])qa(sel).forEach(x=>x.remove())
 }
 function renderSearch(){
  const box=$('#rwaV5GlobalSearch'),input=box?.querySelector('input'),out=box?.querySelector('.rwa-v5-search-results');if(!input||!out)return;
@@ -208,11 +208,11 @@ async function renderBottom(force=false){
 function ensureMiniBook(){
  const main=$('.main'),chart=$('.chart-wrap');if(!main||!chart)return;let mini=$('#rwaV5MiniBook');if(!mini){mini=document.createElement('section');mini.id='rwaV5MiniBook';mini.className='rwa-v5-mini-book';mini.innerHTML='<header><span>Bids</span><b data-v5-mini-spread>Spread —</b><span>Asks</span></header><div data-v5-mini-rows></div><button data-v5-mobile-mode="book">View full book</button>';chart.insertAdjacentElement('afterend',mini)}renderMiniBook()
 }
-function renderMiniBook(){const mini=$('#rwaV5MiniBook');if(!mini)return;const s=market(),b=s?.book?.bids?.slice(0,3)||[],a=s?.book?.asks?.slice(0,3)||[],fmt=window.RWAMarketRuntime?.format;const rows=mini.querySelector('[data-v5-mini-rows]');rows.innerHTML=[0,1,2].map(i=>'<div><span class="pos">'+esc(fmt?.price?.(b[i]?.[0])||String(b[i]?.[0]??'—'))+'</span><i>'+esc(String(b[i]?.[1]??'—'))+'</i><i>'+esc(String(a[i]?.[1]??'—'))+'</i><span class="neg">'+esc(fmt?.price?.(a[i]?.[0])||String(a[i]?.[0]??'—'))+'</span></div>').join('');const bp=num(b[0]?.[0]),ap=num(a[0]?.[0]);mini.querySelector('[data-v5-mini-spread]').textContent=bp&&ap?'Spread '+(((ap-bp)/((ap+bp)/2))*100).toFixed(4)+'%':'Spread —'}
+function renderMiniBook(){const mini=$('#rwaV5MiniBook');if(!mini)return;const s=market(),fmt=window.RWAMarketRuntime?.format;let b=s?.book?.bids?.slice(0,3)||[],a=s?.book?.asks?.slice(0,3)||[];const domRows=sel=>qa(sel+' .bookrow').slice(0,3).map(r=>{const x=[...r.querySelectorAll('span')].map(n=>n.textContent.trim());return[x[0],x[1]]});if(!b.length)b=domRows('#bids');if(!a.length)a=domRows('#asks');const rows=mini.querySelector('[data-v5-mini-rows]');rows.innerHTML=[0,1,2].map(i=>'<div><span class="pos">'+esc(fmt?.price?.(b[i]?.[0])||String(b[i]?.[0]??'—'))+'</span><i>'+esc(String(b[i]?.[1]??'—'))+'</i><i>'+esc(String(a[i]?.[1]??'—'))+'</i><span class="neg">'+esc(fmt?.price?.(a[i]?.[0])||String(a[i]?.[0]??'—'))+'</span></div>').join('');const bp=num(b[0]?.[0]),ap=num(a[0]?.[0]);mini.querySelector('[data-v5-mini-spread]').textContent=bp&&ap?'Spread '+(((ap-bp)/((ap+bp)/2))*100).toFixed(4)+'%':'Spread —'}
 function ensureMobile(){
  const head=$('.terminal-header');if(head&&!head.querySelector('.rwa-v5-mobile-worktabs')){const nav=document.createElement('nav');nav.className='rwa-v5-mobile-worktabs';nav.innerHTML='<button class="active" data-v5-mobile-mode="chart">Chart</button><button data-v5-mobile-mode="book">Book</button><button data-v5-mobile-mode="trade">Trade</button><button data-v5-mobile-mode="feed">Feed</button><button data-v5-action="open-markets">Markets</button>';head.appendChild(nav)}
  let mf=$('#rwaV5MobileFeed');if(!mf){mf=document.createElement('section');mf.id='rwaV5MobileFeed';mf.className='rwa-v5-mobile-feed';mf.hidden=true;$('.main')?.appendChild(mf)}
- const tabs=$('.mobile-tabs');if(tabs){tabs.dataset.v5='1';tabs.innerHTML='<button class="active" data-v5-global="markets" aria-current="page"><span>⌕</span><small>Markets</small></button>';tabs.hidden=true}
+ const tabs=$('.mobile-tabs');if(tabs){tabs.dataset.v5='1';tabs.innerHTML='<button data-v5-mobile-nav="home"><span>⌂</span><small>Home</small></button><button data-v5-mobile-nav="markets"><span>⌕</span><small>Markets</small></button><button class="active" data-v5-mobile-nav="trade" aria-current="page"><span>↔</span><small>Trade</small></button><button data-v5-mobile-nav="portfolio"><span>◴</span><small>Portfolio</small></button><button data-v5-mobile-nav="profile"><span>◎</span><small>Profile</small></button>';tabs.hidden=false}
  const legacyClose=$('#mobileMarketsClose');if(legacyClose)legacyClose.remove();
  let close=$('#rwaV5MarketsClose');
  if(!close){close=document.createElement('button');close.id='rwaV5MarketsClose';close.className='rwa-v5-mobile-market-close-v2';close.type='button';close.textContent='×';close.setAttribute('aria-label','Close markets');close.dataset.v5Action='close-markets';document.body.appendChild(close)}
@@ -222,7 +222,9 @@ function ensureMobile(){
  const openBtn=head?.querySelector('[data-v5-action="open-markets"]');
  if(openBtn&&!openBtn.dataset.v5Direct){openBtn.dataset.v5Direct='1';openBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();openMarketsMobile()},{capture:true});openBtn.onclick=e=>{e.preventDefault();e.stopPropagation();openMarketsMobile()}}
  if(close&&!close.dataset.v5Direct){close.dataset.v5Direct='1';close.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();closeMarketsMobile()},{capture:true});close.onclick=e=>{e.preventDefault();e.stopPropagation();closeMarketsMobile()}}
- ensureMiniBook();applyMobileState()
+ ensureMiniBook();
+ let quick=$('#rwaV5MobileQuickTrade');if(!quick){quick=document.createElement('section');quick.id='rwaV5MobileQuickTrade';quick.className='rwa-v5-mobile-quicktrade';quick.innerHTML='<div class="rwa-v5-mobile-quick-sides"><button class="active" data-v5-side="BUY">Buy</button><button data-v5-side="SELL">Sell</button></div><div class="rwa-v5-mobile-quick-modes"><button class="active" data-v5-quick-mode="MARKET">Market</button><button data-v5-quick-mode="LIMIT">Limit</button><button data-v5-quick-mode="STOP">Stop</button></div><div class="rwa-v5-mobile-quick-meta"><span data-v5-quick-availability>Wallet required for execution</span><span data-v5-quick-network>Hyperliquid Testnet</span></div><button class="rwa-v5-mobile-primary" data-v5-mobile-mode="trade">Open trade ticket</button>';const mini=$('#rwaV5MiniBook');(mini||$('.chart-wrap'))?.insertAdjacentElement('afterend',quick)}
+ applyMobileState()
 }
 function setMobile(mode){
  mobileMode=mode;document.body.dataset.v5MobileMode=mode;setActive('.rwa-v5-mobile-worktabs [data-v5-mobile-mode]',mode,'v5MobileMode');
@@ -272,14 +274,14 @@ function renderFavorite(){
 function toggleFavorite(){const sym=selected(),f=favorites(),i=f.indexOf(sym);if(i>=0)f.splice(i,1);else f.unshift(sym);store.set(LS.fav,f.slice(0,100));renderFavorite();renderLeft();toast(i>=0?'Removed from watchlist':'Added to watchlist')}
 async function share(){const u=new URL(location.href);u.hash='markets';u.searchParams.set('market',base());try{if(navigator.share){await navigator.share({title:'RWA Markets · '+base()+'/USDT',url:u.toString()});return}await navigator.clipboard.writeText(u.toString());toast('Market link copied')}catch(e){if(e?.name!=='AbortError')toast('Could not share this market')}}
 function navigate(k){
- keepMarket();const active=()=>setActive('#liveRail .rwa-v5-market-nav [data-v5-nav]',k);
+ keepMarket();const active=()=>{setActive('#liveRail .rwa-v5-market-nav [data-v5-nav]',k);setActive('.topnav [data-v5-nav]',k)};
  if(k==='trade'){active();openTrade();if(innerWidth<681)setMobile('trade');return}
  if(k==='discover'){active();leftMode='pulse';renderLeft();setBottom('discover');if(innerWidth<681)setMobile('workspace');return}
  if(k==='portfolio'){active();setBottom('portfolio');if(innerWidth<681)setMobile('workspace');return}
  if(k==='orders'){active();setBottom('orders');if(innerWidth<681)setMobile('workspace');return}
  if(k==='analytics'){active();setBottom('analytics');if(innerWidth<681)setMobile('workspace');return}
  if(k==='rewards'){active();setBottom('rewards');if(innerWidth<681)setMobile('workspace');return}
- if(k==='more'){const m=$('#liveRail [data-v5-more-menu]');if(m)m.hidden=!m.hidden}
+ if(k==='more'){const m=$('.topnav [data-v5-more-menu]')||$('#liveRail [data-v5-more-menu]');if(m)m.hidden=!m.hidden}
 }
 async function cancelOrder(b){try{const core=await window.RWALiveHome?.ensureExecution?.();await core.cancel(b.dataset.coin,b.dataset.oid);await core.refresh();renderBottom()}catch(e){toast(String(e?.message||e))}}
 async function publishThesis(){
@@ -303,7 +305,7 @@ function orderBookClick(e){const row=e.target.closest('.bookrow');if(!row||!$('#
 function renderStatus(){
  const p=pair();if(lastPair!==p.symbol){lastPair=p.symbol;renderFavorite();renderMiniBook();if(bottomMode==='analytics'||bottomMode==='feed'||bottomMode==='discover')renderBottom()}
  const ex=exchange(),stamp=num(ex?.lastUpdated);if(stamp&&stamp!==lastExchangeStamp){lastExchangeStamp=stamp;if(['positions','orders','portfolio','history'].includes(bottomMode))renderBottom()}
- renderTargetHeaderStats();renderLeft();renderMiniBook();renderAlertCount();renderFooter()
+ renderTargetHeaderStats();renderLeft();renderMiniBook();renderAlertCount();renderFooter();const qp=$('#rwaV5MobileQuickTrade .rwa-v5-mobile-primary'),qaText=$('[data-v5-quick-availability]');if(qp)qp.textContent=(tradeSide==='SELL'?'Sell / Short ':'Buy / Long ')+base();if(qaText)qaText.textContent=window.RWAWalletAuth?.isLoggedIn?.()?'Wallet connected · execution gated by risk checks':'Connect wallet to trade'
 }
 function ensureFooter(){
  if($('#rwaV5Footer'))return;const f=document.createElement('footer');f.id='rwaV5Footer';f.className='rwa-v5-footer';document.body.appendChild(f);renderFooter()
