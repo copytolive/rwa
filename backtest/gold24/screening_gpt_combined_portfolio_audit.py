@@ -1,5 +1,5 @@
 from __future__ import annotations
-import argparse, importlib.util, json, math, sys
+import argparse, csv, importlib.util, json, math, sys
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -41,9 +41,33 @@ def main():
         r["raw_global_corr_max"]=max([mat[i,j] for j in range(n) if j!=i],default=0.0)
         r["raw_global_corr_gate"]="PASS" if r["raw_global_corr_max"]<=0.5+1e-12 else "FAIL"
 
-    # Global greedy quality order across STRICT + MULTI together.
-    auditj=json.loads((HERE/"runtime_screening_gpt"/"screening_gpt_real_audit.json").read_text())
-    by={x["method"]:x for x in auditj["rows"]}
+    # Current exact economic/robustness metrics come from the same strict + Multi
+    # runtime CSVs that define the selected script package. Never use a stale audit.
+    def read_csv(path):
+        with path.open(newline="",encoding="utf-8-sig") as fh:
+            return list(csv.DictReader(fh))
+    strict_rows=read_csv(HERE/"runtime_mt5_lot"/"latest_entry100_net20000_standard_lot.csv")
+    multi_rows=read_csv(HERE/"runtime_multimethod_v1"/"latest_multimethod_v1_discovery.csv")
+    runtime_rows=strict_rows+multi_rows
+    def norm(row):
+        return {
+            "total_entry":int(row["total_entry"]),
+            "profit_factor_net":float(row["standard_lot_profit_factor_same_cost_model"]),
+            "net_profit_usd":float(row["standard_lot_net_profit_usd_same_cost_model"]),
+            "ev_per_trade_usd":float(row["standard_lot_ev_per_trade_usd_same_cost_model"]),
+            "max_dd_pct":float(row["standard_lot_max_dd_pct_starting_equity_10000"]),
+            "oos_profit_factor":float(row["oos_profit_factor"]),
+            "monte_carlo_pass":str(row["monte_carlo_pass"]).strip().lower()=="true",
+            "positive_years_pct":float(row["positive_years_pct"]),
+            "sqn":float(row["standard_lot_sqn_same_cost_model"]),
+        }
+    by={row["method"]:norm(row) for row in runtime_rows}
+    missing=[r["method"] for r in rec if r["method"] not in by]
+    if missing:
+        raise RuntimeError(f"current selected methods missing from runtime CSVs: {missing}")
+    if len(runtime_rows)!=len(rec):
+        raise RuntimeError(f"selected runtime/script count mismatch runtime={len(runtime_rows)} scripts={len(rec)}")
+
     def hard_gate_score_no_corr(x):
         checks=(
             int(x["total_entry"])>=300,
@@ -197,6 +221,14 @@ def main():
       "methods_input":n,
       "methods_final":k,
       "dataset_rows":int(audit["rows"]),
+      "dataset_sha256":str(audit["dataset_sha256"]),
+      "provider":str(audit.get("provider","TradingView")),
+      "symbol":str(audit.get("primary_symbol","COMEX:GC1!")),
+      "timeframe":"D1",
+      "starting_equity_usd":10000.0,
+      "quantity_gold_units":100.0,
+      "xauusd_standard_lot_reference":1.0,
+      "cost_model":"canonical stressed Hyperliquid cost model; portfolio PnL is diagnostic, not broker-specific",
       "global_pair_count":len(pairs),
       "pairs_gt_0_50":sum(p["corr_abs"]>0.5 for p in pairs),
       "max_pair":pairs[0],
