@@ -57,14 +57,18 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Wait for exact Pages SHA
+      - name: Wait for final public UI markers
         shell: bash
         run: |
           set -euo pipefail
-          URL='https://copytolive.github.io/rwa/deployment-sha.txt'
+          BASE='https://copytolive.github.io/rwa'
           for i in $(seq 1 90); do
-            LIVE="$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "$URL?v=$GITHUB_SHA-$i" 2>/dev/null | tr -d '\r\n' || true)"
-            [ "$LIVE" = "$GITHUB_SHA" ] && exit 0
+            ROOT="$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "$BASE/?v=$i" 2>/dev/null || true)"
+            CORE="$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "$BASE/chart-core.js?v=$i" 2>/dev/null || true)"
+            if printf '%s' "$ROOT" | grep -Fq 'id="bookPrecision"' && printf '%s' "$CORE" | grep -Fq 'rwa-live-home-v1.js?v=4.0.1'; then
+              echo "Final public UI markers are live"
+              exit 0
+            fi
             sleep 10
           done
           exit 1
