@@ -407,3 +407,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 /* RWA_TERMINAL_AGREED_UI_PUBLIC_ACCEPTANCE_R6_2026_09_03 */
 
 /* RWA_TERMINAL_EXACT_SHA_RECERT_2026_09_04 */
+
+/* RWA_TERMINAL_MOBILE_TRADE_FIX_RECERT_2026_09_04 */
