@@ -163,19 +163,139 @@ def compile_signal(s: dict, source: str):
     return run
 
 
-def oos_metrics(trades: list[dict], d: pd.DataFrame) -> dict:
-    split_i = min(max(int(len(d) * 0.70), 1), len(d) - 1)
-    split_ts = pd.Timestamp(d["Date"].iloc[split_i])
-    test = []
-    for t in trades:
-        ts = pd.Timestamp(t["closeTime"])
-        if ts.tzinfo is None:
-            ts = ts.tz_localize("UTC")
+def production_filter_mode(strategy_id: str) -> str:
+    parts = str(strategy_id).split("_", 2)
+    if len(parts) < 3 or parts[0] != "ND" or parts[1] not in {"VOL","MTF","VM","VS","ALL"}:
+        raise RuntimeError(f"unsupported CopyToLive Non-DEX filter mode: {strategy_id}")
+    return parts[1]
+
+
+def build_production_masks(d: pd.DataFrame) -> dict[str, tuple[np.ndarray, np.ndarray]]:
+    """Reproduce pipeline/wf_nondex_btc_gold.py filter construction exactly."""
+    c = d["close"].to_numpy(np.float64)
+    h = d["high"].to_numpy(np.float64)
+    l = d["low"].to_numpy(np.float64)
+    n = len(c)
+
+    # compute_vol_mask(c,h,l, period=14, ma_period=50)
+    vol_mask = np.zeros(n, dtype=np.int8)
+    tr = np.zeros(n, dtype=np.float64)
+    for i in range(1, n):
+        tr[i] = max(h[i]-l[i], abs(h[i]-c[i-1]), abs(l[i]-c[i-1]))
+    atr = np.zeros(n, dtype=np.float64)
+    for i in range(14, n):
+        atr[i] = np.mean(tr[i-14+1:i+1])
+    atr_ma = np.zeros(n, dtype=np.float64)
+    for i in range(50, n):
+        atr_ma[i] = np.mean(atr[i-50+1:i+1])
+    for i in range(50, n):
+        if atr[i] > atr_ma[i]:
+            vol_mask[i] = 1
+
+    # Production D1 is built from the same source bars with first/max/min/last.
+    # Rebuilding from H1 preserves those daily OHLC values while keeping the
+    # original positional H1-per-D1 mapping used by compute_mtf_bias().
+    x = d.set_index("Date")[["open","high","low","close","volume"]]
+    d1 = x.resample("1D").agg({
+        "open":"first","high":"max","low":"min","close":"last","volume":"sum"
+    }).dropna(subset=["open","high","low","close"])
+    mtf_bias = np.zeros(n, dtype=np.int8)
+    if len(d1) >= 200:
+        d1c = d1["close"].to_numpy(np.float64)
+        ema50 = pd.Series(d1c).ewm(span=50).mean().to_numpy()
+        ema200 = pd.Series(d1c).ewm(span=200).mean().to_numpy()
+        h1_per_d1 = n // max(len(d1c), 1)
+        for i in range(200, len(d1c)):
+            h1_start = i * h1_per_d1
+            h1_end = min((i + 1) * h1_per_d1, n)
+            if h1_start >= n:
+                break
+            mtf_bias[h1_start:h1_end] = 1 if ema50[i] > ema200[i] else -1
+
+    # GOLD session filter in production: hours 07:00 through 21:59 inclusive.
+    session = np.ones(n, dtype=np.int8)
+    hours = d["Date"].dt.hour.to_numpy()
+    session[(hours < 7) | (hours > 21)] = 0
+    zeros = np.zeros(n, dtype=np.int8)
+    ones = np.ones(n, dtype=np.int8)
+    return {
+        "VOL": (vol_mask, zeros),
+        "MTF": (ones, mtf_bias),
+        "VM": (vol_mask, mtf_bias),
+        "VS": (vol_mask * session, zeros),
+        "ALL": (vol_mask * session, mtf_bias),
+    }
+
+
+def apply_production_filter(strategy_id: str, sig: np.ndarray, masks: dict[str, tuple[np.ndarray, np.ndarray]]) -> np.ndarray:
+    mode = production_filter_mode(strategy_id)
+    vol_mask, bias_mask = masks[mode]
+    out = np.asarray(sig, dtype=np.int8).copy()
+    out[vol_mask != 1] = 0
+    reject_bias = (bias_mask != 0) & (out != 0) & (out != bias_mask)
+    out[reject_bias] = 0
+    return out
+
+
+def producer_metrics(profits: np.ndarray) -> dict:
+    """Exact metric arithmetic/rounding from pipeline/wf_nondex_btc_gold.py::vs."""
+    profits = np.asarray(profits, dtype=np.float64)
+    n = len(profits)
+    if n == 0:
+        return {
+            "totalTrades":0,"winRate":0.0,"profitFactor":0.0,"maxDrawdown":0.0,
+            "netProfit":0.0,"sqn":0.0,"sharpe":0.0,"sortino":0.0,"calmar":0.0,
+            "recoveryFactor":0.0,"grossProfit":0.0,"grossLoss":0.0,
+            "winningTrades":0,"losingTrades":0,"avgProfit":0.0,"avgLoss":0.0,
+            "rr":0.0,"maxConsecWin":0,"maxConsecLoss":0,
+        }
+    w = profits[profits > 0]
+    loss = profits[profits <= 0]
+    wr = len(w) / n * 100.0
+    gp = float(w.sum()) if len(w) else 0.0
+    gl = float(abs(loss.sum())) if len(loss) else 0.0
+    pf_val = gp / gl if gl > 0 else 0.0
+    eq = COPYTOLIVE_DEPOSIT_USD + np.cumsum(profits)
+    peak = np.maximum.accumulate(eq)
+    mdd = float(((peak-eq)/np.maximum(peak,1)*100).max()) if len(eq) else 0.0
+    net = gp - gl
+    aw = float(w.mean()) if len(w) else 0.0
+    al = float(abs(loss.mean())) if len(loss) else 0.0
+    std = float(profits.std())
+    sqn = (float(profits.mean())/std)*np.sqrt(n) if std > 0 else 0.0
+    sharpe = (float(profits.mean())/std)*np.sqrt(252) if std > 0 else 0.0
+    down = profits[profits < 0]
+    dstd = float(down.std()) if len(down) > 1 else 0.0
+    sortino = (float(profits.mean())/dstd)*np.sqrt(252) if dstd > 0 else 0.0
+    recov = net/(mdd/100*COPYTOLIVE_DEPOSIT_USD) if mdd > 0.01 else 0.0
+    cal = (net/COPYTOLIVE_DEPOSIT_USD*100)/mdd if mdd > 0.01 else 0.0
+    rr = aw/al if al > 0 else 0.0
+    cw=mcw=cl=mcl=0
+    for p in profits:
+        if p > 0:
+            cw += 1; mcw=max(mcw,cw); cl=0
         else:
-            ts = ts.tz_convert("UTC")
-        if ts > split_ts:
-            test.append(t)
-    m = compute_copytolive_metrics(test)
+            cl += 1; mcl=max(mcl,cl); cw=0
+    return {
+        "totalTrades":int(n),"winRate":round(wr,1),"profitFactor":round(pf_val,2),
+        "maxDrawdown":round(mdd,1),"netProfit":round(net,2),"sqn":round(float(sqn),2),
+        "sharpe":round(float(sharpe),2),"sortino":round(min(float(sortino),99),2),
+        "calmar":round(min(float(cal),99),2),"recoveryFactor":round(min(float(recov),99),2),
+        "grossProfit":round(gp,2),"grossLoss":round(gl,2),
+        "winningTrades":int(len(w)),"losingTrades":int(len(loss)),
+        "avgProfit":round(aw,2),"avgLoss":round(al,2),"rr":round(rr,2),
+        "maxConsecWin":int(mcw),"maxConsecLoss":int(mcl),
+    }
+
+
+def oos_metrics(trades: list[dict], d: pd.DataFrame) -> dict:
+    # Production split is positional and classifies by EXIT index: xi <= int(n*.70).
+    split_i = int(len(d) * 0.70)
+    test_pnl = np.asarray(
+        [float(t["profit"]) for t in trades if int(t.get("exitBar", -1)) > split_i],
+        dtype=np.float64,
+    )
+    m = producer_metrics(test_pnl)
     return {
         "oos_trades": int(m["totalTrades"]),
         "oos_profit_factor": finite(m["profitFactor"]),
@@ -201,23 +321,24 @@ def parity_expected(s: dict, m: dict, oos: dict) -> dict:
     }
 
 
-def replay_one(s: dict, source: str, d: pd.DataFrame):
+def replay_one(s: dict, source: str, d: pd.DataFrame, masks: dict[str, tuple[np.ndarray, np.ndarray]]):
     run = compile_signal(s, source)
     close = d["close"].to_numpy(np.float64)
     high = d["high"].to_numpy(np.float64)
     low = d["low"].to_numpy(np.float64)
-    sig = np.asarray(run(close, high, low), dtype=np.int8)
-    if len(sig) != len(d):
+    raw_sig = np.asarray(run(close, high, low), dtype=np.int8)
+    if len(raw_sig) != len(d):
         raise RuntimeError(f"signal length mismatch: {s['id']}")
-    if not np.isin(sig, [-1, 0, 1]).all():
+    if not np.isin(raw_sig, [-1, 0, 1]).all():
         raise RuntimeError(f"non -1/0/+1 signal: {s['id']}")
+    sig = apply_production_filter(s["id"], raw_sig, masks)
 
     cfg = CopyToLiveExecutionConfig(sl_pct=float(s["sl_pct"]), tp_ratio=float(s["tp_ratio"]))
     result = run_copytolive_backtest(d, sig, cfg)
     trades = list(result["trades"])
-    m = dict(result["metrics"])
-    bar_pnl = np.asarray(result["bar_pnl"], dtype=float)
     pnl = np.asarray([float(t["profit"]) for t in trades], dtype=float)
+    m = producer_metrics(pnl)
+    bar_pnl = np.asarray(result["bar_pnl"], dtype=float)
     oos = oos_metrics(trades, d)
     ann = annual_stats(d, bar_pnl)
 
@@ -227,6 +348,9 @@ def replay_one(s: dict, source: str, d: pd.DataFrame):
 
     row = {
         "strategy_id": s["id"],
+        "production_filter_mode": production_filter_mode(s["id"]),
+        "raw_signal_nonzero": int(np.count_nonzero(raw_sig)),
+        "filtered_signal_nonzero": int(np.count_nonzero(sig)),
         "signal_type": s.get("signalType"),
         "timeframe": "H1",
         "order": "PENDING",
@@ -242,7 +366,7 @@ def replay_one(s: dict, source: str, d: pd.DataFrame):
         "win_rate_pct": finite(m["winRate"]),
         "profit_factor": finite(m["profitFactor"]),
         "net_profit_usd": finite(m["netProfit"]),
-        "ev_per_trade_usd": finite(m["expectancy"]),
+        "ev_per_trade_usd": finite(m["netProfit"]) / int(m["totalTrades"]) if int(m["totalTrades"]) else 0.0,
         "avg_win_loss_ratio": finite(m.get("rr")),
         "max_dd_pct": finite(m["maxDrawdown"]),
         "recovery_factor": finite(m["recoveryFactor"]),
@@ -381,6 +505,7 @@ def main() -> int:
     d = load_h1(Path(args.dataset))
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
+    production_masks = build_production_masks(d)
 
     rows = []
     barpnls = {}
@@ -388,7 +513,7 @@ def main() -> int:
     errors = []
     for i, s in enumerate(manifest["strategies"], 1):
         try:
-            row, bp, pnl = replay_one(s, scripts[s["id"]], d)
+            row, bp, pnl = replay_one(s, scripts[s["id"]], d, production_masks)
             rows.append(row)
             barpnls[s["id"]] = bp
             tradepnls[s["id"]] = pnl
@@ -434,6 +559,8 @@ def main() -> int:
         "schema": "gold24-copytolive-active-replay-v1",
         "status": "PASS",
         "engine_mode": "COPYTOLIVE_EXACT_ACTIVE_REPLAY",
+        "producer_reference": "pipeline/wf_nondex_btc_gold.py",
+        "producer_filter_modes": ["VOL","MTF","VM","VS","ALL"],
         "active_gold_input": len(rows),
         "source": manifest["snapshot"],
         "dataset": {
