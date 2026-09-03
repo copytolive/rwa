@@ -61,6 +61,10 @@ jobs:
           git add backtest/gold24/runtime_screening_gpt/combined_portfolio_audit.json
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "chore(gold24): publish current combined portfolio audit [skip ci]"
+          # Audit/import steps may leave non-authoritative working-tree scratch changes.
+          # The intended runtime output is already committed above; clean before rebase.
+          git reset --hard HEAD
+          git clean -fd
           for TRY in 1 2 3 4 5; do
             if git pull --rebase origin main && git push origin HEAD:main; then exit 0; fi
             git rebase --abort 2>/dev/null || true
