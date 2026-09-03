@@ -80,7 +80,11 @@ jobs:
           x=json.loads(p.read_text())
           assert x['status']=='PASS'
           assert x['all_rows_verified'] is True
-          assert int(x['total_methods'])==15
+          import csv
+          strict=list(csv.DictReader(open('backtest/gold24/runtime_mt5_lot/latest_entry100_net20000_standard_lot.csv')))
+          multi=list(csv.DictReader(open('backtest/gold24/runtime_multimethod_v1/latest_multimethod_v1_discovery.csv')))
+          expected=len(strict)+len(multi)
+          assert int(x['total_methods'])==expected,(x['total_methods'],expected)
           assert int(x['source_batch'])==int(os.environ['SOURCE_BATCH'])
           assert str(x['source_run_id'])==str(os.environ['SOURCE_RUN_ID'])
           assert int(x['source_archive_total'])==int(os.environ['SOURCE_ARCHIVED'])
@@ -95,7 +99,7 @@ jobs:
           },indent=2))
           PY
 
-      - name: Run 15-method global correlation portfolio audit
+      - name: Run current selected-package global correlation portfolio audit
         shell: bash
         run: |
           set -euo pipefail
@@ -107,8 +111,12 @@ jobs:
           p=pathlib.Path(os.environ['OUT_DIR'])/'combined_portfolio_audit.json'
           x=json.loads(p.read_text())
           assert x['status']=='PASS'
-          assert int(x['methods_input'])==15
-          assert int(x['global_pair_count'])==105
+          import csv
+          strict=list(csv.DictReader(open('backtest/gold24/runtime_mt5_lot/latest_entry100_net20000_standard_lot.csv')))
+          multi=list(csv.DictReader(open('backtest/gold24/runtime_multimethod_v1/latest_multimethod_v1_discovery.csv')))
+          expected=len(strict)+len(multi)
+          assert int(x['methods_input'])==expected,(x['methods_input'],expected)
+          assert int(x['global_pair_count'])==expected*(expected-1)//2
           assert int(x['methods_final'])==int(x['global_greedy_kept_count'])
           assert all(r['global_corr_gate']=='PASS' for r in x['rows'] if r['global_selection']=='KEPT')
           print(json.dumps({
