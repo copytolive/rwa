@@ -1,4 +1,6 @@
 GOLD10B million-candidate discovery kick
-2026-09-03T20:38:00+07:00
+2026-09-03T20:51:00+07:00
 baseline evaluated=292000
-user contract: Candidate Entry>=100 NP>=20000 Corr<=0.50; HARD PASS 8/8 unchanged
+candidate gate fix merged: PF/OOS/Positive-Year/SQN are not Candidate admission filters
+Candidate Gate: Entry>=100; Net Profit>=USD20000; global Corr<=0.50
+HARD PASS 8/8 unchanged
