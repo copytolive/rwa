@@ -769,3 +769,71 @@ body.rwa-terminal-v5 #rwaMobileInstrumentStrip{display:none!important;visibility
   z-index:1!important
  }
 }
+
+/* R13 VISUAL REFERENCE REFINEMENT */
+.rwa-v5-mobile-back{display:none}
+@media(min-width:1281px){
+ body.rwa-terminal-v5 .brandmark{
+  display:grid!important;
+  width:29px!important;
+  height:29px!important;
+  flex:0 0 29px!important
+ }
+ body.rwa-terminal-v5 .rwa-v5-target-posts article{padding:7px 8px!important}
+ body.rwa-terminal-v5 .rwa-v5-target-posts article p{font-size:7.5px!important;line-height:1.35!important}
+ body.rwa-terminal-v5 #rwaTargetOrderTicket .rwa-order-advanced{margin-top:1px!important}
+ body.rwa-terminal-v5 #rwaTargetOrderTicket .rwa-order-advanced[open] summary{margin-bottom:5px!important}
+ body.rwa-terminal-v5 #rwaTargetOrderTicket .rwa-order-advanced>div{gap:5px!important}
+}
+@media(max-width:680px){
+ body.rwa-terminal-v5 .terminal-header{
+  height:171px!important;
+  min-height:171px!important;
+  grid-template-rows:66px 55px 42px!important;
+  padding-top:8px!important;
+  box-sizing:border-box!important
+ }
+ body.rwa-terminal-v5 .instrument{min-width:0!important}
+ body.rwa-terminal-v5 .rwa-v5-mobile-back{
+  display:grid!important;
+  place-items:center!important;
+  width:25px!important;
+  min-width:25px!important;
+  height:30px!important;
+  margin-right:1px!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  color:#e5edf7!important;
+  font:500 25px/1 system-ui!important;
+  cursor:pointer!important
+ }
+ body.rwa-terminal-v5 .rwa-v5-mobile-worktabs{
+  display:grid!important;
+  visibility:visible!important;
+  opacity:1!important;
+  height:42px!important;
+  min-height:42px!important;
+  overflow:visible!important
+ }
+ body.rwa-terminal-v5 .rwa-v5-mobile-worktabs button{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  visibility:visible!important;
+  opacity:1!important;
+  color:#8293a8!important;
+  font-size:8px!important;
+  font-weight:750!important
+ }
+ body.rwa-terminal-v5 .rwa-v5-mobile-worktabs button.active{color:#fff!important}
+ body.rwa-terminal-v5 .chart-wrap{
+  height:250px!important;
+  min-height:250px!important;
+  max-height:250px!important
+ }
+ body.rwa-terminal-v5 .rwa-v5-mini-book{padding:7px 10px 8px!important}
+ body.rwa-terminal-v5 .rwa-v5-mini-book header{height:24px!important}
+ body.rwa-terminal-v5 .rwa-v5-mini-book [data-v5-mini-rows]>div{height:23px!important}
+ body.rwa-terminal-v5 .rwa-v5-mobile-quicktrade{padding-top:7px!important;padding-bottom:9px!important}
+}
