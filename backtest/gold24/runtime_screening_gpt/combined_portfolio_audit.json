@@ -13,7 +13,7 @@
     "j": 18,
     "a": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=2.75 exp=8",
     "b": "CANDLE_ENGULFING f55/s100 p1=55.0 p2=58.0 p3=1.0 off=3.25 exp=8",
-    "corr_abs": 0.671810277245724
+    "corr_abs": 0.6718102772457232
   },
   "top10_pairs": [
     {
@@ -21,70 +21,70 @@
       "j": 18,
       "a": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=2.75 exp=8",
       "b": "CANDLE_ENGULFING f55/s100 p1=55.0 p2=58.0 p3=1.0 off=3.25 exp=8",
-      "corr_abs": 0.671810277245724
+      "corr_abs": 0.6718102772457232
     },
     {
       "i": 2,
       "j": 7,
       "a": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=2.75 exp=8",
       "b": "CANDLE_ENGULFING f21/s144 p1=66.0 p2=62.0 p3=1.0 off=5.0 exp=8",
-      "corr_abs": 0.605462244417942
+      "corr_abs": 0.6054622444179437
     },
     {
       "i": 2,
       "j": 8,
       "a": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=2.75 exp=8",
       "b": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=1.75 exp=10",
-      "corr_abs": 0.5059348468198667
+      "corr_abs": 0.5059348468198664
     },
     {
       "i": 5,
       "j": 11,
       "a": "CHART_PATTERN f3/s34 p1=0.7 p2=55.0 p3=1.0 off=1.25 exp=8",
       "b": "CHART_PATTERN f3/s26 p1=0.7 p2=55.0 p3=1.0 off=4.0 exp=3",
-      "corr_abs": 0.49256964983663665
+      "corr_abs": 0.4925696498366357
     },
     {
       "i": 7,
       "j": 8,
       "a": "CANDLE_ENGULFING f21/s144 p1=66.0 p2=62.0 p3=1.0 off=5.0 exp=8",
       "b": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=1.75 exp=10",
-      "corr_abs": 0.48771860876497847
+      "corr_abs": 0.4877186087649784
     },
     {
       "i": 7,
       "j": 18,
       "a": "CANDLE_ENGULFING f21/s144 p1=66.0 p2=62.0 p3=1.0 off=5.0 exp=8",
       "b": "CANDLE_ENGULFING f55/s100 p1=55.0 p2=58.0 p3=1.0 off=3.25 exp=8",
-      "corr_abs": 0.4368024169086339
+      "corr_abs": 0.4368024169086332
     },
     {
       "i": 1,
       "j": 4,
       "a": "DONCHIAN f3/s89 p1=66.0 p2=55.0 p3=1.0 off=3.0 exp=4",
       "b": "DONCHIAN f3/s89 p1=58.0 p2=52.0 p3=1.0 off=4.75 exp=3",
-      "corr_abs": 0.42305388437251884
+      "corr_abs": 0.4230538843725163
     },
     {
       "i": 5,
       "j": 14,
       "a": "CHART_PATTERN f3/s34 p1=0.7 p2=55.0 p3=1.0 off=1.25 exp=8",
       "b": "CHART_PATTERN f5/s20 p1=0.7 p2=55.0 p3=1.0 off=3.0 exp=4",
-      "corr_abs": 0.3999457782884521
+      "corr_abs": 0.3999457782884537
     },
     {
       "i": 11,
       "j": 14,
       "a": "CHART_PATTERN f3/s26 p1=0.7 p2=55.0 p3=1.0 off=4.0 exp=3",
       "b": "CHART_PATTERN f5/s20 p1=0.7 p2=55.0 p3=1.0 off=3.0 exp=4",
-      "corr_abs": 0.37425722380981236
+      "corr_abs": 0.3742572238098117
     },
     {
       "i": 7,
       "j": 16,
       "a": "CANDLE_ENGULFING f21/s144 p1=66.0 p2=62.0 p3=1.0 off=5.0 exp=8",
       "b": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=1.75 exp=8",
-      "corr_abs": 0.3736814954557567
+      "corr_abs": 0.37368149545575513
     }
   ],
   "rows": [
@@ -93,10 +93,10 @@
       "method": "DONCHIAN f3/s89 p1=66.0 p2=55.0 p3=1.0 off=3.0 exp=4",
       "family": "DONCHIAN",
       "config_hash": "13f689142dff69d33b2c6b33c3652aec484046d059d64636e4639f2d4a5bd295",
-      "raw_global_corr_max": 0.42305388437251884,
+      "raw_global_corr_max": 0.4230538843725163,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.42305388437251884,
+      "global_corr_max": 0.4230538843725163,
       "global_corr_gate": "PASS",
       "hard_pass_gates": {
         "entry_ge_300": false,
@@ -116,7 +116,7 @@
       "method": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=2.75 exp=8",
       "family": "CANDLE_ENGULFING",
       "config_hash": "7c00212eb6bd65ad07e432d4a261d3f3240478d4d4698cf57e99c549684b61cb",
-      "raw_global_corr_max": 0.671810277245724,
+      "raw_global_corr_max": 0.6718102772457232,
       "raw_global_corr_gate": "FAIL",
       "global_selection": "REJECTED",
       "global_corr_max": null,
@@ -139,10 +139,10 @@
       "method": "DONCHIAN f3/s100 p1=55.0 p2=58.0 p3=1.0 off=1.0 exp=7",
       "family": "DONCHIAN",
       "config_hash": "860c7a7defb867ad594b594e41f4a5157b3dc4262a1b1bd69c978298130ac57c",
-      "raw_global_corr_max": 0.3228413775329864,
+      "raw_global_corr_max": 0.32284137753298675,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.3228413775329864,
+      "global_corr_max": 0.32284137753298675,
       "global_corr_gate": "PASS",
       "hard_pass_gates": {
         "entry_ge_300": false,
@@ -162,10 +162,10 @@
       "method": "DONCHIAN f3/s89 p1=58.0 p2=52.0 p3=1.0 off=4.75 exp=3",
       "family": "DONCHIAN",
       "config_hash": "8398c92b8fb894fd605c077b07863777b0e43160ea761f0dee51a40984efa5ef",
-      "raw_global_corr_max": 0.42305388437251884,
+      "raw_global_corr_max": 0.4230538843725163,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.42305388437251884,
+      "global_corr_max": 0.4230538843725163,
       "global_corr_gate": "PASS",
       "hard_pass_gates": {
         "entry_ge_300": false,
@@ -185,10 +185,10 @@
       "method": "CHART_PATTERN f3/s34 p1=0.7 p2=55.0 p3=1.0 off=1.25 exp=8",
       "family": "CHART_PATTERN",
       "config_hash": "4ff55b7bfa26f3cd3778faa661704fa1b1ed2e7767a249e5eab593352ca1b514",
-      "raw_global_corr_max": 0.49256964983663665,
+      "raw_global_corr_max": 0.4925696498366357,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.49256964983663665,
+      "global_corr_max": 0.4925696498366357,
       "global_corr_gate": "PASS",
       "hard_pass_gates": {
         "entry_ge_300": false,
@@ -208,10 +208,10 @@
       "method": "BOLLINGER_REVERSION_V2 f3/s14 p1=1.5 p2=30.0 p3=1.0 off=1.25 exp=4",
       "family": "BOLLINGER_REVERSION_V2",
       "config_hash": "5b32ea7bda5439f27bc176bed6866ff72c74a109e0e7d51170a205d580017a81",
-      "raw_global_corr_max": 0.17339409888279692,
+      "raw_global_corr_max": 0.17339409888279714,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.17339409888279692,
+      "global_corr_max": 0.17339409888279714,
       "global_corr_gate": "PASS",
       "hard_pass_gates": {
         "entry_ge_300": false,
@@ -231,10 +231,10 @@
       "method": "CANDLE_ENGULFING f21/s144 p1=66.0 p2=62.0 p3=1.0 off=5.0 exp=8",
       "family": "CANDLE_ENGULFING",
       "config_hash": "c8598fa098e7c37d0e0c8cd5d6408eff10d2cca5f54c9c5b1c56c8fe6c909291",
-      "raw_global_corr_max": 0.605462244417942,
+      "raw_global_corr_max": 0.6054622444179437,
       "raw_global_corr_gate": "FAIL",
       "global_selection": "KEPT",
-      "global_corr_max": 0.48771860876497847,
+      "global_corr_max": 0.4877186087649784,
       "global_corr_gate": "PASS",
       "hard_pass_gates": {
         "entry_ge_300": false,
@@ -254,10 +254,10 @@
       "method": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=1.75 exp=10",
       "family": "CANDLE_ENGULFING",
       "config_hash": "7a11760c49f5b9f030703bad55649258355b18dea4bc1971c43ae33553a13b64",
-      "raw_global_corr_max": 0.5059348468198667,
+      "raw_global_corr_max": 0.5059348468198664,
       "raw_global_corr_gate": "FAIL",
       "global_selection": "KEPT",
-      "global_corr_max": 0.48771860876497847,
+      "global_corr_max": 0.4877186087649784,
       "global_corr_gate": "PASS",
       "hard_pass_gates": {
         "entry_ge_300": false,
@@ -277,10 +277,10 @@
       "method": "VOLUME f50/s100 p1=1.4 p2=55.0 p3=1.0 off=1.0 exp=5",
       "family": "VOLUME",
       "config_hash": "09fb362cbb4fcbc244e2c5e9d3ec336466e6b63f391328af656f24482c15290d",
-      "raw_global_corr_max": 0.3438997663390417,
+      "raw_global_corr_max": 0.3438997663390403,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.3438997663390417,
+      "global_corr_max": 0.3438997663390403,
       "global_corr_gate": "PASS",
       "hard_pass_gates": {
         "entry_ge_300": false,
@@ -300,10 +300,10 @@
       "method": "BOLLINGER_REVERSION_V2 f8/s13 p1=1.5 p2=30.0 p3=1.0 off=0.5 exp=5",
       "family": "BOLLINGER_REVERSION_V2",
       "config_hash": "0b27901d1ce62559b1b7efa0c30bf8005edf5addd2b68d398b2d8b6a34eb09c6",
-      "raw_global_corr_max": 0.15802925133244802,
+      "raw_global_corr_max": 0.15802925133244827,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.15802925133244802,
+      "global_corr_max": 0.15802925133244827,
       "global_corr_gate": "PASS",
       "hard_pass_gates": {
         "entry_ge_300": false,
@@ -323,10 +323,10 @@
       "method": "CHART_PATTERN f3/s26 p1=0.7 p2=55.0 p3=1.0 off=4.0 exp=3",
       "family": "CHART_PATTERN",
       "config_hash": "22929b50777d39e2cd417bc7c46a4d9b9ac48c58712a24754172ca0697a83931",
-      "raw_global_corr_max": 0.49256964983663665,
+      "raw_global_corr_max": 0.4925696498366357,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.49256964983663665,
+      "global_corr_max": 0.4925696498366357,
       "global_corr_gate": "PASS",
       "hard_pass_gates": {
         "entry_ge_300": false,
@@ -346,10 +346,10 @@
       "method": "VOLUME f13/s144 p1=1.4 p2=55.0 p3=1.0 off=4.75 exp=8",
       "family": "VOLUME",
       "config_hash": "e0c3f07796453a518fb37bb614058e586c950bbe20c982963004528d7c412cb3",
-      "raw_global_corr_max": 0.3516955877989212,
+      "raw_global_corr_max": 0.3516955877989204,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.3516955877989212,
+      "global_corr_max": 0.3516955877989204,
       "global_corr_gate": "PASS",
       "hard_pass_gates": {
         "entry_ge_300": false,
@@ -369,10 +369,10 @@
       "method": "VOLATILITY_REGIME f5/s13 p1=1.2 p2=0.8 p3=1.0 off=2.25 exp=10",
       "family": "VOLATILITY_REGIME",
       "config_hash": "1d77941a57cf39eb393cb22ecf54207970e49fc4075ad95093e5a7188dbfd587",
-      "raw_global_corr_max": 0.3079054634215058,
+      "raw_global_corr_max": 0.30790546342150543,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.3079054634215058,
+      "global_corr_max": 0.30790546342150543,
       "global_corr_gate": "PASS",
       "hard_pass_gates": {
         "entry_ge_300": false,
@@ -392,10 +392,10 @@
       "method": "CHART_PATTERN f5/s20 p1=0.7 p2=55.0 p3=1.0 off=3.0 exp=4",
       "family": "CHART_PATTERN",
       "config_hash": "9331592e94eaa3bf1186c511e39d9e834cc3c8d371c6084a0adf79adde392e6a",
-      "raw_global_corr_max": 0.3999457782884521,
+      "raw_global_corr_max": 0.3999457782884537,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.3999457782884521,
+      "global_corr_max": 0.3999457782884537,
       "global_corr_gate": "PASS",
       "hard_pass_gates": {
         "entry_ge_300": false,
@@ -415,10 +415,10 @@
       "method": "VOLATILITY_REGIME f5/s7 p1=1.1 p2=0.8 p3=1.0 off=0.5 exp=2",
       "family": "VOLATILITY_REGIME",
       "config_hash": "aa120bcd581bc34cb29382a46a1a39b51ccf83476f639c4cf178926701577dd3",
-      "raw_global_corr_max": 0.3079054634215058,
+      "raw_global_corr_max": 0.30790546342150543,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.3079054634215058,
+      "global_corr_max": 0.30790546342150543,
       "global_corr_gate": "PASS",
       "hard_pass_gates": {
         "entry_ge_300": false,
@@ -438,10 +438,10 @@
       "method": "CANDLE_ENGULFING f26/s144 p1=55.0 p2=52.0 p3=1.0 off=1.75 exp=8",
       "family": "CANDLE_ENGULFING",
       "config_hash": "db02ceb03b2a80d41e08ef0271529a78acac546b4dea2d370b8fc71dd9d75dc0",
-      "raw_global_corr_max": 0.3736814954557567,
+      "raw_global_corr_max": 0.37368149545575513,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.3736814954557567,
+      "global_corr_max": 0.37368149545575513,
       "global_corr_gate": "PASS",
       "hard_pass_gates": {
         "entry_ge_300": false,
@@ -461,10 +461,10 @@
       "method": "ADAPTIVE_TREND f20/s144 p1=2.2 p2=55.0 p3=1.0 off=5.0 exp=5",
       "family": "ADAPTIVE_TREND",
       "config_hash": "d3844bec737310d796a696cb50450f11295e7cb85580a619237f2e32f560a4c4",
-      "raw_global_corr_max": 0.3516955877989212,
+      "raw_global_corr_max": 0.3516955877989204,
       "raw_global_corr_gate": "PASS",
       "global_selection": "KEPT",
-      "global_corr_max": 0.3516955877989212,
+      "global_corr_max": 0.3516955877989204,
       "global_corr_gate": "PASS",
       "hard_pass_gates": {
         "entry_ge_300": false,
@@ -484,10 +484,10 @@
       "method": "CANDLE_ENGULFING f55/s100 p1=55.0 p2=58.0 p3=1.0 off=3.25 exp=8",
       "family": "CANDLE_ENGULFING",
       "config_hash": "b27c57af4988aa89b12d9421250f8244c1460fb9f1570590c8501579a869a45b",
-      "raw_global_corr_max": 0.671810277245724,
+      "raw_global_corr_max": 0.6718102772457232,
       "raw_global_corr_gate": "FAIL",
       "global_selection": "KEPT",
-      "global_corr_max": 0.4368024169086339,
+      "global_corr_max": 0.4368024169086332,
       "global_corr_gate": "PASS",
       "hard_pass_gates": {
         "entry_ge_300": false,
@@ -532,11 +532,11 @@
       "conflicts": [
         {
           "method": "CANDLE_ENGULFING f21/s144 p1=66.0 p2=62.0 p3=1.0 off=5.0 exp=8",
-          "corr_abs": 0.605462244417942
+          "corr_abs": 0.6054622444179437
         },
         {
           "method": "CANDLE_ENGULFING f34/s144 p1=66.0 p2=58.0 p3=1.0 off=1.75 exp=10",
-          "corr_abs": 0.5059348468198667
+          "corr_abs": 0.5059348468198664
         }
       ]
     }
