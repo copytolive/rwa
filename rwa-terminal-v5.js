@@ -147,7 +147,7 @@ function ensureMobile(){
  let mf=$('#rwaV5MobileFeed');if(!mf){mf=document.createElement('section');mf.id='rwaV5MobileFeed';mf.className='rwa-v5-mobile-feed';mf.hidden=true;$('.main')?.appendChild(mf)}
  const tabs=$('.mobile-tabs');if(tabs&&tabs.dataset.v5!=='1'){tabs.dataset.v5='1';tabs.innerHTML='<button data-v5-mobile-nav="home"><span>⌂</span><small>Home</small></button><button class="active" data-v5-mobile-nav="markets"><span>⌕</span><small>Markets</small></button><button data-v5-mobile-nav="trade"><span>↻</span><small>Trade</small></button><button data-v5-mobile-nav="portfolio"><span>▣</span><small>Portfolio</small></button><button data-v5-mobile-nav="profile"><span>◎</span><small>Profile</small></button>'}
  let close=$('#mobileMarketsClose')||$('[data-v5-action="close-markets"]');
- if(close){close.dataset.v5Action='close-markets';close.classList.add('rwa-v5-mobile-market-close-v2');close.type='button';close.setAttribute('aria-label','Close markets')}
+ if(close){close.dataset.v5Action='close-markets';close.classList.add('rwa-v5-mobile-market-close-v2');close.type='button';close.setAttribute('aria-label','Close markets');if(close.parentElement!==document.body)document.body.appendChild(close)}
  else{close=document.createElement('button');close.className='rwa-v5-mobile-market-close-v2';close.type='button';close.textContent='×';close.setAttribute('aria-label','Close markets');close.dataset.v5Action='close-markets';document.body.appendChild(close)}
  const marketsOpen=innerWidth<681&&document.body.classList.contains('rwa-v5-mobile-markets');
  setMobileMarketsCloseVisible(marketsOpen);
@@ -270,4 +270,4 @@ function boot(){apply();bind();renderBottom();clearInterval(renderTimer);renderT
 window.RWATerminalV5={version:VERSION,active:true,apply,navigate,setBottom,setMobile,setTradeSide,openAlerts,openTrade,toggleFavorite,share,audit:()=>({version:VERSION,route:location.hash||'#markets',leftMode,bottomMode,mobileMode,tradeSide,globalNav:qa('.topnav [data-v5-nav]').map(x=>x.dataset.v5Nav),bottomTabs:qa('#rwaV5Bottom [data-v5-bottom]').map(x=>x.dataset.v5Bottom),railTrade:$('#liveRail')?.dataset.v5Trade==='1',orderTicketInside:!!$('#liveRail #rwaTargetOrderTicket'),mobileMarketsOpen:document.body.classList.contains('rwa-v5-mobile-markets'),favorites:favorites().length,alerts:alerts().length,theses:theses().length})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
-/* RWA_TERMINAL_V5_ACCEPTANCE_2026_09_03_R15 */
+/* RWA_TERMINAL_V5_ACCEPTANCE_2026_09_03_R16 */
