@@ -35,6 +35,7 @@ jobs:
             "http://109.123.239.76:3001/health",
             "http://109.123.239.76:3001/api/version",
             "http://109.123.239.76:3001/api/docs",
+            "http://109.123.239.76:3001/api/docs/spec.json",
             "http://109.123.239.76:3001/api/docs.json",
             "http://109.123.239.76:3001/api/openapi.json",
             "http://109.123.239.76:3001/openapi.json",
