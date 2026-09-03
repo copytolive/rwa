@@ -278,3 +278,9 @@ body.rwa-terminal-v5 #rwaTargetOrderTicket .rwa-target-trade-note{font-size:6.5p
  .rwa-v5-footer{display:none!important}
  body.rwa-terminal-v5.rwa-v5-mobile-markets .mobile-tabs{z-index:9901!important}
 }
+
+@media(min-width:1281px){
+ body.rwa-target-dashboard-v2.rwa-terminal-v5 .topnav [data-rwa-target-nav]{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important
+ }
+}
