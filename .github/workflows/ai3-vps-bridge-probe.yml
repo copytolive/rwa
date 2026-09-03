@@ -1,20 +1,19 @@
 name: AI3 CopyToLive VPS Bridge Probe
-
 on:
   push:
     branches: [main]
     paths:
       - "ai3-vps-bridge-requests/**"
-
 permissions:
   contents: write
-
 jobs:
   probe:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: req
         shell: bash
         run: |
@@ -32,10 +31,7 @@ jobs:
           OUT="${{ steps.req.outputs.out }}"
           mkdir -p "$(dirname "$OUT")" "$HOME/.ssh"
           if [ -z "${SSH_KEY:-}" ]; then
-            python3 - <<'PY' "$OUT"
-import json,sys
-json.dump({"ok":False,"secret_present":False,"ssh_ok":False,"error":"COPYTOLIVE_SSH_KEY unavailable in copytolive/rwa"},open(sys.argv[1],"w"),indent=2)
-PY
+            printf '%s\n' '{"ok":false,"secret_present":false,"ssh_ok":false,"error":"COPYTOLIVE_SSH_KEY unavailable in copytolive/rwa"}' > "$OUT"
             exit 0
           fi
           printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/copytolive_ai3"
@@ -45,17 +41,14 @@ PY
           HOST="$(ssh -o BatchMode=yes -o ConnectTimeout=10 -i "$HOME/.ssh/copytolive_ai3" root@109.123.239.76 'hostname' 2>/dev/null)"
           RC=$?
           set -e
-          python3 - <<'PY' "$OUT" "$RC" "$HOST"
-import json,sys
-rc=int(sys.argv[2]);host=sys.argv[3]
-json.dump({"ok":rc==0,"secret_present":True,"ssh_ok":rc==0,"hostname":host if rc==0 else None},open(sys.argv[1],"w"),indent=2)
-PY
+          python3 -c 'import json,sys; rc=int(sys.argv[2]); json.dump({"ok":rc==0,"secret_present":True,"ssh_ok":rc==0,"hostname":sys.argv[3] if rc==0 else None},open(sys.argv[1],"w"),indent=2)' "$OUT" "$RC" "$HOST"
       - name: Commit result
         if: always()
         shell: bash
         run: |
           set -euo pipefail
-          OUT="${{ steps.req.outputs.out }}"; test -s "$OUT"
+          OUT="${{ steps.req.outputs.out }}"
+          test -s "$OUT"
           git config user.name "CopyToLive AI3 VPS Probe"
           git config user.email "copytolive-ai3-vps-probe@local.invalid"
           git add "$OUT"
