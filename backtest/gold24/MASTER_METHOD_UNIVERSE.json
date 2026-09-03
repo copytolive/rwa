@@ -190,7 +190,8 @@
       "status": "IMPLEMENTED",
       "engine_families": [
         "HYBRID",
-        "TREND_MEANREV_ENSEMBLE"
+        "TREND_MEANREV_ENSEMBLE",
+        "ATR_MEANREV_REGIME"
       ],
       "methods": [
         "Trend+Momentum",
@@ -198,7 +199,8 @@
         "Breakout+Volume",
         "Mean Reversion+Volatility",
         "Structure+Momentum",
-        "3-factor confirmation"
+        "3-factor confirmation",
+        "ATR-regime mean reversion"
       ]
     },
     {
@@ -387,14 +389,16 @@
       "engine_families": [
         "STATISTICAL",
         "ROLLING_ZSCORE",
-        "LINEAR_REGRESSION"
+        "LINEAR_REGRESSION",
+        "REGRESSION_CHANNEL_BREAKOUT"
       ],
       "methods": [
         "Z-Score",
         "Rolling Regression",
         "Linear Regression Channel",
         "Mean/Std Bands",
-        "Percentile Breakout"
+        "Percentile Breakout",
+        "Regression channel breakout"
       ]
     },
     {
@@ -428,14 +432,14 @@
       ]
     }
   ],
-  "implemented_engine_family_count": 46,
+  "implemented_engine_family_count": 48,
   "implemented_category_count": 20,
   "all_required_categories_backtestable": true,
   "implementation_notes": {
     "multi_timeframe": "Causal completed 5D aggregate + D1 entry; no fabricated H1/H4.",
     "relative_strength": "Price-vs-MA relative strength until canonical DXY/cross-asset series is added.",
-    "expansion_2026_09_03": "22 new causal D1-real engine families implemented; 2 native-H4 remix families registered but DATA_BLOCKED until real H4 exists.",
-    "target": "48 registered families = 46 implemented now + 2 data-blocked native MTF."
+    "expansion_2026_09_03": "24 new causal D1-real engine families implemented; native H4→D1 and D1→H4 research families remain DATA_BLOCKED until real H4 exists and are not counted toward the 48 real implemented-family target.",
+    "target": "48 implemented real families now; 2 native-H4 MTF research families remain additional DATA_BLOCKED items and are excluded from the 48 count until Gate-A real H4 exists."
   },
   "registered_target_engine_family_count": 48,
   "data_blocked_engine_family_count": 2,
@@ -468,7 +472,7 @@
       "execution_hash"
     ],
     "forbid_fake_timeframes": true,
-    "rule": "Never synthesize/resample a timeframe and label it real H1/H4. Native H1/H4 becomes eligible only after its own canonical data and Gate-A audit exist."
+    "rule": "Never synthesize/resample a timeframe and label it real H1/H4. The 48 implemented target is satisfied with causal real-D1 engines. Native H1/H4 becomes eligible only after its own canonical data and Gate-A audit exist."
   },
   "progress_contract": {
     "before_after_required": [
