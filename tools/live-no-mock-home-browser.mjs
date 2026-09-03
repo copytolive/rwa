@@ -63,7 +63,7 @@ async function desktop(){
  await page.locator('.topnav>button[data-v5-nav="discover"]').click();await page.waitForTimeout(120);
  if(!/Top movers|Top volume/i.test(await page.locator('#rwaV5Bottom').innerText()))fail('discover content mismatch');
  await clickNav('portfolio',/Portfolio|Connect a wallet|ACCOUNT VALUE/i);
- await clickNav('orders',/Open Orders|Connect a wallet|No open orders/i);
+ await page.locator('#rwaV5Bottom [data-v5-bottom="orders"]').click();await page.waitForTimeout(0);if(!/Open Orders|Connect a wallet|No open orders/i.test(await page.locator('#rwaV5Bottom').innerText()))fail('orders content mismatch');
  await clickNav('analytics',/LIVE PAIRS|RWA-LINKED|BUY PRESSURE/i);
  await clickNav('rewards',/No verified rewards program|INACTIVE|Rewards ledger unavailable|LOCKED|Rewards program/i);
  await page.locator('.topnav>button[data-v5-nav="trade"]').click();
@@ -101,8 +101,9 @@ async function mobile(width,height,name){
  await page.locator('.rwa-v5-mobile-worktabs [data-v5-action="open-markets"]').click();await page.waitForTimeout(50);if(!await page.locator('.left').isVisible())fail(name+' internal Markets drawer did not open');
  await page.locator('[data-v5-action="close-markets"]').click();await page.waitForTimeout(50);
  await page.locator('.rwa-v5-mobile-worktabs [data-v5-mobile-mode="trade"]').click();await page.waitForTimeout(30);
- await page.locator('#liveRail .rwa-v5-market-nav>button[data-v5-nav="portfolio"]').click();await page.waitForTimeout(50);if(!await page.locator('#rwaV5Bottom').isVisible())fail(name+' Market-owned Portfolio workspace did not open');
- const escaped=await page.locator('.mobile-tabs [data-v5-mobile-nav],.topnav [data-v5-nav]').count();if(escaped)fail(name+' found navigation outside Market',escaped);
+ await page.locator('.mobile-tabs [data-v5-mobile-nav="portfolio"]').click();await page.waitForTimeout(0);if(!await page.locator('#rwaV5Bottom').isVisible())fail(name+' Portfolio workspace did not open');
+ const mobileNav=await page.locator('.mobile-tabs [data-v5-mobile-nav]').count();if(mobileNav!==5)fail(name+' agreed mobile bottom navigation mismatch',mobileNav);
+ const topVisible=await page.locator('.topnav').isVisible().catch(()=>false);if(topVisible)fail(name+' desktop topnav leaked into mobile');
  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);if(overflow>2)fail(name+' overflow after interactions',overflow);
  await shot(page,name+'-post-interaction');await ctx.close();return m;
 }
