@@ -196,7 +196,7 @@ jobs:
           import json, os, pathlib
           out=pathlib.Path(os.environ['OUT_DIR'])
           x=json.loads((out/'latest_copytolive_active_replay.json').read_text())
-          rows=x.get('rows') or []
+          rows=x.get('ranking') or x.get('rows') or []
           assert len(rows)==118, len(rows)
           tolerances={
               'totalTrades':0.0,
