@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "target": "RWA Target V4",
+  "target_sha": "7b1dc81a1306c02f7c197025632566c8316585cf",
+  "live_url": "https://copytolive.github.io/rwa/",
+  "official_workflows": {
+    "deploy": {
+      "name": "Deploy Real World Asset Target V4",
+      "run_id": 33706969364,
+      "conclusion": "success",
+      "artifact_id": 9875542270
+    },
+    "browser_gate": {
+      "name": "RWA Target V4 Browser Gate",
+      "run_id": 33706969434,
+      "conclusion": "success",
+      "public_artifact_id": 9875581705,
+      "public_artifact_digest": "sha256:970e78dcf20d46b5f39bac86cdf5937a7697e2da37a92c82c61169d37db947b2"
+    },
+    "page_by_page": {
+      "name": "Real World Asset V4 Public Page-by-Page Audit",
+      "run_id": 33706969447,
+      "conclusion": "success",
+      "artifact_id": 9875560612,
+      "artifact_digest": "sha256:a498942eaef28e231dace16b378fb8622cdeb5f21e8f0fdcb01ca18b075a33db"
+    }
+  },
+  "public_browser": {
+    "ok": true,
+    "failures": [],
+    "contract": "real-world-asset-target-v4-live-only",
+    "market_pairs": 489,
+    "brand": "Real World Asset",
+    "commerce_visible": false,
+    "screenshot_mock": false,
+    "orderbook_rows": {
+      "asks": 5,
+      "bids": 5
+    },
+    "top3_live_volume_rows": 3,
+    "geometry": {
+      "header": 55,
+      "watchlist": 286,
+      "orderbook": 286,
+      "live_rail": 330,
+      "footer": 34,
+      "chart_height": 467,
+      "ticket_height": 318
+    },
+    "mobile": {
+      "390x844": {
+        "horizontal_overflow": false,
+        "buy_height": 46,
+        "sell_height": 46,
+        "input_height": 44,
+        "wallet_clipped": false
+      },
+      "430x932": {
+        "horizontal_overflow": false,
+        "buy_height": 46,
+        "sell_height": 46,
+        "input_height": 44,
+        "wallet_clipped": false
+      }
+    }
+  },
+  "page_audit": {
+    "ok": true,
+    "errors": [],
+    "mainnet_ready": false,
+    "context_brief": false,
+    "screenshot_mock": false,
+    "multichain_networks": 9
+  },
+  "principles": {
+    "no_seablueprint": true,
+    "no_ecommerce": true,
+    "no_renko_on_home": true,
+    "no_fake_mainnet": true,
+    "real_or_honest_locked_state": true
+  },
+  "note": "Fresh recertification evidence for the unchanged Target V4 UI source line. Subsequent commits through cleanup did not change the tracked Target V4 UI runtime files."
+}
