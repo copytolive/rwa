@@ -1,0 +1,122 @@
+name: GOLD10B Native H4 Exact Script Sync
+
+on:
+  workflow_run:
+    workflows:
+      - GOLD10B Global D1-H4 Correlation Gate
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: gold10b-native-h4-script-sync
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned dependencies
+        run: python -m pip install -r backtest/gold24/requirements.txt
+      - name: Read global proof and download exact H4 artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:backtest/gold24/runtime_global_cross_tf/latest_global_d1_h4_corr.json > "$RUNNER_TEMP/global.json"
+          H4_RUN="$(python - <<'PY'
+          import json,os
+          x=json.load(open(os.environ['RUNNER_TEMP']+'/global.json'))
+          assert x['status']=='PASS'
+          print(x['source_h4_run_id'])
+          PY
+          )"
+          echo "H4_SOURCE_RUN=$H4_RUN" >> "$GITHUB_ENV"
+          rm -rf "$RUNNER_TEMP/h4"; mkdir -p "$RUNNER_TEMP/h4"
+          gh run download "$H4_RUN" --repo "$GITHUB_REPOSITORY" -n "gold10b-native-h4-$H4_RUN" -D "$RUNNER_TEMP/h4"
+          test -s "$RUNNER_TEMP/h4/GC1_COMEX_TRADINGVIEW_H4_PRIMARY.csv"
+          test -s "$RUNNER_TEMP/h4/gate_a_h4_receipt.json"
+          test -s "$RUNNER_TEMP/h4/native_h4_hardpass.json"
+      - name: Generate exact Python and MT5 pairs for globally retained H4 HARD PASS
+        run: |
+          set -euo pipefail
+          python backtest/gold24/native_h4_qualified/sync_native_h4.py \
+            --cross-json "$RUNNER_TEMP/global.json" \
+            --h4-json "$RUNNER_TEMP/h4/native_h4_hardpass.json" \
+            --out-dir backtest/gold24/native_h4_qualified
+          python - <<'PY'
+          import json,pathlib
+          p=pathlib.Path('backtest/gold24/native_h4_qualified/selected_manifest_h4.json')
+          x=json.loads(p.read_text())
+          assert x['status']=='PASS'
+          assert x['contract']['pip_size_usd']==0.01
+          assert x['contract']['quantity_gold_units']==100.0
+          assert x['contract']['timeframe']=='H4'
+          n=x['selected_h4_hardpass_count']
+          py=list(p.parent.glob('h4_*.py')); mq=list(p.parent.glob('h4_*.mq5'))
+          assert len(py)==n and len(mq)==n,(n,len(py),len(mq))
+          print(f'H4_EXACT_PAIR_GENERATION_PASS count={n}')
+          PY
+      - name: Validate exact native-H4 Python replay parity
+        run: |
+          set -euo pipefail
+          cp "$RUNNER_TEMP/h4/GC1_COMEX_TRADINGVIEW_H4_PRIMARY.csv" "$RUNNER_TEMP/h4/GC1_COMEX_TRADINGVIEW_H4_PRIMARY.csv.keep"
+          export GOLD10B_NATIVE_H4_DATASET="$RUNNER_TEMP/h4/GC1_COMEX_TRADINGVIEW_H4_PRIMARY.csv"
+          export GOLD10B_NATIVE_H4_RECEIPT="$RUNNER_TEMP/h4/gate_a_h4_receipt.json"
+          python - <<'PY'
+          import json,os,pathlib,subprocess,sys
+          root=pathlib.Path('backtest/gold24/native_h4_qualified')
+          m=json.loads((root/'selected_manifest_h4.json').read_text())
+          checks=[]
+          for row in m['methods']:
+              p=root/row['python']
+              cp=subprocess.run([sys.executable,str(p)],cwd=str(root),capture_output=True,text=True,env=os.environ.copy())
+              checks.append({'python':row['python'],'returncode':cp.returncode,'stdout':cp.stdout[-4000:],'stderr':cp.stderr[-4000:]})
+              if cp.returncode!=0:
+                  raise SystemExit(f"PYTHON_H4_PARITY_FAIL {row['python']}\n{cp.stdout}\n{cp.stderr}")
+          out={'status':'PASS','count':len(checks),'checks':checks}
+          pathlib.Path(os.environ['RUNNER_TEMP']+'/native_h4_python_parity.json').write_text(json.dumps(out,indent=2)+'\n')
+          print(f'NATIVE_H4_PYTHON_PARITY_PASS count={len(checks)}')
+          PY
+      - name: Publish exact H4 wrapper set race-safe
+        run: |
+          set -euo pipefail
+          PAYLOAD="$RUNNER_TEMP/native-h4-qualified"
+          rm -rf "$PAYLOAD"; mkdir -p "$PAYLOAD"
+          cp -a backtest/gold24/native_h4_qualified/. "$PAYLOAD/"
+          git config user.name 'gold10b-bot'
+          git config user.email 'gold10b-bot@users.noreply.github.com'
+          for TRY in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p backtest/gold24/native_h4_qualified
+            find backtest/gold24/native_h4_qualified -maxdepth 1 -type f \( -name 'h4_*.py' -o -name 'h4_*.mq5' -o -name 'selected_manifest_h4.json' \) -delete
+            cp -a "$PAYLOAD/." backtest/gold24/native_h4_qualified/
+            git add backtest/gold24/native_h4_qualified
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m 'chore(gold10b): publish exact native H4 Python-MT5 pairs [skip ci]'
+            if git push origin HEAD:main; then exit 0; fi
+            sleep $((TRY*2))
+          done
+          exit 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gold10b-native-h4-script-pairs-${{ github.run_id }}
+          path: |
+            backtest/gold24/native_h4_qualified/selected_manifest_h4.json
+            backtest/gold24/native_h4_qualified/h4_*.py
+            backtest/gold24/native_h4_qualified/h4_*.mq5
+            ${{ runner.temp }}/native_h4_python_parity.json
+          if-no-files-found: warn
+          retention-days: 90
