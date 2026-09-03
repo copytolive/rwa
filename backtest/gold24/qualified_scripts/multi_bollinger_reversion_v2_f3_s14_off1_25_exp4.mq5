@@ -13,6 +13,8 @@
 #define MM_OFFSET_USD 1.25
 #define MM_EXPIRY_BARS 4
 #define MM_DIRECTION_MODE "LONG_ONLY"
+#define MM_ENTRY_METHOD "LIMIT"
+#define MM_CONFIG_HASH "5b32ea7bda5439f27bc176bed6866ff72c74a109e0e7d51170a205d580017a81"
 #define MM_MAGIC 24090303
 #define MM_TAG "GOLD24_MULTI_BOLLV2"
 #include "multimethod_engine.mqh"
