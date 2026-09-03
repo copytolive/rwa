@@ -78,7 +78,7 @@ jobs:
           wallet="$(curl -fsSL "$BASE/wallet-core.js?v=$GITHUB_RUN_ID")"
           ready="$(curl -fsSL "$BASE/launch/readiness.json?v=$GITHUB_RUN_ID")"
 
-          grep -Fq '<strong>RWA</strong>' <<<"$root"
+          grep -Fq '<strong>Real World Asset</strong>' <<<"$root"
           grep -Fq 'rwaMultiChainLazyBootstrap' <<<"$root"
           ! grep -Eiq 'seablueprint|ecommerce' <<<"$root"
           grep -Fq "hardening:'single-write-path-v1'" <<<"$execapi"
