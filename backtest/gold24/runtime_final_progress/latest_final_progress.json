@@ -1,18 +1,18 @@
 {
   "after": {
     "broker_h4_added_to_unique_total": false,
-    "candidate_evaluated_all_timeframes_minimum_unique": 1551912,
+    "candidate_evaluated_all_timeframes_minimum_unique": 1651912,
     "candidate_evaluated_broker_h4_separate": 0,
     "candidate_evaluated_d1_pre_v4": 1491912,
     "candidate_evaluated_direct_h4_unique": 60000,
     "candidate_evaluated_discovery_total": 1491912,
-    "candidate_evaluated_discovery_total_d1": 1491912,
-    "candidate_evaluated_frequency_v4_unique": 0,
+    "candidate_evaluated_discovery_total_d1": 1591912,
+    "candidate_evaluated_frequency_v4_unique": 100000,
     "candidate_pass_global_d1": 115,
     "corr_violations": 8,
     "distinct_family_all_timeframes": 25,
     "distinct_family_d1": 25,
-    "fail_portfolio_audit": 94,
+    "fail_portfolio_audit": 91,
     "finalized_backtest": 65357,
     "global_corr_kept_all_timeframes": 115,
     "global_corr_kept_d1": 115,
@@ -31,7 +31,7 @@
     "targeted_candidate_evaluated_unique": 300000,
     "watch_portfolio_audit": 24
   },
-  "authoritative_d1_global_source": "combined_portfolio_audit",
+  "authoritative_d1_global_source": "hardpass_frequency_v4",
   "before": {
     "candidate_evaluated": 1191912,
     "candidate_pass_global": 115,
@@ -61,7 +61,7 @@
   "global_cross_timeframe": {
     "correlation_rule": "absolute Pearson(log-return equity), global per-symbol",
     "distinct_family": 25,
-    "fail_global": 94,
+    "fail_global": 91,
     "h4_hard_pass_after_global_corr": 0,
     "hard_pass_global": 0,
     "max_family_concentration": 0.1565217391304348,
@@ -72,14 +72,23 @@
   },
   "hard_pass_global_final": 0,
   "hardpass_frequency_v4": {
-    "candidate_evaluated_unique": 0,
-    "disjoint_from_prior_d1_discovery": false,
-    "global_selected": 0,
+    "candidate_evaluated_unique": 100000,
+    "disjoint_from_prior_d1_discovery": true,
+    "global_selected": 115,
     "hard_pass_new_count": 0,
     "noncorr_7_of_7_survivors": 0,
-    "primitive_diagnostics": {},
+    "primitive_diagnostics": {
+      "dd_le_25": 16,
+      "entry_ge_300": 88779,
+      "ev_gt_0": 11,
+      "gates_0": 11198,
+      "gates_1": 88797,
+      "gates_2": 5,
+      "net_ge_20k": 0,
+      "pf_ge_1_20": 1
+    },
     "primitive_survivors": 0,
-    "status": "NOT_PUBLISHED"
+    "status": "PASS"
   },
   "latest_targeted_search": {
     "combined_candidate_evaluated_reported": 1391912,
