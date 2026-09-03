@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# Dynamic selected-set validation is intentionally triggered after wrapper synchronization.
+
 import argparse
 import csv
 import importlib.util
