@@ -64,6 +64,7 @@ jobs:
           node --check chart-core.js
           node --check rwa-live-home-v1.js
           node --check rwa-terminal-v5.js
+          node --check rwa-terminal-service.js
           node --check tools/root-market-browser-stability.mjs
           grep -Fq '<strong>Real World Asset</strong>' index.html
           grep -Fq 'app.js?v=19' index.html
@@ -83,7 +84,7 @@ jobs:
           grep -Fq "renderLiveRail" rwa-live-home-v1.js
           grep -Fq "keepMarketRoute" rwa-live-home-v1.js
           grep -Fq "RWATerminalV5" rwa-live-home-v1.js
-          grep -Fq "rwa-terminal-v5.js?v=1.0.11" chart-core.js
+          grep -Fq "rwa-terminal-v5.js?v=1.0.12" chart-core.js
           grep -Fq "rwa-terminal-v5.css?v=1.0.4" chart-core.js
           grep -Fq "data-v5-nav=\"discover\"" rwa-terminal-v5.js
           grep -Fq "data-v5-bottom=\"positions\"" rwa-terminal-v5.js
