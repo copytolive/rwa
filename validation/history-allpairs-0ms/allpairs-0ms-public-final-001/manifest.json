@@ -1,37 +1,11 @@
 {
-  "ok": true,
+  "ok": false,
   "id": "allpairs-0ms-public-final-001",
-  "acceptance": "PASS",
+  "acceptance": "FAIL",
   "target": "📋 Detailed Trade Log · ALL PAIRS",
   "requestedScreenshotDelayMs": 0,
-  "desktop": {
-    "width": 2048,
-    "height": 933,
-    "requestedDelayMs": 0,
-    "syncApplyMs": 4.30000000000291,
-    "screenshotCommandRoundTripMs": 91.723962,
-    "mode": "all",
-    "active": "all",
-    "title": "📋 Detailed Trade Log · ALL PAIRS",
-    "animationName": "none",
-    "transitionProperty": "none",
-    "panelPixelExact0to100": true,
-    "filtersPixelExact0to100": true
-  },
-  "mobile": {
-    "width": 390,
-    "height": 844,
-    "requestedDelayMs": 0,
-    "syncApplyMs": 15.200000000004366,
-    "screenshotCommandRoundTripMs": 39.656953,
-    "mode": "all",
-    "active": "all",
-    "title": "📋 Detailed Trade Log · ALL PAIRS",
-    "animationName": "none",
-    "transitionProperty": "none",
-    "panelPixelExact0to100": true,
-    "filtersPixelExact0to100": true
-  },
+  "desktop": {},
+  "mobile": {},
   "screenshots": {
     "desktop-allpairs-0ms-panel.png": {
       "path": "validation/history-allpairs-0ms/allpairs-0ms-public-final-001/desktop-allpairs-0ms-panel.png",
@@ -55,33 +29,8 @@
     },
     "desktop-allpairs-100ms-filters.png": {
       "path": "validation/history-allpairs-0ms/allpairs-0ms-public-final-001/desktop-allpairs-100ms-filters.png",
-      "bytes": 4038,
-      "sha256": "eacb0af647197f5297c32bdda993442cd19de337b1a0acc118f2b9a4e3b939ae"
-    },
-    "mobile-allpairs-0ms-panel.png": {
-      "path": "validation/history-allpairs-0ms/allpairs-0ms-public-final-001/mobile-allpairs-0ms-panel.png",
-      "bytes": 21373,
-      "sha256": "26a1b3f3dc9ff4e8e2d2df4c87125ea0abbafa220c8a538edd0d360c9356fe9b"
-    },
-    "mobile-allpairs-0ms-filters.png": {
-      "path": "validation/history-allpairs-0ms/allpairs-0ms-public-final-001/mobile-allpairs-0ms-filters.png",
-      "bytes": 4490,
-      "sha256": "cd615a90c619b8fb0553671f10e66674e6e30a3860ae8091ad14d916eb4f4372"
-    },
-    "mobile-allpairs-0ms-viewport.png": {
-      "path": "validation/history-allpairs-0ms/allpairs-0ms-public-final-001/mobile-allpairs-0ms-viewport.png",
-      "bytes": 57989,
-      "sha256": "fbc8253491139f6b9cf8e0c21a2f1186db54f65087a92bf30c9b30dfb06d438b"
-    },
-    "mobile-allpairs-100ms-panel.png": {
-      "path": "validation/history-allpairs-0ms/allpairs-0ms-public-final-001/mobile-allpairs-100ms-panel.png",
-      "bytes": 21373,
-      "sha256": "26a1b3f3dc9ff4e8e2d2df4c87125ea0abbafa220c8a538edd0d360c9356fe9b"
-    },
-    "mobile-allpairs-100ms-filters.png": {
-      "path": "validation/history-allpairs-0ms/allpairs-0ms-public-final-001/mobile-allpairs-100ms-filters.png",
-      "bytes": 4490,
-      "sha256": "cd615a90c619b8fb0553671f10e66674e6e30a3860ae8091ad14d916eb4f4372"
+      "bytes": 4040,
+      "sha256": "69b8b3cfc02c4a596088ba7017667ba817293f4fb7895dba67f9e3e175e5eeb6"
     }
   },
   "consoleErrors": [],
@@ -97,5 +46,6 @@
     "fills": 0,
     "historyCount": "0 Hyperliquid fills",
     "status": "REAL HYPERLIQUID · READY · 0 account · 0 fills"
-  }
+  },
+  "error": "Error: PIXEL_CHANGED_0_TO_100MS_desktop {\"width\":2048,\"height\":933,\"requestedDelayMs\":0,\"syncApplyMs\":0.5,\"screenshotCommandRoundTripMs\":95.37515,\"mode\":\"all\",\"active\":\"all\",\"title\":\"📋 Detailed Trade Log · ALL PAIRS\",\"animationName\":\"none\",\"transitionProperty\":\"none\",\"panelPixelExact0to100\":true,\"filtersPixelExact0to100\":false}\n    at validateCase (file:///tmp/ctl-all0.mjs:165:13)\n    at async file:///tmp/ctl-all0.mjs:186:18"
 }
