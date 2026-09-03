@@ -44,9 +44,9 @@ function timestampMs(x) {
 }
 
 (async () => {
-  const [, , outPath, fromIso = '2003-05-05', toIso = '2026-04-29'] = process.argv;
-  if (!outPath) {
-    console.error('usage: node fetch_copytolive_gold_h1.cjs <output.csv> [from] [to-exclusive]');
+  const [, , outPath, d1OutPath, fromIso = '2003-05-05', toIso = '2026-04-29'] = process.argv;
+  if (!outPath || !d1OutPath) {
+    console.error('usage: node fetch_copytolive_gold_h1.cjs <h1-output.csv> <d1-output.csv> [from] [to-exclusive]');
     process.exit(2);
   }
 
@@ -62,6 +62,7 @@ function timestampMs(x) {
   const chunkMonths = Math.max(1, Number(process.env.COPYTOLIVE_M1_CHUNK_MONTHS || 12));
 
   const hours = new Map();
+  const days = new Map();
   let rawM1 = 0;
   let acceptedM1 = 0;
   let duplicateOrOverlap = 0;
@@ -146,6 +147,33 @@ function timestampMs(x) {
         if (l < prev.low) prev.low = l;
         prev.volume += v;
       }
+
+      const dayTs = Math.floor(ts / 86400000) * 86400000;
+      const day = days.get(dayTs);
+      if (!day) {
+        days.set(dayTs, {
+          ts: dayTs,
+          open: o,
+          high: h,
+          low: l,
+          close: c,
+          volume: v,
+          firstTs: ts,
+          lastTs: ts
+        });
+      } else {
+        if (ts < day.firstTs) {
+          day.firstTs = ts;
+          day.open = o;
+        }
+        if (ts >= day.lastTs) {
+          day.lastTs = ts;
+          day.close = c;
+        }
+        if (h > day.high) day.high = h;
+        if (l < day.low) day.low = l;
+        day.volume += v;
+      }
     }
 
     chunks += 1;
@@ -186,6 +214,22 @@ function timestampMs(x) {
   const body = lines.join('\n') + '\n';
   fs.writeFileSync(outPath, body);
 
+  const orderedD1 = [...days.values()].sort((a, b) => a.ts - b.ts);
+  const d1Lines = ['Date,open,high,low,close,volume'];
+  for (const x of orderedD1) {
+    d1Lines.push([
+      new Date(x.ts).toISOString(),
+      x.open,
+      x.high,
+      x.low,
+      x.close,
+      x.volume
+    ].join(','));
+  }
+  fs.mkdirSync(path.dirname(d1OutPath), { recursive: true });
+  const d1Body = d1Lines.join('\n') + '\n';
+  fs.writeFileSync(d1OutPath, d1Body);
+
   console.log(JSON.stringify({
     status: 'PASS',
     construction: 'DUKASCOPY_M1_RESAMPLE_H1',
@@ -193,7 +237,7 @@ function timestampMs(x) {
     provider: 'Dukascopy',
     instrument: 'xauusd',
     source_timeframe: 'm1',
-    output_timeframe: 'h1',
+    output_timeframes: ['h1','d1'],
     priceType: 'bid',
     ignoreFlats,
     resample: {
@@ -212,8 +256,11 @@ function timestampMs(x) {
     accepted_m1_rows: acceptedM1,
     duplicate_or_overlap_rows: duplicateOrOverlap,
     h1_rows: ordered.length,
-    sha256: crypto.createHash('sha256').update(body).digest('hex'),
-    output: outPath
+    d1_rows: orderedD1.length,
+    h1_sha256: crypto.createHash('sha256').update(body).digest('hex'),
+    d1_sha256: crypto.createHash('sha256').update(d1Body).digest('hex'),
+    h1_output: outPath,
+    d1_output: d1OutPath
   }, null, 2));
 })().catch(err => {
   console.error(err && err.stack ? err.stack : String(err));
