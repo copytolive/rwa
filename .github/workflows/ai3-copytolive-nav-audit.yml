@@ -35,7 +35,7 @@ jobs:
           mkdir -p "$OUT_DIR"
           python3 -m pip install --quiet websocket-client
           CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium)"
-          "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu --remote-debugging-address=127.0.0.1 --remote-debugging-port=9778 --remote-allow-origins=* about:blank >/tmp/ai3-nav-audit-chrome.out 2>/tmp/ai3-nav-audit-chrome.err &
+          "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu --remote-debugging-address=127.0.0.1 --remote-debugging-port=9779 --remote-allow-origins=* about:blank >/tmp/ai3-nav-audit-chrome.out 2>/tmp/ai3-nav-audit-chrome.err &
           PID=$!
           trap 'kill $PID 2>/dev/null || true' EXIT
           python3 tools/ai3_copytolive_nav_audit.py
@@ -48,9 +48,15 @@ jobs:
           test -f "$OUT/report.json"
           git config user.name "CopyToLive AI3 Nav Audit"
           git config user.email "copytolive-ai3-navaudit@local.invalid"
-          git add "$OUT/report.json"
+          git add "$OUT"
           git commit -m "ai3 nav audit: ${{ steps.req.outputs.id }}" || true
-          git push origin HEAD:main
+          for attempt in 1 2 3 4 5 6; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort || true; sleep "$attempt"; continue; }
+            if git push origin HEAD:main; then exit 0; fi
+            sleep "$attempt"
+          done
+          exit 1
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4
