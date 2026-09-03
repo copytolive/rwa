@@ -357,40 +357,47 @@ def empty_metrics() -> dict:
 
 
 def compute_copytolive_metrics(trades: list[dict], deposit_usd: float=COPYTOLIVE_DEPOSIT_USD) -> dict:
+    """Production vs() metric arithmetic without applying the research gate."""
     if not trades:
         return empty_metrics()
-    pnl=np.asarray([float(t["profit"]) for t in trades],dtype=float)
-    wins=pnl[pnl>0]; losses=pnl[pnl<=0]
-    gp=float(wins.sum()) if len(wins) else 0.0
-    gl=abs(float(losses.sum())) if len(losses) else 0.0
-    total=int(len(pnl)); wr=100.0*len(wins)/total
-    pf=gp/gl if gl>0 else float("inf"); net=float(pnl.sum()); expectancy=net/total
-    equity=float(deposit_usd)+np.cumsum(pnl); peaks=np.maximum.accumulate(equity)
-    dd_pct=np.where(peaks>0,(peaks-equity)/np.maximum(peaks,1)*100.0,0.0)
-    max_dd_pct=float(dd_pct.max(initial=0.0))
-    std=float(np.std(pnl))
-    sqn=float(np.mean(pnl)/std*math.sqrt(total)) if std>0 else 0.0
-    sharpe=float(np.mean(pnl)/std*math.sqrt(252.0)) if std>0 else 0.0
-    down=pnl[pnl<0]; down_std=float(np.std(down)) if len(down)>1 else 0.0
-    sortino=float(np.mean(pnl)/down_std*math.sqrt(252.0)) if down_std>0 else 0.0
-    avg_win=float(wins.mean()) if len(wins) else 0.0
-    avg_loss=abs(float(losses.mean())) if len(losses) else 0.0
-    rr=avg_win/avg_loss if avg_loss>0 else 0.0
-    recovery=net/(max_dd_pct/100.0*float(deposit_usd)) if max_dd_pct>0.01 else 0.0
-    max_consec_loss=0; cur=0
+    pnl=np.asarray([float(t["profit"]) for t in trades],dtype=np.float64)
+    n=len(pnl)
+    w=pnl[pnl>0]; l=pnl[pnl<=0]
+    if len(w)==0 or len(l)==0:
+        out=empty_metrics()
+        out["totalTrades"]=int(n)
+        return out
+    wr=len(w)/n*100
+    gp=float(w.sum()); gl=float(abs(l.sum()))
+    pf_val=gp/gl if gl>0 else 0
+    eq=float(deposit_usd)+np.cumsum(pnl); peak=np.maximum.accumulate(eq)
+    mdd=float(((peak-eq)/np.maximum(peak,1)*100).max())
+    net=gp-gl; aw=float(w.mean()); al=float(abs(l.mean()))
+    std=float(pnl.std())
+    sqn=(pnl.mean()/std)*np.sqrt(n) if std>0 else 0
+    sharpe=(pnl.mean()/std)*np.sqrt(252) if std>0 else 0
+    down=pnl[pnl<0]
+    sortino=(pnl.mean()/down.std())*np.sqrt(252) if len(down)>1 and down.std()>0 else 0
+    recov=net/(mdd/100*float(deposit_usd)) if mdd>0.01 else 0
+    cal=(net/float(deposit_usd)*100)/mdd if mdd>0.01 else 0
+    rr=aw/al if al>0 else 0
+    cw=mcw=cl=mcl=0
     for p in pnl:
-        if p<=0:
-            cur+=1; max_consec_loss=max(max_consec_loss,cur)
+        if p>0:
+            cw+=1; mcw=max(mcw,cw); cl=0
         else:
-            cur=0
+            cl+=1; mcl=max(mcl,cl); cw=0
     return {
-        "totalTrades":total,"winningTrades":int(len(wins)),"losingTrades":int(len(losses)),
-        "winRate":float(wr),"profitFactor":float(pf),"maxDrawdown":float(max_dd_pct),
-        "netProfit":net,"expectancy":float(expectancy),"sqn":sqn,"sharpe":sharpe,
-        "sortino":sortino,"recoveryFactor":float(recovery),"grossProfit":gp,"grossLoss":gl,
-        "avgProfit":avg_win,"avgLoss":avg_loss,"rr":float(rr),"maxConsecLoss":int(max_consec_loss),
+        "totalTrades":int(n),"winRate":round(wr,1),"profitFactor":round(pf_val,2),
+        "maxDrawdown":round(mdd,1),"netProfit":round(net,2),"expectancy":round(net/n,2),
+        "sqn":round(float(sqn),2),"sharpe":round(float(sharpe),2),
+        "sortino":round(min(float(sortino),99),2),"calmar":round(min(float(cal),99),2),
+        "recoveryFactor":round(min(float(recov),99),2),
+        "grossProfit":round(gp,2),"grossLoss":round(gl,2),
+        "winningTrades":int(len(w)),"losingTrades":int(len(l)),
+        "avgProfit":round(aw,2),"avgLoss":round(al,2),"rr":round(rr,2),
+        "maxConsecWin":int(mcw),"maxConsecLoss":int(mcl),
     }
-
 
 def validate_copytolive_period(trades: list[dict], *, min_trades: int=100, pf_min: float=2.0, wr_min: float=40.0, wr_max: float=85.0, dd_max: float=30.0, deposit_usd: float=COPYTOLIVE_DEPOSIT_USD) -> dict | None:
     metrics=compute_copytolive_metrics(trades,deposit_usd)
