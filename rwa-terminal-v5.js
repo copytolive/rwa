@@ -176,7 +176,9 @@ async function refreshAccount(){
  try{if(!window.RWAWalletAuth?.isLoggedIn?.())return null;const core=await window.RWALiveHome?.ensureExecution?.();await core?.refresh?.();return core?.state?.()||exchange()}catch(e){toast(String(e?.message||e));return exchange()}
 }
 async function setBottom(mode){
- bottomMode=mode;keepMarket();ensureBottom();setActive('#rwaV5Bottom [data-v5-bottom]',mode,'v5Bottom');renderBottom(true)
+ bottomMode=mode;keepMarket();ensureBottom();setActive('#rwaV5Bottom [data-v5-bottom]',mode,'v5Bottom');
+ const body=$('[data-v5-bottom-body]');if(body&&mode==='holders')body.innerHTML='<div class="rwa-v5-loading">Loading authoritative holder source…</div>';
+ renderBottom(true)
 }
 async function renderBottom(force=false){
  const body=$('[data-v5-bottom-body]');if(!body)return;const s=exchange();qa('[data-v5-position-count]').forEach(x=>x.textContent=String(s?.positions?.length||0));qa('[data-v5-order-count]').forEach(x=>x.textContent=String(s?.orders?.length||0));
@@ -282,7 +284,7 @@ async function publishThesis(){
  if(await syncService()&&window.RWAWalletAuth?.isLoggedIn?.()){
   try{await window.RWATerminalService.social.post({symbol:selected(),side,text});serverSession=true;box.value='';await syncServerFeed();renderBottom();renderLeft();toast('Thesis published to signed server feed');return}catch(e){toast(String(e?.message||e));return}
  }
- const list=theses();list.push({id:String(Date.now()),symbol:selected(),side,text,ts:Date.now()});store.set(LS.thesis,list.slice(-100));box.value='';renderBottom();renderLeft();toast('Local thesis saved')
+ const list=theses();list.push({id:String(Date.now()),symbol:selected(),side,text,ts:Date.now()});store.set(LS.thesis,list.slice(-100));box.value='';toast('Local thesis saved');setTimeout(()=>{if(bottomMode==='thesis')renderBottom();renderLeft()},0)
 }
 async function socialAction(kind,target){
  if(!await syncService()||!window.RWAWalletAuth?.isLoggedIn?.()){toast('Connect wallet and enable terminal backend');return}
