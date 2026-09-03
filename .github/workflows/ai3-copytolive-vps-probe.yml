@@ -1,0 +1,75 @@
+name: CopyToLive VPS Access Probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ai3-vps-probe-requests/**"
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: req
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^ai3-vps-probe-requests/.*\.json$' | tail -n1)"
+          ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$FILE")"
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+          echo "out=ai3-vps-probe-results/$ID.json" >> "$GITHUB_OUTPUT"
+      - name: Probe VPS access
+        env:
+          SSH_KEY: ${{ secrets.COPYTOLIVE_SSH_KEY }}
+          SSH_HOST: 109.123.239.76
+          SSH_USER: root
+        shell: bash
+        run: |
+          set +e
+          mkdir -p ai3-vps-probe-results "$HOME/.ssh"
+          OUT="${{ steps.req.outputs.out }}"
+          if [ -z "$SSH_KEY" ]; then
+            python3 - <<'PY' > "$OUT"
+          import json,os
+          print(json.dumps({"ok":False,"reason":"secret_missing","id":os.environ.get("ID","")}))
+          PY
+            exit 1
+          fi
+          printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/copytolive_control"
+          chmod 600 "$HOME/.ssh/copytolive_control"
+          ssh-keyscan -p 22 -H "$SSH_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null
+          ssh -o BatchMode=yes -o ConnectTimeout=8 -i "$HOME/.ssh/copytolive_control" "$SSH_USER@$SSH_HOST" 'python3 - <<'"'"'PY'"'"'
+          import json,os
+          print(json.dumps({"ok":True,"web_root_exists":os.path.isdir("/var/www/copytolive"),"source_root_exists":os.path.isdir("/opt/copytolive-source")}))
+          PY' > "$OUT"
+          RC=$?
+          test -s "$OUT" || python3 - <<'PY' > "$OUT"
+          import json
+          print(json.dumps({"ok":False,"reason":"ssh_failed"}))
+          PY
+          exit $RC
+      - name: Commit result
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="${{ steps.req.outputs.out }}"
+          test -s "$OUT"
+          git config user.name "CopyToLive AI3 VPS Probe"
+          git config user.email "copytolive-ai3-vpsprobe@local.invalid"
+          git add "$OUT"
+          git commit -m "ai3 vps probe: ${{ steps.req.outputs.id }}" || true
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort || true; sleep "$attempt"; continue; }
+            if git push origin HEAD:main; then exit 0; fi
+            sleep "$attempt"
+          done
+          exit 1
