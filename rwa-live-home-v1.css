@@ -346,3 +346,9 @@ body.rwa-target-dashboard-v2 .pairprice b,body.rwa-target-dashboard-v2 .pairpric
 }
 
 /* TARGET_V4_PUBLIC_INTERACTION_CERT_FINAL */
+
+/* V4.0.1 final order book controls */
+body.rwa-target-dashboard-v2 .orderbook-tools{display:flex;align-items:center;gap:5px}
+body.rwa-target-dashboard-v2 .orderbook-tools button{height:25px;min-width:42px;padding:0 7px;border:1px solid #1b2b40;border-radius:5px;background:#071321;color:#aebbd0;font-size:8px;font-weight:750;cursor:pointer}
+body.rwa-target-dashboard-v2 .orderbook-tools button:last-child{min-width:28px;width:28px;padding:0}
+body.rwa-target-dashboard-v2 .orderbook-tools button:hover{background:#0d1b2d;color:#fff;border-color:#2a405e}
