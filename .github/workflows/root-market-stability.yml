@@ -65,6 +65,8 @@ jobs:
           grep -Fq 'id="bookPrecision"' index.html
           grep -Fq 'id="bookMenu"' index.html
           grep -Fq 'id="liveRail"' index.html
+          ! grep -Fq 'data-rwa-target-nav="portfolio"' index.html
+          grep -Fq 'live-rail-section-nav' rwa-live-home-v1.js
           grep -Fq "RWAMarketRuntime={version:'1.4.3'" app.js
           grep -Fq "/api/v3/depth?symbol=" app.js
           grep -Fq "limit=100" app.js
@@ -72,7 +74,7 @@ jobs:
           grep -Fq "recentTrades" app.js
           grep -Fq "bookLevels:5" app.js
           grep -Fq "bindBookControls" app.js
-          grep -Fq "VERSION='4.2.0'" rwa-live-home-v1.js
+          grep -Fq "VERSION='4.2.1'" rwa-live-home-v1.js
           grep -Fq "renderLiveRail" rwa-live-home-v1.js
           grep -Fq "keepMarketRoute" rwa-live-home-v1.js
           grep -Fq "workspace-open" rwa-live-home-v1.js
@@ -80,8 +82,8 @@ jobs:
           grep -Fq "openOrders" rwa-live-home-v1.js
           grep -Fq "openRewards" rwa-live-home-v1.js
           grep -Fq "workspaceOpen('analytics'" rwa-live-home-v1.js
-          grep -Fq "rwa-live-home-v1.js?v=4.2.0" chart-core.js
-          grep -Fq "rwa-live-home-v1.css?v=4.2.0" chart-core.js
+          grep -Fq "rwa-live-home-v1.js?v=4.2.1" chart-core.js
+          grep -Fq "rwa-live-home-v1.css?v=4.2.1" chart-core.js
           grep -Fq "POLICY='chain-abstraction-fail-closed-v2'" rwa-multichain.js
           ! grep -Eiq 'seablueprint|ecommerce|in-page commerce' index.html
           ! grep -Fq '/rwa/_next/' index.html
