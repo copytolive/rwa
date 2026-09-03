@@ -146,7 +146,7 @@ function ensureMobile(){
  const head=$('.terminal-header');if(head&&!head.querySelector('.rwa-v5-mobile-worktabs')){const nav=document.createElement('nav');nav.className='rwa-v5-mobile-worktabs';nav.innerHTML='<button class="active" data-v5-mobile-mode="chart">Chart</button><button data-v5-mobile-mode="book">Book</button><button data-v5-mobile-mode="trade">Trade</button><button data-v5-mobile-mode="feed">Feed</button>';head.appendChild(nav)}
  let mf=$('#rwaV5MobileFeed');if(!mf){mf=document.createElement('section');mf.id='rwaV5MobileFeed';mf.className='rwa-v5-mobile-feed';mf.hidden=true;$('.main')?.appendChild(mf)}
  const tabs=$('.mobile-tabs');if(tabs&&tabs.dataset.v5!=='1'){tabs.dataset.v5='1';tabs.innerHTML='<button data-v5-mobile-nav="home"><span>⌂</span><small>Home</small></button><button class="active" data-v5-mobile-nav="markets"><span>⌕</span><small>Markets</small></button><button data-v5-mobile-nav="trade"><span>↻</span><small>Trade</small></button><button data-v5-mobile-nav="portfolio"><span>▣</span><small>Portfolio</small></button><button data-v5-mobile-nav="profile"><span>◎</span><small>Profile</small></button>'}
- let close=$('.rwa-v5-mobile-market-close');if(!close){close=document.createElement('button');close.className='rwa-v5-mobile-market-close';close.type='button';close.textContent='×';close.setAttribute('aria-label','Close markets');close.dataset.v5Action='close-markets';document.body.appendChild(close)}
+ let close=$('[data-v5-action="close-markets"]');if(!close){close=document.createElement('button');close.className='rwa-v5-mobile-market-close-v2';close.type='button';close.textContent='×';close.setAttribute('aria-label','Close markets');close.dataset.v5Action='close-markets';close.style.cssText='display:none!important;position:fixed!important;right:10px!important;top:64px!important;z-index:2147483000!important;width:36px!important;height:36px!important;border:1px solid #26394f!important;border-radius:18px!important;background:#081522!important;color:#c7d1df!important;font-size:20px!important;line-height:1!important;';document.body.appendChild(close)}
  ensureMiniBook();applyMobileState()
 }
 function setMobile(mode){mobileMode=mode;document.body.dataset.v5MobileMode=mode;setActive('.rwa-v5-mobile-worktabs [data-v5-mobile-mode]',mode,'v5MobileMode');applyMobileState()}
@@ -156,9 +156,12 @@ function applyMobileState(){
  if(innerWidth<681){setMobileMarketsCloseVisible(document.body.classList.contains('rwa-v5-mobile-markets'));if(mobileMode==='workspace')$('#rwaV5Bottom')?.scrollIntoView?.({block:'start'})}
 }
 function setMobileMarketsCloseVisible(on){
- const b=$('.rwa-v5-mobile-market-close');if(!b)return;
- const vals=on?{display:'block',position:'fixed',right:'10px',top:'64px','z-index':'9905',width:'34px',height:'34px'}:{display:'none'};
- for(const [k,v] of Object.entries(vals))b.style.setProperty(k,v,'important')
+ const b=$('[data-v5-action="close-markets"]');if(!b)return;
+ b.style.setProperty('display',on?'block':'none','important');
+ b.style.setProperty('visibility',on?'visible':'hidden','important');
+ b.style.setProperty('opacity',on?'1':'0','important');
+ b.style.setProperty('pointer-events',on?'auto':'none','important');
+ b.setAttribute('aria-hidden',String(!on))
 }
 function openMarketsMobile(){document.body.classList.add('rwa-v5-mobile-markets');leftMode='watchlist';renderLeft();setMobileMarketsCloseVisible(true)}
 function closeMarketsMobile(){document.body.classList.remove('rwa-v5-mobile-markets');setMobileMarketsCloseVisible(false);setMobile('chart')}
