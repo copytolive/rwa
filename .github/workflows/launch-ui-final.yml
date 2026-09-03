@@ -50,7 +50,12 @@ jobs:
           grep -Fq 'data-v5-nav="portfolio"' rwa-terminal-v5.js
           grep -Fq 'data-v5-nav="analytics"' rwa-terminal-v5.js
           grep -Fq 'data-v5-nav="rewards"' rwa-terminal-v5.js
-          grep -Fq 'data-v5-global="markets"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-global="trade"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-global="discover"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-global="portfolio"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-global="analytics"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-global="rewards"' rwa-terminal-v5.js
+          grep -Fq 'data-v5-global="more"' rwa-terminal-v5.js
           grep -Fq 'rwa-v5-market-nav' rwa-terminal-v5.js
           ! grep -Fq 'data-v5-mobile-nav="portfolio"' index.html
           ! grep -Fq 'data-mobile-nav="portfolio"' index.html
