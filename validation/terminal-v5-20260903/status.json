@@ -1,58 +1,58 @@
 {
-  "target_sha": "abe558fc46715fb48bdb773da6a99ee5dc396a84",
-  "observed_at": "2026-09-03T06:44:31Z",
+  "target_sha": "029a2065452a148838f7b3fe7eb608b087916345",
+  "observed_at": "2026-09-03T12:56:48Z",
   "workflows": [
     {
       "name": "Real World Asset V4 UI Final",
-      "id": 33724504396,
+      "id": 33758016247,
       "status": "completed",
       "conclusion": "success",
-      "head_sha": "abe558fc46715fb48bdb773da6a99ee5dc396a84",
-      "html_url": "https://github.com/copytolive/rwa/actions/runs/33724504396",
-      "created_at": "2026-09-03T06:42:48Z",
-      "updated_at": "2026-09-03T06:42:58Z"
+      "head_sha": "029a2065452a148838f7b3fe7eb608b087916345",
+      "html_url": "https://github.com/copytolive/rwa/actions/runs/33758016247",
+      "created_at": "2026-09-03T12:55:14Z",
+      "updated_at": "2026-09-03T12:55:28Z"
     },
     {
       "name": "Deploy Real World Asset Target V4",
-      "id": 33724504397,
+      "id": 33758016229,
       "status": "completed",
       "conclusion": "success",
-      "head_sha": "abe558fc46715fb48bdb773da6a99ee5dc396a84",
-      "html_url": "https://github.com/copytolive/rwa/actions/runs/33724504397",
-      "created_at": "2026-09-03T06:42:48Z",
-      "updated_at": "2026-09-03T06:43:19Z"
+      "head_sha": "029a2065452a148838f7b3fe7eb608b087916345",
+      "html_url": "https://github.com/copytolive/rwa/actions/runs/33758016229",
+      "created_at": "2026-09-03T12:55:14Z",
+      "updated_at": "2026-09-03T12:56:36Z"
     },
     {
       "name": "RWA Root Market Stability",
-      "id": 33724504384,
+      "id": 33758016328,
       "status": "completed",
-      "conclusion": "success",
-      "head_sha": "abe558fc46715fb48bdb773da6a99ee5dc396a84",
-      "html_url": "https://github.com/copytolive/rwa/actions/runs/33724504384",
-      "created_at": "2026-09-03T06:42:48Z",
-      "updated_at": "2026-09-03T06:43:44Z"
-    },
-    {
-      "name": "RWA Target V4 Browser Gate",
-      "id": 33724504370,
-      "status": "completed",
-      "conclusion": "success",
-      "head_sha": "abe558fc46715fb48bdb773da6a99ee5dc396a84",
-      "html_url": "https://github.com/copytolive/rwa/actions/runs/33724504370",
-      "created_at": "2026-09-03T06:42:48Z",
-      "updated_at": "2026-09-03T06:44:17Z"
+      "conclusion": "failure",
+      "head_sha": "029a2065452a148838f7b3fe7eb608b087916345",
+      "html_url": "https://github.com/copytolive/rwa/actions/runs/33758016328",
+      "created_at": "2026-09-03T12:55:14Z",
+      "updated_at": "2026-09-03T12:56:01Z"
     },
     {
       "name": "Real World Asset V4 Public Page-by-Page Audit",
-      "id": 33724504447,
+      "id": 33758016258,
       "status": "completed",
       "conclusion": "success",
-      "head_sha": "abe558fc46715fb48bdb773da6a99ee5dc396a84",
-      "html_url": "https://github.com/copytolive/rwa/actions/runs/33724504447",
-      "created_at": "2026-09-03T06:42:48Z",
-      "updated_at": "2026-09-03T06:43:31Z"
+      "head_sha": "029a2065452a148838f7b3fe7eb608b087916345",
+      "html_url": "https://github.com/copytolive/rwa/actions/runs/33758016258",
+      "created_at": "2026-09-03T12:55:14Z",
+      "updated_at": "2026-09-03T12:56:07Z"
+    },
+    {
+      "name": "RWA Target V4 Browser Gate",
+      "id": 33758016363,
+      "status": "completed",
+      "conclusion": "failure",
+      "head_sha": "029a2065452a148838f7b3fe7eb608b087916345",
+      "html_url": "https://github.com/copytolive/rwa/actions/runs/33758016363",
+      "created_at": "2026-09-03T12:55:14Z",
+      "updated_at": "2026-09-03T12:56:07Z"
     }
   ],
   "complete": true,
-  "all_success": true
+  "all_success": false
 }
