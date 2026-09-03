@@ -27,7 +27,7 @@ def frame(close, high=None, low=None):
 
 class CopyToLiveCompatTests(unittest.TestCase):
     def test_fixed_risk_and_tp_ratio(self):
-        df=frame([100,100,100],high=[100,103,103],low=[100,99,99])
+        df=frame([100,100,100],high=[100,103,103],low=[100,99.5,99.5])
         sig=np.array([1,0,0],dtype=np.int8)
         cfg=CopyToLiveExecutionConfig(sl_pct=0.01,tp_ratio=2.0,fee=0.0)
         r=run_copytolive_backtest(df,sig,cfg)
@@ -59,7 +59,7 @@ class CopyToLiveCompatTests(unittest.TestCase):
         self.assertIsNotNone(r["open_position_at_end"])
 
     def test_fee_matches_production_contract(self):
-        df=frame([100,100],high=[100,103],low=[100,99])
+        df=frame([100,100],high=[100,103],low=[100,99.5])
         sig=np.array([1,0],dtype=np.int8)
         cfg=CopyToLiveExecutionConfig(sl_pct=0.01,tp_ratio=2.0)
         r=run_copytolive_backtest(df,sig,cfg)
@@ -70,7 +70,7 @@ class CopyToLiveCompatTests(unittest.TestCase):
         self.assertAlmostEqual(t["profit"],400.0-expected_fee)
 
     def test_short_side(self):
-        df=frame([100,100],high=[100,101],low=[100,97])
+        df=frame([100,100],high=[100,100.5],low=[100,97])
         sig=np.array([-1,0],dtype=np.int8)
         cfg=CopyToLiveExecutionConfig(sl_pct=0.01,tp_ratio=2.0,fee=0.0)
         r=run_copytolive_backtest(df,sig,cfg)
