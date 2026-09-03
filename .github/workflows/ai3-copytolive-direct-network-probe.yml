@@ -42,6 +42,15 @@ jobs:
             "http://109.123.239.76:3001/api/trading/health",
             "http://109.123.239.76:11175/health",
             "http://109.123.239.76:11175/openapi.json",
+            "http://109.123.239.76:3110/",
+            "http://109.123.239.76:3110/health",
+            "http://109.123.239.76:3110/openapi.json",
+            "http://109.123.239.76:3110/api",
+            "http://109.123.239.76:3110/api/health",
+            "http://109.123.239.76:3110/api/docs",
+            "http://109.123.239.76:8013/",
+            "http://109.123.239.76:8013/health",
+            "http://109.123.239.76:8013/openapi.json",
           ]
           out={}
           for u in urls:
