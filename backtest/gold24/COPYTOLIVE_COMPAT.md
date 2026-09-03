@@ -65,13 +65,13 @@ strategy.
 ## GitHub compute only
 
 The default workflow runs on **GitHub-hosted Ubuntu**, not the user's MacBook.
-XAUUSD H1 is fetched directly on the hosted runner through
+XAUUSD M1 is fetched directly on the hosted runner, then resampled exactly like production, through
 `dukascopy-node@1.50.0` and cached between runs.
 
 Default data window:
 
 - Start: `2003-05-05`
-- End exclusive: `2026-08-28`
+- End exclusive: `2026-05-01`
 - Provider instrument: `xauusd`
 - Timeframe: `h1`
 - Price side: `bid`

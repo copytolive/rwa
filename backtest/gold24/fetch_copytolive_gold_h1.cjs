@@ -44,7 +44,7 @@ function timestampMs(x) {
 }
 
 (async () => {
-  const [, , outPath, fromIso = '2003-05-05', toIso = '2026-08-28'] = process.argv;
+  const [, , outPath, fromIso = '2003-05-05', toIso = '2026-05-01'] = process.argv;
   if (!outPath) {
     console.error('usage: node fetch_copytolive_gold_h1.cjs <output.csv> [from] [to-exclusive]');
     process.exit(2);
@@ -58,7 +58,7 @@ function timestampMs(x) {
   // the production converter itself does not remove them; it only removes
   // invalid / zero-price rows before resampling.
   const ignoreFlats = String(process.env.COPYTOLIVE_IGNORE_FLATS || 'false').toLowerCase() === 'true';
-  const chunkMonths = Math.max(1, Number(process.env.COPYTOLIVE_M1_CHUNK_MONTHS || 3));
+  const chunkMonths = Math.max(1, Number(process.env.COPYTOLIVE_M1_CHUNK_MONTHS || 12));
 
   const hours = new Map();
   let rawM1 = 0;
