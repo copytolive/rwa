@@ -114,10 +114,12 @@ async function desktop(browser){
   await page.locator('.rwa-v5-left-tabs [data-v5-left="pulse"]').click();
   assert.match(await page.locator('[data-v5-left-pane="pulse"]').innerText(),/Top Movers/i);
   await page.locator('#rwaV5Bottom [data-v5-bottom="holders"]').click();
+  await page.waitForFunction(()=>/SOURCE GATED|VERIFIED|NEEDS HOLDER BACKEND|NEEDS AUTHORITATIVE SOURCE|Holder source not configured|Holders data unavailable/i.test(document.querySelector('[data-v5-bottom-body]')?.innerText||''),{timeout:8000});
   assert.match(await page.locator('[data-v5-bottom-body]').innerText(),/SOURCE GATED|VERIFIED|NEEDS HOLDER BACKEND|NEEDS AUTHORITATIVE SOURCE|Holder source not configured|Holders data unavailable/i);
   await page.locator('#rwaV5Bottom [data-v5-bottom="thesis"]').click();
   await page.locator('[data-v5-thesis-text]').fill('Deterministic local thesis');
   await page.locator('[data-v5-thesis-publish]').click();
+  await page.waitForFunction(()=>/Deterministic local thesis/.test(document.querySelector('[data-v5-bottom-body]')?.innerText||''),{timeout:3000});
   assert.match(await page.locator('[data-v5-bottom-body]').innerText(),/Deterministic local thesis/);
 
   const search=page.locator('#rwaV5GlobalSearch input');await search.fill('T250');await page.waitForTimeout(40);
