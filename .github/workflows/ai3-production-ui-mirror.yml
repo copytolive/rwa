@@ -1,0 +1,64 @@
+name: AI3 Production UI Mirror
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ai3-prod-mirror-requests/**"
+permissions:
+  contents: write
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - id: req
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^ai3-prod-mirror-requests/.*\.json$' | tail -n1)"
+          ID="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["id"])' "$FILE")"
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+          echo "out=ai3-prod-mirror/$ID" >> "$GITHUB_OUTPUT"
+      - name: Fetch exact live UI assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="${{ steps.req.outputs.out }}";mkdir -p "$OUT"
+          BASE="https://copytolive.com"
+          curl -fsSL -H 'Cache-Control: no-cache' "$BASE/?mirror=${{ steps.req.outputs.id }}" -o "$OUT/index.html"
+          curl -fsSL -H 'Cache-Control: no-cache' "$BASE/fundamental.html?mirror=${{ steps.req.outputs.id }}" -o "$OUT/fundamental.html"
+          python3 - <<'PY' "$OUT"
+          import re,sys,pathlib,urllib.request,urllib.parse,json,hashlib
+          out=pathlib.Path(sys.argv[1]);s=(out/"index.html").read_text(errors="ignore")
+          urls=re.findall(r'<script[^>]+src=["\x27]([^"\x27]+)',s,re.I)
+          rows=[]
+          for u in urls:
+              full=urllib.parse.urljoin("https://copytolive.com/",u)
+              if urllib.parse.urlparse(full).netloc!="copytolive.com":continue
+              if not urllib.parse.urlparse(full).path.endswith(".js"):continue
+              name=urllib.parse.urlparse(full).path.strip("/").replace("/","__")
+              try:
+                  req=urllib.request.Request(full,headers={"User-Agent":"Mozilla/5.0","Cache-Control":"no-cache"})
+                  with urllib.request.urlopen(req,timeout=30) as r:b=r.read()
+                  (out/name).write_bytes(b)
+                  rows.append({"url":full,"file":name,"bytes":len(b),"sha256":hashlib.sha256(b).hexdigest()})
+              except Exception as e:rows.append({"url":full,"error":repr(e)})
+          (out/"manifest.json").write_text(json.dumps(rows,indent=2)+"\n")
+          PY
+      - name: Commit mirror
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="${{ steps.req.outputs.out }}"
+          git config user.name "CopyToLive AI3 Prod Mirror"
+          git config user.email "copytolive-ai3-mirror@local.invalid"
+          git add "$OUT"
+          git commit -m "ai3 production mirror: ${{ steps.req.outputs.id }}" || true
+          for n in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort || true;sleep "$n";continue; }
+            if git push origin HEAD:main;then exit 0;fi
+          done
+          exit 1
