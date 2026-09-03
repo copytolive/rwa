@@ -70,7 +70,7 @@ jobs:
             if printf '%s' "$ROOT" | grep -Fq 'id="bookPrecision"' \
               && printf '%s' "$ROOT" | grep -Fq 'id="watchAdd"' \
               && printf '%s' "$ROOT" | grep -Fq 'app.js?v=19' \
-              && printf '%s' "$CORE" | grep -Fq 'rwa-live-home-v1.js?v=4.2.0'; then
+              && printf '%s' "$CORE" | grep -Fq 'rwa-live-home-v1.js?v=4.2.1'; then
               echo "Public target markers live at deployment $LIVE_SHA"
               exit 0
             fi
