@@ -8,6 +8,7 @@ const num=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
 const money=v=>Number.isFinite(Number(v))?'$'+Number(v).toLocaleString(undefined,{maximumFractionDigits:2}):'—';
 const pct=v=>Number.isFinite(Number(v))?(Number(v)>=0?'+':'')+Number(v).toFixed(2)+'%':'—';
 const compact=v=>{const n=num(v),a=Math.abs(n);return a>=1e9?'$'+(n/1e9).toFixed(2)+'B':a>=1e6?'$'+(n/1e6).toFixed(2)+'M':a>=1e3?'$'+(n/1e3).toFixed(1)+'K':money(n)};
+const shortWallet=v=>{const s=String(v||'').trim();return /^0x[a-fA-F0-9]{40}$/.test(s)?s.slice(0,6)+'…'+s.slice(-4):(s||'Market signal')};
 const store={get(k,d){try{const v=JSON.parse(localStorage.getItem(k)||'null');return v??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 let leftMode='watchlist',bottomMode='positions',mobileMode='chart',tradeSide='BUY',lastPair='',lastExchangeStamp=0,alertTimer=0,renderTimer=0,serviceTimer=0,serverReady=false,serverSession=false,serverAlerts=[],serverFeed=[],serverRewards=null,serverHolders=null,serverServiceError='';
 function market(){try{return window.RWAMarketRuntime?.state?.()||null}catch{return null}}
