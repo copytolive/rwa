@@ -14,7 +14,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: gold24-qualified-script-certification
+  group: gold24-qualified-script-certification-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
