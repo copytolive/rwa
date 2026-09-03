@@ -78,7 +78,7 @@ jobs:
           grep -Fq "limit=100" app.js
           grep -Fq "limit=innerWidth<681?70:140" app.js
           grep -Fq "recentTrades" app.js
-          grep -Fq "bookLevels:5" app.js
+          grep -Fq "bookLevels:9" app.js
           grep -Fq "bindBookControls" app.js
           grep -Fq "VERSION='5.0.0'" rwa-live-home-v1.js
           grep -Fq "renderLiveRail" rwa-live-home-v1.js
