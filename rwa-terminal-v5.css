@@ -526,3 +526,32 @@ body.rwa-terminal-v5 .rwa-v5-bottom-body{height:calc(100% - 39px)!important;back
   font:500 22px/1 system-ui!important;box-shadow:0 8px 24px #0009!important
  }
 }
+
+
+/* R6 AGREED HEADER NAV VISIBILITY + MOBILE PRICE */
+.rwa-v5-mobile-price{display:none}
+@media(min-width:1281px){
+ body.rwa-terminal-v5 #liveRail{
+  z-index:9100!important;
+  overflow:visible!important;
+  contain:none!important;
+  isolation:auto!important
+ }
+ body.rwa-terminal-v5 #liveRail>.rwa-v5-market-nav{
+  visibility:visible!important;opacity:1!important;clip:auto!important;clip-path:none!important;
+  transform:none!important;filter:none!important
+ }
+ body.rwa-terminal-v5 #liveRail>.rwa-v5-market-nav>button{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  visibility:visible!important;opacity:1!important;color:#a6b3c5!important
+ }
+ body.rwa-terminal-v5 #liveRail>.rwa-v5-market-nav>button.active{color:#fff!important}
+}
+@media(max-width:680px){
+ body.rwa-terminal-v5 .rwa-v5-mobile-price{
+  display:flex!important;align-items:baseline!important;gap:7px!important;margin-top:4px!important;white-space:nowrap!important
+ }
+ body.rwa-terminal-v5 .rwa-v5-mobile-price b{font-size:18px!important;line-height:1!important;color:#fff!important;letter-spacing:-.4px!important}
+ body.rwa-terminal-v5 .rwa-v5-mobile-price span{font-size:8px!important;font-weight:800!important}
+ body.rwa-terminal-v5 .instrument-copy>small{font-size:6.5px!important;line-height:1.15!important}
+}
