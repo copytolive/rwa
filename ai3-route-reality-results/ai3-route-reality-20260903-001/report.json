@@ -1,0 +1,3065 @@
+{
+  "id": "ai3-route-reality-20260903-001",
+  "ok": true,
+  "steps": [
+    {
+      "viewport": "desktop",
+      "action": "start-home",
+      "state": {
+        "url": "https://copytolive.com/?route-reality=ai3-route-reality-20260903-001&v=desktop&home=1",
+        "mode": "home",
+        "nav": {
+          "x": 598.8359375,
+          "y": 8,
+          "w": 456.328125,
+          "h": 66
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 598.8359375,
+            "y": 8,
+            "w": 51.015625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 37.015625,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 677.8515625,
+            "y": 8,
+            "w": 95.5625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 81.5625,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 801.4140625,
+            "y": 8,
+            "w": 87.671875,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 73.671875,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 917.0859375,
+            "y": 8,
+            "w": 57.09375,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 43.09375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 1002.1796875,
+            "y": 8,
+            "w": 52.984375,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 38.984375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "CTL Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Max Loss Any Profit Factor Any Win Rate Any Risk Reward Any Cari Analisis Semua Strategi Terbaru 100/118 STRATEGY ▼ ENTRIES PERIOD PROB RR PF PROFIT DD GROWTH ACTIONS ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 319 2003–2026 (23Y) 44.5% 2.3 1.84 $31517 8.8% +315.2% ND ALL OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 50% 1.8 1.82 $27730 12.8% +277.3% ND MTF ROC_ZERO — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 39.4% 2.8 1.79 $31632 10.8% +316.3% ND ALL DONCH_BO — GOLD GOLD/USDC H1 CANDLE 306 2003–2026 (23Y) 43.8% 2.3 1.78 $28683 10.8% +286.8% ND ALL EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 324 2003–2026 (23Y) 39.5% 2.7 1.77 $32416 18.2% +324.2% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 334 2003–2026 (23Y) 39.5% 2.7 1.77 $33456 23.1% +334.6% ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 376 2003–2026 (23Y) 39.4% 2.7 1.76 $37184 15.5% +371.8% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 43.5% 2.3 1.76 $28258 22.5% +282.6% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 357 2003–2026 (23Y) 39.5% 2.7 1.76 $35688 10.9% +356.9% ND MTF SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.9% 1.8 1.74 $26066 7.4% +260.7% ND ALL ADX_DI — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL ADX_STRONG — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 48.7% 1.8 1.73 $23934 12.5% +239.3% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 43% 2.3 1.73 $27345 22.5% +273.4% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 385 2003–2026 (23Y) 39% 2.7 1.73 $36840 19.9% +368.4% ND ALL ATR_BO — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 48.6% 1.8 1.72 $24419 9.6% +244.2% ND MTF KELTNER_BO — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 48.6% 1.8 1.72 $24942 8.9% +249.4% ND VM EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 355 2003–2026 (23Y) 38.9% 2.7 1.72 $33720 14.2% +337.2% ND VM LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 38.8% 2.7 1.72 $29256 18.3% +292.6% ND VM HARAMI — GOLD GOLD/USDC H1 CANDLE 339 2003–2026 (23Y) 48.4% 1.8 1.71 $26261 11.9% +262.6% ND ALL SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.3% 1.8 1.7 $24866 12.9% +248.7% ND MTF CORREL_REV — GOLD GOLD/USDC H1 CANDLE 314 2003–2026 (23Y) 42.7% 2.3 1.7 $26981 11.8% +269.8% ND MTF ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 336 2003–2026 (23Y) 38.1% 2.8 1.7 $30899 16.9% +309.0% ND VM ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 38.2% 2.8 1.7 $29342 11.4% +293.4% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 328 2003–2026 (23Y) 38.4% 2.7 1.69 $29952 19.2% +299.5% ND ALL ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 325 2003–2026 (23Y) 38.5% 2.7 1.69 $29800 14.7% +298.0% ND MTF AROON_XO — GOLD GOLD/USDC H1 CANDLE 320 2003–2026 (23Y) 42.5% 2.3 1.69 $27104 12.8% +271.0% ND MTF EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 38.1% 2.8 1.69 $29130 13.5% +291.3% ND MTF NATR_EX",
+        "error": false,
+        "scrollWidth": 1600,
+        "innerWidth": 1600
+      }
+    },
+    {
+      "viewport": "desktop",
+      "sequence": 1,
+      "action": "Fundamental",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "home",
+        "nav": {
+          "x": 598.8359375,
+          "y": 8,
+          "w": 456.328125,
+          "h": 66
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 598.8359375,
+            "y": 8,
+            "w": 51.015625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 37.015625,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 677.8515625,
+            "y": 8,
+            "w": 95.5625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 81.5625,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 801.4140625,
+            "y": 8,
+            "w": 87.671875,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 73.671875,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 917.0859375,
+            "y": 8,
+            "w": 57.09375,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 43.09375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 1002.1796875,
+            "y": 8,
+            "w": 52.984375,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 38.984375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [
+          {
+            "src": "https://copytolive.com/fundamental.html?embedded=1&v=20260903-11",
+            "x": 0,
+            "y": 0,
+            "w": 1600,
+            "h": 1000,
+            "child": {
+              "text": "Home Fundamental Signal Scan Crypto Hyperliquid Renko P/E Any ≤ 10 ≤ 15 ≤ 20 ≤ 25 ≤ 30 ≤ 40 ≤ 50 ROE Any ≥ 5% ≥ 10% ≥ 15% ≥ 20% ≥ 25% ≥ 30% Debt / Equity Any ≤ 0.25 ≤ 0.50 ≤ 1.00 ≤ 1.50 ≤ 2.00 Revenue Growth Any ≥ 0% ≥ 5% ≥ 10% ≥ 15% ≥ 20% ≥ 30% Cari FUNDAMENTAL RESEARCH Stock Research Screener Watchlist Fundamental API Live AAPL Apple Inc. SEC EDGAR LIVE Yahoo Price UNAVAILABLE Yahoo Fundamental UNAVAILABLE Precomputed Fundamentals 2026-05-23T23:48:09.669002+07:00 Yahoo chart: upstream 429 https://query1.finance.yahoo.com/v8/finance/chart/AAPL?range=1y&interval=1d&events=div%2Csplits Yahoo summary: upstream 429 https://query1.finance.yahoo.com/v1/test/getcrumb $0 As of 9/3/2026, 7:09:23 PM ☆ Add Watchlist Overview Valuation Growth Profitability Financials Health Ownership Insiders Filings Estimates Compare MARKET CAP $0 P/E 63.28 FORWARD P/E 0 ROIC 87.39% Return on invested capital FCF YIELD 0% Free cash flow / market cap DCF FAIR VALUE $98.62 Upside 0% Price history Price history unavailable Company overview Company description is not available from the current upstream source. CIK 320193 SIC 3571 Employees 0 REVENUE $416.16B NET INCOME $112.01B FREE CASH FLOW $98.77B NET DEBT $5",
+              "navs": [
+                "Home Fundamental Signal Scan Crypto Hyperliquid Renko"
+              ]
+            }
+          }
+        ],
+        "body": "CTL Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Max Loss Any Profit Factor Any Win Rate Any Risk Reward Any Cari Analisis Semua Strategi Terbaru 100/118 STRATEGY ▼ ENTRIES PERIOD PROB RR PF PROFIT DD GROWTH ACTIONS ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 319 2003–2026 (23Y) 44.5% 2.3 1.84 $31517 8.8% +315.2% ND ALL OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 50% 1.8 1.82 $27730 12.8% +277.3% ND MTF ROC_ZERO — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 39.4% 2.8 1.79 $31632 10.8% +316.3% ND ALL DONCH_BO — GOLD GOLD/USDC H1 CANDLE 306 2003–2026 (23Y) 43.8% 2.3 1.78 $28683 10.8% +286.8% ND ALL EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 324 2003–2026 (23Y) 39.5% 2.7 1.77 $32416 18.2% +324.2% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 334 2003–2026 (23Y) 39.5% 2.7 1.77 $33456 23.1% +334.6% ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 376 2003–2026 (23Y) 39.4% 2.7 1.76 $37184 15.5% +371.8% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 43.5% 2.3 1.76 $28258 22.5% +282.6% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 357 2003–2026 (23Y) 39.5% 2.7 1.76 $35688 10.9% +356.9% ND MTF SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.9% 1.8 1.74 $26066 7.4% +260.7% ND ALL ADX_DI — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL ADX_STRONG — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 48.7% 1.8 1.73 $23934 12.5% +239.3% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 43% 2.3 1.73 $27345 22.5% +273.4% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 385 2003–2026 (23Y) 39% 2.7 1.73 $36840 19.9% +368.4% ND ALL ATR_BO — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 48.6% 1.8 1.72 $24419 9.6% +244.2% ND MTF KELTNER_BO — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 48.6% 1.8 1.72 $24942 8.9% +249.4% ND VM EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 355 2003–2026 (23Y) 38.9% 2.7 1.72 $33720 14.2% +337.2% ND VM LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 38.8% 2.7 1.72 $29256 18.3% +292.6% ND VM HARAMI — GOLD GOLD/USDC H1 CANDLE 339 2003–2026 (23Y) 48.4% 1.8 1.71 $26261 11.9% +262.6% ND ALL SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.3% 1.8 1.7 $24866 12.9% +248.7% ND MTF CORREL_REV — GOLD GOLD/USDC H1 CANDLE 314 2003–2026 (23Y) 42.7% 2.3 1.7 $26981 11.8% +269.8% ND MTF ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 336 2003–2026 (23Y) 38.1% 2.8 1.7 $30899 16.9% +309.0% ND VM ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 38.2% 2.8 1.7 $29342 11.4% +293.4% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 328 2003–2026 (23Y) 38.4% 2.7 1.69 $29952 19.2% +299.5% ND ALL ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 325 2003–2026 (23Y) 38.5% 2.7 1.69 $29800 14.7% +298.0% ND MTF AROON_XO — GOLD GOLD/USDC H1 CANDLE 320 2003–2026 (23Y) 42.5% 2.3 1.69 $27104 12.8% +271.0% ND MTF EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 38.1% 2.8 1.69 $29130 13.5% +291.3% ND MTF NATR_EX",
+        "error": false,
+        "scrollWidth": 1600,
+        "innerWidth": 1600
+      }
+    },
+    {
+      "viewport": "desktop",
+      "sequence": 1,
+      "action": "Home",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "home",
+        "nav": {
+          "x": 598.8359375,
+          "y": 8,
+          "w": 456.328125,
+          "h": 66
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 598.8359375,
+            "y": 8,
+            "w": 51.015625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 37.015625,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 677.8515625,
+            "y": 8,
+            "w": 95.5625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 81.5625,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 801.4140625,
+            "y": 8,
+            "w": 87.671875,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 73.671875,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 917.0859375,
+            "y": 8,
+            "w": 57.09375,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 43.09375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 1002.1796875,
+            "y": 8,
+            "w": 52.984375,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 38.984375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [
+          {
+            "src": "https://copytolive.com/fundamental.html?embedded=1&v=20260903-11",
+            "x": 0,
+            "y": 0,
+            "w": 1600,
+            "h": 1000,
+            "child": {
+              "text": "Home Fundamental Signal Scan Crypto Hyperliquid Renko P/E Any ≤ 10 ≤ 15 ≤ 20 ≤ 25 ≤ 30 ≤ 40 ≤ 50 ROE Any ≥ 5% ≥ 10% ≥ 15% ≥ 20% ≥ 25% ≥ 30% Debt / Equity Any ≤ 0.25 ≤ 0.50 ≤ 1.00 ≤ 1.50 ≤ 2.00 Revenue Growth Any ≥ 0% ≥ 5% ≥ 10% ≥ 15% ≥ 20% ≥ 30% Cari FUNDAMENTAL RESEARCH Stock Research Screener Watchlist Fundamental API Live AAPL Apple Inc. SEC EDGAR LIVE Yahoo Price UNAVAILABLE Yahoo Fundamental UNAVAILABLE Precomputed Fundamentals 2026-05-23T23:48:09.669002+07:00 Yahoo chart: upstream 429 https://query1.finance.yahoo.com/v8/finance/chart/AAPL?range=1y&interval=1d&events=div%2Csplits Yahoo summary: upstream 429 https://query1.finance.yahoo.com/v1/test/getcrumb $0 As of 9/3/2026, 7:09:23 PM ☆ Add Watchlist Overview Valuation Growth Profitability Financials Health Ownership Insiders Filings Estimates Compare MARKET CAP $0 P/E 63.28 FORWARD P/E 0 ROIC 87.39% Return on invested capital FCF YIELD 0% Free cash flow / market cap DCF FAIR VALUE $98.62 Upside 0% Price history Price history unavailable Company overview Company description is not available from the current upstream source. CIK 320193 SIC 3571 Employees 0 REVENUE $416.16B NET INCOME $112.01B FREE CASH FLOW $98.77B NET DEBT $5",
+              "navs": [
+                "Home Fundamental Signal Scan Crypto Hyperliquid Renko"
+              ]
+            }
+          }
+        ],
+        "body": "CTL Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Max Loss Any Profit Factor Any Win Rate Any Risk Reward Any Cari Analisis Semua Strategi Terbaru 100/118 STRATEGY ▼ ENTRIES PERIOD PROB RR PF PROFIT DD GROWTH ACTIONS ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 319 2003–2026 (23Y) 44.5% 2.3 1.84 $31517 8.8% +315.2% ND ALL OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 50% 1.8 1.82 $27730 12.8% +277.3% ND MTF ROC_ZERO — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 39.4% 2.8 1.79 $31632 10.8% +316.3% ND ALL DONCH_BO — GOLD GOLD/USDC H1 CANDLE 306 2003–2026 (23Y) 43.8% 2.3 1.78 $28683 10.8% +286.8% ND ALL EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 324 2003–2026 (23Y) 39.5% 2.7 1.77 $32416 18.2% +324.2% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 334 2003–2026 (23Y) 39.5% 2.7 1.77 $33456 23.1% +334.6% ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 376 2003–2026 (23Y) 39.4% 2.7 1.76 $37184 15.5% +371.8% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 43.5% 2.3 1.76 $28258 22.5% +282.6% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 357 2003–2026 (23Y) 39.5% 2.7 1.76 $35688 10.9% +356.9% ND MTF SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.9% 1.8 1.74 $26066 7.4% +260.7% ND ALL ADX_DI — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL ADX_STRONG — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 48.7% 1.8 1.73 $23934 12.5% +239.3% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 43% 2.3 1.73 $27345 22.5% +273.4% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 385 2003–2026 (23Y) 39% 2.7 1.73 $36840 19.9% +368.4% ND ALL ATR_BO — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 48.6% 1.8 1.72 $24419 9.6% +244.2% ND MTF KELTNER_BO — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 48.6% 1.8 1.72 $24942 8.9% +249.4% ND VM EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 355 2003–2026 (23Y) 38.9% 2.7 1.72 $33720 14.2% +337.2% ND VM LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 38.8% 2.7 1.72 $29256 18.3% +292.6% ND VM HARAMI — GOLD GOLD/USDC H1 CANDLE 339 2003–2026 (23Y) 48.4% 1.8 1.71 $26261 11.9% +262.6% ND ALL SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.3% 1.8 1.7 $24866 12.9% +248.7% ND MTF CORREL_REV — GOLD GOLD/USDC H1 CANDLE 314 2003–2026 (23Y) 42.7% 2.3 1.7 $26981 11.8% +269.8% ND MTF ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 336 2003–2026 (23Y) 38.1% 2.8 1.7 $30899 16.9% +309.0% ND VM ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 38.2% 2.8 1.7 $29342 11.4% +293.4% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 328 2003–2026 (23Y) 38.4% 2.7 1.69 $29952 19.2% +299.5% ND ALL ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 325 2003–2026 (23Y) 38.5% 2.7 1.69 $29800 14.7% +298.0% ND MTF AROON_XO — GOLD GOLD/USDC H1 CANDLE 320 2003–2026 (23Y) 42.5% 2.3 1.69 $27104 12.8% +271.0% ND MTF EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 38.1% 2.8 1.69 $29130 13.5% +291.3% ND MTF NATR_EX",
+        "error": false,
+        "scrollWidth": 1600,
+        "innerWidth": 1600
+      }
+    },
+    {
+      "viewport": "desktop",
+      "sequence": 2,
+      "action": "Signal Scan",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "scanner-signal",
+        "nav": null,
+        "items": [],
+        "iframes": [],
+        "body": "CTL Scanner Signal Market Scanner Prefiltering Selected 7 Candidates 0 Signals 0 Instruments 7 selected Timeframe 15m 1h 4h 1d R:R 1:1 1:1.5 1:2 1:2.5 1:3 Mode Strict Moderate Aggressive Mencari kandidat… Auto Filter + Auto Prefilter aktif · Deep Scan tetap manual Instruments 7/163 Major 7/7 BTC ETH SOL HYPE XRP DOGE BNB Perpetuals 0/156 ATOM DYDX AVAX APE OP LTC ARB INJ KPEPE CRV LDO LINK STX CFX GMX SNX BCH AAVE COMP WLD UNI SEI RUNE DOT BANANA TRB KAS BLUR TIA ADA MINA POLYX PENDLE FET NEAR MEME ORDI NEO ZEN FIL PYTH SUSHI IMX KBONK GMT SUPER JUP KLUNC RSR JTO ACE WIF CAKE PEOPLE ENS ETC XAI MANTA ALT ZETA DYM W STRK TAO AR KFLOKI BOME ETHFI ENA TNSR SAGA MERL HBAR POPCAT EIGEN REZ NOT TURBO BRETT IO Tampilkan 76 lagi 10 Engine Prefilter 34 Deep Engines Deep manual Pilih instrument dan filter. Prefilter berjalan otomatis; 34-engine Deep Scan hanya berjalan setelah Anda menekan tombol Deep Scan. \\n DIRECT V4 - NO GITHUB aktif di home",
+        "error": false,
+        "scrollWidth": 1600,
+        "innerWidth": 1600
+      }
+    },
+    {
+      "viewport": "desktop",
+      "sequence": 2,
+      "action": "Home",
+      "clicked": false,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "scanner-signal",
+        "nav": null,
+        "items": [],
+        "iframes": [],
+        "body": "CTL Scanner Signal Market Scanner Prefiltering Selected 7 Candidates 0 Signals 0 Instruments 7 selected Timeframe 15m 1h 4h 1d R:R 1:1 1:1.5 1:2 1:2.5 1:3 Mode Strict Moderate Aggressive Mencari kandidat… Auto Filter + Auto Prefilter aktif · Deep Scan tetap manual Instruments 7/163 Major 7/7 BTC ETH SOL HYPE XRP DOGE BNB Perpetuals 0/156 ATOM DYDX AVAX APE OP LTC ARB INJ KPEPE CRV LDO LINK STX CFX GMX SNX BCH AAVE COMP WLD UNI SEI RUNE DOT BANANA TRB KAS BLUR TIA ADA MINA POLYX PENDLE FET NEAR MEME ORDI NEO ZEN FIL PYTH SUSHI IMX KBONK GMT SUPER JUP KLUNC RSR JTO ACE WIF CAKE PEOPLE ENS ETC XAI MANTA ALT ZETA DYM W STRK TAO AR KFLOKI BOME ETHFI ENA TNSR SAGA MERL HBAR POPCAT EIGEN REZ NOT TURBO BRETT IO Tampilkan 76 lagi 10 Engine Prefilter 34 Deep Engines Deep manual Pilih instrument dan filter. Prefilter berjalan otomatis; 34-engine Deep Scan hanya berjalan setelah Anda menekan tombol Deep Scan. \\n DIRECT V4 - NO GITHUB aktif di home",
+        "error": false,
+        "scrollWidth": 1600,
+        "innerWidth": 1600
+      }
+    },
+    {
+      "viewport": "desktop",
+      "sequence": 3,
+      "action": "Crypto",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/?route-reality=ai3-route-reality-20260903-001&v=desktop&seq=3&home=1",
+        "mode": "home",
+        "nav": {
+          "x": 603.8359375,
+          "y": 8,
+          "w": 456.328125,
+          "h": 66
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 603.8359375,
+            "y": 8,
+            "w": 51.015625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 37.015625,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 682.8515625,
+            "y": 8,
+            "w": 95.5625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 81.5625,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 806.4140625,
+            "y": 8,
+            "w": 87.671875,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 73.671875,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 922.0859375,
+            "y": 8,
+            "w": 57.09375,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 43.09375,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 1007.1796875,
+            "y": 8,
+            "w": 52.984375,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 38.984375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "CTL Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Metode Breakout ⌄ Position Any ⌄ Market Any ⌄ Status Any ⌄ Cari 🚀 Multi-TF Hyperliquid Screener· BREAKOUT AREA 177 Hyperliquid perp | ditampilkan 9 | diperbarui 12:26:57 AM | refresh UI 60s 🎯 Signal Mode 🔬 Pro Mode · HL ONLY AUTO REAL OFF 60+ 70+ 80+ TF·ANY M15 M30 H1 H4 D1 3 actionable (3 long · 0 short) BTC NEUTRAL conf 15% 24h -0.23% 📡 Scanning 177 koin Mencari signal confidence ≥ 60 (multi-TF + volume + trend match) Terakhir scan: 67401s lalu · refresh berikutnya: 0s Sistem auto-scan tiap 60 detik. Signal akan muncul otomatis bila ditemukan. ⚠️ Trading involves substantial risk of loss. AI signals are for informational purposes only, not financial advice. Past performance does not guarantee future results. \\n DIRECT V4 - NO GITHUB aktif di home",
+        "error": false,
+        "scrollWidth": 1600,
+        "innerWidth": 1600
+      }
+    },
+    {
+      "viewport": "desktop",
+      "sequence": 3,
+      "action": "Home",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/?route-reality=ai3-route-reality-20260903-001&v=desktop&seq=3&home=1",
+        "mode": "home",
+        "nav": {
+          "x": 598.8359375,
+          "y": 8,
+          "w": 456.328125,
+          "h": 66
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 598.8359375,
+            "y": 8,
+            "w": 51.015625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 37.015625,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 677.8515625,
+            "y": 8,
+            "w": 95.5625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 81.5625,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 801.4140625,
+            "y": 8,
+            "w": 87.671875,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 73.671875,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 917.0859375,
+            "y": 8,
+            "w": 57.09375,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 43.09375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 1002.1796875,
+            "y": 8,
+            "w": 52.984375,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 38.984375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "CTL Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Max Loss Any Profit Factor Any Win Rate Any Risk Reward Any Cari Analisis Semua Strategi Terbaru 100/118 STRATEGY ▼ ENTRIES PERIOD PROB RR PF PROFIT DD GROWTH ACTIONS ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 319 2003–2026 (23Y) 44.5% 2.3 1.84 $31517 8.8% +315.2% ND ALL OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 50% 1.8 1.82 $27730 12.8% +277.3% ND MTF ROC_ZERO — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 39.4% 2.8 1.79 $31632 10.8% +316.3% ND ALL DONCH_BO — GOLD GOLD/USDC H1 CANDLE 306 2003–2026 (23Y) 43.8% 2.3 1.78 $28683 10.8% +286.8% ND ALL EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 324 2003–2026 (23Y) 39.5% 2.7 1.77 $32416 18.2% +324.2% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 334 2003–2026 (23Y) 39.5% 2.7 1.77 $33456 23.1% +334.6% ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 376 2003–2026 (23Y) 39.4% 2.7 1.76 $37184 15.5% +371.8% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 43.5% 2.3 1.76 $28258 22.5% +282.6% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 357 2003–2026 (23Y) 39.5% 2.7 1.76 $35688 10.9% +356.9% ND MTF SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.9% 1.8 1.74 $26066 7.4% +260.7% ND ALL ADX_DI — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL ADX_STRONG — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 48.7% 1.8 1.73 $23934 12.5% +239.3% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 43% 2.3 1.73 $27345 22.5% +273.4% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 385 2003–2026 (23Y) 39% 2.7 1.73 $36840 19.9% +368.4% ND ALL ATR_BO — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 48.6% 1.8 1.72 $24419 9.6% +244.2% ND MTF KELTNER_BO — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 48.6% 1.8 1.72 $24942 8.9% +249.4% ND VM EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 355 2003–2026 (23Y) 38.9% 2.7 1.72 $33720 14.2% +337.2% ND VM LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 38.8% 2.7 1.72 $29256 18.3% +292.6% ND VM HARAMI — GOLD GOLD/USDC H1 CANDLE 339 2003–2026 (23Y) 48.4% 1.8 1.71 $26261 11.9% +262.6% ND ALL SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.3% 1.8 1.7 $24866 12.9% +248.7% ND MTF CORREL_REV — GOLD GOLD/USDC H1 CANDLE 314 2003–2026 (23Y) 42.7% 2.3 1.7 $26981 11.8% +269.8% ND MTF ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 336 2003–2026 (23Y) 38.1% 2.8 1.7 $30899 16.9% +309.0% ND VM ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 38.2% 2.8 1.7 $29342 11.4% +293.4% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 328 2003–2026 (23Y) 38.4% 2.7 1.69 $29952 19.2% +299.5% ND ALL ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 325 2003–2026 (23Y) 38.5% 2.7 1.69 $29800 14.7% +298.0% ND MTF AROON_XO — GOLD GOLD/USDC H1 CANDLE 320 2003–2026 (23Y) 42.5% 2.3 1.69 $27104 12.8% +271.0% ND MTF EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 38.1% 2.8 1.69 $29130 13.5% +291.3% ND MTF NATR_EX",
+        "error": false,
+        "scrollWidth": 1600,
+        "innerWidth": 1600
+      }
+    },
+    {
+      "viewport": "desktop",
+      "sequence": 4,
+      "action": "Renko",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "renko",
+        "nav": {
+          "x": 571.8359375,
+          "y": 7,
+          "w": 456.328125,
+          "h": 66
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 571.8359375,
+            "y": 7,
+            "w": 51.015625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 37.015625,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 650.8515625,
+            "y": 7,
+            "w": 95.5625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 81.5625,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 774.4140625,
+            "y": 7,
+            "w": 87.671875,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 73.671875,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 890.0859375,
+            "y": 7,
+            "w": 57.09375,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 43.09375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 975.1796875,
+            "y": 7,
+            "w": 52.984375,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 38.984375,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Metode Renko OOS Auto Pair EIGEN/USDC · OOS 76.3% GRASS/USDC · OOS 75.1% PURR/USDC · OOS 71.7% WLD/USDC · OOS 71.7% DASH/USDC · OOS 69.8% MORPHO/USDC · OOS 69.8% XPL/USDC · OOS 69.7% JTO/USDC · OOS 69.3% DOT/USDC · OOS 69.2% AAVE/USDC · OOS 69.0% AVAX/USDC · OOS 68.2% ALGO/USDC · OOS 68.1% SPX/USDC · OOS 68.0% IO/USDC · OOS 67.6% NIL/USDC · OOS 67.5% STABLE/USDC · OOS 66.8% HBAR/USDC · OOS 66.6% TNSR/USDC · OOS 66.6% ADA/USDC · OOS 66.5% TIA/USDC · OOS 66.3% BIO/USDC · OOS 66.1% SOL/USDC · OOS 65.8% XAI/USDC · OOS 65.7% APE/USDC · OOS 65.7% JUP/USDC · OOS 65.5% RESOLV/USDC · OOS 65.4% NEO/USDC · OOS 65.3% LINK/USDC · OOS 65.0% BANANA/USDC · OOS 64.9% XLM/USDC · OOS 64.9% ACE/USDC · OOS 64.9% KAITO/USDC · OOS 64.6% ATOM/USDC · OOS 64.5% LIT/USDC · OOS 64.1% BLUR/USDC · OOS 64.0% MON/USDC · OOS 63.9% ETC/USDC · OOS 63.7% LDO/USDC · OOS 63.7% VVV/USDC · OOS 63.5% DYDX/USDC · OOS 63.3% ALT/USDC · OOS 62.8% PYTH/USDC · OOS 62.7% ENA/USDC · OOS 62.7% POPCAT/USDC · OOS 62.6% SKR/USDC · OOS 62.4% SKY/USDC · OOS 62.4% PENDLE/USDC · OOS 62.2% CRV/USDC · OOS 62.1% NOT/USDC · OOS 61.8% FET/USDC · OOS 61.3% KLUNC/USDC · OOS 61.2% CELO/USDC · OOS 61.1% W/USDC · OOS 61.1% XRP/USDC · OOS 60.9% HEMI/USDC · OOS 60.7% ETHFI/USDC · OOS 60.7% ETH/USDC · OOS 60.6% MANTA/USDC · OOS 60.5% WIF/USDC · OOS 60.3% OP/USDC · OOS 60.1% BABY/USDC · OOS 60.1% DOGE/USDC · OOS 59.9% LTC/USDC · OOS 59.7% AERO/USDC · OOS 59.4% STBL/USDC · OOS 59.0% SNX/USDC · OOS 59.0% POLYX/USDC · OOS 59.0% AR/USDC · OOS 59.0% UNI/USDC · OOS 58.9% XMR/USDC · OOS 58.8% VIRTUAL/USDC · OOS 58.7% SUSHI/USDC · OOS 58.7% KNEIRO/USDC · OOS 58.7% MET/USDC · OOS 58.6% NXPC/USDC · OOS 58.4% NEAR/USDC · OOS 58.3% AVNT/USDC · OOS 58.2% ORDI/USDC · OOS 58.2% PENGU/USDC · OOS 57.8% RSR/USDC · OOS 57.8% BNB/USDC · OOS 57.7% MERL/USDC · OOS 57.7% GMX/USDC · OOS 57.6% BCH/USDC · OOS 57.6% FIL/USDC · OOS 57.4% REZ/USDC · OOS 57.4% SEI/USDC · OOS 57.2% MOVE/USDC · OOS 57.1% BRETT/USDC · OOS 57.1% MEME/USDC · OOS 57.0% ZORA/USDC · OOS 56.3% AIXBT/USDC · OOS 56.1% GOAT/USDC · OOS 56.1% RUNE/USDC · OOS 55.7% APEX/USDC · OOS 55.6% TURBO/USDC · OOS 55.4% BOME/USDC · OOS 55.4% FARTCOIN/USDC · OOS 55.2% INIT/USDC · OOS 55.2% S/USDC · OOS 55.0% TRB/USDC · OOS 54.9% USUAL/USDC · OOS 54.8% DYM/USDC · OOS 54.4% KAS/USDC · OOS 54.3% STX/USDC · OOS 54.3% 2Z/USDC · OOS 54.3% MELANIA/USDC · OOS 54.3% MINA/USDC · OOS 54.2% ZETA/USDC · OOS 54.1% ENS/USDC · OOS 54.0% ARB/USDC · OOS 54.0% CFX/USDC · OOS 54.0% MEGA/USDC · OOS 53.9% RENDER/USDC · OOS 53.8% ME/USDC · OOS 53.6% STRK/USDC · OOS 53.5% CAKE/USDC · OOS 53.5% ZK/USDC · OOS 53.2% ZEN/USDC · OOS 53.0% KFLOKI/USDC · OOS 52.3% PNUT/USDC · OOS 52.3% MOODENG/USDC · OOS 52.1% KBONK/USDC · OOS 51.8% SUPER/USDC · OOS 51.7% GMT/USDC · OOS 51.7% INJ/USDC · OOS 51.6% TAO/USDC · OOS 51.5% IOTA/USDC · OOS 51.4% PEOPLE/USDC · OOS 51.2% SAGA/USDC · OOS 51.0% ICP/USDC · OOS 50.8% KPEPE/USDC · OOS 50.7% HYPE/USDC · OOS 50.4% WLFI/USDC · ",
+        "error": false,
+        "scrollWidth": 1600,
+        "innerWidth": 1600
+      }
+    },
+    {
+      "viewport": "desktop",
+      "sequence": 4,
+      "action": "Home",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "home",
+        "nav": {
+          "x": 598.8359375,
+          "y": 8,
+          "w": 456.328125,
+          "h": 66
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 598.8359375,
+            "y": 8,
+            "w": 51.015625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 37.015625,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 677.8515625,
+            "y": 8,
+            "w": 95.5625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 81.5625,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 801.4140625,
+            "y": 8,
+            "w": 87.671875,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 73.671875,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 917.0859375,
+            "y": 8,
+            "w": 57.09375,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 43.09375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 1002.1796875,
+            "y": 8,
+            "w": 52.984375,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 38.984375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "CTL Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Max Loss Any Profit Factor Any Win Rate Any Risk Reward Any Cari Analisis Semua Strategi Terbaru 100/118 STRATEGY ▼ ENTRIES PERIOD PROB RR PF PROFIT DD GROWTH ACTIONS ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 319 2003–2026 (23Y) 44.5% 2.3 1.84 $31517 8.8% +315.2% ND ALL OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 50% 1.8 1.82 $27730 12.8% +277.3% ND MTF ROC_ZERO — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 39.4% 2.8 1.79 $31632 10.8% +316.3% ND ALL DONCH_BO — GOLD GOLD/USDC H1 CANDLE 306 2003–2026 (23Y) 43.8% 2.3 1.78 $28683 10.8% +286.8% ND ALL EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 324 2003–2026 (23Y) 39.5% 2.7 1.77 $32416 18.2% +324.2% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 334 2003–2026 (23Y) 39.5% 2.7 1.77 $33456 23.1% +334.6% ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 376 2003–2026 (23Y) 39.4% 2.7 1.76 $37184 15.5% +371.8% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 43.5% 2.3 1.76 $28258 22.5% +282.6% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 357 2003–2026 (23Y) 39.5% 2.7 1.76 $35688 10.9% +356.9% ND MTF SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.9% 1.8 1.74 $26066 7.4% +260.7% ND ALL ADX_DI — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL ADX_STRONG — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 48.7% 1.8 1.73 $23934 12.5% +239.3% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 43% 2.3 1.73 $27345 22.5% +273.4% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 385 2003–2026 (23Y) 39% 2.7 1.73 $36840 19.9% +368.4% ND ALL ATR_BO — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 48.6% 1.8 1.72 $24419 9.6% +244.2% ND MTF KELTNER_BO — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 48.6% 1.8 1.72 $24942 8.9% +249.4% ND VM EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 355 2003–2026 (23Y) 38.9% 2.7 1.72 $33720 14.2% +337.2% ND VM LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 38.8% 2.7 1.72 $29256 18.3% +292.6% ND VM HARAMI — GOLD GOLD/USDC H1 CANDLE 339 2003–2026 (23Y) 48.4% 1.8 1.71 $26261 11.9% +262.6% ND ALL SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.3% 1.8 1.7 $24866 12.9% +248.7% ND MTF CORREL_REV — GOLD GOLD/USDC H1 CANDLE 314 2003–2026 (23Y) 42.7% 2.3 1.7 $26981 11.8% +269.8% ND MTF ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 336 2003–2026 (23Y) 38.1% 2.8 1.7 $30899 16.9% +309.0% ND VM ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 38.2% 2.8 1.7 $29342 11.4% +293.4% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 328 2003–2026 (23Y) 38.4% 2.7 1.69 $29952 19.2% +299.5% ND ALL ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 325 2003–2026 (23Y) 38.5% 2.7 1.69 $29800 14.7% +298.0% ND MTF AROON_XO — GOLD GOLD/USDC H1 CANDLE 320 2003–2026 (23Y) 42.5% 2.3 1.69 $27104 12.8% +271.0% ND MTF EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 38.1% 2.8 1.69 $29130 13.5% +291.3% ND MTF NATR_EX",
+        "error": false,
+        "scrollWidth": 1600,
+        "innerWidth": 1600
+      }
+    },
+    {
+      "viewport": "desktop",
+      "sequence": 5,
+      "action": "Renko",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "renko",
+        "nav": {
+          "x": 571.8359375,
+          "y": 7,
+          "w": 456.328125,
+          "h": 66
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 571.8359375,
+            "y": 7,
+            "w": 51.015625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 37.015625,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 650.8515625,
+            "y": 7,
+            "w": 95.5625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 81.5625,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 774.4140625,
+            "y": 7,
+            "w": 87.671875,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 73.671875,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 890.0859375,
+            "y": 7,
+            "w": 57.09375,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 43.09375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 975.1796875,
+            "y": 7,
+            "w": 52.984375,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 38.984375,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Metode Renko OOS Auto Pair Memuat pair... Market Any Crypto Non-Crypto OOS WR Any ≥ 55% ≥ 60% ≥ 65% Cari SOL · RENKO — 🔒 SMA10 · entry lock 🔒 Klik untuk aktifkan chart loading SOL… › CRYPTO 0 NON-CRYPTO 0 QUICK ENTRY RENKO SMA GOLD ETC UNI AVAX XLM DOT 🔒 — · SMA10 MEMUAT CONNECTING History 0 / 0 — DATA RENKO Non-Crypto · HIP-3 · parameter terkunci OOS LOCK COVERAGE —–NOW OHLCV 0 · 1H TICKS N/A FULL BACKTEST OOS 30% — PF — TRADES — MAX DD — INDIKATOR 162 + PASANG \\n DIRECT V4 - NO GITHUB aktif di home",
+        "error": false,
+        "scrollWidth": 1600,
+        "innerWidth": 1600
+      }
+    },
+    {
+      "viewport": "desktop",
+      "sequence": 5,
+      "action": "Crypto",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "home",
+        "nav": {
+          "x": 603.8359375,
+          "y": 8,
+          "w": 456.328125,
+          "h": 66
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 603.8359375,
+            "y": 8,
+            "w": 51.015625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 37.015625,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 682.8515625,
+            "y": 8,
+            "w": 95.5625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 81.5625,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 806.4140625,
+            "y": 8,
+            "w": 87.671875,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 73.671875,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 922.0859375,
+            "y": 8,
+            "w": 57.09375,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 43.09375,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 1007.1796875,
+            "y": 8,
+            "w": 52.984375,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 38.984375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "CTL Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Metode Breakout ⌄ Position Any ⌄ Market Any ⌄ Status Any ⌄ Cari 🚀 Multi-TF Hyperliquid Screener· BREAKOUT AREA 177 Hyperliquid perp | ditampilkan 9 | diperbarui 12:26:57 AM | refresh UI 60s 🎯 Signal Mode 🔬 Pro Mode · HL ONLY AUTO REAL OFF 60+ 70+ 80+ TF·ANY M15 M30 H1 H4 D1 3 actionable (3 long · 0 short) BTC NEUTRAL conf 15% 24h -0.23% 📡 Scanning 177 koin... Mencari signal confidence ≥ 60 (multi-TF + volume + trend match) Terakhir scan: 67440s lalu · refresh berikutnya: 0s Sistem auto-scan tiap 60 detik. Signal akan muncul otomatis bila ditemukan. ⚠️ Trading involves substantial risk of loss. AI signals are for informational purposes only, not financial advice. Past performance does not guarantee future results. \\n DIRECT V4 - NO GITHUB aktif di home",
+        "error": false,
+        "scrollWidth": 1600,
+        "innerWidth": 1600
+      }
+    },
+    {
+      "viewport": "desktop",
+      "sequence": 5,
+      "action": "Home",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "home",
+        "nav": {
+          "x": 598.8359375,
+          "y": 8,
+          "w": 456.328125,
+          "h": 66
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 598.8359375,
+            "y": 8,
+            "w": 51.015625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 37.015625,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 677.8515625,
+            "y": 8,
+            "w": 95.5625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 81.5625,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 801.4140625,
+            "y": 8,
+            "w": 87.671875,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 73.671875,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 917.0859375,
+            "y": 8,
+            "w": 57.09375,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 43.09375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 1002.1796875,
+            "y": 8,
+            "w": 52.984375,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 38.984375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "CTL Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Max Loss Any Profit Factor Any Win Rate Any Risk Reward Any Cari Analisis Semua Strategi Terbaru 100/118 STRATEGY ▼ ENTRIES PERIOD PROB RR PF PROFIT DD GROWTH ACTIONS ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 319 2003–2026 (23Y) 44.5% 2.3 1.84 $31517 8.8% +315.2% ND ALL OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 50% 1.8 1.82 $27730 12.8% +277.3% ND MTF ROC_ZERO — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 39.4% 2.8 1.79 $31632 10.8% +316.3% ND ALL DONCH_BO — GOLD GOLD/USDC H1 CANDLE 306 2003–2026 (23Y) 43.8% 2.3 1.78 $28683 10.8% +286.8% ND ALL EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 324 2003–2026 (23Y) 39.5% 2.7 1.77 $32416 18.2% +324.2% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 334 2003–2026 (23Y) 39.5% 2.7 1.77 $33456 23.1% +334.6% ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 376 2003–2026 (23Y) 39.4% 2.7 1.76 $37184 15.5% +371.8% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 43.5% 2.3 1.76 $28258 22.5% +282.6% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 357 2003–2026 (23Y) 39.5% 2.7 1.76 $35688 10.9% +356.9% ND MTF SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.9% 1.8 1.74 $26066 7.4% +260.7% ND ALL ADX_DI — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL ADX_STRONG — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 48.7% 1.8 1.73 $23934 12.5% +239.3% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 43% 2.3 1.73 $27345 22.5% +273.4% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 385 2003–2026 (23Y) 39% 2.7 1.73 $36840 19.9% +368.4% ND ALL ATR_BO — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 48.6% 1.8 1.72 $24419 9.6% +244.2% ND MTF KELTNER_BO — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 48.6% 1.8 1.72 $24942 8.9% +249.4% ND VM EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 355 2003–2026 (23Y) 38.9% 2.7 1.72 $33720 14.2% +337.2% ND VM LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 38.8% 2.7 1.72 $29256 18.3% +292.6% ND VM HARAMI — GOLD GOLD/USDC H1 CANDLE 339 2003–2026 (23Y) 48.4% 1.8 1.71 $26261 11.9% +262.6% ND ALL SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.3% 1.8 1.7 $24866 12.9% +248.7% ND MTF CORREL_REV — GOLD GOLD/USDC H1 CANDLE 314 2003–2026 (23Y) 42.7% 2.3 1.7 $26981 11.8% +269.8% ND MTF ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 336 2003–2026 (23Y) 38.1% 2.8 1.7 $30899 16.9% +309.0% ND VM ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 38.2% 2.8 1.7 $29342 11.4% +293.4% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 328 2003–2026 (23Y) 38.4% 2.7 1.69 $29952 19.2% +299.5% ND ALL ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 325 2003–2026 (23Y) 38.5% 2.7 1.69 $29800 14.7% +298.0% ND MTF AROON_XO — GOLD GOLD/USDC H1 CANDLE 320 2003–2026 (23Y) 42.5% 2.3 1.69 $27104 12.8% +271.0% ND MTF EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 38.1% 2.8 1.69 $29130 13.5% +291.3% ND MTF NATR_EX",
+        "error": false,
+        "scrollWidth": 1600,
+        "innerWidth": 1600
+      }
+    },
+    {
+      "viewport": "desktop",
+      "sequence": 6,
+      "action": "Crypto",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/?route-reality=ai3-route-reality-20260903-001&v=desktop&seq=6&home=1",
+        "mode": "home",
+        "nav": {
+          "x": 603.8359375,
+          "y": 8,
+          "w": 456.328125,
+          "h": 66
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 603.8359375,
+            "y": 8,
+            "w": 51.015625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 37.015625,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 682.8515625,
+            "y": 8,
+            "w": 95.5625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 81.5625,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 806.4140625,
+            "y": 8,
+            "w": 87.671875,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 73.671875,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 922.0859375,
+            "y": 8,
+            "w": 57.09375,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 43.09375,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 1007.1796875,
+            "y": 8,
+            "w": 52.984375,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 38.984375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "CTL Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Metode Breakout ⌄ Position Any ⌄ Market Any ⌄ Status Any ⌄ Cari 🚀 Multi-TF Hyperliquid Screener· BREAKOUT AREA 177 Hyperliquid perp | ditampilkan 9 | diperbarui 12:26:57 AM | refresh UI 60s 🎯 Signal Mode 🔬 Pro Mode · HL ONLY AUTO REAL OFF 60+ 70+ 80+ TF·ANY M15 M30 H1 H4 D1 3 actionable (3 long · 0 short) BTC NEUTRAL conf 15% 24h -0.23% 📡 Scanning 177 koin. Mencari signal confidence ≥ 60 (multi-TF + volume + trend match) Terakhir scan: 67455s lalu · refresh berikutnya: 0s Sistem auto-scan tiap 60 detik. Signal akan muncul otomatis bila ditemukan. ⚠️ Trading involves substantial risk of loss. AI signals are for informational purposes only, not financial advice. Past performance does not guarantee future results. \\n DIRECT V4 - NO GITHUB aktif di home",
+        "error": false,
+        "scrollWidth": 1600,
+        "innerWidth": 1600
+      }
+    },
+    {
+      "viewport": "desktop",
+      "sequence": 6,
+      "action": "Renko",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "renko",
+        "nav": {
+          "x": 571.8359375,
+          "y": 7,
+          "w": 456.328125,
+          "h": 66
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 571.8359375,
+            "y": 7,
+            "w": 51.015625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 37.015625,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 650.8515625,
+            "y": 7,
+            "w": 95.5625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 81.5625,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 774.4140625,
+            "y": 7,
+            "w": 87.671875,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 73.671875,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 890.0859375,
+            "y": 7,
+            "w": 57.09375,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 43.09375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 975.1796875,
+            "y": 7,
+            "w": 52.984375,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 38.984375,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Metode Renko OOS Auto Pair Memuat pair... Market Any Crypto Non-Crypto OOS WR Any ≥ 55% ≥ 60% ≥ 65% Cari SOL · RENKO — 🔒 SMA10 · entry lock 🔒 Klik untuk aktifkan chart loading SOL… › CRYPTO 0 NON-CRYPTO 0 QUICK ENTRY RENKO SMA GOLD ETC UNI AVAX XLM DOT 🔒 — · SMA10 MEMUAT CONNECTING History 0 / 0 — DATA RENKO Non-Crypto · HIP-3 · parameter terkunci OOS LOCK COVERAGE —–NOW OHLCV 0 · 1H TICKS N/A FULL BACKTEST OOS 30% — PF — TRADES — MAX DD — INDIKATOR 162 + PASANG \\n DIRECT V4 - NO GITHUB aktif di home",
+        "error": false,
+        "scrollWidth": 1600,
+        "innerWidth": 1600
+      }
+    },
+    {
+      "viewport": "desktop",
+      "sequence": 6,
+      "action": "Home",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "home",
+        "nav": {
+          "x": 598.8359375,
+          "y": 8,
+          "w": 456.328125,
+          "h": 66
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 598.8359375,
+            "y": 8,
+            "w": 51.015625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 37.015625,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 677.8515625,
+            "y": 8,
+            "w": 95.5625,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 81.5625,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 801.4140625,
+            "y": 8,
+            "w": 87.671875,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 73.671875,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 917.0859375,
+            "y": 8,
+            "w": 57.09375,
+            "h": 66,
+            "icon": {
+              "w": 36,
+              "h": 36
+            },
+            "label": {
+              "w": 43.09375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 1002.1796875,
+            "y": 8,
+            "w": 52.984375,
+            "h": 66,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 38.984375,
+              "h": 19.5,
+              "fontSize": 13,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "CTL Home Fundamental Signal Scan ₿ Crypto Renko All Filter Any Max Loss Any Profit Factor Any Win Rate Any Risk Reward Any Cari Analisis Semua Strategi Terbaru 100/118 STRATEGY ▼ ENTRIES PERIOD PROB RR PF PROFIT DD GROWTH ACTIONS ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 319 2003–2026 (23Y) 44.5% 2.3 1.84 $31517 8.8% +315.2% ND ALL OBV_CROSS — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 50% 1.8 1.82 $27730 12.8% +277.3% ND MTF ROC_ZERO — GOLD GOLD/USDC H1 CANDLE 310 2003–2026 (23Y) 39.4% 2.8 1.79 $31632 10.8% +316.3% ND ALL DONCH_BO — GOLD GOLD/USDC H1 CANDLE 306 2003–2026 (23Y) 43.8% 2.3 1.78 $28683 10.8% +286.8% ND ALL EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 324 2003–2026 (23Y) 39.5% 2.7 1.77 $32416 18.2% +324.2% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 334 2003–2026 (23Y) 39.5% 2.7 1.77 $33456 23.1% +334.6% ND MTF LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 376 2003–2026 (23Y) 39.4% 2.7 1.76 $37184 15.5% +371.8% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 308 2003–2026 (23Y) 43.5% 2.3 1.76 $28258 22.5% +282.6% ND VM BB_SQZ — GOLD GOLD/USDC H1 CANDLE 357 2003–2026 (23Y) 39.5% 2.7 1.76 $35688 10.9% +356.9% ND MTF SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.9% 1.8 1.74 $26066 7.4% +260.7% ND ALL ADX_DI — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL ADX_STRONG — GOLD GOLD/USDC H1 CANDLE 344 2003–2026 (23Y) 39% 2.7 1.73 $32896 9.0% +329.0% ND ALL HARAMI — GOLD GOLD/USDC H1 CANDLE 302 2003–2026 (23Y) 48.7% 1.8 1.73 $23934 12.5% +239.3% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 43% 2.3 1.73 $27345 22.5% +273.4% ND MTF BB_SQZ — GOLD GOLD/USDC H1 CANDLE 385 2003–2026 (23Y) 39% 2.7 1.73 $36840 19.9% +368.4% ND ALL ATR_BO — GOLD GOLD/USDC H1 CANDLE 311 2003–2026 (23Y) 48.6% 1.8 1.72 $24419 9.6% +244.2% ND MTF KELTNER_BO — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 48.6% 1.8 1.72 $24942 8.9% +249.4% ND VM EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 355 2003–2026 (23Y) 38.9% 2.7 1.72 $33720 14.2% +337.2% ND VM LINREG_SLP — GOLD GOLD/USDC H1 CANDLE 309 2003–2026 (23Y) 38.8% 2.7 1.72 $29256 18.3% +292.6% ND VM HARAMI — GOLD GOLD/USDC H1 CANDLE 339 2003–2026 (23Y) 48.4% 1.8 1.71 $26261 11.9% +262.6% ND ALL SUPERT_PROXY — GOLD GOLD/USDC H1 CANDLE 323 2003–2026 (23Y) 48.3% 1.8 1.7 $24866 12.9% +248.7% ND MTF CORREL_REV — GOLD GOLD/USDC H1 CANDLE 314 2003–2026 (23Y) 42.7% 2.3 1.7 $26981 11.8% +269.8% ND MTF ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 336 2003–2026 (23Y) 38.1% 2.8 1.7 $30899 16.9% +309.0% ND VM ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 317 2003–2026 (23Y) 38.2% 2.8 1.7 $29342 11.4% +293.4% ND ALL BB_SQZ — GOLD GOLD/USDC H1 CANDLE 328 2003–2026 (23Y) 38.4% 2.7 1.69 $29952 19.2% +299.5% ND ALL ZSCORE_MR — GOLD GOLD/USDC H1 CANDLE 325 2003–2026 (23Y) 38.5% 2.7 1.69 $29800 14.7% +298.0% ND MTF AROON_XO — GOLD GOLD/USDC H1 CANDLE 320 2003–2026 (23Y) 42.5% 2.3 1.69 $27104 12.8% +271.0% ND MTF EMA_RIBBON — GOLD GOLD/USDC H1 CANDLE 318 2003–2026 (23Y) 38.1% 2.8 1.69 $29130 13.5% +291.3% ND MTF NATR_EX",
+        "error": false,
+        "scrollWidth": 1600,
+        "innerWidth": 1600
+      }
+    },
+    {
+      "viewport": "mobile",
+      "action": "start-home",
+      "state": {
+        "url": "https://copytolive.com/?route-reality=ai3-route-reality-20260903-001&v=mobile&home=1",
+        "mode": "home",
+        "nav": {
+          "x": 0,
+          "y": 69.5,
+          "w": 390,
+          "h": 73
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 10.5,
+            "y": 80,
+            "w": 32,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 32,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 53,
+            "y": 80,
+            "w": 69.015625,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 69.015625,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 132.515625,
+            "y": 80,
+            "w": 62.328125,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 62.328125,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 205.34375,
+            "y": 80,
+            "w": 36.46875,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 36.46875,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 252.3125,
+            "y": 80,
+            "w": 32.984375,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 32.984375,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "Cari strategi Filter berdasarkan kriteria Home Fundamental Signal Scan ₿ Crypto Renko Max Loss: Any Profit Factor: Any Win Rate: Any Risk Reward: Any Analisis Semua Strategi Terbaru 100/118 PAIR ENT PERIOD PROB RR PF PROFIT DD FAV GOLD GOLD/USDC H1 CANDLE 319 23Y 45% 2.3 1.8 $32K 9% GOLD GOLD/USDC H1 CANDLE 318 23Y 50% 1.8 1.8 $28K 13% GOLD GOLD/USDC H1 CANDLE 310 23Y 39% 2.8 1.8 $32K 11% GOLD GOLD/USDC H1 CANDLE 306 23Y 44% 2.3 1.8 $29K 11% GOLD GOLD/USDC H1 CANDLE 324 23Y 40% 2.7 1.8 $32K 18% GOLD GOLD/USDC H1 CANDLE 334 23Y 40% 2.7 1.8 $33K 23% GOLD GOLD/USDC H1 CANDLE 376 23Y 39% 2.7 1.8 $37K 16% GOLD GOLD/USDC H1 CANDLE 308 23Y 44% 2.3 1.8 $28K 23% GOLD GOLD/USDC H1 CANDLE 357 23Y 40% 2.7 1.8 $36K 11% GOLD GOLD/USDC H1 CANDLE 323 23Y 49% 1.8 1.7 $26K 7% GOLD GOLD/USDC H1 CANDLE 344 23Y 39% 2.7 1.7 $33K 9% GOLD GOLD/USDC H1 CANDLE 344 23Y 39% 2.7 1.7 $33K 9% GOLD GOLD/USDC H1 CANDLE 302 23Y 49% 1.8 1.7 $24K 13% GOLD GOLD/USDC H1 CANDLE 309 23Y 43% 2.3 1.7 $27K 23% GOLD GOLD/USDC H1 CANDLE 385 23Y 39% 2.7 1.7 $37K 20% GOLD GOLD/USDC H1 CANDLE 311 23Y 49% 1.8 1.7 $24K 10% GOLD GOLD/USDC H1 CANDLE 317 23Y 49% 1.8 1.7 $25K 9% GOLD GOLD/USDC H1 CANDLE 355 23Y 39% 2.7 1.7 $34K 14% GOLD GOLD/USDC H1 CANDLE 309 23Y 39% 2.7 1.7 $29K 18% GOLD GOLD/USDC H1 CANDLE 339 23Y 48% 1.8 1.7 $26K 12% GOLD GOLD/USDC H1 CANDLE 323 23Y 48% 1.8 1.7 $25K 13% GOLD GOLD/USDC H1 CANDLE 314 23Y 43% 2.3 1.7 $27K 12% GOLD GOLD/USDC H1 CANDLE 336 23Y 38% 2.8 1.7 $31K 17% GOLD GOLD/USDC H1 CANDLE 317 23Y 38% 2.8 1.7 $29K 11% GOLD GOLD/USDC H1 CANDLE 328 23Y 38% 2.7 1.7 $30K 19% GOLD GOLD/USDC H1 CANDLE 325 23Y 39% 2.7 1.7 $30K 15% GOLD GOLD/USDC H1 CANDLE 320 23Y 43% 2.3 1.7 $27K 13% GOLD GOLD/USDC H1 CANDLE 318 23Y 38% 2.8 1.7 $29K 14% GOLD GOLD/USDC H1 CANDLE 315 23Y 43% 2.3 1.7 $27K 10% GOLD GOLD/USDC H1 CANDLE 306 23Y 43% 2.3 1.7 $26K 20% GOLD GOLD/USDC H1 CANDLE 311 23Y 42% 2.3 1.7 $26K 24% GOLD GOLD/USDC H1 CANDLE 327 23Y 43% 2.2 1.7 $27K 14% GOLD GOLD/USDC H1 CANDLE 317 23Y 48% 1.8 1.7 $24K 14% GOLD GOLD/USDC H1 CANDLE 354 23Y 48% 1.8 1.7 $27K 18% GOLD GOLD/USDC H1 CANDLE 305 23Y 38% 2.7 1.7 $28K 18% GOLD GOLD/USDC H1 CANDLE 309 23Y 48% 1.9 1.7 $23K 8% GOLD GOLD/USDC H1 CANDLE 310 23Y 42% 2.3 1.7 $26K 10% GOLD GOLD/USDC H1 CANDLE 389 23Y 43% 2.2 1.7 $32K 11% GOLD GOLD/USDC H1 CANDLE 389 23Y 43% 2.2 1.7 $32K 11% GOLD GOLD/USDC H1 CANDLE 305 23Y 48% 1.9 1.7 $23K 12% GOLD GOLD/USDC H1 CANDLE 341 23Y 38% 2.7 1.7 $30K 18% GOLD GOLD/USDC H1 CANDLE 323 23Y 42% 2.3 1.7 $26K 11% GOLD GOLD/USDC H1 CANDLE 325 23Y 42% 2.3 1.7 $27K 11% GOLD GOLD/USDC H1 CANDLE 350 23Y 43% 2.2 1.7 $29K 20% GOLD GOLD/USDC H1 CANDLE 302 23Y 42% 2.3 1.7 $25K 16% GOLD GOLD/USDC H1 CANDLE 369 23Y 48% 1.8 1.7 $27K 7% GOLD GOLD/USDC H1 CANDLE 321 23Y 48% 1.8 1.7 $23K 13% GOLD GOLD/USDC H1 CANDLE 312 23Y 39% 2.6 1.7 $28K 11% GOLD GOLD/USDC H1 CANDLE 358 23Y 38% 2.7 1.7 $31K 15% GOLD GOLD/USDC H1 CANDLE 321 23Y 42% 2.3 1.7 $26K 10% GOLD GOLD/USDC H1 CANDLE 331 23Y 43% 2.2 1.7 $27K 18% GOLD GOLD/USDC H1 CAND",
+        "error": false,
+        "scrollWidth": 390,
+        "innerWidth": 390
+      }
+    },
+    {
+      "viewport": "mobile",
+      "sequence": 1,
+      "action": "Fundamental",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "home",
+        "nav": {
+          "x": 0,
+          "y": 69.5,
+          "w": 390,
+          "h": 73
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 10.5,
+            "y": 80,
+            "w": 32,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 32,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 53,
+            "y": 80,
+            "w": 69.015625,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 69.015625,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 132.515625,
+            "y": 80,
+            "w": 62.328125,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 62.328125,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 205.34375,
+            "y": 80,
+            "w": 36.46875,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 36.46875,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 252.3125,
+            "y": 80,
+            "w": 32.984375,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 32.984375,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [
+          {
+            "src": "https://copytolive.com/fundamental.html?embedded=1&v=20260903-11",
+            "x": 0,
+            "y": 0,
+            "w": 390,
+            "h": 844,
+            "child": {
+              "text": "Home Fundamental Signal Scan Crypto Hyperliquid Renko P/E Any ≤ 10 ≤ 15 ≤ 20 ≤ 25 ≤ 30 ≤ 40 ≤ 50 ROE Any ≥ 5% ≥ 10% ≥ 15% ≥ 20% ≥ 25% ≥ 30% Debt / Equity Any ≤ 0.25 ≤ 0.50 ≤ 1.00 ≤ 1.50 ≤ 2.00 Revenue Growth Any ≥ 0% ≥ 5% ≥ 10% ≥ 15% ≥ 20% ≥ 30% Cari FUNDAMENTAL RESEARCH Stock Research Screener Watchlist Connecting Loading fundamental research... Data is sourced from SEC EDGAR/XBRL and Yahoo Finance when available. DCF values are model estimates derived from reported free cash flow and explicit assumptions, not a recommendation. Research use only; not investment advice.",
+              "navs": [
+                "Home Fundamental Signal Scan Crypto Hyperliquid Renko"
+              ]
+            }
+          }
+        ],
+        "body": "Cari strategi Filter berdasarkan kriteria Home Fundamental Signal Scan ₿ Crypto Renko Max Loss: Any Profit Factor: Any Win Rate: Any Risk Reward: Any Analisis Semua Strategi Terbaru 100/118 PAIR ENT PERIOD PROB RR PF PROFIT DD FAV GOLD GOLD/USDC H1 CANDLE 319 23Y 45% 2.3 1.8 $32K 9% GOLD GOLD/USDC H1 CANDLE 318 23Y 50% 1.8 1.8 $28K 13% GOLD GOLD/USDC H1 CANDLE 310 23Y 39% 2.8 1.8 $32K 11% GOLD GOLD/USDC H1 CANDLE 306 23Y 44% 2.3 1.8 $29K 11% GOLD GOLD/USDC H1 CANDLE 324 23Y 40% 2.7 1.8 $32K 18% GOLD GOLD/USDC H1 CANDLE 334 23Y 40% 2.7 1.8 $33K 23% GOLD GOLD/USDC H1 CANDLE 376 23Y 39% 2.7 1.8 $37K 16% GOLD GOLD/USDC H1 CANDLE 308 23Y 44% 2.3 1.8 $28K 23% GOLD GOLD/USDC H1 CANDLE 357 23Y 40% 2.7 1.8 $36K 11% GOLD GOLD/USDC H1 CANDLE 323 23Y 49% 1.8 1.7 $26K 7% GOLD GOLD/USDC H1 CANDLE 344 23Y 39% 2.7 1.7 $33K 9% GOLD GOLD/USDC H1 CANDLE 344 23Y 39% 2.7 1.7 $33K 9% GOLD GOLD/USDC H1 CANDLE 302 23Y 49% 1.8 1.7 $24K 13% GOLD GOLD/USDC H1 CANDLE 309 23Y 43% 2.3 1.7 $27K 23% GOLD GOLD/USDC H1 CANDLE 385 23Y 39% 2.7 1.7 $37K 20% GOLD GOLD/USDC H1 CANDLE 311 23Y 49% 1.8 1.7 $24K 10% GOLD GOLD/USDC H1 CANDLE 317 23Y 49% 1.8 1.7 $25K 9% GOLD GOLD/USDC H1 CANDLE 355 23Y 39% 2.7 1.7 $34K 14% GOLD GOLD/USDC H1 CANDLE 309 23Y 39% 2.7 1.7 $29K 18% GOLD GOLD/USDC H1 CANDLE 339 23Y 48% 1.8 1.7 $26K 12% GOLD GOLD/USDC H1 CANDLE 323 23Y 48% 1.8 1.7 $25K 13% GOLD GOLD/USDC H1 CANDLE 314 23Y 43% 2.3 1.7 $27K 12% GOLD GOLD/USDC H1 CANDLE 336 23Y 38% 2.8 1.7 $31K 17% GOLD GOLD/USDC H1 CANDLE 317 23Y 38% 2.8 1.7 $29K 11% GOLD GOLD/USDC H1 CANDLE 328 23Y 38% 2.7 1.7 $30K 19% GOLD GOLD/USDC H1 CANDLE 325 23Y 39% 2.7 1.7 $30K 15% GOLD GOLD/USDC H1 CANDLE 320 23Y 43% 2.3 1.7 $27K 13% GOLD GOLD/USDC H1 CANDLE 318 23Y 38% 2.8 1.7 $29K 14% GOLD GOLD/USDC H1 CANDLE 315 23Y 43% 2.3 1.7 $27K 10% GOLD GOLD/USDC H1 CANDLE 306 23Y 43% 2.3 1.7 $26K 20% GOLD GOLD/USDC H1 CANDLE 311 23Y 42% 2.3 1.7 $26K 24% GOLD GOLD/USDC H1 CANDLE 327 23Y 43% 2.2 1.7 $27K 14% GOLD GOLD/USDC H1 CANDLE 317 23Y 48% 1.8 1.7 $24K 14% GOLD GOLD/USDC H1 CANDLE 354 23Y 48% 1.8 1.7 $27K 18% GOLD GOLD/USDC H1 CANDLE 305 23Y 38% 2.7 1.7 $28K 18% GOLD GOLD/USDC H1 CANDLE 309 23Y 48% 1.9 1.7 $23K 8% GOLD GOLD/USDC H1 CANDLE 310 23Y 42% 2.3 1.7 $26K 10% GOLD GOLD/USDC H1 CANDLE 389 23Y 43% 2.2 1.7 $32K 11% GOLD GOLD/USDC H1 CANDLE 389 23Y 43% 2.2 1.7 $32K 11% GOLD GOLD/USDC H1 CANDLE 305 23Y 48% 1.9 1.7 $23K 12% GOLD GOLD/USDC H1 CANDLE 341 23Y 38% 2.7 1.7 $30K 18% GOLD GOLD/USDC H1 CANDLE 323 23Y 42% 2.3 1.7 $26K 11% GOLD GOLD/USDC H1 CANDLE 325 23Y 42% 2.3 1.7 $27K 11% GOLD GOLD/USDC H1 CANDLE 350 23Y 43% 2.2 1.7 $29K 20% GOLD GOLD/USDC H1 CANDLE 302 23Y 42% 2.3 1.7 $25K 16% GOLD GOLD/USDC H1 CANDLE 369 23Y 48% 1.8 1.7 $27K 7% GOLD GOLD/USDC H1 CANDLE 321 23Y 48% 1.8 1.7 $23K 13% GOLD GOLD/USDC H1 CANDLE 312 23Y 39% 2.6 1.7 $28K 11% GOLD GOLD/USDC H1 CANDLE 358 23Y 38% 2.7 1.7 $31K 15% GOLD GOLD/USDC H1 CANDLE 321 23Y 42% 2.3 1.7 $26K 10% GOLD GOLD/USDC H1 CANDLE 331 23Y 43% 2.2 1.7 $27K 18% GOLD GOLD/USDC H1 CAND",
+        "error": false,
+        "scrollWidth": 390,
+        "innerWidth": 390
+      }
+    },
+    {
+      "viewport": "mobile",
+      "sequence": 1,
+      "action": "Home",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "home",
+        "nav": {
+          "x": 0,
+          "y": 69.5,
+          "w": 390,
+          "h": 73
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 10.5,
+            "y": 80,
+            "w": 32,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 32,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 53,
+            "y": 80,
+            "w": 69.015625,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 69.015625,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 132.515625,
+            "y": 80,
+            "w": 62.328125,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 62.328125,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 205.34375,
+            "y": 80,
+            "w": 36.46875,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 36.46875,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 252.3125,
+            "y": 80,
+            "w": 32.984375,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 32.984375,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [
+          {
+            "src": "https://copytolive.com/fundamental.html?embedded=1&v=20260903-11",
+            "x": 0,
+            "y": 0,
+            "w": 390,
+            "h": 844,
+            "child": {
+              "text": "Home Fundamental Signal Scan Crypto Hyperliquid Renko P/E Any ≤ 10 ≤ 15 ≤ 20 ≤ 25 ≤ 30 ≤ 40 ≤ 50 ROE Any ≥ 5% ≥ 10% ≥ 15% ≥ 20% ≥ 25% ≥ 30% Debt / Equity Any ≤ 0.25 ≤ 0.50 ≤ 1.00 ≤ 1.50 ≤ 2.00 Revenue Growth Any ≥ 0% ≥ 5% ≥ 10% ≥ 15% ≥ 20% ≥ 30% Cari FUNDAMENTAL RESEARCH Stock Research Screener Watchlist Fundamental API Live Loading AAPL from SEC and market sources... Data is sourced from SEC EDGAR/XBRL and Yahoo Finance when available. DCF values are model estimates derived from reported free cash flow and explicit assumptions, not a recommendation. Research use only; not investment advice.",
+              "navs": [
+                "Home Fundamental Signal Scan Crypto Hyperliquid Renko"
+              ]
+            }
+          }
+        ],
+        "body": "Cari strategi Filter berdasarkan kriteria Home Fundamental Signal Scan ₿ Crypto Renko Max Loss: Any Profit Factor: Any Win Rate: Any Risk Reward: Any Analisis Semua Strategi Terbaru 100/118 PAIR ENT PERIOD PROB RR PF PROFIT DD FAV GOLD GOLD/USDC H1 CANDLE 319 23Y 45% 2.3 1.8 $32K 9% GOLD GOLD/USDC H1 CANDLE 318 23Y 50% 1.8 1.8 $28K 13% GOLD GOLD/USDC H1 CANDLE 310 23Y 39% 2.8 1.8 $32K 11% GOLD GOLD/USDC H1 CANDLE 306 23Y 44% 2.3 1.8 $29K 11% GOLD GOLD/USDC H1 CANDLE 324 23Y 40% 2.7 1.8 $32K 18% GOLD GOLD/USDC H1 CANDLE 334 23Y 40% 2.7 1.8 $33K 23% GOLD GOLD/USDC H1 CANDLE 376 23Y 39% 2.7 1.8 $37K 16% GOLD GOLD/USDC H1 CANDLE 308 23Y 44% 2.3 1.8 $28K 23% GOLD GOLD/USDC H1 CANDLE 357 23Y 40% 2.7 1.8 $36K 11% GOLD GOLD/USDC H1 CANDLE 323 23Y 49% 1.8 1.7 $26K 7% GOLD GOLD/USDC H1 CANDLE 344 23Y 39% 2.7 1.7 $33K 9% GOLD GOLD/USDC H1 CANDLE 344 23Y 39% 2.7 1.7 $33K 9% GOLD GOLD/USDC H1 CANDLE 302 23Y 49% 1.8 1.7 $24K 13% GOLD GOLD/USDC H1 CANDLE 309 23Y 43% 2.3 1.7 $27K 23% GOLD GOLD/USDC H1 CANDLE 385 23Y 39% 2.7 1.7 $37K 20% GOLD GOLD/USDC H1 CANDLE 311 23Y 49% 1.8 1.7 $24K 10% GOLD GOLD/USDC H1 CANDLE 317 23Y 49% 1.8 1.7 $25K 9% GOLD GOLD/USDC H1 CANDLE 355 23Y 39% 2.7 1.7 $34K 14% GOLD GOLD/USDC H1 CANDLE 309 23Y 39% 2.7 1.7 $29K 18% GOLD GOLD/USDC H1 CANDLE 339 23Y 48% 1.8 1.7 $26K 12% GOLD GOLD/USDC H1 CANDLE 323 23Y 48% 1.8 1.7 $25K 13% GOLD GOLD/USDC H1 CANDLE 314 23Y 43% 2.3 1.7 $27K 12% GOLD GOLD/USDC H1 CANDLE 336 23Y 38% 2.8 1.7 $31K 17% GOLD GOLD/USDC H1 CANDLE 317 23Y 38% 2.8 1.7 $29K 11% GOLD GOLD/USDC H1 CANDLE 328 23Y 38% 2.7 1.7 $30K 19% GOLD GOLD/USDC H1 CANDLE 325 23Y 39% 2.7 1.7 $30K 15% GOLD GOLD/USDC H1 CANDLE 320 23Y 43% 2.3 1.7 $27K 13% GOLD GOLD/USDC H1 CANDLE 318 23Y 38% 2.8 1.7 $29K 14% GOLD GOLD/USDC H1 CANDLE 315 23Y 43% 2.3 1.7 $27K 10% GOLD GOLD/USDC H1 CANDLE 306 23Y 43% 2.3 1.7 $26K 20% GOLD GOLD/USDC H1 CANDLE 311 23Y 42% 2.3 1.7 $26K 24% GOLD GOLD/USDC H1 CANDLE 327 23Y 43% 2.2 1.7 $27K 14% GOLD GOLD/USDC H1 CANDLE 317 23Y 48% 1.8 1.7 $24K 14% GOLD GOLD/USDC H1 CANDLE 354 23Y 48% 1.8 1.7 $27K 18% GOLD GOLD/USDC H1 CANDLE 305 23Y 38% 2.7 1.7 $28K 18% GOLD GOLD/USDC H1 CANDLE 309 23Y 48% 1.9 1.7 $23K 8% GOLD GOLD/USDC H1 CANDLE 310 23Y 42% 2.3 1.7 $26K 10% GOLD GOLD/USDC H1 CANDLE 389 23Y 43% 2.2 1.7 $32K 11% GOLD GOLD/USDC H1 CANDLE 389 23Y 43% 2.2 1.7 $32K 11% GOLD GOLD/USDC H1 CANDLE 305 23Y 48% 1.9 1.7 $23K 12% GOLD GOLD/USDC H1 CANDLE 341 23Y 38% 2.7 1.7 $30K 18% GOLD GOLD/USDC H1 CANDLE 323 23Y 42% 2.3 1.7 $26K 11% GOLD GOLD/USDC H1 CANDLE 325 23Y 42% 2.3 1.7 $27K 11% GOLD GOLD/USDC H1 CANDLE 350 23Y 43% 2.2 1.7 $29K 20% GOLD GOLD/USDC H1 CANDLE 302 23Y 42% 2.3 1.7 $25K 16% GOLD GOLD/USDC H1 CANDLE 369 23Y 48% 1.8 1.7 $27K 7% GOLD GOLD/USDC H1 CANDLE 321 23Y 48% 1.8 1.7 $23K 13% GOLD GOLD/USDC H1 CANDLE 312 23Y 39% 2.6 1.7 $28K 11% GOLD GOLD/USDC H1 CANDLE 358 23Y 38% 2.7 1.7 $31K 15% GOLD GOLD/USDC H1 CANDLE 321 23Y 42% 2.3 1.7 $26K 10% GOLD GOLD/USDC H1 CANDLE 331 23Y 43% 2.2 1.7 $27K 18% GOLD GOLD/USDC H1 CAND",
+        "error": false,
+        "scrollWidth": 390,
+        "innerWidth": 390
+      }
+    },
+    {
+      "viewport": "mobile",
+      "sequence": 2,
+      "action": "Signal Scan",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "scanner-signal",
+        "nav": null,
+        "items": [],
+        "iframes": [],
+        "body": "Scanner Signal Market Scanner Prefiltering Selected 7 Candidates 0 Signals 0 Instruments 7 selected Timeframe 15m 1h 4h 1d R:R 1:1 1:1.5 1:2 1:2.5 1:3 Mode Strict Moderate Aggressive Mencari kandidat… Auto Filter + Auto Prefilter aktif · Deep Scan tetap manual Instruments 7/177 Major 7/7 BTC ETH SOL HYPE XRP DOGE BNB Perpetuals 0/170 ATOM DYDX AVAX APE OP LTC ARB INJ SUI kPEPE CRV LDO LINK STX CFX GMX SNX BCH APT AAVE COMP WLD YGG TRX kSHIB UNI SEI RUNE ZRO DOT BANANA TRB BIGTIME KAS BLUR TIA BSV ADA MINA POLYX GAS PENDLE FET NEAR MEME ORDI NEO ZEN FIL PYTH SUSHI IMX kBONK GMT SUPER JUP kLUNC RSR GALA JTO ACE WIF CAKE PEOPLE ENS ETC XAI MANTA UMA ONDO ALT ZETA DYM W STRK TAO AR kFLOKI BOME ETHFI Tampilkan 80 lagi 10 Engine Prefilter 34 Deep Engines Deep manual Pilih instrument dan filter. Prefilter berjalan otomatis; 34-engine Deep Scan hanya berjalan setelah Anda menekan tombol Deep Scan. CopyToLive Admin \\n DIRECT V4 - NO GITHUB aktif di home",
+        "error": false,
+        "scrollWidth": 390,
+        "innerWidth": 390
+      }
+    },
+    {
+      "viewport": "mobile",
+      "sequence": 2,
+      "action": "Home",
+      "clicked": false,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "scanner-signal",
+        "nav": null,
+        "items": [],
+        "iframes": [],
+        "body": "Scanner Signal Market Scanner Prefiltering Selected 7 Candidates 0 Signals 0 Instruments 7 selected Timeframe 15m 1h 4h 1d R:R 1:1 1:1.5 1:2 1:2.5 1:3 Mode Strict Moderate Aggressive Mencari kandidat… Auto Filter + Auto Prefilter aktif · Deep Scan tetap manual Instruments 7/177 Major 7/7 BTC ETH SOL HYPE XRP DOGE BNB Perpetuals 0/170 ATOM DYDX AVAX APE OP LTC ARB INJ SUI kPEPE CRV LDO LINK STX CFX GMX SNX BCH APT AAVE COMP WLD YGG TRX kSHIB UNI SEI RUNE ZRO DOT BANANA TRB BIGTIME KAS BLUR TIA BSV ADA MINA POLYX GAS PENDLE FET NEAR MEME ORDI NEO ZEN FIL PYTH SUSHI IMX kBONK GMT SUPER JUP kLUNC RSR GALA JTO ACE WIF CAKE PEOPLE ENS ETC XAI MANTA UMA ONDO ALT ZETA DYM W STRK TAO AR kFLOKI BOME ETHFI Tampilkan 80 lagi 10 Engine Prefilter 34 Deep Engines Deep manual Pilih instrument dan filter. Prefilter berjalan otomatis; 34-engine Deep Scan hanya berjalan setelah Anda menekan tombol Deep Scan. CopyToLive Admin \\n DIRECT V4 - NO GITHUB aktif di home",
+        "error": false,
+        "scrollWidth": 390,
+        "innerWidth": 390
+      }
+    },
+    {
+      "viewport": "mobile",
+      "sequence": 3,
+      "action": "Crypto",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/?route-reality=ai3-route-reality-20260903-001&v=mobile&seq=3&home=1",
+        "mode": "home",
+        "nav": {
+          "x": 0,
+          "y": 69.5,
+          "w": 390,
+          "h": 73
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 10.5,
+            "y": 80,
+            "w": 32,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 31.3125,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 53,
+            "y": 80,
+            "w": 69.015625,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 69.015625,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 132.515625,
+            "y": 80,
+            "w": 62.328125,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 62.328125,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 205.34375,
+            "y": 80,
+            "w": 36.46875,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 36.46875,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 252.3125,
+            "y": 80,
+            "w": 32.984375,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 32.984375,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "Cari strategi Filter berdasarkan kriteria Home Fundamental Signal Scan ₿ Crypto Renko Metode Breakout ⌄ Position Any ⌄ Market Any ⌄ Status Any ⌄ Cari 🚀 Multi-TF Hyperliquid Screener· BREAKOUT AREA 177 Hyperliquid perp | ditampilkan 9 | diperbarui 12:26:57 AM | refresh UI 60s 🎯 Signal Mode 🔬 Pro Mode · HL ONLY AUTO REAL OFF 60+ 70+ 80+ TF·ANY M15 M30 H1 H4 D1 3 actionable (3 long · 0 short) BTC NEUTRAL conf 15% 24h -0.23% 📡 Scanning 177 koin.. Mencari signal confidence ≥ 60 (multi-TF + volume + trend match) Terakhir scan: 67508s lalu · refresh berikutnya: 0s Sistem auto-scan tiap 60 detik. Signal akan muncul otomatis bila ditemukan. ⚠️ Trading involves substantial risk of loss. AI signals are for informational purposes only, not financial advice. Past performance does not guarantee future results. CopyToLive Admin \\n DIRECT V4 - NO GITHUB aktif di home",
+        "error": false,
+        "scrollWidth": 390,
+        "innerWidth": 390
+      }
+    },
+    {
+      "viewport": "mobile",
+      "sequence": 3,
+      "action": "Home",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/?route-reality=ai3-route-reality-20260903-001&v=mobile&seq=3&home=1",
+        "mode": "home",
+        "nav": {
+          "x": 0,
+          "y": 69.5,
+          "w": 390,
+          "h": 73
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 10.5,
+            "y": 80,
+            "w": 32,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 32,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 53,
+            "y": 80,
+            "w": 69.015625,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 69.015625,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 132.515625,
+            "y": 80,
+            "w": 62.328125,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 62.328125,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 205.34375,
+            "y": 80,
+            "w": 36.46875,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 36.46875,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 252.3125,
+            "y": 80,
+            "w": 32.984375,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 32.984375,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "Cari strategi Filter berdasarkan kriteria Home Fundamental Signal Scan ₿ Crypto Renko Max Loss: Any Profit Factor: Any Win Rate: Any Risk Reward: Any Analisis Semua Strategi Terbaru 100/118 PAIR ENT PERIOD PROB RR PF PROFIT DD FAV GOLD GOLD/USDC H1 CANDLE 319 23Y 45% 2.3 1.8 $32K 9% GOLD GOLD/USDC H1 CANDLE 318 23Y 50% 1.8 1.8 $28K 13% GOLD GOLD/USDC H1 CANDLE 310 23Y 39% 2.8 1.8 $32K 11% GOLD GOLD/USDC H1 CANDLE 306 23Y 44% 2.3 1.8 $29K 11% GOLD GOLD/USDC H1 CANDLE 324 23Y 40% 2.7 1.8 $32K 18% GOLD GOLD/USDC H1 CANDLE 334 23Y 40% 2.7 1.8 $33K 23% GOLD GOLD/USDC H1 CANDLE 376 23Y 39% 2.7 1.8 $37K 16% GOLD GOLD/USDC H1 CANDLE 308 23Y 44% 2.3 1.8 $28K 23% GOLD GOLD/USDC H1 CANDLE 357 23Y 40% 2.7 1.8 $36K 11% GOLD GOLD/USDC H1 CANDLE 323 23Y 49% 1.8 1.7 $26K 7% GOLD GOLD/USDC H1 CANDLE 344 23Y 39% 2.7 1.7 $33K 9% GOLD GOLD/USDC H1 CANDLE 344 23Y 39% 2.7 1.7 $33K 9% GOLD GOLD/USDC H1 CANDLE 302 23Y 49% 1.8 1.7 $24K 13% GOLD GOLD/USDC H1 CANDLE 309 23Y 43% 2.3 1.7 $27K 23% GOLD GOLD/USDC H1 CANDLE 385 23Y 39% 2.7 1.7 $37K 20% GOLD GOLD/USDC H1 CANDLE 311 23Y 49% 1.8 1.7 $24K 10% GOLD GOLD/USDC H1 CANDLE 317 23Y 49% 1.8 1.7 $25K 9% GOLD GOLD/USDC H1 CANDLE 355 23Y 39% 2.7 1.7 $34K 14% GOLD GOLD/USDC H1 CANDLE 309 23Y 39% 2.7 1.7 $29K 18% GOLD GOLD/USDC H1 CANDLE 339 23Y 48% 1.8 1.7 $26K 12% GOLD GOLD/USDC H1 CANDLE 323 23Y 48% 1.8 1.7 $25K 13% GOLD GOLD/USDC H1 CANDLE 314 23Y 43% 2.3 1.7 $27K 12% GOLD GOLD/USDC H1 CANDLE 336 23Y 38% 2.8 1.7 $31K 17% GOLD GOLD/USDC H1 CANDLE 317 23Y 38% 2.8 1.7 $29K 11% GOLD GOLD/USDC H1 CANDLE 328 23Y 38% 2.7 1.7 $30K 19% GOLD GOLD/USDC H1 CANDLE 325 23Y 39% 2.7 1.7 $30K 15% GOLD GOLD/USDC H1 CANDLE 320 23Y 43% 2.3 1.7 $27K 13% GOLD GOLD/USDC H1 CANDLE 318 23Y 38% 2.8 1.7 $29K 14% GOLD GOLD/USDC H1 CANDLE 315 23Y 43% 2.3 1.7 $27K 10% GOLD GOLD/USDC H1 CANDLE 306 23Y 43% 2.3 1.7 $26K 20% GOLD GOLD/USDC H1 CANDLE 311 23Y 42% 2.3 1.7 $26K 24% GOLD GOLD/USDC H1 CANDLE 327 23Y 43% 2.2 1.7 $27K 14% GOLD GOLD/USDC H1 CANDLE 317 23Y 48% 1.8 1.7 $24K 14% GOLD GOLD/USDC H1 CANDLE 354 23Y 48% 1.8 1.7 $27K 18% GOLD GOLD/USDC H1 CANDLE 305 23Y 38% 2.7 1.7 $28K 18% GOLD GOLD/USDC H1 CANDLE 309 23Y 48% 1.9 1.7 $23K 8% GOLD GOLD/USDC H1 CANDLE 310 23Y 42% 2.3 1.7 $26K 10% GOLD GOLD/USDC H1 CANDLE 389 23Y 43% 2.2 1.7 $32K 11% GOLD GOLD/USDC H1 CANDLE 389 23Y 43% 2.2 1.7 $32K 11% GOLD GOLD/USDC H1 CANDLE 305 23Y 48% 1.9 1.7 $23K 12% GOLD GOLD/USDC H1 CANDLE 341 23Y 38% 2.7 1.7 $30K 18% GOLD GOLD/USDC H1 CANDLE 323 23Y 42% 2.3 1.7 $26K 11% GOLD GOLD/USDC H1 CANDLE 325 23Y 42% 2.3 1.7 $27K 11% GOLD GOLD/USDC H1 CANDLE 350 23Y 43% 2.2 1.7 $29K 20% GOLD GOLD/USDC H1 CANDLE 302 23Y 42% 2.3 1.7 $25K 16% GOLD GOLD/USDC H1 CANDLE 369 23Y 48% 1.8 1.7 $27K 7% GOLD GOLD/USDC H1 CANDLE 321 23Y 48% 1.8 1.7 $23K 13% GOLD GOLD/USDC H1 CANDLE 312 23Y 39% 2.6 1.7 $28K 11% GOLD GOLD/USDC H1 CANDLE 358 23Y 38% 2.7 1.7 $31K 15% GOLD GOLD/USDC H1 CANDLE 321 23Y 42% 2.3 1.7 $26K 10% GOLD GOLD/USDC H1 CANDLE 331 23Y 43% 2.2 1.7 $27K 18% GOLD GOLD/USDC H1 CAND",
+        "error": false,
+        "scrollWidth": 390,
+        "innerWidth": 390
+      }
+    },
+    {
+      "viewport": "mobile",
+      "sequence": 4,
+      "action": "Renko",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "renko",
+        "nav": {
+          "x": 0,
+          "y": 68.5,
+          "w": 390,
+          "h": 73
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 10.5,
+            "y": 79,
+            "w": 32,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 32,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 53,
+            "y": 79,
+            "w": 69.015625,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 69.015625,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 132.515625,
+            "y": 79,
+            "w": 62.328125,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 62.328125,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 205.34375,
+            "y": 79,
+            "w": 36.46875,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 36.46875,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 252.3125,
+            "y": 79,
+            "w": 32.984375,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 32.984375,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "Cari strategi Filter berdasarkan kriteria Home Fundamental Signal Scan ₿ Crypto Renko Metode Renko OOS Auto Pair EIGEN/USDC · OOS 76.3% GRASS/USDC · OOS 75.1% PURR/USDC · OOS 71.7% WLD/USDC · OOS 71.7% DASH/USDC · OOS 69.8% MORPHO/USDC · OOS 69.8% XPL/USDC · OOS 69.7% JTO/USDC · OOS 69.3% DOT/USDC · OOS 69.2% AAVE/USDC · OOS 69.0% AVAX/USDC · OOS 68.2% ALGO/USDC · OOS 68.1% SPX/USDC · OOS 68.0% IO/USDC · OOS 67.6% NIL/USDC · OOS 67.5% STABLE/USDC · OOS 66.8% HBAR/USDC · OOS 66.6% TNSR/USDC · OOS 66.6% ADA/USDC · OOS 66.5% TIA/USDC · OOS 66.3% BIO/USDC · OOS 66.1% SOL/USDC · OOS 65.8% XAI/USDC · OOS 65.7% APE/USDC · OOS 65.7% JUP/USDC · OOS 65.5% RESOLV/USDC · OOS 65.4% NEO/USDC · OOS 65.3% LINK/USDC · OOS 65.0% BANANA/USDC · OOS 64.9% XLM/USDC · OOS 64.9% ACE/USDC · OOS 64.9% KAITO/USDC · OOS 64.6% ATOM/USDC · OOS 64.5% LIT/USDC · OOS 64.1% BLUR/USDC · OOS 64.0% MON/USDC · OOS 63.9% ETC/USDC · OOS 63.7% LDO/USDC · OOS 63.7% VVV/USDC · OOS 63.5% DYDX/USDC · OOS 63.3% ALT/USDC · OOS 62.8% PYTH/USDC · OOS 62.7% ENA/USDC · OOS 62.7% POPCAT/USDC · OOS 62.6% SKR/USDC · OOS 62.4% SKY/USDC · OOS 62.4% PENDLE/USDC · OOS 62.2% CRV/USDC · OOS 62.1% NOT/USDC · OOS 61.8% FET/USDC · OOS 61.3% KLUNC/USDC · OOS 61.2% CELO/USDC · OOS 61.1% W/USDC · OOS 61.1% XRP/USDC · OOS 60.9% HEMI/USDC · OOS 60.7% ETHFI/USDC · OOS 60.7% ETH/USDC · OOS 60.6% MANTA/USDC · OOS 60.5% WIF/USDC · OOS 60.3% OP/USDC · OOS 60.1% BABY/USDC · OOS 60.1% DOGE/USDC · OOS 59.9% LTC/USDC · OOS 59.7% AERO/USDC · OOS 59.4% STBL/USDC · OOS 59.0% SNX/USDC · OOS 59.0% POLYX/USDC · OOS 59.0% AR/USDC · OOS 59.0% UNI/USDC · OOS 58.9% XMR/USDC · OOS 58.8% VIRTUAL/USDC · OOS 58.7% SUSHI/USDC · OOS 58.7% KNEIRO/USDC · OOS 58.7% MET/USDC · OOS 58.6% NXPC/USDC · OOS 58.4% NEAR/USDC · OOS 58.3% AVNT/USDC · OOS 58.2% ORDI/USDC · OOS 58.2% PENGU/USDC · OOS 57.8% RSR/USDC · OOS 57.8% BNB/USDC · OOS 57.7% MERL/USDC · OOS 57.7% GMX/USDC · OOS 57.6% BCH/USDC · OOS 57.6% FIL/USDC · OOS 57.4% REZ/USDC · OOS 57.4% SEI/USDC · OOS 57.2% MOVE/USDC · OOS 57.1% BRETT/USDC · OOS 57.1% MEME/USDC · OOS 57.0% ZORA/USDC · OOS 56.3% AIXBT/USDC · OOS 56.1% GOAT/USDC · OOS 56.1% RUNE/USDC · OOS 55.7% APEX/USDC · OOS 55.6% TURBO/USDC · OOS 55.4% BOME/USDC · OOS 55.4% FARTCOIN/USDC · OOS 55.2% INIT/USDC · OOS 55.2% S/USDC · OOS 55.0% TRB/USDC · OOS 54.9% USUAL/USDC · OOS 54.8% DYM/USDC · OOS 54.4% KAS/USDC · OOS 54.3% STX/USDC · OOS 54.3% 2Z/USDC · OOS 54.3% MELANIA/USDC · OOS 54.3% MINA/USDC · OOS 54.2% ZETA/USDC · OOS 54.1% ENS/USDC · OOS 54.0% ARB/USDC · OOS 54.0% CFX/USDC · OOS 54.0% MEGA/USDC · OOS 53.9% RENDER/USDC · OOS 53.8% ME/USDC · OOS 53.6% STRK/USDC · OOS 53.5% CAKE/USDC · OOS 53.5% ZK/USDC · OOS 53.2% ZEN/USDC · OOS 53.0% KFLOKI/USDC · OOS 52.3% PNUT/USDC · OOS 52.3% MOODENG/USDC · OOS 52.1% KBONK/USDC · OOS 51.8% SUPER/USDC · OOS 51.7% GMT/USDC · OOS 51.7% INJ/USDC · OOS 51.6% TAO/USDC · OOS 51.5% IOTA/USDC · OOS 51.4% PEOPLE/USDC · OOS 51.2% SAGA/USDC · OOS 51.0% ICP/USDC · OOS 50.8% KPEPE/USDC · OOS 50.7% HYPE/US",
+        "error": false,
+        "scrollWidth": 390,
+        "innerWidth": 390
+      }
+    },
+    {
+      "viewport": "mobile",
+      "sequence": 4,
+      "action": "Home",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "home",
+        "nav": {
+          "x": 0,
+          "y": 69.5,
+          "w": 390,
+          "h": 73
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 10.5,
+            "y": 80,
+            "w": 32,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 32,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 53,
+            "y": 80,
+            "w": 69.015625,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 69.015625,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 132.515625,
+            "y": 80,
+            "w": 62.328125,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 62.328125,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 205.34375,
+            "y": 80,
+            "w": 36.46875,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 36.46875,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 252.3125,
+            "y": 80,
+            "w": 32.984375,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 32.984375,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "Cari strategi Filter berdasarkan kriteria Home Fundamental Signal Scan ₿ Crypto Renko Max Loss: Any Profit Factor: Any Win Rate: Any Risk Reward: Any Analisis Semua Strategi Terbaru 100/118 PAIR ENT PERIOD PROB RR PF PROFIT DD FAV GOLD GOLD/USDC H1 CANDLE 319 23Y 45% 2.3 1.8 $32K 9% GOLD GOLD/USDC H1 CANDLE 318 23Y 50% 1.8 1.8 $28K 13% GOLD GOLD/USDC H1 CANDLE 310 23Y 39% 2.8 1.8 $32K 11% GOLD GOLD/USDC H1 CANDLE 306 23Y 44% 2.3 1.8 $29K 11% GOLD GOLD/USDC H1 CANDLE 324 23Y 40% 2.7 1.8 $32K 18% GOLD GOLD/USDC H1 CANDLE 334 23Y 40% 2.7 1.8 $33K 23% GOLD GOLD/USDC H1 CANDLE 376 23Y 39% 2.7 1.8 $37K 16% GOLD GOLD/USDC H1 CANDLE 308 23Y 44% 2.3 1.8 $28K 23% GOLD GOLD/USDC H1 CANDLE 357 23Y 40% 2.7 1.8 $36K 11% GOLD GOLD/USDC H1 CANDLE 323 23Y 49% 1.8 1.7 $26K 7% GOLD GOLD/USDC H1 CANDLE 344 23Y 39% 2.7 1.7 $33K 9% GOLD GOLD/USDC H1 CANDLE 344 23Y 39% 2.7 1.7 $33K 9% GOLD GOLD/USDC H1 CANDLE 302 23Y 49% 1.8 1.7 $24K 13% GOLD GOLD/USDC H1 CANDLE 309 23Y 43% 2.3 1.7 $27K 23% GOLD GOLD/USDC H1 CANDLE 385 23Y 39% 2.7 1.7 $37K 20% GOLD GOLD/USDC H1 CANDLE 311 23Y 49% 1.8 1.7 $24K 10% GOLD GOLD/USDC H1 CANDLE 317 23Y 49% 1.8 1.7 $25K 9% GOLD GOLD/USDC H1 CANDLE 355 23Y 39% 2.7 1.7 $34K 14% GOLD GOLD/USDC H1 CANDLE 309 23Y 39% 2.7 1.7 $29K 18% GOLD GOLD/USDC H1 CANDLE 339 23Y 48% 1.8 1.7 $26K 12% GOLD GOLD/USDC H1 CANDLE 323 23Y 48% 1.8 1.7 $25K 13% GOLD GOLD/USDC H1 CANDLE 314 23Y 43% 2.3 1.7 $27K 12% GOLD GOLD/USDC H1 CANDLE 336 23Y 38% 2.8 1.7 $31K 17% GOLD GOLD/USDC H1 CANDLE 317 23Y 38% 2.8 1.7 $29K 11% GOLD GOLD/USDC H1 CANDLE 328 23Y 38% 2.7 1.7 $30K 19% GOLD GOLD/USDC H1 CANDLE 325 23Y 39% 2.7 1.7 $30K 15% GOLD GOLD/USDC H1 CANDLE 320 23Y 43% 2.3 1.7 $27K 13% GOLD GOLD/USDC H1 CANDLE 318 23Y 38% 2.8 1.7 $29K 14% GOLD GOLD/USDC H1 CANDLE 315 23Y 43% 2.3 1.7 $27K 10% GOLD GOLD/USDC H1 CANDLE 306 23Y 43% 2.3 1.7 $26K 20% GOLD GOLD/USDC H1 CANDLE 311 23Y 42% 2.3 1.7 $26K 24% GOLD GOLD/USDC H1 CANDLE 327 23Y 43% 2.2 1.7 $27K 14% GOLD GOLD/USDC H1 CANDLE 317 23Y 48% 1.8 1.7 $24K 14% GOLD GOLD/USDC H1 CANDLE 354 23Y 48% 1.8 1.7 $27K 18% GOLD GOLD/USDC H1 CANDLE 305 23Y 38% 2.7 1.7 $28K 18% GOLD GOLD/USDC H1 CANDLE 309 23Y 48% 1.9 1.7 $23K 8% GOLD GOLD/USDC H1 CANDLE 310 23Y 42% 2.3 1.7 $26K 10% GOLD GOLD/USDC H1 CANDLE 389 23Y 43% 2.2 1.7 $32K 11% GOLD GOLD/USDC H1 CANDLE 389 23Y 43% 2.2 1.7 $32K 11% GOLD GOLD/USDC H1 CANDLE 305 23Y 48% 1.9 1.7 $23K 12% GOLD GOLD/USDC H1 CANDLE 341 23Y 38% 2.7 1.7 $30K 18% GOLD GOLD/USDC H1 CANDLE 323 23Y 42% 2.3 1.7 $26K 11% GOLD GOLD/USDC H1 CANDLE 325 23Y 42% 2.3 1.7 $27K 11% GOLD GOLD/USDC H1 CANDLE 350 23Y 43% 2.2 1.7 $29K 20% GOLD GOLD/USDC H1 CANDLE 302 23Y 42% 2.3 1.7 $25K 16% GOLD GOLD/USDC H1 CANDLE 369 23Y 48% 1.8 1.7 $27K 7% GOLD GOLD/USDC H1 CANDLE 321 23Y 48% 1.8 1.7 $23K 13% GOLD GOLD/USDC H1 CANDLE 312 23Y 39% 2.6 1.7 $28K 11% GOLD GOLD/USDC H1 CANDLE 358 23Y 38% 2.7 1.7 $31K 15% GOLD GOLD/USDC H1 CANDLE 321 23Y 42% 2.3 1.7 $26K 10% GOLD GOLD/USDC H1 CANDLE 331 23Y 43% 2.2 1.7 $27K 18% GOLD GOLD/USDC H1 CAND",
+        "error": false,
+        "scrollWidth": 390,
+        "innerWidth": 390
+      }
+    },
+    {
+      "viewport": "mobile",
+      "sequence": 5,
+      "action": "Renko",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "renko",
+        "nav": {
+          "x": 0,
+          "y": 68.5,
+          "w": 390,
+          "h": 73
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 10.5,
+            "y": 79,
+            "w": 32,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 32,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 53,
+            "y": 79,
+            "w": 69.015625,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 69.015625,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 132.515625,
+            "y": 79,
+            "w": 62.328125,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 62.328125,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 205.34375,
+            "y": 79,
+            "w": 36.46875,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 36.46875,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 252.3125,
+            "y": 79,
+            "w": 32.984375,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 32.984375,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "Cari strategi Filter berdasarkan kriteria Home Fundamental Signal Scan ₿ Crypto Renko Metode Renko OOS Auto Pair EIGEN/USDC · OOS 76.3% GRASS/USDC · OOS 75.1% PURR/USDC · OOS 71.7% WLD/USDC · OOS 71.7% DASH/USDC · OOS 69.8% MORPHO/USDC · OOS 69.8% XPL/USDC · OOS 69.7% JTO/USDC · OOS 69.3% DOT/USDC · OOS 69.2% AAVE/USDC · OOS 69.0% AVAX/USDC · OOS 68.2% ALGO/USDC · OOS 68.1% SPX/USDC · OOS 68.0% IO/USDC · OOS 67.6% NIL/USDC · OOS 67.5% STABLE/USDC · OOS 66.8% HBAR/USDC · OOS 66.6% TNSR/USDC · OOS 66.6% ADA/USDC · OOS 66.5% TIA/USDC · OOS 66.3% BIO/USDC · OOS 66.1% SOL/USDC · OOS 65.8% XAI/USDC · OOS 65.7% APE/USDC · OOS 65.7% JUP/USDC · OOS 65.5% RESOLV/USDC · OOS 65.4% NEO/USDC · OOS 65.3% LINK/USDC · OOS 65.0% BANANA/USDC · OOS 64.9% XLM/USDC · OOS 64.9% ACE/USDC · OOS 64.9% KAITO/USDC · OOS 64.6% ATOM/USDC · OOS 64.5% LIT/USDC · OOS 64.1% BLUR/USDC · OOS 64.0% MON/USDC · OOS 63.9% ETC/USDC · OOS 63.7% LDO/USDC · OOS 63.7% VVV/USDC · OOS 63.5% DYDX/USDC · OOS 63.3% ALT/USDC · OOS 62.8% PYTH/USDC · OOS 62.7% ENA/USDC · OOS 62.7% POPCAT/USDC · OOS 62.6% SKR/USDC · OOS 62.4% SKY/USDC · OOS 62.4% PENDLE/USDC · OOS 62.2% CRV/USDC · OOS 62.1% NOT/USDC · OOS 61.8% FET/USDC · OOS 61.3% KLUNC/USDC · OOS 61.2% CELO/USDC · OOS 61.1% W/USDC · OOS 61.1% XRP/USDC · OOS 60.9% HEMI/USDC · OOS 60.7% ETHFI/USDC · OOS 60.7% ETH/USDC · OOS 60.6% MANTA/USDC · OOS 60.5% WIF/USDC · OOS 60.3% OP/USDC · OOS 60.1% BABY/USDC · OOS 60.1% DOGE/USDC · OOS 59.9% LTC/USDC · OOS 59.7% AERO/USDC · OOS 59.4% STBL/USDC · OOS 59.0% SNX/USDC · OOS 59.0% POLYX/USDC · OOS 59.0% AR/USDC · OOS 59.0% UNI/USDC · OOS 58.9% XMR/USDC · OOS 58.8% VIRTUAL/USDC · OOS 58.7% SUSHI/USDC · OOS 58.7% KNEIRO/USDC · OOS 58.7% MET/USDC · OOS 58.6% NXPC/USDC · OOS 58.4% NEAR/USDC · OOS 58.3% AVNT/USDC · OOS 58.2% ORDI/USDC · OOS 58.2% PENGU/USDC · OOS 57.8% RSR/USDC · OOS 57.8% BNB/USDC · OOS 57.7% MERL/USDC · OOS 57.7% GMX/USDC · OOS 57.6% BCH/USDC · OOS 57.6% FIL/USDC · OOS 57.4% REZ/USDC · OOS 57.4% SEI/USDC · OOS 57.2% MOVE/USDC · OOS 57.1% BRETT/USDC · OOS 57.1% MEME/USDC · OOS 57.0% ZORA/USDC · OOS 56.3% AIXBT/USDC · OOS 56.1% GOAT/USDC · OOS 56.1% RUNE/USDC · OOS 55.7% APEX/USDC · OOS 55.6% TURBO/USDC · OOS 55.4% BOME/USDC · OOS 55.4% FARTCOIN/USDC · OOS 55.2% INIT/USDC · OOS 55.2% S/USDC · OOS 55.0% TRB/USDC · OOS 54.9% USUAL/USDC · OOS 54.8% DYM/USDC · OOS 54.4% KAS/USDC · OOS 54.3% STX/USDC · OOS 54.3% 2Z/USDC · OOS 54.3% MELANIA/USDC · OOS 54.3% MINA/USDC · OOS 54.2% ZETA/USDC · OOS 54.1% ENS/USDC · OOS 54.0% ARB/USDC · OOS 54.0% CFX/USDC · OOS 54.0% MEGA/USDC · OOS 53.9% RENDER/USDC · OOS 53.8% ME/USDC · OOS 53.6% STRK/USDC · OOS 53.5% CAKE/USDC · OOS 53.5% ZK/USDC · OOS 53.2% ZEN/USDC · OOS 53.0% KFLOKI/USDC · OOS 52.3% PNUT/USDC · OOS 52.3% MOODENG/USDC · OOS 52.1% KBONK/USDC · OOS 51.8% SUPER/USDC · OOS 51.7% GMT/USDC · OOS 51.7% INJ/USDC · OOS 51.6% TAO/USDC · OOS 51.5% IOTA/USDC · OOS 51.4% PEOPLE/USDC · OOS 51.2% SAGA/USDC · OOS 51.0% ICP/USDC · OOS 50.8% KPEPE/USDC · OOS 50.7% HYPE/US",
+        "error": false,
+        "scrollWidth": 390,
+        "innerWidth": 390
+      }
+    },
+    {
+      "viewport": "mobile",
+      "sequence": 5,
+      "action": "Crypto",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "home",
+        "nav": {
+          "x": 0,
+          "y": 69.5,
+          "w": 390,
+          "h": 73
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 10.5,
+            "y": 80,
+            "w": 32,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 31.3125,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 53,
+            "y": 80,
+            "w": 69.015625,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 69.015625,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 132.515625,
+            "y": 80,
+            "w": 62.328125,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 62.328125,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 205.34375,
+            "y": 80,
+            "w": 36.46875,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 36.46875,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 252.3125,
+            "y": 80,
+            "w": 32.984375,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 32.984375,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "Cari strategi Filter berdasarkan kriteria Home Fundamental Signal Scan ₿ Crypto Renko Metode Breakout ⌄ Position Any ⌄ Market Any ⌄ Status Any ⌄ Cari 🚀 Multi-TF Hyperliquid Screener· BREAKOUT AREA 177 Hyperliquid perp | ditampilkan 9 | diperbarui 12:26:57 AM | refresh UI 60s 🎯 Signal Mode 🔬 Pro Mode · HL ONLY AUTO REAL OFF 60+ 70+ 80+ TF·ANY M15 M30 H1 H4 D1 3 actionable (3 long · 0 short) BTC NEUTRAL conf 15% 24h -0.23% 📡 Scanning 177 koin. Mencari signal confidence ≥ 60 (multi-TF + volume + trend match) Terakhir scan: 67541s lalu · refresh berikutnya: 0s Sistem auto-scan tiap 60 detik. Signal akan muncul otomatis bila ditemukan. ⚠️ Trading involves substantial risk of loss. AI signals are for informational purposes only, not financial advice. Past performance does not guarantee future results. CopyToLive Admin \\n DIRECT V4 - NO GITHUB aktif di home",
+        "error": false,
+        "scrollWidth": 390,
+        "innerWidth": 390
+      }
+    },
+    {
+      "viewport": "mobile",
+      "sequence": 5,
+      "action": "Home",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "home",
+        "nav": {
+          "x": 0,
+          "y": 69.5,
+          "w": 390,
+          "h": 73
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 10.5,
+            "y": 80,
+            "w": 32,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 32,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 53,
+            "y": 80,
+            "w": 69.015625,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 69.015625,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 132.515625,
+            "y": 80,
+            "w": 62.328125,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 62.328125,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 205.34375,
+            "y": 80,
+            "w": 36.46875,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 36.46875,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 252.3125,
+            "y": 80,
+            "w": 32.984375,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 32.984375,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "Cari strategi Filter berdasarkan kriteria Home Fundamental Signal Scan ₿ Crypto Renko Max Loss: Any Profit Factor: Any Win Rate: Any Risk Reward: Any Analisis Semua Strategi Terbaru 100/118 PAIR ENT PERIOD PROB RR PF PROFIT DD FAV GOLD GOLD/USDC H1 CANDLE 319 23Y 45% 2.3 1.8 $32K 9% GOLD GOLD/USDC H1 CANDLE 318 23Y 50% 1.8 1.8 $28K 13% GOLD GOLD/USDC H1 CANDLE 310 23Y 39% 2.8 1.8 $32K 11% GOLD GOLD/USDC H1 CANDLE 306 23Y 44% 2.3 1.8 $29K 11% GOLD GOLD/USDC H1 CANDLE 324 23Y 40% 2.7 1.8 $32K 18% GOLD GOLD/USDC H1 CANDLE 334 23Y 40% 2.7 1.8 $33K 23% GOLD GOLD/USDC H1 CANDLE 376 23Y 39% 2.7 1.8 $37K 16% GOLD GOLD/USDC H1 CANDLE 308 23Y 44% 2.3 1.8 $28K 23% GOLD GOLD/USDC H1 CANDLE 357 23Y 40% 2.7 1.8 $36K 11% GOLD GOLD/USDC H1 CANDLE 323 23Y 49% 1.8 1.7 $26K 7% GOLD GOLD/USDC H1 CANDLE 344 23Y 39% 2.7 1.7 $33K 9% GOLD GOLD/USDC H1 CANDLE 344 23Y 39% 2.7 1.7 $33K 9% GOLD GOLD/USDC H1 CANDLE 302 23Y 49% 1.8 1.7 $24K 13% GOLD GOLD/USDC H1 CANDLE 309 23Y 43% 2.3 1.7 $27K 23% GOLD GOLD/USDC H1 CANDLE 385 23Y 39% 2.7 1.7 $37K 20% GOLD GOLD/USDC H1 CANDLE 311 23Y 49% 1.8 1.7 $24K 10% GOLD GOLD/USDC H1 CANDLE 317 23Y 49% 1.8 1.7 $25K 9% GOLD GOLD/USDC H1 CANDLE 355 23Y 39% 2.7 1.7 $34K 14% GOLD GOLD/USDC H1 CANDLE 309 23Y 39% 2.7 1.7 $29K 18% GOLD GOLD/USDC H1 CANDLE 339 23Y 48% 1.8 1.7 $26K 12% GOLD GOLD/USDC H1 CANDLE 323 23Y 48% 1.8 1.7 $25K 13% GOLD GOLD/USDC H1 CANDLE 314 23Y 43% 2.3 1.7 $27K 12% GOLD GOLD/USDC H1 CANDLE 336 23Y 38% 2.8 1.7 $31K 17% GOLD GOLD/USDC H1 CANDLE 317 23Y 38% 2.8 1.7 $29K 11% GOLD GOLD/USDC H1 CANDLE 328 23Y 38% 2.7 1.7 $30K 19% GOLD GOLD/USDC H1 CANDLE 325 23Y 39% 2.7 1.7 $30K 15% GOLD GOLD/USDC H1 CANDLE 320 23Y 43% 2.3 1.7 $27K 13% GOLD GOLD/USDC H1 CANDLE 318 23Y 38% 2.8 1.7 $29K 14% GOLD GOLD/USDC H1 CANDLE 315 23Y 43% 2.3 1.7 $27K 10% GOLD GOLD/USDC H1 CANDLE 306 23Y 43% 2.3 1.7 $26K 20% GOLD GOLD/USDC H1 CANDLE 311 23Y 42% 2.3 1.7 $26K 24% GOLD GOLD/USDC H1 CANDLE 327 23Y 43% 2.2 1.7 $27K 14% GOLD GOLD/USDC H1 CANDLE 317 23Y 48% 1.8 1.7 $24K 14% GOLD GOLD/USDC H1 CANDLE 354 23Y 48% 1.8 1.7 $27K 18% GOLD GOLD/USDC H1 CANDLE 305 23Y 38% 2.7 1.7 $28K 18% GOLD GOLD/USDC H1 CANDLE 309 23Y 48% 1.9 1.7 $23K 8% GOLD GOLD/USDC H1 CANDLE 310 23Y 42% 2.3 1.7 $26K 10% GOLD GOLD/USDC H1 CANDLE 389 23Y 43% 2.2 1.7 $32K 11% GOLD GOLD/USDC H1 CANDLE 389 23Y 43% 2.2 1.7 $32K 11% GOLD GOLD/USDC H1 CANDLE 305 23Y 48% 1.9 1.7 $23K 12% GOLD GOLD/USDC H1 CANDLE 341 23Y 38% 2.7 1.7 $30K 18% GOLD GOLD/USDC H1 CANDLE 323 23Y 42% 2.3 1.7 $26K 11% GOLD GOLD/USDC H1 CANDLE 325 23Y 42% 2.3 1.7 $27K 11% GOLD GOLD/USDC H1 CANDLE 350 23Y 43% 2.2 1.7 $29K 20% GOLD GOLD/USDC H1 CANDLE 302 23Y 42% 2.3 1.7 $25K 16% GOLD GOLD/USDC H1 CANDLE 369 23Y 48% 1.8 1.7 $27K 7% GOLD GOLD/USDC H1 CANDLE 321 23Y 48% 1.8 1.7 $23K 13% GOLD GOLD/USDC H1 CANDLE 312 23Y 39% 2.6 1.7 $28K 11% GOLD GOLD/USDC H1 CANDLE 358 23Y 38% 2.7 1.7 $31K 15% GOLD GOLD/USDC H1 CANDLE 321 23Y 42% 2.3 1.7 $26K 10% GOLD GOLD/USDC H1 CANDLE 331 23Y 43% 2.2 1.7 $27K 18% GOLD GOLD/USDC H1 CAND",
+        "error": false,
+        "scrollWidth": 390,
+        "innerWidth": 390
+      }
+    },
+    {
+      "viewport": "mobile",
+      "sequence": 6,
+      "action": "Crypto",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/?route-reality=ai3-route-reality-20260903-001&v=mobile&seq=6&home=1",
+        "mode": "home",
+        "nav": {
+          "x": 0,
+          "y": 69.5,
+          "w": 390,
+          "h": 73
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 10.5,
+            "y": 80,
+            "w": 32,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 31.3125,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 53,
+            "y": 80,
+            "w": 69.015625,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 69.015625,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 132.515625,
+            "y": 80,
+            "w": 62.328125,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 62.328125,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 205.34375,
+            "y": 80,
+            "w": 36.46875,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 36.46875,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 252.3125,
+            "y": 80,
+            "w": 32.984375,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 32.984375,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "Cari strategi Filter berdasarkan kriteria Home Fundamental Signal Scan ₿ Crypto Renko Metode Breakout ⌄ Position Any ⌄ Market Any ⌄ Status Any ⌄ Cari 🚀 Multi-TF Hyperliquid Screener· BREAKOUT AREA 177 Hyperliquid perp | ditampilkan 9 | diperbarui 12:26:57 AM | refresh UI 60s 🎯 Signal Mode 🔬 Pro Mode · HL ONLY AUTO REAL OFF 60+ 70+ 80+ TF·ANY M15 M30 H1 H4 D1 3 actionable (3 long · 0 short) BTC NEUTRAL conf 15% 24h -0.23% 📡 Scanning 177 koin.. Mencari signal confidence ≥ 60 (multi-TF + volume + trend match) Terakhir scan: 67556s lalu · refresh berikutnya: 0s Sistem auto-scan tiap 60 detik. Signal akan muncul otomatis bila ditemukan. ⚠️ Trading involves substantial risk of loss. AI signals are for informational purposes only, not financial advice. Past performance does not guarantee future results. CopyToLive Admin \\n DIRECT V4 - NO GITHUB aktif di home",
+        "error": false,
+        "scrollWidth": 390,
+        "innerWidth": 390
+      }
+    },
+    {
+      "viewport": "mobile",
+      "sequence": 6,
+      "action": "Renko",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "renko",
+        "nav": {
+          "x": 0,
+          "y": 68.5,
+          "w": 390,
+          "h": 73
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 10.5,
+            "y": 79,
+            "w": 32,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 32,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 53,
+            "y": 79,
+            "w": 69.015625,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 69.015625,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 132.515625,
+            "y": 79,
+            "w": 62.328125,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 62.328125,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 205.34375,
+            "y": 79,
+            "w": 36.46875,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 36.46875,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 252.3125,
+            "y": 79,
+            "w": 32.984375,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 32.984375,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "Cari strategi Filter berdasarkan kriteria Home Fundamental Signal Scan ₿ Crypto Renko Metode Renko OOS Auto Pair EIGEN/USDC · OOS 76.3% GRASS/USDC · OOS 75.1% PURR/USDC · OOS 71.7% WLD/USDC · OOS 71.7% DASH/USDC · OOS 69.8% MORPHO/USDC · OOS 69.8% XPL/USDC · OOS 69.7% JTO/USDC · OOS 69.3% DOT/USDC · OOS 69.2% AAVE/USDC · OOS 69.0% AVAX/USDC · OOS 68.2% ALGO/USDC · OOS 68.1% SPX/USDC · OOS 68.0% IO/USDC · OOS 67.6% NIL/USDC · OOS 67.5% STABLE/USDC · OOS 66.8% HBAR/USDC · OOS 66.6% TNSR/USDC · OOS 66.6% ADA/USDC · OOS 66.5% TIA/USDC · OOS 66.3% BIO/USDC · OOS 66.1% SOL/USDC · OOS 65.8% XAI/USDC · OOS 65.7% APE/USDC · OOS 65.7% JUP/USDC · OOS 65.5% RESOLV/USDC · OOS 65.4% NEO/USDC · OOS 65.3% LINK/USDC · OOS 65.0% BANANA/USDC · OOS 64.9% XLM/USDC · OOS 64.9% ACE/USDC · OOS 64.9% KAITO/USDC · OOS 64.6% ATOM/USDC · OOS 64.5% LIT/USDC · OOS 64.1% BLUR/USDC · OOS 64.0% MON/USDC · OOS 63.9% ETC/USDC · OOS 63.7% LDO/USDC · OOS 63.7% VVV/USDC · OOS 63.5% DYDX/USDC · OOS 63.3% ALT/USDC · OOS 62.8% PYTH/USDC · OOS 62.7% ENA/USDC · OOS 62.7% POPCAT/USDC · OOS 62.6% SKR/USDC · OOS 62.4% SKY/USDC · OOS 62.4% PENDLE/USDC · OOS 62.2% CRV/USDC · OOS 62.1% NOT/USDC · OOS 61.8% FET/USDC · OOS 61.3% KLUNC/USDC · OOS 61.2% CELO/USDC · OOS 61.1% W/USDC · OOS 61.1% XRP/USDC · OOS 60.9% HEMI/USDC · OOS 60.7% ETHFI/USDC · OOS 60.7% ETH/USDC · OOS 60.6% MANTA/USDC · OOS 60.5% WIF/USDC · OOS 60.3% OP/USDC · OOS 60.1% BABY/USDC · OOS 60.1% DOGE/USDC · OOS 59.9% LTC/USDC · OOS 59.7% AERO/USDC · OOS 59.4% STBL/USDC · OOS 59.0% SNX/USDC · OOS 59.0% POLYX/USDC · OOS 59.0% AR/USDC · OOS 59.0% UNI/USDC · OOS 58.9% XMR/USDC · OOS 58.8% VIRTUAL/USDC · OOS 58.7% SUSHI/USDC · OOS 58.7% KNEIRO/USDC · OOS 58.7% MET/USDC · OOS 58.6% NXPC/USDC · OOS 58.4% NEAR/USDC · OOS 58.3% AVNT/USDC · OOS 58.2% ORDI/USDC · OOS 58.2% PENGU/USDC · OOS 57.8% RSR/USDC · OOS 57.8% BNB/USDC · OOS 57.7% MERL/USDC · OOS 57.7% GMX/USDC · OOS 57.6% BCH/USDC · OOS 57.6% FIL/USDC · OOS 57.4% REZ/USDC · OOS 57.4% SEI/USDC · OOS 57.2% MOVE/USDC · OOS 57.1% BRETT/USDC · OOS 57.1% MEME/USDC · OOS 57.0% ZORA/USDC · OOS 56.3% AIXBT/USDC · OOS 56.1% GOAT/USDC · OOS 56.1% RUNE/USDC · OOS 55.7% APEX/USDC · OOS 55.6% TURBO/USDC · OOS 55.4% BOME/USDC · OOS 55.4% FARTCOIN/USDC · OOS 55.2% INIT/USDC · OOS 55.2% S/USDC · OOS 55.0% TRB/USDC · OOS 54.9% USUAL/USDC · OOS 54.8% DYM/USDC · OOS 54.4% KAS/USDC · OOS 54.3% STX/USDC · OOS 54.3% 2Z/USDC · OOS 54.3% MELANIA/USDC · OOS 54.3% MINA/USDC · OOS 54.2% ZETA/USDC · OOS 54.1% ENS/USDC · OOS 54.0% ARB/USDC · OOS 54.0% CFX/USDC · OOS 54.0% MEGA/USDC · OOS 53.9% RENDER/USDC · OOS 53.8% ME/USDC · OOS 53.6% STRK/USDC · OOS 53.5% CAKE/USDC · OOS 53.5% ZK/USDC · OOS 53.2% ZEN/USDC · OOS 53.0% KFLOKI/USDC · OOS 52.3% PNUT/USDC · OOS 52.3% MOODENG/USDC · OOS 52.1% KBONK/USDC · OOS 51.8% SUPER/USDC · OOS 51.7% GMT/USDC · OOS 51.7% INJ/USDC · OOS 51.6% TAO/USDC · OOS 51.5% IOTA/USDC · OOS 51.4% PEOPLE/USDC · OOS 51.2% SAGA/USDC · OOS 51.0% ICP/USDC · OOS 50.8% KPEPE/USDC · OOS 50.7% HYPE/US",
+        "error": false,
+        "scrollWidth": 390,
+        "innerWidth": 390
+      }
+    },
+    {
+      "viewport": "mobile",
+      "sequence": 6,
+      "action": "Home",
+      "clicked": true,
+      "state": {
+        "url": "https://copytolive.com/",
+        "mode": "home",
+        "nav": {
+          "x": 0,
+          "y": 69.5,
+          "w": 390,
+          "h": 73
+        },
+        "items": [
+          {
+            "name": "Home",
+            "raw": "Home",
+            "x": 10.5,
+            "y": 80,
+            "w": 32,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 32,
+              "h": 2,
+              "fontSize": 14,
+              "fontWeight": "400"
+            }
+          },
+          {
+            "name": "Fundamental",
+            "raw": "Fundamental",
+            "x": 53,
+            "y": 80,
+            "w": 69.015625,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 69.015625,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Signal Scan",
+            "raw": "Signal Scan",
+            "x": 132.515625,
+            "y": 80,
+            "w": 62.328125,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 62.328125,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Crypto",
+            "raw": "₿ Crypto",
+            "x": 205.34375,
+            "y": 80,
+            "w": 36.46875,
+            "h": 59,
+            "icon": {
+              "w": 32,
+              "h": 32
+            },
+            "label": {
+              "w": 36.46875,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          },
+          {
+            "name": "Renko",
+            "raw": "Renko",
+            "x": 252.3125,
+            "y": 80,
+            "w": 32.984375,
+            "h": 59,
+            "icon": {
+              "w": 28,
+              "h": 28
+            },
+            "label": {
+              "w": 32.984375,
+              "h": 16.5,
+              "fontSize": 11,
+              "fontWeight": "600"
+            }
+          }
+        ],
+        "iframes": [],
+        "body": "Cari strategi Filter berdasarkan kriteria Home Fundamental Signal Scan ₿ Crypto Renko Max Loss: Any Profit Factor: Any Win Rate: Any Risk Reward: Any Analisis Semua Strategi Terbaru 100/118 PAIR ENT PERIOD PROB RR PF PROFIT DD FAV GOLD GOLD/USDC H1 CANDLE 319 23Y 45% 2.3 1.8 $32K 9% GOLD GOLD/USDC H1 CANDLE 318 23Y 50% 1.8 1.8 $28K 13% GOLD GOLD/USDC H1 CANDLE 310 23Y 39% 2.8 1.8 $32K 11% GOLD GOLD/USDC H1 CANDLE 306 23Y 44% 2.3 1.8 $29K 11% GOLD GOLD/USDC H1 CANDLE 324 23Y 40% 2.7 1.8 $32K 18% GOLD GOLD/USDC H1 CANDLE 334 23Y 40% 2.7 1.8 $33K 23% GOLD GOLD/USDC H1 CANDLE 376 23Y 39% 2.7 1.8 $37K 16% GOLD GOLD/USDC H1 CANDLE 308 23Y 44% 2.3 1.8 $28K 23% GOLD GOLD/USDC H1 CANDLE 357 23Y 40% 2.7 1.8 $36K 11% GOLD GOLD/USDC H1 CANDLE 323 23Y 49% 1.8 1.7 $26K 7% GOLD GOLD/USDC H1 CANDLE 344 23Y 39% 2.7 1.7 $33K 9% GOLD GOLD/USDC H1 CANDLE 344 23Y 39% 2.7 1.7 $33K 9% GOLD GOLD/USDC H1 CANDLE 302 23Y 49% 1.8 1.7 $24K 13% GOLD GOLD/USDC H1 CANDLE 309 23Y 43% 2.3 1.7 $27K 23% GOLD GOLD/USDC H1 CANDLE 385 23Y 39% 2.7 1.7 $37K 20% GOLD GOLD/USDC H1 CANDLE 311 23Y 49% 1.8 1.7 $24K 10% GOLD GOLD/USDC H1 CANDLE 317 23Y 49% 1.8 1.7 $25K 9% GOLD GOLD/USDC H1 CANDLE 355 23Y 39% 2.7 1.7 $34K 14% GOLD GOLD/USDC H1 CANDLE 309 23Y 39% 2.7 1.7 $29K 18% GOLD GOLD/USDC H1 CANDLE 339 23Y 48% 1.8 1.7 $26K 12% GOLD GOLD/USDC H1 CANDLE 323 23Y 48% 1.8 1.7 $25K 13% GOLD GOLD/USDC H1 CANDLE 314 23Y 43% 2.3 1.7 $27K 12% GOLD GOLD/USDC H1 CANDLE 336 23Y 38% 2.8 1.7 $31K 17% GOLD GOLD/USDC H1 CANDLE 317 23Y 38% 2.8 1.7 $29K 11% GOLD GOLD/USDC H1 CANDLE 328 23Y 38% 2.7 1.7 $30K 19% GOLD GOLD/USDC H1 CANDLE 325 23Y 39% 2.7 1.7 $30K 15% GOLD GOLD/USDC H1 CANDLE 320 23Y 43% 2.3 1.7 $27K 13% GOLD GOLD/USDC H1 CANDLE 318 23Y 38% 2.8 1.7 $29K 14% GOLD GOLD/USDC H1 CANDLE 315 23Y 43% 2.3 1.7 $27K 10% GOLD GOLD/USDC H1 CANDLE 306 23Y 43% 2.3 1.7 $26K 20% GOLD GOLD/USDC H1 CANDLE 311 23Y 42% 2.3 1.7 $26K 24% GOLD GOLD/USDC H1 CANDLE 327 23Y 43% 2.2 1.7 $27K 14% GOLD GOLD/USDC H1 CANDLE 317 23Y 48% 1.8 1.7 $24K 14% GOLD GOLD/USDC H1 CANDLE 354 23Y 48% 1.8 1.7 $27K 18% GOLD GOLD/USDC H1 CANDLE 305 23Y 38% 2.7 1.7 $28K 18% GOLD GOLD/USDC H1 CANDLE 309 23Y 48% 1.9 1.7 $23K 8% GOLD GOLD/USDC H1 CANDLE 310 23Y 42% 2.3 1.7 $26K 10% GOLD GOLD/USDC H1 CANDLE 389 23Y 43% 2.2 1.7 $32K 11% GOLD GOLD/USDC H1 CANDLE 389 23Y 43% 2.2 1.7 $32K 11% GOLD GOLD/USDC H1 CANDLE 305 23Y 48% 1.9 1.7 $23K 12% GOLD GOLD/USDC H1 CANDLE 341 23Y 38% 2.7 1.7 $30K 18% GOLD GOLD/USDC H1 CANDLE 323 23Y 42% 2.3 1.7 $26K 11% GOLD GOLD/USDC H1 CANDLE 325 23Y 42% 2.3 1.7 $27K 11% GOLD GOLD/USDC H1 CANDLE 350 23Y 43% 2.2 1.7 $29K 20% GOLD GOLD/USDC H1 CANDLE 302 23Y 42% 2.3 1.7 $25K 16% GOLD GOLD/USDC H1 CANDLE 369 23Y 48% 1.8 1.7 $27K 7% GOLD GOLD/USDC H1 CANDLE 321 23Y 48% 1.8 1.7 $23K 13% GOLD GOLD/USDC H1 CANDLE 312 23Y 39% 2.6 1.7 $28K 11% GOLD GOLD/USDC H1 CANDLE 358 23Y 38% 2.7 1.7 $31K 15% GOLD GOLD/USDC H1 CANDLE 321 23Y 42% 2.3 1.7 $26K 10% GOLD GOLD/USDC H1 CANDLE 331 23Y 43% 2.2 1.7 $27K 18% GOLD GOLD/USDC H1 CAND",
+        "error": false,
+        "scrollWidth": 390,
+        "innerWidth": 390
+      }
+    }
+  ],
+  "errors": []
+}
