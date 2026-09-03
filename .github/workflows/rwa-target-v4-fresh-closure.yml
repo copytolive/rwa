@@ -1,0 +1,148 @@
+name: RWA Target V4 Fresh Closure
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/rwa-target-v4-fresh-closure.yml"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: rwa-target-v4-fresh-closure
+  cancel-in-progress: false
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      TARGET_SHA: 7b1dc81a1306c02f7c197025632566c8316585cf
+      PROOF_DIR: validation/target-v4-fresh-20260903
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Wait for all official Target V4 workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          deploy_name='Deploy Real World Asset Target V4'
+          browser_name='RWA Target V4 Browser Gate'
+          audit_name='Real World Asset V4 Public Page-by-Page Audit'
+          ok=0
+          for i in $(seq 1 120); do
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$TARGET_SHA&per_page=100" > /tmp/runs.json
+            deploy_id="$(jq -r --arg n "$deploy_name" '.workflow_runs | map(select(.name==$n)) | sort_by(.id) | last | .id // empty' /tmp/runs.json)"
+            browser_id="$(jq -r --arg n "$browser_name" '.workflow_runs | map(select(.name==$n)) | sort_by(.id) | last | .id // empty' /tmp/runs.json)"
+            audit_id="$(jq -r --arg n "$audit_name" '.workflow_runs | map(select(.name==$n)) | sort_by(.id) | last | .id // empty' /tmp/runs.json)"
+            deploy_conclusion="$(jq -r --arg n "$deploy_name" '.workflow_runs | map(select(.name==$n)) | sort_by(.id) | last | .conclusion // empty' /tmp/runs.json)"
+            browser_conclusion="$(jq -r --arg n "$browser_name" '.workflow_runs | map(select(.name==$n)) | sort_by(.id) | last | .conclusion // empty' /tmp/runs.json)"
+            audit_conclusion="$(jq -r --arg n "$audit_name" '.workflow_runs | map(select(.name==$n)) | sort_by(.id) | last | .conclusion // empty' /tmp/runs.json)"
+            echo "attempt=$i deploy=$deploy_id:$deploy_conclusion browser=$browser_id:$browser_conclusion audit=$audit_id:$audit_conclusion"
+            for c in "$deploy_conclusion" "$browser_conclusion" "$audit_conclusion"; do
+              if [ -n "$c" ] && [ "$c" != "success" ]; then
+                echo "Official Target V4 workflow completed non-success: $c"
+                exit 1
+              fi
+            done
+            if [ "$deploy_conclusion" = success ] && [ "$browser_conclusion" = success ] && [ "$audit_conclusion" = success ]; then
+              printf '%s\n' "$deploy_id" > /tmp/deploy_id
+              printf '%s\n' "$browser_id" > /tmp/browser_id
+              printf '%s\n' "$audit_id" > /tmp/audit_id
+              ok=1
+              break
+            fi
+            sleep 15
+          done
+          test "$ok" = 1
+
+      - name: Download official browser and page audit evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$PROOF_DIR/browser-public" "$PROOF_DIR/page-by-page"
+          browser_id="$(cat /tmp/browser_id)"
+          audit_id="$(cat /tmp/audit_id)"
+          gh run download "$browser_id" -n "target-v4-public-$TARGET_SHA" -D "$PROOF_DIR/browser-public"
+          gh run download "$audit_id" -n "rwa-page-by-page-audit-$TARGET_SHA" -D "$PROOF_DIR/page-by-page"
+          test "$(jq -r '.ok' "$PROOF_DIR/browser-public/browser-result.json")" = "true"
+          test "$(jq -r '.ok' "$PROOF_DIR/page-by-page/audit.json")" = "true"
+          test -s "$PROOF_DIR/page-by-page/01-markets-desktop.png"
+          test -s "$PROOF_DIR/page-by-page/02-trade-desktop.png"
+          test -s "$PROOF_DIR/page-by-page/03-portfolio-desktop.png"
+          test -s "$PROOF_DIR/page-by-page/04-orders-desktop.png"
+          test -s "$PROOF_DIR/page-by-page/05-analytics-desktop.png"
+          test -s "$PROOF_DIR/page-by-page/06-rewards-desktop.png"
+          test -s "$PROOF_DIR/page-by-page/07-multichain-desktop.png"
+          test -s "$PROOF_DIR/page-by-page/08-markets-mobile-390.png"
+          test -s "$PROOF_DIR/page-by-page/09-markets-mobile-430.png"
+
+      - name: Record authoritative fresh closure receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          deploy_id="$(cat /tmp/deploy_id)"
+          browser_id="$(cat /tmp/browser_id)"
+          audit_id="$(cat /tmp/audit_id)"
+          live_sha="$(curl -fsSL --retry 3 "https://copytolive.github.io/rwa/deployment-sha.txt?v=$TARGET_SHA" | tr -d '\r\n')"
+          test "$live_sha" = "$TARGET_SHA"
+          browser_ok="$(jq -r '.ok' "$PROOF_DIR/browser-public/browser-result.json")"
+          audit_ok="$(jq -r '.ok' "$PROOF_DIR/page-by-page/audit.json")"
+          market_pairs="$(jq -r '.audit.desktop.data.pairs // empty' "$PROOF_DIR/browser-public/browser-result.json")"
+          brand="$(jq -r '.audit.desktop.data.brand // empty' "$PROOF_DIR/browser-public/browser-result.json")"
+          commerce="$(jq -r '.audit.desktop.data.commerce // empty' "$PROOF_DIR/browser-public/browser-result.json")"
+          mock="$(jq -r '.audit.desktop.data.mock // empty' "$PROOF_DIR/browser-public/browser-result.json")"
+          cat > "$PROOF_DIR/receipt.json" <<JSON
+          {
+            "schema": 1,
+            "target": "RWA Target V4",
+            "target_sha": "$TARGET_SHA",
+            "live_deployment_sha": "$live_sha",
+            "official_workflows": {
+              "deploy": {"name": "Deploy Real World Asset Target V4", "run_id": $deploy_id, "conclusion": "success"},
+              "browser_gate": {"name": "RWA Target V4 Browser Gate", "run_id": $browser_id, "conclusion": "success"},
+              "page_by_page": {"name": "Real World Asset V4 Public Page-by-Page Audit", "run_id": $audit_id, "conclusion": "success"}
+            },
+            "browser_result_ok": $browser_ok,
+            "page_audit_ok": $audit_ok,
+            "brand": "$brand",
+            "market_pairs": $market_pairs,
+            "commerce_visible": $commerce,
+            "screenshot_mock": $mock,
+            "principles": {
+              "no_seablueprint": true,
+              "no_ecommerce": true,
+              "no_renko_on_home": true,
+              "no_fake_mainnet": true
+            }
+          }
+          JSON
+          jq . "$PROOF_DIR/receipt.json"
+          test "$brand" = "Real World Asset"
+          test "$market_pairs" -ge 50
+          test "$commerce" = "false"
+          test "$mock" = "false"
+
+      - name: Publish fresh screenshots and receipt to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "rwa-target-v4-cert-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add "$PROOF_DIR"
+          git commit -m "chore(validation): publish fresh Target V4 closure [skip ci]"
+          for i in $(seq 1 8); do
+            git fetch origin main
+            if git rebase origin/main && git push origin HEAD:main; then
+              exit 0
+            fi
+            git rebase --abort || true
+            sleep $((i*3))
+          done
+          exit 1
