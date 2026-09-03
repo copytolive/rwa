@@ -72,7 +72,7 @@ jobs:
           grep -Fq 'rwaMultiChainLazyBootstrap' index.html
           grep -Fq "rwa-live-home-v1.js?v=5.0.1" chart-core.js
           grep -Fq "rwa-live-home-v1.css?v=5.0.0" chart-core.js
-          grep -Fq "rwa-terminal-v5.js?v=1.0.9" chart-core.js
+          grep -Fq "rwa-terminal-v5.js?v=1.0.10" chart-core.js
           grep -Fq "rwa-terminal-v5.css?v=1.0.4" chart-core.js
           grep -Fq "RWATerminalV5" rwa-terminal-v5.js
           grep -Fq "rwa-v5-bottom" rwa-terminal-v5.css
