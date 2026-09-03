@@ -47,7 +47,7 @@ async function open(browser,width,height){
   const page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(String(e?.message||e)));
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:25000});
-  await page.waitForFunction(()=>window.RWALiveHome?.version==='4.2.0'&&window.RWAMarketRuntime?.version==='1.4.3'&&window.RWAMarketRuntime.state().pairs.length===520,{timeout:20000});
+  await page.waitForFunction(()=>window.RWALiveHome?.version==='4.2.1'&&window.RWAMarketRuntime?.version==='1.4.3'&&window.RWAMarketRuntime.state().pairs.length===520,{timeout:20000});
   await page.waitForFunction(()=>document.querySelectorAll('#bids .bookrow').length>=5&&document.querySelectorAll('#asks .bookrow').length>=5,{timeout:15000});
   await page.waitForTimeout(250);
   return {context,page,errors};
@@ -77,6 +77,10 @@ async function desktop(browser){
   assert.equal(info.commerce,false);
   assert.equal(info.mock,false);
   assert.equal(info.brand,'Real World Asset');
+  const navPlacement=await page.evaluate(()=>({top:[...document.querySelectorAll('.topnav [data-rwa-target-nav]')].map(x=>x.dataset.rwaTargetNav),rail:[...document.querySelectorAll('#liveRail>.live-rail-section-nav [data-rwa-target-nav]')].map(x=>x.dataset.rwaTargetNav),railHeights:[...document.querySelectorAll('#liveRail>.live-rail-section-nav [data-rwa-target-nav]')].map(x=>Math.round(x.getBoundingClientRect().height))}));
+  assert.deepEqual(navPlacement.top,['markets']);
+  assert.deepEqual(navPlacement.rail,['trade','portfolio','orders','analytics','rewards']);
+  assert.ok(navPlacement.railHeights.every(h=>h===36),`Market rail nav height mismatch: ${JSON.stringify(navPlacement)}`);
   assert.equal(info.rail?.display,'flex');
   assert.ok(Math.abs(info.left?.w-286)<=3);
   assert.ok(Math.abs(info.right?.w-286)<=3);
