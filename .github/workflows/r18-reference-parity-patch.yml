@@ -31,7 +31,6 @@ jobs:
               p.write_text(s.replace(old,new))
               return True
 
-          # Revert the later R9 geometry regression back to the approved reference proportions.
           p=Path('rwa-terminal-v5.js'); s=p.read_text()
           pairs=[
             ("310px minmax(0,1fr) 280px 230px","238px minmax(0,1fr) 250px 300px"),
@@ -46,7 +45,6 @@ jobs:
           if marker not in s: s=s.rstrip()+"\n\n"+marker+"\n"
           p.write_text(s)
 
-          # CSS R7 had duplicated the same regressed proportions; restore reference geometry.
           p=Path('rwa-terminal-v5.css'); s=p.read_text()
           css_pairs=[
             ('grid-template-columns:310px minmax(0,1fr) 280px 230px!important','grid-template-columns:238px minmax(0,1fr) 250px 300px!important'),
@@ -76,11 +74,8 @@ jobs:
           '''
           p.write_text(s)
 
-          # Browser gates must certify the approved reference geometry, not the regressed one.
           p=Path('tools/root-market-browser-stability.mjs'); s=p.read_text()
-          for old,new in [
-            ('info.left.w-310','info.left.w-238'),('info.book.w-280','info.book.w-250'),('info.trade.w-230','info.trade.w-300')
-          ]:
+          for old,new in [('info.left.w-310','info.left.w-238'),('info.book.w-280','info.book.w-250'),('info.trade.w-230','info.trade.w-300')]:
               if old not in s: raise SystemExit('missing root stability marker '+old)
               s=s.replace(old,new)
           p.write_text(s)
@@ -100,17 +95,11 @@ jobs:
           s=s.replace(old,new)
           p.write_text(s)
 
-          # Cache bust all public loaders/contracts so previously visited browsers cannot keep R17 geometry.
           replace('chart-core.js','rwa-terminal-v5.css?v=1.0.16','rwa-terminal-v5.css?v=1.0.17')
           replace('chart-core.js','rwa-terminal-v5.js?v=1.0.25','rwa-terminal-v5.js?v=1.0.26')
           replace('index.html','rwa-terminal-v5.css?v=1.0.16','rwa-terminal-v5.css?v=1.0.17')
           replace('index.html','chart-core.js?v=33','chart-core.js?v=34')
-          for wf in Path('.github/workflows').glob('*.yml'):
-              if wf.name=='r18-reference-parity-patch.yml': continue
-              t=wf.read_text(); u=t.replace('rwa-terminal-v5.css?v=1.0.16','rwa-terminal-v5.css?v=1.0.17').replace('rwa-terminal-v5.js?v=1.0.25','rwa-terminal-v5.js?v=1.0.26').replace('chart-core.js?v=33','chart-core.js?v=34')
-              if u!=t: wf.write_text(u)
 
-          # Guard against reintroducing the three visibly wrong widths in authoritative runtime/tests.
           for path in ['rwa-terminal-v5.js','tools/root-market-browser-stability.mjs','tools/live-no-mock-home-browser.mjs']:
               t=Path(path).read_text()
               if '310px minmax(0,1fr) 280px 230px' in t or 'info.left.w-310' in t:
@@ -118,10 +107,9 @@ jobs:
           PY
       - name: Commit parity patch
         run: |
-          rm -f .github/workflows/r18-reference-parity-patch.yml
           git config user.name copytolive-ui-bot
           git config user.email copytolive-ui-bot@users.noreply.github.com
-          git add -A
+          git add rwa-terminal-v5.js rwa-terminal-v5.css chart-core.js index.html tools/root-market-browser-stability.mjs tools/live-no-mock-home-browser.mjs
           git commit -m "fix(ui): match approved desktop mobile reference R18"
           for i in 1 2 3; do
             git pull --rebase origin main && git push origin HEAD:main && exit 0
