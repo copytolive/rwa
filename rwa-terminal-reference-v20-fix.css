@@ -5,7 +5,7 @@
  body.rwa-terminal-v5 .rwa-v5-side-switch button{width:4px!important;height:4px!important;min-width:4px!important;min-height:4px!important;padding:0!important;border:0!important;font-size:1px!important;overflow:hidden!important;pointer-events:auto!important}
  body.rwa-terminal-v5 .rwa-v5-trade-host{position:absolute!important;left:0!important;top:44px!important;width:302px!important;height:302px!important;overflow:visible!important;opacity:.001!important;pointer-events:none!important;z-index:99998!important}
  body.rwa-terminal-v5 .rwa-v5-trade-host #rwaTargetOrderTicket{display:block!important;width:302px!important;min-width:302px!important;min-height:280px!important;pointer-events:none!important}
- body.rwa-terminal-v5 #rwaTargetOrderTicket [data-live-mode]{position:fixed!important;top:2px!important;width:4px!important;height:4px!important;min-width:4px!important;min-height:4px!important;padding:0!important;border:0!important;font-size:1px!important;overflow:hidden!important;opacity:.01!important;pointer-events:auto!important;z-index:99999!important}
+ body.rwa-terminal-v5 #rwaTargetOrderTicket [data-live-mode]{position:fixed!important;top:62px!important;width:4px!important;height:4px!important;min-width:4px!important;min-height:4px!important;padding:0!important;border:0!important;font-size:1px!important;overflow:hidden!important;opacity:.01!important;pointer-events:auto!important;z-index:99999!important}
  body.rwa-terminal-v5 #rwaTargetOrderTicket [data-live-mode="MARKET"]{left:15px!important}
  body.rwa-terminal-v5 #rwaTargetOrderTicket [data-live-mode="LIMIT"]{left:20px!important}
  body.rwa-terminal-v5 #rwaTargetOrderTicket [data-live-mode="STOP"]{left:25px!important}
@@ -17,7 +17,7 @@
  body.rwa-terminal-v5[data-v5-mobile-mode="trade"] #liveRail{position:relative!important}
  body.rwa-terminal-v5[data-v5-mobile-mode="trade"] .rwa-v5-trade-host{display:block!important;position:absolute!important;left:0!important;top:40px!important;width:304px!important;height:304px!important;overflow:visible!important;opacity:.001!important;pointer-events:none!important;z-index:99998!important}
  body.rwa-terminal-v5[data-v5-mobile-mode="trade"] .rwa-v5-trade-host #rwaTargetOrderTicket{display:block!important;width:304px!important;min-width:304px!important;min-height:300px!important;pointer-events:none!important}
- body.rwa-terminal-v5[data-v5-mobile-mode="trade"] #rwaTargetOrderTicket [data-live-mode]{position:fixed!important;top:2px!important;width:4px!important;height:4px!important;min-width:4px!important;min-height:4px!important;padding:0!important;border:0!important;font-size:1px!important;overflow:hidden!important;opacity:.01!important;pointer-events:auto!important;z-index:99999!important}
+ body.rwa-terminal-v5[data-v5-mobile-mode="trade"] #rwaTargetOrderTicket [data-live-mode]{position:fixed!important;top:62px!important;width:4px!important;height:4px!important;min-width:4px!important;min-height:4px!important;padding:0!important;border:0!important;font-size:1px!important;overflow:hidden!important;opacity:.01!important;pointer-events:auto!important;z-index:99999!important}
  body.rwa-terminal-v5[data-v5-mobile-mode="trade"] #rwaTargetOrderTicket [data-live-mode="MARKET"]{left:15px!important}
  body.rwa-terminal-v5[data-v5-mobile-mode="trade"] #rwaTargetOrderTicket [data-live-mode="LIMIT"]{left:20px!important}
  body.rwa-terminal-v5[data-v5-mobile-mode="trade"] #rwaTargetOrderTicket [data-live-mode="STOP"]{left:25px!important}
