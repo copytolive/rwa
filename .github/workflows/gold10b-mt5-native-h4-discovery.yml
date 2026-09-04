@@ -44,8 +44,7 @@ jobs:
           $setup=Join-Path $env:RUNNER_TEMP 'exness5setup.exe'
           Invoke-WebRequest -UseBasicParsing 'https://download.terminal.free/cdn/web/exness.technologies.ltd/mt5/exness5setup.exe' -OutFile $setup
           $installer=Start-Process -FilePath $setup -ArgumentList '/auto' -PassThru
-          $terminal=$null
-          $deadline=(Get-Date).AddMinutes(4)
+          $terminal=$null;$deadline=(Get-Date).AddMinutes(4)
           do {
             Start-Sleep -Seconds 10
             $c=@();foreach($r in @('C:\Program Files','C:\Program Files (x86)',"$env:LOCALAPPDATA\Programs")){if(Test-Path $r){$c+=Get-ChildItem $r -Filter terminal64.exe -File -Recurse -ErrorAction SilentlyContinue}}
@@ -67,13 +66,13 @@ jobs:
           if($LASTEXITCODE -ne 0){throw 'FRESH_TV_H4_CROSSCHECK_GATE_A_FAIL'}
           if(!(Test-Path "$tvh4\XAUUSD_OANDA_TRADINGVIEW_H4_CROSSCHECK.csv")){throw 'FRESH_TV_H4_CROSSCHECK_MISSING'}
           python -c "import json,os; p=os.path.join(os.environ['RUNNER_TEMP'],'tvh4','gate_a_h4_receipt.json'); x=json.load(open(p)); assert x['crosscheck_pass'] and x['construction']=='DIRECT_SOURCE_H4_BARS_NO_RESAMPLING'; print('FRESH_TV_H4_CROSSCHECK_PASS rows='+str(x['crosscheck_rows']))"
-      - name: Fetch broker-server native H4 and enforce Gate A
+      - name: Fetch broker-server dense native H4 and enforce Gate A
         shell: powershell
         run: |
           $out="$env:RUNNER_TEMP\brokerh4";New-Item -ItemType Directory -Force $out|Out-Null
           python backtest/gold24/mt5_native_h4_fetch.py --terminal "$env:MT5_TERMINAL" --crosscheck "$env:RUNNER_TEMP\tvh4\XAUUSD_OANDA_TRADINGVIEW_H4_CROSSCHECK.csv" --out-dir $out
           if($LASTEXITCODE -ne 0){throw 'BROKER_NATIVE_H4_GATE_A_FAIL'}
-          python -c "import json,os; x=json.load(open(os.path.join(os.environ['RUNNER_TEMP'],'brokerh4','gate_a_h4_receipt.json'))); assert x['crosscheck_pass'] and x['no_resampling_attested'] and x['construction']=='DIRECT_BROKER_NATIVE_H4_NO_RESAMPLING'; print('BROKER_NATIVE_H4_GATE_A_PASS rows='+str(x['primary_rows']))"
+          python -c "import json,os; x=json.load(open(os.path.join(os.environ['RUNNER_TEMP'],'brokerh4','gate_a_h4_receipt.json'))); assert x['crosscheck_pass'] and x['no_resampling_attested'] and x['construction']=='DIRECT_BROKER_NATIVE_H4_DENSE_SEGMENT_NO_RESAMPLING'; assert x['cadence_audit']['canonical_median_gap_hours']==4.0 and x['cadence_audit']['canonical_four_hour_gap_share']>=0.90; print('BROKER_NATIVE_DENSE_H4_GATE_A_PASS rows='+str(x['primary_rows']))"
       - uses: actions/upload-artifact@v4
         with:
           name: gold10b-broker-native-h4-${{ github.run_id }}
@@ -100,7 +99,7 @@ jobs:
         with:
           name: gold10b-broker-native-h4-${{ github.run_id }}
           path: ${{ runner.temp }}/brokerh4
-      - name: Search all 48 families on long-history native H4
+      - name: Search all 48 families on dense long-history native H4
         run: |
           set -euo pipefail
           python -u backtest/gold24/native_h4_broker_search.py \
@@ -111,7 +110,8 @@ jobs:
           import json,os,pathlib
           p=pathlib.Path(os.environ['RUNNER_TEMP'])/'brokerh4/native_h4_broker_hardpass.json';x=json.loads(p.read_text())
           assert x['status']=='PASS' and x['candidate_evaluated_unique']==20000
-          assert x['dataset']['construction']=='DIRECT_BROKER_NATIVE_H4_NO_RESAMPLING'
+          assert x['dataset']['construction']=='DIRECT_BROKER_NATIVE_H4_DENSE_SEGMENT_NO_RESAMPLING'
+          assert x['dataset']['cadence_audit']['canonical_median_gap_hours']==4.0
           print(json.dumps({'rows':x['dataset']['rows'],'candidate_evaluated':x['candidate_evaluated_unique'],'candidate_gate_pre_corr':x['primitive_diagnostics'].get('candidate_gate_pre_corr',0),'full_pre_corr_hardpass':x['full_pre_corr_hardpass'],'hardpass_kept':x['native_h4_hardpass_kept']},indent=2))
           PY
       - name: Publish broker-native H4 discovery evidence race-safe
@@ -125,7 +125,7 @@ jobs:
             git fetch origin main;git reset --hard origin/main;mkdir -p backtest/gold24/runtime_native_h4_broker
             cp "$PAYLOAD/"* backtest/gold24/runtime_native_h4_broker/;git add backtest/gold24/runtime_native_h4_broker
             if git diff --cached --quiet; then exit 0; fi
-            git commit -m 'chore(gold10b): publish broker-native H4 discovery [skip ci]'
+            git commit -m 'chore(gold10b): publish broker-native dense H4 discovery [skip ci]'
             if git push origin HEAD:main; then exit 0; fi;sleep $((TRY*2))
           done
           exit 1
