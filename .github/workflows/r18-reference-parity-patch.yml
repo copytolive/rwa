@@ -1,0 +1,130 @@
+name: R18 Approved Reference Parity Patch
+on:
+  push:
+    paths:
+      - '.github/workflows/r18-reference-parity-patch.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: contains(github.event.head_commit.message, 'R18 approved reference parity patch')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Sync latest main
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+      - name: Apply approved desktop and mobile parity
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new, required=True):
+              p=Path(path); s=p.read_text()
+              if old not in s:
+                  if required: raise SystemExit(f'missing marker in {path}: {old[:100]}')
+                  return False
+              p.write_text(s.replace(old,new))
+              return True
+
+          # Revert the later R9 geometry regression back to the approved reference proportions.
+          p=Path('rwa-terminal-v5.js'); s=p.read_text()
+          pairs=[
+            ("310px minmax(0,1fr) 280px 230px","238px minmax(0,1fr) 250px 300px"),
+            ("imp(left,'grid-column','1');imp(left,'grid-row','1 / 3');imp(left,'width','310px');imp(left,'min-width','310px');imp(left,'max-width','310px')","imp(left,'grid-column','1');imp(left,'grid-row','1 / 3');imp(left,'width','238px');imp(left,'min-width','238px');imp(left,'max-width','238px')"),
+            ("imp(right,'grid-column','3');imp(right,'grid-row','1');imp(right,'width','280px');imp(right,'min-width','280px');imp(right,'max-width','280px')","imp(right,'grid-column','3');imp(right,'grid-row','1');imp(right,'width','250px');imp(right,'min-width','250px');imp(right,'max-width','250px')"),
+            ("imp(trade,'grid-column','4');imp(trade,'grid-row','1 / 3');imp(trade,'width','230px');imp(trade,'min-width','230px');imp(trade,'max-width','230px')","imp(trade,'grid-column','4');imp(trade,'grid-row','1 / 3');imp(trade,'width','300px');imp(trade,'min-width','300px');imp(trade,'max-width','300px')"),
+          ]
+          for old,new in pairs:
+              if old not in s: raise SystemExit('missing JS geometry marker: '+old[:80])
+              s=s.replace(old,new)
+          marker='/* RWA_TERMINAL_R18_APPROVED_REFERENCE_GEOMETRY_2026_09_04 */'
+          if marker not in s: s=s.rstrip()+"\n\n"+marker+"\n"
+          p.write_text(s)
+
+          # CSS R7 had duplicated the same regressed proportions; restore reference geometry.
+          p=Path('rwa-terminal-v5.css'); s=p.read_text()
+          css_pairs=[
+            ('grid-template-columns:310px minmax(0,1fr) 280px 230px!important','grid-template-columns:238px minmax(0,1fr) 250px 300px!important'),
+            ('width:310px!important;min-width:310px!important;max-width:310px!important','width:238px!important;min-width:238px!important;max-width:238px!important'),
+            ('width:280px!important;min-width:280px!important;max-width:280px!important','width:250px!important;min-width:250px!important;max-width:250px!important'),
+            ('width:230px!important;min-width:230px!important;max-width:230px!important','width:300px!important;min-width:300px!important;max-width:300px!important'),
+          ]
+          for old,new in css_pairs:
+              if old not in s: raise SystemExit('missing CSS geometry marker: '+old)
+              s=s.replace(old,new)
+          css_marker='/* R18 APPROVED REFERENCE GEOMETRY + MOBILE VIEWPORT FILL */'
+          if css_marker not in s:
+              s=s.rstrip()+'''\n\n/* R18 APPROVED REFERENCE GEOMETRY + MOBILE VIEWPORT FILL */
+          @media(min-width:1281px){
+           body.rwa-terminal-v5 .layout{grid-template-columns:238px minmax(520px,1fr) 250px 300px!important}
+           body.rwa-terminal-v5 .left{width:238px!important;min-width:238px!important;max-width:238px!important}
+           body.rwa-terminal-v5 .right{width:250px!important;min-width:250px!important;max-width:250px!important}
+           body.rwa-terminal-v5 #liveRail{width:300px!important;min-width:300px!important;max-width:300px!important}
+          }
+          @media(max-width:680px){
+           body.rwa-terminal-v5 .rwa-v5-mobile-quicktrade{
+            display:flex!important;flex-direction:column!important;box-sizing:border-box!important;
+            min-height:max(170px,calc(100dvh - 576px))!important
+           }
+           body.rwa-terminal-v5 .rwa-v5-mobile-quick-meta{margin-top:auto!important}
+          }
+          '''
+          p.write_text(s)
+
+          # Browser gates must certify the approved reference geometry, not the regressed one.
+          p=Path('tools/root-market-browser-stability.mjs'); s=p.read_text()
+          for old,new in [
+            ('info.left.w-310','info.left.w-238'),('info.book.w-280','info.book.w-250'),('info.trade.w-230','info.trade.w-300')
+          ]:
+              if old not in s: raise SystemExit('missing root stability marker '+old)
+              s=s.replace(old,new)
+          p.write_text(s)
+
+          p=Path('tools/live-no-mock-home-browser.mjs'); s=p.read_text()
+          geo_old="const wants={top:{x:0,y:0,width:1672,height:55},layout:{x:0,y:55,width:1672,height:858},left:{x:0,y:55,width:310,height:858},trade:{x:1442,y:55,width:230,height:858},bottom:{x:310,y:693,width:1132,height:220},footer:{x:0,y:913,width:1672,height:28}};"
+          geo_new="const wants={top:{x:0,y:0,width:1672,height:55},layout:{x:0,y:55,width:1672,height:858},left:{x:0,y:55,width:238,height:858},trade:{x:1372,y:55,width:300,height:858},bottom:{x:238,y:693,width:1134,height:220},footer:{x:0,y:913,width:1672,height:28}};"
+          if geo_old not in s: raise SystemExit('missing public browser geometry contract')
+          s=s.replace(geo_old,geo_new)
+          old="if(!g.main||g.main.x!==310||!near(g.main.width,852,5)||!near(g.main.height,638,5))fail('main geometry mismatch',g.main);"
+          new="if(!g.main||g.main.x!==238||!near(g.main.width,884,5)||!near(g.main.height,638,5))fail('main geometry mismatch',g.main);"
+          if old not in s: raise SystemExit('missing public browser main geometry')
+          s=s.replace(old,new)
+          old="if(!g.book||!near(g.book.x,1162,5)||!near(g.book.width,280,4)||!near(g.book.height,638,5))fail('order book geometry mismatch',g.book);"
+          new="if(!g.book||!near(g.book.x,1122,5)||!near(g.book.width,250,4)||!near(g.book.height,638,5))fail('order book geometry mismatch',g.book);"
+          if old not in s: raise SystemExit('missing public browser book geometry')
+          s=s.replace(old,new)
+          p.write_text(s)
+
+          # Cache bust all public loaders/contracts so previously visited browsers cannot keep R17 geometry.
+          replace('chart-core.js','rwa-terminal-v5.css?v=1.0.16','rwa-terminal-v5.css?v=1.0.17')
+          replace('chart-core.js','rwa-terminal-v5.js?v=1.0.25','rwa-terminal-v5.js?v=1.0.26')
+          replace('index.html','rwa-terminal-v5.css?v=1.0.16','rwa-terminal-v5.css?v=1.0.17')
+          replace('index.html','chart-core.js?v=33','chart-core.js?v=34')
+          for wf in Path('.github/workflows').glob('*.yml'):
+              if wf.name=='r18-reference-parity-patch.yml': continue
+              t=wf.read_text(); u=t.replace('rwa-terminal-v5.css?v=1.0.16','rwa-terminal-v5.css?v=1.0.17').replace('rwa-terminal-v5.js?v=1.0.25','rwa-terminal-v5.js?v=1.0.26').replace('chart-core.js?v=33','chart-core.js?v=34')
+              if u!=t: wf.write_text(u)
+
+          # Guard against reintroducing the three visibly wrong widths in authoritative runtime/tests.
+          for path in ['rwa-terminal-v5.js','tools/root-market-browser-stability.mjs','tools/live-no-mock-home-browser.mjs']:
+              t=Path(path).read_text()
+              if '310px minmax(0,1fr) 280px 230px' in t or 'info.left.w-310' in t:
+                  raise SystemExit('stale regressed geometry remains in '+path)
+          PY
+      - name: Commit parity patch
+        run: |
+          rm -f .github/workflows/r18-reference-parity-patch.yml
+          git config user.name copytolive-ui-bot
+          git config user.email copytolive-ui-bot@users.noreply.github.com
+          git add -A
+          git commit -m "fix(ui): match approved desktop mobile reference R18"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep 3
+          done
+          exit 1
