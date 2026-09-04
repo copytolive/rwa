@@ -1,0 +1,137 @@
+name: GOLD10B Broker H4 Global Correlation Gate
+
+on:
+  workflow_run:
+    workflows:
+      - GOLD10B Broker Native MT5 H4 Discovery
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: gold10b-broker-h4-global-corr
+  cancel-in-progress: true
+
+env:
+  D1_SOURCE_RUN_ID: '33667987913'
+  D1_ARTIFACT: gold24-canonical-v11-state
+
+jobs:
+  cross:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned dependencies
+        run: python -m pip install -r backtest/gold24/requirements.txt
+      - name: Resolve published broker-H4 proof
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:backtest/gold24/runtime_native_h4_broker/latest_native_h4_broker_hardpass.json > "$RUNNER_TEMP/broker-result.json"
+          git show origin/main:backtest/gold24/runtime_native_h4_broker/latest_gate_a_h4_receipt.json > "$RUNNER_TEMP/broker-receipt.json"
+          python - <<'PY' >> "$GITHUB_ENV"
+          import json,os
+          r=json.load(open(os.environ['RUNNER_TEMP']+'/broker-result.json'))
+          g=json.load(open(os.environ['RUNNER_TEMP']+'/broker-receipt.json'))
+          assert r['status']=='PASS' and g['crosscheck_pass'] is True
+          assert g['construction']=='DIRECT_BROKER_NATIVE_H4_NO_RESAMPLING'
+          print('BROKER_H4_HARDPASS='+str(int(r.get('native_h4_hardpass_kept',0))))
+          print('BROKER_H4_ROWS='+str(int(r['dataset']['rows'])))
+          rid=os.environ.get('GITHUB_EVENT_PATH')
+          event=json.load(open(rid)) if rid else {}
+          source=((event.get('workflow_run') or {}).get('id')) or 33833628548
+          print('BROKER_H4_SOURCE_RUN_ID='+str(source))
+          PY
+      - name: Exact zero-HARD-PASS broker closure
+        if: env.BROKER_H4_HARDPASS == '0'
+        run: |
+          set -euo pipefail
+          mkdir -p backtest/gold24/runtime_global_cross_tf_broker
+          python - <<'PY'
+          import json,os,pathlib
+          root=pathlib.Path('.')
+          b=json.load(open(os.environ['RUNNER_TEMP']+'/broker-result.json'))
+          g=json.load(open(os.environ['RUNNER_TEMP']+'/broker-receipt.json'))
+          a=json.load(open(root/'backtest/gold24/runtime_screening_gpt/combined_portfolio_audit.json'))
+          rows=a.get('rows',[]); kept=[r for r in rows if r.get('global_selection')=='KEPT']
+          payload={
+            'schema':'gold10b-broker-h4-global-corr-v1-zero-hardpass','status':'PASS',
+            'correlation_rule':'absolute Pearson(log-return equity), global per-symbol',
+            'correlation_alignment':{'common_frequency':'UTC daily equity close','backtest_resampling':False,'reason':'broker-native H4 search produced zero HARD PASS; current D1 global greedy set is unchanged'},
+            'source_h4_run_id':os.environ['BROKER_H4_SOURCE_RUN_ID'],
+            'datasets':{'H4':{'provider':g.get('primary_provider'),'symbol':g.get('primary_symbol'),'rows':b['dataset']['rows'],'sha256':b['dataset']['dataset_sha256'],'start_utc':b['dataset']['start_utc'],'end_utc':b['dataset']['end_utc'],'construction':b['dataset']['construction']}},
+            'methods_input_d1':int(a['methods_input']),'methods_input_h4_internal_hardpass':0,'methods_input_total':int(a['methods_input']),
+            'selected_global':int(a['methods_final']),'rejected_global':int(a['methods_input'])-int(a['methods_final']),
+            'hard_pass_global':int(a['hard_pass_count']),'watch_global':int(a['watch_count']),'fail_global':int(a['fail_count']),
+            'h4_selected_after_global_corr':0,'h4_hard_pass_after_global_corr':0,
+            'distinct_family':int(a['final_distinct_family_count']),'family_counts':a['family_counts_final'],'max_family_concentration':float(a['final_max_family_share']),
+            'portfolio_readiness':'NOT_READY','live_ready':False,'live_ready_reason':'HARD PASS=0; margin/slippage/broker interaction not fully validated',
+            'selected':[{'config_hash':r['config_hash'],'method':r['method'],'family':r['family'],'timeframe':'D1','correlation_max':r.get('global_corr_max'),'classification':r.get('classification')} for r in kept],
+            'rejected':[]
+          }
+          p=root/'backtest/gold24/runtime_global_cross_tf_broker/latest_global_d1_h4_broker_corr.json';p.write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({k:payload[k] for k in ['status','methods_input_total','selected_global','hard_pass_global','h4_hard_pass_after_global_corr']},indent=2))
+          PY
+      - name: Download exact datasets when broker H4 HARD PASS exists
+        if: env.BROKER_H4_HARDPASS != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -rf "$RUNNER_TEMP/cross-h4" "$RUNNER_TEMP/cross-d1"; mkdir -p "$RUNNER_TEMP/cross-h4" "$RUNNER_TEMP/cross-d1"
+          gh run download "$BROKER_H4_SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" -n "gold10b-broker-native-h4-$BROKER_H4_SOURCE_RUN_ID" -D "$RUNNER_TEMP/cross-h4"
+          gh run download "$BROKER_H4_SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" -n "gold10b-broker-native-h4-search-$BROKER_H4_SOURCE_RUN_ID" -D "$RUNNER_TEMP/cross-h4"
+          gh run download "$D1_SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" -n "$D1_ARTIFACT" -D "$RUNNER_TEMP/cross-d1"
+          cp "$RUNNER_TEMP/cross-h4/XAUUSD_MT5_NATIVE_H4_PRIMARY.csv" "$RUNNER_TEMP/cross-h4/GC1_COMEX_TRADINGVIEW_H4_PRIMARY.csv"
+          cp "$RUNNER_TEMP/cross-h4/native_h4_broker_hardpass.json" "$RUNNER_TEMP/cross-h4/native_h4_hardpass.json"
+          test -s "$RUNNER_TEMP/cross-h4/gate_a_h4_receipt.json"
+          test -s "$RUNNER_TEMP/cross-d1/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv"
+      - name: Run exact global D1 plus broker-H4 greedy correlation
+        if: env.BROKER_H4_HARDPASS != '0'
+        run: |
+          set -euo pipefail
+          mkdir -p backtest/gold24/runtime_global_cross_tf_broker
+          python -u backtest/gold24/global_cross_timeframe_corr.py \
+            --d1-state-dir "$RUNNER_TEMP/cross-d1" --h4-artifact-dir "$RUNNER_TEMP/cross-h4" --repo-root . \
+            --h4-source-run-id "$BROKER_H4_SOURCE_RUN_ID" \
+            --out backtest/gold24/runtime_global_cross_tf_broker/latest_global_d1_h4_broker_corr.json
+          python - <<'PY'
+          import json,os
+          p='backtest/gold24/runtime_global_cross_tf_broker/latest_global_d1_h4_broker_corr.json';x=json.load(open(p));g=json.load(open(os.environ['RUNNER_TEMP']+'/broker-receipt.json'))
+          x['schema']='gold10b-broker-h4-global-corr-v1';x['datasets']['H4']['provider']=g.get('primary_provider');x['datasets']['H4']['symbol']=g.get('primary_symbol');x['datasets']['H4']['construction']=g.get('construction')
+          open(p,'w').write(json.dumps(x,indent=2,sort_keys=True)+'\n')
+          assert x['status']=='PASS' and x['correlation_rule']=='absolute Pearson(log-return equity), global per-symbol'
+          assert x['correlation_alignment']['backtest_resampling'] is False
+          assert x['max_family_concentration']<=0.25+1e-12 and x['distinct_family']>=6
+          print('BROKER_H4_GLOBAL_CORR_PASS')
+          PY
+      - name: Publish broker global proof race-safe
+        run: |
+          set -euo pipefail
+          P="$RUNNER_TEMP/latest_global_d1_h4_broker_corr.json";cp backtest/gold24/runtime_global_cross_tf_broker/latest_global_d1_h4_broker_corr.json "$P"
+          git config user.name gold10b-bot;git config user.email gold10b-bot@users.noreply.github.com
+          for TRY in 1 2 3 4 5; do
+            git fetch origin main;git reset --hard origin/main;mkdir -p backtest/gold24/runtime_global_cross_tf_broker;cp "$P" backtest/gold24/runtime_global_cross_tf_broker/latest_global_d1_h4_broker_corr.json
+            git add backtest/gold24/runtime_global_cross_tf_broker/latest_global_d1_h4_broker_corr.json
+            if git diff --cached --quiet;then exit 0;fi
+            git commit -m 'chore(gold10b): publish broker H4 global correlation proof [skip ci]'
+            if git push origin HEAD:main;then exit 0;fi;sleep $((TRY*2))
+          done;exit 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gold10b-broker-h4-global-corr-${{ github.run_id }}
+          path: backtest/gold24/runtime_global_cross_tf_broker/latest_global_d1_h4_broker_corr.json
+          if-no-files-found: error
+          retention-days: 90
