@@ -3,9 +3,10 @@ body.rwa-terminal-v5 .brandmark,body.rwa-terminal-v5 .brandmark *{border-color:#
 body.rwa-terminal-v5 .brandcopy strong{font-weight:720!important;letter-spacing:-.01em!important}
 /* The legacy automation bridge remains mounted for backwards-compatible probes but is visually absent. */
 .rwa-ref-market-bridge{position:absolute!important;right:0!important;top:0!important;width:1px!important;height:1px!important;min-width:1px!important;min-height:1px!important;padding:0!important;margin:0!important;border:0!important;box-shadow:none!important;background:transparent!important;color:transparent!important;opacity:.001!important;overflow:hidden!important;z-index:99999!important;pointer-events:auto!important}
-/* The reference toolbar overlays the provider toolbar in the same 38px band. This prevents the visual double-toolbar while preserving the real TradingView frame underneath. */
+/* Keep exactly one visible chart-control band. The real TradingView iframe is shifted up by one provider-toolbar row, while our functional reference toolbar owns the visible 38px control band. */
 body.rwa-terminal-v5 #rwaRefChartBar{display:flex!important;visibility:visible!important;opacity:1!important;z-index:2147483000!important;pointer-events:auto!important;background:#030b14!important}
-body.rwa-terminal-v5 .chart-wrap>#tvHost,body.rwa-terminal-v5 .chart-wrap>#fallbackChart{top:0!important;height:100%!important}
+body.rwa-terminal-v5 .chart-wrap>#tvHost{top:-38px!important;height:calc(100% + 38px)!important}
+body.rwa-terminal-v5 .chart-wrap>#fallbackChart{top:38px!important;height:calc(100% - 38px)!important}
 .rwa-ref-indicator-menu,.rwa-ref-settings-menu{position:absolute!important;top:34px!important;width:148px!important;padding:5px!important;display:grid!important;gap:2px!important;border:1px solid var(--ref-line,#17283a)!important;border-radius:6px!important;background:#06131f!important;box-shadow:0 18px 40px #000a!important;z-index:2147483001!important}.rwa-ref-indicator-menu{right:150px!important}.rwa-ref-settings-menu{right:6px!important}.rwa-ref-indicator-menu[hidden],.rwa-ref-settings-menu[hidden]{display:none!important}.rwa-ref-indicator-menu button,.rwa-ref-settings-menu button{height:28px!important;width:100%!important;text-align:left!important;border:0!important;border-radius:4px!important;background:transparent!important;color:#c9d5e3!important;padding:0 7px!important;font-size:7px!important}.rwa-ref-indicator-menu button:hover,.rwa-ref-settings-menu button:hover{background:#0b1926!important;color:#fff!important}
 [data-final-indicator-proxy]{display:none!important}
 .rwa-ref-mobile-spark{display:none}
@@ -23,4 +24,4 @@ body.rwa-terminal-v5 .chart-wrap>#tvHost,body.rwa-terminal-v5 .chart-wrap>#fallb
  .rwa-ref-mobile-actions{position:relative!important}
  .rwa-ref-mobile-more-menu{position:absolute!important;right:0!important;top:34px!important;width:120px!important;padding:5px!important;display:grid!important;gap:2px!important;border:1px solid #17283a!important;border-radius:7px!important;background:#06131f!important;box-shadow:0 18px 40px #000b!important;z-index:2147483002!important}.rwa-ref-mobile-more-menu[hidden]{display:none!important}.rwa-ref-mobile-more-menu button{width:100%!important;height:28px!important;text-align:left!important;padding:0 8px!important;border:0!important;border-radius:4px!important;background:transparent!important;color:#c9d5e3!important;font-size:7px!important}.rwa-ref-mobile-more-menu button:hover{background:#0b1926!important}
 }
-/* RWA_REFERENCE_FINAL_1_0_1 */
+/* RWA_REFERENCE_FINAL_1_0_2 */
