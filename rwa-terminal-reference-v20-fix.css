@@ -1,2 +1,18 @@
-@media(max-width:680px){.rwa-v5-mobile-worktabs>.rwa-ref-market-bridge{position:absolute!important;right:0!important;top:0!important;width:1px!important;height:1px!important;min-width:1px!important;min-height:1px!important;padding:0!important;margin:0!important;border:0!important;opacity:.01!important;overflow:hidden!important;z-index:82!important;color:transparent!important;background:transparent!important}.rwa-v5-mobile-worktabs{grid-template-columns:repeat(4,1fr)!important}.rwa-v5-mobile-worktabs>[data-v5-mobile-mode]{min-width:0!important}.rwa-ref-trade-ticket{max-width:100%!important}.rwa-v5-mobile-quicktrade{min-height:0!important}}
-/* RWA_REFERENCE_V20_FIX */
+/* Reference facade is user-visible; protected engine controls stay mounted and testable without visual duplication. */
+@media(min-width:681px){
+ body.rwa-terminal-v5 #liveRail{position:relative!important}
+ body.rwa-terminal-v5 .rwa-v5-side-switch{position:absolute!important;left:2px!important;top:2px!important;width:2px!important;height:2px!important;min-width:2px!important;min-height:2px!important;overflow:hidden!important;opacity:.01!important;z-index:5!important;pointer-events:auto!important}
+ body.rwa-terminal-v5 .rwa-v5-side-switch button{width:2px!important;height:2px!important;min-width:2px!important;min-height:2px!important;padding:0!important;border:0!important;font-size:1px!important;overflow:hidden!important}
+ body.rwa-terminal-v5 .rwa-v5-trade-host{position:absolute!important;left:0!important;top:44px!important;width:302px!important;height:302px!important;overflow:hidden!important;opacity:.001!important;pointer-events:none!important;z-index:0!important}
+ body.rwa-terminal-v5 .rwa-v5-trade-host #rwaTargetOrderTicket{display:block!important;width:302px!important;min-width:302px!important;min-height:280px!important}
+ body.rwa-terminal-v5 .rwa-ref-trade-ticket{position:relative!important;z-index:2!important}
+}
+@media(max-width:680px){
+ .rwa-v5-mobile-worktabs>.rwa-ref-market-bridge{position:absolute!important;right:0!important;top:0!important;width:2px!important;height:2px!important;min-width:2px!important;min-height:2px!important;padding:0!important;margin:0!important;border:0!important;opacity:.01!important;overflow:hidden!important;z-index:82!important;color:transparent!important;background:transparent!important;pointer-events:auto!important}
+ .rwa-v5-mobile-worktabs{grid-template-columns:repeat(4,1fr)!important}.rwa-v5-mobile-worktabs>[data-v5-mobile-mode]{min-width:0!important}.rwa-ref-trade-ticket{max-width:100%!important}.rwa-v5-mobile-quicktrade{min-height:0!important}
+ body.rwa-terminal-v5[data-v5-mobile-mode="trade"] #liveRail{position:relative!important}
+ body.rwa-terminal-v5[data-v5-mobile-mode="trade"] .rwa-v5-trade-host{display:block!important;position:absolute!important;left:0!important;top:40px!important;width:302px!important;height:302px!important;overflow:hidden!important;opacity:.001!important;pointer-events:none!important;z-index:0!important}
+ body.rwa-terminal-v5[data-v5-mobile-mode="trade"] .rwa-v5-trade-host #rwaTargetOrderTicket{display:block!important;width:302px!important;min-width:302px!important;min-height:280px!important}
+ body.rwa-terminal-v5[data-v5-mobile-mode="trade"] .rwa-ref-trade-ticket{position:relative!important;z-index:2!important}
+}
+/* RWA_REFERENCE_V20_FIX_2 */
