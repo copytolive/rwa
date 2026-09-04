@@ -33,9 +33,16 @@ jobs:
           set -euo pipefail
           node --check tools/worker-candidate-probe.mjs
           python -m json.tool agent-worker/public-config.json >/dev/null
-          grep -Fq '"enabled": false' agent-worker/public-config.json
-          grep -Fq '"base_url": ""' agent-worker/public-config.json
-          grep -Fq '"candidate_base_url": "https://seablueprint.com/rwa-worker"' agent-worker/public-config.json
+          node - <<'NODE'
+          const c=require('./agent-worker/public-config.json');
+          if(c.enabled!==true) throw new Error('public terminal service must be explicitly enabled');
+          if(c.mode!=='terminal+delegated-agent') throw new Error('expected terminal+delegated-agent mode');
+          for(const [k,v] of [['base_url',c.base_url],['candidate_base_url',c.candidate_base_url]]){
+            if(!/^https:\/\//i.test(String(v||''))) throw new Error(k+' must be HTTPS');
+          }
+          if(c.base_url!==c.candidate_base_url) throw new Error('base_url and candidate_base_url must resolve to the same validated terminal service');
+          if(c.master_private_key_required!==false) throw new Error('master private key must never be required by the public terminal service');
+          NODE
       - name: Probe candidate honestly
         id: probe
         continue-on-error: true
@@ -46,9 +53,9 @@ jobs:
         if: steps.probe.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/worker-candidate-live' -f description='TESTNET worker health + ready + single-write-path PASS; mainnet remains locked'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=success -f context='rwa/worker-candidate-live' -f description='Terminal service health + ready PASS; mainnet authorization remains launch-gated'
       - name: Publish waiting status
         if: steps.probe.outcome != 'success'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=pending -f context='rwa/worker-candidate-live' -f description='Seablueprint worker candidate not operational yet'
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -f state=pending -f context='rwa/worker-candidate-live' -f description='Terminal service candidate is not fully healthy/ready yet'
