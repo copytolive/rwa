@@ -595,12 +595,12 @@ body.rwa-terminal-v5 .rwa-v5-header-more{top:49px!important;right:0!important;le
  body.rwa-terminal-v5 #liveRail>.rwa-v5-market-nav{display:none!important}
  body.rwa-terminal-v5 .layout{
   inset:55px 0 28px 0!important;height:calc(100vh - 83px)!important;
-  grid-template-columns:310px minmax(0,1fr) 280px 230px!important;grid-template-rows:minmax(0,1fr) 220px!important
+  grid-template-columns:238px minmax(0,1fr) 250px 300px!important;grid-template-rows:minmax(0,1fr) 220px!important
  }
- body.rwa-terminal-v5 .left{width:310px!important;min-width:310px!important;max-width:310px!important;background:#030c16!important}
+ body.rwa-terminal-v5 .left{width:238px!important;min-width:238px!important;max-width:238px!important;background:#030c16!important}
  body.rwa-terminal-v5 .main{grid-column:2!important;grid-template-rows:74px minmax(0,1fr)!important;background:#020810!important}
- body.rwa-terminal-v5 .right{grid-column:3!important;width:280px!important;min-width:280px!important;max-width:280px!important;background:#030c16!important}
- body.rwa-terminal-v5 #liveRail{grid-column:4!important;width:230px!important;min-width:230px!important;max-width:230px!important;background:#04101a!important}
+ body.rwa-terminal-v5 .right{grid-column:3!important;width:250px!important;min-width:250px!important;max-width:250px!important;background:#030c16!important}
+ body.rwa-terminal-v5 #liveRail{grid-column:4!important;width:300px!important;min-width:300px!important;max-width:300px!important;background:#04101a!important}
  body.rwa-terminal-v5 #rwaV5Bottom{grid-column:2/4!important;height:220px!important;min-height:220px!important;max-height:220px!important}
  body.rwa-terminal-v5 .terminal-header{
   grid-template-columns:260px minmax(0,1fr) 126px!important;height:74px!important;min-height:74px!important;padding:0 10px!important;background:#030c16!important
@@ -840,3 +840,18 @@ body.rwa-terminal-v5 #rwaMobileInstrumentStrip{display:none!important;visibility
 
 /* R14 ZERO-DELAY FIRST-READY CLEANUP */
 body.rwa-terminal-v5 #rwaFirstLoadStatus{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+
+/* R18 APPROVED REFERENCE GEOMETRY + MOBILE VIEWPORT FILL */
+@media(min-width:1281px){
+ body.rwa-terminal-v5 .layout{grid-template-columns:238px minmax(520px,1fr) 250px 300px!important}
+ body.rwa-terminal-v5 .left{width:238px!important;min-width:238px!important;max-width:238px!important}
+ body.rwa-terminal-v5 .right{width:250px!important;min-width:250px!important;max-width:250px!important}
+ body.rwa-terminal-v5 #liveRail{width:300px!important;min-width:300px!important;max-width:300px!important}
+}
+@media(max-width:680px){
+ body.rwa-terminal-v5 .rwa-v5-mobile-quicktrade{
+  display:flex!important;flex-direction:column!important;box-sizing:border-box!important;
+  min-height:max(170px,calc(100dvh - 576px))!important
+ }
+ body.rwa-terminal-v5 .rwa-v5-mobile-quick-meta{margin-top:auto!important}
+}

@@ -49,10 +49,10 @@ async function desktop(){
  if(!info.search||!info.ticketInside)fail('V5 primary structure incomplete',info);
  if(info.commerce||info.mock)fail('removed/mock content visible',{commerce:info.commerce,mock:info.mock});
  const g={top:await rect(page,'.topbar'),layout:await rect(page,'.layout'),left:await rect(page,'.left'),main:await rect(page,'.main'),book:await rect(page,'.right'),trade:await rect(page,'#liveRail'),bottom:await rect(page,'#rwaV5Bottom'),footer:await rect(page,'#rwaV5Footer')};
- const wants={top:{x:0,y:0,width:1672,height:55},layout:{x:0,y:55,width:1672,height:858},left:{x:0,y:55,width:310,height:858},trade:{x:1442,y:55,width:230,height:858},bottom:{x:310,y:693,width:1132,height:220},footer:{x:0,y:913,width:1672,height:28}};
+ const wants={top:{x:0,y:0,width:1672,height:55},layout:{x:0,y:55,width:1672,height:858},left:{x:0,y:55,width:238,height:858},trade:{x:1372,y:55,width:300,height:858},bottom:{x:238,y:693,width:1134,height:220},footer:{x:0,y:913,width:1672,height:28}};
  for(const [k,w] of Object.entries(wants)){const a=g[k];if(!a){fail('missing geometry '+k);continue}for(const [p,v] of Object.entries(w))if(!near(a[p],v,4))fail('geometry '+k+'.'+p,{want:v,got:a[p],full:a})}
- if(!g.main||g.main.x!==310||!near(g.main.width,852,5)||!near(g.main.height,638,5))fail('main geometry mismatch',g.main);
- if(!g.book||!near(g.book.x,1162,5)||!near(g.book.width,280,4)||!near(g.book.height,638,5))fail('order book geometry mismatch',g.book);
+ if(!g.main||g.main.x!==238||!near(g.main.width,884,5)||!near(g.main.height,638,5))fail('main geometry mismatch',g.main);
+ if(!g.book||!near(g.book.x,1122,5)||!near(g.book.width,250,4)||!near(g.book.height,638,5))fail('order book geometry mismatch',g.book);
  const clickNav=async(key,expect)=>{
    await page.locator('.topnav>button[data-v5-nav="'+key+'"]').click();await page.waitForTimeout(0);
    if((await page.evaluate(()=>location.hash))!=='#markets')fail(key+' changed route');

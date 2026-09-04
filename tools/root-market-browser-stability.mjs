@@ -87,9 +87,9 @@ async function desktop(browser){
   assert.deepEqual(info.bottomTabs,['positions','orders','holders','feed','analytics','thesis','history']);
   assert.deepEqual(info.leftTabs,['watchlist','feed','pulse','live']);
   assert.equal(info.ticketInside,true);
-  assert.ok(Math.abs(info.left.w-310)<=3);
-  assert.ok(Math.abs(info.book.w-280)<=3);
-  assert.ok(Math.abs(info.trade.w-230)<=3);
+  assert.ok(Math.abs(info.left.w-238)<=3);
+  assert.ok(Math.abs(info.book.w-250)<=3);
+  assert.ok(Math.abs(info.trade.w-300)<=3);
   assert.ok(Math.abs(info.bottom.h-220)<=3);
   assert.ok(Math.abs(info.footer.h-28)<=2);
   assert.equal(await locationHash(page),'#markets');
