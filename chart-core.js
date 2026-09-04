@@ -26,10 +26,12 @@ window.addEventListener('resize',queueDraw,{passive:true});window.addEventListen
   document.querySelectorAll('link[data-rwa-terminal-v5]').forEach(x=>x.remove());
   {const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-terminal-v5.css?v=1.0.17';l.dataset.rwaTerminalV5='1';document.head.appendChild(l)}
   if(!window.RWATerminalV5)await import('./rwa-terminal-v5.js?v=1.0.26');
-  if(!document.querySelector('link[data-rwa-reference-v20]')){const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-terminal-reference-v20.css?v=2.0.0';l.dataset.rwaReferenceV20='1';document.head.appendChild(l);await new Promise((res,rej)=>{l.onload=res;l.onerror=rej})}
-  if(!document.querySelector('link[data-rwa-reference-v20-fix]')){const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-terminal-reference-v20-fix.css?v=2.0.4';l.dataset.rwaReferenceV20Fix='1';document.head.appendChild(l);await new Promise((res,rej)=>{l.onload=res;l.onerror=rej})}
-  if(!window.RWAReferenceParity)await import('./rwa-terminal-reference-v20.js?v=2.0.0');
-  if(!window.RWAReferenceParityFix)await import('./rwa-terminal-reference-v20-fix.js?v=2.0.1');
+  if(!document.querySelector('link[data-rwa-reference-v20]')){const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-terminal-reference-v20.css?v=2.0.1';l.dataset.rwaReferenceV20='1';document.head.appendChild(l);await new Promise((res,rej)=>{l.onload=res;l.onerror=rej})}
+  if(!document.querySelector('link[data-rwa-reference-v20-fix]')){const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-terminal-reference-v20-fix.css?v=2.0.5';l.dataset.rwaReferenceV20Fix='1';document.head.appendChild(l);await new Promise((res,rej)=>{l.onload=res;l.onerror=rej})}
+  if(!window.RWAReferenceParity)await import('./rwa-terminal-reference-v20.js?v=2.0.1');
+  if(!window.RWAReferenceParityFix)await import('./rwa-terminal-reference-v20-fix.js?v=2.0.2');
+  if(!document.querySelector('link[data-rwa-reference-final]')){const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-terminal-reference-final.css?v=1.0.0';l.dataset.rwaReferenceFinal='1';document.head.appendChild(l);await new Promise((res,rej)=>{l.onload=res;l.onerror=rej})}
+  if(!window.RWAReferenceFinal)await import('./rwa-terminal-reference-final.js?v=1.0.0');
   document.documentElement.classList.add('rwa-target-runtime-ready')
 }catch(e){console.error('RWA live HOME failed to load',e)}})();
 /* RWA_REAL_BUSINESS_VALIDATION_CONSOLE_V1_BOOTSTRAP */
@@ -42,3 +44,4 @@ window.addEventListener('resize',queueDraw,{passive:true});window.addEventListen
 /* RWA_TERMINAL_R20_FIXCSS_2_0_2_RECERT_2026_09_04 */
 /* RWA_TERMINAL_R20_FIXCSS_2_0_3_RECERT_2026_09_04 */
 /* RWA_TERMINAL_R20_FIXCSS_2_0_4_RECERT_2026_09_04 */
+/* RWA_TERMINAL_REFERENCE_FINAL_1_0_0_RECERT_2026_09_04 */
