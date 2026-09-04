@@ -2,7 +2,7 @@
   "after": {
     "broker_h4_added_to_unique_total": false,
     "candidate_evaluated_all_timeframes_minimum_unique": 1651912,
-    "candidate_evaluated_broker_h4_separate": 0,
+    "candidate_evaluated_broker_h4_separate": 20000,
     "candidate_evaluated_d1_pre_v4": 1491912,
     "candidate_evaluated_direct_h4_unique": 60000,
     "candidate_evaluated_discovery_total": 1491912,
@@ -49,14 +49,119 @@
     "watch": 24
   },
   "broker_native_h4": {
-    "candidate_evaluated_unique": 0,
+    "candidate_evaluated_unique": 20000,
     "counted_in_all_timeframes_minimum_unique": false,
     "counting_note": "kept separate until disjoint config-hash proof versus direct-H4 search is published",
-    "dataset": {},
+    "dataset": {
+      "broker_server": "Exness-MT5Trial17",
+      "cadence_audit": {
+        "canonical_dense_h4_start_year": 2017,
+        "canonical_four_hour_gap_share": 0.9636590655188276,
+        "canonical_median_gap_hours": 4.0,
+        "canonical_rows": 15218,
+        "raw_end_utc": "2026-09-04 00:00:00+00:00",
+        "raw_rows": 16142,
+        "raw_start_utc": "2014-01-14 00:00:00+00:00",
+        "trim_policy": "DROP_SPARSE_PRE_H4_HISTORY_ONLY; NO RESAMPLING/AGGREGATION/IMPUTATION",
+        "yearly_cadence": [
+          {
+            "four_hour_gap_share": 0.0,
+            "median_gap_hours": 24.0,
+            "rows": 302,
+            "year": 2014
+          },
+          {
+            "four_hour_gap_share": 0.0,
+            "median_gap_hours": 24.0,
+            "rows": 312,
+            "year": 2015
+          },
+          {
+            "four_hour_gap_share": 0.0,
+            "median_gap_hours": 24.0,
+            "rows": 310,
+            "year": 2016
+          },
+          {
+            "four_hour_gap_share": 0.9332355099046221,
+            "median_gap_hours": 4.0,
+            "rows": 1364,
+            "year": 2017
+          },
+          {
+            "four_hour_gap_share": 0.9658875552747946,
+            "median_gap_hours": 4.0,
+            "rows": 1584,
+            "year": 2018
+          },
+          {
+            "four_hour_gap_share": 0.966750313676286,
+            "median_gap_hours": 4.0,
+            "rows": 1595,
+            "year": 2019
+          },
+          {
+            "four_hour_gap_share": 0.9675202998126171,
+            "median_gap_hours": 4.0,
+            "rows": 1602,
+            "year": 2020
+          },
+          {
+            "four_hour_gap_share": 0.9680651221039449,
+            "median_gap_hours": 4.0,
+            "rows": 1598,
+            "year": 2021
+          },
+          {
+            "four_hour_gap_share": 0.9680851063829787,
+            "median_gap_hours": 4.0,
+            "rows": 1599,
+            "year": 2022
+          },
+          {
+            "four_hour_gap_share": 0.967964824120603,
+            "median_gap_hours": 4.0,
+            "rows": 1593,
+            "year": 2023
+          },
+          {
+            "four_hour_gap_share": 0.9669576059850374,
+            "median_gap_hours": 4.0,
+            "rows": 1605,
+            "year": 2024
+          },
+          {
+            "four_hour_gap_share": 0.9668335419274092,
+            "median_gap_hours": 4.0,
+            "rows": 1599,
+            "year": 2025
+          },
+          {
+            "four_hour_gap_share": 0.9675324675324676,
+            "median_gap_hours": 4.0,
+            "rows": 1079,
+            "year": 2026
+          }
+        ]
+      },
+      "construction": "DIRECT_BROKER_NATIVE_H4_DENSE_SEGMENT_NO_RESAMPLING",
+      "cost_model": "core.py COST_FLOOR_RT=0.0032",
+      "crosscheck_provider": "TradingView",
+      "dataset_sha256": "c61a71853f0432cc88e3d8d69cd263bc5ca788c42a225021bf689daad168cc69",
+      "end_utc": "2026-09-04 00:00:00+00:00",
+      "logical_symbol": "GOLD",
+      "provider": "MetaTrader5 broker server",
+      "quantity_gold_units": 100.0,
+      "rows": 15218,
+      "start_utc": "2017-01-03 00:00:00+00:00",
+      "starting_equity_usd": 10000.0,
+      "symbol": "XAUUSDm",
+      "timeframe": "H4"
+    },
     "full_pre_corr_hardpass": 0,
-    "global_cross_timeframe_corr_status": "NOT_RUN",
+    "global_cross_timeframe_corr_status": "PENDING_IF_H4_HARDPASS_EXISTS",
     "internal_hard_pass_kept": 0,
-    "status": "NOT_PUBLISHED"
+    "status": "PASS"
   },
   "global_cross_timeframe": {
     "correlation_rule": "absolute Pearson(log-return equity), global per-symbol",
