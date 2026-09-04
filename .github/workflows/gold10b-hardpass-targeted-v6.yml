@@ -1,0 +1,75 @@
+name: GOLD10B Targeted HARD PASS Search v6
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/gold10b-hardpass-targeted-v6.yml'
+      - 'backtest/gold24/hardpass_targeted_v6.py'
+      - 'backtest/gold24/HARDPASS_TARGETED_V6_KICK'
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: gold10b-hardpass-targeted-v6
+  cancel-in-progress: true
+env:
+  SOURCE_RUN_ID: '33667987913'
+  STATE_ARTIFACT: gold24-canonical-v11-state
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r backtest/gold24/requirements.txt
+      - name: Restore canonical D1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -rf .v6-state;mkdir -p .v6-state
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" -n "$STATE_ARTIFACT" -D .v6-state
+          test -s .v6-state/gate_a/GC1_COMEX_TRADINGVIEW_D1_PRIMARY.csv
+      - name: Run near-miss recovery search
+        run: |
+          set -euo pipefail
+          mkdir -p backtest/gold24/runtime_hardpass_targeted_v6
+          python -u backtest/gold24/hardpass_targeted_v6.py --state-dir .v6-state \
+            --prior-json backtest/gold24/runtime_multimethod_v1/latest_multimethod_v1_discovery.json \
+            --prior-targeted-json backtest/gold24/runtime_hardpass_targeted/latest_hardpass_targeted.json \
+            --out backtest/gold24/runtime_hardpass_targeted_v6/latest_hardpass_targeted_v6.json \
+            --candidate-count 60000 --workers 8 --seed 2026090437
+          python - <<'PY'
+          import json
+          x=json.load(open('backtest/gold24/runtime_hardpass_targeted_v6/latest_hardpass_targeted_v6.json'))
+          assert x['status']=='PASS' and x['candidate_evaluated_unique']==60000
+          assert x['candidate_gate']=={'entry_min':100,'net_profit_usd_min':20000.0,'corr_max':0.5}
+          assert x['hard_pass_gate']=={'entry_min':300,'pf_min':1.2,'max_dd_pct_max':25.0,'ev_gt':0.0,'oos_pf_min':1.0,'monte_carlo':'PASS','positive_year_pct_min':60.0,'corr_max':0.5}
+          assert x['generation_profile']['threshold_relaxation'] is False
+          print(json.dumps({k:x[k] for k in ['candidate_evaluated_unique','primitive_diagnostics','prefilter_survivors','full_pre_corr_survivors','hard_pass_count','hard_pass_new_count','global_corr_rejected']},indent=2))
+          PY
+      - name: Publish v6 evidence race-safe
+        run: |
+          set -euo pipefail
+          P="$RUNNER_TEMP/latest_hardpass_targeted_v6.json";cp backtest/gold24/runtime_hardpass_targeted_v6/latest_hardpass_targeted_v6.json "$P"
+          git config user.name gold10b-bot;git config user.email gold10b-bot@users.noreply.github.com
+          for TRY in 1 2 3 4 5; do
+            git fetch origin main;git reset --hard origin/main;mkdir -p backtest/gold24/runtime_hardpass_targeted_v6;cp "$P" backtest/gold24/runtime_hardpass_targeted_v6/latest_hardpass_targeted_v6.json
+            git add backtest/gold24/runtime_hardpass_targeted_v6/latest_hardpass_targeted_v6.json
+            if git diff --cached --quiet;then exit 0;fi
+            git commit -m 'chore(gold10b): publish v6 hard-pass evidence [skip ci]'
+            if git push origin HEAD:main;then exit 0;fi;sleep $((TRY*2))
+          done;exit 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gold10b-hardpass-targeted-v6-${{ github.run_id }}
+          path: backtest/gold24/runtime_hardpass_targeted_v6/latest_hardpass_targeted_v6.json
+          if-no-files-found: error
+          retention-days: 90
