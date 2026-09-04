@@ -1,0 +1,142 @@
+{
+  "approved_method": "BROKER_NATIVE_MT5_DENSE_H4_PLUS_TRADINGVIEW_OANDA_SESSION_AWARE_CROSSCHECK_V3",
+  "broker_fetch_attempts": [
+    {
+      "api": "copy_rates_range",
+      "count": 16142,
+      "last_error": [
+        1,
+        "Success"
+      ]
+    }
+  ],
+  "cadence_audit": {
+    "canonical_dense_h4_start_year": 2017,
+    "canonical_four_hour_gap_share": 0.9636590655188276,
+    "canonical_median_gap_hours": 4.0,
+    "canonical_rows": 15218,
+    "raw_end_utc": "2026-09-04 00:00:00+00:00",
+    "raw_rows": 16142,
+    "raw_start_utc": "2014-01-14 00:00:00+00:00",
+    "trim_policy": "DROP_SPARSE_PRE_H4_HISTORY_ONLY; NO RESAMPLING/AGGREGATION/IMPUTATION",
+    "yearly_cadence": [
+      {
+        "four_hour_gap_share": 0.0,
+        "median_gap_hours": 24.0,
+        "rows": 302,
+        "year": 2014
+      },
+      {
+        "four_hour_gap_share": 0.0,
+        "median_gap_hours": 24.0,
+        "rows": 312,
+        "year": 2015
+      },
+      {
+        "four_hour_gap_share": 0.0,
+        "median_gap_hours": 24.0,
+        "rows": 310,
+        "year": 2016
+      },
+      {
+        "four_hour_gap_share": 0.9332355099046221,
+        "median_gap_hours": 4.0,
+        "rows": 1364,
+        "year": 2017
+      },
+      {
+        "four_hour_gap_share": 0.9658875552747946,
+        "median_gap_hours": 4.0,
+        "rows": 1584,
+        "year": 2018
+      },
+      {
+        "four_hour_gap_share": 0.966750313676286,
+        "median_gap_hours": 4.0,
+        "rows": 1595,
+        "year": 2019
+      },
+      {
+        "four_hour_gap_share": 0.9675202998126171,
+        "median_gap_hours": 4.0,
+        "rows": 1602,
+        "year": 2020
+      },
+      {
+        "four_hour_gap_share": 0.9680651221039449,
+        "median_gap_hours": 4.0,
+        "rows": 1598,
+        "year": 2021
+      },
+      {
+        "four_hour_gap_share": 0.9680851063829787,
+        "median_gap_hours": 4.0,
+        "rows": 1599,
+        "year": 2022
+      },
+      {
+        "four_hour_gap_share": 0.967964824120603,
+        "median_gap_hours": 4.0,
+        "rows": 1593,
+        "year": 2023
+      },
+      {
+        "four_hour_gap_share": 0.9669576059850374,
+        "median_gap_hours": 4.0,
+        "rows": 1605,
+        "year": 2024
+      },
+      {
+        "four_hour_gap_share": 0.9668335419274092,
+        "median_gap_hours": 4.0,
+        "rows": 1599,
+        "year": 2025
+      },
+      {
+        "four_hour_gap_share": 0.9675324675324676,
+        "median_gap_hours": 4.0,
+        "rows": 1079,
+        "year": 2026
+      }
+    ]
+  },
+  "construction": "DIRECT_BROKER_NATIVE_H4_DENSE_SEGMENT_NO_RESAMPLING",
+  "criteria": {
+    "canonical_four_hour_gap_share_ge_0_90": true,
+    "canonical_median_gap_eq_4h": true,
+    "crosscheck_overlap_ge_3000": true,
+    "daily_validation_direction_ge_0_80": true,
+    "daily_validation_return_corr_ge_0_90": true,
+    "h4_direction_agreement_ge_0_70": true,
+    "median_abs_price_delta_le_0_08": true,
+    "primary_dense_h4_history_ge_8y": true,
+    "primary_reaches_2026": true,
+    "primary_rows_ge_12000": true
+  },
+  "crosscheck_alignment_policy": "nearest source H4 timestamp within 2h; no OHLCV resampling",
+  "crosscheck_data_sha256": "b85e14aac5edb747ca614c1582dda6ac68495b940f7fcd62da2969dc34c6b825",
+  "crosscheck_pass": true,
+  "crosscheck_symbol": "TradingView OANDA:XAUUSD",
+  "daily_validation_direction_agreement": 0.8906386701662292,
+  "daily_validation_log_return_correlation": 0.9451891151878011,
+  "daily_validation_policy": "last native H4 close per UTC date for cross-check only; never used as backtest bars",
+  "daily_validation_rows": 1144,
+  "generated_at": "2026-09-04T03:58:46.390863+00:00",
+  "h4_direction_agreement": 0.7221642310368824,
+  "h4_log_return_correlation_diagnostic": 0.6471058661150568,
+  "median_absolute_price_delta_fraction": 0.0009982892900552987,
+  "no_resampling_attested": true,
+  "overlap_rows": 5749,
+  "primary_broker_server": "Exness-MT5Trial17",
+  "primary_end_utc": "2026-09-04 00:00:00+00:00",
+  "primary_provider": "MetaTrader5 broker server",
+  "primary_rows": 15218,
+  "primary_sha256": "c61a71853f0432cc88e3d8d69cd263bc5ca788c42a225021bf689daad168cc69",
+  "primary_start_utc": "2017-01-03 00:00:00+00:00",
+  "primary_symbol": "XAUUSDm",
+  "provider": "TradingView",
+  "schema": "gold10b-mt5-native-h4-gate-a-v3-dense-session-aware",
+  "source_interval": "H4",
+  "symbol": "GOLD",
+  "timeframe": "H4"
+}

@@ -1,0 +1,197 @@
+{
+  "schema": "gold10b-broker-native-h4-hardpass-discovery-v2-dense",
+  "status": "PASS",
+  "dataset": {
+    "provider": "MetaTrader5 broker server",
+    "broker_server": "Exness-MT5Trial17",
+    "symbol": "XAUUSDm",
+    "logical_symbol": "GOLD",
+    "timeframe": "H4",
+    "rows": 15218,
+    "start_utc": "2017-01-03 00:00:00+00:00",
+    "end_utc": "2026-09-04 00:00:00+00:00",
+    "dataset_sha256": "c61a71853f0432cc88e3d8d69cd263bc5ca788c42a225021bf689daad168cc69",
+    "cost_model": "core.py COST_FLOOR_RT=0.0032",
+    "quantity_gold_units": 100.0,
+    "starting_equity_usd": 10000.0,
+    "construction": "DIRECT_BROKER_NATIVE_H4_DENSE_SEGMENT_NO_RESAMPLING",
+    "crosscheck_provider": "TradingView",
+    "cadence_audit": {
+      "canonical_dense_h4_start_year": 2017,
+      "canonical_four_hour_gap_share": 0.9636590655188276,
+      "canonical_median_gap_hours": 4.0,
+      "canonical_rows": 15218,
+      "raw_end_utc": "2026-09-04 00:00:00+00:00",
+      "raw_rows": 16142,
+      "raw_start_utc": "2014-01-14 00:00:00+00:00",
+      "trim_policy": "DROP_SPARSE_PRE_H4_HISTORY_ONLY; NO RESAMPLING/AGGREGATION/IMPUTATION",
+      "yearly_cadence": [
+        {
+          "four_hour_gap_share": 0.0,
+          "median_gap_hours": 24.0,
+          "rows": 302,
+          "year": 2014
+        },
+        {
+          "four_hour_gap_share": 0.0,
+          "median_gap_hours": 24.0,
+          "rows": 312,
+          "year": 2015
+        },
+        {
+          "four_hour_gap_share": 0.0,
+          "median_gap_hours": 24.0,
+          "rows": 310,
+          "year": 2016
+        },
+        {
+          "four_hour_gap_share": 0.9332355099046221,
+          "median_gap_hours": 4.0,
+          "rows": 1364,
+          "year": 2017
+        },
+        {
+          "four_hour_gap_share": 0.9658875552747946,
+          "median_gap_hours": 4.0,
+          "rows": 1584,
+          "year": 2018
+        },
+        {
+          "four_hour_gap_share": 0.966750313676286,
+          "median_gap_hours": 4.0,
+          "rows": 1595,
+          "year": 2019
+        },
+        {
+          "four_hour_gap_share": 0.9675202998126171,
+          "median_gap_hours": 4.0,
+          "rows": 1602,
+          "year": 2020
+        },
+        {
+          "four_hour_gap_share": 0.9680651221039449,
+          "median_gap_hours": 4.0,
+          "rows": 1598,
+          "year": 2021
+        },
+        {
+          "four_hour_gap_share": 0.9680851063829787,
+          "median_gap_hours": 4.0,
+          "rows": 1599,
+          "year": 2022
+        },
+        {
+          "four_hour_gap_share": 0.967964824120603,
+          "median_gap_hours": 4.0,
+          "rows": 1593,
+          "year": 2023
+        },
+        {
+          "four_hour_gap_share": 0.9669576059850374,
+          "median_gap_hours": 4.0,
+          "rows": 1605,
+          "year": 2024
+        },
+        {
+          "four_hour_gap_share": 0.9668335419274092,
+          "median_gap_hours": 4.0,
+          "rows": 1599,
+          "year": 2025
+        },
+        {
+          "four_hour_gap_share": 0.9675324675324676,
+          "median_gap_hours": 4.0,
+          "rows": 1079,
+          "year": 2026
+        }
+      ]
+    }
+  },
+  "candidate_gate": {
+    "entry_min": 100,
+    "net_profit_usd_min": 20000.0,
+    "corr_max": 0.5
+  },
+  "hard_pass_gate": {
+    "entry_min": 300,
+    "pf_min": 1.2,
+    "max_dd_pct_max": 25.0,
+    "ev_gt": 0.0,
+    "oos_pf_min": 1.0,
+    "monte_carlo": "PASS",
+    "positive_year_pct_min": 60.0,
+    "corr_max": 0.5
+  },
+  "candidate_evaluated_unique": 20000,
+  "generated_family_counts": {
+    "ADAPTIVE_TREND": 402,
+    "ADX_TREND": 416,
+    "ATR_BREAKOUT": 404,
+    "ATR_CHANNEL": 409,
+    "ATR_MEANREV_REGIME": 415,
+    "BAND_HYBRID": 439,
+    "BOLLINGER_REVERSION": 412,
+    "BOLLINGER_REVERSION_V2": 430,
+    "BOLLINGER_SQUEEZE": 421,
+    "BOS_CHOCH": 411,
+    "CANDLE_ENGULFING": 416,
+    "CHANDELIER_TREND": 420,
+    "CHART_PATTERN": 401,
+    "DIVERGENCE": 387,
+    "DONCHIAN": 416,
+    "EMA_PULLBACK": 419,
+    "FIBONACCI": 429,
+    "FIB_PULLBACK": 421,
+    "FRACTAL_BREAKOUT": 429,
+    "HYBRID": 416,
+    "ICHIMOKU": 407,
+    "ICHIMOKU_KUMO_BREAKOUT": 422,
+    "ICHIMOKU_PULLBACK": 433,
+    "KELTNER_BREAKOUT": 413,
+    "KELTNER_SQUEEZE": 409,
+    "LINEAR_REGRESSION": 420,
+    "MACD_MOMENTUM": 425,
+    "MARKET_STRUCTURE": 413,
+    "MOMENTUM_RSI_ROC": 402,
+    "MULTI_TIMEFRAME": 420,
+    "PIVOT_SR": 410,
+    "PRICE_STRUCTURE": 416,
+    "REGRESSION_CHANNEL_BREAKOUT": 422,
+    "RELATIVE_STRENGTH": 410,
+    "ROLLING_ZSCORE": 427,
+    "RSI_MOMENTUM": 421,
+    "RSI_REVERSION": 393,
+    "STATISTICAL": 410,
+    "SUPERTREND_ATR": 409,
+    "SUPPORT_RESISTANCE": 380,
+    "TREND_EMA": 442,
+    "TREND_MEANREV_ENSEMBLE": 424,
+    "TURTLE_BREAKOUT": 410,
+    "VOLATILITY": 440,
+    "VOLATILITY_REGIME": 417,
+    "VOLUME": 427,
+    "VWAP": 443,
+    "ZSCORE_REVERSION": 422
+  },
+  "primitive_diagnostics": {
+    "candidate_gate_pre_corr": 0,
+    "dd_le_25": 177,
+    "entry_ge_300": 15073,
+    "ev_gt_0": 208,
+    "net_ge_20k": 0,
+    "pf_ge_1_20": 152,
+    "primitive_gates_0": 4601,
+    "primitive_gates_1": 15234,
+    "primitive_gates_2": 119,
+    "primitive_gates_3": 46
+  },
+  "primitive_survivors": 0,
+  "full_pre_corr_hardpass": 0,
+  "native_h4_hardpass_kept": 0,
+  "native_h4_corr_rejected": 0,
+  "hard_pass_rows": [],
+  "top50_primitive_near_miss": [],
+  "global_cross_timeframe_corr_status": "PENDING_IF_H4_HARDPASS_EXISTS",
+  "portfolio_readiness": "NOT_READY",
+  "note": "Direct broker-server dense H4 segment only; sparse pre-H4 history was dropped, never resampled. Global logical-GOLD correlation against D1 remains mandatory."
+}
