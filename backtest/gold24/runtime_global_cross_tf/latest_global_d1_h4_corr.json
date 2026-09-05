@@ -17,10 +17,10 @@
     },
     "H4": {
       "construction": "DIRECT_SOURCE_H4_BARS_NO_RESAMPLING",
-      "end_utc": "2026-09-03 18:00:00+00:00",
+      "end_utc": "2026-09-04 18:00:00+00:00",
       "provider": "TradingView",
-      "rows": 5679,
-      "sha256": "e3b6c32b199be6ace97e2bebb2636792018dbbade9cb2065177afe4784a46728",
+      "rows": 5685,
+      "sha256": "46f1b9145786314c7cd70094b1dfdc7c7093d175d1890e3352ddd2b8b722c08e",
       "start_utc": "2023-01-02 23:00:00+00:00"
     }
   },
