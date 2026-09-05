@@ -16,6 +16,7 @@ async function certify(width,height,name){
   page.on('pageerror',e=>errors.push(String(e?.message||e)));
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:50000});
   await page.waitForFunction(()=>window.RWAReferenceParityV21?.version==='2.1.0',{timeout:50000});
+  await page.waitForFunction(()=>window.RWAReferenceParityV21Visual?.version==='1.0.1'&&window.RWAReferenceParityV21Visual?.applied===true,{timeout:50000});
   await page.waitForFunction(()=>{
     const a=window.RWAReferenceParityV21?.audit?.();
     return a?.chartState==='live'&&a?.bars>=30&&a?.bookBids>=5&&a?.bookAsks>=5;
@@ -24,14 +25,17 @@ async function certify(width,height,name){
     const audit=window.RWAReferenceParityV21.audit();
     const c=document.querySelector('#rwaV21Chart');
     const r=c?.getBoundingClientRect();
+    const ind=document.querySelector('#rwaRefIndicatorOverlay');
+    const line=document.querySelector('#rwaRefLineChart');
     const mode=document.body.dataset.v5MobileMode||'';
-    return {audit,canvas:r?{x:r.x,y:r.y,width:r.width,height:r.height,display:getComputedStyle(c).display}:null,mode,overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth};
+    return {audit,visual:{version:window.RWAReferenceParityV21Visual?.version||'',applied:window.RWAReferenceParityV21Visual?.applied===true,indicatorHidden:ind?.hidden===true,lineHidden:line?.hidden===true},canvas:r?{x:r.x,y:r.y,width:r.width,height:r.height,display:getComputedStyle(c).display}:null,mode,overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth};
   });
   snapshots[name]=a;
   if(a.audit.version!=='2.1.0')fail(name+' wrong V21 version',a.audit.version);
   if(a.audit.chartState!=='live'||a.audit.bars<30)fail(name+' real candlestick history not live',a.audit);
   if(a.audit.bookBids<5||a.audit.bookAsks<5)fail(name+' live order book not populated',a.audit);
   if(a.audit.mainnetReady!==false)fail(name+' mainnet must remain fail-closed',a.audit.mainnetReady);
+  if(!a.visual.applied||!a.visual.indicatorHidden||!a.visual.lineHidden)fail(name+' clean-candle default not applied',a.visual);
   if(!a.canvas||a.canvas.display==='none'||a.canvas.width<300||a.canvas.height<(width<=680?250:300))fail(name+' V21 chart canvas geometry invalid',a.canvas);
   if(a.overflow>2)fail(name+' horizontal overflow',a.overflow);
   if(width<=680){
@@ -51,7 +55,7 @@ try{
   await certify(430,932,'reference-v21-mobile-430');
 }catch(e){fail('unexpected failure',String(e?.stack||e))}
 await browser.close();
-const out={ok:failures.length===0,contract:'rwa-reference-parity-v21-real-data',base,failures,snapshots};
+const out={ok:failures.length===0,contract:'rwa-reference-parity-v21-real-data-clean-candles',base,failures,snapshots};
 await writeFile(`${proof}/reference-v21-result.json`,JSON.stringify(out,null,2));
 console.log(JSON.stringify(out,null,2));
 if(!out.ok)process.exit(1);
