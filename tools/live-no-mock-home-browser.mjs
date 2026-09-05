@@ -93,7 +93,7 @@ async function desktopOperational(){
 async function mobile(width,height,name,{interact=true}={}){
   const ctx=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,serviceWorkers:'block'}),page=await ctx.newPage();
   page.on('pageerror',e=>pageErrors.push(name+': '+String(e?.message||e)));
-  await ready(page);const info=await snapshot(page);const s={a:info.v22,mode:document.body?.dataset?.v5MobileMode};
+  await ready(page);const info=await snapshot(page);
   const mode=await page.evaluate(()=>({mode:document.body.dataset.v5MobileMode,chart:getComputedStyle(document.querySelector('.chart-wrap')).display,book:getComputedStyle(document.querySelector('.right')).display,trade:getComputedStyle(document.querySelector('#liveRail')).display}));
   verifyCore(info,name);
   if(mode.mode!=='chart'||mode.chart==='none'||mode.book!=='none'||mode.trade!=='none')fail(name+' default chart state',mode);
