@@ -1,0 +1,26 @@
+/* RWA Terminal V22.2 — final truthful reference viewport polish. No image/screenshot overlay. */
+@media(min-width:1281px){
+  body.rwa-terminal-v5.rwa-reference-v22-exact .right .order-section{padding:0!important}
+}
+@media(max-width:680px){
+  body.rwa-terminal-v5.rwa-reference-v22-exact .quickstats .price-stat,
+  body.rwa-terminal-v5.rwa-reference-v22-exact .quickstats .qstat:has(#statChange){display:none!important}
+  body.rwa-terminal-v5.rwa-reference-v22-exact .quickstats{grid-template-columns:repeat(4,minmax(0,1fr))!important;overflow:hidden!important}
+  body.rwa-terminal-v5.rwa-reference-v22-exact .quickstats .qstat{min-width:0!important;overflow:hidden!important}
+  body.rwa-terminal-v5.rwa-reference-v22-exact[data-v5-mobile-mode="chart"] .chart-wrap{
+    flex:0 0 clamp(218px,29.5dvh,285px)!important;
+    height:clamp(218px,29.5dvh,285px)!important;
+    min-height:0!important
+  }
+  body.rwa-terminal-v5.rwa-reference-v22-exact .rwa-v5-mini-book{
+    flex:0 0 clamp(124px,15.8dvh,146px)!important;
+    height:clamp(124px,15.8dvh,146px)!important;
+    min-height:124px!important
+  }
+  body.rwa-terminal-v5.rwa-reference-v22-exact .rwa-v5-mobile-quicktrade{min-height:137px!important}
+  body.rwa-terminal-v5.rwa-reference-v22-exact .main{inset:0 0 64px 0!important}
+  body.rwa-terminal-v5.rwa-reference-v22-exact[data-v5-mobile-mode="book"] .right,
+  body.rwa-terminal-v5.rwa-reference-v22-exact[data-v5-mobile-mode="trade"] #liveRail{inset:168px 0 64px 0!important}
+  body.rwa-terminal-v5.rwa-reference-v22-exact #rwaV5MobileNav,
+  body.rwa-terminal-v5.rwa-reference-v22-exact .mobile-tabs{height:64px!important}
+}

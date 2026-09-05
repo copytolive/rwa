@@ -40,6 +40,8 @@ window.addEventListener('resize',queueDraw,{passive:true});window.addEventListen
   if(!document.querySelector('link[data-rwa-reference-v22]')){const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-terminal-reference-v22.css?v=2.2.0';l.dataset.rwaReferenceV22='1';document.head.appendChild(l);await new Promise((res,rej)=>{l.onload=res;l.onerror=rej})}
   if(!document.querySelector('link[data-rwa-reference-v22-exact]')){const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-terminal-reference-v22-exact.css?v=2.2.1';l.dataset.rwaReferenceV22Exact='1';document.head.appendChild(l);await new Promise((res,rej)=>{l.onload=res;l.onerror=rej})}
   await import('./rwa-terminal-reference-v22.js?v=2.2.1');
+  if(!document.querySelector('link[data-rwa-reference-v22-final]')){const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-terminal-reference-v22-final.css?v=2.2.2';l.dataset.rwaReferenceV22Final='1';document.head.appendChild(l);await new Promise((res,rej)=>{l.onload=res;l.onerror=rej})}
+  if(!window.RWAReferenceParityV22Final)await import('./rwa-terminal-reference-v22-final.js?v=2.2.2');
   document.documentElement.classList.add('rwa-target-runtime-ready')
 }catch(e){console.error('RWA live HOME failed to load',e)}})();
 /* RWA_REAL_BUSINESS_VALIDATION_CONSOLE_V1_BOOTSTRAP */
@@ -64,3 +66,4 @@ window.addEventListener('resize',queueDraw,{passive:true});window.addEventListen
 /* RWA_TERMINAL_REFERENCE_V21_FINAL_RECERT_TRIGGER_2026_09_05 */
 /* RWA_TERMINAL_REFERENCE_V22_REAL_DOM_PARITY_2026_09_05 */
 /* RWA_TERMINAL_REFERENCE_V22_1_EXACT_ADAPTER_PARITY_2026_09_05 */
+/* RWA_TERMINAL_REFERENCE_V22_2_FINAL_TRUTHFUL_PARITY_2026_09_05 */

@@ -16,6 +16,8 @@ on:
       - "rwa-terminal-reference-v22.js"
       - "rwa-terminal-reference-v22.css"
       - "rwa-terminal-reference-v22-exact.css"
+      - "rwa-terminal-reference-v22-final.js"
+      - "rwa-terminal-reference-v22-final.css"
       - "rwa-multichain.js"
       - "rwa-multichain-engine.js"
       - "rwa-multichain-registry.json"
@@ -46,7 +48,7 @@ jobs:
           python3 -m http.server 4173 --directory .. >/tmp/rwa-target-v4.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && exit 0; sleep 1; done
           cat /tmp/rwa-target-v4.log; exit 1
-      - name: Certify Real World Asset target V22
+      - name: Certify Real World Asset target V22.2
         env:
           RWA_UI_URL: http://127.0.0.1:4173/rwa/
           RWA_UI_PROOF_DIR: proof/target-v4-local
@@ -72,7 +74,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Wait for current public V22 markers
+      - name: Wait for current public V22.2 markers
         shell: bash
         run: |
           set -euo pipefail
@@ -88,8 +90,10 @@ jobs:
               && printf '%s' "$CORE" | grep -Fq 'rwa-terminal-v5.js?v=1.0.26' \
               && printf '%s' "$CORE" | grep -Fq 'rwa-terminal-reference-v21.js?v=2.1.0' \
               && printf '%s' "$CORE" | grep -Fq 'rwa-terminal-reference-v22.js?v=2.2.1' \
-              && printf '%s' "$CORE" | grep -Fq 'rwa-terminal-reference-v22-exact.css?v=2.2.1'; then
-              echo "Public V22 markers live at deployment $LIVE_SHA"
+              && printf '%s' "$CORE" | grep -Fq 'rwa-terminal-reference-v22-exact.css?v=2.2.1' \
+              && printf '%s' "$CORE" | grep -Fq 'rwa-terminal-reference-v22-final.css?v=2.2.2' \
+              && printf '%s' "$CORE" | grep -Fq 'rwa-terminal-reference-v22-final.js?v=2.2.2'; then
+              echo "Public V22.2 markers live at deployment $LIVE_SHA"
               exit 0
             fi
             sleep 5
@@ -99,7 +103,7 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Certify public target V22
+      - name: Certify public target V22.2
         env:
           RWA_UI_URL: https://copytolive.github.io/rwa/
           RWA_UI_PROOF_DIR: proof/target-v4-public
