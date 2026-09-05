@@ -35,6 +35,7 @@ window.addEventListener('resize',queueDraw,{passive:true});window.addEventListen
   if(!window.RWAReferenceFinalHotfix)await import('./rwa-terminal-reference-final-hotfix.js?v=1.0.0');
   if(!document.querySelector('link[data-rwa-reference-v21]')){const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-terminal-reference-v21.css?v=2.1.0';l.dataset.rwaReferenceV21='1';document.head.appendChild(l);await new Promise((res,rej)=>{l.onload=res;l.onerror=rej})}
   if(!window.RWAReferenceParityV21)await import('./rwa-terminal-reference-v21.js?v=2.1.0');
+  if(!window.RWAReferenceParityV21Visual)await import('./rwa-terminal-reference-v21-visual.js?v=1.0.0');
   document.documentElement.classList.add('rwa-target-runtime-ready')
 }catch(e){console.error('RWA live HOME failed to load',e)}})();
 /* RWA_REAL_BUSINESS_VALIDATION_CONSOLE_V1_BOOTSTRAP */
@@ -53,3 +54,4 @@ window.addEventListener('resize',queueDraw,{passive:true});window.addEventListen
 /* RWA_TERMINAL_REFERENCE_FINAL_1_0_3_MOBILE_CONTROLS_2026_09_04 */
 /* RWA_TERMINAL_REFERENCE_FINAL_1_0_4_HITTEST_REWARDS_2026_09_05 */
 /* RWA_TERMINAL_REFERENCE_V21_REALDATA_PARITY_2026_09_05 */
+/* RWA_TERMINAL_REFERENCE_V21_VISUAL_DEFAULTS_2026_09_05 */
