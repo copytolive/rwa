@@ -18,23 +18,14 @@ async function certify(width,height,name){
   await page.waitForFunction(()=>window.RWAReferenceParityV21?.version==='2.1.0',{timeout:50000});
   await page.waitForFunction(()=>window.RWAReferenceParityV21Visual?.version==='1.0.1'&&window.RWAReferenceParityV21Visual?.applied===true,{timeout:50000});
   await page.waitForFunction(()=>window.RWAReferenceParityV21Seal?.version==='1.0.0'&&window.RWAReferenceParityV21Seal?.applied===true,{timeout:50000});
-  await page.waitForFunction(()=>{
-    const a=window.RWAReferenceParityV21?.audit?.();
-    return a?.chartState==='live'&&a?.bars>=30&&a?.bookBids>=5&&a?.bookAsks>=5;
-  },{timeout:45000});
-  await page.waitForFunction(()=>{
-    const s=window.RWAReferenceParityV21Seal?.audit?.();
-    return s?.applied===true&&s?.overlay===false&&s?.indicatorHidden===true&&s?.lineHidden===true&&s?.canvasZ>=108;
-  },{timeout:10000});
+  await page.waitForFunction(()=>{const a=window.RWAReferenceParityV21?.audit?.();return a?.chartState==='live'&&a?.bars>=30&&a?.bookBids>=5&&a?.bookAsks>=5},{timeout:45000});
+  await page.waitForFunction(()=>{const s=window.RWAReferenceParityV21Seal?.audit?.();return s?.applied===true&&s?.overlay===false&&s?.indicatorHidden===true&&s?.lineHidden===true&&s?.canvasZ>=108},{timeout:10000});
   const a=await page.evaluate(()=>{
     const audit=window.RWAReferenceParityV21.audit();
     const seal=window.RWAReferenceParityV21Seal.audit();
-    const c=document.querySelector('#rwaV21Chart');
-    const r=c?.getBoundingClientRect();
-    const ind=document.querySelector('#rwaRefIndicatorOverlay');
-    const line=document.querySelector('#rwaRefLineChart');
-    const mode=document.body.dataset.v5MobileMode||'';
-    return {audit,seal,visual:{version:window.RWAReferenceParityV21Visual?.version||'',applied:window.RWAReferenceParityV21Visual?.applied===true,indicatorHidden:ind?.hidden===true,lineHidden:line?.hidden===true},canvas:r?{x:r.x,y:r.y,width:r.width,height:r.height,display:getComputedStyle(c).display,zIndex:Number.parseInt(getComputedStyle(c).zIndex,10)||0}:null,mode,overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth};
+    const c=document.querySelector('#rwaV21Chart');const r=c?.getBoundingClientRect();
+    const ind=document.querySelector('#rwaRefIndicatorOverlay');const line=document.querySelector('#rwaRefLineChart');
+    return {audit,seal,visual:{version:window.RWAReferenceParityV21Visual?.version||'',applied:window.RWAReferenceParityV21Visual?.applied===true,indicatorHidden:ind?.hidden===true,lineHidden:line?.hidden===true},canvas:r?{x:r.x,y:r.y,width:r.width,height:r.height,display:getComputedStyle(c).display,zIndex:Number.parseInt(getComputedStyle(c).zIndex,10)||0}:null,mode:document.body.dataset.v5MobileMode||'',overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth};
   });
   snapshots[name]=a;
   if(a.audit.version!=='2.1.0')fail(name+' wrong V21 version',a.audit.version);
@@ -49,19 +40,24 @@ async function certify(width,height,name){
 
   if(width>680){
     const style=page.locator('[data-ref-chart-style]');
-    const indicator=page.locator('[data-ref-indicator]');
     if(await style.count()){
       await style.click();
       try{await page.waitForFunction(()=>{const s=window.RWAReferenceParityV21Seal?.audit?.();return s?.lineHidden===false&&s?.overlay===true&&s?.canvasZ<100},{timeout:5000})}catch{fail(name+' line-chart interaction did not lower sealed canvas',await page.evaluate(()=>window.RWAReferenceParityV21Seal?.audit?.()))}
       await style.click();
       try{await page.waitForFunction(()=>{const s=window.RWAReferenceParityV21Seal?.audit?.();return s?.lineHidden===true&&s?.overlay===false&&s?.canvasZ>=108},{timeout:5000})}catch{fail(name+' candle-chart restore did not reseal canvas',await page.evaluate(()=>window.RWAReferenceParityV21Seal?.audit?.()))}
     }else fail(name+' chart-style control missing');
-    if(await indicator.count()){
-      await indicator.click();
+
+    const indicators=page.locator('[data-final-indicators]');
+    if(await indicators.count()){
+      await indicators.click();
+      const sma=page.locator('.rwa-ref-indicator-menu [data-final-indicator-set="sma20"]');
+      if(await sma.count())await sma.click();else fail(name+' SMA indicator menu action missing');
       try{await page.waitForFunction(()=>{const s=window.RWAReferenceParityV21Seal?.audit?.();return s?.indicatorHidden===false&&s?.overlay===true&&s?.canvasZ<100},{timeout:5000})}catch{fail(name+' indicator interaction did not lower sealed canvas',await page.evaluate(()=>window.RWAReferenceParityV21Seal?.audit?.()))}
-      await indicator.click();
+      await indicators.click();
+      const off=page.locator('.rwa-ref-indicator-menu [data-final-indicator-set="none"]');
+      if(await off.count())await off.click();else fail(name+' indicator-off menu action missing');
       try{await page.waitForFunction(()=>{const s=window.RWAReferenceParityV21Seal?.audit?.();return s?.indicatorHidden===true&&s?.overlay===false&&s?.canvasZ>=108},{timeout:5000})}catch{fail(name+' indicator-off restore did not reseal canvas',await page.evaluate(()=>window.RWAReferenceParityV21Seal?.audit?.()))}
-    }else fail(name+' indicator control missing');
+    }else fail(name+' visible Indicators control missing');
   }
   if(width<=680){
     const tabs=await page.locator('.rwa-v5-mobile-worktabs [data-v5-mobile-mode]').evaluateAll(xs=>xs.map(x=>x.dataset.v5MobileMode));

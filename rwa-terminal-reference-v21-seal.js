@@ -2,7 +2,7 @@
 'use strict';
 if(window.RWAReferenceParityV21Seal)return;
 const VERSION='1.0.0';
-let observer=null,applied=false;
+let observer=null,timer=null,applied=false;
 const $=s=>document.querySelector(s);
 function visible(el){return !!el&&el.hidden!==true&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden'}
 function apply(){
@@ -19,13 +19,11 @@ function apply(){
   return true
 }
 function watch(){
-  const indicator=$('#rwaRefIndicatorOverlay');
-  const line=$('#rwaRefLineChart');
-  const canvas=$('#rwaV21Chart');
-  if(!indicator||!line||!canvas)return false;
   observer?.disconnect();
   observer=new MutationObserver(()=>requestAnimationFrame(apply));
-  for(const node of [indicator,line])observer.observe(node,{attributes:true,attributeFilter:['hidden','class','style']});
+  observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','class','style']});
+  if(timer)clearInterval(timer);
+  timer=setInterval(()=>{if(!document.hidden)apply()},50);
   apply();
   return true
 }
@@ -33,11 +31,12 @@ function boot(){
   let tries=0;
   const spin=()=>{
     tries++;
-    if(watch()){
+    if($('#rwaV21Chart')&&$('#rwaRefIndicatorOverlay')&&$('#rwaRefLineChart')){
+      watch();
       window.dispatchEvent(new CustomEvent('rwa:reference-v21-sealed',{detail:{version:VERSION,defaultLayer:108,interactiveLayer:8}}));
       return;
     }
-    if(tries<80)setTimeout(spin,100)
+    if(tries<120)setTimeout(spin,100)
   };
   spin()
 }
