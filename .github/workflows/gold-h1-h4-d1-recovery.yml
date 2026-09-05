@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      RECOVERY: ${{ runner.temp }}/gold-h1-h4-d1-recovery
+      RECOVERY: /tmp/gold-h1-h4-d1-recovery
       RECOVERY_BRANCH: recovery/gold-h1-h4-d1-data-20260905
     steps:
       - name: Checkout
@@ -42,7 +42,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gold-h1-h4-d1-recovery-${{ github.run_id }}
-          path: ${{ runner.temp }}/gold-h1-h4-d1-recovery
+          path: /tmp/gold-h1-h4-d1-recovery
           retention-days: 30
           if-no-files-found: error
 
