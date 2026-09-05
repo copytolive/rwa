@@ -11,6 +11,8 @@ on:
       - "rwa-terminal-v5.js"
       - "rwa-terminal-v5.css"
       - "rwa-live-home-v1.css"
+      - "rwa-terminal-reference-v21.js"
+      - "rwa-terminal-reference-v21.css"
       - "rwa-multichain.js"
       - "rwa-multichain-engine.js"
       - "rwa-multichain-registry.json"
@@ -19,6 +21,7 @@ on:
       - "wallet-core.js"
       - "walletconnect.js"
       - "tools/live-no-mock-home-browser.mjs"
+      - "tools/reference-v21-browser.mjs"
       - ".github/workflows/live-no-mock-home.yml"
   workflow_dispatch:
 
@@ -45,11 +48,18 @@ jobs:
           RWA_UI_URL: http://127.0.0.1:4173/rwa/
           RWA_UI_PROOF_DIR: proof/target-v4-local
         run: node tools/live-no-mock-home-browser.mjs
+      - name: Certify Reference Parity V21 real-data layer
+        env:
+          RWA_UI_URL: http://127.0.0.1:4173/rwa/
+          RWA_UI_PROOF_DIR: proof/reference-v21-local
+        run: node tools/reference-v21-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: target-v4-local-${{ github.sha }}
-          path: proof/target-v4-local/
+          path: |
+            proof/target-v4-local/
+            proof/reference-v21-local/
           if-no-files-found: error
           retention-days: 30
 
@@ -72,7 +82,8 @@ jobs:
             if printf '%s' "$ROOT" | grep -Fq 'id="bookPrecision"' \
               && printf '%s' "$ROOT" | grep -Fq 'id="watchAdd"' \
               && printf '%s' "$ROOT" | grep -Fq 'app.js?v=20' \
-              && printf '%s' "$CORE" | grep -Fq 'rwa-terminal-v5.js?v=1.0.26'; then
+              && printf '%s' "$CORE" | grep -Fq 'rwa-terminal-v5.js?v=1.0.26' \
+              && printf '%s' "$CORE" | grep -Fq 'rwa-terminal-reference-v21.js?v=2.1.0'; then
               echo "Public target markers live at deployment $LIVE_SHA"
               exit 0
             fi
@@ -88,10 +99,17 @@ jobs:
           RWA_UI_URL: https://copytolive.github.io/rwa/
           RWA_UI_PROOF_DIR: proof/target-v4-public
         run: node tools/live-no-mock-home-browser.mjs
+      - name: Certify public Reference Parity V21 real-data layer
+        env:
+          RWA_UI_URL: https://copytolive.github.io/rwa/
+          RWA_UI_PROOF_DIR: proof/reference-v21-public
+        run: node tools/reference-v21-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: target-v4-public-${{ github.sha }}
-          path: proof/target-v4-public/
+          path: |
+            proof/target-v4-public/
+            proof/reference-v21-public/
           if-no-files-found: error
           retention-days: 30
