@@ -1,0 +1,58 @@
+/* RWA TERMINAL REFERENCE PARITY V21 — real-data visual reliability layer */
+:root{--v21-bg:#020810;--v21-panel:#04101a;--v21-panel2:#06131f;--v21-line:#17283a;--v21-grid:#142536;--v21-text:#eaf1fa;--v21-muted:#8090a5;--v21-green:#36d7a2;--v21-red:#ff626e}
+body.rwa-terminal-v5{background:var(--v21-bg)!important;color:var(--v21-text)!important}
+/* Keep the terminal dense and balanced like the approved desktop reference. */
+@media(min-width:1281px){
+ body.rwa-terminal-v5 .layout{grid-template-columns:238px minmax(0,1fr) 260px 290px!important;grid-template-rows:minmax(0,1fr) 214px!important;background:var(--v21-bg)!important}
+ body.rwa-terminal-v5 .left{width:238px!important;min-width:238px!important;max-width:238px!important;background:#030c16!important}
+ body.rwa-terminal-v5 .right{width:260px!important;min-width:260px!important;max-width:260px!important;background:#030c16!important}
+ body.rwa-terminal-v5 #liveRail{width:290px!important;min-width:290px!important;max-width:290px!important;background:#04101a!important}
+ body.rwa-terminal-v5 #rwaV5Bottom{height:214px!important;min-height:214px!important;max-height:214px!important;background:#04101a!important}
+ body.rwa-terminal-v5 .terminal-header{height:78px!important;min-height:78px!important;background:#030c16!important;border-bottom:1px solid var(--v21-line)!important}
+ body.rwa-terminal-v5 .rwa-ref-asset-summary{height:78px!important}
+ body.rwa-terminal-v5 .rwa-ref-price>b{font-size:23px!important}
+ body.rwa-terminal-v5 .rwa-ref-stats small{font-size:6.4px!important}.rwa-ref-stats b{font-size:8.4px!important}
+ body.rwa-terminal-v5 .right .right-title{height:42px!important;min-height:42px!important}
+ body.rwa-terminal-v5 .book-head{height:27px!important}
+ body.rwa-terminal-v5 #asks .bookrow,body.rwa-terminal-v5 #bids .bookrow{height:26px!important;min-height:26px!important;position:relative!important;overflow:hidden!important}
+ body.rwa-terminal-v5 #rwaRefTradeTicket{gap:6px!important;padding:9px!important}
+ body.rwa-terminal-v5 #rwaV5Bottom>nav{height:39px!important;min-height:39px!important}
+ body.rwa-terminal-v5 .rwa-v5-bottom-body{height:calc(100% - 39px)!important}
+}
+/* Guaranteed chart surface: this canvas is fed only by RWAMarketRuntime real klines. */
+body.rwa-terminal-v5 .chart-wrap{position:relative!important;background:#020810!important;isolation:isolate!important}
+#rwaV21Chart{position:absolute;left:0;right:0;top:38px;bottom:0;width:100%;height:calc(100% - 38px);z-index:8;display:block;background:#020810;pointer-events:auto;touch-action:pan-y}
+body.rwa-terminal-v5 .chart-wrap>#tvHost{opacity:0!important;pointer-events:none!important;z-index:2!important}
+body.rwa-terminal-v5 .chart-wrap>#fallbackChart{z-index:1!important}
+body.rwa-terminal-v5 #rwaRefIndicatorOverlay,body.rwa-terminal-v5 #rwaRefLineChart{z-index:105!important;pointer-events:none!important}
+body.rwa-terminal-v5 #rwaRefOrderOverlays{z-index:110!important}
+body.rwa-terminal-v5 #rwaRefChartBar{z-index:120!important}
+.rwa-v21-chart-tip{position:absolute;z-index:116;display:none;min-width:144px;padding:7px 8px;border:1px solid #21384d;border-radius:5px;background:#06131feF;box-shadow:0 10px 28px #0008;color:#cdd8e5;font-size:7px;line-height:1.5;pointer-events:none}.rwa-v21-chart-tip b{color:#fff}.rwa-v21-chart-tip .pos{color:var(--v21-green)}.rwa-v21-chart-tip .neg{color:var(--v21-red)}
+/* Real order-depth shading. Width comes from the rendered live quantity, never from sample data. */
+body.rwa-terminal-v5 .bookrow{--v21-depth:0%;position:relative!important;isolation:isolate!important}
+body.rwa-terminal-v5 .bookrow::before{content:"";position:absolute;z-index:-1;top:1px;bottom:1px;right:0;width:var(--v21-depth);pointer-events:none}
+body.rwa-terminal-v5 #asks .bookrow::before{background:linear-gradient(90deg,transparent,rgba(255,98,110,.18))}
+body.rwa-terminal-v5 #bids .bookrow::before{background:linear-gradient(90deg,transparent,rgba(54,215,162,.18))}
+body.rwa-terminal-v5 .bookrow:hover{background:#0a1824!important;outline:1px solid #1f374b!important;cursor:pointer!important}
+body.rwa-terminal-v5 .rwa-ref-book-meter{background:#04101a!important}
+/* Reference-like compact hierarchy without inventing unavailable account values. */
+body.rwa-terminal-v5 .rwa-ref-trade-ticket{background:#04101a!important}
+body.rwa-terminal-v5 .rwa-ref-input,body.rwa-terminal-v5 .rwa-ref-est,body.rwa-terminal-v5 .rwa-ref-price-input,body.rwa-terminal-v5 .rwa-ref-protection>div,body.rwa-terminal-v5 .rwa-ref-buying{background:#071522!important;border-color:#1a3045!important}
+body.rwa-terminal-v5 .rwa-v5-target-posts article,body.rwa-terminal-v5 .rwa-ref-social-empty{background:#06131f!important;border-color:#172d41!important}
+body.rwa-terminal-v5 .rwa-v5-target-movers>button:hover{background:#071522!important}
+/* Mobile: preserve the approved four upper modes and five bottom destinations, keep the chart readable. */
+@media(max-width:680px){
+ body.rwa-terminal-v5 .terminal-header{min-height:168px!important;height:168px!important;padding:10px 10px 0!important;grid-template-rows:auto 50px 40px!important}
+ body.rwa-terminal-v5 .rwa-ref-mobile-price b{font-size:20px!important}
+ body.rwa-terminal-v5 .rwa-ref-mobile-stats{height:50px!important}
+ body.rwa-terminal-v5 .rwa-v5-mobile-worktabs{height:40px!important;grid-template-columns:repeat(4,1fr)!important}
+ body.rwa-terminal-v5 .rwa-v5-mobile-worktabs [data-v5-mobile-mode]{height:40px!important}
+ #rwaV21Chart{top:40px;height:calc(100% - 40px);bottom:0;touch-action:pan-y}
+ body.rwa-terminal-v5 .chart-wrap{height:398px!important;min-height:398px!important}
+ body.rwa-terminal-v5 .rwa-final-mobile-chartbar{height:40px!important;min-height:40px!important}
+ body.rwa-terminal-v5[data-v5-mobile-mode="book"] .right,body.rwa-terminal-v5[data-v5-mobile-mode="trade"] #liveRail{height:calc(100vh - 168px)!important}
+ body.rwa-terminal-v5 #asks .bookrow,body.rwa-terminal-v5 #bids .bookrow{min-height:28px!important;height:28px!important;font-size:8px!important}
+ .rwa-v21-chart-tip{font-size:8px;min-width:154px}
+}
+/* Small desktops: keep all four primary columns visible instead of collapsing the chart. */
+@media(min-width:1281px) and (max-width:1500px){body.rwa-terminal-v5 .layout{grid-template-columns:220px minmax(420px,1fr) 236px 274px!important}body.rwa-terminal-v5 .left{width:220px!important;min-width:220px!important;max-width:220px!important}body.rwa-terminal-v5 .right{width:236px!important;min-width:236px!important;max-width:236px!important}body.rwa-terminal-v5 #liveRail{width:274px!important;min-width:274px!important;max-width:274px!important}}
