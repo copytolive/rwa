@@ -17,11 +17,13 @@ async function shot(page,name){
 
 async function ready(page){
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:50000});
-  await page.waitForFunction(()=>window.RWALiveHome?.version==='5.0.0'&&window.RWATerminalV5?.version==='1.0.0'&&window.RWAReferenceParityV22?.version==='2.2.1'&&window.RWAReferenceParityV22Final?.version==='2.2.2'&&window.RWAMarketRuntime?.state?.().pairs?.length>50,{timeout:50000});
+  await page.waitForFunction(()=>window.RWALiveHome?.version==='5.0.0'&&window.RWATerminalV5?.version==='1.0.0'&&window.RWAReferenceParityV22?.version==='2.2.1'&&window.RWAReferenceParityV22Final?.version==='2.2.3'&&window.RWAMarketRuntime?.state?.().pairs?.length>50,{timeout:50000});
+  await page.waitForFunction(()=>window.RWAReferenceParityV22Final?.audit?.().attempted===true,{timeout:20000});
   await page.evaluate(async()=>{try{await window.RWAReferenceParityV21?.refreshDepth?.()}catch{}});
   await page.waitForFunction(()=>document.querySelectorAll('#bids .bookrow').length>=5&&document.querySelectorAll('#asks .bookrow').length>=5,{timeout:45000});
   await page.waitForFunction(()=>document.querySelector('#liveRail #rwaTargetOrderTicket'),{timeout:20000});
   await page.waitForFunction(()=>{const n=Number((document.querySelector('#statPrice')?.textContent||'').replace(/,/g,'').replace(/[^0-9.-]/g,''));return n>0},{timeout:30000});
+  await page.waitForFunction(()=>{const a=window.RWAReferenceParityV22Final?.audit?.();return a?.marketConsistent===true&&a?.marketConsistency?.symbol&&a.marketConsistency.symbol===a.selected},{timeout:20000});
   await page.waitForFunction(()=>window.RWAReferenceParityV22.audit().overlayImages===0&&window.RWAReferenceParityV22Final.audit().overlayImages===0,{timeout:10000});
 }
 
@@ -47,6 +49,8 @@ function verifyCore(info,label){
   if(JSON.stringify(info.left)!==JSON.stringify(['watchlist','feed','pulse','live']))fail(label+' left tabs',info.left);
   if(info.commerce||info.mock||info.v22.overlayImages!==0||info.final.overlayImages!==0)fail(label+' forbidden mock/commerce overlay',info);
   if(info.v22.chartBars<30||info.v22.bookBids<5||info.v22.bookAsks<5)fail(label+' live market surfaces incomplete',info.v22);
+  if(info.final.version!=='2.2.3'||info.final.attempted!==true||info.final.marketConsistent!==true)fail(label+' market consistency guard',info.final);
+  if(info.final.marketConsistency?.symbol!==info.final.selected||!info.final.marketConsistency?.chartCoherent||!info.final.marketConsistency?.bookCoherent)fail(label+' mixed market surfaces',info.final.marketConsistency);
   if(info.v22.mainnetReady!==false||info.final.mainnetReady!==false)fail(label+' mainnet must remain fail-closed',{v22:info.v22.mainnetReady,final:info.final.mainnetReady});
 }
 
@@ -128,7 +132,7 @@ try{
 }catch(e){fail('unexpected failure',String(e?.stack||e))}
 await browser.close();
 if(pageErrors.length)fail('page errors',pageErrors);
-const out={ok:failures.length===0,contract:'rwa-terminal-v22-2-real-dom-reference-viewport-final',base,failures,audit};
+const out={ok:failures.length===0,contract:'rwa-terminal-v22-3-real-dom-reference-viewport-market-consistency',base,failures,audit};
 await writeFile(proof+'/browser-result.json',JSON.stringify(out,null,2));
 console.log(JSON.stringify(out,null,2));
 if(!out.ok)process.exit(1);
