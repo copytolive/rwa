@@ -1,0 +1,31 @@
+{
+  "purpose": "Editable integration points for every button/system in desktop.html and mobile.html",
+  "safety": "trade-execution is preview-only until replaced with a real authenticated adapter",
+  "edit_flow": [
+    "Open desktop.html or mobile.html",
+    "Click 'Edit slots'",
+    "Click any outlined control",
+    "Change label/system/action/target and save",
+    "For production integration, implement the matching system adapter in config.js"
+  ],
+  "systems": [
+    "router",
+    "chart",
+    "trade-execution",
+    "portfolio",
+    "analytics",
+    "rewards",
+    "alerts",
+    "watchlist",
+    "social-feed",
+    "wallet",
+    "profile"
+  ],
+  "slot_attributes": {
+    "label": "Visible button text",
+    "system": "Adapter namespace",
+    "action": "Action name passed to adapter",
+    "target": "Route, timeframe, order type, or system-specific key",
+    "enabled": "Whether the control is active"
+  }
+}
