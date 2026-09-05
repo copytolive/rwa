@@ -1,39 +1,641 @@
 {
-  "construction": "DIRECT_SOURCE_H1_BARS_NO_RESAMPLING",
+  "back_adjustment": false,
+  "construction": "DIRECT_NATIVE_COMEX_CONTRACT_H1_CONTINUOUS_NO_RESAMPLING",
+  "construction_meta": {
+    "accepted_contract_count": 42,
+    "accepted_symbols": [
+      "GCG2020",
+      "GCJ2020",
+      "GCM2020",
+      "GCQ2020",
+      "GCV2020",
+      "GCZ2020",
+      "GCG2021",
+      "GCJ2021",
+      "GCM2021",
+      "GCQ2021",
+      "GCV2021",
+      "GCZ2021",
+      "GCG2022",
+      "GCJ2022",
+      "GCM2022",
+      "GCQ2022",
+      "GCV2022",
+      "GCZ2022",
+      "GCG2023",
+      "GCJ2023",
+      "GCM2023",
+      "GCQ2023",
+      "GCV2023",
+      "GCZ2023",
+      "GCG2024",
+      "GCJ2024",
+      "GCM2024",
+      "GCQ2024",
+      "GCV2024",
+      "GCZ2024",
+      "GCG2025",
+      "GCJ2025",
+      "GCM2025",
+      "GCQ2025",
+      "GCV2025",
+      "GCZ2025",
+      "GCG2026",
+      "GCJ2026",
+      "GCM2026",
+      "GCQ2026",
+      "GCV2026",
+      "GCZ2026"
+    ],
+    "attempted_symbols": [
+      "GCG2020",
+      "GCJ2020",
+      "GCM2020",
+      "GCQ2020",
+      "GCV2020",
+      "GCZ2020",
+      "GCG2021",
+      "GCJ2021",
+      "GCM2021",
+      "GCQ2021",
+      "GCV2021",
+      "GCZ2021",
+      "GCG2022",
+      "GCJ2022",
+      "GCM2022",
+      "GCQ2022",
+      "GCV2022",
+      "GCZ2022",
+      "GCG2023",
+      "GCJ2023",
+      "GCM2023",
+      "GCQ2023",
+      "GCV2023",
+      "GCZ2023",
+      "GCG2024",
+      "GCJ2024",
+      "GCM2024",
+      "GCQ2024",
+      "GCV2024",
+      "GCZ2024",
+      "GCG2025",
+      "GCJ2025",
+      "GCM2025",
+      "GCQ2025",
+      "GCV2025",
+      "GCZ2025",
+      "GCG2026",
+      "GCJ2026",
+      "GCM2026",
+      "GCQ2026",
+      "GCV2026",
+      "GCZ2026"
+    ],
+    "contract_switches": 47,
+    "leader_contract_by_month": [
+      {
+        "LeaderContract": "GCM2020",
+        "Month": "2014-08"
+      },
+      {
+        "LeaderContract": "GCM2020",
+        "Month": "2014-10"
+      },
+      {
+        "LeaderContract": "GCM2020",
+        "Month": "2015-05"
+      },
+      {
+        "LeaderContract": "GCM2020",
+        "Month": "2015-08"
+      },
+      {
+        "LeaderContract": "GCM2021",
+        "Month": "2015-09"
+      },
+      {
+        "LeaderContract": "GCM2021",
+        "Month": "2015-10"
+      },
+      {
+        "LeaderContract": "GCM2021",
+        "Month": "2015-11"
+      },
+      {
+        "LeaderContract": "GCM2021",
+        "Month": "2016-01"
+      },
+      {
+        "LeaderContract": "GCM2020",
+        "Month": "2016-05"
+      },
+      {
+        "LeaderContract": "GCM2020",
+        "Month": "2016-07"
+      },
+      {
+        "LeaderContract": "GCM2021",
+        "Month": "2016-08"
+      },
+      {
+        "LeaderContract": "GCM2021",
+        "Month": "2016-10"
+      },
+      {
+        "LeaderContract": "GCM2022",
+        "Month": "2016-11"
+      },
+      {
+        "LeaderContract": "GCM2021",
+        "Month": "2017-03"
+      },
+      {
+        "LeaderContract": "GCM2021",
+        "Month": "2017-05"
+      },
+      {
+        "LeaderContract": "GCM2020",
+        "Month": "2017-08"
+      },
+      {
+        "LeaderContract": "GCM2020",
+        "Month": "2017-09"
+      },
+      {
+        "LeaderContract": "GCM2023",
+        "Month": "2017-11"
+      },
+      {
+        "LeaderContract": "GCM2020",
+        "Month": "2017-12"
+      },
+      {
+        "LeaderContract": "GCM2020",
+        "Month": "2018-01"
+      },
+      {
+        "LeaderContract": "GCM2020",
+        "Month": "2018-04"
+      },
+      {
+        "LeaderContract": "GCG2020",
+        "Month": "2018-05"
+      },
+      {
+        "LeaderContract": "GCM2020",
+        "Month": "2018-06"
+      },
+      {
+        "LeaderContract": "GCM2020",
+        "Month": "2018-07"
+      },
+      {
+        "LeaderContract": "GCM2020",
+        "Month": "2018-08"
+      },
+      {
+        "LeaderContract": "GCG2020",
+        "Month": "2018-09"
+      },
+      {
+        "LeaderContract": "GCM2020",
+        "Month": "2018-10"
+      },
+      {
+        "LeaderContract": "GCG2020",
+        "Month": "2018-11"
+      },
+      {
+        "LeaderContract": "GCG2020",
+        "Month": "2018-12"
+      },
+      {
+        "LeaderContract": "GCG2020",
+        "Month": "2019-01"
+      },
+      {
+        "LeaderContract": "GCG2020",
+        "Month": "2019-02"
+      },
+      {
+        "LeaderContract": "GCG2020",
+        "Month": "2019-03"
+      },
+      {
+        "LeaderContract": "GCG2020",
+        "Month": "2019-04"
+      },
+      {
+        "LeaderContract": "GCG2020",
+        "Month": "2019-05"
+      },
+      {
+        "LeaderContract": "GCG2020",
+        "Month": "2019-06"
+      },
+      {
+        "LeaderContract": "GCG2020",
+        "Month": "2019-07"
+      },
+      {
+        "LeaderContract": "GCG2020",
+        "Month": "2019-08"
+      },
+      {
+        "LeaderContract": "GCG2020",
+        "Month": "2019-09"
+      },
+      {
+        "LeaderContract": "GCG2020",
+        "Month": "2019-10"
+      },
+      {
+        "LeaderContract": "GCG2020",
+        "Month": "2019-11"
+      },
+      {
+        "LeaderContract": "GCG2020",
+        "Month": "2019-12"
+      },
+      {
+        "LeaderContract": "GCG2020",
+        "Month": "2020-01"
+      },
+      {
+        "LeaderContract": "GCJ2020",
+        "Month": "2020-02"
+      },
+      {
+        "LeaderContract": "GCJ2020",
+        "Month": "2020-03"
+      },
+      {
+        "LeaderContract": "GCM2020",
+        "Month": "2020-04"
+      },
+      {
+        "LeaderContract": "GCM2020",
+        "Month": "2020-05"
+      },
+      {
+        "LeaderContract": "GCQ2020",
+        "Month": "2020-06"
+      },
+      {
+        "LeaderContract": "GCQ2020",
+        "Month": "2020-07"
+      },
+      {
+        "LeaderContract": "GCZ2020",
+        "Month": "2020-08"
+      },
+      {
+        "LeaderContract": "GCZ2020",
+        "Month": "2020-09"
+      },
+      {
+        "LeaderContract": "GCZ2020",
+        "Month": "2020-10"
+      },
+      {
+        "LeaderContract": "GCZ2020",
+        "Month": "2020-11"
+      },
+      {
+        "LeaderContract": "GCG2021",
+        "Month": "2020-12"
+      },
+      {
+        "LeaderContract": "GCG2021",
+        "Month": "2021-01"
+      },
+      {
+        "LeaderContract": "GCJ2021",
+        "Month": "2021-02"
+      },
+      {
+        "LeaderContract": "GCJ2021",
+        "Month": "2021-03"
+      },
+      {
+        "LeaderContract": "GCM2021",
+        "Month": "2021-04"
+      },
+      {
+        "LeaderContract": "GCM2021",
+        "Month": "2021-05"
+      },
+      {
+        "LeaderContract": "GCQ2021",
+        "Month": "2021-06"
+      },
+      {
+        "LeaderContract": "GCQ2021",
+        "Month": "2021-07"
+      },
+      {
+        "LeaderContract": "GCZ2021",
+        "Month": "2021-08"
+      },
+      {
+        "LeaderContract": "GCZ2021",
+        "Month": "2021-09"
+      },
+      {
+        "LeaderContract": "GCZ2021",
+        "Month": "2021-10"
+      },
+      {
+        "LeaderContract": "GCZ2021",
+        "Month": "2021-11"
+      },
+      {
+        "LeaderContract": "GCG2022",
+        "Month": "2021-12"
+      },
+      {
+        "LeaderContract": "GCG2022",
+        "Month": "2022-01"
+      },
+      {
+        "LeaderContract": "GCJ2022",
+        "Month": "2022-02"
+      },
+      {
+        "LeaderContract": "GCJ2022",
+        "Month": "2022-03"
+      },
+      {
+        "LeaderContract": "GCM2022",
+        "Month": "2022-04"
+      },
+      {
+        "LeaderContract": "GCM2022",
+        "Month": "2022-05"
+      },
+      {
+        "LeaderContract": "GCQ2022",
+        "Month": "2022-06"
+      },
+      {
+        "LeaderContract": "GCQ2022",
+        "Month": "2022-07"
+      },
+      {
+        "LeaderContract": "GCZ2022",
+        "Month": "2022-08"
+      },
+      {
+        "LeaderContract": "GCZ2022",
+        "Month": "2022-09"
+      },
+      {
+        "LeaderContract": "GCZ2022",
+        "Month": "2022-10"
+      },
+      {
+        "LeaderContract": "GCZ2022",
+        "Month": "2022-11"
+      },
+      {
+        "LeaderContract": "GCG2023",
+        "Month": "2022-12"
+      },
+      {
+        "LeaderContract": "GCG2023",
+        "Month": "2023-01"
+      },
+      {
+        "LeaderContract": "GCJ2023",
+        "Month": "2023-02"
+      },
+      {
+        "LeaderContract": "GCJ2023",
+        "Month": "2023-03"
+      },
+      {
+        "LeaderContract": "GCM2023",
+        "Month": "2023-04"
+      },
+      {
+        "LeaderContract": "GCM2023",
+        "Month": "2023-05"
+      },
+      {
+        "LeaderContract": "GCQ2023",
+        "Month": "2023-06"
+      },
+      {
+        "LeaderContract": "GCQ2023",
+        "Month": "2023-07"
+      },
+      {
+        "LeaderContract": "GCZ2023",
+        "Month": "2023-08"
+      },
+      {
+        "LeaderContract": "GCZ2023",
+        "Month": "2023-09"
+      },
+      {
+        "LeaderContract": "GCZ2023",
+        "Month": "2023-10"
+      },
+      {
+        "LeaderContract": "GCZ2023",
+        "Month": "2023-11"
+      },
+      {
+        "LeaderContract": "GCG2024",
+        "Month": "2023-12"
+      },
+      {
+        "LeaderContract": "GCG2024",
+        "Month": "2024-01"
+      },
+      {
+        "LeaderContract": "GCJ2024",
+        "Month": "2024-02"
+      },
+      {
+        "LeaderContract": "GCJ2024",
+        "Month": "2024-03"
+      },
+      {
+        "LeaderContract": "GCM2024",
+        "Month": "2024-04"
+      },
+      {
+        "LeaderContract": "GCM2024",
+        "Month": "2024-05"
+      },
+      {
+        "LeaderContract": "GCQ2024",
+        "Month": "2024-06"
+      },
+      {
+        "LeaderContract": "GCQ2024",
+        "Month": "2024-07"
+      },
+      {
+        "LeaderContract": "GCZ2024",
+        "Month": "2024-08"
+      },
+      {
+        "LeaderContract": "GCZ2024",
+        "Month": "2024-09"
+      },
+      {
+        "LeaderContract": "GCZ2024",
+        "Month": "2024-10"
+      },
+      {
+        "LeaderContract": "GCZ2024",
+        "Month": "2024-11"
+      },
+      {
+        "LeaderContract": "GCG2025",
+        "Month": "2024-12"
+      },
+      {
+        "LeaderContract": "GCG2025",
+        "Month": "2025-01"
+      },
+      {
+        "LeaderContract": "GCJ2025",
+        "Month": "2025-02"
+      },
+      {
+        "LeaderContract": "GCJ2025",
+        "Month": "2025-03"
+      },
+      {
+        "LeaderContract": "GCM2025",
+        "Month": "2025-04"
+      },
+      {
+        "LeaderContract": "GCM2025",
+        "Month": "2025-05"
+      },
+      {
+        "LeaderContract": "GCQ2025",
+        "Month": "2025-06"
+      },
+      {
+        "LeaderContract": "GCQ2025",
+        "Month": "2025-07"
+      },
+      {
+        "LeaderContract": "GCZ2025",
+        "Month": "2025-08"
+      },
+      {
+        "LeaderContract": "GCZ2025",
+        "Month": "2025-09"
+      },
+      {
+        "LeaderContract": "GCZ2025",
+        "Month": "2025-10"
+      },
+      {
+        "LeaderContract": "GCZ2025",
+        "Month": "2025-11"
+      },
+      {
+        "LeaderContract": "GCG2026",
+        "Month": "2025-12"
+      },
+      {
+        "LeaderContract": "GCG2026",
+        "Month": "2026-01"
+      },
+      {
+        "LeaderContract": "GCJ2026",
+        "Month": "2026-02"
+      },
+      {
+        "LeaderContract": "GCJ2026",
+        "Month": "2026-03"
+      },
+      {
+        "LeaderContract": "GCM2026",
+        "Month": "2026-04"
+      },
+      {
+        "LeaderContract": "GCM2026",
+        "Month": "2026-05"
+      },
+      {
+        "LeaderContract": "GCQ2026",
+        "Month": "2026-06"
+      },
+      {
+        "LeaderContract": "GCQ2026",
+        "Month": "2026-07"
+      },
+      {
+        "LeaderContract": "GCZ2026",
+        "Month": "2026-08"
+      },
+      {
+        "LeaderContract": "GCZ2026",
+        "Month": "2026-09"
+      }
+    ],
+    "leader_month_count": 122,
+    "selection_policy": "one direct COMEX H1 contract per UTC calendar month; highest total source volume; OHLCV rows copied unchanged; no resampling; no back-adjustment"
+  },
   "criteria": {
     "crosscheck_reaches_2026": true,
-    "daily_corr_ge_0_85": true,
-    "daily_direction_ge_0_75": true,
-    "h1_direction_ge_0_70": true,
-    "h1_log_return_corr_ge_0_70": true,
-    "median_abs_price_delta_le_0_08": true,
-    "overlap_ge_90pct": false,
-    "primary_history_ge_4_years": false,
+    "gc1_daily_corr_ge_0_95": true,
+    "gc1_h1_log_return_corr_ge_0_90": true,
+    "no_back_adjustment": true,
+    "no_resampling": true,
+    "primary_history_ge_4_years": true,
     "primary_reaches_2026": true,
-    "primary_rows_ge_20000": false
+    "primary_rows_ge_20000": true,
+    "recent_gc1_overlap_ge_75pct": true,
+    "recent_spot_overlap_ge_75pct": true,
+    "spot_daily_corr_ge_0_85": true,
+    "spot_daily_direction_ge_0_75": true,
+    "spot_h1_direction_ge_0_70": true,
+    "spot_h1_log_return_corr_ge_0_70": true,
+    "spot_median_abs_price_delta_le_0_08": true
   },
-  "crosscheck_data_sha256": "5271b410f3b6bed097ac3a12b73c59bcec5f71384c3136358bfe496ae9388987",
+  "crosscheck_data_sha256": "7d79b998a40ac5c9a9519f38f1d0a5ec8f6bb145c622722ebd5a761d7a1b8177",
   "crosscheck_end_utc": "2026-09-04 20:00:00+00:00",
-  "crosscheck_pass": false,
+  "crosscheck_pass": true,
   "crosscheck_rows": 9926,
   "crosscheck_start_utc": "2025-01-01 23:00:00+00:00",
-  "crosscheck_symbol": "OANDA:XAUUSD",
-  "daily_validation_direction_agreement": 0.9693486590038314,
-  "daily_validation_log_return_correlation": 0.9923155298521621,
-  "generated_at": "2026-09-05T04:21:09.211601+00:00",
-  "h1_direction_agreement": 0.959749823464138,
-  "h1_log_return_correlation": 0.9898433290384713,
-  "median_absolute_price_delta_fraction": 0.004158613222522312,
+  "crosscheck_symbol": "OANDA:XAUUSD + COMEX:GC1! recent",
+  "gc1_recent_rows": 9914,
+  "gc1_recent_sha256": "eb0c74778263c04ad37ae92dbfd4cbf7f068ad6dfba9e5de436b9ca5da97da91",
+  "gc1_recent_validation": {
+    "daily_direction_agreement": 0.9923371647509579,
+    "daily_log_return_correlation": 0.9922083106133605,
+    "direction_agreement": 0.995052004443098,
+    "log_return_correlation": 0.9868685156117812,
+    "median_absolute_price_delta_fraction": 0.0,
+    "overlap_rows": 9904
+  },
+  "generated_at": "2026-09-05T04:30:14.962123+00:00",
   "no_resampling_attested": true,
-  "overlap_rows": 9914,
   "primary_end_utc": "2026-09-04 20:00:00+00:00",
-  "primary_history_days": 610.875,
-  "primary_rows": 9914,
-  "primary_sha256": "9f9b4d365067f6163c8c6eb90f7ff6545bd2b4a7056d5c5cbbf02306666c8d6a",
-  "primary_start_utc": "2025-01-01 23:00:00+00:00",
-  "primary_symbol": "COMEX:GC1!",
+  "primary_history_days": 2437.875,
+  "primary_rows": 39451,
+  "primary_sha256": "e78f3f5673c9dae7b3e714b6a74e4d13ab125c77ea3341f2b9b8cc9327db234e",
+  "primary_start_utc": "2020-01-01 23:00:00+00:00",
+  "primary_symbol": "COMEX:GC native individual futures contracts / GC1! fallback",
   "provider": "TradingView",
-  "schema": "copytolive-gold-h1-gate-a-v4",
+  "schema": "copytolive-gold-h1-gate-a-v5",
+  "spot_validation": {
+    "daily_direction_agreement": 0.9693486590038314,
+    "daily_log_return_correlation": 0.9932688493622375,
+    "direction_agreement": 0.9566797940018177,
+    "log_return_correlation": 0.9862503694672372,
+    "median_absolute_price_delta_fraction": 0.0038558540067321623,
+    "overlap_rows": 9904
+  },
   "symbol": "GOLD",
   "timeframe": "H1"
 }
