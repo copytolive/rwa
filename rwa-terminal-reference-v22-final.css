@@ -3,6 +3,8 @@
   body.rwa-terminal-v5.rwa-reference-v22-exact .right .order-section{padding:0!important}
 }
 @media(max-width:680px){
+  /* Mobile owns the dedicated live price line. Never leak the desktop price cell into the mobile stats row. */
+  .quickstats .price-stat,
   body.rwa-terminal-v5.rwa-reference-v22-exact .quickstats .price-stat,
   body.rwa-terminal-v5.rwa-reference-v22-exact .quickstats .qstat:has(#statChange){display:none!important}
   body.rwa-terminal-v5.rwa-reference-v22-exact .quickstats{grid-template-columns:repeat(4,minmax(0,1fr))!important;overflow:hidden!important}
@@ -17,7 +19,8 @@
     height:clamp(124px,15.8dvh,146px)!important;
     min-height:124px!important
   }
-  body.rwa-terminal-v5.rwa-reference-v22-exact .rwa-v5-mobile-quicktrade{min-height:137px!important}
+  /* 321x737 is the smallest canonical reference viewport. Keep the quick ticket fully above the 55px safe-nav gate. */
+  body.rwa-terminal-v5.rwa-reference-v22-exact .rwa-v5-mobile-quicktrade{min-height:132px!important}
   body.rwa-terminal-v5.rwa-reference-v22-exact .main{inset:0 0 64px 0!important}
   body.rwa-terminal-v5.rwa-reference-v22-exact[data-v5-mobile-mode="book"] .right,
   body.rwa-terminal-v5.rwa-reference-v22-exact[data-v5-mobile-mode="trade"] #liveRail{inset:168px 0 64px 0!important}
