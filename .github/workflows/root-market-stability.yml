@@ -73,7 +73,7 @@ jobs:
           grep -Fq 'id="liveRail"' index.html
           ! grep -Fq 'data-rwa-target-nav="portfolio"' index.html
           grep -Fq 'live-rail-section-nav' rwa-live-home-v1.js
-          grep -Fq "RWAMarketRuntime={version:'1.4.3'" app.js
+          grep -Fq "RWAMarketRuntime={version:'1.4.4'" app.js
           grep -Fq "/api/v3/depth?symbol=" app.js
           grep -Fq "limit=100" app.js
           grep -Fq "limit=innerWidth<681?70:140" app.js
