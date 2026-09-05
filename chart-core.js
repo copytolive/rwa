@@ -30,8 +30,9 @@ window.addEventListener('resize',queueDraw,{passive:true});window.addEventListen
   if(!document.querySelector('link[data-rwa-reference-v20-fix]')){const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-terminal-reference-v20-fix.css?v=2.0.5';l.dataset.rwaReferenceV20Fix='1';document.head.appendChild(l);await new Promise((res,rej)=>{l.onload=res;l.onerror=rej})}
   if(!window.RWAReferenceParity)await import('./rwa-terminal-reference-v20.js?v=2.0.1');
   if(!window.RWAReferenceParityFix)await import('./rwa-terminal-reference-v20-fix.js?v=2.0.2');
-  if(!document.querySelector('link[data-rwa-reference-final]')){const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-terminal-reference-final.css?v=1.0.3';l.dataset.rwaReferenceFinal='1';document.head.appendChild(l);await new Promise((res,rej)=>{l.onload=res;l.onerror=rej})}
+  if(!document.querySelector('link[data-rwa-reference-final]')){const l=document.createElement('link');l.rel='stylesheet';l.href='rwa-terminal-reference-final.css?v=1.0.4';l.dataset.rwaReferenceFinal='1';document.head.appendChild(l);await new Promise((res,rej)=>{l.onload=res;l.onerror=rej})}
   if(!window.RWAReferenceFinal)await import('./rwa-terminal-reference-final.js?v=1.0.1');
+  if(!window.RWAReferenceFinalHotfix)await import('./rwa-terminal-reference-final-hotfix.js?v=1.0.0');
   document.documentElement.classList.add('rwa-target-runtime-ready')
 }catch(e){console.error('RWA live HOME failed to load',e)}})();
 /* RWA_REAL_BUSINESS_VALIDATION_CONSOLE_V1_BOOTSTRAP */
@@ -48,3 +49,4 @@ window.addEventListener('resize',queueDraw,{passive:true});window.addEventListen
 /* RWA_TERMINAL_REFERENCE_FINAL_1_0_1_TOOLBAR_OVERLAY_2026_09_04 */
 /* RWA_TERMINAL_REFERENCE_FINAL_1_0_2_SINGLE_TOOLBAR_2026_09_04 */
 /* RWA_TERMINAL_REFERENCE_FINAL_1_0_3_MOBILE_CONTROLS_2026_09_04 */
+/* RWA_TERMINAL_REFERENCE_FINAL_1_0_4_HITTEST_REWARDS_2026_09_05 */
