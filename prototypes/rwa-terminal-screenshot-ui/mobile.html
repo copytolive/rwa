@@ -1,24 +1,33 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><title>RWA Terminal — Mobile</title><link rel="stylesheet" href="styles.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RWA Terminal — Mobile Pixel Reference</title><link rel="stylesheet" href="styles.css"></head>
 <body data-view="mobile">
-  <main class="mobile-stage only-mobile">
-    <section class="phone">
-      <div class="notch"></div><div class="phone-top"><b>9:41</b><span>● ◒ ▰</span></div>
-      <header class="mobile-head"><span class="back">‹</span><span class="asset-photo" style="width:30px;height:30px"></span><div><div class="mobile-title" data-market="symbol">RWAus</div><div class="mobile-sub" data-market="subtitle">Real Estate US</div></div><div class="mobile-icons">☆ ♧ ⋮</div></header>
-      <div class="mobile-price"><span class="price" data-market="price">$1.1428</span><span class="up" data-market="change">+2.35%</span><span class="spark">⌁⌁</span></div>
-      <div class="mobile-stats"><span>Mcap<b data-market="marketCap">$512.84M</b></span><span>Vol<b data-market="volume">$38.62M</b></span><span>Liq<b data-market="liquidity">$14.27M</b></span><span>Holders<b>24.6K</b></span></div>
-      <nav class="mobile-tabs"><button class="active">Chart</button><button>Book</button><button data-slot="mobileTrade">Trade</button><button data-slot="feed">Feed</button></nav>
-      <div class="mobile-chart-toolbar"><button data-slot="chart15m">15m</button><button data-slot="chart1h" class="active">1h</button><button data-slot="chart4h">4h</button><button data-slot="chart1d">D</button><span style="margin-left:auto;color:#8a98aa;font-size:10px">Indicators</span></div>
-      <section class="mobile-chart">
-        <div class="price-tag">1.1428</div><div class="candle-chart"><i class="candle red" style="left:2%;top:86px;height:28px"></i><i class="candle green" style="left:7%;top:76px;height:22px"></i><i class="candle green" style="left:12%;top:65px;height:25px"></i><i class="candle red" style="left:17%;top:72px;height:29px"></i><i class="candle green" style="left:22%;top:50px;height:34px"></i><i class="candle green" style="left:27%;top:39px;height:30px"></i><i class="candle red" style="left:32%;top:58px;height:31px"></i><i class="candle green" style="left:37%;top:52px;height:28px"></i><i class="candle green" style="left:42%;top:35px;height:32px"></i><i class="candle red" style="left:47%;top:43px;height:30px"></i><i class="candle green" style="left:52%;top:25px;height:30px"></i><i class="candle red" style="left:57%;top:36px;height:35px"></i><i class="candle red" style="left:62%;top:55px;height:28px"></i><i class="candle green" style="left:67%;top:62px;height:26px"></i><i class="candle green" style="left:72%;top:52px;height:24px"></i><i class="candle red" style="left:77%;top:69px;height:25px"></i><i class="candle green" style="left:82%;top:56px;height:28px"></i><i class="candle green" style="left:87%;top:42px;height:30px"></i><i class="candle red" style="left:92%;top:55px;height:25px"></i></div>
-        <div class="volume"><i class="bar red" style="height:28px"></i><i class="bar" style="height:38px"></i><i class="bar" style="height:45px"></i><i class="bar red" style="height:32px"></i><i class="bar" style="height:52px"></i><i class="bar" style="height:43px"></i><i class="bar" style="height:24px"></i><i class="bar red" style="height:40px"></i><i class="bar" style="height:50px"></i><i class="bar" style="height:34px"></i><i class="bar" style="height:55px"></i><i class="bar red" style="height:44px"></i><i class="bar" style="height:37px"></i><i class="bar" style="height:51px"></i><i class="bar" style="height:29px"></i><i class="bar red" style="height:45px"></i></div>
+<div class="mobile-stage">
+  <div class="device">
+    <div class="screen">
+      <div class="iosbar"><b>9:41</b><span class="island"></span><div>▮▮ ◉ ▰</div></div>
+      <header class="mhead"><button class="back" data-slot="back" data-system="router" data-action="back">‹</button><img src="rwa-avatar.svg" alt=""><div><b>RWAus</b><small>Real Estate US <i>●</i></small></div><span class="grow"></span><button data-slot="favorite" data-system="watchlist" data-action="toggle">☆</button><button data-slot="mobileAlerts" data-system="alerts" data-action="open">♧</button><button data-slot="more" data-system="router" data-action="menu">⋮</button></header>
+      <div class="mprice"><strong>$1.1428</strong><b>+2.35%</b><svg viewBox="0 0 56 26"><polyline points="1,18 7,13 13,16 20,6 28,12 35,9 43,11 55,3"/></svg></div>
+      <div class="mstats"><div><span>Mcap</span><b>$512.84M</b></div><div><span>Vol</span><b>$38.62M</b></div><div><span>Liq</span><b>$14.27M</b></div><div><span>Holders</span><b>24.6K</b></div></div>
+      <nav class="mtabs"><button class="active" data-slot="mobileChart" data-system="chart">Chart</button><button data-slot="mobileBook" data-system="orderbook">Book</button><button data-slot="mobileTradeTab" data-system="trade-execution">Trade</button><button data-slot="mobileFeed" data-system="social-feed">Feed</button><span>⌃</span></nav>
+      <section class="mchart" data-slot="chartMobile" data-system="chart" data-action="focus">
+        <div class="mtoolbar"><button>15m</button><button class="active">1h</button><button>4h</button><button>D</button><span>◐</span><button data-slot="mobileIndicators" data-system="chart" data-action="indicators">Indicators</button><span>⌘</span></div>
+        <svg viewBox="0 0 330 210" data-chart="mobile"></svg>
       </section>
-      <section class="mobile-book"><div class="spread-head"><span class="bid">Bids</span><span>Spread 0.0003</span><span class="ask">Asks</span></div><div class="mini-book"><div class="mini-side"><div class="ob-row bid"><span>1.1417</span><span>6,120</span></div><div class="ob-row bid"><span>1.1415</span><span>7,430</span></div><div class="ob-row bid"><span>1.1410</span><span>9,880</span></div></div><div class="mini-side"><div class="ob-row"><span class="ask">1.1450</span><span>12,540</span></div><div class="ob-row"><span class="ask">1.1445</span><span>8,320</span></div><div class="ob-row"><span class="ask">1.1440</span><span>9,210</span></div></div></div></section>
-      <section class="mobile-trade"><div class="seg"><button class="active" data-slot="tradeBuy">Buy</button><button data-slot="tradeSell">Sell</button></div><div class="trade-tabs"><button class="active" data-slot="orderMarket">Market</button><button data-slot="orderLimit">Limit</button><button data-slot="orderStop">Stop</button></div><div class="label">Available &nbsp; 27,340.50 USDC</div><button class="primary-btn" data-slot="submitOrder">Buy RWAus</button></section>
-      <nav class="mobile-bottom"><button data-slot="mobileHome">Home</button><button data-slot="mobileMarkets">Markets</button><button data-slot="mobileTrade" class="active">Trade</button><button data-slot="mobilePortfolio">Portfolio</button><button data-slot="mobileProfile">Profile</button></nav>
-    </section>
-  </main>
-  <button id="editToggle" class="edit-toggle">⚙ Edit slots</button>
-  <script src="config.js"></script><script src="app.js"></script>
+      <section class="mbook">
+        <div class="booklabels"><b>Bids</b><span>Spread &nbsp;0.0003 (0.03%)</span><strong>Asks</strong></div>
+        <div class="twobook"><div class="bidcol"><p><b>1.1417</b><span>6,120</span></p><p><b>1.1415</b><span>7,430</span></p><p><b>1.1410</b><span>9,880</span></p></div><div class="askcol"><p><b>1.1450</b><span>12,540</span></p><p><b>1.1445</b><span>8,320</span></p><p><b>1.1440</b><span>9,210</span></p></div></div>
+      </section>
+      <section class="mtrade">
+        <div class="mbuysell"><button class="active" data-slot="mBuy" data-system="trade-execution" data-action="side" data-target="buy">Buy</button><button data-slot="mSell" data-system="trade-execution" data-action="side" data-target="sell">Sell</button></div>
+        <div class="mordertabs"><button class="active">Market</button><button>Limit</button><button>Stop</button><span>⌄</span></div>
+        <div class="mavailable"><span>Available</span><b>27,340.50 USDC ⊕</b></div>
+        <button class="mbuy" data-slot="mSubmit" data-system="trade-execution" data-action="preview-order" data-target="RWAus">Buy RWAus</button>
+      </section>
+      <nav class="bottomnav"><button data-slot="mHome" data-system="router" data-target="home"><i>⌂</i><span>Home</span></button><button data-slot="mMarkets" data-system="router" data-target="markets"><i>⌁</i><span>Markets</span></button><button class="active" data-slot="mTrade" data-system="router" data-target="trade"><i>⟳</i><span>Trade</span></button><button data-slot="mPortfolio" data-system="portfolio" data-target="portfolio"><i>◴</i><span>Portfolio</span></button><button data-slot="mProfile" data-system="profile" data-target="profile"><i>♙</i><span>Profile</span></button></nav>
+      <div class="homebar"></div>
+    </div>
+  </div>
+</div>
+<script src="config.js"></script><script src="app.js"></script>
 </body></html>
