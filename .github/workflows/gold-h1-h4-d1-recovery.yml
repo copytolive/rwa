@@ -7,6 +7,9 @@ on:
       - main
     paths:
       - .github/workflows/gold-h1-h4-d1-recovery.yml
+      - backtest/gold24/remote_recovery_h1h4d1.py
+      - backtest/gold24/tradingview_gate_a.py
+      - backtest/gold24/tradingview_native_h4_gate_a.py
 
 permissions:
   contents: write
@@ -71,6 +74,7 @@ jobs:
           print('H1_PASS=', s['H1'].get('crosscheck_pass'))
           print('H1_ROWS=', s['H1'].get('primary_rows'))
           print('H1_HISTORY_DAYS=', s['H1'].get('primary_history_days'))
+          print('H1_CONSTRUCTION=', s['H1'].get('construction'))
           if not s.get('all_pass'):
               raise SystemExit('RECOVERY_BLOCKED')
           print('H1_H4_D1_REMOTE_RECOVERY=PASS')
