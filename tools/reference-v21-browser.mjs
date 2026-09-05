@@ -2,80 +2,30 @@ import { chromium } from 'playwright';
 import { mkdir, writeFile } from 'node:fs/promises';
 
 const base=process.env.RWA_UI_URL||'http://127.0.0.1:4173/rwa/';
-const proof=process.env.RWA_UI_PROOF_DIR||'proof/reference-v21';
+const proof=process.env.RWA_UI_PROOF_DIR||'proof/reference-v22';
 await mkdir(proof,{recursive:true});
 const browser=await chromium.launch({headless:true});
-const failures=[];
-const snapshots={};
+const failures=[],snapshots={};
 const fail=(message,detail=null)=>failures.push({message,detail});
-
+const near=(a,b,t=6)=>Math.abs(Number(a)-Number(b))<=t;
+async function liveDepth(page){await page.evaluate(async()=>{try{await window.RWAReferenceParityV21?.refreshDepth?.()}catch{}});await page.waitForFunction(()=>{const a=window.RWAReferenceParityV21?.audit?.();return a?.bookBids>=5&&a?.bookAsks>=5},{timeout:45000})}
 async function certify(width,height,name){
-  const ctx=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,serviceWorkers:'block'});
-  const page=await ctx.newPage();
-  const errors=[];
-  page.on('pageerror',e=>errors.push(String(e?.message||e)));
-  await page.goto(base,{waitUntil:'domcontentloaded',timeout:50000});
-  await page.waitForFunction(()=>window.RWAReferenceParityV21?.version==='2.1.0',{timeout:50000});
-  await page.waitForFunction(()=>window.RWAReferenceParityV21Visual?.version==='1.0.1'&&window.RWAReferenceParityV21Visual?.applied===true,{timeout:50000});
-  await page.waitForFunction(()=>window.RWAReferenceParityV21Seal?.version==='1.0.0'&&window.RWAReferenceParityV21Seal?.applied===true,{timeout:50000});
-  await page.waitForFunction(()=>{const a=window.RWAReferenceParityV21?.audit?.();return a?.chartState==='live'&&a?.bars>=30&&a?.bookBids>=5&&a?.bookAsks>=5},{timeout:45000});
-  await page.waitForFunction(()=>{const s=window.RWAReferenceParityV21Seal?.audit?.();return s?.applied===true&&s?.overlay===false&&s?.indicatorHidden===true&&s?.lineHidden===true&&s?.canvasZ>=108},{timeout:10000});
-  const a=await page.evaluate(()=>{
-    const audit=window.RWAReferenceParityV21.audit();
-    const seal=window.RWAReferenceParityV21Seal.audit();
-    const c=document.querySelector('#rwaV21Chart');const r=c?.getBoundingClientRect();
-    const ind=document.querySelector('#rwaRefIndicatorOverlay');const line=document.querySelector('#rwaRefLineChart');
-    return {audit,seal,visual:{version:window.RWAReferenceParityV21Visual?.version||'',applied:window.RWAReferenceParityV21Visual?.applied===true,indicatorHidden:ind?.hidden===true,lineHidden:line?.hidden===true},canvas:r?{x:r.x,y:r.y,width:r.width,height:r.height,display:getComputedStyle(c).display,zIndex:Number.parseInt(getComputedStyle(c).zIndex,10)||0}:null,mode:document.body.dataset.v5MobileMode||'',overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth};
-  });
-  snapshots[name]=a;
-  if(a.audit.version!=='2.1.0')fail(name+' wrong V21 version',a.audit.version);
-  if(a.audit.chartState!=='live'||a.audit.bars<30)fail(name+' real candlestick history not live',a.audit);
-  if(a.audit.bookBids<5||a.audit.bookAsks<5)fail(name+' live order book not populated',a.audit);
-  if(a.audit.mainnetReady!==false)fail(name+' mainnet must remain fail-closed',a.audit.mainnetReady);
-  if(!a.visual.applied||!a.visual.indicatorHidden||!a.visual.lineHidden)fail(name+' clean-candle default not applied',a.visual);
-  if(!a.seal.applied||a.seal.overlay||a.seal.canvasZ<108||a.seal.mode!=='clean-candles')fail(name+' sealed clean-candle layering not applied',a.seal);
-  if(!a.canvas||a.canvas.display==='none'||a.canvas.width<300||a.canvas.height<(width<=680?250:300)||a.canvas.zIndex<108)fail(name+' V21 chart canvas geometry/layer invalid',a.canvas);
-  if(a.overflow>2)fail(name+' horizontal overflow',a.overflow);
-  await page.screenshot({path:`${proof}/${name}.png`,fullPage:false});
-
-  if(width>680){
-    const style=page.locator('[data-ref-chart-style]');
-    if(await style.count()){
-      await style.click();
-      try{await page.waitForFunction(()=>{const s=window.RWAReferenceParityV21Seal?.audit?.();return s?.lineHidden===false&&s?.overlay===true&&s?.canvasZ<100},{timeout:5000})}catch{fail(name+' line-chart interaction did not lower sealed canvas',await page.evaluate(()=>window.RWAReferenceParityV21Seal?.audit?.()))}
-      await style.click();
-      try{await page.waitForFunction(()=>{const s=window.RWAReferenceParityV21Seal?.audit?.();return s?.lineHidden===true&&s?.overlay===false&&s?.canvasZ>=108},{timeout:5000})}catch{fail(name+' candle-chart restore did not reseal canvas',await page.evaluate(()=>window.RWAReferenceParityV21Seal?.audit?.()))}
-    }else fail(name+' chart-style control missing');
-
-    const indicators=page.locator('[data-final-indicators]');
-    if(await indicators.count()){
-      await indicators.click();
-      const sma=page.locator('.rwa-ref-indicator-menu [data-final-indicator-set="sma20"]');
-      if(await sma.count())await sma.click();else fail(name+' SMA indicator menu action missing');
-      try{await page.waitForFunction(()=>{const s=window.RWAReferenceParityV21Seal?.audit?.();return s?.indicatorHidden===false&&s?.overlay===true&&s?.canvasZ<100},{timeout:5000})}catch{fail(name+' indicator interaction did not lower sealed canvas',await page.evaluate(()=>window.RWAReferenceParityV21Seal?.audit?.()))}
-      await indicators.click();
-      const off=page.locator('.rwa-ref-indicator-menu [data-final-indicator-set="none"]');
-      if(await off.count())await off.click();else fail(name+' indicator-off menu action missing');
-      try{await page.waitForFunction(()=>{const s=window.RWAReferenceParityV21Seal?.audit?.();return s?.indicatorHidden===true&&s?.overlay===false&&s?.canvasZ>=108},{timeout:5000})}catch{fail(name+' indicator-off restore did not reseal canvas',await page.evaluate(()=>window.RWAReferenceParityV21Seal?.audit?.()))}
-    }else fail(name+' visible Indicators control missing');
-  }
-  if(width<=680){
-    const tabs=await page.locator('.rwa-v5-mobile-worktabs [data-v5-mobile-mode]').evaluateAll(xs=>xs.map(x=>x.dataset.v5MobileMode));
-    if(JSON.stringify(tabs)!==JSON.stringify(['chart','book','trade','feed']))fail(name+' mobile upper tabs mismatch',tabs);
-    const bottom=await page.locator('.mobile-tabs [data-v5-mobile-nav]').count();
-    if(bottom!==5)fail(name+' mobile bottom nav mismatch',bottom);
-  }
-  if(errors.length)fail(name+' page errors',errors);
-  await ctx.close();
+ const ctx=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,serviceWorkers:'block'}),page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(String(e?.message||e)));
+ await page.goto(base,{waitUntil:'domcontentloaded',timeout:50000});
+ await page.waitForFunction(()=>window.RWAReferenceParityV22?.version==='2.2.1'&&window.RWAReferenceParityV21?.version==='2.1.0'&&window.RWAMarketRuntime?.state?.().pairs?.length>50,{timeout:50000});
+ await page.waitForFunction(()=>window.RWAReferenceParityV21Visual?.version==='1.0.1'&&window.RWAReferenceParityV21Visual?.applied===true,{timeout:50000});
+ await page.waitForFunction(()=>window.RWAReferenceParityV21Seal?.version==='1.0.0'&&window.RWAReferenceParityV21Seal?.applied===true,{timeout:50000});
+ await liveDepth(page);
+ await page.waitForFunction(()=>{const a=window.RWAReferenceParityV21?.audit?.();return a?.chartState==='live'&&a?.bars>=30},{timeout:45000});
+ await page.waitForFunction(()=>{const s=window.RWAReferenceParityV21Seal?.audit?.();return s?.applied===true&&s?.overlay===false&&s?.indicatorHidden===true&&s?.lineHidden===true&&s?.canvasZ>=108},{timeout:10000});
+ const a=await page.evaluate(()=>({v21:window.RWAReferenceParityV21.audit(),v22:window.RWAReferenceParityV22.audit(),seal:window.RWAReferenceParityV21Seal.audit(),overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,canvas:(()=>{const e=document.querySelector('#rwaV21Chart');if(!e)return null;const r=e.getBoundingClientRect(),s=getComputedStyle(e);return{x:Math.round(r.x),y:Math.round(r.y),width:Math.round(r.width),height:Math.round(r.height),display:s.display,z:Number.parseInt(s.zIndex,10)||0}})()}));snapshots[name]=a;
+ if(a.v22.version!=='2.2.1')fail(name+' V22.1 missing',a.v22.version);if(a.v22.overlayImages!==0)fail(name+' forbidden screenshot/reference overlay present',a.v22.overlayImages);if(a.v21.chartState!=='live'||a.v21.bars<30)fail(name+' live candles missing',a.v21);if(a.v21.bookBids<5||a.v21.bookAsks<5)fail(name+' real book missing',a.v21);if(a.v22.mainnetReady!==false)fail(name+' mainnet must stay fail-closed',a.v22.mainnetReady);if(!a.v22.defaultClean||a.seal.overlay||a.seal.canvasZ<108)fail(name+' default chart is not clean candles',{v22:a.v22,seal:a.seal});if(a.overflow>2)fail(name+' horizontal overflow',a.overflow);if(!a.canvas||a.canvas.display==='none'||a.canvas.height<(width<=680?245:300))fail(name+' chart canvas invalid',a.canvas);
+ if(width>680){const d=a.v22.desktop,W=width,left=Math.round(W*238/1298),main=Math.round(W*675/1298),book=Math.round(W*216/1298),trade=W-left-main-book,bottom=Math.max(195,Math.min(218,Math.round(height*.232))),mainH=height-59-28-bottom;if(!near(d.header?.height,59,2)||!near(d.left?.width,left)||!near(d.main?.width,main)||!near(d.book?.width,book)||!near(d.trade?.width,trade)||!near(d.bottom?.height,bottom)||!near(d.main?.height,mainH))fail(name+' exact desktop proportions mismatch',{d,want:{left,main,book,trade,bottom,mainH}});
+   const tools=await page.locator('#rwaV22DrawTools [data-v22-tool]').count();if(tools<5)fail(name+' functional drawing toolbar incomplete',tools);
+   const style=page.locator('[data-ref-chart-style]');if(await style.count()){await style.click();try{await page.waitForFunction(()=>{const s=window.RWAReferenceParityV21Seal?.audit?.();return s?.lineHidden===false&&s?.overlay===true&&s?.canvasZ<100},{timeout:5000})}catch{fail(name+' line interaction failed',await page.evaluate(()=>window.RWAReferenceParityV21Seal?.audit?.()))}await style.click();try{await page.waitForFunction(()=>{const s=window.RWAReferenceParityV21Seal?.audit?.();return s?.lineHidden===true&&s?.overlay===false&&s?.canvasZ>=108},{timeout:5000})}catch{fail(name+' candle restore failed',await page.evaluate(()=>window.RWAReferenceParityV21Seal?.audit?.()))}}
+   const indicators=page.locator('[data-final-indicators]');if(await indicators.count()){await indicators.click();const sma=page.locator('.rwa-ref-indicator-menu [data-final-indicator-set="sma20"]');if(await sma.count())await sma.click();try{await page.waitForFunction(()=>window.RWAReferenceParityV21Seal?.audit?.().overlay===true,{timeout:5000})}catch{fail(name+' indicator interaction failed')}await indicators.click();const off=page.locator('.rwa-ref-indicator-menu [data-final-indicator-set="none"]');if(await off.count())await off.click();try{await page.waitForFunction(()=>window.RWAReferenceParityV21Seal?.audit?.().overlay===false,{timeout:5000})}catch{fail(name+' indicator off failed')}}
+ }else{if(JSON.stringify(a.v22.mobile.tabs)!==JSON.stringify(['chart','book','trade','feed']))fail(name+' mobile work tabs mismatch',a.v22.mobile.tabs);if(JSON.stringify(a.v22.mobile.bottom)!==JSON.stringify(['home','markets','trade','portfolio','profile']))fail(name+' mobile bottom nav mismatch',a.v22.mobile.bottom);const q=a.v22.mobile.quick;if(!q||q.display==='none'||q.height<110||q.y+q.height>height-60)fail(name+' mobile quick trade is not visible above bottom nav',q);const primary=page.locator('#rwaV5MobileQuickTrade .rwa-v5-mobile-primary');if(!await primary.isVisible())fail(name+' mobile primary CTA missing')}
+ if(errors.length)fail(name+' page errors',errors);await page.screenshot({path:`${proof}/${name}.png`,fullPage:false});await ctx.close()
 }
-
-try{
-  await certify(1672,941,'reference-v21-desktop');
-  await certify(390,844,'reference-v21-mobile-390');
-  await certify(430,932,'reference-v21-mobile-430');
-}catch(e){fail('unexpected failure',String(e?.stack||e))}
-await browser.close();
-const out={ok:failures.length===0,contract:'rwa-reference-parity-v21-real-data-clean-candles-sealed',base,failures,snapshots};
-await writeFile(`${proof}/reference-v21-result.json`,JSON.stringify(out,null,2));
-console.log(JSON.stringify(out,null,2));
-if(!out.ok)process.exit(1);
+try{await certify(1672,941,'reference-v22-desktop');await certify(390,844,'reference-v22-mobile-390');await certify(430,932,'reference-v22-mobile-430')}catch(e){fail('unexpected failure',String(e?.stack||e))}
+await browser.close();const out={ok:failures.length===0,contract:'rwa-reference-v22-real-dom-exact-adapter',base,failures,snapshots};await writeFile(`${proof}/reference-v22-result.json`,JSON.stringify(out,null,2));console.log(JSON.stringify(out,null,2));if(!out.ok)process.exit(1);

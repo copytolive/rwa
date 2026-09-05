@@ -13,6 +13,9 @@ on:
       - "rwa-live-home-v1.css"
       - "rwa-terminal-reference-v21.js"
       - "rwa-terminal-reference-v21.css"
+      - "rwa-terminal-reference-v22.js"
+      - "rwa-terminal-reference-v22.css"
+      - "rwa-terminal-reference-v22-exact.css"
       - "rwa-multichain.js"
       - "rwa-multichain-engine.js"
       - "rwa-multichain-registry.json"
@@ -43,12 +46,12 @@ jobs:
           python3 -m http.server 4173 --directory .. >/tmp/rwa-target-v4.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/rwa/ >/dev/null && exit 0; sleep 1; done
           cat /tmp/rwa-target-v4.log; exit 1
-      - name: Certify Real World Asset target V4
+      - name: Certify Real World Asset target V22
         env:
           RWA_UI_URL: http://127.0.0.1:4173/rwa/
           RWA_UI_PROOF_DIR: proof/target-v4-local
         run: node tools/live-no-mock-home-browser.mjs
-      - name: Certify Reference Parity V21 real-data layer
+      - name: Certify Reference Parity V22 real-DOM layer
         env:
           RWA_UI_URL: http://127.0.0.1:4173/rwa/
           RWA_UI_PROOF_DIR: proof/reference-v21-local
@@ -69,7 +72,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Wait for current public target markers
+      - name: Wait for current public V22 markers
         shell: bash
         run: |
           set -euo pipefail
@@ -83,8 +86,10 @@ jobs:
               && printf '%s' "$ROOT" | grep -Fq 'id="watchAdd"' \
               && printf '%s' "$ROOT" | grep -Fq 'app.js?v=20' \
               && printf '%s' "$CORE" | grep -Fq 'rwa-terminal-v5.js?v=1.0.26' \
-              && printf '%s' "$CORE" | grep -Fq 'rwa-terminal-reference-v21.js?v=2.1.0'; then
-              echo "Public target markers live at deployment $LIVE_SHA"
+              && printf '%s' "$CORE" | grep -Fq 'rwa-terminal-reference-v21.js?v=2.1.0' \
+              && printf '%s' "$CORE" | grep -Fq 'rwa-terminal-reference-v22.js?v=2.2.1' \
+              && printf '%s' "$CORE" | grep -Fq 'rwa-terminal-reference-v22-exact.css?v=2.2.1'; then
+              echo "Public V22 markers live at deployment $LIVE_SHA"
               exit 0
             fi
             sleep 5
@@ -94,12 +99,12 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Certify public target V4
+      - name: Certify public target V22
         env:
           RWA_UI_URL: https://copytolive.github.io/rwa/
           RWA_UI_PROOF_DIR: proof/target-v4-public
         run: node tools/live-no-mock-home-browser.mjs
-      - name: Certify public Reference Parity V21 real-data layer
+      - name: Certify public Reference Parity V22 real-DOM layer
         env:
           RWA_UI_URL: https://copytolive.github.io/rwa/
           RWA_UI_PROOF_DIR: proof/reference-v21-public
