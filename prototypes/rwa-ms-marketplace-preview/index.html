@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RWA.ms — Live Preview</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#081018;color:#fff;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.top{position:sticky;top:0;z-index:20;height:58px;display:flex;align-items:center;gap:10px;padding:0 14px;background:#06101a;border-bottom:1px solid #1c2b38}
+.top strong{margin-right:auto;font-size:15px}
+.top button{appearance:none;border:1px solid #294052;background:#10202c;color:#dce5ee;border-radius:9px;padding:9px 14px;font-weight:700;cursor:pointer}
+.top button.active{background:#08795c;border-color:#08795c;color:#fff}
+.stage{min-height:calc(100vh - 58px);padding:14px;display:flex;justify-content:center;align-items:flex-start;overflow:auto;background:radial-gradient(circle at 50% 0,#13202c 0,#060a0f 65%)}
+.view{display:none;background:#fff;box-shadow:0 18px 50px rgba(0,0,0,.48)}
+.view.active{display:block}
+.desktop{width:min(1672px,calc(100vw - 28px));aspect-ratio:1672/941}
+.mobile{width:min(941px,calc(100vw - 28px));aspect-ratio:941/1671}
+.view img{display:block;width:100%;height:100%;object-fit:fill}
+@media(max-width:700px){.top{height:auto;min-height:58px;flex-wrap:wrap;padding:9px 10px}.top strong{width:100%;margin:0}.stage{padding:8px}.desktop,.mobile{width:100%}}
+</style>
+</head><body>
+<header class="top">
+<strong>RWA.ms — Live Preview</strong>
+<button id="desktopBtn" class="active">Desktop</button>
+<button id="mobileBtn">Mobile</button>
+</header>
+<main class="stage">
+<section id="desktopView" class="view desktop active"><img src="desktop-reference.png" alt="RWA.ms desktop preview"></section>
+<section id="mobileView" class="view mobile"><img src="mobile-reference.png" alt="RWA.ms mobile preview"></section>
+</main>
+<script>
+const d=document.getElementById('desktopView'),m=document.getElementById('mobileView');
+const db=document.getElementById('desktopBtn'),mb=document.getElementById('mobileBtn');
+function show(mode){const desktop=mode==='desktop';d.classList.toggle('active',desktop);m.classList.toggle('active',!desktop);db.classList.toggle('active',desktop);mb.classList.toggle('active',!desktop);history.replaceState(null,'','#'+mode)}
+db.onclick=()=>show('desktop');mb.onclick=()=>show('mobile');
+if(location.hash==='#mobile'||(!location.hash&&innerWidth<700))show('mobile');
+</script>
+</body>
+</html>
