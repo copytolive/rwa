@@ -1,8 +1,8 @@
 {
   "api": "https://www.okx.com/api/v5/market/history-candles",
-  "builtAtUtc": "2026-09-06T04:37:20.004722+00:00",
-  "fromMs": 1787664003000,
-  "fromUtc": "2026-08-25T13:20:03+00:00",
+  "builtAtUtc": "2026-09-07T04:39:41.352489+00:00",
+  "fromMs": 1787750537000,
+  "fromUtc": "2026-08-26T13:22:17+00:00",
   "instrument": "XAUT-USDT",
   "interval": "1s",
   "intervalMs": 1000,
@@ -16,8 +16,8 @@
   "provider": "OKX Spot",
   "rows": 1005000,
   "schema": "renko-xaut-okx-1s-pack-v2",
-  "sha256UncompressedCsv": "af0426ae2a3ec1c7ee80e143d6040495bf08a7f0d9b96e3b573b5baee4c928f5",
-  "toMs": 1788669002000,
-  "toUtc": "2026-09-06T04:30:02+00:00",
+  "sha256UncompressedCsv": "13063138e1be8ed4ad52b1e23ddbf4ba61f86dd5a2b8a363021ac634d64c0123",
+  "toMs": 1788755536000,
+  "toUtc": "2026-09-07T04:32:16+00:00",
   "zeroVolumeBars": "provider-native OKX 1s candles; no synthetic gap fill"
 }
