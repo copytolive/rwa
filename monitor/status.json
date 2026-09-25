@@ -7,33 +7,33 @@
   "providers": {
     "binance_api1": {
       "active": false,
-      "error": "HTTP Error 451: ",
-      "ok": false
+      "latency_ms": 2338,
+      "ok": true
     },
     "binance_global": {
       "active": false,
-      "error": "HTTP Error 451: ",
-      "ok": false
+      "latency_ms": 1120,
+      "ok": true
     },
     "binance_vision": {
       "active": true,
-      "latency_ms": 1371,
+      "latency_ms": 2483,
       "markets": 3716,
       "ok": true
     },
     "coinbase": {
-      "latency_ms": 105,
+      "latency_ms": 110,
       "ok": true
     },
     "hyperliquid": {
-      "latency_ms": 203,
+      "latency_ms": 279,
       "markets": 1119,
       "ok": true
     },
     "kraken": {
-      "latency_ms": 83,
+      "latency_ms": 112,
       "ok": true
     }
   },
-  "updated_at": 1790351361014
+  "updated_at": 1790376521676
 }
