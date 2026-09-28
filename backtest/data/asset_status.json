@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-09-21T03:53:26.981Z",
+  "generated_at": "2026-09-28T03:55:32.058Z",
   "verification_windows": [
     {
       "from": "2024-01-02T12:00:00.000Z",
@@ -16,12 +16,14 @@
     }
   ],
   "total_assets": 31,
-  "verified_assets": 28,
-  "failed_assets": 3,
+  "verified_assets": 26,
+  "failed_assets": 5,
   "failed_symbols": [
+    "NZDUSD",
     "EURNZD",
-    "AUDCAD",
-    "AUDCHF"
+    "GBPCHF",
+    "AUDNZD",
+    "NZDCHF"
   ],
   "primary_provider": "dukascopy",
   "assets": [
@@ -48,8 +50,8 @@
           "valid_ticks": 1214
         }
       ],
-      "verified_at": "2026-09-21T03:53:20.060Z",
-      "latency_ms": 285
+      "verified_at": "2026-09-28T03:55:27.581Z",
+      "latency_ms": 377
     },
     {
       "symbol": "GBPUSD",
@@ -74,8 +76,8 @@
           "valid_ticks": 1562
         }
       ],
-      "verified_at": "2026-09-21T03:53:20.124Z",
-      "latency_ms": 64
+      "verified_at": "2026-09-28T03:55:27.609Z",
+      "latency_ms": 28
     },
     {
       "symbol": "USDJPY",
@@ -100,8 +102,8 @@
           "valid_ticks": 1720
         }
       ],
-      "verified_at": "2026-09-21T03:53:20.300Z",
-      "latency_ms": 176
+      "verified_at": "2026-09-28T03:55:27.728Z",
+      "latency_ms": 119
     },
     {
       "symbol": "USDCHF",
@@ -113,26 +115,21 @@
       "mode": "bid_ask_tick",
       "earliest_tick": "2012-02-09",
       "status": "VERIFIED",
-      "sample_count": 1367,
-      "sample_sha256": "d8f0f520257caafb65bcdb2c07864bed73e6e3ba27eccf0ed7db4e4909f20877",
-      "first_timestamp": 1704290400979,
-      "last_timestamp": 1704291297515,
-      "sample_from": "2024-01-03T14:00:00.000Z",
-      "sample_to": "2024-01-03T14:15:00.000Z",
+      "sample_count": 1006,
+      "sample_sha256": "88a81f81c987f01b072550ad845cc0d4315516578027ed2d0430906b7dbe2897",
+      "first_timestamp": 1704196800089,
+      "last_timestamp": 1704197697812,
+      "sample_from": "2024-01-02T12:00:00.000Z",
+      "sample_to": "2024-01-02T12:15:00.000Z",
       "verification_attempts": [
         {
           "from": "2024-01-02T12:00:00.000Z",
           "to": "2024-01-02T12:15:00.000Z",
-          "valid_ticks": 0
-        },
-        {
-          "from": "2024-01-03T14:00:00.000Z",
-          "to": "2024-01-03T14:15:00.000Z",
-          "valid_ticks": 1367
+          "valid_ticks": 1006
         }
       ],
-      "verified_at": "2026-09-21T03:53:20.671Z",
-      "latency_ms": 371
+      "verified_at": "2026-09-28T03:55:27.845Z",
+      "latency_ms": 117
     },
     {
       "symbol": "AUDUSD",
@@ -157,8 +154,8 @@
           "valid_ticks": 733
         }
       ],
-      "verified_at": "2026-09-21T03:53:20.700Z",
-      "latency_ms": 29
+      "verified_at": "2026-09-28T03:55:27.953Z",
+      "latency_ms": 108
     },
     {
       "symbol": "USDCAD",
@@ -183,8 +180,8 @@
           "valid_ticks": 735
         }
       ],
-      "verified_at": "2026-09-21T03:53:20.852Z",
-      "latency_ms": 152
+      "verified_at": "2026-09-28T03:55:28.065Z",
+      "latency_ms": 112
     },
     {
       "symbol": "NZDUSD",
@@ -195,13 +192,8 @@
       "point_size": 0.0001,
       "mode": "bid_ask_tick",
       "earliest_tick": "2007-03-27",
-      "status": "VERIFIED",
-      "sample_count": 2117,
-      "sample_sha256": "8864d75c989fd507bf7626d45666db072e7a04b06e27582ccc30656e5a12da22",
-      "first_timestamp": 1704290400103,
-      "last_timestamp": 1704291299590,
-      "sample_from": "2024-01-03T14:00:00.000Z",
-      "sample_to": "2024-01-03T14:15:00.000Z",
+      "status": "FAILED",
+      "error": "zero valid bid/ask ticks across all verification windows",
       "verification_attempts": [
         {
           "from": "2024-01-02T12:00:00.000Z",
@@ -211,11 +203,16 @@
         {
           "from": "2024-01-03T14:00:00.000Z",
           "to": "2024-01-03T14:15:00.000Z",
-          "valid_ticks": 2117
+          "valid_ticks": 0
+        },
+        {
+          "from": "2024-06-03T12:00:00.000Z",
+          "to": "2024-06-03T12:15:00.000Z",
+          "valid_ticks": 0
         }
       ],
-      "verified_at": "2026-09-21T03:53:21.170Z",
-      "latency_ms": 318
+      "verified_at": "2026-09-28T03:55:28.430Z",
+      "latency_ms": 365
     },
     {
       "symbol": "EURGBP",
@@ -240,8 +237,8 @@
           "valid_ticks": 948
         }
       ],
-      "verified_at": "2026-09-21T03:53:21.325Z",
-      "latency_ms": 155
+      "verified_at": "2026-09-28T03:55:28.538Z",
+      "latency_ms": 108
     },
     {
       "symbol": "EURJPY",
@@ -253,26 +250,21 @@
       "mode": "bid_ask_tick",
       "earliest_tick": "2007-04-01",
       "status": "VERIFIED",
-      "sample_count": 3752,
-      "sample_sha256": "3187b3341a90b0c0e32f721db62bfb7003c39db43b1411ed5248eb7e792f76c3",
-      "first_timestamp": 1704290400427,
-      "last_timestamp": 1704291299283,
-      "sample_from": "2024-01-03T14:00:00.000Z",
-      "sample_to": "2024-01-03T14:15:00.000Z",
+      "sample_count": 3232,
+      "sample_sha256": "1825fc02ebb5fc1bd4908a75f265f9a5110d1745f424ff1bce3d11ff66735bd2",
+      "first_timestamp": 1704196800103,
+      "last_timestamp": 1704197699870,
+      "sample_from": "2024-01-02T12:00:00.000Z",
+      "sample_to": "2024-01-02T12:15:00.000Z",
       "verification_attempts": [
         {
           "from": "2024-01-02T12:00:00.000Z",
           "to": "2024-01-02T12:15:00.000Z",
-          "valid_ticks": 0
-        },
-        {
-          "from": "2024-01-03T14:00:00.000Z",
-          "to": "2024-01-03T14:15:00.000Z",
-          "valid_ticks": 3752
+          "valid_ticks": 3232
         }
       ],
-      "verified_at": "2026-09-21T03:53:21.702Z",
-      "latency_ms": 377
+      "verified_at": "2026-09-28T03:55:28.563Z",
+      "latency_ms": 25
     },
     {
       "symbol": "EURCHF",
@@ -284,31 +276,21 @@
       "mode": "bid_ask_tick",
       "earliest_tick": "2012-02-09",
       "status": "VERIFIED",
-      "sample_count": 581,
-      "sample_sha256": "b0bf24cac6b0e00952e3c5f69f59c8c6337ba647f6cde1ead185b7a94b9a8188",
-      "first_timestamp": 1717416000086,
-      "last_timestamp": 1717416898586,
-      "sample_from": "2024-06-03T12:00:00.000Z",
-      "sample_to": "2024-06-03T12:15:00.000Z",
+      "sample_count": 823,
+      "sample_sha256": "dfabadf322c9268d253fdbf393e70980dd1aeefbb7978018d08e2d25f5a53931",
+      "first_timestamp": 1704196800075,
+      "last_timestamp": 1704197698119,
+      "sample_from": "2024-01-02T12:00:00.000Z",
+      "sample_to": "2024-01-02T12:15:00.000Z",
       "verification_attempts": [
         {
           "from": "2024-01-02T12:00:00.000Z",
           "to": "2024-01-02T12:15:00.000Z",
-          "valid_ticks": 0
-        },
-        {
-          "from": "2024-01-03T14:00:00.000Z",
-          "to": "2024-01-03T14:15:00.000Z",
-          "valid_ticks": 0
-        },
-        {
-          "from": "2024-06-03T12:00:00.000Z",
-          "to": "2024-06-03T12:15:00.000Z",
-          "valid_ticks": 581
+          "valid_ticks": 823
         }
       ],
-      "verified_at": "2026-09-21T03:53:22.169Z",
-      "latency_ms": 467
+      "verified_at": "2026-09-28T03:55:28.676Z",
+      "latency_ms": 113
     },
     {
       "symbol": "EURAUD",
@@ -320,26 +302,21 @@
       "mode": "bid_ask_tick",
       "earliest_tick": "2012-02-09",
       "status": "VERIFIED",
-      "sample_count": 2631,
-      "sample_sha256": "2fa5a95b6a102272a9dded11eb54144be365971b9bd0d409a3c4f5a935ca5d9f",
-      "first_timestamp": 1704290400102,
-      "last_timestamp": 1704291298992,
-      "sample_from": "2024-01-03T14:00:00.000Z",
-      "sample_to": "2024-01-03T14:15:00.000Z",
+      "sample_count": 1316,
+      "sample_sha256": "cc820629c9e2b6a9f94fa94c94b3d29b658fcee1c5ee3214c8c5d0e486a7f44c",
+      "first_timestamp": 1704196800082,
+      "last_timestamp": 1704197699170,
+      "sample_from": "2024-01-02T12:00:00.000Z",
+      "sample_to": "2024-01-02T12:15:00.000Z",
       "verification_attempts": [
         {
           "from": "2024-01-02T12:00:00.000Z",
           "to": "2024-01-02T12:15:00.000Z",
-          "valid_ticks": 0
-        },
-        {
-          "from": "2024-01-03T14:00:00.000Z",
-          "to": "2024-01-03T14:15:00.000Z",
-          "valid_ticks": 2631
+          "valid_ticks": 1316
         }
       ],
-      "verified_at": "2026-09-21T03:53:22.537Z",
-      "latency_ms": 368
+      "verified_at": "2026-09-28T03:55:28.790Z",
+      "latency_ms": 114
     },
     {
       "symbol": "EURCAD",
@@ -364,8 +341,8 @@
           "valid_ticks": 982
         }
       ],
-      "verified_at": "2026-09-21T03:53:22.692Z",
-      "latency_ms": 155
+      "verified_at": "2026-09-28T03:55:28.903Z",
+      "latency_ms": 113
     },
     {
       "symbol": "EURNZD",
@@ -395,8 +372,8 @@
           "valid_ticks": 0
         }
       ],
-      "verified_at": "2026-09-21T03:53:23.204Z",
-      "latency_ms": 512
+      "verified_at": "2026-09-28T03:55:29.253Z",
+      "latency_ms": 350
     },
     {
       "symbol": "GBPJPY",
@@ -408,26 +385,21 @@
       "mode": "bid_ask_tick",
       "earliest_tick": "2012-02-09",
       "status": "VERIFIED",
-      "sample_count": 2908,
-      "sample_sha256": "b3771aeca26e5f259b1b7d46bb3ec4369b307b2ab56f5366492958c37d7b0e6b",
-      "first_timestamp": 1704290400130,
-      "last_timestamp": 1704291298995,
-      "sample_from": "2024-01-03T14:00:00.000Z",
-      "sample_to": "2024-01-03T14:15:00.000Z",
+      "sample_count": 1875,
+      "sample_sha256": "8b5f756dd864b83ce22f6baa0d282f6d6a1a28a4748123db9113bf22977d2662",
+      "first_timestamp": 1704196800093,
+      "last_timestamp": 1704197699735,
+      "sample_from": "2024-01-02T12:00:00.000Z",
+      "sample_to": "2024-01-02T12:15:00.000Z",
       "verification_attempts": [
         {
           "from": "2024-01-02T12:00:00.000Z",
           "to": "2024-01-02T12:15:00.000Z",
-          "valid_ticks": 0
-        },
-        {
-          "from": "2024-01-03T14:00:00.000Z",
-          "to": "2024-01-03T14:15:00.000Z",
-          "valid_ticks": 2908
+          "valid_ticks": 1875
         }
       ],
-      "verified_at": "2026-09-21T03:53:23.526Z",
-      "latency_ms": 322
+      "verified_at": "2026-09-28T03:55:29.366Z",
+      "latency_ms": 113
     },
     {
       "symbol": "GBPCHF",
@@ -438,22 +410,27 @@
       "point_size": 0.0001,
       "mode": "bid_ask_tick",
       "earliest_tick": "2012-02-09",
-      "status": "VERIFIED",
-      "sample_count": 1495,
-      "sample_sha256": "22bbc217164d5ef3d8d32afa6c2e48603037f475923d06da688ecbd2a0457f95",
-      "first_timestamp": 1704196800091,
-      "last_timestamp": 1704197699370,
-      "sample_from": "2024-01-02T12:00:00.000Z",
-      "sample_to": "2024-01-02T12:15:00.000Z",
+      "status": "FAILED",
+      "error": "zero valid bid/ask ticks across all verification windows",
       "verification_attempts": [
         {
           "from": "2024-01-02T12:00:00.000Z",
           "to": "2024-01-02T12:15:00.000Z",
-          "valid_ticks": 1495
+          "valid_ticks": 0
+        },
+        {
+          "from": "2024-01-03T14:00:00.000Z",
+          "to": "2024-01-03T14:15:00.000Z",
+          "valid_ticks": 0
+        },
+        {
+          "from": "2024-06-03T12:00:00.000Z",
+          "to": "2024-06-03T12:15:00.000Z",
+          "valid_ticks": 0
         }
       ],
-      "verified_at": "2026-09-21T03:53:23.680Z",
-      "latency_ms": 154
+      "verified_at": "2026-09-28T03:55:29.717Z",
+      "latency_ms": 350
     },
     {
       "symbol": "GBPAUD",
@@ -478,8 +455,8 @@
           "valid_ticks": 1370
         }
       ],
-      "verified_at": "2026-09-21T03:53:23.840Z",
-      "latency_ms": 160
+      "verified_at": "2026-09-28T03:55:29.829Z",
+      "latency_ms": 112
     },
     {
       "symbol": "GBPCAD",
@@ -504,8 +481,8 @@
           "valid_ticks": 1274
         }
       ],
-      "verified_at": "2026-09-21T03:53:23.998Z",
-      "latency_ms": 158
+      "verified_at": "2026-09-28T03:55:29.938Z",
+      "latency_ms": 109
     },
     {
       "symbol": "GBPNZD",
@@ -530,8 +507,8 @@
           "valid_ticks": 2523
         }
       ],
-      "verified_at": "2026-09-21T03:53:24.170Z",
-      "latency_ms": 172
+      "verified_at": "2026-09-28T03:55:30.055Z",
+      "latency_ms": 117
     },
     {
       "symbol": "AUDJPY",
@@ -556,8 +533,8 @@
           "valid_ticks": 1179
         }
       ],
-      "verified_at": "2026-09-21T03:53:24.326Z",
-      "latency_ms": 156
+      "verified_at": "2026-09-28T03:55:30.074Z",
+      "latency_ms": 19
     },
     {
       "symbol": "AUDCAD",
@@ -568,27 +545,22 @@
       "point_size": 0.0001,
       "mode": "bid_ask_tick",
       "earliest_tick": "2012-02-15",
-      "status": "FAILED",
-      "error": "zero valid bid/ask ticks across all verification windows",
+      "status": "VERIFIED",
+      "sample_count": 1128,
+      "sample_sha256": "ec63bea0e991913255f11d49f8394c63f1981c661fa9d8a848f369ef31a9deb8",
+      "first_timestamp": 1704196800100,
+      "last_timestamp": 1704197699455,
+      "sample_from": "2024-01-02T12:00:00.000Z",
+      "sample_to": "2024-01-02T12:15:00.000Z",
       "verification_attempts": [
         {
           "from": "2024-01-02T12:00:00.000Z",
           "to": "2024-01-02T12:15:00.000Z",
-          "valid_ticks": 0
-        },
-        {
-          "from": "2024-01-03T14:00:00.000Z",
-          "to": "2024-01-03T14:15:00.000Z",
-          "valid_ticks": 0
-        },
-        {
-          "from": "2024-06-03T12:00:00.000Z",
-          "to": "2024-06-03T12:15:00.000Z",
-          "valid_ticks": 0
+          "valid_ticks": 1128
         }
       ],
-      "verified_at": "2026-09-21T03:53:24.800Z",
-      "latency_ms": 474
+      "verified_at": "2026-09-28T03:55:30.185Z",
+      "latency_ms": 111
     },
     {
       "symbol": "AUDCHF",
@@ -599,6 +571,32 @@
       "point_size": 0.0001,
       "mode": "bid_ask_tick",
       "earliest_tick": "2012-02-09",
+      "status": "VERIFIED",
+      "sample_count": 1056,
+      "sample_sha256": "0305d9e7ca6f9943da241a623c444c372f1129221ae963f3f5254fd27c4f4d28",
+      "first_timestamp": 1704196800099,
+      "last_timestamp": 1704197699302,
+      "sample_from": "2024-01-02T12:00:00.000Z",
+      "sample_to": "2024-01-02T12:15:00.000Z",
+      "verification_attempts": [
+        {
+          "from": "2024-01-02T12:00:00.000Z",
+          "to": "2024-01-02T12:15:00.000Z",
+          "valid_ticks": 1056
+        }
+      ],
+      "verified_at": "2026-09-28T03:55:30.292Z",
+      "latency_ms": 107
+    },
+    {
+      "symbol": "AUDNZD",
+      "name": "AUD / NZD",
+      "class": "forex-cross",
+      "provider": "dukascopy",
+      "provider_symbol": "audnzd",
+      "point_size": 0.0001,
+      "mode": "bid_ask_tick",
+      "earliest_tick": "2012-02-09",
       "status": "FAILED",
       "error": "zero valid bid/ask ticks across all verification windows",
       "verification_attempts": [
@@ -618,34 +616,8 @@
           "valid_ticks": 0
         }
       ],
-      "verified_at": "2026-09-21T03:53:25.273Z",
-      "latency_ms": 473
-    },
-    {
-      "symbol": "AUDNZD",
-      "name": "AUD / NZD",
-      "class": "forex-cross",
-      "provider": "dukascopy",
-      "provider_symbol": "audnzd",
-      "point_size": 0.0001,
-      "mode": "bid_ask_tick",
-      "earliest_tick": "2012-02-09",
-      "status": "VERIFIED",
-      "sample_count": 1359,
-      "sample_sha256": "660eb8f9154fd443c3fb1716b770efe33b7216d58d27506a9227a84da9963fa4",
-      "first_timestamp": 1704196800108,
-      "last_timestamp": 1704197699209,
-      "sample_from": "2024-01-02T12:00:00.000Z",
-      "sample_to": "2024-01-02T12:15:00.000Z",
-      "verification_attempts": [
-        {
-          "from": "2024-01-02T12:00:00.000Z",
-          "to": "2024-01-02T12:15:00.000Z",
-          "valid_ticks": 1359
-        }
-      ],
-      "verified_at": "2026-09-21T03:53:25.426Z",
-      "latency_ms": 153
+      "verified_at": "2026-09-28T03:55:30.640Z",
+      "latency_ms": 348
     },
     {
       "symbol": "CADJPY",
@@ -670,8 +642,8 @@
           "valid_ticks": 1019
         }
       ],
-      "verified_at": "2026-09-21T03:53:25.578Z",
-      "latency_ms": 152
+      "verified_at": "2026-09-28T03:55:30.752Z",
+      "latency_ms": 111
     },
     {
       "symbol": "CADCHF",
@@ -683,21 +655,31 @@
       "mode": "bid_ask_tick",
       "earliest_tick": "2012-02-09",
       "status": "VERIFIED",
-      "sample_count": 975,
-      "sample_sha256": "46d4d44b58561372c0cfcc689b49a5eb0c65704607c4d98ac390012cf0f9baf4",
-      "first_timestamp": 1704196800120,
-      "last_timestamp": 1704197699468,
-      "sample_from": "2024-01-02T12:00:00.000Z",
-      "sample_to": "2024-01-02T12:15:00.000Z",
+      "sample_count": 661,
+      "sample_sha256": "9ed519a191e7369660e19b2a88265181a409dbd65873bdb444d39288a4365301",
+      "first_timestamp": 1717416000105,
+      "last_timestamp": 1717416898606,
+      "sample_from": "2024-06-03T12:00:00.000Z",
+      "sample_to": "2024-06-03T12:15:00.000Z",
       "verification_attempts": [
         {
           "from": "2024-01-02T12:00:00.000Z",
           "to": "2024-01-02T12:15:00.000Z",
-          "valid_ticks": 975
+          "valid_ticks": 0
+        },
+        {
+          "from": "2024-01-03T14:00:00.000Z",
+          "to": "2024-01-03T14:15:00.000Z",
+          "valid_ticks": 0
+        },
+        {
+          "from": "2024-06-03T12:00:00.000Z",
+          "to": "2024-06-03T12:15:00.000Z",
+          "valid_ticks": 661
         }
       ],
-      "verified_at": "2026-09-21T03:53:25.729Z",
-      "latency_ms": 151
+      "verified_at": "2026-09-28T03:55:30.993Z",
+      "latency_ms": 241
     },
     {
       "symbol": "CHFJPY",
@@ -709,21 +691,26 @@
       "mode": "bid_ask_tick",
       "earliest_tick": "2012-02-09",
       "status": "VERIFIED",
-      "sample_count": 1557,
-      "sample_sha256": "24eb9d8fe681752219cb73107096dbcda0a3748c001eaeeecbbe4d41b3d88958",
-      "first_timestamp": 1704196800050,
-      "last_timestamp": 1704197699003,
-      "sample_from": "2024-01-02T12:00:00.000Z",
-      "sample_to": "2024-01-02T12:15:00.000Z",
+      "sample_count": 2078,
+      "sample_sha256": "c8d49968b9cb048e270cbc7057c4f92361bc5f4a232b7544c9ffe25f6503d4cd",
+      "first_timestamp": 1704290400298,
+      "last_timestamp": 1704291299637,
+      "sample_from": "2024-01-03T14:00:00.000Z",
+      "sample_to": "2024-01-03T14:15:00.000Z",
       "verification_attempts": [
         {
           "from": "2024-01-02T12:00:00.000Z",
           "to": "2024-01-02T12:15:00.000Z",
-          "valid_ticks": 1557
+          "valid_ticks": 0
+        },
+        {
+          "from": "2024-01-03T14:00:00.000Z",
+          "to": "2024-01-03T14:15:00.000Z",
+          "valid_ticks": 2078
         }
       ],
-      "verified_at": "2026-09-21T03:53:25.886Z",
-      "latency_ms": 156
+      "verified_at": "2026-09-28T03:55:31.131Z",
+      "latency_ms": 138
     },
     {
       "symbol": "NZDCAD",
@@ -753,8 +740,8 @@
           "valid_ticks": 1493
         }
       ],
-      "verified_at": "2026-09-21T03:53:26.196Z",
-      "latency_ms": 310
+      "verified_at": "2026-09-28T03:55:31.360Z",
+      "latency_ms": 229
     },
     {
       "symbol": "NZDCHF",
@@ -765,22 +752,27 @@
       "point_size": 0.0001,
       "mode": "bid_ask_tick",
       "earliest_tick": "2012-02-09",
-      "status": "VERIFIED",
-      "sample_count": 1013,
-      "sample_sha256": "99a41e3a4b6349c83b7d0f415571d4f000beb815428b27b2535d22d639935e6f",
-      "first_timestamp": 1704196800097,
-      "last_timestamp": 1704197697813,
-      "sample_from": "2024-01-02T12:00:00.000Z",
-      "sample_to": "2024-01-02T12:15:00.000Z",
+      "status": "FAILED",
+      "error": "zero valid bid/ask ticks across all verification windows",
       "verification_attempts": [
         {
           "from": "2024-01-02T12:00:00.000Z",
           "to": "2024-01-02T12:15:00.000Z",
-          "valid_ticks": 1013
+          "valid_ticks": 0
+        },
+        {
+          "from": "2024-01-03T14:00:00.000Z",
+          "to": "2024-01-03T14:15:00.000Z",
+          "valid_ticks": 0
+        },
+        {
+          "from": "2024-06-03T12:00:00.000Z",
+          "to": "2024-06-03T12:15:00.000Z",
+          "valid_ticks": 0
         }
       ],
-      "verified_at": "2026-09-21T03:53:26.393Z",
-      "latency_ms": 197
+      "verified_at": "2026-09-28T03:55:31.708Z",
+      "latency_ms": 348
     },
     {
       "symbol": "XAUUSD",
@@ -805,8 +797,8 @@
           "valid_ticks": 1821
         }
       ],
-      "verified_at": "2026-09-21T03:53:26.452Z",
-      "latency_ms": 59
+      "verified_at": "2026-09-28T03:55:31.722Z",
+      "latency_ms": 14
     },
     {
       "symbol": "XAGUSD",
@@ -831,8 +823,8 @@
           "valid_ticks": 722
         }
       ],
-      "verified_at": "2026-09-21T03:53:26.506Z",
-      "latency_ms": 54
+      "verified_at": "2026-09-28T03:55:31.829Z",
+      "latency_ms": 107
     },
     {
       "symbol": "BTCUSD",
@@ -844,26 +836,21 @@
       "mode": "bid_ask_tick",
       "earliest_tick": "2017-05-07",
       "status": "VERIFIED",
-      "sample_count": 2215,
-      "sample_sha256": "8d683edf689721d8122e976f7bac653684622bccb56fe050f336d743e96c4fa4",
-      "first_timestamp": 1704290400147,
-      "last_timestamp": 1704291299590,
-      "sample_from": "2024-01-03T14:00:00.000Z",
-      "sample_to": "2024-01-03T14:15:00.000Z",
+      "sample_count": 1440,
+      "sample_sha256": "602c893a0f43b85f3122d934d4e5323257fbda8c0c68ab986141a9ed36e4ce0a",
+      "first_timestamp": 1704196800520,
+      "last_timestamp": 1704197699198,
+      "sample_from": "2024-01-02T12:00:00.000Z",
+      "sample_to": "2024-01-02T12:15:00.000Z",
       "verification_attempts": [
         {
           "from": "2024-01-02T12:00:00.000Z",
           "to": "2024-01-02T12:15:00.000Z",
-          "valid_ticks": 0
-        },
-        {
-          "from": "2024-01-03T14:00:00.000Z",
-          "to": "2024-01-03T14:15:00.000Z",
-          "valid_ticks": 2215
+          "valid_ticks": 1440
         }
       ],
-      "verified_at": "2026-09-21T03:53:26.828Z",
-      "latency_ms": 322
+      "verified_at": "2026-09-28T03:55:31.944Z",
+      "latency_ms": 115
     },
     {
       "symbol": "ETHUSD",
@@ -888,8 +875,8 @@
           "valid_ticks": 742
         }
       ],
-      "verified_at": "2026-09-21T03:53:26.981Z",
-      "latency_ms": 153
+      "verified_at": "2026-09-28T03:55:32.057Z",
+      "latency_ms": 113
     }
   ]
 }
