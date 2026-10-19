@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RWA Terminal — Desktop Pixel Reference</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-view="desktop">
+<div class="desk-stage">
+  <main class="terminal">
+    <header class="topbar">
+      <div class="brand"><img src="brand-mark.svg" alt=""><b>Real World Asset</b></div>
+      <nav class="topnav">
+        <button class="active" data-slot="navTrade" data-system="router" data-action="navigate" data-target="trade"><span data-slot-label>Trade</span></button>
+        <button data-slot="navDiscover" data-system="router" data-action="navigate" data-target="discover"><span data-slot-label>Discover</span></button>
+        <button data-slot="navPortfolio" data-system="portfolio" data-action="open" data-target="portfolio"><span data-slot-label>Portfolio</span></button>
+        <button data-slot="navAnalytics" data-system="analytics" data-action="open" data-target="analytics"><span data-slot-label>Analytics</span></button>
+        <button data-slot="navRewards" data-system="rewards" data-action="open" data-target="rewards"><span data-slot-label>Rewards</span></button>
+        <button data-slot="navMore" data-system="router" data-action="menu" data-target="more"><span data-slot-label>More⌄</span></button>
+      </nav>
+      <div class="searchbox"><span>⌕</span> Search tokens, markets, or users… <kbd>⌘K</kbd></div>
+      <div class="network"><i></i> Network: Mainnet <span>⌃</span></div>
+      <button class="icon-top bell" data-slot="notifications" data-system="alerts" data-action="open" data-target="notifications">♧<em>12</em></button>
+      <button class="wallet" data-slot="wallet" data-system="wallet" data-action="open" data-target="account"><span>▣</span>0xE88d…F3D3 <b>◒</b></button>
+    </header>
+
+    <div class="desk-body">
+      <aside class="leftbar">
+        <div class="side-tabs"><button class="active" data-slot="watchlist" data-system="watchlist">Watchlist</button><button data-slot="feed" data-system="social-feed">Feed</button><button data-slot="pulse" data-system="market-data">Pulse <small>LIVE</small></button></div>
+        <div class="side-title"><span>Top Movers</span><span>24h⌄</span></div>
+        <div class="mover"><span class="coin blue">R</span><div><b>RWAus</b><small>Real Estate US</small></div><strong>+12.43%</strong></div>
+        <div class="mover"><span class="coin mint">T</span><div><b>T-BILL</b><small>US Treasury Bill</small></div><strong>+4.21%</strong></div>
+        <div class="mover"><span class="coin gold">G</span><div><b>GOLDX</b><small>Tokenized Gold</small></div><strong class="red">-1.18%</strong></div>
+        <button class="view-watch" data-slot="viewWatchlist" data-system="watchlist" data-action="open">View all watchlist</button>
+        <div class="side-title discuss-title"><span>Signals &amp; Discussions</span><span>All⌄</span></div>
+        <article class="post"><div class="avatar a1"></div><div class="post-main"><div class="post-head"><b>MEADGod <i>Pro</i></b><small>2m</small></div><p>Just increased my bag on <span>$RWAus</span>.<br>Strong yield + real-world cashflow.<br>This pullback is healthy.</p><div class="post-foot"><span>🔥 32</span><span>◯ 18</span><button>↗ Bullish</button></div></div></article>
+        <article class="post"><div class="avatar a2"></div><div class="post-main"><div class="post-head"><b>YieldHunter</b><small>5m</small></div><p>Entered $T-BILL at 1.024.<br>Target 1.080 • Stop 0.995</p><div class="post-foot"><span>◯ 23</span><button>↗ Follow</button></div></div></article>
+        <article class="post"><div class="avatar a3"></div><div class="post-main"><div class="post-head"><b>ChainSleuth</b><small>12m</small></div><p>On-chain flows into $GOLDX wallets spiking. Accumulation phase?</p><div class="post-foot"><span>🔥 41</span><span>◯ 27</span></div></div></article>
+        <article class="post"><div class="avatar a4"></div><div class="post-main"><div class="post-head"><b>RWA_Research</b><small>18m</small></div><p>New thread: Tokenized Real Estate<br>Yields Q3 Update</p><div class="post-foot"><span>◯ 12</span></div></div></article>
+        <article class="post"><div class="avatar a5"></div><div class="post-main"><div class="post-head"><b>DeFiLion</b><small>25m</small></div><p>Bought $RWAus<br>Avg 1.142 • Size 15,000</p><div class="post-foot"><span>◯ 7</span><span>◉ 1.2K</span></div></div></article>
+        <button class="idea" data-slot="postIdea" data-system="social-feed" data-action="compose">Post an idea</button>
+      </aside>
+
+      <section class="center">
+        <div class="asset-head">
+          <div class="asset-id"><img src="rwa-avatar.svg" alt=""><div><div class="asset-name">RWAus <span>☆</span></div><small>Real Estate US <i>●</i> <b>RWA</b> <b>Real Estate</b></small></div></div>
+          <div class="price">$1.1428 <strong>+2.35%</strong></div>
+          <div class="metric"><small>Market Cap</small><b>$512.84M</b></div><div class="metric"><small>24h Volume</small><b>$38.62M</b></div><div class="metric"><small>Liquidity</small><b>$14.27M</b></div><div class="metric"><small>Holders</small><b>24,671</b></div>
+          <div class="change"><small>24h Change</small><b>+2.35%</b><svg viewBox="0 0 54 24"><polyline points="0,19 7,14 12,17 18,6 27,11 34,7 43,9 54,2"/></svg></div>
+        </div>
+        <section class="chart-card" data-slot="chartPanel" data-system="chart" data-action="focus">
+          <div class="chart-top">
+            <div class="left-tool">◐</div>
+            <div class="tf"><button>1m</button><button>5m</button><button>15m</button><button class="active">1h</button><button>4h</button><button>D</button><button>W⌄</button><span class="sep"></span><button>◐</button><button>ƒx</button><button data-slot="indicators" data-system="chart" data-action="indicators">Indicators</button><button data-slot="templates" data-system="chart" data-action="templates">⌘ Templates</button></div>
+          </div>
+          <div class="drawing-tools"><span>＋</span><span>╱</span><span>☷</span><span>⌁</span><span>⌗</span><span>⌁</span><span>T</span><span>☻</span><span>◈</span><span>⊕</span><span>∩</span><span>✎</span><span>▣</span><span>⋯</span></div>
+          <div class="chart-meta">RWAus · 1h · RWA <span>O 1.1369</span> <span>H 1.1452</span> <span>L 1.1341</span> <strong>C 1.1428 +0.0059 (+0.52%)</strong></div>
+          <svg class="chart-svg" viewBox="0 0 640 420" data-chart="desktop" aria-label="Candlestick chart"></svg>
+          <div class="chart-bottom"><span>1D</span><span>5D</span><span>1M</span><span>3M</span><span>6M</span><span>YTD</span><span>1Y</span><span>All</span><span>↗</span><div>12:45:12 (UTC+7) &nbsp;&nbsp; % &nbsp; log &nbsp; <b>auto</b></div></div>
+        </section>
+        <section class="positions">
+          <div class="pos-tabs"><button class="active">Positions <i>3</i></button><button>Open Orders</button><button>Holders</button><button>Feed</button><button>Analytics</button><button>Thesis</button><button>History</button></div>
+          <table><thead><tr><th>Asset</th><th>Size</th><th>Avg. Entry</th><th>Mark Price</th><th>PnL (USDC)</th><th>PnL %</th><th>Liquidity</th><th>Risk</th><th></th></tr></thead>
+          <tbody><tr><td><span class="tinycoin blue">R</span> RWAus <i class="long">Long</i></td><td>15,000</td><td>1.1024</td><td>1.1428</td><td class="green">+606.00</td><td class="green">+3.68%</td><td>$14.27M</td><td><i class="risk low">Low</i></td><td>›</td></tr>
+          <tr><td><span class="tinycoin mint">T</span> T-BILL <i class="long">Long</i></td><td>50,000</td><td>1.0231</td><td>1.0412</td><td class="green">+905.00</td><td class="green">+1.77%</td><td>$22.11M</td><td><i class="risk low">Low</i></td><td>›</td></tr>
+          <tr><td><span class="tinycoin gold">G</span> GOLDX <i class="short">Short</i></td><td>2,500</td><td>2,412.5</td><td>2,384.2</td><td class="green">+70.75</td><td class="green">+1.17%</td><td>$18.74M</td><td><i class="risk med">Medium</i></td><td>›</td></tr></tbody></table>
+        </section>
+      </section>
+
+      <aside class="orderbook">
+        <div class="ob-title"><b>Order Book</b><span>•••</span></div>
+        <div class="ob-head"><span>Price (USDC)</span><span>Size (RWAus)</span><span>Total</span></div>
+        <div class="rows asks"><div><b>1.1450</b><span>12,540</span><span>68,340</span></div><div><b>1.1445</b><span>8,320</span><span>55,800</span></div><div><b>1.1440</b><span>9,210</span><span>47,480</span></div><div><b>1.1435</b><span>7,650</span><span>38,270</span></div><div><b>1.1430</b><span>5,360</span><span>30,620</span></div><div><b>1.1425</b><span>6,890</span><span>25,260</span></div><div><b>1.1420</b><span>4,210</span><span>18,370</span></div></div>
+        <div class="mid"><strong>1.1428 ↑</strong><span>0.0008 (0.07%)</span><small>Spread &nbsp;&nbsp; 0.0003 (0.03%)</small></div>
+        <div class="rows bids"><div><b>1.1417</b><span>6,120</span><span>6,120</span></div><div><b>1.1415</b><span>7,430</span><span>13,550</span></div><div><b>1.1410</b><span>9,880</span><span>23,430</span></div><div><b>1.1405</b><span>8,910</span><span>32,340</span></div><div><b>1.1400</b><span>10,200</span><span>42,540</span></div><div><b>1.1395</b><span>6,780</span><span>49,320</span></div><div><b>1.1390</b><span>7,910</span><span>57,230</span></div></div>
+        <div class="depth"><span>Bid 54%</span><i><b></b><em></em></i><span>Ask 46%</span></div>
+      </aside>
+
+      <aside class="tradepanel">
+        <div class="trade-head"><button class="active">⌄ &nbsp;Trade</button><button data-slot="alerts" data-system="alerts" data-action="open">Alerts <i>2</i></button></div>
+        <div class="buy-sell"><button class="active" data-slot="tradeBuy" data-system="trade-execution" data-action="side" data-target="buy">Buy</button><button data-slot="tradeSell" data-system="trade-execution" data-action="side" data-target="sell">Sell</button></div>
+        <div class="order-tabs"><button class="active">Market</button><button>Limit</button><button>Stop</button><span>⌄</span></div>
+        <div class="avail"><span>Available</span><b>27,340.50 USDC ⊕</b></div>
+        <label>I want to spend</label><div class="inputrow"><strong>10,000</strong><span>USDC⌄</span></div>
+        <div class="slider"><i></i><b></b></div><div class="percent"><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+        <label>Estimated to receive</label><div class="inputrow"><strong>8,748.35</strong><span>RWAus⌄</span></div>
+        <div class="slippage"><span>Slippage Tolerance</span><b>0.30% ›</b></div>
+        <div class="toggle-line"><span>☑ Take Profit</span></div><div class="inputrow compact"><strong>1.1850</strong><span class="green">+3.76%</span></div>
+        <div class="toggle-line"><span>☑ Stop Loss</span></div><div class="inputrow compact"><strong>1.0980</strong><span class="red">-3.92%</span></div>
+        <button class="submit" data-slot="submitOrder" data-system="trade-execution" data-action="preview-order" data-target="RWAus">Buy RWAus</button>
+        <div class="trade-summary"><p><span>Est. Price</span><b>$1.1428</b></p><p><span>Network Fee</span><b>0.45 USDC</b></p><p><span>Est. Total</span><b>10,000.45 USDC</b></p></div>
+        <div class="buying"><span>Buying Power</span><b>27,350.95 USDC</b></div>
+      </aside>
+    </div>
+    <footer><span class="status-dot"></span>System Status <i>•</i> Operational <span class="blue-dot"></span> RWAus <b>+2.35%</b> <span>• T-BILL &nbsp;<b>+1.18%</b></span><span>GOLDX &nbsp;<strong>-1.18%</strong></span><span>USDC &nbsp;0.00%</span><em>⌘ Real World Data. On Chain.</em></footer>
+  </main>
+</div>
+<script src="config.js"></script><script src="app.js"></script>
+</body></html>
