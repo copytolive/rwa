@@ -22,18 +22,18 @@
       "ok": true
     },
     "coinbase": {
-      "latency_ms": 85,
+      "latency_ms": 128,
       "ok": true
     },
     "hyperliquid": {
-      "latency_ms": 217,
-      "markets": 1398,
+      "latency_ms": 250,
+      "markets": 1399,
       "ok": true
     },
     "kraken": {
-      "latency_ms": 81,
+      "latency_ms": 118,
       "ok": true
     }
   },
-  "updated_at": 1792946802989
+  "updated_at": 1793099046409
 }
