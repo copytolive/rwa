@@ -17,23 +17,23 @@
     },
     "binance_vision": {
       "active": true,
-      "latency_ms": 1904,
+      "latency_ms": 1604,
       "markets": 3745,
       "ok": true
     },
     "coinbase": {
-      "latency_ms": 70,
+      "latency_ms": 25,
       "ok": true
     },
     "hyperliquid": {
-      "latency_ms": 362,
+      "latency_ms": 207,
       "markets": 1424,
       "ok": true
     },
     "kraken": {
-      "error": "HTTP Error 503: Service Unavailable",
-      "ok": false
+      "latency_ms": 23,
+      "ok": true
     }
   },
-  "updated_at": 1794259986046
+  "updated_at": 1794282405750
 }
